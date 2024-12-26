@@ -21,11 +21,11 @@ impl AsObject for ShaderResourceBinding {
 }
 
 impl ShaderResourceBinding {
-    pub(crate) fn create(srb_ptr: *mut bindings::IShaderResourceBinding) -> Self {
+    pub(crate) fn new(srb_ptr: *mut bindings::IShaderResourceBinding) -> Self {
         ShaderResourceBinding {
             m_shader_resource_binding: srb_ptr,
             m_virtual_functions: unsafe { (*srb_ptr).pVtbl },
-            m_object: Object::create(srb_ptr as *mut bindings::IObject),
+            m_object: Object::new(srb_ptr as *mut bindings::IObject),
         }
     }
 

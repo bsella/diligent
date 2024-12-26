@@ -1,7 +1,7 @@
 use crate::core::bindings;
 
-use super::object::{AsObject, Object};
 use super::device_object::DeviceObject;
+use super::object::{AsObject, Object};
 
 pub struct ShaderResourceVariable {
     pub(crate) m_shader_resource_variable: *mut bindings::IShaderResourceVariable,
@@ -16,13 +16,11 @@ impl AsObject for ShaderResourceVariable {
 }
 
 impl ShaderResourceVariable {
-    pub(crate) fn create(shader_resource_variable: *mut bindings::IShaderResourceVariable) -> Self {
+    pub(crate) fn new(shader_resource_variable: *mut bindings::IShaderResourceVariable) -> Self {
         ShaderResourceVariable {
             m_virtual_functions: unsafe { (*shader_resource_variable).pVtbl },
             m_shader_resource_variable: shader_resource_variable,
-            m_object: Object::create(
-                shader_resource_variable as *mut bindings::IObject,
-            ),
+            m_object: Object::new(shader_resource_variable as *mut bindings::IObject),
         }
     }
 

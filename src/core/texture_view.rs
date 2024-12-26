@@ -20,15 +20,12 @@ impl AsDeviceObject for TextureView {
 }
 
 impl TextureView {
-    pub(crate) fn create(
-        texture_view: *mut bindings::ITextureView,
-        texture: *const Texture,
-    ) -> Self {
+    pub(crate) fn new(texture_view: *mut bindings::ITextureView, texture: *const Texture) -> Self {
         TextureView {
             m_virtual_functions: unsafe { (*texture_view).pVtbl },
             m_texture_view: texture_view,
             m_texture: texture,
-            m_device_object: DeviceObject::create(texture_view as *mut bindings::IDeviceObject),
+            m_device_object: DeviceObject::new(texture_view as *mut bindings::IDeviceObject),
         }
     }
 

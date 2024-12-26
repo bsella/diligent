@@ -2,7 +2,10 @@ use std::collections::BTreeMap;
 
 use crate::core::bindings;
 
-use super::{device_object::DeviceObject, object::{AsObject, Object}};
+use super::{
+    device_object::DeviceObject,
+    object::{AsObject, Object},
+};
 
 pub struct ResourceMapping {
     pub(crate) m_resource_mapping: *mut bindings::IResourceMapping,
@@ -20,11 +23,11 @@ impl AsObject for ResourceMapping {
 }
 
 impl ResourceMapping {
-    pub(crate) fn create(resource_mapping_ptr: *mut bindings::IResourceMapping) -> Self {
+    pub(crate) fn new(resource_mapping_ptr: *mut bindings::IResourceMapping) -> Self {
         ResourceMapping {
             m_resource_mapping: resource_mapping_ptr,
             m_virtual_functions: unsafe { (*resource_mapping_ptr).pVtbl },
-            m_object: Object::create(resource_mapping_ptr as *mut bindings::IObject),
+            m_object: Object::new(resource_mapping_ptr as *mut bindings::IObject),
 
             // We're assuming that resource_mapping_ptr is a pointer to a newly created resource
             // mapping that does not contain any resources for now

@@ -6,7 +6,7 @@ pub(crate) struct Object {
 }
 
 impl Object {
-    pub(crate) fn create(object: *mut bindings::IObject) -> Self {
+    pub(crate) fn new(object: *mut bindings::IObject) -> Self {
         Object {
             m_virtual_functions: unsafe { (*object).pVtbl },
             m_object: object,

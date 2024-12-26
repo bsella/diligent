@@ -39,12 +39,12 @@ impl AsDeviceObject for Texture {
 }
 
 impl Texture {
-    pub(crate) fn create(
+    pub(crate) fn new(
         texture_ptr: *mut bindings::ITexture,
         texture_desc: &bindings::TextureDesc,
     ) -> Self {
         let mut texture = Texture {
-            m_device_object: DeviceObject::create(texture_ptr as *mut bindings::IDeviceObject),
+            m_device_object: DeviceObject::new(texture_ptr as *mut bindings::IDeviceObject),
             m_texture: texture_ptr,
             m_virtual_functions: unsafe { (*texture_ptr).pVtbl },
             m_default_view: None,
@@ -53,7 +53,7 @@ impl Texture {
         let texture_view_type = bind_flags_to_texture_view_type(texture_desc.BindFlags);
 
         if texture_view_type != bindings::BUFFER_VIEW_UNDEFINED {
-            let texture_view = TextureView::create(
+            let texture_view = TextureView::new(
                 unsafe {
                     (*(*texture_ptr).pVtbl)
                         .Texture
@@ -116,7 +116,7 @@ impl TextureImpl for Texture {
         if texture_view_ptr.is_null() {
             None
         } else {
-            Some(TextureView::create(texture_view_ptr, self as *const Self))
+            Some(TextureView::new(texture_view_ptr, self as *const Self))
         }
     }
 

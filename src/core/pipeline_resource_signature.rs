@@ -26,7 +26,7 @@ impl AsDeviceObject for PipelineResourceSignature {
 }
 
 impl PipelineResourceSignature {
-    pub(crate) fn create(pipeline_rs_ptr: *mut bindings::IPipelineResourceSignature) -> Self {
+    pub(crate) fn new(pipeline_rs_ptr: *mut bindings::IPipelineResourceSignature) -> Self {
         fn create_shader_resource_variables(
             pipeline_rs_ptr: *mut bindings::IPipelineResourceSignature,
             shader_type: bindings::SHADER_TYPE,
@@ -50,7 +50,7 @@ impl PipelineResourceSignature {
             fn create_srv_and_add_ref(
                 srv_ptr: *mut bindings::IShaderResourceVariable,
             ) -> ShaderResourceVariable {
-                let srv = ShaderResourceVariable::create(srv_ptr);
+                let srv = ShaderResourceVariable::new(srv_ptr);
                 srv.as_object().add_ref();
                 srv
             }
@@ -68,7 +68,7 @@ impl PipelineResourceSignature {
             m_pipeline_resource_signature: pipeline_rs_ptr,
             m_virtual_functions: unsafe { (*pipeline_rs_ptr).pVtbl },
 
-            m_device_object: DeviceObject::create(pipeline_rs_ptr as *mut bindings::IDeviceObject),
+            m_device_object: DeviceObject::new(pipeline_rs_ptr as *mut bindings::IDeviceObject),
 
             m_static_variables: BTreeMap::from_iter(
                 [
@@ -131,7 +131,7 @@ impl PipelineResourceSignature {
         if shader_resource_binding_ptr.is_null() {
             None
         } else {
-            Some(ShaderResourceBinding::create(shader_resource_binding_ptr))
+            Some(ShaderResourceBinding::new(shader_resource_binding_ptr))
         }
     }
 

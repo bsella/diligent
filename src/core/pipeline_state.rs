@@ -20,13 +20,11 @@ impl AsDeviceObject for PipelineState {
 }
 
 impl PipelineState {
-    pub(crate) fn create(pipeline_state_ptr: *mut bindings::IPipelineState) -> Self {
+    pub(crate) fn new(pipeline_state_ptr: *mut bindings::IPipelineState) -> Self {
         PipelineState {
             m_pipeline_state: pipeline_state_ptr,
             m_virtual_functions: unsafe { (*pipeline_state_ptr).pVtbl },
-            m_device_object: DeviceObject::create(
-                pipeline_state_ptr as *mut bindings::IDeviceObject,
-            ),
+            m_device_object: DeviceObject::new(pipeline_state_ptr as *mut bindings::IDeviceObject),
         }
     }
 
@@ -121,7 +119,7 @@ impl PipelineState {
         if shader_resource_binding_ptr.is_null() {
             None
         } else {
-            Some(ShaderResourceBinding::create(shader_resource_binding_ptr))
+            Some(ShaderResourceBinding::new(shader_resource_binding_ptr))
         }
     }
 

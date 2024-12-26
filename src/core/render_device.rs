@@ -20,18 +20,18 @@ pub struct RenderDevice {
     m_object: Object,
 }
 
-impl AsObject for RenderDevice{
+impl AsObject for RenderDevice {
     fn as_object(&self) -> &Object {
         &self.m_object
     }
 }
 
 impl RenderDevice {
-    pub(crate) fn create(render_device_ptr: *mut bindings::IRenderDevice) -> Self {
+    pub(crate) fn new(render_device_ptr: *mut bindings::IRenderDevice) -> Self {
         RenderDevice {
             m_render_device: render_device_ptr,
             m_virtual_functions: unsafe { (*render_device_ptr).pVtbl },
-            m_object: Object::create(render_device_ptr as *mut bindings::IObject),
+            m_object: Object::new(render_device_ptr as *mut bindings::IObject),
         }
     }
 
@@ -58,7 +58,7 @@ impl RenderDevice {
         if buffer_ptr.is_null() {
             None
         } else {
-            Some(Buffer::create(buffer_ptr, buffer_desc))
+            Some(Buffer::new(buffer_ptr, buffer_desc))
         }
     }
 
@@ -80,12 +80,12 @@ impl RenderDevice {
             );
         }
 
-        let data_blob = DataBlob::create(data_blob_ptr);
+        let data_blob = DataBlob::new(data_blob_ptr);
 
         if shader_ptr.is_null() {
             Err(data_blob)
         } else {
-            Ok(Shader::create(shader_ptr))
+            Ok(Shader::new(shader_ptr))
         }
     }
 
@@ -113,7 +113,7 @@ impl RenderDevice {
         if texture_ptr.is_null() {
             None
         } else {
-            Some(Texture::create(texture_ptr, texture_desc))
+            Some(Texture::new(texture_ptr, texture_desc))
         }
     }
 
@@ -133,7 +133,7 @@ impl RenderDevice {
         if sampler_ptr.is_null() {
             None
         } else {
-            Some(Sampler::create(sampler_ptr))
+            Some(Sampler::new(sampler_ptr))
         }
     }
 
@@ -156,7 +156,7 @@ impl RenderDevice {
         if resource_mapping_ptr.is_null() {
             None
         } else {
-            Some(ResourceMapping::create(resource_mapping_ptr))
+            Some(ResourceMapping::new(resource_mapping_ptr))
         }
     }
 
@@ -178,7 +178,7 @@ impl RenderDevice {
         if pipeline_state_ptr.is_null() {
             None
         } else {
-            Some(PipelineState::create(pipeline_state_ptr))
+            Some(PipelineState::new(pipeline_state_ptr))
         }
     }
 
@@ -201,7 +201,7 @@ impl RenderDevice {
         if pipeline_state_ptr.is_null() {
             None
         } else {
-            Some(PipelineState::create(pipeline_state_ptr))
+            Some(PipelineState::new(pipeline_state_ptr))
         }
     }
 
@@ -223,7 +223,7 @@ impl RenderDevice {
         if pipeline_state_ptr.is_null() {
             None
         } else {
-            Some(PipelineState::create(pipeline_state_ptr))
+            Some(PipelineState::new(pipeline_state_ptr))
         }
     }
 
@@ -245,7 +245,7 @@ impl RenderDevice {
         if pipeline_state_ptr.is_null() {
             None
         } else {
-            Some(PipelineState::create(pipeline_state_ptr))
+            Some(PipelineState::new(pipeline_state_ptr))
         }
     }
 
@@ -264,7 +264,7 @@ impl RenderDevice {
         if fence_ptr.is_null() {
             None
         } else {
-            Some(Fence::create(fence_ptr))
+            Some(Fence::new(fence_ptr))
         }
     }
 

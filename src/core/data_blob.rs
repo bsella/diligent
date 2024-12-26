@@ -16,12 +16,12 @@ impl AsObject for DataBlob {
 }
 
 impl DataBlob {
-    pub(crate) fn create(data_blob_ptr: *mut bindings::IDataBlob) -> Self{
+    pub(crate) fn new(data_blob_ptr: *mut bindings::IDataBlob) -> Self {
         DataBlob {
             m_data_blob: data_blob_ptr,
             m_virtual_functions: unsafe { (*data_blob_ptr).pVtbl },
 
-            m_object : Object::create(data_blob_ptr as *mut bindings::IObject)
+            m_object: Object::new(data_blob_ptr as *mut bindings::IObject),
         }
     }
 

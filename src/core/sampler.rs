@@ -16,11 +16,11 @@ impl AsDeviceObject for Sampler {
 }
 
 impl Sampler {
-    pub(crate) fn create(sampler_ptr: *mut bindings::ISampler) -> Self {
+    pub(crate) fn new(sampler_ptr: *mut bindings::ISampler) -> Self {
         Sampler {
             m_sampler: sampler_ptr,
             m_virtual_functions: unsafe { (*sampler_ptr).pVtbl },
-            m_device_object: DeviceObject::create(sampler_ptr as *mut bindings::IDeviceObject),
+            m_device_object: DeviceObject::new(sampler_ptr as *mut bindings::IDeviceObject),
         }
     }
 

@@ -2,7 +2,7 @@ use crate::core::bindings;
 
 use crate::core::buffer::Buffer;
 
-use super::device_object::{DeviceObject, AsDeviceObject};
+use super::device_object::{AsDeviceObject, DeviceObject};
 
 pub struct BufferView {
     m_buffer_view: *mut bindings::IBufferView,
@@ -13,12 +13,12 @@ pub struct BufferView {
 }
 
 impl BufferView {
-    pub(crate) fn create(buffer_view: *mut bindings::IBufferView, buffer: *const Buffer) -> Self {
+    pub(crate) fn new(buffer_view: *mut bindings::IBufferView, buffer: *const Buffer) -> Self {
         BufferView {
             m_virtual_functions: unsafe { (*buffer_view).pVtbl },
             m_buffer_view: buffer_view,
             m_buffer: buffer,
-            m_device_object: DeviceObject::create(buffer_view as *mut bindings::IDeviceObject),
+            m_device_object: DeviceObject::new(buffer_view as *mut bindings::IDeviceObject),
         }
     }
 }

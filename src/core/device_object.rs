@@ -9,11 +9,11 @@ pub struct DeviceObject {
 }
 
 impl DeviceObject {
-    pub(crate) fn create(device_object: *mut bindings::IDeviceObject) -> Self {
+    pub(crate) fn new(device_object: *mut bindings::IDeviceObject) -> Self {
         DeviceObject {
             m_virtual_functions: unsafe { (*device_object).pVtbl },
             m_device_object: device_object,
-            m_object: Object::create(device_object as *mut bindings::IObject),
+            m_object: Object::new(device_object as *mut bindings::IObject),
         }
     }
 }

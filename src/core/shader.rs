@@ -18,11 +18,11 @@ impl AsDeviceObject for Shader {
 }
 
 impl Shader {
-    pub(crate) fn create(shader_ptr: *mut bindings::IShader) -> Self {
+    pub(crate) fn new(shader_ptr: *mut bindings::IShader) -> Self {
         Shader {
             m_shader: shader_ptr,
             m_virtual_functions: unsafe { (*shader_ptr).pVtbl },
-            m_device_object: DeviceObject::create(shader_ptr as *mut bindings::IDeviceObject),
+            m_device_object: DeviceObject::new(shader_ptr as *mut bindings::IDeviceObject),
         }
     }
 

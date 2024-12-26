@@ -16,11 +16,11 @@ impl AsDeviceObject for Fence {
 }
 
 impl Fence {
-    pub(crate) fn create(fence_ptr: *mut bindings::IFence) -> Self {
+    pub(crate) fn new(fence_ptr: *mut bindings::IFence) -> Self {
         Fence {
             m_fence: fence_ptr,
             m_virtual_functions: unsafe { (*fence_ptr).pVtbl },
-            m_device_object: DeviceObject::create(fence_ptr as *mut bindings::IDeviceObject),
+            m_device_object: DeviceObject::new(fence_ptr as *mut bindings::IDeviceObject),
         }
     }
 

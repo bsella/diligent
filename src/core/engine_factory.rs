@@ -42,7 +42,7 @@ impl EngineFactory {
         if data_blob_ptr.is_null() {
             None
         } else {
-            Some(DataBlob::create(data_blob_ptr))
+            Some(DataBlob::new(data_blob_ptr))
         }
     }
     fn enumerate_adapters(&self, version: bindings::Version) -> Vec<bindings::GraphicsAdapterInfo> {

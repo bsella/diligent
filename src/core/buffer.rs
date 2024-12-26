@@ -2,15 +2,18 @@ use crate::core::bindings;
 
 use crate::core::buffer_view::BufferView;
 
-use super::{device_object::{AsDeviceObject, DeviceObject}, object::AsObject};
+use super::{
+    device_object::{AsDeviceObject, DeviceObject},
+    object::AsObject,
+};
 
 pub struct Buffer {
     m_buffer: *mut bindings::IBuffer,
     m_virtual_functions: *mut bindings::IBufferVtbl,
 
     m_default_view: Option<BufferView>,
-    
-    m_device_object : DeviceObject,
+
+    m_device_object: DeviceObject,
 }
 
 impl AsDeviceObject for Buffer {
@@ -20,18 +23,20 @@ impl AsDeviceObject for Buffer {
 }
 
 impl Buffer {
-    pub(crate) fn create(
+    pub(crate) fn new(
         buffer_ptr: *mut bindings::IBuffer,
         buffer_desc: &bindings::BufferDesc,
     ) -> Self {
         let mut buffer = Buffer {
-            m_device_object : DeviceObject::create(buffer_ptr as *mut bindings::IDeviceObject),
+            m_device_object: DeviceObject::new(buffer_ptr as *mut bindings::IDeviceObject),
             m_buffer: buffer_ptr,
             m_virtual_functions: unsafe { (*buffer_ptr).pVtbl },
             m_default_view: None,
         };
 
-        fn bind_flags_to_buffer_view_type(bind_flag: bindings::BIND_FLAGS) -> bindings::BUFFER_VIEW_TYPE {
+        fn bind_flags_to_buffer_view_type(
+            bind_flag: bindings::BIND_FLAGS,
+        ) -> bindings::BUFFER_VIEW_TYPE {
             if bind_flag & bindings::BIND_UNORDERED_ACCESS != 0 {
                 bindings::BUFFER_VIEW_UNORDERED_ACCESS as u8
             } else if bind_flag & bindings::BIND_SHADER_RESOURCE != 0 {
@@ -44,7 +49,7 @@ impl Buffer {
         let buffer_view_type = bind_flags_to_buffer_view_type(buffer_desc.BindFlags);
 
         if buffer_view_type != (bindings::BUFFER_VIEW_UNDEFINED as u8) {
-            let buffer_view = BufferView::create(
+            let buffer_view = BufferView::new(
                 unsafe {
                     (*(*buffer_ptr).pVtbl)
                         .Buffer
@@ -89,7 +94,7 @@ impl Buffer {
         if buffer_view_ptr.is_null() {
             None
         } else {
-            Some(BufferView::create(buffer_view_ptr, self as *mut Self))
+            Some(BufferView::new(buffer_view_ptr, self as *mut Self))
         }
     }
 
