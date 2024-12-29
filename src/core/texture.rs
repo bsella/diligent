@@ -1,31 +1,13 @@
-use crate::core::bindings;
+use crate::bindings;
 
-use crate::core::texture_view::TextureView;
+use crate::texture_view::TextureView;
 
 use super::device_object::{AsDeviceObject, DeviceObject};
 use super::object::AsObject;
 
-fn bind_flags_to_texture_view_type(
-    bind_flag: bindings::BIND_FLAGS,
-) -> bindings::_TEXTURE_VIEW_TYPE {
-    if bind_flag & bindings::BIND_SHADER_RESOURCE != 0 {
-        bindings::TEXTURE_VIEW_SHADER_RESOURCE
-    } else if bind_flag & bindings::BIND_RENDER_TARGET != 0 {
-        bindings::BUFFER_VIEW_SHADER_RESOURCE
-    } else if bind_flag & bindings::BIND_DEPTH_STENCIL != 0 {
-        bindings::TEXTURE_VIEW_DEPTH_STENCIL
-    } else if bind_flag & bindings::BIND_UNORDERED_ACCESS != 0 {
-        bindings::TEXTURE_VIEW_UNORDERED_ACCESS
-    } else if bind_flag & bindings::BIND_SHADING_RATE != 0 {
-        bindings::TEXTURE_VIEW_SHADING_RATE
-    } else {
-        bindings::TEXTURE_VIEW_UNDEFINED
-    }
-}
-
 pub struct Texture {
     pub(crate) m_texture: *mut bindings::ITexture,
-    pub(crate) m_virtual_functions: *mut bindings::ITextureVtbl,
+    m_virtual_functions: *mut bindings::ITextureVtbl,
 
     m_default_view: Option<TextureView>,
 
@@ -50,6 +32,24 @@ impl Texture {
             m_default_view: None,
         };
 
+        fn bind_flags_to_texture_view_type(
+            bind_flag: bindings::BIND_FLAGS,
+        ) -> bindings::_TEXTURE_VIEW_TYPE {
+            if bind_flag & bindings::BIND_SHADER_RESOURCE != 0 {
+                bindings::TEXTURE_VIEW_SHADER_RESOURCE
+            } else if bind_flag & bindings::BIND_RENDER_TARGET != 0 {
+                bindings::BUFFER_VIEW_SHADER_RESOURCE
+            } else if bind_flag & bindings::BIND_DEPTH_STENCIL != 0 {
+                bindings::TEXTURE_VIEW_DEPTH_STENCIL
+            } else if bind_flag & bindings::BIND_UNORDERED_ACCESS != 0 {
+                bindings::TEXTURE_VIEW_UNORDERED_ACCESS
+            } else if bind_flag & bindings::BIND_SHADING_RATE != 0 {
+                bindings::TEXTURE_VIEW_SHADING_RATE
+            } else {
+                bindings::TEXTURE_VIEW_UNDEFINED
+            }
+        }
+
         let texture_view_type = bind_flags_to_texture_view_type(texture_desc.BindFlags);
 
         if texture_view_type != bindings::BUFFER_VIEW_UNDEFINED {
@@ -68,23 +68,7 @@ impl Texture {
 
         texture
     }
-}
 
-pub trait TextureImpl {
-    fn get_desc(&self) -> &bindings::TextureDesc;
-    fn create_view(&mut self, texture_view_desc: &bindings::TextureViewDesc)
-        -> Option<TextureView>;
-    fn get_default_view(
-        &self,
-        texture_view_type: bindings::TEXTURE_VIEW_TYPE,
-    ) -> Option<&TextureView>;
-    fn get_native_handle(&self) -> u64;
-    fn set_state(&mut self, state: bindings::RESOURCE_STATE);
-    fn get_state(&self) -> bindings::RESOURCE_STATE;
-    fn get_sparse_properties(&self) -> &bindings::SparseTextureProperties;
-}
-
-impl TextureImpl for Texture {
     fn get_desc(&self) -> &bindings::TextureDesc {
         unsafe {
             ((*self.m_virtual_functions)

@@ -1,4 +1,4 @@
-use crate::core::bindings;
+use crate::bindings;
 
 use super::device_object::{AsDeviceObject, DeviceObject};
 use super::pipeline_resource_signature::PipelineResourceSignature;
@@ -7,7 +7,7 @@ use super::shader_resource_binding::ShaderResourceBinding;
 use super::shader_resource_variable::ShaderResourceVariable;
 
 pub struct PipelineState {
-    pub(crate) m_pipeline_state: *mut bindings::IPipelineState,
+    m_pipeline_state: *mut bindings::IPipelineState,
     m_virtual_functions: *mut bindings::IPipelineStateVtbl,
 
     m_device_object: DeviceObject,
@@ -93,12 +93,12 @@ impl PipelineState {
         }
     }
 
-    // TODO
-    //fn get_static_variables(
-    //    &self,
-    //    shader_type: bindings::SHADER_TYPE,
-    //) -> Option<&[ShaderResourceVariable]> {
-    //}
+    fn get_static_variables(
+        &self,
+        shader_type: bindings::SHADER_TYPE,
+    ) -> Option<&[ShaderResourceVariable]> {
+        todo!()
+    }
 
     fn create_shader_resource_binding(
         &mut self,
@@ -157,9 +157,9 @@ impl PipelineState {
         }
     }
 
-    // TODO
-    //fn get_resource_signatures(&self) -> &[PipelineResourceSignature] {
-    //}
+    fn get_resource_signatures(&self) -> &[PipelineResourceSignature] {
+        todo!()
+    }
 
     fn get_status(&self, wait_for_completion: Option<bool>) -> bindings::PIPELINE_STATE_STATUS {
         unsafe {

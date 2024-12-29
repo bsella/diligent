@@ -1,5 +1,5 @@
-use crate::core::bindings;
-use crate::core::engine_factory::EngineFactory;
+use crate::bindings;
+use crate::engine_factory::EngineFactory;
 
 use super::engine_factory::AsEngineFactory;
 

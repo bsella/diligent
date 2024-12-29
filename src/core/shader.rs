@@ -1,6 +1,6 @@
 use std::os::raw::c_void;
 
-use crate::core::bindings;
+use crate::bindings;
 
 use super::device_object::{AsDeviceObject, DeviceObject};
 

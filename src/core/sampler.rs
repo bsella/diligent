@@ -1,4 +1,4 @@
-use crate::core::bindings;
+use crate::bindings;
 
 use super::device_object::{AsDeviceObject, DeviceObject};
 

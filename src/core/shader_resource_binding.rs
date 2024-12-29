@@ -1,15 +1,15 @@
-use crate::core::bindings;
+use crate::bindings;
 
 use super::{
     object::{AsObject, Object},
+    pipeline_resource_signature::PipelineResourceSignature,
     resource_mapping::ResourceMapping,
+    shader_resource_variable::ShaderResourceVariable,
 };
-//use crate::core::shader_resource_variable::ShaderResourceVariable,
-//use crate::core::pipeline_resource_signature::PipelineResourceSignature,
 
 pub struct ShaderResourceBinding {
     pub(crate) m_shader_resource_binding: *mut bindings::IShaderResourceBinding,
-    pub(crate) m_virtual_functions: *mut bindings::IShaderResourceBindingVtbl,
+    m_virtual_functions: *mut bindings::IShaderResourceBindingVtbl,
 
     m_object: Object,
 }
@@ -29,9 +29,9 @@ impl ShaderResourceBinding {
         }
     }
 
-    // TODO
-    //fn get_pipeline_resource_signature(&self) -> Option<&PipelineResourceSignature> {
-    //}
+    fn get_pipeline_resource_signature(&self) -> Option<&PipelineResourceSignature> {
+        todo!()
+    }
 
     fn bind_resources(
         &mut self,
@@ -71,9 +71,12 @@ impl ShaderResourceBinding {
         }
     }
 
-    // TODO
-    //fn get_variables(&self, shader_type: bindings::SHADER_TYPE) -> Option<&[ShaderResourceVariable]> {
-    //}
+    fn get_variables(
+        &self,
+        shader_type: bindings::SHADER_TYPE,
+    ) -> Option<&[ShaderResourceVariable]> {
+        todo!()
+    }
 
     fn static_resources_initialized(&self) -> bool {
         unsafe {

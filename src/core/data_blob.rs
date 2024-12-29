@@ -1,9 +1,9 @@
-use crate::core::bindings;
+use crate::bindings;
 
 use super::object::{AsObject, Object};
 
 pub struct DataBlob {
-    pub(crate) m_data_blob: *mut bindings::IDataBlob,
+    m_data_blob: *mut bindings::IDataBlob,
     m_virtual_functions: *mut bindings::IDataBlobVtbl,
 
     m_object: Object,

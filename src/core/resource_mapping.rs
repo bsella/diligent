@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use crate::core::bindings;
+use crate::bindings;
 
 use super::{
     device_object::DeviceObject,
@@ -97,13 +97,13 @@ impl ResourceMapping {
         }
     }
 
-    // TODO
-    //fn get_resources_by_name(&self, name: &str) -> Option<&[DeviceObject]> {
-    //    self.m_resources
-    //        .get(name)
-    //        .map(|resources| resources.as_slice())
-    //        .map(|resources| resources.iter().map(|resource| *resource))
-    //}
+    fn get_resources_by_name(&self, name: &str) -> Option<&[DeviceObject]> {
+        //self.m_resources
+        //    .get(name)
+        //    .map(|resources| resources.as_slice())
+        //    .map(|resources| resources.iter().map(|resource| *resource))
+        todo!()
+    }
 
     fn get_size(&self) -> usize {
         unsafe {

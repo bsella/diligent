@@ -1,6 +1,6 @@
-use crate::core::bindings;
+use crate::bindings;
 
-use crate::core::buffer_view::BufferView;
+use crate::buffer_view::BufferView;
 
 use super::{
     device_object::{AsDeviceObject, DeviceObject},
@@ -64,9 +64,7 @@ impl Buffer {
 
         buffer
     }
-}
 
-impl Buffer {
     fn get_desc(&self) -> &bindings::BufferDesc {
         unsafe {
             ((*self.m_virtual_functions)

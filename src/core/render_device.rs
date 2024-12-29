@@ -1,12 +1,12 @@
-use crate::core::bindings;
+use crate::bindings;
 
 use std::option::Option;
 
-use crate::core::buffer::Buffer;
-use crate::core::data_blob::DataBlob;
-use crate::core::sampler::Sampler;
-use crate::core::shader::Shader;
-use crate::core::texture::Texture;
+use crate::buffer::Buffer;
+use crate::data_blob::DataBlob;
+use crate::sampler::Sampler;
+use crate::shader::Shader;
+use crate::texture::Texture;
 
 use super::fence::Fence;
 use super::object::{AsObject, Object};
@@ -14,7 +14,7 @@ use super::pipeline_state::PipelineState;
 use super::resource_mapping::ResourceMapping;
 
 pub struct RenderDevice {
-    pub(crate) m_render_device: *mut bindings::IRenderDevice,
+    m_render_device: *mut bindings::IRenderDevice,
     m_virtual_functions: *mut bindings::IRenderDeviceVtbl,
 
     m_object: Object,

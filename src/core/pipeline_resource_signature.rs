@@ -1,8 +1,8 @@
 use std::collections::BTreeMap;
 
-use crate::core::bindings;
-use crate::core::object::AsObject;
-use crate::core::shader_resource_variable::ShaderResourceVariable;
+use crate::bindings;
+use crate::object::AsObject;
+use crate::shader_resource_variable::ShaderResourceVariable;
 
 use super::{
     device_object::{AsDeviceObject, DeviceObject},

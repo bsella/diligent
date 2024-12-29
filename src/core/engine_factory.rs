@@ -1,8 +1,8 @@
 use std::os::raw::c_void;
 
-use crate::core::bindings;
+use crate::bindings;
 
-use crate::core::data_blob::DataBlob;
+use crate::data_blob::DataBlob;
 
 pub struct EngineFactory {
     pub(crate) m_engine_factory: *mut bindings::IEngineFactory,

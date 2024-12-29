@@ -1,14 +1,14 @@
-use crate::core::bindings;
+use crate::bindings;
 
-use crate::core::sampler::Sampler;
-use crate::core::texture::Texture;
+use crate::sampler::Sampler;
+use crate::texture::Texture;
 
 use super::device_object::{AsDeviceObject, DeviceObject};
 
 pub struct TextureView {
     pub(crate) m_texture_view: *mut bindings::ITextureView,
     m_virtual_functions: *mut bindings::ITextureViewVtbl,
-    pub(crate) m_texture: *const Texture,
+    m_texture: *const Texture,
 
     m_device_object: DeviceObject,
 }
@@ -49,9 +49,9 @@ impl TextureView {
         }
     }
 
-    //fn get_sampler(&self) -> Option<&Sampler> {
-    //    // TODO
-    //}
+    fn get_sampler(&self) -> Option<&Sampler> {
+        todo!()
+    }
 
     #[inline]
     fn get_texture(&self) -> &Texture {

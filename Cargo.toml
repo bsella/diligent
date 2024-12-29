@@ -10,7 +10,16 @@ cmake   = "0.1"
 
 [dependencies]
 libc = "0.2.0"
+xcb = { version = "*" , optional = true }
+
+[features]
+default = ["VULKAN_SUPPORTED"]
+VULKAN_SUPPORTED = ["xcb"]
 
 [lib]
 name = "diligent"
-path = "src/lib.rs"
+path = "src/core/lib.rs"
+
+[[example]]
+name = "Tutorial01_HelloTriangle"
+path = "src/samples/tutorials/tutorial01_hello_triangle.rs"

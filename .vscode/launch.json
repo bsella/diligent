@@ -7,11 +7,14 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug",
+            "name": "Tutorial01 : Hello Triangle",
             "cargo": {
                 "args": [
-                    "build"
-                ]
+                    "build",
+                    "--example",
+                    "Tutorial01_HelloTriangle"
+                ],
+                "cwd": "${workspaceFolder}",
             },
             "cwd": "${workspaceFolder}",
         }

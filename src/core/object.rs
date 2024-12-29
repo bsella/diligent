@@ -1,4 +1,4 @@
-use crate::core::bindings;
+use crate::bindings;
 
 pub(crate) struct Object {
     m_object: *mut bindings::IObject,
