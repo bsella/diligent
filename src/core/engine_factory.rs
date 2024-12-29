@@ -2,7 +2,7 @@ use std::os::raw::c_void;
 
 use crate::bindings;
 
-use crate::data_blob::DataBlob;
+use super::data_blob::DataBlob;
 
 pub struct EngineFactory {
     pub(crate) m_engine_factory: *mut bindings::IEngineFactory,

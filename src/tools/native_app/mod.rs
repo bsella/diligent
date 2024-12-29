@@ -1,4 +1,6 @@
-mod command_line_parser;
+pub mod app;
+
+pub mod command_line_parser;
 
 #[cfg(target_os = "linux")]
 mod linux;

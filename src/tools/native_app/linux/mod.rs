@@ -1,3 +1,5 @@
+mod linux_app;
+
 #[cfg(feature = "VULKAN_SUPPORTED")]
 mod linux_xcb;
 

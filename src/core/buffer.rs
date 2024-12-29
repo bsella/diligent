@@ -1,6 +1,6 @@
 use crate::bindings;
 
-use crate::buffer_view::BufferView;
+use super::buffer_view::BufferView;
 
 use super::{
     device_object::{AsDeviceObject, DeviceObject},

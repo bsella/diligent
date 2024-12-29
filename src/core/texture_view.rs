@@ -1,7 +1,7 @@
 use crate::bindings;
 
-use crate::sampler::Sampler;
-use crate::texture::Texture;
+use super::sampler::Sampler;
+use super::texture::Texture;
 
 use super::device_object::{AsDeviceObject, DeviceObject};
 

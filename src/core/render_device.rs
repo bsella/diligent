@@ -2,11 +2,11 @@ use crate::bindings;
 
 use std::option::Option;
 
-use crate::buffer::Buffer;
-use crate::data_blob::DataBlob;
-use crate::sampler::Sampler;
-use crate::shader::Shader;
-use crate::texture::Texture;
+use super::buffer::Buffer;
+use super::data_blob::DataBlob;
+use super::sampler::Sampler;
+use super::shader::Shader;
+use super::texture::Texture;
 
 use super::fence::Fence;
 use super::object::{AsObject, Object};

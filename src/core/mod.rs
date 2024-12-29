@@ -1,12 +1,3 @@
-mod bindings {
-    #![allow(non_upper_case_globals)]
-    #![allow(non_camel_case_types)]
-    #![allow(non_snake_case)]
-    #![allow(dead_code)]
-
-    include!(concat!(env!("OUT_DIR"), "/diligent_bindings.rs"));
-}
-
 mod device_object;
 mod object;
 
@@ -28,6 +19,4 @@ pub mod texture;
 pub mod texture_view;
 
 #[cfg(feature = "VULKAN_SUPPORTED")]
-mod engine_factory_vk;
-
-pub mod tools;
+mod vk;

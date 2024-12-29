@@ -1,6 +1,6 @@
 use crate::bindings;
 
-use crate::texture_view::TextureView;
+use super::texture_view::TextureView;
 
 use super::device_object::{AsDeviceObject, DeviceObject};
 use super::object::AsObject;

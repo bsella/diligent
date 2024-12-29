@@ -12,6 +12,7 @@ fn build_diligent_engine(build_path: &PathBuf, install_prefix: &str) -> PathBuf 
         .define("OpenGL_GL_PREFERENCE", "GLVND")
         .define("DILIGENT_BUILD_SAMPLES", "OFF")
         .define("DILIGENT_BUILD_FX", "OFF")
+        .define("DILIGENT_BUILD_TOOLS", "OFF")
         .build()
         .join("build/install");
 

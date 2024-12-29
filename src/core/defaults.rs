@@ -1,4 +1,4 @@
-use super::bindings;
+use crate::bindings;
 
 impl Default for bindings::ShaderResourceDesc {
     fn default() -> Self {

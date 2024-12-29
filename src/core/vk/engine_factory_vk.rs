@@ -1,7 +1,7 @@
 use crate::bindings;
-use crate::engine_factory::EngineFactory;
+use crate::core::engine_factory::EngineFactory;
 
-use super::engine_factory::AsEngineFactory;
+use crate::core::engine_factory::AsEngineFactory;
 
 pub struct EngineFactoryVk {
     m_engine_factory_vk: *mut bindings::IEngineFactoryVk,

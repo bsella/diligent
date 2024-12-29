@@ -1,6 +1,6 @@
 use crate::bindings;
 
-use crate::buffer::Buffer;
+use super::buffer::Buffer;
 
 use super::device_object::{AsDeviceObject, DeviceObject};
 

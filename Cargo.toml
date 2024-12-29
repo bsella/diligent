@@ -18,7 +18,6 @@ VULKAN_SUPPORTED = ["xcb"]
 
 [lib]
 name = "diligent"
-path = "src/core/lib.rs"
 
 [[example]]
 name = "Tutorial01_HelloTriangle"
