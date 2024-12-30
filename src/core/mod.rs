@@ -5,6 +5,7 @@ pub mod buffer;
 pub mod buffer_view;
 pub mod data_blob;
 pub mod defaults;
+pub mod device_context;
 pub mod engine_factory;
 pub mod fence;
 pub mod pipeline_resource_signature;
@@ -15,6 +16,7 @@ pub mod sampler;
 pub mod shader;
 pub mod shader_resource_binding;
 pub mod shader_resource_variable;
+pub mod swap_chain;
 pub mod texture;
 pub mod texture_view;
 
