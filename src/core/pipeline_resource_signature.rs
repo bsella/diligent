@@ -1,7 +1,8 @@
 use std::collections::BTreeMap;
 
-use super::object::AsObject;
+use super::sampler::SamplerDesc;
 use super::shader_resource_variable::ShaderResourceVariable;
+use super::{graphics_types::ShaderTypes, object::AsObject};
 use crate::bindings;
 
 use super::{
@@ -10,8 +11,24 @@ use super::{
     shader_resource_binding::ShaderResourceBinding,
 };
 
+pub struct ImmutableSamplerDesc {
+    pub shader_stages: ShaderTypes,
+    pub sampler_or_texture_name: String,
+    pub sampler_desc: SamplerDesc,
+}
+
+impl Into<bindings::ImmutableSamplerDesc> for ImmutableSamplerDesc {
+    fn into(self) -> bindings::ImmutableSamplerDesc {
+        bindings::ImmutableSamplerDesc {
+            ShaderStages: self.shader_stages.bits() as bindings::SHADER_TYPE,
+            SamplerOrTextureName: self.sampler_or_texture_name.as_ptr() as *const i8,
+            Desc: self.sampler_desc.into(),
+        }
+    }
+}
+
 pub struct PipelineResourceSignature {
-    m_pipeline_resource_signature: *mut bindings::IPipelineResourceSignature,
+    pub(crate) m_pipeline_resource_signature: *mut bindings::IPipelineResourceSignature,
     m_virtual_functions: *mut bindings::IPipelineResourceSignatureVtbl,
 
     m_static_variables: BTreeMap<bindings::SHADER_TYPE, Vec<ShaderResourceVariable>>,

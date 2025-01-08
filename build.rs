@@ -21,7 +21,12 @@ fn build_diligent_engine(build_path: &PathBuf, install_prefix: &str) -> PathBuf 
         dst.display()
     );
     println!("cargo::rustc-link-lib=static=DiligentCore");
-
+    println!("cargo::rustc-link-lib=static=glslang");
+    println!("cargo::rustc-link-lib=static=SPIRV");
+    println!("cargo::rustc-link-lib=static=SPIRV-Tools");
+    println!("cargo::rustc-link-lib=static=SPIRV-Tools-opt");
+    println!("cargo::rustc-link-lib=static=spirv-cross-core");
+    println!("cargo:rustc-link-lib=dylib=stdc++");
     dst
 }
 

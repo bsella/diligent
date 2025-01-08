@@ -1,3 +1,4 @@
+use app::App;
 pub mod app;
 
 pub mod command_line_parser;
@@ -6,6 +7,9 @@ pub mod command_line_parser;
 mod linux;
 
 #[cfg(target_os = "linux")]
-pub fn main() -> Result<(), std::io::Error> {
-    linux::main()
+pub fn main<Application>() -> Result<(), std::io::Error>
+where
+    Application: App,
+{
+    linux::main::<Application>()
 }

@@ -3,7 +3,7 @@ use crate::bindings;
 use super::device_object::{AsDeviceObject, DeviceObject};
 
 pub struct Fence {
-    m_fence: *mut bindings::IFence,
+    pub(crate) m_fence: *mut bindings::IFence,
     m_virtual_functions: *mut bindings::IFenceVtbl,
 
     m_device_object: DeviceObject,

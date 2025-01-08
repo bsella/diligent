@@ -1,6 +1,26 @@
 use crate::bindings;
 
-use super::object::{AsObject, Object};
+use super::{
+    object::{AsObject, Object},
+    texture_view::TextureView,
+};
+
+impl Default for bindings::SwapChainDesc {
+    fn default() -> Self {
+        bindings::SwapChainDesc {
+            Width: 0,
+            Height: 0,
+            ColorBufferFormat: bindings::TEX_FORMAT_RGBA8_UNORM_SRGB as u16,
+            DepthBufferFormat: bindings::TEX_FORMAT_D32_FLOAT as u16,
+            Usage: bindings::SWAP_CHAIN_USAGE_RENDER_TARGET,
+            PreTransform: bindings::SURFACE_TRANSFORM_OPTIMAL,
+            BufferCount: 2,
+            DefaultDepthValue: 1.0,
+            DefaultStencilValue: 0,
+            IsPrimary: true,
+        }
+    }
+}
 
 pub struct SwapChain {
     pub(crate) m_swap_chain: *mut bindings::ISwapChain,
@@ -16,6 +36,14 @@ impl AsObject for SwapChain {
 }
 
 impl SwapChain {
+    pub(crate) fn new(swap_chain_ptr: *mut bindings::ISwapChain) -> Self {
+        SwapChain {
+            m_swap_chain: swap_chain_ptr,
+            m_virtual_functions: unsafe { (*swap_chain_ptr).pVtbl },
+            m_object: Object::new(swap_chain_ptr as *mut bindings::IObject),
+        }
+    }
+
     pub fn present(&self, sync_interval: u32) {
         unsafe {
             (*self.m_virtual_functions)
@@ -82,21 +110,35 @@ impl SwapChain {
         }
     }
 
-    pub(crate) fn get_current_back_buffer_rtv(&self) -> *mut bindings::ITextureView {
-        unsafe {
-            (*self.m_virtual_functions)
-                .SwapChain
-                .GetCurrentBackBufferRTV
-                .unwrap_unchecked()(self.m_swap_chain)
-        }
+    pub fn get_current_back_buffer_rtv(&self) -> TextureView {
+        let view = TextureView::new(
+            unsafe {
+                (*self.m_virtual_functions)
+                    .SwapChain
+                    .GetCurrentBackBufferRTV
+                    .unwrap_unchecked()(self.m_swap_chain)
+            },
+            std::ptr::null_mut(),
+        );
+
+        view.m_device_object.as_object().add_ref();
+
+        view
     }
 
-    pub(crate) fn get_depth_buffer_dsv(&self) -> *mut bindings::ITextureView {
-        unsafe {
-            (*self.m_virtual_functions)
-                .SwapChain
-                .GetDepthBufferDSV
-                .unwrap_unchecked()(self.m_swap_chain)
-        }
+    pub fn get_depth_buffer_dsv(&self) -> TextureView {
+        let view = TextureView::new(
+            unsafe {
+                (*self.m_virtual_functions)
+                    .SwapChain
+                    .GetDepthBufferDSV
+                    .unwrap_unchecked()(self.m_swap_chain)
+            },
+            std::ptr::null_mut(),
+        );
+
+        view.m_device_object.as_object().add_ref();
+
+        view
     }
 }

@@ -5,16 +5,16 @@ use std::option::Option;
 use super::buffer::Buffer;
 use super::data_blob::DataBlob;
 use super::sampler::Sampler;
-use super::shader::Shader;
+use super::shader::{Shader, ShaderCreateInfo};
 use super::texture::Texture;
 
 use super::fence::Fence;
 use super::object::{AsObject, Object};
-use super::pipeline_state::PipelineState;
+use super::pipeline_state::{GraphicsPipelineStateCreateInfo, PipelineState};
 use super::resource_mapping::ResourceMapping;
 
 pub struct RenderDevice {
-    m_render_device: *mut bindings::IRenderDevice,
+    pub(crate) m_render_device: *mut bindings::IRenderDevice,
     m_virtual_functions: *mut bindings::IRenderDeviceVtbl,
 
     m_object: Object,
@@ -35,8 +35,8 @@ impl RenderDevice {
         }
     }
 
-    fn create_buffer(
-        &mut self,
+    pub fn create_buffer(
+        &self,
         buffer_desc: &bindings::BufferDesc,
         buffer_data: Option<&bindings::BufferData>,
     ) -> Option<Buffer> {
@@ -62,10 +62,7 @@ impl RenderDevice {
         }
     }
 
-    fn create_shader(
-        &mut self,
-        shader_ci: &bindings::ShaderCreateInfo,
-    ) -> Result<Shader, DataBlob> {
+    pub fn create_shader(&self, shader_ci: ShaderCreateInfo) -> Result<Shader, DataBlob> {
         let mut shader_ptr: *mut bindings::IShader = std::ptr::null_mut();
         let mut data_blob_ptr: *mut bindings::IDataBlob = std::ptr::null_mut();
         unsafe {
@@ -74,23 +71,21 @@ impl RenderDevice {
                 .CreateShader
                 .unwrap_unchecked()(
                 self.m_render_device,
-                std::ptr::addr_of!(shader_ci) as *const bindings::ShaderCreateInfo,
+                std::ptr::from_ref(&shader_ci.into()),
                 std::ptr::addr_of_mut!(shader_ptr),
                 std::ptr::addr_of_mut!(data_blob_ptr),
             );
         }
 
-        let data_blob = DataBlob::new(data_blob_ptr);
-
         if shader_ptr.is_null() {
-            Err(data_blob)
+            Err(DataBlob::new(data_blob_ptr))
         } else {
             Ok(Shader::new(shader_ptr))
         }
     }
 
-    fn create_texture(
-        &mut self,
+    pub fn create_texture(
+        &self,
         texture_desc: &bindings::TextureDesc,
         texture_data: Option<&bindings::TextureData>,
     ) -> Option<Texture> {
@@ -117,7 +112,7 @@ impl RenderDevice {
         }
     }
 
-    fn create_sampler(&mut self, sampler_desc: &bindings::SamplerDesc) -> Option<Sampler> {
+    pub fn create_sampler(&self, sampler_desc: &bindings::SamplerDesc) -> Option<Sampler> {
         let mut sampler_ptr: *mut bindings::ISampler = std::ptr::null_mut();
         unsafe {
             (*self.m_virtual_functions)
@@ -137,8 +132,8 @@ impl RenderDevice {
         }
     }
 
-    fn create_resource_mapping(
-        &mut self,
+    pub fn create_resource_mapping(
+        &self,
         resource_mapping_ci: &bindings::ResourceMappingCreateInfo,
     ) -> Option<ResourceMapping> {
         let mut resource_mapping_ptr = std::ptr::null_mut();
@@ -160,9 +155,9 @@ impl RenderDevice {
         }
     }
 
-    fn create_graphics_pipeline_state(
-        &mut self,
-        pipeline_ci: &bindings::GraphicsPipelineStateCreateInfo,
+    pub fn create_graphics_pipeline_state(
+        &self,
+        pipeline_ci: GraphicsPipelineStateCreateInfo,
     ) -> Option<PipelineState> {
         let mut pipeline_state_ptr = std::ptr::null_mut();
         unsafe {
@@ -171,7 +166,7 @@ impl RenderDevice {
                 .CreateGraphicsPipelineState
                 .unwrap_unchecked()(
                 self.m_render_device,
-                pipeline_ci,
+                std::ptr::from_ref(&pipeline_ci.into()),
                 std::ptr::addr_of_mut!(pipeline_state_ptr),
             );
         }
@@ -182,8 +177,8 @@ impl RenderDevice {
         }
     }
 
-    fn create_compute_pipeline_state(
-        &mut self,
+    pub fn create_compute_pipeline_state(
+        &self,
         pipeline_ci: &bindings::ComputePipelineStateCreateInfo,
     ) -> Option<PipelineState> {
         let mut pipeline_state_ptr = std::ptr::null_mut();
@@ -205,8 +200,8 @@ impl RenderDevice {
         }
     }
 
-    fn create_ray_tracing_pipeline_state(
-        &mut self,
+    pub fn create_ray_tracing_pipeline_state(
+        &self,
         pipeline_ci: &bindings::RayTracingPipelineStateCreateInfo,
     ) -> Option<PipelineState> {
         let mut pipeline_state_ptr = std::ptr::null_mut();
@@ -227,8 +222,8 @@ impl RenderDevice {
         }
     }
 
-    fn create_tile_pipeline_state(
-        &mut self,
+    pub fn create_tile_pipeline_state(
+        &self,
         pipeline_ci: &bindings::TilePipelineStateCreateInfo,
     ) -> Option<PipelineState> {
         let mut pipeline_state_ptr = std::ptr::null_mut();
@@ -249,7 +244,7 @@ impl RenderDevice {
         }
     }
 
-    fn create_fence(&mut self, fence_desc: &bindings::FenceDesc) -> Option<Fence> {
+    pub fn create_fence(&self, fence_desc: &bindings::FenceDesc) -> Option<Fence> {
         let mut fence_ptr = std::ptr::null_mut();
         unsafe {
             (*self.m_virtual_functions)
@@ -268,16 +263,16 @@ impl RenderDevice {
         }
     }
 
-    //fn create_query();
-    //fn create_render_pass();
-    //fn create_framebuffer();
-    //fn create_blas();
-    //fn create_tlas();
-    //fn create_sbt();
-    //fn create_pipeline_resource_signature();
-    //fn create_device_memory();
+    // pub fn create_query();
+    // pub fn create_render_pass();
+    // pub fn create_framebuffer();
+    // pub fn create_blas();
+    // pub fn create_tlas();
+    // pub fn create_sbt();
+    // pub fn create_pipeline_resource_signature();
+    // pub fn create_device_memory();
 
-    fn get_adapter_info(&self) -> &bindings::GraphicsAdapterInfo {
+    pub fn get_adapter_info(&self) -> &bindings::GraphicsAdapterInfo {
         unsafe {
             (*self.m_virtual_functions)
                 .RenderDevice
@@ -288,7 +283,7 @@ impl RenderDevice {
         }
     }
 
-    fn get_device_info(&self) -> &bindings::RenderDeviceInfo {
+    pub fn get_device_info(&self) -> &bindings::RenderDeviceInfo {
         unsafe {
             (*self.m_virtual_functions)
                 .RenderDevice
@@ -299,7 +294,7 @@ impl RenderDevice {
         }
     }
 
-    fn get_texture_format_info(
+    pub fn get_texture_format_info(
         &self,
         format: bindings::TEXTURE_FORMAT,
     ) -> &bindings::TextureFormatInfo {
@@ -313,7 +308,7 @@ impl RenderDevice {
         }
     }
 
-    fn get_texture_format_info_ext(
+    pub fn get_texture_format_info_ext(
         &self,
         format: bindings::TEXTURE_FORMAT,
     ) -> &bindings::TextureFormatInfoExt {
@@ -327,7 +322,7 @@ impl RenderDevice {
         }
     }
 
-    fn get_sparse_texture_format_info(
+    pub fn get_sparse_texture_format_info(
         &self,
         format: bindings::TEXTURE_FORMAT,
         dimension: bindings::RESOURCE_DIMENSION,
@@ -343,7 +338,7 @@ impl RenderDevice {
         }
     }
 
-    fn release_stale_resources(&mut self, force_release: bool) {
+    pub fn release_stale_resources(&self, force_release: bool) {
         unsafe {
             (*self.m_virtual_functions)
                 .RenderDevice
@@ -352,7 +347,7 @@ impl RenderDevice {
         }
     }
 
-    fn idle_gpu(&mut self) {
+    pub fn idle_gpu(&self) {
         unsafe {
             (*self.m_virtual_functions)
                 .RenderDevice
@@ -361,6 +356,6 @@ impl RenderDevice {
         }
     }
 
-    //fn get_engine_factory();
-    //fn get_shader_compilation_thread_pool();
+    //pub fn get_engine_factory();
+    //pub fn get_shader_compilation_thread_pool();
 }

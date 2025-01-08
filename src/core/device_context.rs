@@ -6,13 +6,32 @@ use super::{
     object::{AsObject, Object},
     pipeline_state::PipelineState,
     shader_resource_binding::ShaderResourceBinding,
-    swap_chain::SwapChain,
     texture::Texture,
     texture_view::TextureView,
 };
 
+pub struct DrawAttribs {
+    pub num_vertices: u32,
+    pub flags: bindings::DRAW_FLAGS,
+    pub num_instances: u32,
+    pub start_vertex_location: u32,
+    pub first_instance_location: u32,
+}
+
+impl Into<bindings::DrawAttribs> for DrawAttribs {
+    fn into(self) -> bindings::DrawAttribs {
+        bindings::DrawAttribs {
+            NumVertices: self.num_vertices,
+            Flags: self.flags,
+            NumInstances: self.num_instances,
+            StartVertexLocation: self.start_vertex_location,
+            FirstInstanceLocation: self.first_instance_location,
+        }
+    }
+}
+
 pub struct DeviceContext {
-    m_device_context: *mut bindings::IDeviceContext,
+    pub(crate) m_device_context: *mut bindings::IDeviceContext,
     m_virtual_functions: *mut bindings::IDeviceContextVtbl,
 
     m_object: Object,
@@ -207,7 +226,7 @@ impl DeviceContext {
     pub fn set_render_targets(
         &self,
         render_targets: &[&TextureView],
-        depth_stencil: &TextureView,
+        depth_stencil: Option<&TextureView>,
         state_transition_mode: bindings::_RESOURCE_STATE_TRANSITION_MODE,
     ) {
         let num_render_targets = render_targets.len();
@@ -225,29 +244,7 @@ impl DeviceContext {
                 self.m_device_context,
                 num_render_targets as u32,
                 render_target_pointers.as_mut_ptr(),
-                depth_stencil.m_texture_view,
-                state_transition_mode as bindings::RESOURCE_STATE_TRANSITION_MODE,
-            )
-        }
-    }
-
-    pub fn set_render_targets_from_swap_chain(
-        &self,
-        swap_chain: &SwapChain,
-        state_transition_mode: bindings::_RESOURCE_STATE_TRANSITION_MODE,
-    ) {
-        let mut rtv = [swap_chain.get_current_back_buffer_rtv()];
-        let dsv = swap_chain.get_depth_buffer_dsv();
-
-        unsafe {
-            (*self.m_virtual_functions)
-                .DeviceContext
-                .SetRenderTargets
-                .unwrap_unchecked()(
-                self.m_device_context,
-                1,
-                rtv.as_mut_ptr(),
-                dsv,
+                depth_stencil.map_or(std::ptr::null_mut(), |v| v.m_texture_view),
                 state_transition_mode as bindings::RESOURCE_STATE_TRANSITION_MODE,
             )
         }
@@ -280,12 +277,13 @@ impl DeviceContext {
         }
     }
 
-    pub fn draw(&self, attribs: &bindings::DrawAttribs) {
+    pub fn draw(&self, attribs: DrawAttribs) {
+        let attribs: bindings::DrawAttribs = attribs.into();
         unsafe {
             (*self.m_virtual_functions)
                 .DeviceContext
                 .Draw
-                .unwrap_unchecked()(self.m_device_context, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.m_device_context, std::ptr::addr_of!(attribs))
         }
     }
 
@@ -401,7 +399,7 @@ impl DeviceContext {
         clear_flags: bindings::CLEAR_DEPTH_STENCIL_FLAGS,
         depth: f32,
         stencil: u8,
-        state_transition_mode: RESOURCE_STATE_TRANSITION_MODE,
+        state_transition_mode: bindings::_RESOURCE_STATE_TRANSITION_MODE,
     ) {
         unsafe {
             (*self.m_virtual_functions)
@@ -413,7 +411,7 @@ impl DeviceContext {
                 clear_flags,
                 depth,
                 stencil,
-                state_transition_mode,
+                state_transition_mode as bindings::RESOURCE_STATE_TRANSITION_MODE,
             )
         }
     }
@@ -422,7 +420,7 @@ impl DeviceContext {
         &self,
         view: &mut TextureView,
         rgba: &[T; 4],
-        state_transition_mode: RESOURCE_STATE_TRANSITION_MODE,
+        state_transition_mode: bindings::_RESOURCE_STATE_TRANSITION_MODE,
     ) {
         unsafe {
             (*self.m_virtual_functions)
@@ -431,8 +429,8 @@ impl DeviceContext {
                 .unwrap_unchecked()(
                 self.m_device_context,
                 view.m_texture_view,
-                rgba.as_ptr() as *const std::os::raw::c_void,
-                state_transition_mode,
+                (*rgba).as_ptr() as *const std::os::raw::c_void,
+                state_transition_mode as bindings::RESOURCE_STATE_TRANSITION_MODE,
             )
         }
     }

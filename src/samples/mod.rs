@@ -1,1 +1,1 @@
-mod sample_base;
+pub mod sample_base;

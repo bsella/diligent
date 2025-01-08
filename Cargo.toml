@@ -9,6 +9,8 @@ bindgen = "0.71.1"
 cmake   = "0.1"
 
 [dependencies]
+static_assertions = "1.1.0"
+bitflags = "2.6.0"
 libc = "0.2.0"
 xcb = { version = "*" , optional = true }
 

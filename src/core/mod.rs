@@ -4,10 +4,10 @@ mod object;
 pub mod buffer;
 pub mod buffer_view;
 pub mod data_blob;
-pub mod defaults;
 pub mod device_context;
 pub mod engine_factory;
 pub mod fence;
+pub mod graphics_types;
 pub mod pipeline_resource_signature;
 pub mod pipeline_state;
 pub mod render_device;
@@ -21,4 +21,4 @@ pub mod texture;
 pub mod texture_view;
 
 #[cfg(feature = "VULKAN_SUPPORTED")]
-mod vk;
+pub mod vk;

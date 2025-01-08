@@ -1,3 +1,5 @@
+use super::app::App;
+
 mod linux_app;
 
 #[cfg(feature = "VULKAN_SUPPORTED")]
@@ -7,6 +9,9 @@ mod linux_xcb;
 mod linux_xlib;
 
 #[cfg(feature = "VULKAN_SUPPORTED")]
-pub fn main() -> Result<(), std::io::Error> {
-    linux_xcb::main()
+pub fn main<Application>() -> Result<(), std::io::Error>
+where
+    Application: App,
+{
+    linux_xcb::main::<Application>()
 }

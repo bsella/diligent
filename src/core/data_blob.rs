@@ -1,3 +1,5 @@
+use core::fmt;
+
 use crate::bindings;
 
 use super::object::{AsObject, Object};
@@ -15,6 +17,20 @@ impl AsObject for DataBlob {
     }
 }
 
+impl fmt::Debug for DataBlob {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        unsafe {
+            let size = self.get_size();
+
+            write!(
+                f,
+                "{}",
+                String::from_raw_parts(self.get_data_ptr::<u8>(0), size, size).as_str()
+            )
+        }
+    }
+}
+
 impl DataBlob {
     pub(crate) fn new(data_blob_ptr: *mut bindings::IDataBlob) -> Self {
         DataBlob {
@@ -25,7 +41,7 @@ impl DataBlob {
         }
     }
 
-    fn resize(&mut self, new_size: usize) {
+    pub fn resize(&mut self, new_size: usize) {
         unsafe {
             (*self.m_virtual_functions)
                 .DataBlob
@@ -34,7 +50,7 @@ impl DataBlob {
         }
     }
 
-    fn get_size(&self) -> usize {
+    pub fn get_size(&self) -> usize {
         unsafe {
             (*self.m_virtual_functions)
                 .DataBlob
@@ -43,7 +59,7 @@ impl DataBlob {
         }
     }
 
-    fn get_data_ptr<T>(&self, offset: usize) -> *mut T {
+    pub fn get_data_ptr<T>(&self, offset: usize) -> *mut T {
         unsafe {
             (*self.m_virtual_functions)
                 .DataBlob
@@ -51,7 +67,8 @@ impl DataBlob {
                 .unwrap_unchecked()(self.m_data_blob, offset) as *mut T
         }
     }
-    fn get_const_data_ptr<T>(&self, offset: usize) -> *const T {
+
+    pub fn get_const_data_ptr<T>(&self, offset: usize) -> *const T {
         unsafe {
             (*self.m_virtual_functions)
                 .DataBlob

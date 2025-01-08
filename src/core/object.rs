@@ -1,7 +1,7 @@
 use crate::bindings;
 
 pub(crate) struct Object {
-    m_object: *mut bindings::IObject,
+    pub(crate) m_object: *mut bindings::IObject,
     m_virtual_functions: *mut bindings::IObjectVtbl,
 }
 
@@ -20,7 +20,7 @@ impl Object {
     }
 }
 
-pub trait AsObject {
+pub(crate) trait AsObject {
     fn as_object(&self) -> &Object;
 }
 

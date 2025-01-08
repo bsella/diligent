@@ -8,7 +8,7 @@ use super::{
 };
 
 pub struct Buffer {
-    m_buffer: *mut bindings::IBuffer,
+    pub(crate) m_buffer: *mut bindings::IBuffer,
     m_virtual_functions: *mut bindings::IBufferVtbl,
 
     m_default_view: Option<BufferView>,

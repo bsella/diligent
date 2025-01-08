@@ -1,4 +1,12 @@
+use std::os::raw::c_void;
+
 use xcb::{x, Xid};
+
+use crate::{
+    bindings,
+    core::{engine_factory::EngineFactoryImplementation, vk::engine_factory_vk::EngineFactoryVk},
+    tools::native_app::app::{ApiImplementation, App},
+};
 
 fn init_connection_and_window() -> xcb::Result<(xcb::Connection, x::Window, x::Atom)> {
     let width = 1024;
@@ -92,10 +100,28 @@ fn init_connection_and_window() -> xcb::Result<(xcb::Connection, x::Window, x::A
     Ok((connection, window, atom_wm_delete_window))
 }
 
-fn xcb_main() -> xcb::Result<()> {
-    // TODO create the application
-
+fn xcb_main<Application>() -> xcb::Result<()>
+where
+    Application: App,
+{
     let (connection, window, atom_delete_window) = init_connection_and_window()?;
+
+    let native_window = bindings::NativeWindow {
+        WindowId: window.resource_id(),
+        pXCBConnection: connection.get_raw_conn() as *mut c_void,
+        pDisplay: std::ptr::null_mut(),
+    };
+
+    let api = ApiImplementation::Vulkan;
+
+    let mut app = match api {
+        ApiImplementation::Vulkan => {
+            let engine_create_info =
+                <EngineFactoryVk as EngineFactoryImplementation>::EngineCreateInfo::default();
+            Application::new::<EngineFactoryVk>(engine_create_info, Some(&native_window))
+        }
+        ApiImplementation::OpenGL => panic!(),
+    };
 
     // TODO init vulkan
 
@@ -104,6 +130,9 @@ fn xcb_main() -> xcb::Result<()> {
     // TODO golden image mode
 
     // TODO timer and title
+
+    let mut current_width = 1024;
+    let mut current_height = 768;
 
     'main: loop {
         'xcb_events: loop {
@@ -124,15 +153,28 @@ fn xcb_main() -> xcb::Result<()> {
                     }
 
                     xcb::Event::X(x::Event::ConfigureNotify(configure_event)) => {
-                        // TODO
+                        if (configure_event.width() != current_width)
+                            || (configure_event.height() != current_height)
+                        {
+                            current_width = configure_event.width();
+                            current_height = configure_event.height();
+                            if current_width > 0 && current_height > 0 {
+                                app.window_resize(current_height as u32, current_height as u32);
+                            }
+                        }
                     }
-                    _ => {}
+                    _ => break 'xcb_events,
                 },
                 None => break 'xcb_events,
             }
         }
 
-        // TODO update + render
+        // TODO implement timer
+        app.update(0.0, 0.0);
+
+        app.render();
+
+        app.present();
 
         // TODO update title
     }
@@ -140,7 +182,10 @@ fn xcb_main() -> xcb::Result<()> {
     Ok(())
 }
 
-pub(super) fn main() -> Result<(), std::io::Error> {
-    xcb_main()
+pub(super) fn main<Application>() -> Result<(), std::io::Error>
+where
+    Application: App,
+{
+    xcb_main::<Application>()
         .map_err(|xcb_error| std::io::Error::new(std::io::ErrorKind::Other, xcb_error.to_string()))
 }

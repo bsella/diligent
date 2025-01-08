@@ -10,7 +10,7 @@ pub struct TextureView {
     m_virtual_functions: *mut bindings::ITextureViewVtbl,
     m_texture: *const Texture,
 
-    m_device_object: DeviceObject,
+    pub(crate) m_device_object: DeviceObject,
 }
 
 impl AsDeviceObject for TextureView {

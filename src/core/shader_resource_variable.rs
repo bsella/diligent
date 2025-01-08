@@ -1,7 +1,45 @@
 use crate::bindings;
+use static_assertions::const_assert;
 
 use super::device_object::DeviceObject;
+use super::graphics_types::ShaderTypes;
 use super::object::{AsObject, Object};
+use super::pipeline_state::ShaderVariableFlags;
+
+pub enum ShaderResourceVariableType {
+    Static,
+    Mutable,
+    Dynamic,
+}
+const_assert!(bindings::SHADER_RESOURCE_VARIABLE_TYPE_NUM_TYPES == 3);
+
+impl Into<bindings::SHADER_RESOURCE_VARIABLE_TYPE> for ShaderResourceVariableType {
+    fn into(self) -> bindings::SHADER_RESOURCE_VARIABLE_TYPE {
+        (match self {
+            ShaderResourceVariableType::Static => bindings::SHADER_RESOURCE_VARIABLE_TYPE_STATIC,
+            ShaderResourceVariableType::Mutable => bindings::SHADER_RESOURCE_VARIABLE_TYPE_MUTABLE,
+            ShaderResourceVariableType::Dynamic => bindings::SHADER_RESOURCE_VARIABLE_TYPE_DYNAMIC,
+        }) as bindings::SHADER_RESOURCE_VARIABLE_TYPE
+    }
+}
+
+pub struct ShaderResourceVariableDesc {
+    pub name: String,
+    pub variable_type: ShaderResourceVariableType,
+    pub shader_stages: ShaderTypes,
+    pub flags: ShaderVariableFlags,
+}
+
+impl Into<bindings::ShaderResourceVariableDesc> for ShaderResourceVariableDesc {
+    fn into(self) -> bindings::ShaderResourceVariableDesc {
+        bindings::ShaderResourceVariableDesc {
+            Name: self.name.as_ptr() as *const i8,
+            ShaderStages: self.shader_stages.bits() as bindings::SHADER_TYPE,
+            Type: self.variable_type.into(),
+            Flags: self.flags.bits() as bindings::SHADER_VARIABLE_FLAGS,
+        }
+    }
+}
 
 pub struct ShaderResourceVariable {
     pub(crate) m_shader_resource_variable: *mut bindings::IShaderResourceVariable,
