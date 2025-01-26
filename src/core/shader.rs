@@ -12,7 +12,7 @@ use super::{
 
 pub enum ShaderSource<'a> {
     FilePath(PathBuf), // TODO Option<IShaderSourceInputStreamFactory>
-    SourceCode(&'a str, Option<usize>),
+    SourceCode(&'a str),
     ByteCode(*const c_void, Option<usize>),
 }
 
@@ -70,19 +70,19 @@ impl Default for bindings::ShaderResourceDesc {
     }
 }
 
-pub struct ShaderDesc {
-    pub name: String,
+pub struct ShaderDesc<'a> {
+    pub name: &'a std::ffi::CStr,
     pub shader_type: ShaderType,
     pub use_combined_texture_samplers: bool,
-    pub combined_sampler_suffix: String,
+    pub combined_sampler_suffix: std::ffi::CString,
 }
 
 pub struct ShaderCreateInfo<'a> {
     pub source: ShaderSource<'a>,
     // TODO IShaderSourceInputStreamFactory
-    pub entry_point: &'a str,
-    pub macros: Vec<(&'a str, &'a str)>,
-    pub desc: ShaderDesc,
+    pub entry_point: &'a std::ffi::CStr,
+    pub macros: Vec<(&'a std::ffi::CStr, &'a std::ffi::CStr)>,
+    pub desc: ShaderDesc<'a>,
     pub source_language: ShaderLanguage,
     pub compiler: ShaderCompiler,
     pub hlsl_version: Version,
@@ -92,10 +92,14 @@ pub struct ShaderCreateInfo<'a> {
 }
 
 impl<'a> ShaderCreateInfo<'a> {
-    pub fn new(name: &str, source: ShaderSource<'a>, shader_type: ShaderType) -> Self {
+    pub fn new(
+        name: &'a std::ffi::CStr,
+        source: ShaderSource<'a>,
+        shader_type: ShaderType,
+    ) -> Self {
         ShaderCreateInfo {
             source: source,
-            entry_point: "main",
+            entry_point: c"main",
             macros: Vec::new(),
             desc: ShaderDesc::new(name, shader_type),
             source_language: ShaderLanguage::Default,
@@ -121,7 +125,7 @@ impl<'a> Into<bindings::ShaderCreateInfo> for ShaderCreateInfo<'a> {
             },
             pShaderSourceStreamFactory: std::ptr::null_mut(), // TODO
             Source: match self.source {
-                ShaderSource::SourceCode(code, _) => code.as_ptr() as *const i8,
+                ShaderSource::SourceCode(code) => code.as_ptr() as *const i8,
                 _ => std::ptr::null(),
             },
             ByteCode: match self.source {
@@ -131,11 +135,11 @@ impl<'a> Into<bindings::ShaderCreateInfo> for ShaderCreateInfo<'a> {
             __bindgen_anon_1: bindings::ShaderCreateInfo__bindgen_ty_1 {
                 ByteCodeSize: match self.source {
                     ShaderSource::ByteCode(_, Some(size)) => size,
-                    ShaderSource::SourceCode(_, Some(size)) => size,
+                    ShaderSource::SourceCode(code) => code.len(),
                     _ => 0,
                 },
             },
-            EntryPoint: self.entry_point.as_ptr() as *const i8,
+            EntryPoint: self.entry_point.as_ptr(),
             Macros: bindings::ShaderMacroArray {
                 Elements: macros.as_ptr(),
                 Count: macros.len() as u32,
@@ -143,12 +147,12 @@ impl<'a> Into<bindings::ShaderCreateInfo> for ShaderCreateInfo<'a> {
             Desc: bindings::ShaderDesc {
                 _DeviceObjectAttribs: {
                     bindings::DeviceObjectAttribs {
-                        Name: self.desc.name.as_ptr() as *const i8,
+                        Name: self.desc.name.as_ptr(),
                     }
                 },
                 ShaderType: self.desc.shader_type.into(),
                 UseCombinedTextureSamplers: self.desc.use_combined_texture_samplers,
-                CombinedSamplerSuffix: self.desc.combined_sampler_suffix.as_ptr() as *const i8,
+                CombinedSamplerSuffix: self.desc.combined_sampler_suffix.as_ptr(),
             },
             SourceLanguage: self.source_language.into(),
             ShaderCompiler: self.compiler.into(),
@@ -177,13 +181,13 @@ impl<'a> Into<bindings::ShaderCreateInfo> for ShaderCreateInfo<'a> {
     }
 }
 
-impl ShaderDesc {
-    fn new(name: &str, shader_type: ShaderType) -> Self {
+impl<'a> ShaderDesc<'a> {
+    fn new(name: &'a std::ffi::CStr, shader_type: ShaderType) -> Self {
         ShaderDesc {
-            name: name.to_string(),
+            name: name,
             shader_type: shader_type,
             use_combined_texture_samplers: false,
-            combined_sampler_suffix: "_sampler".to_string(),
+            combined_sampler_suffix: std::ffi::CString::new("_sampler").unwrap(),
         }
     }
 }

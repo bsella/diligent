@@ -255,8 +255,8 @@ pub struct PipelineResourceLayoutDesc {
     pub immutable_samplers: Vec<ImmutableSamplerDesc>,
 }
 
-pub struct PipelineStateDesc {
-    pub name: String,
+pub struct PipelineStateDesc<'a> {
+    pub name: &'a std::ffi::CStr,
     pipeline_type: bindings::_PIPELINE_TYPE,
     pub srb_allocation_granularity: u32,
     pub immediate_context_mask: u64,
@@ -264,7 +264,7 @@ pub struct PipelineStateDesc {
 }
 
 pub struct PipelineStateCreateInfo<'a> {
-    pub pso_desc: PipelineStateDesc,
+    pub pso_desc: PipelineStateDesc<'a>,
     pub flags: PipelineStateObjectCreateFlags,
     pub resource_signatures: &'a [&'a PipelineResourceSignature],
     //TODO
@@ -353,7 +353,7 @@ pub struct GraphicsPipelineStateCreateInfo<'a> {
 }
 
 impl<'a> GraphicsPipelineStateCreateInfo<'a> {
-    pub fn new(name: &str) -> Self {
+    pub fn new(name: &'a std::ffi::CStr) -> Self {
         GraphicsPipelineStateCreateInfo {
             pipeline_state_create_info: PipelineStateCreateInfo::new(
                 name,
@@ -421,11 +421,11 @@ impl<'a> Into<bindings::PipelineStateCreateInfo> for PipelineStateCreateInfo<'a>
         }
     }
 }
-impl Into<bindings::PipelineStateDesc> for PipelineStateDesc {
+impl<'a> Into<bindings::PipelineStateDesc> for PipelineStateDesc<'a> {
     fn into(self) -> bindings::PipelineStateDesc {
         bindings::PipelineStateDesc {
             _DeviceObjectAttribs: bindings::DeviceObjectAttribs {
-                Name: self.name.as_ptr() as *const i8,
+                Name: self.name.as_ptr(),
             },
             PipelineType: self.pipeline_type as u8,
             SRBAllocationGranularity: self.srb_allocation_granularity,
@@ -443,7 +443,11 @@ impl Into<bindings::GraphicsPipelineDesc> for GraphicsPipelineDesc {
             RasterizerDesc: self.rasterizer_desc.into(),
             DepthStencilDesc: self.depth_stencil_desc.into(),
             InputLayout: bindings::InputLayoutDesc {
-                LayoutElements: self.input_layouts.as_ptr(),
+                LayoutElements: if self.input_layouts.is_empty() {
+                    std::ptr::null()
+                } else {
+                    self.input_layouts.as_ptr()
+                },
                 NumElements: self.input_layouts.len() as u32,
             },
             PrimitiveTopology: self.primitive_topology.into(),
@@ -480,19 +484,25 @@ impl Into<bindings::PipelineResourceLayoutDesc> for PipelineResourceLayoutDesc {
             DefaultVariableType: self.default_variable_type.into(),
             DefaultVariableMergeStages: self.default_variable_merge_stages.bits(),
             NumVariables: self.variables.len() as u32,
-            Variables: self
-                .variables
-                .into_iter()
-                .map(|var| var.into())
-                .collect::<Vec<bindings::ShaderResourceVariableDesc>>()
-                .as_ptr(),
+            Variables: if self.variables.is_empty() {
+                std::ptr::null()
+            } else {
+                self.variables
+                    .into_iter()
+                    .map(|var| var.into())
+                    .collect::<Vec<bindings::ShaderResourceVariableDesc>>()
+                    .as_ptr()
+            },
             NumImmutableSamplers: self.immutable_samplers.len() as u32,
-            ImmutableSamplers: self
-                .immutable_samplers
-                .into_iter()
-                .map(|var| var.into())
-                .collect::<Vec<bindings::ImmutableSamplerDesc>>()
-                .as_ptr(),
+            ImmutableSamplers: if self.immutable_samplers.is_empty() {
+                std::ptr::null()
+            } else {
+                self.immutable_samplers
+                    .into_iter()
+                    .map(|var| var.into())
+                    .collect::<Vec<bindings::ImmutableSamplerDesc>>()
+                    .as_ptr()
+            },
         }
     }
 }
@@ -557,7 +567,7 @@ impl Into<bindings::RenderTargetBlendDesc> for RenderTargetBlendDesc {
 }
 
 impl<'a> PipelineStateCreateInfo<'a> {
-    fn new(name: &str, pipeline_type: bindings::_PIPELINE_TYPE) -> Self {
+    fn new(name: &'a std::ffi::CStr, pipeline_type: bindings::_PIPELINE_TYPE) -> Self {
         PipelineStateCreateInfo {
             pso_desc: PipelineStateDesc::new(name, pipeline_type),
             flags: PipelineStateObjectCreateFlags::None,
@@ -580,7 +590,7 @@ impl Default for GraphicsPipelineDesc {
             subpass_index: 0,
             shading_rate_flags: PipelineShadingRateFlags::None,
             rtv_formats: [
-                bindings::TEX_FORMAT_RGBA32_FLOAT,
+                bindings::TEX_FORMAT_RGBA8_UNORM_SRGB,
                 bindings::TEX_FORMAT_RGBA32_FLOAT,
                 bindings::TEX_FORMAT_RGBA32_FLOAT,
                 bindings::TEX_FORMAT_RGBA32_FLOAT,
@@ -600,10 +610,10 @@ impl Default for GraphicsPipelineDesc {
     }
 }
 
-impl PipelineStateDesc {
-    fn new(name: &str, pipeline_type: bindings::_PIPELINE_TYPE) -> Self {
+impl<'a> PipelineStateDesc<'a> {
+    fn new(name: &'a std::ffi::CStr, pipeline_type: bindings::_PIPELINE_TYPE) -> Self {
         PipelineStateDesc {
-            name: name.to_string(),
+            name: name,
             pipeline_type: pipeline_type,
             srb_allocation_granularity: 1,
             immediate_context_mask: 1,

@@ -10,7 +10,6 @@ use diligent::core::render_device::RenderDevice;
 use diligent::core::shader::ShaderCreateInfo;
 use diligent::core::shader::ShaderLanguage;
 use diligent::core::shader::ShaderSource;
-use diligent::core::swap_chain;
 use diligent::core::swap_chain::SwapChain;
 use diligent::samples::sample_base::sample_app::Sample;
 use diligent::samples::sample_base::sample_app::SampleApp;
@@ -37,7 +36,7 @@ impl SampleBase for HelloTriangle {
         deferred_contexts: Vec<DeviceContext>,
         swap_chain: &SwapChain,
     ) -> Self {
-        let mut pso_create_info = GraphicsPipelineStateCreateInfo::new("Simple triangle PSO");
+        let mut pso_create_info = GraphicsPipelineStateCreateInfo::new(c"Simple triangle PSO");
 
         // This tutorial will render to a single render target
         pso_create_info.graphics_pipeline_desc.num_render_targets = 1;
@@ -85,8 +84,8 @@ void main(in uint VertId : SV_VertexID, out PSInput PSIn)
 }
 "#;
             let mut shader_create_info = ShaderCreateInfo::new(
-                "Triangle vertex shader",
-                ShaderSource::SourceCode(&shader_source_code, Some(shader_source_code.len())),
+                c"Triangle vertex shader",
+                ShaderSource::SourceCode(&shader_source_code),
                 ShaderType::Vertex,
             );
 
@@ -118,8 +117,8 @@ void main(in PSInput PSIn, out PSOutput PSOut)
 }
 "#;
             let mut shader_create_info = ShaderCreateInfo::new(
-                "Triangle pixel shader",
-                ShaderSource::SourceCode(shader_source_code, Some(shader_source_code.len())),
+                c"Triangle pixel shader",
+                ShaderSource::SourceCode(shader_source_code),
                 ShaderType::Pixel,
             );
             // Tell the system that the shader source code is in HLSL.

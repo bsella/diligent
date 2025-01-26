@@ -785,15 +785,12 @@ impl DeviceContext {
     // pub fn get_user_data(&self);
 
     pub fn begin_debug_group(&self, name: &str, color: [f32; 4]) {
+        let name = std::ffi::CString::new(name.to_owned()).unwrap();
         unsafe {
             (*self.m_virtual_functions)
                 .DeviceContext
                 .BeginDebugGroup
-                .unwrap_unchecked()(
-                self.m_device_context,
-                name.as_bytes().as_ptr() as *const i8,
-                color.as_ptr(),
-            )
+                .unwrap_unchecked()(self.m_device_context, name.as_ptr(), color.as_ptr())
         }
     }
 

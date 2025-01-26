@@ -45,6 +45,9 @@ impl Default for EngineCreateInfo {
 
             features: bindings::DeviceFeatures::default(),
 
+            #[cfg(debug_assertions)]
+            enable_validation: true,
+            #[cfg(not(debug_assertions))]
             enable_validation: false,
 
             validation_flags: bindings::VALIDATION_FLAG_NONE,
