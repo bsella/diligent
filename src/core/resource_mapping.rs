@@ -35,7 +35,7 @@ impl ResourceMapping {
         }
     }
 
-    fn add_resource(&mut self, name: &str, object: &DeviceObject, is_unique: bool) {
+    pub fn add_resource(&mut self, name: &str, object: &DeviceObject, is_unique: bool) {
         {
             let name = std::ffi::CString::new(name).unwrap();
             unsafe {
@@ -56,7 +56,7 @@ impl ResourceMapping {
             .push(std::ptr::addr_of!(*object));
     }
 
-    fn add_resource_array(&mut self, name: &str, objects: &[DeviceObject], is_unique: bool) {
+    pub fn add_resource_array(&mut self, name: &str, objects: &[DeviceObject], is_unique: bool) {
         let object_ptrs = Vec::from_iter(objects.iter().map(|object| object.device_object));
 
         {
@@ -83,7 +83,7 @@ impl ResourceMapping {
             .extend(objects.iter().map(|object| std::ptr::addr_of!(*object)));
     }
 
-    fn remove_resource_by_name(&mut self, name: &str, array_index: Option<u32>) {
+    pub fn remove_resource_by_name(&mut self, name: &str, array_index: Option<u32>) {
         let array_index = array_index.unwrap_or(0);
 
         self.resources.entry(name.to_owned()).and_modify(|objects| {
@@ -100,7 +100,7 @@ impl ResourceMapping {
         }
     }
 
-    fn get_resources_by_name(&self, name: &str) -> Option<&[DeviceObject]> {
+    pub fn get_resources_by_name(&self, _name: &str) -> Option<&[DeviceObject]> {
         //self.resources
         //    .get(name)
         //    .map(|resources| resources.as_slice())
@@ -108,7 +108,7 @@ impl ResourceMapping {
         todo!()
     }
 
-    fn get_size(&self) -> usize {
+    pub fn get_size(&self) -> usize {
         unsafe {
             (*self.virtual_functions)
                 .ResourceMapping

@@ -762,6 +762,7 @@ impl DeviceContext {
     // TODO
     // pub fn update_sbt(&self, sbt : &mut ShaderBindingTable) {}
 
+    #[allow(private_bounds)]
     pub fn set_user_data<Data>(&self, user_data: &Data)
     where
         Data: AsObject,
@@ -797,15 +798,12 @@ impl DeviceContext {
     }
 
     pub fn insert_debug_label(&self, name: &str, color: [f32; 4]) {
+        let name = std::ffi::CString::new(name).unwrap();
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
                 .InsertDebugLabel
-                .unwrap_unchecked()(
-                self.device_context,
-                std::ffi::CString::new(name).unwrap().as_ptr(),
-                color.as_ptr(),
-            )
+                .unwrap_unchecked()(self.device_context, name.as_ptr(), color.as_ptr())
         }
     }
 

@@ -65,7 +65,7 @@ impl Buffer {
         buffer
     }
 
-    fn get_desc(&self) -> &bindings::BufferDesc {
+    pub fn get_desc(&self) -> &bindings::BufferDesc {
         unsafe {
             ((*self.virtual_functions)
                 .DeviceObject
@@ -77,7 +77,7 @@ impl Buffer {
         }
     }
 
-    fn create_view(&mut self, view_desc: bindings::BufferViewDesc) -> Option<BufferView> {
+    pub fn create_view(&mut self, view_desc: bindings::BufferViewDesc) -> Option<BufferView> {
         let mut buffer_view_ptr: *mut bindings::IBufferView = std::ptr::null_mut();
         unsafe {
             (*self.virtual_functions)
@@ -96,7 +96,7 @@ impl Buffer {
         }
     }
 
-    fn get_default_view(&self, view_type: bindings::BUFFER_VIEW_TYPE) -> Option<&BufferView> {
+    pub fn get_default_view(&self, view_type: bindings::BUFFER_VIEW_TYPE) -> Option<&BufferView> {
         if unsafe {
             (*self.virtual_functions)
                 .Buffer
@@ -111,7 +111,7 @@ impl Buffer {
         }
     }
 
-    fn get_native_handle(&self) -> u64 {
+    pub fn get_native_handle(&self) -> u64 {
         unsafe {
             (*self.virtual_functions)
                 .Buffer
@@ -120,15 +120,15 @@ impl Buffer {
         }
     }
 
-    fn set_state(&mut self, state: bindings::RESOURCE_STATE) {
+    pub fn set_state(&mut self, state: bindings::RESOURCE_STATE) {
         unsafe { (*self.virtual_functions).Buffer.SetState.unwrap_unchecked()(self.buffer, state) }
     }
 
-    fn get_state(&self) -> bindings::RESOURCE_STATE {
+    pub fn get_state(&self) -> bindings::RESOURCE_STATE {
         unsafe { (*self.virtual_functions).Buffer.GetState.unwrap_unchecked()(self.buffer) }
     }
 
-    fn get_memory_properties(&self) -> bindings::MEMORY_PROPERTIES {
+    pub fn get_memory_properties(&self) -> bindings::MEMORY_PROPERTIES {
         unsafe {
             (*self.virtual_functions)
                 .Buffer
@@ -137,7 +137,7 @@ impl Buffer {
         }
     }
 
-    fn flush_mapped_range(&mut self, start_offset: u64, size: u64) {
+    pub fn flush_mapped_range(&mut self, start_offset: u64, size: u64) {
         unsafe {
             (*self.virtual_functions)
                 .Buffer
@@ -146,7 +146,7 @@ impl Buffer {
         }
     }
 
-    fn invalidate_mapped_range(&mut self, start_offset: u64, size: u64) {
+    pub fn invalidate_mapped_range(&mut self, start_offset: u64, size: u64) {
         unsafe {
             (*self.virtual_functions)
                 .Buffer
@@ -155,7 +155,7 @@ impl Buffer {
         }
     }
 
-    fn get_sparse_properties(&self) -> bindings::SparseBufferProperties {
+    pub fn get_sparse_properties(&self) -> bindings::SparseBufferProperties {
         unsafe {
             (*self.virtual_functions)
                 .Buffer

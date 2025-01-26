@@ -145,7 +145,7 @@ where
                             }
                         }
                     }
-                    xcb::Event::X(x::Event::KeyRelease(key_event)) => {
+                    xcb::Event::X(x::Event::KeyRelease(_key_event)) => {
                         // TODO
                     }
                     xcb::Event::X(x::Event::DestroyNotify(_destroy_event)) => {

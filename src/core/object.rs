@@ -27,10 +27,7 @@ pub(crate) trait AsObject {
 impl Drop for Object {
     fn drop(&mut self) {
         unsafe {
-            (*self.virtual_functions)
-                .Object
-                .Release
-                .unwrap_unchecked()(self.object);
+            (*self.virtual_functions).Object.Release.unwrap_unchecked()(self.object);
         }
     }
 }

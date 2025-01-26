@@ -29,12 +29,12 @@ impl ShaderResourceBinding {
         }
     }
 
-    fn get_pipeline_resource_signature(&self) -> Option<&PipelineResourceSignature> {
+    pub fn get_pipeline_resource_signature(&self) -> Option<&PipelineResourceSignature> {
         todo!()
     }
 
-    fn bind_resources(
-        &mut self,
+    pub fn bind_resources(
+        &self,
         shader_stages: bindings::SHADER_TYPE,
         resource_mapping: &ResourceMapping,
         flags: bindings::BIND_SHADER_RESOURCES_FLAGS,
@@ -52,7 +52,7 @@ impl ShaderResourceBinding {
         }
     }
 
-    fn check_resources(
+    pub fn check_resources(
         &self,
         shader_stages: bindings::SHADER_TYPE,
         resource_mapping: &ResourceMapping,
@@ -71,14 +71,14 @@ impl ShaderResourceBinding {
         }
     }
 
-    fn get_variables(
+    pub fn get_variables(
         &self,
-        shader_type: bindings::SHADER_TYPE,
+        _shader_type: bindings::SHADER_TYPE,
     ) -> Option<&[ShaderResourceVariable]> {
         todo!()
     }
 
-    fn static_resources_initialized(&self) -> bool {
+    pub fn static_resources_initialized(&self) -> bool {
         unsafe {
             (*self.virtual_functions)
                 .ShaderResourceBinding

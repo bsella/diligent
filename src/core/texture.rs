@@ -69,7 +69,7 @@ impl Texture {
         texture
     }
 
-    fn get_desc(&self) -> &bindings::TextureDesc {
+    pub fn get_desc(&self) -> &bindings::TextureDesc {
         unsafe {
             ((*self.virtual_functions)
                 .DeviceObject
@@ -81,7 +81,7 @@ impl Texture {
         }
     }
 
-    fn create_view(
+    pub fn create_view(
         &mut self,
         texture_view_desc: &bindings::TextureViewDesc,
     ) -> Option<TextureView> {
@@ -104,7 +104,7 @@ impl Texture {
         }
     }
 
-    fn get_default_view(
+    pub fn get_default_view(
         &self,
         texture_view_type: bindings::TEXTURE_VIEW_TYPE,
     ) -> Option<&TextureView> {
@@ -122,7 +122,7 @@ impl Texture {
         }
     }
 
-    fn get_native_handle(&self) -> u64 {
+    pub fn get_native_handle(&self) -> u64 {
         unsafe {
             (*self.virtual_functions)
                 .Texture
@@ -131,7 +131,7 @@ impl Texture {
         }
     }
 
-    fn set_state(&mut self, state: bindings::RESOURCE_STATE) {
+    pub fn set_state(&mut self, state: bindings::RESOURCE_STATE) {
         unsafe {
             (*self.virtual_functions)
                 .Texture
@@ -140,7 +140,7 @@ impl Texture {
         }
     }
 
-    fn get_state(&self) -> bindings::RESOURCE_STATE {
+    pub fn get_state(&self) -> bindings::RESOURCE_STATE {
         unsafe {
             (*self.virtual_functions)
                 .Texture
@@ -149,7 +149,7 @@ impl Texture {
         }
     }
 
-    fn get_sparse_properties(&self) -> &bindings::SparseTextureProperties {
+    pub fn get_sparse_properties(&self) -> &bindings::SparseTextureProperties {
         unsafe {
             (*self.virtual_functions)
                 .Texture

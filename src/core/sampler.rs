@@ -82,7 +82,7 @@ impl Sampler {
         }
     }
 
-    fn get_desc(&self) -> &bindings::SamplerDesc {
+    pub fn get_desc(&self) -> &bindings::SamplerDesc {
         unsafe {
             ((*self.virtual_functions)
                 .DeviceObject

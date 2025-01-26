@@ -10,7 +10,7 @@ use crate::{
 pub struct Sample {
     render_device: RenderDevice,
     immediate_contexts: Vec<DeviceContext>,
-    deferred_contexts: Vec<DeviceContext>,
+    _deferred_contexts: Vec<DeviceContext>,
 }
 
 pub trait SampleBase {
@@ -42,7 +42,7 @@ impl SampleBase for Sample {
         Sample {
             render_device: render_device,
             immediate_contexts: immediate_contexts,
-            deferred_contexts: deferred_contexts,
+            _deferred_contexts: deferred_contexts,
         }
     }
 
@@ -54,7 +54,7 @@ impl SampleBase for Sample {
         self.immediate_contexts.first().unwrap()
     }
 
-    fn render(&self, swap_chain: &SwapChain) {}
+    fn render(&self, _swap_chain: &SwapChain) {}
     fn update(&self, _current_time: f64, _elapsed_time: f64) {}
     fn get_name() -> &'static str {
         ""
@@ -67,8 +67,8 @@ pub struct SampleApp<Sample: SampleBase> {
     app_title: String,
     swap_chain: SwapChain,
 
-    golden_image_mode: GoldenImageMode,
-    golden_pixel_tolerance: u32,
+    _golden_image_mode: GoldenImageMode,
+    _golden_pixel_tolerance: u32,
 
     sample: Sample,
 
@@ -110,8 +110,8 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             app_title: GenericSample::get_name().to_string(),
             swap_chain: swap_chain,
 
-            golden_image_mode: GoldenImageMode::None,
-            golden_pixel_tolerance: 0,
+            _golden_image_mode: GoldenImageMode::None,
+            _golden_pixel_tolerance: 0,
 
             sample: sample,
 

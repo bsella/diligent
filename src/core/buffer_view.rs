@@ -28,7 +28,7 @@ impl BufferView {
         }
     }
 
-    fn get_desc(&self) -> &bindings::BufferViewDesc {
+    pub fn get_desc(&self) -> &bindings::BufferViewDesc {
         unsafe {
             ((*self.virtual_functions)
                 .DeviceObject
@@ -41,7 +41,7 @@ impl BufferView {
     }
 
     #[inline]
-    fn get_buffer(&self) -> &Buffer {
+    pub fn get_buffer(&self) -> &Buffer {
         unsafe { self.buffer.as_ref().unwrap_unchecked() }
     }
 }

@@ -740,7 +740,7 @@ impl PipelineState {
         }
     }
 
-    fn get_desc(&self) -> &bindings::PipelineStateDesc {
+    pub fn get_desc(&self) -> &bindings::PipelineStateDesc {
         unsafe {
             ((*self.virtual_functions)
                 .DeviceObject
@@ -752,7 +752,7 @@ impl PipelineState {
         }
     }
 
-    fn get_graphics_pipeline_desc(&self) -> &bindings::GraphicsPipelineDesc {
+    pub fn get_graphics_pipeline_desc(&self) -> &bindings::GraphicsPipelineDesc {
         unsafe {
             (*self.virtual_functions)
                 .PipelineState
@@ -763,7 +763,7 @@ impl PipelineState {
         }
     }
 
-    fn get_ray_tracing_pipeline_desc(&self) -> &bindings::RayTracingPipelineDesc {
+    pub fn get_ray_tracing_pipeline_desc(&self) -> &bindings::RayTracingPipelineDesc {
         unsafe {
             (*self.virtual_functions)
                 .PipelineState
@@ -774,7 +774,7 @@ impl PipelineState {
         }
     }
 
-    fn get_tile_pipeline_desc(&self) -> &bindings::TilePipelineDesc {
+    pub fn get_tile_pipeline_desc(&self) -> &bindings::TilePipelineDesc {
         unsafe {
             (*self.virtual_functions)
                 .PipelineState
@@ -785,7 +785,7 @@ impl PipelineState {
         }
     }
 
-    fn bind_static_resources(
+    pub fn bind_static_resources(
         &mut self,
         shader_type: bindings::SHADER_TYPE,
         resource_mapping: &ResourceMapping,
@@ -804,15 +804,15 @@ impl PipelineState {
         }
     }
 
-    fn get_static_variables(
+    pub fn get_static_variables(
         &self,
-        shader_type: bindings::SHADER_TYPE,
+        _shader_type: bindings::SHADER_TYPE,
     ) -> Option<&[ShaderResourceVariable]> {
         todo!()
     }
 
-    fn create_shader_resource_binding(
-        &mut self,
+    pub fn create_shader_resource_binding(
+        &self,
         init_static_resources: Option<bool>,
     ) -> Option<ShaderResourceBinding> {
         let mut shader_resource_binding_ptr: *mut bindings::IShaderResourceBinding =
@@ -834,7 +834,10 @@ impl PipelineState {
         }
     }
 
-    fn initialize_static_srb_resources(&self, shader_resource_binding: &mut ShaderResourceBinding) {
+    pub fn initialize_static_srb_resources(
+        &self,
+        shader_resource_binding: &mut ShaderResourceBinding,
+    ) {
         unsafe {
             (*self.virtual_functions)
                 .PipelineState
@@ -846,7 +849,7 @@ impl PipelineState {
         }
     }
 
-    fn copy_static_resources(&self, pipeline_state: &mut PipelineState) {
+    pub fn copy_static_resources(&self, pipeline_state: &mut PipelineState) {
         unsafe {
             (*self.virtual_functions)
                 .PipelineState
@@ -855,7 +858,7 @@ impl PipelineState {
         }
     }
 
-    fn is_compatible_with(&self, pipeline_state: &PipelineState) -> bool {
+    pub fn is_compatible_with(&self, pipeline_state: &PipelineState) -> bool {
         unsafe {
             (*self.virtual_functions)
                 .PipelineState
@@ -864,11 +867,11 @@ impl PipelineState {
         }
     }
 
-    fn get_resource_signatures(&self) -> &[PipelineResourceSignature] {
+    pub fn get_resource_signatures(&self) -> &[PipelineResourceSignature] {
         todo!()
     }
 
-    fn get_status(&self, wait_for_completion: Option<bool>) -> bindings::PIPELINE_STATE_STATUS {
+    pub fn get_status(&self, wait_for_completion: Option<bool>) -> bindings::PIPELINE_STATE_STATUS {
         unsafe {
             (*self.virtual_functions)
                 .PipelineState

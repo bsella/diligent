@@ -116,7 +116,7 @@ impl PipelineResourceSignature {
         }
     }
 
-    fn get_desc(&self) -> &bindings::PipelineResourceSignatureDesc {
+    pub fn get_desc(&self) -> &bindings::PipelineResourceSignatureDesc {
         unsafe {
             ((*self.virtual_functions)
                 .DeviceObject
@@ -129,8 +129,8 @@ impl PipelineResourceSignature {
         }
     }
 
-    fn create_shader_resource_binding(
-        &mut self,
+    pub fn create_shader_resource_binding(
+        &self,
         init_static_resources: Option<bool>,
     ) -> Option<ShaderResourceBinding> {
         let mut shader_resource_binding_ptr = std::ptr::null_mut();
@@ -152,8 +152,8 @@ impl PipelineResourceSignature {
         }
     }
 
-    fn bind_static_resources(
-        &mut self,
+    pub fn bind_static_resources(
+        &self,
         shader_stages: bindings::SHADER_TYPE,
         resource_mapping: &ResourceMapping,
         flags: bindings::BIND_SHADER_RESOURCES_FLAGS,
@@ -171,7 +171,7 @@ impl PipelineResourceSignature {
         }
     }
 
-    fn get_static_variables(
+    pub fn get_static_variables(
         &self,
         shader_type: bindings::SHADER_TYPE,
     ) -> Option<&[ShaderResourceVariable]> {
@@ -180,7 +180,7 @@ impl PipelineResourceSignature {
             .map(|v| v.as_slice())
     }
 
-    fn initialize_static_srb_resources(&self, shader_resource_binding: &ShaderResourceBinding) {
+    pub fn initialize_static_srb_resources(&self, shader_resource_binding: &ShaderResourceBinding) {
         unsafe {
             (*self.virtual_functions)
                 .PipelineResourceSignature
@@ -192,7 +192,7 @@ impl PipelineResourceSignature {
         }
     }
 
-    fn copy_static_resources(&self, signature: &mut PipelineResourceSignature) {
+    pub fn copy_static_resources(&self, signature: &mut PipelineResourceSignature) {
         unsafe {
             (*self.virtual_functions)
                 .PipelineResourceSignature
@@ -204,7 +204,7 @@ impl PipelineResourceSignature {
         }
     }
 
-    fn is_compatible_with(&self, signature: &PipelineResourceSignature) -> bool {
+    pub fn is_compatible_with(&self, signature: &PipelineResourceSignature) -> bool {
         unsafe {
             (*self.virtual_functions)
                 .PipelineResourceSignature

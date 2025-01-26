@@ -62,7 +62,7 @@ impl ShaderResourceVariable {
         }
     }
 
-    fn set(
+    pub fn set(
         &mut self,
         device_object: &DeviceObject,
         flags: Option<bindings::SET_SHADER_RESOURCE_FLAGS>,
@@ -79,7 +79,7 @@ impl ShaderResourceVariable {
         }
     }
 
-    fn set_array(
+    pub fn set_array(
         &mut self,
         device_objects: &[DeviceObject],
         flags: Option<bindings::SET_SHADER_RESOURCE_FLAGS>,
@@ -99,7 +99,7 @@ impl ShaderResourceVariable {
         }
     }
 
-    fn set_buffer_range(
+    pub fn set_buffer_range(
         &mut self,
         device_object: &DeviceObject,
         offset: u64,
@@ -122,7 +122,7 @@ impl ShaderResourceVariable {
         }
     }
 
-    fn set_buffer_offset(&mut self, offset: u32, array_index: Option<u32>) {
+    pub fn set_buffer_offset(&mut self, offset: u32, array_index: Option<u32>) {
         unsafe {
             (*self.virtual_functions)
                 .ShaderResourceVariable
@@ -134,7 +134,8 @@ impl ShaderResourceVariable {
             )
         }
     }
-    fn get_type(&self) -> bindings::SHADER_RESOURCE_VARIABLE_TYPE {
+
+    pub fn get_type(&self) -> bindings::SHADER_RESOURCE_VARIABLE_TYPE {
         unsafe {
             (*self.virtual_functions)
                 .ShaderResourceVariable
@@ -142,7 +143,8 @@ impl ShaderResourceVariable {
                 .unwrap_unchecked()(self.shader_resource_variable)
         }
     }
-    fn get_resource_desc(&self) -> bindings::ShaderResourceDesc {
+
+    pub fn get_resource_desc(&self) -> bindings::ShaderResourceDesc {
         let mut shader_resource_desc = bindings::ShaderResourceDesc::default();
         unsafe {
             (*self.virtual_functions)
@@ -155,7 +157,8 @@ impl ShaderResourceVariable {
         }
         shader_resource_desc
     }
-    fn get_index(&self) -> u32 {
+
+    pub fn get_index(&self) -> u32 {
         unsafe {
             (*self.virtual_functions)
                 .ShaderResourceVariable

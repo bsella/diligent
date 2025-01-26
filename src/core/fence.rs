@@ -24,7 +24,7 @@ impl Fence {
         }
     }
 
-    fn get_desc(&self) -> &bindings::FenceDesc {
+    pub fn get_desc(&self) -> &bindings::FenceDesc {
         unsafe {
             ((*self.virtual_functions)
                 .DeviceObject
@@ -35,7 +35,8 @@ impl Fence {
                 .unwrap_unchecked()
         }
     }
-    fn get_completed_value(&self) -> u64 {
+
+    pub fn get_completed_value(&self) -> u64 {
         unsafe {
             (*self.virtual_functions)
                 .Fence
@@ -43,10 +44,12 @@ impl Fence {
                 .unwrap_unchecked()(self.fence)
         }
     }
-    fn signal(&self, value: u64) {
+
+    pub fn signal(&self, value: u64) {
         unsafe { (*self.virtual_functions).Fence.Signal.unwrap_unchecked()(self.fence, value) }
     }
-    fn wait(&self, value: u64) {
+
+    pub fn wait(&self, value: u64) {
         unsafe { (*self.virtual_functions).Fence.Wait.unwrap_unchecked()(self.fence, value) }
     }
 }

@@ -27,7 +27,7 @@ impl DeviceObject {
         }
     }
 
-    fn get_desc(&self) -> &bindings::DeviceObjectAttribs {
+    pub fn get_desc(&self) -> &bindings::DeviceObjectAttribs {
         unsafe {
             (*self.virtual_functions)
                 .DeviceObject
@@ -38,7 +38,7 @@ impl DeviceObject {
         }
     }
 
-    fn get_unique_id(&self) -> i32 {
+    pub fn get_unique_id(&self) -> i32 {
         unsafe {
             (*self.virtual_functions)
                 .DeviceObject

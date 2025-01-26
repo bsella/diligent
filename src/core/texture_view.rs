@@ -29,18 +29,17 @@ impl TextureView {
         }
     }
 
-    fn get_desc(&self) -> bindings::TextureViewDesc {
+    pub fn get_desc(&self) -> bindings::TextureViewDesc {
         unsafe {
             *((*self.virtual_functions)
                 .DeviceObject
                 .GetDesc
-                .unwrap_unchecked()(
-                self.texture_view as *mut bindings::IDeviceObject
-            ) as *const bindings::TextureViewDesc)
+                .unwrap_unchecked()(self.texture_view as *mut bindings::IDeviceObject)
+                as *const bindings::TextureViewDesc)
         }
     }
 
-    fn set_sampler(&mut self, sampler: &Sampler) {
+    pub fn set_sampler(&mut self, sampler: &Sampler) {
         unsafe {
             (*self.virtual_functions)
                 .TextureView
@@ -49,12 +48,12 @@ impl TextureView {
         }
     }
 
-    fn get_sampler(&self) -> Option<&Sampler> {
+    pub fn get_sampler(&self) -> Option<&Sampler> {
         todo!()
     }
 
     #[inline]
-    fn get_texture(&self) -> &Texture {
+    pub fn get_texture(&self) -> &Texture {
         unsafe { self.texture.as_ref().unwrap_unchecked() }
     }
 }

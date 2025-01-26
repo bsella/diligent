@@ -84,7 +84,7 @@ pub struct EngineFactory {
     pub(crate) engine_factory: *mut bindings::IEngineFactory,
     virtual_functions: *mut bindings::IEngineFactoryVtbl,
 
-    object: Object,
+    _object: Object,
 }
 
 pub trait AsEngineFactory {
@@ -115,11 +115,11 @@ impl EngineFactory {
         EngineFactory {
             engine_factory: engine_factory_ptr,
             virtual_functions: unsafe { (*engine_factory_ptr).pVtbl },
-            object: Object::new(engine_factory_ptr as *mut bindings::IObject),
+            _object: Object::new(engine_factory_ptr as *mut bindings::IObject),
         }
     }
 
-    fn get_api_info(&self) -> &bindings::APIInfo {
+    pub fn get_api_info(&self) -> &bindings::APIInfo {
         unsafe {
             (*self.virtual_functions)
                 .EngineFactory
@@ -132,7 +132,7 @@ impl EngineFactory {
 
     //fn create_default_shader_source_stream_factory(&self, search_directories: Vec<PathBuf>) -> bindings::IShaderSourceInputStreamFactory;
 
-    fn create_data_blob<T>(&self, initial_size: usize, data: *const T) -> Option<DataBlob> {
+    pub fn create_data_blob<T>(&self, initial_size: usize, data: *const T) -> Option<DataBlob> {
         let mut data_blob_ptr: *mut bindings::IDataBlob = std::ptr::null_mut();
         unsafe {
             (*self.virtual_functions)
@@ -151,7 +151,11 @@ impl EngineFactory {
             Some(DataBlob::new(data_blob_ptr))
         }
     }
-    fn enumerate_adapters(&self, version: bindings::Version) -> Vec<bindings::GraphicsAdapterInfo> {
+
+    pub fn enumerate_adapters(
+        &self,
+        version: bindings::Version,
+    ) -> Vec<bindings::GraphicsAdapterInfo> {
         let mut num_adapters: u32 = 0;
         let adapters_ptr = std::ptr::null_mut();
         unsafe {
@@ -171,9 +175,9 @@ impl EngineFactory {
         }
     }
 
-    //fn create_dearchiver(&self, create_info : &bindings::DearchiverCreateInfo) -> bindings::IDearchiver;
+    //pub fn create_dearchiver(&self, create_info : &bindings::DearchiverCreateInfo) -> bindings::IDearchiver;
 
-    fn set_message_callback(&self, callback: bindings::DebugMessageCallbackType) {
+    pub fn set_message_callback(&self, callback: bindings::DebugMessageCallbackType) {
         unsafe {
             (*self.virtual_functions)
                 .EngineFactory
@@ -181,7 +185,8 @@ impl EngineFactory {
                 .unwrap_unchecked()(self.engine_factory, callback)
         }
     }
-    fn set_break_on_error(&self, break_on_error: bool) {
+
+    pub fn set_break_on_error(&self, break_on_error: bool) {
         unsafe {
             (*self.virtual_functions)
                 .EngineFactory

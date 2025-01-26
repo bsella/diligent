@@ -214,7 +214,7 @@ impl Shader {
         }
     }
 
-    fn get_desc(&self) -> bindings::ShaderDesc {
+    pub fn get_desc(&self) -> bindings::ShaderDesc {
         unsafe {
             *((*self.virtual_functions)
                 .DeviceObject
@@ -224,7 +224,7 @@ impl Shader {
         }
     }
 
-    fn get_resources(&self) -> Vec<bindings::ShaderResourceDesc> {
+    pub fn get_resources(&self) -> Vec<bindings::ShaderResourceDesc> {
         unsafe {
             let num_resources = (*self.virtual_functions)
                 .Shader
@@ -245,7 +245,7 @@ impl Shader {
         }
     }
 
-    fn get_constant_buffer_desc(&self, index: u32) -> Option<&bindings::ShaderCodeBufferDesc> {
+    pub fn get_constant_buffer_desc(&self, index: u32) -> Option<&bindings::ShaderCodeBufferDesc> {
         unsafe {
             (*self.virtual_functions)
                 .Shader
@@ -255,9 +255,9 @@ impl Shader {
         }
     }
 
-    fn get_bytecode(&self, bytecode: *mut *const u8) -> u64 {
+    pub fn get_bytecode(&self, bytecode: *mut *const u8) -> u64 {
+        let mut size: u64 = 0;
         unsafe {
-            let mut size: u64 = 0;
             (*self.virtual_functions)
                 .Shader
                 .GetBytecode
@@ -266,11 +266,11 @@ impl Shader {
                 bytecode as *mut *const c_void,
                 std::ptr::addr_of_mut!(size),
             );
-            size
         }
+        size
     }
 
-    fn get_status(&self, wait_for_completion: bool) -> bindings::SHADER_STATUS {
+    pub fn get_status(&self, wait_for_completion: bool) -> bindings::SHADER_STATUS {
         unsafe {
             (*self.virtual_functions)
                 .Shader
