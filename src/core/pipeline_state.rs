@@ -248,11 +248,11 @@ bitflags! {
 }
 const_assert!(bindings::PIPELINE_SHADING_RATE_FLAG_LAST == 2);
 
-pub struct PipelineResourceLayoutDesc {
+pub struct PipelineResourceLayoutDesc<'a> {
     pub default_variable_type: ShaderResourceVariableType,
     pub default_variable_merge_stages: ShaderTypes,
-    pub variables: Vec<ShaderResourceVariableDesc>,
-    pub immutable_samplers: Vec<ImmutableSamplerDesc>,
+    pub variables: Vec<ShaderResourceVariableDesc<'a>>,
+    pub immutable_samplers: Vec<ImmutableSamplerDesc<'a>>,
 }
 
 pub struct PipelineStateDesc<'a> {
@@ -260,7 +260,7 @@ pub struct PipelineStateDesc<'a> {
     pipeline_type: bindings::_PIPELINE_TYPE,
     pub srb_allocation_granularity: u32,
     pub immediate_context_mask: u64,
-    pub resource_layout: PipelineResourceLayoutDesc,
+    pub resource_layout: PipelineResourceLayoutDesc<'a>,
 }
 
 pub struct PipelineStateCreateInfo<'a> {
@@ -478,7 +478,7 @@ impl Into<bindings::BlendStateDesc> for BlendStateDesc {
     }
 }
 
-impl Into<bindings::PipelineResourceLayoutDesc> for PipelineResourceLayoutDesc {
+impl<'a> Into<bindings::PipelineResourceLayoutDesc> for PipelineResourceLayoutDesc<'a> {
     fn into(self) -> bindings::PipelineResourceLayoutDesc {
         bindings::PipelineResourceLayoutDesc {
             DefaultVariableType: self.default_variable_type.into(),
@@ -672,7 +672,7 @@ impl Default for DepthStencilStateDesc {
     }
 }
 
-impl PipelineResourceLayoutDesc {
+impl<'a> PipelineResourceLayoutDesc<'a> {
     fn new(pipeline_type: bindings::_PIPELINE_TYPE) -> Self {
         PipelineResourceLayoutDesc {
             default_variable_type: ShaderResourceVariableType::Static,

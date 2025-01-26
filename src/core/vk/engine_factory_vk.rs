@@ -15,6 +15,7 @@ use crate::core::swap_chain::SwapChain;
 pub struct EngineVkCreateInfo {
     engine_create_info: EngineCreateInfo,
 
+    // TODO : find a way to replace all of the following Vec<String> with Vec<&str>
     instance_layer_names: Vec<String>,
     instance_extension_names: Vec<String>,
     device_extension_names: Vec<String>,
@@ -98,68 +99,6 @@ impl Default for EngineVkCreateInfo {
     }
 }
 
-impl Into<bindings::EngineVkCreateInfo> for EngineVkCreateInfo {
-    fn into(self) -> bindings::EngineVkCreateInfo {
-        bindings::EngineVkCreateInfo {
-            _EngineCreateInfo: self.engine_create_info.into(),
-            InstanceLayerCount: self.instance_layer_names.len() as u32,
-            ppInstanceLayerNames: self
-                .instance_layer_names
-                .iter()
-                .map(|s| s.as_ptr() as *const i8)
-                .collect::<Vec<*const i8>>()
-                .as_ptr(),
-            InstanceExtensionCount: self.instance_extension_names.len() as u32,
-            ppInstanceExtensionNames: self
-                .instance_extension_names
-                .iter()
-                .map(|s| s.as_ptr() as *const i8)
-                .collect::<Vec<*const i8>>()
-                .as_ptr(),
-
-            DeviceExtensionCount: self.device_extension_names.len() as u32,
-            ppDeviceExtensionNames: self
-                .device_extension_names
-                .iter()
-                .map(|s| s.as_ptr() as *const i8)
-                .collect::<Vec<*const i8>>()
-                .as_ptr(),
-
-            pDeviceExtensionFeatures: self.device_extension_features,
-
-            pVkAllocator: self.vk_allocator,
-
-            IgnoreDebugMessageCount: self.ignore_debug_message_names.len() as u32,
-            ppIgnoreDebugMessageNames: self
-                .ignore_debug_message_names
-                .iter()
-                .map(|s| s.as_ptr() as *const i8)
-                .collect::<Vec<*const i8>>()
-                .as_ptr(),
-
-            MainDescriptorPoolSize: self.main_descriptor_pool_size,
-
-            DynamicDescriptorPoolSize: self.dynamic_descriptor_pool_size,
-
-            DeviceLocalMemoryPageSize: self.device_local_memory_page_size,
-            HostVisibleMemoryPageSize: self.host_visible_memory_page_size,
-            DeviceLocalMemoryReserveSize: self.device_local_memory_reserve_size,
-            HostVisibleMemoryReserveSize: self.host_visible_memory_reserve_size,
-            UploadHeapPageSize: self.upload_heap_page_size,
-            DynamicHeapSize: self.dynamic_heap_size,
-            DynamicHeapPageSize: self.dynamic_heap_page_size,
-
-            QueryPoolSizes: self.query_pool_sizes,
-
-            pDxCompilerPath: if let Some(path) = self.dx_compiler_path {
-                path.as_os_str().as_bytes().as_ptr() as *const i8
-            } else {
-                std::ptr::null()
-            },
-        }
-    }
-}
-
 pub struct EngineFactoryVk {
     engine_factory_vk: *mut bindings::IEngineFactoryVk,
     virtual_functions: *mut bindings::IEngineFactoryVkVtbl,
@@ -168,15 +107,6 @@ pub struct EngineFactoryVk {
 }
 
 impl EngineFactoryVk {
-    pub(crate) fn new(engine_factory_ptr: *mut bindings::IEngineFactoryVk) -> Self {
-        EngineFactoryVk {
-            engine_factory_vk: engine_factory_ptr,
-            virtual_functions: unsafe { (*engine_factory_ptr).pVtbl },
-
-            engine_factory: EngineFactory::new(engine_factory_ptr as *mut bindings::IEngineFactory),
-        }
-    }
-
     pub fn enable_device_simulation(&self) {
         unsafe {
             (*self.virtual_functions)
@@ -223,7 +153,81 @@ impl EngineFactoryImplementation for EngineFactoryVk {
         );
 
         {
-            let create_info: bindings::EngineVkCreateInfo = create_info.into();
+            fn vec_string_to_vec_cstring_ptr(
+                strings: &Vec<String>,
+            ) -> (Vec<std::ffi::CString>, Vec<*const i8>) {
+                let cstrings = strings
+                    .iter()
+                    .map(|s| std::ffi::CString::new(s.as_str()).unwrap())
+                    .collect::<Vec<std::ffi::CString>>();
+                let ptrs = cstrings
+                    .iter()
+                    .map(|s| s.as_ptr())
+                    .collect::<Vec<*const i8>>();
+                (cstrings, ptrs)
+            }
+
+            let (_, instance_layer_names) =
+                vec_string_to_vec_cstring_ptr(&create_info.instance_layer_names);
+            let (_, instance_extension_names) =
+                vec_string_to_vec_cstring_ptr(&create_info.instance_extension_names);
+            let (_, device_extension_names) =
+                vec_string_to_vec_cstring_ptr(&create_info.device_extension_names);
+            let (_, ignore_debug_message_names) =
+                vec_string_to_vec_cstring_ptr(&create_info.ignore_debug_message_names);
+
+            let create_info = bindings::EngineVkCreateInfo {
+                _EngineCreateInfo: create_info.engine_create_info.into(),
+                InstanceLayerCount: create_info.instance_layer_names.len() as u32,
+                ppInstanceLayerNames: if instance_layer_names.is_empty() {
+                    std::ptr::null()
+                } else {
+                    instance_layer_names.as_ptr()
+                },
+                InstanceExtensionCount: create_info.instance_extension_names.len() as u32,
+                ppInstanceExtensionNames: if instance_extension_names.is_empty() {
+                    std::ptr::null()
+                } else {
+                    instance_extension_names.as_ptr()
+                },
+
+                DeviceExtensionCount: create_info.device_extension_names.len() as u32,
+                ppDeviceExtensionNames: if device_extension_names.is_empty() {
+                    std::ptr::null()
+                } else {
+                    device_extension_names.as_ptr()
+                },
+                pDeviceExtensionFeatures: create_info.device_extension_features,
+
+                pVkAllocator: create_info.vk_allocator,
+
+                IgnoreDebugMessageCount: create_info.ignore_debug_message_names.len() as u32,
+                ppIgnoreDebugMessageNames: if ignore_debug_message_names.is_empty() {
+                    std::ptr::null()
+                } else {
+                    ignore_debug_message_names.as_ptr()
+                },
+
+                MainDescriptorPoolSize: create_info.main_descriptor_pool_size,
+
+                DynamicDescriptorPoolSize: create_info.dynamic_descriptor_pool_size,
+
+                DeviceLocalMemoryPageSize: create_info.device_local_memory_page_size,
+                HostVisibleMemoryPageSize: create_info.host_visible_memory_page_size,
+                DeviceLocalMemoryReserveSize: create_info.device_local_memory_reserve_size,
+                HostVisibleMemoryReserveSize: create_info.host_visible_memory_reserve_size,
+                UploadHeapPageSize: create_info.upload_heap_page_size,
+                DynamicHeapSize: create_info.dynamic_heap_size,
+                DynamicHeapPageSize: create_info.dynamic_heap_page_size,
+
+                QueryPoolSizes: create_info.query_pool_sizes,
+
+                pDxCompilerPath: if let Some(path) = create_info.dx_compiler_path {
+                    path.as_os_str().as_bytes().as_ptr() as *const i8
+                } else {
+                    std::ptr::null()
+                },
+            };
             unsafe {
                 (*self.virtual_functions)
                     .EngineFactoryVk

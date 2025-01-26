@@ -18,8 +18,8 @@ bitflags! {
 }
 const_assert!(bindings::SAMPLER_FLAG_SUBSAMPLED_COARSE_RECONSTRUCTION == 2);
 
-pub struct SamplerDesc {
-    pub name: String,
+pub struct SamplerDesc<'a> {
+    pub name: &'a std::ffi::CStr,
     pub min_filter: FilterType,
     pub mag_filter: FilterType,
     pub mip_filter: FilterType,
@@ -36,11 +36,11 @@ pub struct SamplerDesc {
     pub max_lod: f32,
 }
 
-impl Into<bindings::SamplerDesc> for SamplerDesc {
+impl<'a> Into<bindings::SamplerDesc> for SamplerDesc<'a> {
     fn into(self) -> bindings::SamplerDesc {
         bindings::SamplerDesc {
             _DeviceObjectAttribs: bindings::DeviceObjectAttribs {
-                Name: self.name.as_ptr() as *const i8,
+                Name: self.name.as_ptr(),
             },
             MinFilter: self.min_filter.into(),
             MagFilter: self.mag_filter.into(),

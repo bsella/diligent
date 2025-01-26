@@ -23,17 +23,17 @@ impl Into<bindings::SHADER_RESOURCE_VARIABLE_TYPE> for ShaderResourceVariableTyp
     }
 }
 
-pub struct ShaderResourceVariableDesc {
-    pub name: String,
+pub struct ShaderResourceVariableDesc<'a> {
+    pub name: &'a std::ffi::CStr,
     pub variable_type: ShaderResourceVariableType,
     pub shader_stages: ShaderTypes,
     pub flags: ShaderVariableFlags,
 }
 
-impl Into<bindings::ShaderResourceVariableDesc> for ShaderResourceVariableDesc {
+impl<'a> Into<bindings::ShaderResourceVariableDesc> for ShaderResourceVariableDesc<'a> {
     fn into(self) -> bindings::ShaderResourceVariableDesc {
         bindings::ShaderResourceVariableDesc {
-            Name: self.name.as_ptr() as *const i8,
+            Name: self.name.as_ptr(),
             ShaderStages: self.shader_stages.bits() as bindings::SHADER_TYPE,
             Type: self.variable_type.into(),
             Flags: self.flags.bits() as bindings::SHADER_VARIABLE_FLAGS,
@@ -84,8 +84,7 @@ impl ShaderResourceVariable {
         device_objects: &[DeviceObject],
         flags: Option<bindings::SET_SHADER_RESOURCE_FLAGS>,
     ) {
-        let object_ptrs =
-            Vec::from_iter(device_objects.iter().map(|object| object.device_object));
+        let object_ptrs = Vec::from_iter(device_objects.iter().map(|object| object.device_object));
         unsafe {
             (*self.virtual_functions)
                 .ShaderResourceVariable

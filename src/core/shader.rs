@@ -115,8 +115,8 @@ impl<'a> ShaderCreateInfo<'a> {
 impl<'a> Into<bindings::ShaderCreateInfo> for ShaderCreateInfo<'a> {
     fn into(self) -> bindings::ShaderCreateInfo {
         let macros = Vec::from_iter(self.macros.iter().map(|(name, def)| bindings::ShaderMacro {
-            Name: name.as_ptr() as *const i8,
-            Definition: def.as_ptr() as *const i8,
+            Name: name.as_ptr(),
+            Definition: def.as_ptr(),
         }));
         bindings::ShaderCreateInfo {
             FilePath: match &self.source {

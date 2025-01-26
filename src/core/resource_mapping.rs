@@ -36,19 +36,22 @@ impl ResourceMapping {
     }
 
     fn add_resource(&mut self, name: &str, object: &DeviceObject, is_unique: bool) {
-        unsafe {
-            (*self.virtual_functions)
-                .ResourceMapping
-                .AddResource
-                .unwrap_unchecked()(
-                self.resource_mapping,
-                name.as_bytes().as_ptr() as *const i8,
-                object.device_object,
-                is_unique,
-            );
+        {
+            let name = std::ffi::CString::new(name).unwrap();
+            unsafe {
+                (*self.virtual_functions)
+                    .ResourceMapping
+                    .AddResource
+                    .unwrap_unchecked()(
+                    self.resource_mapping,
+                    name.as_ptr(),
+                    object.device_object,
+                    is_unique,
+                );
+            }
         }
         self.resources
-            .entry(name.to_string())
+            .entry(name.to_owned())
             .or_insert(Vec::new())
             .push(std::ptr::addr_of!(*object));
     }
@@ -56,22 +59,26 @@ impl ResourceMapping {
     fn add_resource_array(&mut self, name: &str, objects: &[DeviceObject], is_unique: bool) {
         let object_ptrs = Vec::from_iter(objects.iter().map(|object| object.device_object));
 
-        unsafe {
-            (*self.virtual_functions)
-                .ResourceMapping
-                .AddResourceArray
-                .unwrap_unchecked()(
-                self.resource_mapping,
-                name.as_bytes().as_ptr() as *const i8,
-                0,
-                object_ptrs.as_ptr(),
-                objects.len() as u32,
-                is_unique,
-            );
+        {
+            let name = std::ffi::CString::new(name).unwrap();
+
+            unsafe {
+                (*self.virtual_functions)
+                    .ResourceMapping
+                    .AddResourceArray
+                    .unwrap_unchecked()(
+                    self.resource_mapping,
+                    name.as_ptr(),
+                    0,
+                    object_ptrs.as_ptr(),
+                    objects.len() as u32,
+                    is_unique,
+                );
+            }
         }
 
         self.resources
-            .entry(name.to_string())
+            .entry(name.to_owned())
             .or_insert(Vec::new())
             .extend(objects.iter().map(|object| std::ptr::addr_of!(*object)));
     }
@@ -79,21 +86,17 @@ impl ResourceMapping {
     fn remove_resource_by_name(&mut self, name: &str, array_index: Option<u32>) {
         let array_index = array_index.unwrap_or(0);
 
-        self.resources
-            .entry(name.to_string())
-            .and_modify(|objects| {
-                objects.remove(array_index as usize);
-            });
+        self.resources.entry(name.to_owned()).and_modify(|objects| {
+            objects.remove(array_index as usize);
+        });
+
+        let name = std::ffi::CString::new(name).unwrap();
 
         unsafe {
             (*self.virtual_functions)
                 .ResourceMapping
                 .RemoveResourceByName
-                .unwrap_unchecked()(
-                self.resource_mapping,
-                name.as_bytes().as_ptr() as *const i8,
-                array_index,
-            );
+                .unwrap_unchecked()(self.resource_mapping, name.as_ptr(), array_index);
         }
     }
 

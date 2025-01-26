@@ -11,17 +11,17 @@ use super::{
     shader_resource_binding::ShaderResourceBinding,
 };
 
-pub struct ImmutableSamplerDesc {
+pub struct ImmutableSamplerDesc<'a> {
     pub shader_stages: ShaderTypes,
-    pub sampler_or_texture_name: String,
-    pub sampler_desc: SamplerDesc,
+    pub sampler_or_texture_name: &'a std::ffi::CStr,
+    pub sampler_desc: SamplerDesc<'a>,
 }
 
-impl Into<bindings::ImmutableSamplerDesc> for ImmutableSamplerDesc {
+impl<'a> Into<bindings::ImmutableSamplerDesc> for ImmutableSamplerDesc<'a> {
     fn into(self) -> bindings::ImmutableSamplerDesc {
         bindings::ImmutableSamplerDesc {
             ShaderStages: self.shader_stages.bits() as bindings::SHADER_TYPE,
-            SamplerOrTextureName: self.sampler_or_texture_name.as_ptr() as *const i8,
+            SamplerOrTextureName: self.sampler_or_texture_name.as_ptr(),
             Desc: self.sampler_desc.into(),
         }
     }

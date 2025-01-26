@@ -778,7 +778,7 @@ impl DeviceContext {
     // pub fn get_user_data(&self);
 
     pub fn begin_debug_group(&self, name: &str, color: [f32; 4]) {
-        let name = std::ffi::CString::new(name.to_owned()).unwrap();
+        let name = std::ffi::CString::new(name).unwrap();
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -803,7 +803,7 @@ impl DeviceContext {
                 .InsertDebugLabel
                 .unwrap_unchecked()(
                 self.device_context,
-                name.as_bytes().as_ptr() as *const i8,
+                std::ffi::CString::new(name).unwrap().as_ptr(),
                 color.as_ptr(),
             )
         }
