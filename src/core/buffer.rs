@@ -8,17 +8,17 @@ use super::{
 };
 
 pub struct Buffer {
-    pub(crate) m_buffer: *mut bindings::IBuffer,
-    m_virtual_functions: *mut bindings::IBufferVtbl,
+    pub(crate) buffer: *mut bindings::IBuffer,
+    virtual_functions: *mut bindings::IBufferVtbl,
 
-    m_default_view: Option<BufferView>,
+    default_view: Option<BufferView>,
 
-    m_device_object: DeviceObject,
+    device_object: DeviceObject,
 }
 
 impl AsDeviceObject for Buffer {
     fn as_device_object(&self) -> &DeviceObject {
-        &self.m_device_object
+        &self.device_object
     }
 }
 
@@ -28,10 +28,10 @@ impl Buffer {
         buffer_desc: &bindings::BufferDesc,
     ) -> Self {
         let mut buffer = Buffer {
-            m_device_object: DeviceObject::new(buffer_ptr as *mut bindings::IDeviceObject),
-            m_buffer: buffer_ptr,
-            m_virtual_functions: unsafe { (*buffer_ptr).pVtbl },
-            m_default_view: None,
+            device_object: DeviceObject::new(buffer_ptr as *mut bindings::IDeviceObject),
+            buffer: buffer_ptr,
+            virtual_functions: unsafe { (*buffer_ptr).pVtbl },
+            default_view: None,
         };
 
         fn bind_flags_to_buffer_view_type(
@@ -59,7 +59,7 @@ impl Buffer {
                 std::ptr::addr_of!(buffer),
             );
             buffer_view.as_device_object().as_object().add_ref();
-            buffer.m_default_view = Some(buffer_view);
+            buffer.default_view = Some(buffer_view);
         }
 
         buffer
@@ -67,10 +67,10 @@ impl Buffer {
 
     fn get_desc(&self) -> &bindings::BufferDesc {
         unsafe {
-            ((*self.m_virtual_functions)
+            ((*self.virtual_functions)
                 .DeviceObject
                 .GetDesc
-                .unwrap_unchecked()(self.m_buffer as *mut bindings::IDeviceObject)
+                .unwrap_unchecked()(self.buffer as *mut bindings::IDeviceObject)
                 as *const bindings::BufferDesc)
                 .as_ref()
                 .unwrap_unchecked()
@@ -80,11 +80,11 @@ impl Buffer {
     fn create_view(&mut self, view_desc: bindings::BufferViewDesc) -> Option<BufferView> {
         let mut buffer_view_ptr: *mut bindings::IBufferView = std::ptr::null_mut();
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .Buffer
                 .CreateView
                 .unwrap_unchecked()(
-                self.m_buffer,
+                self.buffer,
                 &view_desc,
                 std::ptr::addr_of_mut!(buffer_view_ptr),
             );
@@ -98,79 +98,69 @@ impl Buffer {
 
     fn get_default_view(&self, view_type: bindings::BUFFER_VIEW_TYPE) -> Option<&BufferView> {
         if unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .Buffer
                 .GetDefaultView
-                .unwrap_unchecked()(self.m_buffer, view_type)
+                .unwrap_unchecked()(self.buffer, view_type)
         }
         .is_null()
         {
             None
         } else {
-            self.m_default_view.as_ref()
+            self.default_view.as_ref()
         }
     }
 
     fn get_native_handle(&self) -> u64 {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .Buffer
                 .GetNativeHandle
-                .unwrap_unchecked()(self.m_buffer)
+                .unwrap_unchecked()(self.buffer)
         }
     }
 
     fn set_state(&mut self, state: bindings::RESOURCE_STATE) {
-        unsafe {
-            (*self.m_virtual_functions)
-                .Buffer
-                .SetState
-                .unwrap_unchecked()(self.m_buffer, state)
-        }
+        unsafe { (*self.virtual_functions).Buffer.SetState.unwrap_unchecked()(self.buffer, state) }
     }
 
     fn get_state(&self) -> bindings::RESOURCE_STATE {
-        unsafe {
-            (*self.m_virtual_functions)
-                .Buffer
-                .GetState
-                .unwrap_unchecked()(self.m_buffer)
-        }
+        unsafe { (*self.virtual_functions).Buffer.GetState.unwrap_unchecked()(self.buffer) }
     }
 
     fn get_memory_properties(&self) -> bindings::MEMORY_PROPERTIES {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .Buffer
                 .GetMemoryProperties
-                .unwrap_unchecked()(self.m_buffer)
+                .unwrap_unchecked()(self.buffer)
         }
     }
 
     fn flush_mapped_range(&mut self, start_offset: u64, size: u64) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .Buffer
                 .FlushMappedRange
-                .unwrap_unchecked()(self.m_buffer, start_offset, size)
+                .unwrap_unchecked()(self.buffer, start_offset, size)
         }
     }
 
     fn invalidate_mapped_range(&mut self, start_offset: u64, size: u64) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .Buffer
                 .InvalidateMappedRange
-                .unwrap_unchecked()(self.m_buffer, start_offset, size)
+                .unwrap_unchecked()(self.buffer, start_offset, size)
         }
     }
 
     fn get_sparse_properties(&self) -> bindings::SparseBufferProperties {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .Buffer
                 .GetSparseProperties
-                .unwrap_unchecked()(self.m_buffer)
+                .unwrap_unchecked()(self.buffer)
         }
     }
 }

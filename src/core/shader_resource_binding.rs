@@ -8,24 +8,24 @@ use super::{
 };
 
 pub struct ShaderResourceBinding {
-    pub(crate) m_shader_resource_binding: *mut bindings::IShaderResourceBinding,
-    m_virtual_functions: *mut bindings::IShaderResourceBindingVtbl,
+    pub(crate) shader_resource_binding: *mut bindings::IShaderResourceBinding,
+    virtual_functions: *mut bindings::IShaderResourceBindingVtbl,
 
-    m_object: Object,
+    object: Object,
 }
 
 impl AsObject for ShaderResourceBinding {
     fn as_object(&self) -> &Object {
-        &self.m_object
+        &self.object
     }
 }
 
 impl ShaderResourceBinding {
     pub(crate) fn new(srb_ptr: *mut bindings::IShaderResourceBinding) -> Self {
         ShaderResourceBinding {
-            m_shader_resource_binding: srb_ptr,
-            m_virtual_functions: unsafe { (*srb_ptr).pVtbl },
-            m_object: Object::new(srb_ptr as *mut bindings::IObject),
+            shader_resource_binding: srb_ptr,
+            virtual_functions: unsafe { (*srb_ptr).pVtbl },
+            object: Object::new(srb_ptr as *mut bindings::IObject),
         }
     }
 
@@ -40,13 +40,13 @@ impl ShaderResourceBinding {
         flags: bindings::BIND_SHADER_RESOURCES_FLAGS,
     ) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .ShaderResourceBinding
                 .BindResources
                 .unwrap_unchecked()(
-                self.m_shader_resource_binding,
+                self.shader_resource_binding,
                 shader_stages,
-                resource_mapping.m_resource_mapping,
+                resource_mapping.resource_mapping,
                 flags,
             )
         }
@@ -59,13 +59,13 @@ impl ShaderResourceBinding {
         flags: bindings::BIND_SHADER_RESOURCES_FLAGS,
     ) -> bindings::SHADER_RESOURCE_VARIABLE_TYPE_FLAGS {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .ShaderResourceBinding
                 .CheckResources
                 .unwrap_unchecked()(
-                self.m_shader_resource_binding,
+                self.shader_resource_binding,
                 shader_stages,
-                resource_mapping.m_resource_mapping,
+                resource_mapping.resource_mapping,
                 flags,
             )
         }
@@ -80,10 +80,10 @@ impl ShaderResourceBinding {
 
     fn static_resources_initialized(&self) -> bool {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .ShaderResourceBinding
                 .StaticResourcesInitialized
-                .unwrap_unchecked()(self.m_shader_resource_binding)
+                .unwrap_unchecked()(self.shader_resource_binding)
         }
     }
 }

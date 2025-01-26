@@ -8,9 +8,9 @@ use crate::{
 };
 
 pub struct Sample {
-    m_render_device: RenderDevice,
-    m_immediate_contexts: Vec<DeviceContext>,
-    m_deferred_contexts: Vec<DeviceContext>,
+    render_device: RenderDevice,
+    immediate_contexts: Vec<DeviceContext>,
+    deferred_contexts: Vec<DeviceContext>,
 }
 
 pub trait SampleBase {
@@ -40,18 +40,18 @@ impl SampleBase for Sample {
         _swap_chain: &SwapChain,
     ) -> Self {
         Sample {
-            m_render_device: render_device,
-            m_immediate_contexts: immediate_contexts,
-            m_deferred_contexts: deferred_contexts,
+            render_device: render_device,
+            immediate_contexts: immediate_contexts,
+            deferred_contexts: deferred_contexts,
         }
     }
 
     fn get_render_device(&self) -> &RenderDevice {
-        &self.m_render_device
+        &self.render_device
     }
 
     fn get_immediate_context(&self) -> &DeviceContext {
-        self.m_immediate_contexts.first().unwrap()
+        self.immediate_contexts.first().unwrap()
     }
 
     fn render(&self, swap_chain: &SwapChain) {}
@@ -64,17 +64,17 @@ impl SampleBase for Sample {
 }
 
 pub struct SampleApp<Sample: SampleBase> {
-    m_app_title: String,
-    m_swap_chain: SwapChain,
+    app_title: String,
+    swap_chain: SwapChain,
 
-    m_golden_image_mode: GoldenImageMode,
-    m_golden_pixel_tolerance: u32,
+    golden_image_mode: GoldenImageMode,
+    golden_pixel_tolerance: u32,
 
-    m_sample: Sample,
+    sample: Sample,
 
-    m_vsync: bool,
+    vsync: bool,
 
-    m_current_time: f64,
+    current_time: f64,
 }
 
 impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
@@ -107,40 +107,40 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
         );
 
         SampleApp::<GenericSample> {
-            m_app_title: GenericSample::get_name().to_string(),
-            m_swap_chain: swap_chain,
+            app_title: GenericSample::get_name().to_string(),
+            swap_chain: swap_chain,
 
-            m_golden_image_mode: GoldenImageMode::None,
-            m_golden_pixel_tolerance: 0,
+            golden_image_mode: GoldenImageMode::None,
+            golden_pixel_tolerance: 0,
 
-            m_sample: sample,
+            sample: sample,
 
-            m_vsync: false,
+            vsync: false,
 
-            m_current_time: 0.0,
+            current_time: 0.0,
         }
     }
 
     fn get_title(&self) -> &str {
-        self.m_app_title.as_str()
+        self.app_title.as_str()
     }
 
     fn update(&mut self, current_time: f64, elapsed_time: f64) {
-        self.m_current_time = current_time;
+        self.current_time = current_time;
 
         // TODO : update app settings
 
         // TODO Imgui
 
-        self.m_sample.update(current_time, elapsed_time);
+        self.sample.update(current_time, elapsed_time);
     }
 
     fn render(&self) {
-        let context = self.m_sample.get_immediate_context();
+        let context = self.sample.get_immediate_context();
         context.clear_stats();
 
-        let rtv = self.m_swap_chain.get_current_back_buffer_rtv();
-        let dsv = self.m_swap_chain.get_depth_buffer_dsv();
+        let rtv = self.swap_chain.get_current_back_buffer_rtv();
+        let dsv = self.swap_chain.get_depth_buffer_dsv();
 
         context.set_render_targets(
             &[&rtv],
@@ -148,7 +148,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             bindings::RESOURCE_STATE_TRANSITION_MODE_TRANSITION,
         );
 
-        self.m_sample.render(&self.m_swap_chain);
+        self.sample.render(&self.swap_chain);
 
         // Restore default render target in case the sample has changed it
         context.set_render_targets(
@@ -163,19 +163,19 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
     fn present(&mut self) {
         // TODO screen capture
 
-        self.m_swap_chain.present(if self.m_vsync { 1 } else { 0 });
+        self.swap_chain.present(if self.vsync { 1 } else { 0 });
 
         // TODO screen capture
     }
 
     fn window_resize(&mut self, width: u32, height: u32) {
-        self.m_sample.pre_window_resize();
+        self.sample.pre_window_resize();
 
-        self.m_swap_chain.resize(width, height, None);
+        self.swap_chain.resize(width, height, None);
 
-        let swap_chain_desc = self.m_swap_chain.get_desc();
+        let swap_chain_desc = self.swap_chain.get_desc();
 
-        self.m_sample
+        self.sample
             .window_resize(swap_chain_desc.Width, swap_chain_desc.Height);
     }
 }

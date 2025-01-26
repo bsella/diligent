@@ -378,25 +378,25 @@ impl<'a> Into<bindings::GraphicsPipelineStateCreateInfo> for GraphicsPipelineSta
             GraphicsPipeline: self.graphics_pipeline_desc.into(),
             pVS: self
                 .vertex_shader
-                .map_or(std::ptr::null_mut(), |shader| shader.m_shader),
+                .map_or(std::ptr::null_mut(), |shader| shader.shader),
             pPS: self
                 .pixel_shader
-                .map_or(std::ptr::null_mut(), |shader| shader.m_shader),
+                .map_or(std::ptr::null_mut(), |shader| shader.shader),
             pDS: self
                 .domain_shader
-                .map_or(std::ptr::null_mut(), |shader| shader.m_shader),
+                .map_or(std::ptr::null_mut(), |shader| shader.shader),
             pHS: self
                 .hull_shader
-                .map_or(std::ptr::null_mut(), |shader| shader.m_shader),
+                .map_or(std::ptr::null_mut(), |shader| shader.shader),
             pGS: self
                 .geometry_shader
-                .map_or(std::ptr::null_mut(), |shader| shader.m_shader),
+                .map_or(std::ptr::null_mut(), |shader| shader.shader),
             pAS: self
                 .amplification_shader
-                .map_or(std::ptr::null_mut(), |shader| shader.m_shader),
+                .map_or(std::ptr::null_mut(), |shader| shader.shader),
             pMS: self
                 .mesh_shader
-                .map_or(std::ptr::null_mut(), |shader| shader.m_shader),
+                .map_or(std::ptr::null_mut(), |shader| shader.shader),
         }
     }
 }
@@ -412,7 +412,7 @@ impl<'a> Into<bindings::PipelineStateCreateInfo> for PipelineStateCreateInfo<'a>
             } else {
                 self.resource_signatures
                     .iter()
-                    .map(|rs| rs.m_pipeline_resource_signature)
+                    .map(|rs| rs.pipeline_resource_signature)
                     .collect::<Vec<*mut bindings::IPipelineResourceSignature>>()
                     .as_mut_ptr()
             },
@@ -719,35 +719,34 @@ impl Default for StencilOperationsDesc {
 }
 
 pub struct PipelineState {
-    pub(crate) m_pipeline_state: *mut bindings::IPipelineState,
-    m_virtual_functions: *mut bindings::IPipelineStateVtbl,
+    pub(crate) pipeline_state: *mut bindings::IPipelineState,
+    virtual_functions: *mut bindings::IPipelineStateVtbl,
 
-    m_device_object: DeviceObject,
+    device_object: DeviceObject,
 }
 
 impl AsDeviceObject for PipelineState {
     fn as_device_object(&self) -> &DeviceObject {
-        &self.m_device_object
+        &self.device_object
     }
 }
 
 impl PipelineState {
     pub(crate) fn new(pipeline_state_ptr: *mut bindings::IPipelineState) -> Self {
         PipelineState {
-            m_pipeline_state: pipeline_state_ptr,
-            m_virtual_functions: unsafe { (*pipeline_state_ptr).pVtbl },
-            m_device_object: DeviceObject::new(pipeline_state_ptr as *mut bindings::IDeviceObject),
+            pipeline_state: pipeline_state_ptr,
+            virtual_functions: unsafe { (*pipeline_state_ptr).pVtbl },
+            device_object: DeviceObject::new(pipeline_state_ptr as *mut bindings::IDeviceObject),
         }
     }
 
     fn get_desc(&self) -> &bindings::PipelineStateDesc {
         unsafe {
-            ((*self.m_virtual_functions)
+            ((*self.virtual_functions)
                 .DeviceObject
                 .GetDesc
-                .unwrap_unchecked()(
-                self.m_pipeline_state as *mut bindings::IDeviceObject
-            ) as *const bindings::PipelineStateDesc)
+                .unwrap_unchecked()(self.pipeline_state as *mut bindings::IDeviceObject)
+                as *const bindings::PipelineStateDesc)
                 .as_ref()
                 .unwrap_unchecked()
         }
@@ -755,10 +754,10 @@ impl PipelineState {
 
     fn get_graphics_pipeline_desc(&self) -> &bindings::GraphicsPipelineDesc {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .PipelineState
                 .GetGraphicsPipelineDesc
-                .unwrap_unchecked()(self.m_pipeline_state)
+                .unwrap_unchecked()(self.pipeline_state)
             .as_ref()
             .unwrap_unchecked()
         }
@@ -766,10 +765,10 @@ impl PipelineState {
 
     fn get_ray_tracing_pipeline_desc(&self) -> &bindings::RayTracingPipelineDesc {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .PipelineState
                 .GetRayTracingPipelineDesc
-                .unwrap_unchecked()(self.m_pipeline_state)
+                .unwrap_unchecked()(self.pipeline_state)
             .as_ref()
             .unwrap_unchecked()
         }
@@ -777,10 +776,10 @@ impl PipelineState {
 
     fn get_tile_pipeline_desc(&self) -> &bindings::TilePipelineDesc {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .PipelineState
                 .GetTilePipelineDesc
-                .unwrap_unchecked()(self.m_pipeline_state)
+                .unwrap_unchecked()(self.pipeline_state)
             .as_ref()
             .unwrap_unchecked()
         }
@@ -793,13 +792,13 @@ impl PipelineState {
         flags: bindings::BIND_SHADER_RESOURCES_FLAGS,
     ) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .PipelineState
                 .BindStaticResources
                 .unwrap_unchecked()(
-                self.m_pipeline_state,
+                self.pipeline_state,
                 shader_type,
-                resource_mapping.m_resource_mapping,
+                resource_mapping.resource_mapping,
                 flags,
             )
         }
@@ -819,11 +818,11 @@ impl PipelineState {
         let mut shader_resource_binding_ptr: *mut bindings::IShaderResourceBinding =
             std::ptr::null_mut();
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .PipelineState
                 .CreateShaderResourceBinding
                 .unwrap_unchecked()(
-                self.m_pipeline_state,
+                self.pipeline_state,
                 std::ptr::addr_of_mut!(shader_resource_binding_ptr),
                 init_static_resources.unwrap_or(false),
             );
@@ -837,35 +836,31 @@ impl PipelineState {
 
     fn initialize_static_srb_resources(&self, shader_resource_binding: &mut ShaderResourceBinding) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .PipelineState
                 .InitializeStaticSRBResources
                 .unwrap_unchecked()(
-                self.m_pipeline_state,
-                shader_resource_binding.m_shader_resource_binding,
+                self.pipeline_state,
+                shader_resource_binding.shader_resource_binding,
             )
         }
     }
 
     fn copy_static_resources(&self, pipeline_state: &mut PipelineState) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .PipelineState
                 .CopyStaticResources
-                .unwrap_unchecked()(
-                self.m_pipeline_state, pipeline_state.m_pipeline_state
-            )
+                .unwrap_unchecked()(self.pipeline_state, pipeline_state.pipeline_state)
         }
     }
 
     fn is_compatible_with(&self, pipeline_state: &PipelineState) -> bool {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .PipelineState
                 .IsCompatibleWith
-                .unwrap_unchecked()(
-                self.m_pipeline_state, pipeline_state.m_pipeline_state
-            )
+                .unwrap_unchecked()(self.pipeline_state, pipeline_state.pipeline_state)
         }
     }
 
@@ -875,11 +870,11 @@ impl PipelineState {
 
     fn get_status(&self, wait_for_completion: Option<bool>) -> bindings::PIPELINE_STATE_STATUS {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .PipelineState
                 .GetStatus
                 .unwrap_unchecked()(
-                self.m_pipeline_state, wait_for_completion.unwrap_or(false)
+                self.pipeline_state, wait_for_completion.unwrap_or(false)
             )
         }
     }

@@ -28,17 +28,17 @@ impl Into<bindings::ImmutableSamplerDesc> for ImmutableSamplerDesc {
 }
 
 pub struct PipelineResourceSignature {
-    pub(crate) m_pipeline_resource_signature: *mut bindings::IPipelineResourceSignature,
-    m_virtual_functions: *mut bindings::IPipelineResourceSignatureVtbl,
+    pub(crate) pipeline_resource_signature: *mut bindings::IPipelineResourceSignature,
+    virtual_functions: *mut bindings::IPipelineResourceSignatureVtbl,
 
-    m_static_variables: BTreeMap<bindings::SHADER_TYPE, Vec<ShaderResourceVariable>>,
+    static_variables: BTreeMap<bindings::SHADER_TYPE, Vec<ShaderResourceVariable>>,
 
-    m_device_object: DeviceObject,
+    device_object: DeviceObject,
 }
 
 impl AsDeviceObject for PipelineResourceSignature {
     fn as_device_object(&self) -> &DeviceObject {
-        &self.m_device_object
+        &self.device_object
     }
 }
 
@@ -82,12 +82,12 @@ impl PipelineResourceSignature {
         }
 
         PipelineResourceSignature {
-            m_pipeline_resource_signature: pipeline_rs_ptr,
-            m_virtual_functions: unsafe { (*pipeline_rs_ptr).pVtbl },
+            pipeline_resource_signature: pipeline_rs_ptr,
+            virtual_functions: unsafe { (*pipeline_rs_ptr).pVtbl },
 
-            m_device_object: DeviceObject::new(pipeline_rs_ptr as *mut bindings::IDeviceObject),
+            device_object: DeviceObject::new(pipeline_rs_ptr as *mut bindings::IDeviceObject),
 
-            m_static_variables: BTreeMap::from_iter(
+            static_variables: BTreeMap::from_iter(
                 [
                     bindings::SHADER_TYPE_VERTEX,
                     bindings::SHADER_TYPE_PIXEL,
@@ -118,11 +118,11 @@ impl PipelineResourceSignature {
 
     fn get_desc(&self) -> &bindings::PipelineResourceSignatureDesc {
         unsafe {
-            ((*self.m_virtual_functions)
+            ((*self.virtual_functions)
                 .DeviceObject
                 .GetDesc
                 .unwrap_unchecked()(
-                self.m_pipeline_resource_signature as *mut bindings::IDeviceObject,
+                self.pipeline_resource_signature as *mut bindings::IDeviceObject,
             ) as *const bindings::PipelineResourceSignatureDesc)
                 .as_ref()
                 .unwrap_unchecked()
@@ -135,11 +135,11 @@ impl PipelineResourceSignature {
     ) -> Option<ShaderResourceBinding> {
         let mut shader_resource_binding_ptr = std::ptr::null_mut();
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .PipelineResourceSignature
                 .CreateShaderResourceBinding
                 .unwrap_unchecked()(
-                self.m_pipeline_resource_signature,
+                self.pipeline_resource_signature,
                 std::ptr::addr_of_mut!(shader_resource_binding_ptr),
                 init_static_resources.unwrap_or(false),
             );
@@ -159,13 +159,13 @@ impl PipelineResourceSignature {
         flags: bindings::BIND_SHADER_RESOURCES_FLAGS,
     ) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .PipelineResourceSignature
                 .BindStaticResources
                 .unwrap_unchecked()(
-                self.m_pipeline_resource_signature,
+                self.pipeline_resource_signature,
                 shader_stages,
-                resource_mapping.m_resource_mapping,
+                resource_mapping.resource_mapping,
                 flags,
             );
         }
@@ -175,43 +175,43 @@ impl PipelineResourceSignature {
         &self,
         shader_type: bindings::SHADER_TYPE,
     ) -> Option<&[ShaderResourceVariable]> {
-        self.m_static_variables
+        self.static_variables
             .get(&shader_type)
             .map(|v| v.as_slice())
     }
 
     fn initialize_static_srb_resources(&self, shader_resource_binding: &ShaderResourceBinding) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .PipelineResourceSignature
                 .InitializeStaticSRBResources
                 .unwrap_unchecked()(
-                self.m_pipeline_resource_signature,
-                shader_resource_binding.m_shader_resource_binding,
+                self.pipeline_resource_signature,
+                shader_resource_binding.shader_resource_binding,
             );
         }
     }
 
     fn copy_static_resources(&self, signature: &mut PipelineResourceSignature) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .PipelineResourceSignature
                 .CopyStaticResources
                 .unwrap_unchecked()(
-                self.m_pipeline_resource_signature,
-                signature.m_pipeline_resource_signature,
+                self.pipeline_resource_signature,
+                signature.pipeline_resource_signature,
             );
         }
     }
 
     fn is_compatible_with(&self, signature: &PipelineResourceSignature) -> bool {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .PipelineResourceSignature
                 .IsCompatibleWith
                 .unwrap_unchecked()(
-                self.m_pipeline_resource_signature,
-                signature.m_pipeline_resource_signature,
+                self.pipeline_resource_signature,
+                signature.pipeline_resource_signature,
             )
         }
     }

@@ -3,14 +3,14 @@ use crate::bindings;
 use super::object::{AsObject, Object};
 
 pub struct DeviceObject {
-    pub(crate) m_device_object: *mut bindings::IDeviceObject,
-    m_virtual_functions: *mut bindings::IDeviceObjectVtbl,
-    m_object: Object,
+    pub(crate) device_object: *mut bindings::IDeviceObject,
+    virtual_functions: *mut bindings::IDeviceObjectVtbl,
+    object: Object,
 }
 
 impl AsObject for DeviceObject {
     fn as_object(&self) -> &Object {
-        &self.m_object
+        &self.object
     }
 }
 
@@ -21,18 +21,18 @@ pub trait AsDeviceObject {
 impl DeviceObject {
     pub(crate) fn new(device_object: *mut bindings::IDeviceObject) -> Self {
         DeviceObject {
-            m_virtual_functions: unsafe { (*device_object).pVtbl },
-            m_device_object: device_object,
-            m_object: Object::new(device_object as *mut bindings::IObject),
+            virtual_functions: unsafe { (*device_object).pVtbl },
+            device_object: device_object,
+            object: Object::new(device_object as *mut bindings::IObject),
         }
     }
 
     fn get_desc(&self) -> &bindings::DeviceObjectAttribs {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceObject
                 .GetDesc
-                .unwrap_unchecked()(self.m_device_object)
+                .unwrap_unchecked()(self.device_object)
             .as_ref()
             .unwrap_unchecked()
         }
@@ -40,10 +40,10 @@ impl DeviceObject {
 
     fn get_unique_id(&self) -> i32 {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceObject
                 .GetUniqueID
-                .unwrap_unchecked()(self.m_device_object)
+                .unwrap_unchecked()(self.device_object)
         }
     }
 }

@@ -81,10 +81,10 @@ impl Into<bindings::EngineCreateInfo> for EngineCreateInfo {
 }
 
 pub struct EngineFactory {
-    pub(crate) m_engine_factory: *mut bindings::IEngineFactory,
-    m_virtual_functions: *mut bindings::IEngineFactoryVtbl,
+    pub(crate) engine_factory: *mut bindings::IEngineFactory,
+    virtual_functions: *mut bindings::IEngineFactoryVtbl,
 
-    m_object: Object,
+    object: Object,
 }
 
 pub trait AsEngineFactory {
@@ -113,18 +113,18 @@ pub trait EngineFactoryImplementation {
 impl EngineFactory {
     pub(crate) fn new(engine_factory_ptr: *mut bindings::IEngineFactory) -> Self {
         EngineFactory {
-            m_engine_factory: engine_factory_ptr,
-            m_virtual_functions: unsafe { (*engine_factory_ptr).pVtbl },
-            m_object: Object::new(engine_factory_ptr as *mut bindings::IObject),
+            engine_factory: engine_factory_ptr,
+            virtual_functions: unsafe { (*engine_factory_ptr).pVtbl },
+            object: Object::new(engine_factory_ptr as *mut bindings::IObject),
         }
     }
 
     fn get_api_info(&self) -> &bindings::APIInfo {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .EngineFactory
                 .GetAPIInfo
-                .unwrap_unchecked()(self.m_engine_factory)
+                .unwrap_unchecked()(self.engine_factory)
             .as_ref()
             .unwrap_unchecked()
         }
@@ -135,11 +135,11 @@ impl EngineFactory {
     fn create_data_blob<T>(&self, initial_size: usize, data: *const T) -> Option<DataBlob> {
         let mut data_blob_ptr: *mut bindings::IDataBlob = std::ptr::null_mut();
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .EngineFactory
                 .CreateDataBlob
                 .unwrap_unchecked()(
-                self.m_engine_factory,
+                self.engine_factory,
                 initial_size,
                 data as *const c_void,
                 std::ptr::addr_of_mut!(data_blob_ptr),
@@ -155,11 +155,11 @@ impl EngineFactory {
         let mut num_adapters: u32 = 0;
         let adapters_ptr = std::ptr::null_mut();
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .EngineFactory
                 .EnumerateAdapters
                 .unwrap_unchecked()(
-                self.m_engine_factory,
+                self.engine_factory,
                 version,
                 &mut num_adapters,
                 adapters_ptr,
@@ -175,18 +175,18 @@ impl EngineFactory {
 
     fn set_message_callback(&self, callback: bindings::DebugMessageCallbackType) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .EngineFactory
                 .SetMessageCallback
-                .unwrap_unchecked()(self.m_engine_factory, callback)
+                .unwrap_unchecked()(self.engine_factory, callback)
         }
     }
     fn set_break_on_error(&self, break_on_error: bool) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .EngineFactory
                 .SetBreakOnError
-                .unwrap_unchecked()(self.m_engine_factory, break_on_error)
+                .unwrap_unchecked()(self.engine_factory, break_on_error)
         }
     }
 }

@@ -6,17 +6,17 @@ use super::device_object::{AsDeviceObject, DeviceObject};
 use super::object::AsObject;
 
 pub struct Texture {
-    pub(crate) m_texture: *mut bindings::ITexture,
-    m_virtual_functions: *mut bindings::ITextureVtbl,
+    pub(crate) texture: *mut bindings::ITexture,
+    virtual_functions: *mut bindings::ITextureVtbl,
 
-    m_default_view: Option<TextureView>,
+    default_view: Option<TextureView>,
 
-    m_device_object: DeviceObject,
+    device_object: DeviceObject,
 }
 
 impl AsDeviceObject for Texture {
     fn as_device_object(&self) -> &DeviceObject {
-        &self.m_device_object
+        &self.device_object
     }
 }
 
@@ -26,10 +26,10 @@ impl Texture {
         texture_desc: &bindings::TextureDesc,
     ) -> Self {
         let mut texture = Texture {
-            m_device_object: DeviceObject::new(texture_ptr as *mut bindings::IDeviceObject),
-            m_texture: texture_ptr,
-            m_virtual_functions: unsafe { (*texture_ptr).pVtbl },
-            m_default_view: None,
+            device_object: DeviceObject::new(texture_ptr as *mut bindings::IDeviceObject),
+            texture: texture_ptr,
+            virtual_functions: unsafe { (*texture_ptr).pVtbl },
+            default_view: None,
         };
 
         fn bind_flags_to_texture_view_type(
@@ -63,7 +63,7 @@ impl Texture {
                 std::ptr::addr_of!(texture),
             );
             texture_view.as_device_object().as_object().add_ref();
-            texture.m_default_view = Some(texture_view);
+            texture.default_view = Some(texture_view);
         }
 
         texture
@@ -71,10 +71,10 @@ impl Texture {
 
     fn get_desc(&self) -> &bindings::TextureDesc {
         unsafe {
-            ((*self.m_virtual_functions)
+            ((*self.virtual_functions)
                 .DeviceObject
                 .GetDesc
-                .unwrap_unchecked()(self.m_texture as *mut bindings::IDeviceObject)
+                .unwrap_unchecked()(self.texture as *mut bindings::IDeviceObject)
                 as *const bindings::TextureDesc)
                 .as_ref()
                 .unwrap_unchecked()
@@ -87,11 +87,11 @@ impl Texture {
     ) -> Option<TextureView> {
         let mut texture_view_ptr: *mut bindings::ITextureView = std::ptr::null_mut();
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .Texture
                 .CreateView
                 .unwrap_unchecked()(
-                self.m_texture,
+                self.texture,
                 std::ptr::addr_of!(texture_view_desc) as *const bindings::TextureViewDesc,
                 std::ptr::addr_of_mut!(texture_view_ptr),
             );
@@ -109,52 +109,52 @@ impl Texture {
         texture_view_type: bindings::TEXTURE_VIEW_TYPE,
     ) -> Option<&TextureView> {
         if unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .Texture
                 .GetDefaultView
-                .unwrap_unchecked()(self.m_texture, texture_view_type)
+                .unwrap_unchecked()(self.texture, texture_view_type)
         }
         .is_null()
         {
             None
         } else {
-            self.m_default_view.as_ref()
+            self.default_view.as_ref()
         }
     }
 
     fn get_native_handle(&self) -> u64 {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .Texture
                 .GetNativeHandle
-                .unwrap_unchecked()(self.m_texture)
+                .unwrap_unchecked()(self.texture)
         }
     }
 
     fn set_state(&mut self, state: bindings::RESOURCE_STATE) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .Texture
                 .SetState
-                .unwrap_unchecked()(self.m_texture, state);
+                .unwrap_unchecked()(self.texture, state);
         }
     }
 
     fn get_state(&self) -> bindings::RESOURCE_STATE {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .Texture
                 .GetState
-                .unwrap_unchecked()(self.m_texture)
+                .unwrap_unchecked()(self.texture)
         }
     }
 
     fn get_sparse_properties(&self) -> &bindings::SparseTextureProperties {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .Texture
                 .GetSparseProperties
-                .unwrap_unchecked()(self.m_texture)
+                .unwrap_unchecked()(self.texture)
             .as_ref()
             .unwrap_unchecked()
         }

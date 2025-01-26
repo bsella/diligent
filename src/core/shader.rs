@@ -193,52 +193,52 @@ impl<'a> ShaderDesc<'a> {
 }
 
 pub struct Shader {
-    pub(crate) m_shader: *mut bindings::IShader,
-    m_virtual_functions: *mut bindings::IShaderVtbl,
+    pub(crate) shader: *mut bindings::IShader,
+    virtual_functions: *mut bindings::IShaderVtbl,
 
-    m_device_object: DeviceObject,
+    device_object: DeviceObject,
 }
 
 impl AsDeviceObject for Shader {
     fn as_device_object(&self) -> &DeviceObject {
-        &self.m_device_object
+        &self.device_object
     }
 }
 
 impl Shader {
     pub(crate) fn new(shader_ptr: *mut bindings::IShader) -> Self {
         Shader {
-            m_shader: shader_ptr,
-            m_virtual_functions: unsafe { (*shader_ptr).pVtbl },
-            m_device_object: DeviceObject::new(shader_ptr as *mut bindings::IDeviceObject),
+            shader: shader_ptr,
+            virtual_functions: unsafe { (*shader_ptr).pVtbl },
+            device_object: DeviceObject::new(shader_ptr as *mut bindings::IDeviceObject),
         }
     }
 
     fn get_desc(&self) -> bindings::ShaderDesc {
         unsafe {
-            *((*self.m_virtual_functions)
+            *((*self.virtual_functions)
                 .DeviceObject
                 .GetDesc
-                .unwrap_unchecked()(self.m_shader as *mut bindings::IDeviceObject)
+                .unwrap_unchecked()(self.shader as *mut bindings::IDeviceObject)
                 as *const bindings::ShaderDesc)
         }
     }
 
     fn get_resources(&self) -> Vec<bindings::ShaderResourceDesc> {
         unsafe {
-            let num_resources = (*self.m_virtual_functions)
+            let num_resources = (*self.virtual_functions)
                 .Shader
                 .GetResourceCount
-                .unwrap_unchecked()(self.m_shader);
+                .unwrap_unchecked()(self.shader);
 
             let mut resources = Vec::with_capacity(num_resources as usize);
 
             for index in 0..num_resources {
                 let resources_ptr = std::ptr::null_mut();
-                (*self.m_virtual_functions)
+                (*self.virtual_functions)
                     .Shader
                     .GetResourceDesc
-                    .unwrap_unchecked()(self.m_shader, index, resources_ptr);
+                    .unwrap_unchecked()(self.shader, index, resources_ptr);
                 resources.push(*resources_ptr);
             }
             resources
@@ -247,10 +247,10 @@ impl Shader {
 
     fn get_constant_buffer_desc(&self, index: u32) -> Option<&bindings::ShaderCodeBufferDesc> {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .Shader
                 .GetConstantBufferDesc
-                .unwrap_unchecked()(self.m_shader, index)
+                .unwrap_unchecked()(self.shader, index)
             .as_ref()
         }
     }
@@ -258,11 +258,11 @@ impl Shader {
     fn get_bytecode(&self, bytecode: *mut *const u8) -> u64 {
         unsafe {
             let mut size: u64 = 0;
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .Shader
                 .GetBytecode
                 .unwrap_unchecked()(
-                self.m_shader,
+                self.shader,
                 bytecode as *mut *const c_void,
                 std::ptr::addr_of_mut!(size),
             );
@@ -272,10 +272,10 @@ impl Shader {
 
     fn get_status(&self, wait_for_completion: bool) -> bindings::SHADER_STATUS {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .Shader
                 .GetStatus
-                .unwrap_unchecked()(self.m_shader, wait_for_completion)
+                .unwrap_unchecked()(self.shader, wait_for_completion)
         }
     }
 }

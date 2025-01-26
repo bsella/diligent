@@ -6,46 +6,46 @@ use super::texture::Texture;
 use super::device_object::{AsDeviceObject, DeviceObject};
 
 pub struct TextureView {
-    pub(crate) m_texture_view: *mut bindings::ITextureView,
-    m_virtual_functions: *mut bindings::ITextureViewVtbl,
-    m_texture: *const Texture,
+    pub(crate) texture_view: *mut bindings::ITextureView,
+    virtual_functions: *mut bindings::ITextureViewVtbl,
+    texture: *const Texture,
 
-    pub(crate) m_device_object: DeviceObject,
+    pub(crate) device_object: DeviceObject,
 }
 
 impl AsDeviceObject for TextureView {
     fn as_device_object(&self) -> &DeviceObject {
-        &self.m_device_object
+        &self.device_object
     }
 }
 
 impl TextureView {
     pub(crate) fn new(texture_view: *mut bindings::ITextureView, texture: *const Texture) -> Self {
         TextureView {
-            m_virtual_functions: unsafe { (*texture_view).pVtbl },
-            m_texture_view: texture_view,
-            m_texture: texture,
-            m_device_object: DeviceObject::new(texture_view as *mut bindings::IDeviceObject),
+            virtual_functions: unsafe { (*texture_view).pVtbl },
+            texture_view: texture_view,
+            texture: texture,
+            device_object: DeviceObject::new(texture_view as *mut bindings::IDeviceObject),
         }
     }
 
     fn get_desc(&self) -> bindings::TextureViewDesc {
         unsafe {
-            *((*self.m_virtual_functions)
+            *((*self.virtual_functions)
                 .DeviceObject
                 .GetDesc
                 .unwrap_unchecked()(
-                self.m_texture_view as *mut bindings::IDeviceObject
+                self.texture_view as *mut bindings::IDeviceObject
             ) as *const bindings::TextureViewDesc)
         }
     }
 
     fn set_sampler(&mut self, sampler: &Sampler) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .TextureView
                 .SetSampler
-                .unwrap_unchecked()(self.m_texture_view, sampler.m_sampler);
+                .unwrap_unchecked()(self.texture_view, sampler.sampler);
         }
     }
 
@@ -55,6 +55,6 @@ impl TextureView {
 
     #[inline]
     fn get_texture(&self) -> &Texture {
-        unsafe { self.m_texture.as_ref().unwrap_unchecked() }
+        unsafe { self.texture.as_ref().unwrap_unchecked() }
     }
 }

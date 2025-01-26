@@ -161,30 +161,28 @@ impl Into<bindings::EngineVkCreateInfo> for EngineVkCreateInfo {
 }
 
 pub struct EngineFactoryVk {
-    m_engine_factory_vk: *mut bindings::IEngineFactoryVk,
-    m_virtual_functions: *mut bindings::IEngineFactoryVkVtbl,
+    engine_factory_vk: *mut bindings::IEngineFactoryVk,
+    virtual_functions: *mut bindings::IEngineFactoryVkVtbl,
 
-    m_engine_factory: EngineFactory,
+    engine_factory: EngineFactory,
 }
 
 impl EngineFactoryVk {
     pub(crate) fn new(engine_factory_ptr: *mut bindings::IEngineFactoryVk) -> Self {
         EngineFactoryVk {
-            m_engine_factory_vk: engine_factory_ptr,
-            m_virtual_functions: unsafe { (*engine_factory_ptr).pVtbl },
+            engine_factory_vk: engine_factory_ptr,
+            virtual_functions: unsafe { (*engine_factory_ptr).pVtbl },
 
-            m_engine_factory: EngineFactory::new(
-                engine_factory_ptr as *mut bindings::IEngineFactory,
-            ),
+            engine_factory: EngineFactory::new(engine_factory_ptr as *mut bindings::IEngineFactory),
         }
     }
 
     pub fn enable_device_simulation(&self) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .EngineFactoryVk
                 .EnableDeviceSimulation
-                .unwrap_unchecked()(self.m_engine_factory_vk);
+                .unwrap_unchecked()(self.engine_factory_vk);
         }
     }
 }
@@ -192,7 +190,7 @@ impl EngineFactoryVk {
 impl AsEngineFactory for EngineFactoryVk {
     #[inline]
     fn as_engine_factory(&self) -> &EngineFactory {
-        &self.m_engine_factory
+        &self.engine_factory
     }
 }
 
@@ -204,9 +202,9 @@ impl EngineFactoryImplementation for EngineFactoryVk {
         let engine_factory_ptr = engine_factory_vk as *mut bindings::IEngineFactory;
 
         EngineFactoryVk {
-            m_engine_factory: EngineFactory::new(engine_factory_ptr),
-            m_virtual_functions: unsafe { (*engine_factory_vk).pVtbl },
-            m_engine_factory_vk: engine_factory_vk,
+            engine_factory: EngineFactory::new(engine_factory_ptr),
+            virtual_functions: unsafe { (*engine_factory_vk).pVtbl },
+            engine_factory_vk: engine_factory_vk,
         }
     }
 
@@ -227,11 +225,11 @@ impl EngineFactoryImplementation for EngineFactoryVk {
         {
             let create_info: bindings::EngineVkCreateInfo = create_info.into();
             unsafe {
-                (*self.m_virtual_functions)
+                (*self.virtual_functions)
                     .EngineFactoryVk
                     .CreateDeviceAndContextsVk
                     .unwrap_unchecked()(
-                    self.m_engine_factory_vk,
+                    self.engine_factory_vk,
                     std::ptr::addr_of!(create_info),
                     std::ptr::addr_of_mut!(render_device_ptr),
                     device_context_ptrs.as_mut_ptr(),
@@ -270,13 +268,13 @@ impl EngineFactoryImplementation for EngineFactoryVk {
     ) -> Option<SwapChain> {
         let mut swap_chain_ptr = std::ptr::null_mut();
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .EngineFactoryVk
                 .CreateSwapChainVk
                 .unwrap_unchecked()(
-                self.m_engine_factory_vk,
-                device.m_render_device,
-                immediate_context.m_device_context,
+                self.engine_factory_vk,
+                device.render_device,
+                immediate_context.device_context,
                 std::ptr::from_ref(swapchain_desc),
                 if let Some(window) = window {
                     std::ptr::from_ref(window)

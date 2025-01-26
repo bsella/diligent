@@ -31,33 +31,33 @@ impl Into<bindings::DrawAttribs> for DrawAttribs {
 }
 
 pub struct DeviceContext {
-    pub(crate) m_device_context: *mut bindings::IDeviceContext,
-    m_virtual_functions: *mut bindings::IDeviceContextVtbl,
+    pub(crate) device_context: *mut bindings::IDeviceContext,
+    virtual_functions: *mut bindings::IDeviceContextVtbl,
 
-    m_object: Object,
+    object: Object,
 }
 
 impl AsObject for DeviceContext {
     fn as_object(&self) -> &Object {
-        &self.m_object
+        &self.object
     }
 }
 
 impl DeviceContext {
     pub(crate) fn new(device_context: *mut bindings::IDeviceContext) -> Self {
         DeviceContext {
-            m_device_context: device_context,
-            m_virtual_functions: unsafe { (*device_context).pVtbl },
-            m_object: Object::new(device_context as *mut bindings::IObject),
+            device_context: device_context,
+            virtual_functions: unsafe { (*device_context).pVtbl },
+            object: Object::new(device_context as *mut bindings::IObject),
         }
     }
 
     pub fn get_desc(&self) -> &bindings::DeviceContextDesc {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .GetDesc
-                .unwrap_unchecked()(self.m_device_context)
+                .unwrap_unchecked()(self.device_context)
             .as_ref()
             .unwrap_unchecked()
         }
@@ -65,32 +65,30 @@ impl DeviceContext {
 
     pub fn begin(&self, immediate_context_id: u32) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .Begin
-                .unwrap_unchecked()(self.m_device_context, immediate_context_id)
+                .unwrap_unchecked()(self.device_context, immediate_context_id)
         }
     }
 
     pub fn set_pipeline_state(&self, pipeline_state: &PipelineState) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .SetPipelineState
-                .unwrap_unchecked()(
-                self.m_device_context, pipeline_state.m_pipeline_state
-            )
+                .unwrap_unchecked()(self.device_context, pipeline_state.pipeline_state)
         }
     }
 
     pub fn transition_shader_resources(&self, shader_resource_binding: &ShaderResourceBinding) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .TransitionShaderResources
                 .unwrap_unchecked()(
-                self.m_device_context,
-                shader_resource_binding.m_shader_resource_binding,
+                self.device_context,
+                shader_resource_binding.shader_resource_binding,
             )
         }
     }
@@ -101,12 +99,12 @@ impl DeviceContext {
         state_transition_mode: bindings::RESOURCE_STATE_TRANSITION_MODE,
     ) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .CommitShaderResources
                 .unwrap_unchecked()(
-                self.m_device_context,
-                shader_resource_binding.m_shader_resource_binding,
+                self.device_context,
+                shader_resource_binding.shader_resource_binding,
                 state_transition_mode,
             )
         }
@@ -114,19 +112,19 @@ impl DeviceContext {
 
     pub fn set_stencil_ref(&self, stencil_ref: u32) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .SetStencilRef
-                .unwrap_unchecked()(self.m_device_context, stencil_ref)
+                .unwrap_unchecked()(self.device_context, stencil_ref)
         }
     }
 
     pub fn set_blend_factors(&self, blend_factors: &[f32; 4]) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .SetBlendFactors
-                .unwrap_unchecked()(self.m_device_context, blend_factors.as_ptr())
+                .unwrap_unchecked()(self.device_context, blend_factors.as_ptr())
         }
     }
 
@@ -138,13 +136,13 @@ impl DeviceContext {
         flags: bindings::SET_VERTEX_BUFFERS_FLAGS,
     ) {
         let num_buffers = buffers.len();
-        let buffer_pointers = Vec::from_iter(buffers.iter().map(|buffer| buffer.m_buffer));
+        let buffer_pointers = Vec::from_iter(buffers.iter().map(|buffer| buffer.buffer));
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .SetVertexBuffers
                 .unwrap_unchecked()(
-                self.m_device_context,
+                self.device_context,
                 0,
                 num_buffers as u32,
                 buffer_pointers.as_ptr(),
@@ -157,10 +155,10 @@ impl DeviceContext {
 
     pub fn invalidate_state(&self) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .InvalidateState
-                .unwrap_unchecked()(self.m_device_context)
+                .unwrap_unchecked()(self.device_context)
         }
     }
 
@@ -171,12 +169,12 @@ impl DeviceContext {
         state_transition_mode: bindings::RESOURCE_STATE_TRANSITION_MODE,
     ) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .SetIndexBuffer
                 .unwrap_unchecked()(
-                self.m_device_context,
-                index_buffer.m_buffer,
+                self.device_context,
+                index_buffer.buffer,
                 offset,
                 state_transition_mode,
             )
@@ -190,11 +188,11 @@ impl DeviceContext {
         render_target_height: u32,
     ) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .SetViewports
                 .unwrap_unchecked()(
-                self.m_device_context,
+                self.device_context,
                 viewports.len() as u32,
                 viewports.as_ptr(),
                 render_target_width,
@@ -210,11 +208,11 @@ impl DeviceContext {
         render_target_height: u32,
     ) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .SetScissorRects
                 .unwrap_unchecked()(
-                self.m_device_context,
+                self.device_context,
                 rects.len() as u32,
                 rects.as_ptr(),
                 render_target_width,
@@ -233,18 +231,18 @@ impl DeviceContext {
         let mut render_target_pointers = Vec::from_iter(
             render_targets
                 .iter()
-                .map(|render_targets| render_targets.m_texture_view),
+                .map(|render_targets| render_targets.texture_view),
         );
 
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .SetRenderTargets
                 .unwrap_unchecked()(
-                self.m_device_context,
+                self.device_context,
                 num_render_targets as u32,
                 render_target_pointers.as_mut_ptr(),
-                depth_stencil.map_or(std::ptr::null_mut(), |v| v.m_texture_view),
+                depth_stencil.map_or(std::ptr::null_mut(), |v| v.texture_view),
                 state_transition_mode as bindings::RESOURCE_STATE_TRANSITION_MODE,
             )
         }
@@ -252,128 +250,128 @@ impl DeviceContext {
 
     pub fn begin_render_pass(&self, attribs: &bindings::BeginRenderPassAttribs) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .BeginRenderPass
-                .unwrap_unchecked()(self.m_device_context, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.device_context, std::ptr::from_ref(attribs))
         }
     }
 
     pub fn next_subpass(&self) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .NextSubpass
-                .unwrap_unchecked()(self.m_device_context)
+                .unwrap_unchecked()(self.device_context)
         }
     }
 
     pub fn end_render_pass(&self) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .EndRenderPass
-                .unwrap_unchecked()(self.m_device_context)
+                .unwrap_unchecked()(self.device_context)
         }
     }
 
     pub fn draw(&self, attribs: DrawAttribs) {
         let attribs: bindings::DrawAttribs = attribs.into();
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .Draw
-                .unwrap_unchecked()(self.m_device_context, std::ptr::addr_of!(attribs))
+                .unwrap_unchecked()(self.device_context, std::ptr::addr_of!(attribs))
         }
     }
 
     pub fn draw_indexed(&self, attribs: &bindings::DrawIndexedAttribs) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .DrawIndexed
-                .unwrap_unchecked()(self.m_device_context, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.device_context, std::ptr::from_ref(attribs))
         }
     }
 
     pub fn draw_indirect(&self, attribs: &bindings::DrawIndirectAttribs) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .DrawIndirect
-                .unwrap_unchecked()(self.m_device_context, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.device_context, std::ptr::from_ref(attribs))
         }
     }
 
     pub fn draw_indexed_indirect(&self, attribs: &bindings::DrawIndexedIndirectAttribs) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .DrawIndexedIndirect
-                .unwrap_unchecked()(self.m_device_context, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.device_context, std::ptr::from_ref(attribs))
         }
     }
 
     pub fn draw_mesh(&self, attribs: &bindings::DrawMeshAttribs) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .DrawMesh
-                .unwrap_unchecked()(self.m_device_context, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.device_context, std::ptr::from_ref(attribs))
         }
     }
 
     pub fn draw_mesh_indirect(&self, attribs: &bindings::DrawMeshIndirectAttribs) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .DrawMeshIndirect
-                .unwrap_unchecked()(self.m_device_context, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.device_context, std::ptr::from_ref(attribs))
         }
     }
 
     pub fn multi_draw(&self, attribs: &bindings::MultiDrawAttribs) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .MultiDraw
-                .unwrap_unchecked()(self.m_device_context, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.device_context, std::ptr::from_ref(attribs))
         }
     }
 
     pub fn multi_draw_indexed(&self, attribs: &bindings::MultiDrawIndexedAttribs) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .MultiDrawIndexed
-                .unwrap_unchecked()(self.m_device_context, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.device_context, std::ptr::from_ref(attribs))
         }
     }
 
     pub fn dispatch_compute(&self, attribs: &bindings::DispatchComputeAttribs) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .DispatchCompute
-                .unwrap_unchecked()(self.m_device_context, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.device_context, std::ptr::from_ref(attribs))
         }
     }
 
     pub fn dispatch_compute_indirect(&self, attribs: &bindings::DispatchComputeIndirectAttribs) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .DispatchComputeIndirect
-                .unwrap_unchecked()(self.m_device_context, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.device_context, std::ptr::from_ref(attribs))
         }
     }
 
     pub fn dispatch_tile(&self, attribs: &bindings::DispatchTileAttribs) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .DispatchTile
-                .unwrap_unchecked()(self.m_device_context, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.device_context, std::ptr::from_ref(attribs))
         }
     }
 
@@ -381,11 +379,11 @@ impl DeviceContext {
         let mut tile_size_x: u32 = 0;
         let mut tile_size_y: u32 = 0;
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .GetTileSize
                 .unwrap_unchecked()(
-                self.m_device_context,
+                self.device_context,
                 std::ptr::addr_of_mut!(tile_size_x),
                 std::ptr::addr_of_mut!(tile_size_y),
             )
@@ -402,12 +400,12 @@ impl DeviceContext {
         state_transition_mode: bindings::_RESOURCE_STATE_TRANSITION_MODE,
     ) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .ClearDepthStencil
                 .unwrap_unchecked()(
-                self.m_device_context,
-                view.m_texture_view,
+                self.device_context,
+                view.texture_view,
                 clear_flags,
                 depth,
                 stencil,
@@ -423,12 +421,12 @@ impl DeviceContext {
         state_transition_mode: bindings::_RESOURCE_STATE_TRANSITION_MODE,
     ) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .ClearRenderTarget
                 .unwrap_unchecked()(
-                self.m_device_context,
-                view.m_texture_view,
+                self.device_context,
+                view.texture_view,
                 (*rgba).as_ptr() as *const std::os::raw::c_void,
                 state_transition_mode as bindings::RESOURCE_STATE_TRANSITION_MODE,
             )
@@ -444,28 +442,28 @@ impl DeviceContext {
 
     pub fn enqueue_signal(&self, fence: &Fence, value: u64) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .EnqueueSignal
-                .unwrap_unchecked()(self.m_device_context, fence.m_fence, value)
+                .unwrap_unchecked()(self.device_context, fence.fence, value)
         }
     }
 
     pub fn device_wait_for_fence(&self, fence: &Fence, value: u64) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .DeviceWaitForFence
-                .unwrap_unchecked()(self.m_device_context, fence.m_fence, value)
+                .unwrap_unchecked()(self.device_context, fence.fence, value)
         }
     }
 
     pub fn wait_for_idle(&self) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .WaitForIdle
-                .unwrap_unchecked()(self.m_device_context)
+                .unwrap_unchecked()(self.device_context)
         }
     }
 
@@ -478,10 +476,10 @@ impl DeviceContext {
 
     pub fn flush(&self) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .Flush
-                .unwrap_unchecked()(self.m_device_context)
+                .unwrap_unchecked()(self.device_context)
         }
     }
 
@@ -494,12 +492,12 @@ impl DeviceContext {
         state_transition_mode: RESOURCE_STATE_TRANSITION_MODE,
     ) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .UpdateBuffer
                 .unwrap_unchecked()(
-                self.m_device_context,
-                buffer.m_buffer,
+                self.device_context,
+                buffer.buffer,
                 offset,
                 size,
                 std::ptr::from_ref(data) as *const std::os::raw::c_void,
@@ -519,15 +517,15 @@ impl DeviceContext {
         dst_buffer_transition_mode: RESOURCE_STATE_TRANSITION_MODE,
     ) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .CopyBuffer
                 .unwrap_unchecked()(
-                self.m_device_context,
-                src_buffer.m_buffer,
+                self.device_context,
+                src_buffer.buffer,
                 src_offset,
                 src_buffer_transition_mode,
-                dst_buffer.m_buffer,
+                dst_buffer.buffer,
                 dst_offset,
                 size,
                 dst_buffer_transition_mode,
@@ -543,12 +541,12 @@ impl DeviceContext {
     ) -> *mut u8 {
         let mut ptr = std::ptr::null_mut() as *mut std::os::raw::c_void;
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .MapBuffer
                 .unwrap_unchecked()(
-                self.m_device_context,
-                buffer.m_buffer,
+                self.device_context,
+                buffer.buffer,
                 map_type as bindings::MAP_TYPE,
                 map_flags as bindings::MAP_FLAGS,
                 std::ptr::addr_of_mut!(ptr),
@@ -559,12 +557,12 @@ impl DeviceContext {
 
     pub fn unmap_buffer(&self, buffer: &mut Buffer, map_type: bindings::_MAP_TYPE) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .UnmapBuffer
                 .unwrap_unchecked()(
-                self.m_device_context,
-                buffer.m_buffer,
+                self.device_context,
+                buffer.buffer,
                 map_type as bindings::MAP_TYPE,
             )
         }
@@ -581,12 +579,12 @@ impl DeviceContext {
         texture_transition_mode: bindings::_RESOURCE_STATE_TRANSITION_MODE,
     ) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .UpdateTexture
                 .unwrap_unchecked()(
-                self.m_device_context,
-                texture.m_texture,
+                self.device_context,
+                texture.texture,
                 mip_level,
                 slice,
                 std::ptr::from_ref(dst_box),
@@ -599,11 +597,11 @@ impl DeviceContext {
 
     pub fn copy_texture(&self, copy_attribs: &bindings::CopyTextureAttribs) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .CopyTexture
                 .unwrap_unchecked()(
-                self.m_device_context, std::ptr::from_ref(copy_attribs)
+                self.device_context, std::ptr::from_ref(copy_attribs)
             )
         }
     }
@@ -621,52 +619,49 @@ impl DeviceContext {
         array_slice: u32,
     ) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .UnmapTextureSubresource
                 .unwrap_unchecked()(
-                self.m_device_context,
-                texture.m_texture,
-                mip_level,
-                array_slice,
+                self.device_context, texture.texture, mip_level, array_slice
             )
         }
     }
 
     pub fn generate_mips(&self, texture_view: &mut TextureView) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .GenerateMips
-                .unwrap_unchecked()(self.m_device_context, texture_view.m_texture_view)
+                .unwrap_unchecked()(self.device_context, texture_view.texture_view)
         }
     }
 
     pub fn finish_frame(&self) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .FinishFrame
-                .unwrap_unchecked()(self.m_device_context)
+                .unwrap_unchecked()(self.device_context)
         }
     }
 
     pub fn get_frame_number(&self) -> u64 {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .GetFrameNumber
-                .unwrap_unchecked()(self.m_device_context)
+                .unwrap_unchecked()(self.device_context)
         }
     }
 
     pub fn transition_resource_states(&self, barriers: &[bindings::StateTransitionDesc]) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .TransitionResourceStates
                 .unwrap_unchecked()(
-                self.m_device_context,
+                self.device_context,
                 barriers.len() as u32,
                 barriers.as_ptr(),
             )
@@ -680,13 +675,13 @@ impl DeviceContext {
         resolve_attribs: &bindings::ResolveTextureSubresourceAttribs,
     ) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .ResolveTextureSubresource
                 .unwrap_unchecked()(
-                self.m_device_context,
-                src_texture.m_texture,
-                dst_texture.m_texture,
+                self.device_context,
+                src_texture.texture,
+                dst_texture.texture,
                 std::ptr::from_ref(resolve_attribs),
             )
         }
@@ -694,73 +689,73 @@ impl DeviceContext {
 
     pub fn build_blas(&self, attribs: &bindings::BuildBLASAttribs) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .BuildBLAS
-                .unwrap_unchecked()(self.m_device_context, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.device_context, std::ptr::from_ref(attribs))
         }
     }
 
     pub fn build_tlas(&self, attribs: &bindings::BuildTLASAttribs) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .BuildTLAS
-                .unwrap_unchecked()(self.m_device_context, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.device_context, std::ptr::from_ref(attribs))
         }
     }
 
     pub fn copy_blas(&self, attribs: &bindings::CopyBLASAttribs) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .CopyBLAS
-                .unwrap_unchecked()(self.m_device_context, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.device_context, std::ptr::from_ref(attribs))
         }
     }
 
     pub fn copy_tlas(&self, attribs: &bindings::CopyTLASAttribs) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .CopyTLAS
-                .unwrap_unchecked()(self.m_device_context, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.device_context, std::ptr::from_ref(attribs))
         }
     }
 
     pub fn write_blas_compacted_size(&self, attribs: &bindings::WriteBLASCompactedSizeAttribs) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .WriteBLASCompactedSize
-                .unwrap_unchecked()(self.m_device_context, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.device_context, std::ptr::from_ref(attribs))
         }
     }
 
     pub fn write_tlas_compacted_size(&self, attribs: &bindings::WriteTLASCompactedSizeAttribs) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .WriteTLASCompactedSize
-                .unwrap_unchecked()(self.m_device_context, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.device_context, std::ptr::from_ref(attribs))
         }
     }
 
     pub fn trace_rays(&self, attribs: &bindings::TraceRaysAttribs) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .TraceRays
-                .unwrap_unchecked()(self.m_device_context, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.device_context, std::ptr::from_ref(attribs))
         }
     }
 
     pub fn trace_rays_indirect(&self, attribs: &bindings::TraceRaysIndirectAttribs) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .TraceRaysIndirect
-                .unwrap_unchecked()(self.m_device_context, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.device_context, std::ptr::from_ref(attribs))
         }
     }
 
@@ -772,12 +767,10 @@ impl DeviceContext {
         Data: AsObject,
     {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .SetUserData
-                .unwrap_unchecked()(
-                self.m_device_context, user_data.as_object().m_object
-            )
+                .unwrap_unchecked()(self.device_context, user_data.as_object().object)
         }
     }
 
@@ -787,29 +780,29 @@ impl DeviceContext {
     pub fn begin_debug_group(&self, name: &str, color: [f32; 4]) {
         let name = std::ffi::CString::new(name.to_owned()).unwrap();
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .BeginDebugGroup
-                .unwrap_unchecked()(self.m_device_context, name.as_ptr(), color.as_ptr())
+                .unwrap_unchecked()(self.device_context, name.as_ptr(), color.as_ptr())
         }
     }
 
     pub fn end_debug_group(&self) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .EndDebugGroup
-                .unwrap_unchecked()(self.m_device_context)
+                .unwrap_unchecked()(self.device_context)
         }
     }
 
     pub fn insert_debug_label(&self, name: &str, color: [f32; 4]) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .InsertDebugLabel
                 .unwrap_unchecked()(
-                self.m_device_context,
+                self.device_context,
                 name.as_bytes().as_ptr() as *const i8,
                 color.as_ptr(),
             )
@@ -822,10 +815,10 @@ impl DeviceContext {
 
     pub fn unlock_command_queue(&self) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .UnlockCommandQueue
-                .unwrap_unchecked()(self.m_device_context)
+                .unwrap_unchecked()(self.device_context)
         }
     }
 
@@ -836,11 +829,11 @@ impl DeviceContext {
         texture_combiner: bindings::_SHADING_RATE_COMBINER,
     ) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .SetShadingRate
                 .unwrap_unchecked()(
-                self.m_device_context,
+                self.device_context,
                 base_rate as bindings::SHADING_RATE,
                 primitive_combiner as bindings::SHADING_RATE_COMBINER,
                 texture_combiner as bindings::SHADING_RATE_COMBINER,
@@ -850,28 +843,28 @@ impl DeviceContext {
 
     pub fn bind_sparse_resource_memory(&self, attribs: &bindings::BindSparseResourceMemoryAttribs) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .BindSparseResourceMemory
-                .unwrap_unchecked()(self.m_device_context, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.device_context, std::ptr::from_ref(attribs))
         }
     }
 
     pub fn clear_stats(&self) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .ClearStats
-                .unwrap_unchecked()(self.m_device_context)
+                .unwrap_unchecked()(self.device_context)
         }
     }
 
     pub fn get_stats(&self) -> &bindings::DeviceContextStats {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .DeviceContext
                 .GetStats
-                .unwrap_unchecked()(self.m_device_context)
+                .unwrap_unchecked()(self.device_context)
             .as_ref()
             .unwrap_unchecked()
         }

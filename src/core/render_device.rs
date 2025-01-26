@@ -14,24 +14,24 @@ use super::pipeline_state::{GraphicsPipelineStateCreateInfo, PipelineState};
 use super::resource_mapping::ResourceMapping;
 
 pub struct RenderDevice {
-    pub(crate) m_render_device: *mut bindings::IRenderDevice,
-    m_virtual_functions: *mut bindings::IRenderDeviceVtbl,
+    pub(crate) render_device: *mut bindings::IRenderDevice,
+    virtual_functions: *mut bindings::IRenderDeviceVtbl,
 
-    m_object: Object,
+    object: Object,
 }
 
 impl AsObject for RenderDevice {
     fn as_object(&self) -> &Object {
-        &self.m_object
+        &self.object
     }
 }
 
 impl RenderDevice {
     pub(crate) fn new(render_device_ptr: *mut bindings::IRenderDevice) -> Self {
         RenderDevice {
-            m_render_device: render_device_ptr,
-            m_virtual_functions: unsafe { (*render_device_ptr).pVtbl },
-            m_object: Object::new(render_device_ptr as *mut bindings::IObject),
+            render_device: render_device_ptr,
+            virtual_functions: unsafe { (*render_device_ptr).pVtbl },
+            object: Object::new(render_device_ptr as *mut bindings::IObject),
         }
     }
 
@@ -42,11 +42,11 @@ impl RenderDevice {
     ) -> Option<Buffer> {
         let mut buffer_ptr = std::ptr::null_mut();
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .RenderDevice
                 .CreateBuffer
                 .unwrap_unchecked()(
-                self.m_render_device,
+                self.render_device,
                 buffer_desc,
                 match buffer_data {
                     Some(data) => std::ptr::addr_of!(data) as *const bindings::BufferData,
@@ -66,11 +66,11 @@ impl RenderDevice {
         let mut shader_ptr: *mut bindings::IShader = std::ptr::null_mut();
         let mut data_blob_ptr: *mut bindings::IDataBlob = std::ptr::null_mut();
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .RenderDevice
                 .CreateShader
                 .unwrap_unchecked()(
-                self.m_render_device,
+                self.render_device,
                 std::ptr::from_ref(&shader_ci.into()),
                 std::ptr::addr_of_mut!(shader_ptr),
                 std::ptr::addr_of_mut!(data_blob_ptr),
@@ -91,11 +91,11 @@ impl RenderDevice {
     ) -> Option<Texture> {
         let mut texture_ptr = std::ptr::null_mut();
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .RenderDevice
                 .CreateTexture
                 .unwrap_unchecked()(
-                self.m_render_device,
+                self.render_device,
                 texture_desc,
                 match texture_data {
                     Some(data) => std::ptr::addr_of!(data) as *const bindings::TextureData,
@@ -115,11 +115,11 @@ impl RenderDevice {
     pub fn create_sampler(&self, sampler_desc: &bindings::SamplerDesc) -> Option<Sampler> {
         let mut sampler_ptr: *mut bindings::ISampler = std::ptr::null_mut();
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .RenderDevice
                 .CreateSampler
                 .unwrap_unchecked()(
-                self.m_render_device,
+                self.render_device,
                 std::ptr::addr_of!(sampler_desc) as *const bindings::SamplerDesc,
                 std::ptr::addr_of_mut!(sampler_ptr),
             );
@@ -138,11 +138,11 @@ impl RenderDevice {
     ) -> Option<ResourceMapping> {
         let mut resource_mapping_ptr = std::ptr::null_mut();
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .RenderDevice
                 .CreateResourceMapping
                 .unwrap_unchecked()(
-                self.m_render_device,
+                self.render_device,
                 resource_mapping_ci,
                 std::ptr::addr_of_mut!(resource_mapping_ptr),
             );
@@ -161,11 +161,11 @@ impl RenderDevice {
     ) -> Option<PipelineState> {
         let mut pipeline_state_ptr = std::ptr::null_mut();
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .RenderDevice
                 .CreateGraphicsPipelineState
                 .unwrap_unchecked()(
-                self.m_render_device,
+                self.render_device,
                 std::ptr::from_ref(&pipeline_ci.into()),
                 std::ptr::addr_of_mut!(pipeline_state_ptr),
             );
@@ -183,11 +183,11 @@ impl RenderDevice {
     ) -> Option<PipelineState> {
         let mut pipeline_state_ptr = std::ptr::null_mut();
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .RenderDevice
                 .CreateComputePipelineState
                 .unwrap_unchecked()(
-                self.m_render_device,
+                self.render_device,
                 pipeline_ci,
                 std::ptr::addr_of_mut!(pipeline_state_ptr),
             );
@@ -206,11 +206,11 @@ impl RenderDevice {
     ) -> Option<PipelineState> {
         let mut pipeline_state_ptr = std::ptr::null_mut();
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .RenderDevice
                 .CreateRayTracingPipelineState
                 .unwrap_unchecked()(
-                self.m_render_device,
+                self.render_device,
                 pipeline_ci,
                 std::ptr::addr_of_mut!(pipeline_state_ptr),
             );
@@ -228,11 +228,11 @@ impl RenderDevice {
     ) -> Option<PipelineState> {
         let mut pipeline_state_ptr = std::ptr::null_mut();
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .RenderDevice
                 .CreateTilePipelineState
                 .unwrap_unchecked()(
-                self.m_render_device,
+                self.render_device,
                 pipeline_ci,
                 std::ptr::addr_of_mut!(pipeline_state_ptr),
             );
@@ -247,11 +247,11 @@ impl RenderDevice {
     pub fn create_fence(&self, fence_desc: &bindings::FenceDesc) -> Option<Fence> {
         let mut fence_ptr = std::ptr::null_mut();
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .RenderDevice
                 .CreateFence
                 .unwrap_unchecked()(
-                self.m_render_device,
+                self.render_device,
                 fence_desc,
                 std::ptr::addr_of_mut!(fence_ptr),
             );
@@ -274,10 +274,10 @@ impl RenderDevice {
 
     pub fn get_adapter_info(&self) -> &bindings::GraphicsAdapterInfo {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .RenderDevice
                 .GetAdapterInfo
-                .unwrap_unchecked()(self.m_render_device)
+                .unwrap_unchecked()(self.render_device)
             .as_ref()
             .unwrap_unchecked()
         }
@@ -285,10 +285,10 @@ impl RenderDevice {
 
     pub fn get_device_info(&self) -> &bindings::RenderDeviceInfo {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .RenderDevice
                 .GetDeviceInfo
-                .unwrap_unchecked()(self.m_render_device)
+                .unwrap_unchecked()(self.render_device)
             .as_ref()
             .unwrap_unchecked()
         }
@@ -299,10 +299,10 @@ impl RenderDevice {
         format: bindings::TEXTURE_FORMAT,
     ) -> &bindings::TextureFormatInfo {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .RenderDevice
                 .GetTextureFormatInfo
-                .unwrap_unchecked()(self.m_render_device, format)
+                .unwrap_unchecked()(self.render_device, format)
             .as_ref()
             .unwrap_unchecked()
         }
@@ -313,10 +313,10 @@ impl RenderDevice {
         format: bindings::TEXTURE_FORMAT,
     ) -> &bindings::TextureFormatInfoExt {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .RenderDevice
                 .GetTextureFormatInfoExt
-                .unwrap_unchecked()(self.m_render_device, format)
+                .unwrap_unchecked()(self.render_device, format)
             .as_ref()
             .unwrap_unchecked()
         }
@@ -329,30 +329,30 @@ impl RenderDevice {
         sample_count: u32,
     ) -> bindings::SparseTextureFormatInfo {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .RenderDevice
                 .GetSparseTextureFormatInfo
                 .unwrap_unchecked()(
-                self.m_render_device, format, dimension, sample_count
+                self.render_device, format, dimension, sample_count
             )
         }
     }
 
     pub fn release_stale_resources(&self, force_release: bool) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .RenderDevice
                 .ReleaseStaleResources
-                .unwrap_unchecked()(self.m_render_device, force_release)
+                .unwrap_unchecked()(self.render_device, force_release)
         }
     }
 
     pub fn idle_gpu(&self) {
         unsafe {
-            (*self.m_virtual_functions)
+            (*self.virtual_functions)
                 .RenderDevice
                 .IdleGPU
-                .unwrap_unchecked()(self.m_render_device)
+                .unwrap_unchecked()(self.render_device)
         }
     }
 
