@@ -71,24 +71,21 @@ impl Default for bindings::ShaderResourceDesc {
 }
 
 pub struct ShaderDesc<'a> {
-    pub name: &'a std::ffi::CStr,
-    pub shader_type: ShaderType,
-    pub use_combined_texture_samplers: bool,
-    pub combined_sampler_suffix: std::ffi::CString,
+    name: &'a std::ffi::CStr,
+    shader_type: ShaderType,
+    use_combined_texture_samplers: bool,
+    combined_sampler_suffix: std::ffi::CString,
 }
 
 pub struct ShaderCreateInfo<'a> {
-    pub source: ShaderSource<'a>,
+    source: ShaderSource<'a>,
     // TODO IShaderSourceInputStreamFactory
-    pub entry_point: &'a std::ffi::CStr,
-    pub macros: Vec<(&'a std::ffi::CStr, &'a std::ffi::CStr)>,
-    pub desc: ShaderDesc<'a>,
-    pub source_language: ShaderLanguage,
-    pub compiler: ShaderCompiler,
-    pub hlsl_version: Version,
-    pub glsl_version: Version,
-    pub glessl_version: Version,
-    pub msl_version: Version,
+    entry_point: &'a std::ffi::CStr,
+    macros: Vec<(&'a std::ffi::CStr, &'a std::ffi::CStr)>,
+    desc: ShaderDesc<'a>,
+    source_language: ShaderLanguage,
+    compiler: ShaderCompiler,
+    language_version: Version,
 }
 
 impl<'a> ShaderCreateInfo<'a> {
@@ -104,11 +101,45 @@ impl<'a> ShaderCreateInfo<'a> {
             desc: ShaderDesc::new(name, shader_type),
             source_language: ShaderLanguage::Default,
             compiler: ShaderCompiler::Default,
-            hlsl_version: Version { Major: 0, Minor: 0 },
-            glsl_version: Version { Major: 0, Minor: 0 },
-            glessl_version: Version { Major: 0, Minor: 0 },
-            msl_version: Version { Major: 0, Minor: 0 },
+            language_version: Version { Major: 0, Minor: 0 },
         }
+    }
+
+    pub fn entry_point(mut self, entry_point: &'a std::ffi::CStr) -> ShaderCreateInfo<'a> {
+        self.entry_point = entry_point;
+        self
+    }
+
+    pub fn add_macro(
+        mut self,
+        name: &'a std::ffi::CStr,
+        definition: &'a std::ffi::CStr,
+    ) -> ShaderCreateInfo<'a> {
+        self.macros.push((name, definition));
+        self
+    }
+
+    pub fn use_combined_texture_samplers(
+        mut self,
+        use_combined_texture_samplers: bool,
+    ) -> ShaderCreateInfo<'a> {
+        self.desc.use_combined_texture_samplers = use_combined_texture_samplers;
+        self
+    }
+
+    pub fn language(mut self, language: ShaderLanguage) -> ShaderCreateInfo<'a> {
+        self.source_language = language;
+        self
+    }
+
+    pub fn compiler(mut self, compiler: ShaderCompiler) -> ShaderCreateInfo<'a> {
+        self.compiler = compiler;
+        self
+    }
+
+    pub fn language_version(mut self, version: Version) -> ShaderCreateInfo<'a> {
+        self.language_version = version;
+        self
     }
 }
 
@@ -157,20 +188,20 @@ impl<'a> Into<bindings::ShaderCreateInfo> for ShaderCreateInfo<'a> {
             SourceLanguage: self.source_language.into(),
             ShaderCompiler: self.compiler.into(),
             HLSLVersion: bindings::ShaderVersion {
-                Major: self.hlsl_version.Major,
-                Minor: self.hlsl_version.Minor,
+                Major: self.language_version.Major,
+                Minor: self.language_version.Minor,
             },
             GLSLVersion: bindings::ShaderVersion {
-                Major: self.hlsl_version.Major,
-                Minor: self.hlsl_version.Minor,
+                Major: self.language_version.Major,
+                Minor: self.language_version.Minor,
             },
             GLESSLVersion: bindings::ShaderVersion {
-                Major: self.hlsl_version.Major,
-                Minor: self.hlsl_version.Minor,
+                Major: self.language_version.Major,
+                Minor: self.language_version.Minor,
             },
             MSLVersion: bindings::ShaderVersion {
-                Major: self.hlsl_version.Major,
-                Minor: self.hlsl_version.Minor,
+                Major: self.language_version.Major,
+                Minor: self.language_version.Minor,
             },
             // TODO
             CompileFlags: 0,

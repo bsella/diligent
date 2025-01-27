@@ -1,4 +1,6 @@
-use crate::bindings::{self, RESOURCE_STATE_TRANSITION_MODE};
+use bitflags::bitflags;
+
+use crate::bindings;
 
 use super::{
     buffer::Buffer,
@@ -10,23 +12,85 @@ use super::{
     texture_view::TextureView,
 };
 
+bitflags! {
+    pub struct DrawFlags: bindings::_DRAW_FLAGS {
+        const None                         = bindings::DRAW_FLAG_NONE;
+        const VerifyStates                 = bindings::DRAW_FLAG_VERIFY_STATES;
+        const VerifyDrawAttribs            = bindings::DRAW_FLAG_VERIFY_DRAW_ATTRIBS;
+        const VerifyRenderTargets          = bindings::DRAW_FLAG_VERIFY_RENDER_TARGETS;
+        const VerifyAll                    = bindings::DRAW_FLAG_VERIFY_ALL;
+        const DynamicResourceBuffersIntact = bindings::DRAW_FLAG_DYNAMIC_RESOURCE_BUFFERS_INTACT;
+    }
+}
+
 pub struct DrawAttribs {
-    pub num_vertices: u32,
-    pub flags: bindings::DRAW_FLAGS,
-    pub num_instances: u32,
-    pub start_vertex_location: u32,
-    pub first_instance_location: u32,
+    num_vertices: u32,
+    flags: DrawFlags,
+    num_instances: u32,
+    start_vertex_location: u32,
+    first_instance_location: u32,
+}
+
+impl DrawAttribs {
+    pub fn new(num_vertices: u32) -> Self {
+        DrawAttribs {
+            num_vertices: num_vertices,
+            flags: DrawFlags::None,
+            num_instances: 1,
+            start_vertex_location: 0,
+            first_instance_location: 0,
+        }
+    }
+
+    pub fn num_vertices(mut self, num_vertices: u32) -> Self {
+        self.num_vertices = num_vertices;
+        self
+    }
+    pub fn flags(mut self, flags: DrawFlags) -> Self {
+        self.flags = flags;
+        self
+    }
+    pub fn num_instances(mut self, num_instances: u32) -> Self {
+        self.num_instances = num_instances;
+        self
+    }
+    pub fn start_vertex_location(mut self, start_vertex_location: u32) -> Self {
+        self.start_vertex_location = start_vertex_location;
+        self
+    }
+    pub fn first_instance_location(mut self, first_instance_location: u32) -> Self {
+        self.first_instance_location = first_instance_location;
+        self
+    }
 }
 
 impl Into<bindings::DrawAttribs> for DrawAttribs {
     fn into(self) -> bindings::DrawAttribs {
         bindings::DrawAttribs {
             NumVertices: self.num_vertices,
-            Flags: self.flags,
+            Flags: self.flags.bits() as bindings::DRAW_FLAGS,
             NumInstances: self.num_instances,
             StartVertexLocation: self.start_vertex_location,
             FirstInstanceLocation: self.first_instance_location,
         }
+    }
+}
+
+pub enum ResourceStateTransitionMode {
+    None,
+    Transition,
+    Verify,
+}
+
+impl Into<bindings::RESOURCE_STATE_TRANSITION_MODE> for ResourceStateTransitionMode {
+    fn into(self) -> bindings::RESOURCE_STATE_TRANSITION_MODE {
+        (match self {
+            ResourceStateTransitionMode::None => bindings::RESOURCE_STATE_TRANSITION_MODE_NONE,
+            ResourceStateTransitionMode::Transition => {
+                bindings::RESOURCE_STATE_TRANSITION_MODE_TRANSITION
+            }
+            ResourceStateTransitionMode::Verify => bindings::RESOURCE_STATE_TRANSITION_MODE_VERIFY,
+        }) as bindings::RESOURCE_STATE_TRANSITION_MODE
     }
 }
 
@@ -96,7 +160,7 @@ impl DeviceContext {
     pub fn commit_shader_resources(
         &self,
         shader_resource_binding: &ShaderResourceBinding,
-        state_transition_mode: bindings::RESOURCE_STATE_TRANSITION_MODE,
+        state_transition_mode: ResourceStateTransitionMode,
     ) {
         unsafe {
             (*self.virtual_functions)
@@ -105,7 +169,7 @@ impl DeviceContext {
                 .unwrap_unchecked()(
                 self.device_context,
                 shader_resource_binding.shader_resource_binding,
-                state_transition_mode,
+                state_transition_mode.into(),
             )
         }
     }
@@ -132,7 +196,7 @@ impl DeviceContext {
         &self,
         buffers: &[&Buffer],
         offsets: &[u64],
-        state_transition_mode: bindings::RESOURCE_STATE_TRANSITION_MODE,
+        state_transition_mode: ResourceStateTransitionMode,
         flags: bindings::SET_VERTEX_BUFFERS_FLAGS,
     ) {
         let num_buffers = buffers.len();
@@ -147,7 +211,7 @@ impl DeviceContext {
                 num_buffers as u32,
                 buffer_pointers.as_ptr(),
                 offsets.as_ptr(),
-                state_transition_mode,
+                state_transition_mode.into(),
                 flags,
             )
         }
@@ -166,7 +230,7 @@ impl DeviceContext {
         &self,
         index_buffer: &Buffer,
         offset: u64,
-        state_transition_mode: bindings::RESOURCE_STATE_TRANSITION_MODE,
+        state_transition_mode: ResourceStateTransitionMode,
     ) {
         unsafe {
             (*self.virtual_functions)
@@ -176,7 +240,7 @@ impl DeviceContext {
                 self.device_context,
                 index_buffer.buffer,
                 offset,
-                state_transition_mode,
+                state_transition_mode.into(),
             )
         }
     }
@@ -225,7 +289,7 @@ impl DeviceContext {
         &self,
         render_targets: &[&TextureView],
         depth_stencil: Option<&TextureView>,
-        state_transition_mode: bindings::_RESOURCE_STATE_TRANSITION_MODE,
+        state_transition_mode: ResourceStateTransitionMode,
     ) {
         let num_render_targets = render_targets.len();
         let mut render_target_pointers = Vec::from_iter(
@@ -243,7 +307,7 @@ impl DeviceContext {
                 num_render_targets as u32,
                 render_target_pointers.as_mut_ptr(),
                 depth_stencil.map_or(std::ptr::null_mut(), |v| v.texture_view),
-                state_transition_mode as bindings::RESOURCE_STATE_TRANSITION_MODE,
+                state_transition_mode.into(),
             )
         }
     }
@@ -391,13 +455,11 @@ impl DeviceContext {
         (tile_size_x, tile_size_y)
     }
 
-    pub fn clear_depth_stencil(
+    pub fn clear_depth(
         &self,
         view: &mut TextureView,
-        clear_flags: bindings::CLEAR_DEPTH_STENCIL_FLAGS,
         depth: f32,
-        stencil: u8,
-        state_transition_mode: bindings::_RESOURCE_STATE_TRANSITION_MODE,
+        state_transition_mode: ResourceStateTransitionMode,
     ) {
         unsafe {
             (*self.virtual_functions)
@@ -406,10 +468,53 @@ impl DeviceContext {
                 .unwrap_unchecked()(
                 self.device_context,
                 view.texture_view,
-                clear_flags,
+                bindings::CLEAR_DEPTH_FLAG,
+                depth,
+                0,
+                state_transition_mode.into(),
+            )
+        }
+    }
+
+    pub fn clear_stencil(
+        &self,
+        view: &mut TextureView,
+        stencil: u8,
+        state_transition_mode: ResourceStateTransitionMode,
+    ) {
+        unsafe {
+            (*self.virtual_functions)
+                .DeviceContext
+                .ClearDepthStencil
+                .unwrap_unchecked()(
+                self.device_context,
+                view.texture_view,
+                bindings::CLEAR_STENCIL_FLAG,
+                0.0,
+                stencil,
+                state_transition_mode.into(),
+            )
+        }
+    }
+
+    pub fn clear_depth_stencil(
+        &self,
+        view: &mut TextureView,
+        depth: f32,
+        stencil: u8,
+        state_transition_mode: ResourceStateTransitionMode,
+    ) {
+        unsafe {
+            (*self.virtual_functions)
+                .DeviceContext
+                .ClearDepthStencil
+                .unwrap_unchecked()(
+                self.device_context,
+                view.texture_view,
+                bindings::CLEAR_STENCIL_FLAG | bindings::CLEAR_DEPTH_FLAG,
                 depth,
                 stencil,
-                state_transition_mode as bindings::RESOURCE_STATE_TRANSITION_MODE,
+                state_transition_mode.into(),
             )
         }
     }
@@ -418,7 +523,7 @@ impl DeviceContext {
         &self,
         view: &mut TextureView,
         rgba: &[T; 4],
-        state_transition_mode: bindings::_RESOURCE_STATE_TRANSITION_MODE,
+        state_transition_mode: ResourceStateTransitionMode,
     ) {
         unsafe {
             (*self.virtual_functions)
@@ -428,7 +533,7 @@ impl DeviceContext {
                 self.device_context,
                 view.texture_view,
                 (*rgba).as_ptr() as *const std::os::raw::c_void,
-                state_transition_mode as bindings::RESOURCE_STATE_TRANSITION_MODE,
+                state_transition_mode.into(),
             )
         }
     }
@@ -489,7 +594,7 @@ impl DeviceContext {
         offset: u64,
         size: u64,
         data: &T,
-        state_transition_mode: RESOURCE_STATE_TRANSITION_MODE,
+        state_transition_mode: ResourceStateTransitionMode,
     ) {
         unsafe {
             (*self.virtual_functions)
@@ -501,7 +606,7 @@ impl DeviceContext {
                 offset,
                 size,
                 std::ptr::from_ref(data) as *const std::os::raw::c_void,
-                state_transition_mode,
+                state_transition_mode.into(),
             )
         }
     }
@@ -510,11 +615,11 @@ impl DeviceContext {
         &self,
         src_buffer: &Buffer,
         src_offset: u64,
-        src_buffer_transition_mode: RESOURCE_STATE_TRANSITION_MODE,
+        src_buffer_transition_mode: ResourceStateTransitionMode,
         dst_buffer: &mut Buffer,
         dst_offset: u64,
         size: u64,
-        dst_buffer_transition_mode: RESOURCE_STATE_TRANSITION_MODE,
+        dst_buffer_transition_mode: ResourceStateTransitionMode,
     ) {
         unsafe {
             (*self.virtual_functions)
@@ -524,11 +629,11 @@ impl DeviceContext {
                 self.device_context,
                 src_buffer.buffer,
                 src_offset,
-                src_buffer_transition_mode,
+                src_buffer_transition_mode.into(),
                 dst_buffer.buffer,
                 dst_offset,
                 size,
-                dst_buffer_transition_mode,
+                dst_buffer_transition_mode.into(),
             )
         }
     }
@@ -575,8 +680,8 @@ impl DeviceContext {
         slice: u32,
         dst_box: &bindings::Box,
         subres_data: &bindings::TextureSubResData,
-        src_buffer_transition_mode: bindings::_RESOURCE_STATE_TRANSITION_MODE,
-        texture_transition_mode: bindings::_RESOURCE_STATE_TRANSITION_MODE,
+        src_buffer_transition_mode: ResourceStateTransitionMode,
+        texture_transition_mode: ResourceStateTransitionMode,
     ) {
         unsafe {
             (*self.virtual_functions)
@@ -589,8 +694,8 @@ impl DeviceContext {
                 slice,
                 std::ptr::from_ref(dst_box),
                 std::ptr::from_ref(subres_data),
-                src_buffer_transition_mode as bindings::RESOURCE_STATE_TRANSITION_MODE,
-                texture_transition_mode as bindings::RESOURCE_STATE_TRANSITION_MODE,
+                src_buffer_transition_mode.into(),
+                texture_transition_mode.into(),
             )
         }
     }

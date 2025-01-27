@@ -123,8 +123,6 @@ where
         ApiImplementation::OpenGL => panic!(),
     };
 
-    // TODO init vulkan
-
     connection.flush()?;
 
     // TODO golden image mode

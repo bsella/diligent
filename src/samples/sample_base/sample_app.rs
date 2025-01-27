@@ -1,8 +1,10 @@
 use crate::{
     bindings::{self, NativeWindow},
     core::{
-        device_context::DeviceContext, engine_factory::EngineFactoryImplementation,
-        render_device::RenderDevice, swap_chain::SwapChain,
+        device_context::{DeviceContext, ResourceStateTransitionMode},
+        engine_factory::EngineFactoryImplementation,
+        render_device::RenderDevice,
+        swap_chain::SwapChain,
     },
     tools::native_app::app::{App, GoldenImageMode},
 };
@@ -142,20 +144,12 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
         let rtv = self.swap_chain.get_current_back_buffer_rtv();
         let dsv = self.swap_chain.get_depth_buffer_dsv();
 
-        context.set_render_targets(
-            &[&rtv],
-            Some(&dsv),
-            bindings::RESOURCE_STATE_TRANSITION_MODE_TRANSITION,
-        );
+        context.set_render_targets(&[&rtv], Some(&dsv), ResourceStateTransitionMode::Transition);
 
         self.sample.render(&self.swap_chain);
 
         // Restore default render target in case the sample has changed it
-        context.set_render_targets(
-            &[&rtv],
-            Some(&dsv),
-            bindings::RESOURCE_STATE_TRANSITION_MODE_TRANSITION,
-        );
+        context.set_render_targets(&[&rtv], Some(&dsv), ResourceStateTransitionMode::Transition);
 
         // TODO Imgui
     }

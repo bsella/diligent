@@ -256,11 +256,11 @@ pub struct PipelineResourceLayoutDesc<'a> {
 }
 
 pub struct PipelineStateDesc<'a> {
-    pub name: &'a std::ffi::CStr,
+    name: &'a std::ffi::CStr,
     pipeline_type: bindings::_PIPELINE_TYPE,
-    pub srb_allocation_granularity: u32,
-    pub immediate_context_mask: u64,
-    pub resource_layout: PipelineResourceLayoutDesc<'a>,
+    srb_allocation_granularity: u32,
+    immediate_context_mask: u64,
+    resource_layout: PipelineResourceLayoutDesc<'a>,
 }
 
 pub struct PipelineStateCreateInfo<'a> {
@@ -272,16 +272,59 @@ pub struct PipelineStateCreateInfo<'a> {
 }
 
 pub struct RenderTargetBlendDesc {
-    pub blend_enable: bool,
-    pub logic_operation_enable: bool,
-    pub src_blend: BlendFactor,
-    pub dest_blend: BlendFactor,
-    pub blend_op: BlendOperation,
-    pub src_blend_alpha: BlendFactor,
-    pub dest_blend_alpha: BlendFactor,
-    pub blend_op_alpha: BlendOperation,
-    pub logic_op: LogicOperation,
-    pub render_target_write_mask: ColorMask,
+    blend_enable: bool,
+    logic_operation_enable: bool,
+    src_blend: BlendFactor,
+    dest_blend: BlendFactor,
+    blend_op: BlendOperation,
+    src_blend_alpha: BlendFactor,
+    dest_blend_alpha: BlendFactor,
+    blend_op_alpha: BlendOperation,
+    logic_op: LogicOperation,
+    render_target_write_mask: ColorMask,
+}
+
+impl RenderTargetBlendDesc {
+    pub fn blend_enable(mut self, blend_enable: bool) -> Self {
+        self.blend_enable = blend_enable;
+        self
+    }
+    pub fn logic_operation_enable(mut self, logic_operation_enable: bool) -> Self {
+        self.logic_operation_enable = logic_operation_enable;
+        self
+    }
+    pub fn src_blend(mut self, src_blend: BlendFactor) -> Self {
+        self.src_blend = src_blend;
+        self
+    }
+    pub fn dest_blend(mut self, dest_blend: BlendFactor) -> Self {
+        self.dest_blend = dest_blend;
+        self
+    }
+    pub fn blend_op(mut self, blend_op: BlendOperation) -> Self {
+        self.blend_op = blend_op;
+        self
+    }
+    pub fn src_blend_alpha(mut self, src_blend_alpha: BlendFactor) -> Self {
+        self.src_blend_alpha = src_blend_alpha;
+        self
+    }
+    pub fn dest_blend_alpha(mut self, dest_blend_alpha: BlendFactor) -> Self {
+        self.dest_blend_alpha = dest_blend_alpha;
+        self
+    }
+    pub fn blend_op_alpha(mut self, blend_op_alpha: BlendOperation) -> Self {
+        self.blend_op_alpha = blend_op_alpha;
+        self
+    }
+    pub fn logic_op(mut self, logic_op: LogicOperation) -> Self {
+        self.logic_op = logic_op;
+        self
+    }
+    pub fn render_target_write_mask(mut self, render_target_write_mask: ColorMask) -> Self {
+        self.render_target_write_mask = render_target_write_mask;
+        self
+    }
 }
 
 pub struct BlendStateDesc {
@@ -291,75 +334,253 @@ pub struct BlendStateDesc {
 }
 
 pub struct RasterizerStateDesc {
-    pub fill_mode: FillMode,
-    pub cull_mode: CullMode,
-    pub front_counter_clockwise: bool,
-    pub depth_clip_enable: bool,
-    pub scissor_enable: bool,
-    pub antialiased_line_enable: bool,
-    pub depth_bias: i32,
-    pub depth_bias_clamp: f32,
-    pub slope_scaled_depth_bias: f32,
+    fill_mode: FillMode,
+    cull_mode: CullMode,
+    front_counter_clockwise: bool,
+    depth_clip_enable: bool,
+    scissor_enable: bool,
+    antialiased_line_enable: bool,
+    depth_bias: i32,
+    depth_bias_clamp: f32,
+    slope_scaled_depth_bias: f32,
+}
+
+impl RasterizerStateDesc {
+    pub fn fill_mode(mut self, fill_mode: FillMode) -> Self {
+        self.fill_mode = fill_mode;
+        self
+    }
+    pub fn cull_mode(mut self, cull_mode: CullMode) -> Self {
+        self.cull_mode = cull_mode;
+        self
+    }
+    pub fn front_counter_clockwise(mut self, front_counter_clockwise: bool) -> Self {
+        self.front_counter_clockwise = front_counter_clockwise;
+        self
+    }
+    pub fn depth_clip_enable(mut self, depth_clip_enable: bool) -> Self {
+        self.depth_clip_enable = depth_clip_enable;
+        self
+    }
+    pub fn scissor_enable(mut self, scissor_enable: bool) -> Self {
+        self.scissor_enable = scissor_enable;
+        self
+    }
+    pub fn antialiased_line_enable(mut self, antialiased_line_enable: bool) -> Self {
+        self.antialiased_line_enable = antialiased_line_enable;
+        self
+    }
+    pub fn depth_bias(mut self, depth_bias: i32) -> Self {
+        self.depth_bias = depth_bias;
+        self
+    }
+    pub fn depth_bias_clamp(mut self, depth_bias_clamp: f32) -> Self {
+        self.depth_bias_clamp = depth_bias_clamp;
+        self
+    }
+    pub fn slope_scaled_depth_bias(mut self, slope_scaled_depth_bias: f32) -> Self {
+        self.slope_scaled_depth_bias = slope_scaled_depth_bias;
+        self
+    }
 }
 
 pub struct StencilOperationsDesc {
-    pub stencil_fail_op: StencilOperation,
-    pub stencil_depth_fail_op: StencilOperation,
-    pub stencil_pass_op: StencilOperation,
-    pub stencil_func: ComparisonFunction,
+    stencil_fail_op: StencilOperation,
+    stencil_depth_fail_op: StencilOperation,
+    stencil_pass_op: StencilOperation,
+    stencil_func: ComparisonFunction,
+}
+
+impl StencilOperationsDesc {
+    pub fn stencil_fail_op(mut self, stencil_fail_op: StencilOperation) -> Self {
+        self.stencil_fail_op = stencil_fail_op;
+        self
+    }
+    pub fn stencil_depth_fail_op(mut self, stencil_depth_fail_op: StencilOperation) -> Self {
+        self.stencil_depth_fail_op = stencil_depth_fail_op;
+        self
+    }
+    pub fn stencil_pass_op(mut self, stencil_pass_op: StencilOperation) -> Self {
+        self.stencil_pass_op = stencil_pass_op;
+        self
+    }
+    pub fn stencil_func(mut self, stencil_func: ComparisonFunction) -> Self {
+        self.stencil_func = stencil_func;
+        self
+    }
 }
 
 pub struct DepthStencilStateDesc {
-    pub depth_enable: bool,
-    pub depth_write_enable: bool,
-    pub depth_func: ComparisonFunction,
-    pub stencil_enable: bool,
-    pub stencil_read_mask: u8,
-    pub stencil_write_mask: u8,
-    pub front_face: StencilOperationsDesc,
-    pub back_face: StencilOperationsDesc,
+    depth_enable: bool,
+    depth_write_enable: bool,
+    depth_func: ComparisonFunction,
+    stencil_enable: bool,
+    stencil_read_mask: u8,
+    stencil_write_mask: u8,
+    front_face: StencilOperationsDesc,
+    back_face: StencilOperationsDesc,
+}
+
+impl DepthStencilStateDesc {
+    pub fn depth_enable(mut self, depth_enable: bool) -> Self {
+        self.depth_enable = depth_enable;
+        self
+    }
+    pub fn depth_write_enable(mut self, depth_write_enable: bool) -> Self {
+        self.depth_write_enable = depth_write_enable;
+        self
+    }
+    pub fn depth_func(mut self, depth_func: ComparisonFunction) -> Self {
+        self.depth_func = depth_func;
+        self
+    }
+    pub fn stencil_enable(mut self, stencil_enable: bool) -> Self {
+        self.stencil_enable = stencil_enable;
+        self
+    }
+    pub fn stencil_read_mask(mut self, stencil_read_mask: u8) -> Self {
+        self.stencil_read_mask = stencil_read_mask;
+        self
+    }
+    pub fn stencil_write_mask(mut self, stencil_write_mask: u8) -> Self {
+        self.stencil_write_mask = stencil_write_mask;
+        self
+    }
+    pub fn front_face(mut self, front_face: StencilOperationsDesc) -> Self {
+        self.front_face = front_face;
+        self
+    }
+    pub fn back_face(mut self, back_face: StencilOperationsDesc) -> Self {
+        self.back_face = back_face;
+        self
+    }
 }
 
 pub struct GraphicsPipelineDesc {
-    pub blend_desc: BlendStateDesc,
-    pub sample_mask: u32,
-    pub rasterizer_desc: RasterizerStateDesc,
-    pub depth_stencil_desc: DepthStencilStateDesc,
-    pub input_layouts: Vec<bindings::LayoutElement>,
-    pub primitive_topology: PrimitiveTopology,
-    pub num_viewports: u8,
-    pub num_render_targets: u8,
-    pub subpass_index: u8,
-    pub shading_rate_flags: PipelineShadingRateFlags,
-    pub rtv_formats: [bindings::_TEXTURE_FORMAT; 8usize],
-    pub dsv_format: bindings::_TEXTURE_FORMAT,
-    pub read_only_dsv: bool,
-    pub sample_desc: SampleDesc,
+    blend_desc: BlendStateDesc,
+    sample_mask: u32,
+    rasterizer_desc: RasterizerStateDesc,
+    depth_stencil_desc: DepthStencilStateDesc,
+    input_layouts: Vec<bindings::LayoutElement>,
+    primitive_topology: PrimitiveTopology,
+    num_viewports: u8,
+    num_render_targets: u8,
+    subpass_index: u8,
+    shading_rate_flags: PipelineShadingRateFlags,
+    rtv_formats: [bindings::_TEXTURE_FORMAT; 8usize],
+    dsv_format: bindings::_TEXTURE_FORMAT,
+    read_only_dsv: bool,
+    sample_desc: SampleDesc,
     // TODO
     // pub render_pass: Option<&RenderPass>,
-    pub node_mask: u32,
+    node_mask: u32,
+}
+
+impl Default for GraphicsPipelineDesc {
+    fn default() -> Self {
+        GraphicsPipelineDesc::new(
+            BlendStateDesc::default(),
+            RasterizerStateDesc::default(),
+            DepthStencilStateDesc::default(),
+        )
+    }
+}
+
+impl GraphicsPipelineDesc {
+    pub fn new(
+        blend_desc: BlendStateDesc,
+        rasterizer_desc: RasterizerStateDesc,
+        depth_stencil_desc: DepthStencilStateDesc,
+    ) -> Self {
+        GraphicsPipelineDesc {
+            blend_desc: blend_desc,
+            sample_mask: 0xFFFFFFFF,
+            rasterizer_desc: rasterizer_desc,
+            depth_stencil_desc: depth_stencil_desc,
+            input_layouts: Vec::default(),
+            primitive_topology: PrimitiveTopology::TriangleList,
+            num_viewports: 1,
+            num_render_targets: 0,
+            subpass_index: 0,
+            shading_rate_flags: PipelineShadingRateFlags::None,
+            rtv_formats: [
+                bindings::TEX_FORMAT_UNKNOWN,
+                bindings::TEX_FORMAT_UNKNOWN,
+                bindings::TEX_FORMAT_UNKNOWN,
+                bindings::TEX_FORMAT_UNKNOWN,
+                bindings::TEX_FORMAT_UNKNOWN,
+                bindings::TEX_FORMAT_UNKNOWN,
+                bindings::TEX_FORMAT_UNKNOWN,
+                bindings::TEX_FORMAT_UNKNOWN,
+            ],
+            dsv_format: bindings::TEX_FORMAT_UNKNOWN,
+            read_only_dsv: false,
+            node_mask: 0,
+            sample_desc: SampleDesc {
+                Count: 1,
+                Quality: 0,
+            },
+        }
+    }
+
+    pub fn sample_mask(mut self, sample_mask: u32) -> Self {
+        self.sample_mask = sample_mask;
+        self
+    }
+    pub fn primitive_topology(mut self, primitive_topology: PrimitiveTopology) -> Self {
+        self.primitive_topology = primitive_topology;
+        self
+    }
+    pub fn num_viewports(mut self, num_viewports: u8) -> Self {
+        self.num_viewports = num_viewports;
+        self
+    }
+    pub fn num_render_targets(mut self, num_render_targets: u8) -> Self {
+        self.num_render_targets = num_render_targets;
+        self
+    }
+    pub fn subpass_index(mut self, subpass_index: u8) -> Self {
+        self.subpass_index = subpass_index;
+        self
+    }
+    pub fn shading_rate_flags(mut self, shading_rate_flags: PipelineShadingRateFlags) -> Self {
+        self.shading_rate_flags = shading_rate_flags;
+        self
+    }
+    pub fn rtv_format(mut self, index: usize, value: bindings::_TEXTURE_FORMAT) -> Self {
+        self.rtv_formats[index] = value;
+        self
+    }
+    pub fn dsv_format(mut self, dsv_format: bindings::_TEXTURE_FORMAT) -> Self {
+        self.dsv_format = dsv_format;
+        self
+    }
+    pub fn read_only_dsv(mut self, read_only_dsv: bool) -> Self {
+        self.read_only_dsv = read_only_dsv;
+        self
+    }
 }
 
 pub struct GraphicsPipelineStateCreateInfo<'a> {
-    pub pipeline_state_create_info: PipelineStateCreateInfo<'a>,
-    pub graphics_pipeline_desc: GraphicsPipelineDesc,
-    pub vertex_shader: Option<&'a Shader>,
-    pub pixel_shader: Option<&'a Shader>,
-    pub domain_shader: Option<&'a Shader>,
-    pub hull_shader: Option<&'a Shader>,
-    pub geometry_shader: Option<&'a Shader>,
-    pub amplification_shader: Option<&'a Shader>,
-    pub mesh_shader: Option<&'a Shader>,
+    pipeline_state_create_info: PipelineStateCreateInfo<'a>,
+    graphics_pipeline_desc: GraphicsPipelineDesc,
+    vertex_shader: Option<&'a Shader>,
+    pixel_shader: Option<&'a Shader>,
+    domain_shader: Option<&'a Shader>,
+    hull_shader: Option<&'a Shader>,
+    geometry_shader: Option<&'a Shader>,
+    amplification_shader: Option<&'a Shader>,
+    mesh_shader: Option<&'a Shader>,
 }
 
 impl<'a> GraphicsPipelineStateCreateInfo<'a> {
-    pub fn new(name: &'a std::ffi::CStr) -> Self {
+    pub fn new(name: &'a std::ffi::CStr, graphics_pipeline_desc: GraphicsPipelineDesc) -> Self {
         GraphicsPipelineStateCreateInfo {
             pipeline_state_create_info: PipelineStateCreateInfo::new(
                 name,
                 bindings::PIPELINE_TYPE_GRAPHICS,
             ),
-            graphics_pipeline_desc: GraphicsPipelineDesc::default(),
+            graphics_pipeline_desc: graphics_pipeline_desc,
             vertex_shader: None,
             pixel_shader: None,
             domain_shader: None,
@@ -368,6 +589,41 @@ impl<'a> GraphicsPipelineStateCreateInfo<'a> {
             amplification_shader: None,
             mesh_shader: None,
         }
+    }
+
+    pub fn vertex_shader(mut self, shader: &'a Shader) -> Self {
+        self.vertex_shader = Some(shader);
+        self
+    }
+
+    pub fn pixel_shader(mut self, shader: &'a Shader) -> Self {
+        self.pixel_shader = Some(shader);
+        self
+    }
+
+    pub fn domain_shader(mut self, shader: &'a Shader) -> Self {
+        self.domain_shader = Some(shader);
+        self
+    }
+
+    pub fn hull_shader(mut self, shader: &'a Shader) -> Self {
+        self.hull_shader = Some(shader);
+        self
+    }
+
+    pub fn geometry_shader(mut self, shader: &'a Shader) -> Self {
+        self.geometry_shader = Some(shader);
+        self
+    }
+
+    pub fn amplification_shader(mut self, shader: &'a Shader) -> Self {
+        self.amplification_shader = Some(shader);
+        self
+    }
+
+    pub fn mesh_shader(mut self, shader: &'a Shader) -> Self {
+        self.mesh_shader = Some(shader);
+        self
     }
 }
 
@@ -572,40 +828,6 @@ impl<'a> PipelineStateCreateInfo<'a> {
             pso_desc: PipelineStateDesc::new(name, pipeline_type),
             flags: PipelineStateObjectCreateFlags::None,
             resource_signatures: &[],
-        }
-    }
-}
-
-impl Default for GraphicsPipelineDesc {
-    fn default() -> Self {
-        GraphicsPipelineDesc {
-            blend_desc: BlendStateDesc::default(),
-            sample_mask: 0xFFFFFFFF,
-            rasterizer_desc: RasterizerStateDesc::default(),
-            depth_stencil_desc: DepthStencilStateDesc::default(),
-            input_layouts: Vec::default(),
-            primitive_topology: PrimitiveTopology::TriangleList,
-            num_viewports: 1,
-            num_render_targets: 0,
-            subpass_index: 0,
-            shading_rate_flags: PipelineShadingRateFlags::None,
-            rtv_formats: [
-                bindings::TEX_FORMAT_RGBA8_UNORM_SRGB,
-                bindings::TEX_FORMAT_RGBA32_FLOAT,
-                bindings::TEX_FORMAT_RGBA32_FLOAT,
-                bindings::TEX_FORMAT_RGBA32_FLOAT,
-                bindings::TEX_FORMAT_RGBA32_FLOAT,
-                bindings::TEX_FORMAT_RGBA32_FLOAT,
-                bindings::TEX_FORMAT_RGBA32_FLOAT,
-                bindings::TEX_FORMAT_RGBA32_FLOAT,
-            ],
-            dsv_format: bindings::TEX_FORMAT_D32_FLOAT,
-            read_only_dsv: false,
-            node_mask: 0,
-            sample_desc: SampleDesc {
-                Count: 1,
-                Quality: 0,
-            },
         }
     }
 }

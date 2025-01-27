@@ -1,11 +1,16 @@
 use diligent::bindings;
 use diligent::core::device_context::DeviceContext;
 use diligent::core::device_context::DrawAttribs;
+use diligent::core::device_context::ResourceStateTransitionMode;
 use diligent::core::graphics_types::PrimitiveTopology;
 use diligent::core::graphics_types::ShaderType;
+use diligent::core::pipeline_state::BlendStateDesc;
 use diligent::core::pipeline_state::CullMode;
+use diligent::core::pipeline_state::DepthStencilStateDesc;
+use diligent::core::pipeline_state::GraphicsPipelineDesc;
 use diligent::core::pipeline_state::GraphicsPipelineStateCreateInfo;
 use diligent::core::pipeline_state::PipelineState;
+use diligent::core::pipeline_state::RasterizerStateDesc;
 use diligent::core::render_device::RenderDevice;
 use diligent::core::shader::ShaderCreateInfo;
 use diligent::core::shader::ShaderLanguage;
@@ -36,29 +41,6 @@ impl SampleBase for HelloTriangle {
         deferred_contexts: Vec<DeviceContext>,
         swap_chain: &SwapChain,
     ) -> Self {
-        let mut pso_create_info = GraphicsPipelineStateCreateInfo::new(c"Simple triangle PSO");
-
-        // This tutorial will render to a single render target
-        pso_create_info.graphics_pipeline_desc.num_render_targets = 1;
-        // Set render target format which is the format of the swap chain's color buffer
-        pso_create_info.graphics_pipeline_desc.rtv_formats[0] =
-            swap_chain.get_desc().ColorBufferFormat as u32;
-        // Use the depth buffer format from the swap chain
-        pso_create_info.graphics_pipeline_desc.dsv_format =
-            swap_chain.get_desc().DepthBufferFormat as u32;
-        // Primitive topology defines what kind of primitives will be rendered by this pipeline state
-        pso_create_info.graphics_pipeline_desc.primitive_topology = PrimitiveTopology::TriangleList;
-        // No back face culling for this tutorial
-        pso_create_info
-            .graphics_pipeline_desc
-            .rasterizer_desc
-            .cull_mode = CullMode::None;
-        // Disable depth testing
-        pso_create_info
-            .graphics_pipeline_desc
-            .depth_stencil_desc
-            .depth_enable = false;
-
         let vertex_shader = {
             let shader_source_code = r#"
 struct PSInput
@@ -83,17 +65,16 @@ void main(in uint VertId : SV_VertexID, out PSInput PSIn)
     PSIn.Color = Col[VertId];
 }
 "#;
-            let mut shader_create_info = ShaderCreateInfo::new(
+            let shader_create_info = ShaderCreateInfo::new(
                 c"Triangle vertex shader",
                 ShaderSource::SourceCode(&shader_source_code),
                 ShaderType::Vertex,
-            );
-
+            )
             // Tell the system that the shader source code is in HLSL.
             // For OpenGL, the engine will convert this into GLSL under the hood.
-            shader_create_info.source_language = ShaderLanguage::HLSL;
+            .language(ShaderLanguage::HLSL)
             // OpenGL backend requires emulated combined HLSL texture samplers (g_Texture + g_Texture_sampler combination)
-            shader_create_info.desc.use_combined_texture_samplers = true;
+            .use_combined_texture_samplers(true);
 
             render_device.create_shader(shader_create_info).unwrap()
         };
@@ -116,24 +97,47 @@ void main(in PSInput PSIn, out PSOutput PSOut)
     PSOut.Color = float4(PSIn.Color.rgb, 1.0);
 }
 "#;
-            let mut shader_create_info = ShaderCreateInfo::new(
+            let shader_create_info = ShaderCreateInfo::new(
                 c"Triangle pixel shader",
                 ShaderSource::SourceCode(shader_source_code),
                 ShaderType::Pixel,
-            );
+            )
             // Tell the system that the shader source code is in HLSL.
             // For OpenGL, the engine will convert this into GLSL under the hood.
-            shader_create_info.source_language = ShaderLanguage::HLSL;
+            .language(ShaderLanguage::HLSL)
             // OpenGL backend requires emulated combined HLSL texture samplers (g_Texture + g_Texture_sampler combination)
-            shader_create_info.desc.use_combined_texture_samplers = true;
+            .use_combined_texture_samplers(true);
 
             render_device.create_shader(shader_create_info).unwrap()
         };
 
-        // Finally, create the pipeline state
-        pso_create_info.vertex_shader = Some(&vertex_shader);
-        pso_create_info.pixel_shader = Some(&pixel_shader);
+        let graphics_pipeline_desc = GraphicsPipelineDesc::new(
+            BlendStateDesc::default(),
+            RasterizerStateDesc::default()
+                // No back face culling for this tutorial
+                .cull_mode(CullMode::None),
+            DepthStencilStateDesc::default()
+                // Disable depth testing
+                .depth_enable(false),
+        )
+        // This tutorial will render to a single render target
+        .num_render_targets(1)
+        // Set render target format which is the format of the swap chain's color buffer
+        .rtv_format(
+            0,
+            swap_chain.get_desc().ColorBufferFormat as bindings::_TEXTURE_FORMAT,
+        )
+        // Use the depth buffer format from the swap chain
+        .dsv_format(swap_chain.get_desc().DepthBufferFormat as bindings::_TEXTURE_FORMAT)
+        // Primitive topology defines what kind of primitives will be rendered by this pipeline state
+        .primitive_topology(PrimitiveTopology::TriangleList);
 
+        let pso_create_info =
+            GraphicsPipelineStateCreateInfo::new(c"Simple triangle PSO", graphics_pipeline_desc)
+                .vertex_shader(&vertex_shader)
+                .pixel_shader(&pixel_shader);
+
+        // Finally, create the pipeline state
         let pipeline_state = render_device
             .create_graphics_pipeline_state(pso_create_info)
             .unwrap();
@@ -152,43 +156,33 @@ void main(in PSInput PSIn, out PSOutput PSOut)
     fn pre_window_resize(&mut self) {}
 
     fn window_resize(&mut self, _width: u32, _height: u32) {}
+
     fn render(&self, swap_chain: &SwapChain) {
         let immediate_context = self.get_immediate_context();
 
         let mut rtv = swap_chain.get_current_back_buffer_rtv();
         let mut dsv = swap_chain.get_depth_buffer_dsv();
 
+        // Clear the back buffer
+        // Let the engine perform required state transitions
         immediate_context.clear_render_target::<f32>(
             &mut rtv,
             &[0.350, 0.350, 0.350, 1.0],
-            diligent::bindings::RESOURCE_STATE_TRANSITION_MODE_TRANSITION,
+            ResourceStateTransitionMode::Transition,
         );
 
-        immediate_context.clear_depth_stencil(
-            &mut dsv,
-            bindings::CLEAR_DEPTH_FLAG,
-            1.0,
-            0,
-            diligent::bindings::RESOURCE_STATE_TRANSITION_MODE_TRANSITION,
-        );
+        immediate_context.clear_depth(&mut dsv, 1.0, ResourceStateTransitionMode::Transition);
 
         // Set the pipeline state in the immediate context
         immediate_context.set_pipeline_state(&self.pipeline_state);
 
         // Typically we should now call CommitShaderResources(), however shaders in this example don't
         // use any resources.
-
-        let draw_attribs = DrawAttribs {
-            first_instance_location: 0,
-            flags: bindings::DRAW_FLAG_NONE as bindings::DRAW_FLAGS,
-            num_vertices: 3,
-            num_instances: 1,
-            start_vertex_location: 0,
-        };
-
-        immediate_context.draw(draw_attribs);
+        immediate_context.draw(DrawAttribs::new(3));
     }
+
     fn update(&self, _current_time: f64, _elapsed_time: f64) {}
+
     fn get_name() -> &'static str {
         "Tutorial01: Hello Triangle"
     }
