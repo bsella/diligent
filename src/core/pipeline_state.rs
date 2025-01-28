@@ -2,7 +2,7 @@ use bitflags::bitflags;
 use static_assertions::const_assert;
 
 use super::device_object::{AsDeviceObject, DeviceObject};
-use super::graphics_types::{PrimitiveTopology, ShaderTypes};
+use super::graphics_types::{PrimitiveTopology, ShaderType, ShaderTypes};
 use super::pipeline_resource_signature::{ImmutableSamplerDesc, PipelineResourceSignature};
 use super::resource_mapping::ResourceMapping;
 use super::shader::Shader;
@@ -1009,7 +1009,7 @@ impl PipelineState {
 
     pub fn bind_static_resources(
         &mut self,
-        shader_type: bindings::SHADER_TYPE,
+        shader_type: ShaderType,
         resource_mapping: &ResourceMapping,
         flags: bindings::BIND_SHADER_RESOURCES_FLAGS,
     ) {
@@ -1019,7 +1019,7 @@ impl PipelineState {
                 .BindStaticResources
                 .unwrap_unchecked()(
                 self.pipeline_state,
-                shader_type,
+                shader_type.into(),
                 resource_mapping.resource_mapping,
                 flags,
             )
@@ -1028,7 +1028,7 @@ impl PipelineState {
 
     pub fn get_static_variables(
         &self,
-        _shader_type: bindings::SHADER_TYPE,
+        _shader_type: ShaderType,
     ) -> Option<&[ShaderResourceVariable]> {
         todo!()
     }

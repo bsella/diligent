@@ -1,5 +1,4 @@
-use std::collections::BTreeMap;
-
+use super::graphics_types::ShaderType;
 use super::sampler::SamplerDesc;
 use super::shader_resource_variable::ShaderResourceVariable;
 use super::{graphics_types::ShaderTypes, object::AsObject};
@@ -31,7 +30,21 @@ pub struct PipelineResourceSignature {
     pub(crate) pipeline_resource_signature: *mut bindings::IPipelineResourceSignature,
     virtual_functions: *mut bindings::IPipelineResourceSignatureVtbl,
 
-    static_variables: BTreeMap<bindings::SHADER_TYPE, Vec<ShaderResourceVariable>>,
+    vertex_static_variables: Vec<ShaderResourceVariable>,
+    pixel_static_variables: Vec<ShaderResourceVariable>,
+    geometry_static_variables: Vec<ShaderResourceVariable>,
+    hull_static_variables: Vec<ShaderResourceVariable>,
+    domain_static_variables: Vec<ShaderResourceVariable>,
+    compute_static_variables: Vec<ShaderResourceVariable>,
+    amplification_static_variables: Vec<ShaderResourceVariable>,
+    mesh_static_variables: Vec<ShaderResourceVariable>,
+    raygen_static_variables: Vec<ShaderResourceVariable>,
+    raymiss_static_variables: Vec<ShaderResourceVariable>,
+    rayclosesthit_static_variables: Vec<ShaderResourceVariable>,
+    rayanyhit_static_variables: Vec<ShaderResourceVariable>,
+    rayintersection_static_variables: Vec<ShaderResourceVariable>,
+    callable_static_variables: Vec<ShaderResourceVariable>,
+    tile_static_variables: Vec<ShaderResourceVariable>,
 
     device_object: DeviceObject,
 }
@@ -46,10 +59,12 @@ impl PipelineResourceSignature {
     pub(crate) fn new(pipeline_rs_ptr: *mut bindings::IPipelineResourceSignature) -> Self {
         fn create_shader_resource_variables(
             pipeline_rs_ptr: *mut bindings::IPipelineResourceSignature,
-            shader_type: bindings::SHADER_TYPE,
+            shader_type: ShaderType,
         ) -> Vec<ShaderResourceVariable> {
             let virtual_functions =
                 unsafe { (*(*pipeline_rs_ptr).pVtbl).PipelineResourceSignature };
+
+            let shader_type = shader_type.into();
 
             let num_variables = unsafe {
                 virtual_functions.GetStaticVariableCount.unwrap_unchecked()(
@@ -87,32 +102,21 @@ impl PipelineResourceSignature {
 
             device_object: DeviceObject::new(pipeline_rs_ptr as *mut bindings::IDeviceObject),
 
-            static_variables: BTreeMap::from_iter(
-                [
-                    bindings::SHADER_TYPE_VERTEX,
-                    bindings::SHADER_TYPE_PIXEL,
-                    bindings::SHADER_TYPE_GEOMETRY,
-                    bindings::SHADER_TYPE_HULL,
-                    bindings::SHADER_TYPE_DOMAIN,
-                    bindings::SHADER_TYPE_COMPUTE,
-                    bindings::SHADER_TYPE_AMPLIFICATION,
-                    bindings::SHADER_TYPE_MESH,
-                    bindings::SHADER_TYPE_RAY_GEN,
-                    bindings::SHADER_TYPE_RAY_MISS,
-                    bindings::SHADER_TYPE_RAY_CLOSEST_HIT,
-                    bindings::SHADER_TYPE_RAY_ANY_HIT,
-                    bindings::SHADER_TYPE_RAY_INTERSECTION,
-                    bindings::SHADER_TYPE_CALLABLE,
-                    bindings::SHADER_TYPE_TILE,
-                ]
-                .iter()
-                .map(|shader_type| {
-                    (
-                        *shader_type,
-                        create_shader_resource_variables(pipeline_rs_ptr, *shader_type),
-                    )
-                }),
-            ),
+            vertex_static_variables: Vec::new(),
+            pixel_static_variables: Vec::new(),
+            geometry_static_variables: Vec::new(),
+            hull_static_variables: Vec::new(),
+            domain_static_variables: Vec::new(),
+            compute_static_variables: Vec::new(),
+            amplification_static_variables: Vec::new(),
+            mesh_static_variables: Vec::new(),
+            raygen_static_variables: Vec::new(),
+            raymiss_static_variables: Vec::new(),
+            rayclosesthit_static_variables: Vec::new(),
+            rayanyhit_static_variables: Vec::new(),
+            rayintersection_static_variables: Vec::new(),
+            callable_static_variables: Vec::new(),
+            tile_static_variables: Vec::new(),
         }
     }
 
@@ -154,7 +158,7 @@ impl PipelineResourceSignature {
 
     pub fn bind_static_resources(
         &self,
-        shader_stages: bindings::SHADER_TYPE,
+        shader_stages: ShaderTypes,
         resource_mapping: &ResourceMapping,
         flags: bindings::BIND_SHADER_RESOURCES_FLAGS,
     ) {
@@ -164,20 +168,32 @@ impl PipelineResourceSignature {
                 .BindStaticResources
                 .unwrap_unchecked()(
                 self.pipeline_resource_signature,
-                shader_stages,
+                shader_stages.bits() as bindings::SHADER_TYPE,
                 resource_mapping.resource_mapping,
                 flags,
             );
         }
     }
 
-    pub fn get_static_variables(
-        &self,
-        shader_type: bindings::SHADER_TYPE,
-    ) -> Option<&[ShaderResourceVariable]> {
-        self.static_variables
-            .get(&shader_type)
-            .map(|v| v.as_slice())
+    pub fn get_static_variables(&self, shader_type: ShaderType) -> &[ShaderResourceVariable] {
+        match shader_type {
+            ShaderType::Vertex => &self.vertex_static_variables,
+            ShaderType::Pixel => &self.pixel_static_variables,
+            ShaderType::Geometry => &self.geometry_static_variables,
+            ShaderType::Hull => &self.hull_static_variables,
+            ShaderType::Domain => &self.domain_static_variables,
+            ShaderType::Compute => &self.compute_static_variables,
+            ShaderType::Amplification => &self.amplification_static_variables,
+            ShaderType::Mesh => &self.mesh_static_variables,
+            ShaderType::RayGen => &self.raygen_static_variables,
+            ShaderType::RayMiss => &self.raymiss_static_variables,
+            ShaderType::RayClosestHit => &self.rayclosesthit_static_variables,
+            ShaderType::RayAnyHit => &self.rayanyhit_static_variables,
+            ShaderType::RayIntersection => &self.rayintersection_static_variables,
+            ShaderType::Callable => &self.callable_static_variables,
+            ShaderType::Tile => &self.tile_static_variables,
+        }
+        .as_slice()
     }
 
     pub fn initialize_static_srb_resources(&self, shader_resource_binding: &ShaderResourceBinding) {

@@ -332,9 +332,7 @@ impl RenderDevice {
             (*self.virtual_functions)
                 .RenderDevice
                 .GetSparseTextureFormatInfo
-                .unwrap_unchecked()(
-                self.render_device, format, dimension, sample_count
-            )
+                .unwrap_unchecked()(self.render_device, format, dimension, sample_count)
         }
     }
 

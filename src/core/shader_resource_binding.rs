@@ -1,6 +1,7 @@
 use crate::bindings;
 
 use super::{
+    graphics_types::ShaderTypes,
     object::{AsObject, Object},
     pipeline_resource_signature::PipelineResourceSignature,
     resource_mapping::ResourceMapping,
@@ -35,7 +36,7 @@ impl ShaderResourceBinding {
 
     pub fn bind_resources(
         &self,
-        shader_stages: bindings::SHADER_TYPE,
+        shader_stages: ShaderTypes,
         resource_mapping: &ResourceMapping,
         flags: bindings::BIND_SHADER_RESOURCES_FLAGS,
     ) {
@@ -45,7 +46,7 @@ impl ShaderResourceBinding {
                 .BindResources
                 .unwrap_unchecked()(
                 self.shader_resource_binding,
-                shader_stages,
+                shader_stages.bits() as bindings::SHADER_TYPE,
                 resource_mapping.resource_mapping,
                 flags,
             )
@@ -54,7 +55,7 @@ impl ShaderResourceBinding {
 
     pub fn check_resources(
         &self,
-        shader_stages: bindings::SHADER_TYPE,
+        shader_stages: ShaderTypes,
         resource_mapping: &ResourceMapping,
         flags: bindings::BIND_SHADER_RESOURCES_FLAGS,
     ) -> bindings::SHADER_RESOURCE_VARIABLE_TYPE_FLAGS {
@@ -64,17 +65,14 @@ impl ShaderResourceBinding {
                 .CheckResources
                 .unwrap_unchecked()(
                 self.shader_resource_binding,
-                shader_stages,
+                shader_stages.bits() as bindings::SHADER_TYPE,
                 resource_mapping.resource_mapping,
                 flags,
             )
         }
     }
 
-    pub fn get_variables(
-        &self,
-        _shader_type: bindings::SHADER_TYPE,
-    ) -> Option<&[ShaderResourceVariable]> {
+    pub fn get_variables(&self, _shader_type: ShaderTypes) -> Option<&[ShaderResourceVariable]> {
         todo!()
     }
 
