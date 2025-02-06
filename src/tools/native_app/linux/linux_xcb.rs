@@ -5,13 +5,16 @@ use xcb::{x, Xid};
 use crate::{
     bindings,
     core::{engine_factory::EngineFactoryImplementation, vk::engine_factory_vk::EngineFactoryVk},
-    tools::native_app::app::{ApiImplementation, App},
+    tools::native_app::{
+        app::{ApiImplementation, App},
+        events::{EventHandler, EventResult},
+    },
 };
 
-fn init_connection_and_window() -> xcb::Result<(xcb::Connection, x::Window, x::Atom)> {
-    let width = 1024;
-    let height = 768;
-
+fn init_connection_and_window(
+    width: u16,
+    height: u16,
+) -> xcb::Result<(xcb::Connection, x::Window, x::Atom)> {
     let (connection, screen_number) =
         xcb::Connection::connect(None).expect("Unable to make an XCB connection");
 
@@ -27,8 +30,8 @@ fn init_connection_and_window() -> xcb::Result<(xcb::Connection, x::Window, x::A
         parent: screen.root(),
         x: 0,
         y: 0,
-        width: width,
-        height: height,
+        width,
+        height,
         border_width: 0,
         class: x::WindowClass::InputOutput,
         visual: screen.root_visual(),
@@ -62,7 +65,7 @@ fn init_connection_and_window() -> xcb::Result<(xcb::Connection, x::Window, x::A
 
     connection.send_request(&x::ChangeProperty {
         mode: x::PropMode::Replace,
-        window: window,
+        window,
         property: atom_wm_protocols,
         r#type: x::ATOM_ATOM,
         data: &[atom_wm_delete_window],
@@ -70,7 +73,7 @@ fn init_connection_and_window() -> xcb::Result<(xcb::Connection, x::Window, x::A
 
     connection.send_request(&x::ChangeProperty {
         mode: x::PropMode::Replace,
-        window: window,
+        window,
         property: x::ATOM_WM_NAME,
         r#type: x::ATOM_STRING,
         data: b"Test",
@@ -100,11 +103,80 @@ fn init_connection_and_window() -> xcb::Result<(xcb::Connection, x::Window, x::A
     Ok((connection, window, atom_wm_delete_window))
 }
 
-fn xcb_main<Application>() -> xcb::Result<()>
+struct XcbEventHandler {
+    connection: xcb::Connection,
+    atom_delete_window: xcb::x::Atom,
+    width: u16,
+    height: u16,
+}
+
+impl XcbEventHandler {
+    fn new(
+        connection: xcb::Connection,
+        atom_delete_window: xcb::x::Atom,
+        width: u16,
+        height: u16,
+    ) -> Self {
+        XcbEventHandler {
+            connection,
+            atom_delete_window,
+            width,
+            height,
+        }
+    }
+}
+
+impl EventHandler for XcbEventHandler {
+    type EventType = xcb::Event;
+
+    fn poll_event(&self) -> Option<xcb::Event> {
+        self.connection.poll_for_event().unwrap()
+    }
+
+    fn handle_event(&mut self, event: &xcb::Event) -> EventResult {
+        match event {
+            xcb::Event::X(x::Event::ClientMessage(message_event)) => {
+                if let x::ClientMessageData::Data32([atom, ..]) = message_event.data() {
+                    if atom == self.atom_delete_window.resource_id() {
+                        return EventResult::Quit;
+                    }
+                }
+                return EventResult::Continue;
+            }
+            xcb::Event::X(x::Event::KeyRelease(_key_event)) => {
+                // TODO
+                EventResult::Continue
+            }
+            xcb::Event::X(x::Event::DestroyNotify(_destroy_event)) => EventResult::Quit,
+
+            xcb::Event::X(x::Event::ConfigureNotify(configure_event)) => {
+                let new_width = configure_event.width();
+                let new_height = configure_event.height();
+                if self.width != new_width || self.height != new_height {
+                    self.width = new_width;
+                    self.height = new_height;
+                    EventResult::Resize {
+                        width: configure_event.width(),
+                        height: configure_event.height(),
+                    }
+                } else {
+                    EventResult::Continue
+                }
+            }
+            _ => EventResult::Continue,
+        }
+    }
+}
+
+pub(super) fn main<Application>() -> Result<(), std::io::Error>
 where
     Application: App,
 {
-    let (connection, window, atom_delete_window) = init_connection_and_window()?;
+    let width = 1024;
+    let height = 768;
+
+    let (connection, window, atom_delete_window) =
+        init_connection_and_window(width, height).unwrap();
 
     let native_window = bindings::NativeWindow {
         WindowId: window.resource_id(),
@@ -114,7 +186,7 @@ where
 
     let api = ApiImplementation::Vulkan;
 
-    let mut app = match api {
+    let app = match api {
         ApiImplementation::Vulkan => {
             let engine_create_info =
                 <EngineFactoryVk as EngineFactoryImplementation>::EngineCreateInfo::default();
@@ -123,67 +195,12 @@ where
         ApiImplementation::OpenGL => panic!(),
     };
 
-    connection.flush()?;
+    connection.flush().unwrap();
 
-    // TODO golden image mode
-
-    // TODO timer and title
-
-    let mut current_width = 1024;
-    let mut current_height = 768;
-
-    'main: loop {
-        'xcb_events: loop {
-            match connection.poll_for_event()? {
-                Some(event) => match event {
-                    xcb::Event::X(x::Event::ClientMessage(message_event)) => {
-                        if let x::ClientMessageData::Data32([atom, ..]) = message_event.data() {
-                            if atom == atom_delete_window.resource_id() {
-                                break 'main;
-                            }
-                        }
-                    }
-                    xcb::Event::X(x::Event::KeyRelease(_key_event)) => {
-                        // TODO
-                    }
-                    xcb::Event::X(x::Event::DestroyNotify(_destroy_event)) => {
-                        break 'main;
-                    }
-
-                    xcb::Event::X(x::Event::ConfigureNotify(configure_event)) => {
-                        if (configure_event.width() != current_width)
-                            || (configure_event.height() != current_height)
-                        {
-                            current_width = configure_event.width();
-                            current_height = configure_event.height();
-                            if current_width > 0 && current_height > 0 {
-                                app.window_resize(current_height as u32, current_height as u32);
-                            }
-                        }
-                    }
-                    _ => break 'xcb_events,
-                },
-                None => break 'xcb_events,
-            }
-        }
-
-        // TODO implement timer
-        app.update(0.0, 0.0);
-
-        app.render();
-
-        app.present();
-
-        // TODO update title
-    }
-
-    Ok(())
-}
-
-pub(super) fn main<Application>() -> Result<(), std::io::Error>
-where
-    Application: App,
-{
-    xcb_main::<Application>()
-        .map_err(|xcb_error| std::io::Error::new(std::io::ErrorKind::Other, xcb_error.to_string()))
+    app.run(XcbEventHandler::new(
+        connection,
+        atom_delete_window,
+        width,
+        height,
+    ))
 }

@@ -16,9 +16,9 @@ use diligent::core::shader::ShaderCreateInfo;
 use diligent::core::shader::ShaderLanguage;
 use diligent::core::shader::ShaderSource;
 use diligent::core::swap_chain::SwapChain;
-use diligent::samples::sample_base::sample_app::Sample;
-use diligent::samples::sample_base::sample_app::SampleApp;
-use diligent::samples::sample_base::sample_app::SampleBase;
+use diligent::samples::sample::Sample;
+use diligent::samples::sample::SampleBase;
+use diligent::samples::sample_app::SampleApp;
 use diligent::tools::native_app;
 
 struct HelloTriangle {

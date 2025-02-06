@@ -1,7 +1,7 @@
 use app::App;
 pub mod app;
 
-pub mod command_line_parser;
+pub mod events;
 
 #[cfg(target_os = "linux")]
 mod linux;

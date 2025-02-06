@@ -1,1 +1,2 @@
-pub mod sample_base;
+pub mod sample;
+pub mod sample_app;
