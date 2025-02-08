@@ -2,8 +2,9 @@ use crate::bindings;
 
 use std::option::Option;
 
-use super::buffer::Buffer;
+use super::buffer::{Buffer, BufferDesc};
 use super::data_blob::DataBlob;
+use super::graphics_types::RenderDeviceType;
 use super::sampler::Sampler;
 use super::shader::{Shader, ShaderCreateInfo};
 use super::texture::Texture;
@@ -12,6 +13,21 @@ use super::fence::Fence;
 use super::object::{AsObject, Object};
 use super::pipeline_state::{GraphicsPipelineStateCreateInfo, PipelineState};
 use super::resource_mapping::ResourceMapping;
+
+pub struct RenderDeviceInfo {
+    device_type: RenderDeviceType,
+    //TODO
+    //api_version: Version,
+    //DeviceFeatures Features;
+    //NDCAttribs NDC DEFAULT_INITIALIZER({});
+    //RenderDeviceShaderVersionInfo MaxShaderVersion DEFAULT_INITIALIZER({});
+}
+
+impl RenderDeviceInfo {
+    pub fn device_type(&self) -> &RenderDeviceType {
+        &self.device_type
+    }
+}
 
 pub struct RenderDevice {
     pub(crate) render_device: *mut bindings::IRenderDevice,
@@ -37,17 +53,19 @@ impl RenderDevice {
 
     pub fn create_buffer(
         &self,
-        buffer_desc: &bindings::BufferDesc,
+        buffer_desc: BufferDesc,
         buffer_data: Option<&bindings::BufferData>,
     ) -> Option<Buffer> {
         let mut buffer_ptr = std::ptr::null_mut();
+
+        let buffer_desc = buffer_desc.into();
         unsafe {
             (*self.virtual_functions)
                 .RenderDevice
                 .CreateBuffer
                 .unwrap_unchecked()(
                 self.render_device,
-                buffer_desc,
+                std::ptr::addr_of!(buffer_desc),
                 match buffer_data {
                     Some(data) => std::ptr::addr_of!(data) as *const bindings::BufferData,
                     None => std::ptr::null(),
@@ -55,10 +73,11 @@ impl RenderDevice {
                 std::ptr::addr_of_mut!(buffer_ptr),
             )
         }
+
         if buffer_ptr.is_null() {
             None
         } else {
-            Some(Buffer::new(buffer_ptr, buffer_desc))
+            Some(Buffer::new(buffer_ptr))
         }
     }
 
@@ -283,14 +302,27 @@ impl RenderDevice {
         }
     }
 
-    pub fn get_device_info(&self) -> &bindings::RenderDeviceInfo {
-        unsafe {
+    pub fn get_device_info(&self) -> RenderDeviceInfo {
+        let render_device_info = unsafe {
             (*self.virtual_functions)
                 .RenderDevice
                 .GetDeviceInfo
                 .unwrap_unchecked()(self.render_device)
             .as_ref()
             .unwrap_unchecked()
+        };
+
+        RenderDeviceInfo {
+            device_type: match render_device_info.Type {
+                bindings::RENDER_DEVICE_TYPE_D3D11 => RenderDeviceType::D3D11,
+                bindings::RENDER_DEVICE_TYPE_D3D12 => RenderDeviceType::D3D12,
+                bindings::RENDER_DEVICE_TYPE_GL => RenderDeviceType::GL,
+                bindings::RENDER_DEVICE_TYPE_GLES => RenderDeviceType::GLES,
+                bindings::RENDER_DEVICE_TYPE_VULKAN => RenderDeviceType::VULKAN,
+                bindings::RENDER_DEVICE_TYPE_METAL => RenderDeviceType::METAL,
+                bindings::RENDER_DEVICE_TYPE_WEBGPU => RenderDeviceType::WEBGPU,
+                _ => panic!(),
+            },
         }
     }
 

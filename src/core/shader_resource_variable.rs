@@ -1,10 +1,12 @@
 use crate::bindings;
 use static_assertions::const_assert;
 
-use super::device_object::DeviceObject;
-use super::graphics_types::ShaderTypes;
-use super::object::{AsObject, Object};
-use super::pipeline_state::ShaderVariableFlags;
+use super::{
+    device_object::AsDeviceObject,
+    graphics_types::{SetShaderResourceFlags, ShaderTypes},
+    object::{AsObject, Object},
+    pipeline_state::ShaderVariableFlags,
+};
 
 pub enum ShaderResourceVariableType {
     Static,
@@ -24,10 +26,10 @@ impl Into<bindings::SHADER_RESOURCE_VARIABLE_TYPE> for ShaderResourceVariableTyp
 }
 
 pub struct ShaderResourceVariableDesc<'a> {
-    pub name: &'a std::ffi::CStr,
-    pub variable_type: ShaderResourceVariableType,
-    pub shader_stages: ShaderTypes,
-    pub flags: ShaderVariableFlags,
+    name: &'a std::ffi::CStr,
+    variable_type: ShaderResourceVariableType,
+    shader_stages: ShaderTypes,
+    flags: ShaderVariableFlags,
 }
 
 impl<'a> Into<bindings::ShaderResourceVariableDesc> for ShaderResourceVariableDesc<'a> {
@@ -57,34 +59,34 @@ impl ShaderResourceVariable {
     pub(crate) fn new(shader_resource_variable: *mut bindings::IShaderResourceVariable) -> Self {
         ShaderResourceVariable {
             virtual_functions: unsafe { (*shader_resource_variable).pVtbl },
-            shader_resource_variable: shader_resource_variable,
+            shader_resource_variable,
             object: Object::new(shader_resource_variable as *mut bindings::IObject),
         }
     }
 
-    pub fn set(
-        &mut self,
-        device_object: &DeviceObject,
-        flags: Option<bindings::SET_SHADER_RESOURCE_FLAGS>,
-    ) {
+    pub fn set<DO: AsDeviceObject>(&mut self, device_object: &DO, flags: SetShaderResourceFlags) {
         unsafe {
             (*self.virtual_functions)
                 .ShaderResourceVariable
                 .Set
                 .unwrap_unchecked()(
                 self.shader_resource_variable,
-                device_object.device_object,
-                flags.unwrap_or(bindings::SET_SHADER_RESOURCE_FLAG_NONE),
+                device_object.as_device_object().device_object,
+                flags.bits(),
             )
         }
     }
 
-    pub fn set_array(
+    pub fn set_array<DO: AsDeviceObject>(
         &mut self,
-        device_objects: &[DeviceObject],
-        flags: Option<bindings::SET_SHADER_RESOURCE_FLAGS>,
+        device_objects: &[DO],
+        flags: SetShaderResourceFlags,
     ) {
-        let object_ptrs = Vec::from_iter(device_objects.iter().map(|object| object.device_object));
+        let object_ptrs = Vec::from_iter(
+            device_objects
+                .iter()
+                .map(|object| object.as_device_object().device_object),
+        );
         unsafe {
             (*self.virtual_functions)
                 .ShaderResourceVariable
@@ -94,14 +96,14 @@ impl ShaderResourceVariable {
                 object_ptrs.as_ptr(),
                 0,
                 object_ptrs.len() as u32,
-                flags.unwrap_or(bindings::SET_SHADER_RESOURCE_FLAG_NONE),
+                flags.bits(),
             )
         }
     }
 
-    pub fn set_buffer_range(
+    pub fn set_buffer_range<DO: AsDeviceObject>(
         &mut self,
-        device_object: &DeviceObject,
+        device_object: &DO,
         offset: u64,
         size: u64,
         array_index: Option<u32>,
@@ -113,7 +115,7 @@ impl ShaderResourceVariable {
                 .SetBufferRange
                 .unwrap_unchecked()(
                 self.shader_resource_variable,
-                device_object.device_object,
+                device_object.as_device_object().device_object,
                 offset,
                 size,
                 array_index.unwrap_or(0),

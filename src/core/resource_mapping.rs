@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use crate::bindings;
 
 use super::{
-    device_object::DeviceObject,
+    device_object::{AsDeviceObject, DeviceObject},
     object::{AsObject, Object},
 };
 
@@ -35,7 +35,7 @@ impl ResourceMapping {
         }
     }
 
-    pub fn add_resource(&mut self, name: &str, object: &DeviceObject, is_unique: bool) {
+    pub fn add_resource<DO: AsDeviceObject>(&mut self, name: &str, object: &DO, is_unique: bool) {
         {
             let name = std::ffi::CString::new(name).unwrap();
             unsafe {
@@ -45,7 +45,7 @@ impl ResourceMapping {
                     .unwrap_unchecked()(
                     self.resource_mapping,
                     name.as_ptr(),
-                    object.device_object,
+                    object.as_device_object().device_object,
                     is_unique,
                 );
             }
@@ -53,11 +53,20 @@ impl ResourceMapping {
         self.resources
             .entry(name.to_owned())
             .or_insert(Vec::new())
-            .push(std::ptr::addr_of!(*object));
+            .push(std::ptr::addr_of!(*object.as_device_object()));
     }
 
-    pub fn add_resource_array(&mut self, name: &str, objects: &[DeviceObject], is_unique: bool) {
-        let object_ptrs = Vec::from_iter(objects.iter().map(|object| object.device_object));
+    pub fn add_resource_array<DO: AsDeviceObject>(
+        &mut self,
+        name: &str,
+        device_objects: &[DO],
+        is_unique: bool,
+    ) {
+        let object_ptrs = Vec::from_iter(
+            device_objects
+                .iter()
+                .map(|object| object.as_device_object().device_object),
+        );
 
         {
             let name = std::ffi::CString::new(name).unwrap();
@@ -71,7 +80,7 @@ impl ResourceMapping {
                     name.as_ptr(),
                     0,
                     object_ptrs.as_ptr(),
-                    objects.len() as u32,
+                    device_objects.len() as u32,
                     is_unique,
                 );
             }
@@ -80,7 +89,11 @@ impl ResourceMapping {
         self.resources
             .entry(name.to_owned())
             .or_insert(Vec::new())
-            .extend(objects.iter().map(|object| std::ptr::addr_of!(*object)));
+            .extend(
+                device_objects
+                    .iter()
+                    .map(|object| std::ptr::addr_of!(*object.as_device_object())),
+            );
     }
 
     pub fn remove_resource_by_name(&mut self, name: &str, array_index: Option<u32>) {

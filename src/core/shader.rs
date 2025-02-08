@@ -13,7 +13,7 @@ use super::{
 pub enum ShaderSource<'a> {
     FilePath(PathBuf), // TODO Option<IShaderSourceInputStreamFactory>
     SourceCode(&'a str),
-    ByteCode(*const c_void, Option<usize>),
+    ByteCode(*const c_void, usize),
 }
 
 pub enum ShaderLanguage {
@@ -165,7 +165,7 @@ impl<'a> Into<bindings::ShaderCreateInfo> for ShaderCreateInfo<'a> {
             },
             __bindgen_anon_1: bindings::ShaderCreateInfo__bindgen_ty_1 {
                 ByteCodeSize: match self.source {
-                    ShaderSource::ByteCode(_, Some(size)) => size,
+                    ShaderSource::ByteCode(_, size) => size,
                     ShaderSource::SourceCode(code) => code.len(),
                     _ => 0,
                 },

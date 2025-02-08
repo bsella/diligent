@@ -18,6 +18,8 @@ pub trait App {
     fn new<EngineFactory: EngineFactoryImplementation>(
         engine_create_info: EngineFactory::EngineCreateInfo,
         window: Option<&NativeWindow>,
+        initial_width: u16,
+        initial_height: u16,
     ) -> Self;
 
     fn run<EH: EventHandler>(self, event_handler: EH) -> Result<(), std::io::Error>;

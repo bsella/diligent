@@ -336,3 +336,72 @@ impl Into<bindings::PRIMITIVE_TOPOLOGY> for PrimitiveTopology {
         }) as bindings::PRIMITIVE_TOPOLOGY
     }
 }
+
+bitflags! {
+    pub struct BindFlags: bindings::BIND_FLAGS {
+        const None             = bindings::BIND_NONE;
+        const VertexBuffer     = bindings::BIND_VERTEX_BUFFER;
+        const IndexBuffer      = bindings::BIND_INDEX_BUFFER;
+        const UniformBuffer    = bindings::BIND_UNIFORM_BUFFER;
+        const ShaderResourcec  = bindings::BIND_SHADER_RESOURCE;
+        const StreamOutput     = bindings::BIND_STREAM_OUTPUT;
+        const RenderTarget     = bindings::BIND_RENDER_TARGET;
+        const DepthStencil     = bindings::BIND_DEPTH_STENCIL;
+        const UnorderedAccess  = bindings::BIND_UNORDERED_ACCESS;
+        const IndirectDrawArgs = bindings::BIND_INDIRECT_DRAW_ARGS;
+        const InputAttachement = bindings::BIND_INPUT_ATTACHMENT;
+        const RayTracing       = bindings::BIND_RAY_TRACING;
+        const ShadingRate      = bindings::BIND_SHADING_RATE;
+    }
+}
+const_assert!(bindings::BIND_FLAG_LAST == 2048);
+
+pub enum Usage {
+    Immutable,
+    Default,
+    Dynamic,
+    Staging,
+    Unified,
+    Sparse,
+}
+const_assert!(bindings::USAGE_NUM_USAGES == 6);
+
+impl Into<bindings::USAGE> for Usage {
+    fn into(self) -> bindings::USAGE {
+        (match self {
+            Usage::Immutable => bindings::USAGE_IMMUTABLE,
+            Usage::Default => bindings::USAGE_DEFAULT,
+            Usage::Dynamic => bindings::USAGE_DYNAMIC,
+            Usage::Staging => bindings::USAGE_STAGING,
+            Usage::Unified => bindings::USAGE_UNIFIED,
+            Usage::Sparse => bindings::USAGE_SPARSE,
+        }) as bindings::USAGE
+    }
+}
+
+bitflags! {
+    pub struct CpuAccessFlags: bindings::_CPU_ACCESS_FLAGS {
+        const None  = bindings::CPU_ACCESS_NONE;
+        const Read  = bindings::CPU_ACCESS_READ;
+        const Write = bindings::CPU_ACCESS_WRITE;
+    }
+}
+const_assert!(bindings::CPU_ACCESS_FLAG_LAST == 2);
+
+bitflags! {
+    pub struct SetShaderResourceFlags: bindings::_SET_SHADER_RESOURCE_FLAGS {
+        const None          = bindings::SET_SHADER_RESOURCE_FLAG_NONE;
+        const AllowOverrite = bindings::SET_SHADER_RESOURCE_FLAG_ALLOW_OVERWRITE;
+    }
+}
+
+pub enum RenderDeviceType {
+    D3D11,
+    D3D12,
+    GL,
+    GLES,
+    VULKAN,
+    METAL,
+    WEBGPU,
+}
+const_assert!(bindings::RENDER_DEVICE_TYPE_COUNT == 8);

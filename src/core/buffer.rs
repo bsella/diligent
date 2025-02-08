@@ -1,11 +1,119 @@
+use bitflags::bitflags;
+use static_assertions::const_assert;
+
 use crate::bindings;
 
 use super::buffer_view::BufferView;
 
+use super::graphics_types::{BindFlags, CpuAccessFlags, Usage};
 use super::{
     device_object::{AsDeviceObject, DeviceObject},
     object::AsObject,
 };
+
+pub enum BufferMode {
+    Undefined,
+    Formatted,
+    Structured,
+    Raw,
+}
+const_assert!(bindings::BUFFER_MODE_NUM_MODES == 4);
+
+impl Into<bindings::BUFFER_MODE> for BufferMode {
+    fn into(self) -> bindings::BUFFER_MODE {
+        (match self {
+            BufferMode::Undefined => bindings::BUFFER_MODE_UNDEFINED,
+            BufferMode::Formatted => bindings::BUFFER_MODE_FORMATTED,
+            BufferMode::Structured => bindings::BUFFER_MODE_STRUCTURED,
+            BufferMode::Raw => bindings::BUFFER_MODE_RAW,
+        }) as bindings::BUFFER_MODE
+    }
+}
+
+bitflags! {
+    pub struct MiscBufferFlags: bindings::_MISC_BUFFER_FLAGS {
+        const None            = bindings::MISC_BUFFER_FLAG_NONE;
+        const SparceAliasing  = bindings::MISC_BUFFER_FLAG_SPARSE_ALIASING;
+    }
+}
+
+pub struct BufferDesc<'a> {
+    name: &'a std::ffi::CStr,
+
+    size: u64,
+
+    bind_flags: BindFlags,
+    usage: Usage,
+    cpu_access_flags: CpuAccessFlags,
+    mode: BufferMode,
+    misc_flags: MiscBufferFlags,
+    element_byte_stride: u32,
+    immediate_context_mask: u64,
+}
+
+impl<'a> Into<bindings::BufferDesc> for BufferDesc<'a> {
+    fn into(self) -> bindings::BufferDesc {
+        bindings::BufferDesc {
+            _DeviceObjectAttribs: bindings::DeviceObjectAttribs {
+                Name: self.name.as_ptr(),
+            },
+            Size: self.size,
+            BindFlags: self.bind_flags.bits(),
+            Usage: self.usage.into(),
+            CPUAccessFlags: self.cpu_access_flags.bits() as u8,
+            Mode: self.mode.into(),
+            MiscFlags: self.misc_flags.bits() as u8,
+            ElementByteStride: self.element_byte_stride,
+            ImmediateContextMask: self.immediate_context_mask,
+        }
+    }
+}
+
+impl<'a> BufferDesc<'a> {
+    pub fn new(name: &'a std::ffi::CStr, size: u64) -> Self {
+        BufferDesc {
+            size,
+            name,
+            bind_flags: BindFlags::None,
+            usage: Usage::Default,
+            cpu_access_flags: CpuAccessFlags::None,
+            mode: BufferMode::Undefined,
+            misc_flags: MiscBufferFlags::None,
+
+            element_byte_stride: 0,
+            immediate_context_mask: 1,
+        }
+    }
+
+    pub fn bind_flags(mut self, bind_flags: BindFlags) -> Self {
+        self.bind_flags = bind_flags;
+        self
+    }
+    pub fn usage(mut self, usage: Usage) -> Self {
+        self.usage = usage;
+        self
+    }
+    pub fn cpu_access_flags(mut self, cpu_access_flags: CpuAccessFlags) -> Self {
+        self.cpu_access_flags = cpu_access_flags;
+        self
+    }
+    pub fn mode(mut self, mode: BufferMode) -> Self {
+        self.mode = mode;
+        self
+    }
+    pub fn misc_flags(mut self, misc_flags: MiscBufferFlags) -> Self {
+        self.misc_flags = misc_flags;
+        self
+    }
+    pub fn element_byte_stride(mut self, element_byte_stride: u32) -> Self {
+        self.element_byte_stride = element_byte_stride;
+        self
+    }
+    pub fn immediate_context_mask(mut self, immediate_context_mask: u64) -> Self {
+        self.immediate_context_mask = immediate_context_mask;
+        self
+    }
+}
 
 pub struct Buffer {
     pub(crate) buffer: *mut bindings::IBuffer,
@@ -23,10 +131,7 @@ impl AsDeviceObject for Buffer {
 }
 
 impl Buffer {
-    pub(crate) fn new(
-        buffer_ptr: *mut bindings::IBuffer,
-        buffer_desc: &bindings::BufferDesc,
-    ) -> Self {
+    pub(crate) fn new(buffer_ptr: *mut bindings::IBuffer) -> Self {
         let mut buffer = Buffer {
             device_object: DeviceObject::new(buffer_ptr as *mut bindings::IDeviceObject),
             buffer: buffer_ptr,
@@ -35,16 +140,24 @@ impl Buffer {
         };
 
         fn bind_flags_to_buffer_view_type(
-            bind_flag: bindings::BIND_FLAGS,
+            bind_flags: bindings::BIND_FLAGS,
         ) -> bindings::BUFFER_VIEW_TYPE {
-            if bind_flag & bindings::BIND_UNORDERED_ACCESS != 0 {
+            if bind_flags & bindings::BIND_UNORDERED_ACCESS != 0 {
                 bindings::BUFFER_VIEW_UNORDERED_ACCESS as u8
-            } else if bind_flag & bindings::BIND_SHADER_RESOURCE != 0 {
+            } else if bind_flags & bindings::BIND_SHADER_RESOURCE != 0 {
                 bindings::BUFFER_VIEW_SHADER_RESOURCE as u8
             } else {
                 bindings::BUFFER_VIEW_UNDEFINED as u8
             }
         }
+
+        let buffer_desc = unsafe {
+            &*((*(*buffer_ptr).pVtbl)
+                .DeviceObject
+                .GetDesc
+                .unwrap_unchecked()(buffer_ptr as *mut bindings::IDeviceObject)
+                as *const bindings::BufferDesc)
+        };
 
         let buffer_view_type = bind_flags_to_buffer_view_type(buffer_desc.BindFlags);
 

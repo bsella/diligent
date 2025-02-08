@@ -4,7 +4,7 @@ use xcb::{x, Xid};
 
 use crate::{
     bindings,
-    core::{engine_factory::EngineFactoryImplementation, vk::engine_factory_vk::EngineFactoryVk},
+    core::vk::engine_factory_vk::{EngineFactoryVk, EngineVkCreateInfo},
     tools::native_app::{
         app::{ApiImplementation, App},
         events::{EventHandler, EventResult},
@@ -106,22 +106,13 @@ fn init_connection_and_window(
 struct XcbEventHandler {
     connection: xcb::Connection,
     atom_delete_window: xcb::x::Atom,
-    width: u16,
-    height: u16,
 }
 
 impl XcbEventHandler {
-    fn new(
-        connection: xcb::Connection,
-        atom_delete_window: xcb::x::Atom,
-        width: u16,
-        height: u16,
-    ) -> Self {
+    fn new(connection: xcb::Connection, atom_delete_window: xcb::x::Atom) -> Self {
         XcbEventHandler {
             connection,
             atom_delete_window,
-            width,
-            height,
         }
     }
 }
@@ -149,20 +140,10 @@ impl EventHandler for XcbEventHandler {
             }
             xcb::Event::X(x::Event::DestroyNotify(_destroy_event)) => EventResult::Quit,
 
-            xcb::Event::X(x::Event::ConfigureNotify(configure_event)) => {
-                let new_width = configure_event.width();
-                let new_height = configure_event.height();
-                if self.width != new_width || self.height != new_height {
-                    self.width = new_width;
-                    self.height = new_height;
-                    EventResult::Resize {
-                        width: configure_event.width(),
-                        height: configure_event.height(),
-                    }
-                } else {
-                    EventResult::Continue
-                }
-            }
+            xcb::Event::X(x::Event::ConfigureNotify(configure_event)) => EventResult::Resize {
+                width: configure_event.width(),
+                height: configure_event.height(),
+            },
             _ => EventResult::Continue,
         }
     }
@@ -187,20 +168,16 @@ where
     let api = ApiImplementation::Vulkan;
 
     let app = match api {
-        ApiImplementation::Vulkan => {
-            let engine_create_info =
-                <EngineFactoryVk as EngineFactoryImplementation>::EngineCreateInfo::default();
-            Application::new::<EngineFactoryVk>(engine_create_info, Some(&native_window))
-        }
+        ApiImplementation::Vulkan => Application::new::<EngineFactoryVk>(
+            EngineVkCreateInfo::default(),
+            Some(&native_window),
+            width,
+            height,
+        ),
         ApiImplementation::OpenGL => panic!(),
     };
 
     connection.flush().unwrap();
 
-    app.run(XcbEventHandler::new(
-        connection,
-        atom_delete_window,
-        width,
-        height,
-    ))
+    app.run(XcbEventHandler::new(connection, atom_delete_window))
 }

@@ -24,6 +24,9 @@ pub struct SampleApp<Sample: SampleBase> {
     vsync: bool,
 
     current_time: f64,
+
+    width: u16,
+    height: u16,
 }
 
 impl<GenericSample: SampleBase> SampleApp<GenericSample> {
@@ -82,6 +85,8 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
     fn new<EngineFactory: EngineFactoryImplementation>(
         engine_create_info: EngineFactory::EngineCreateInfo,
         window: Option<&NativeWindow>,
+        initial_width: u16,
+        initial_height: u16,
     ) -> Self {
         let swap_chain_desc = bindings::SwapChainDesc::default();
 
@@ -119,6 +124,9 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             vsync: false,
 
             current_time: 0.0,
+
+            width: initial_width,
+            height: initial_height,
         }
     }
 

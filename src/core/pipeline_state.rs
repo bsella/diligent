@@ -10,7 +10,7 @@ use super::shader_resource_binding::ShaderResourceBinding;
 use super::shader_resource_variable::{
     ShaderResourceVariable, ShaderResourceVariableDesc, ShaderResourceVariableType,
 };
-use crate::bindings::{self, SampleDesc};
+use crate::bindings;
 
 pub enum BlendFactor {
     Zero,
@@ -328,9 +328,27 @@ impl RenderTargetBlendDesc {
 }
 
 pub struct BlendStateDesc {
-    pub alpha_to_coverage_enable: bool,
-    pub independent_blend_enable: bool,
-    pub render_targets: [RenderTargetBlendDesc; 8usize],
+    alpha_to_coverage_enable: bool,
+    independent_blend_enable: bool,
+    render_targets: [RenderTargetBlendDesc; 8usize],
+}
+
+impl BlendStateDesc {
+    pub fn alpha_to_coverage_enable(mut self, alpha_to_coverage_enable: bool) -> Self {
+        self.alpha_to_coverage_enable = alpha_to_coverage_enable;
+        self
+    }
+    pub fn independent_blend_enable(mut self, independent_blend_enable: bool) -> Self {
+        self.independent_blend_enable = independent_blend_enable;
+        self
+    }
+    pub fn render_target_blend_desc<const INDEX: usize>(
+        mut self,
+        render_target_blend_desc: RenderTargetBlendDesc,
+    ) -> Self {
+        self.render_targets[INDEX] = render_target_blend_desc;
+        self
+    }
 }
 
 pub struct RasterizerStateDesc {
@@ -470,7 +488,7 @@ pub struct GraphicsPipelineDesc {
     rtv_formats: [bindings::_TEXTURE_FORMAT; 8usize],
     dsv_format: bindings::_TEXTURE_FORMAT,
     read_only_dsv: bool,
-    sample_desc: SampleDesc,
+    sample_desc: bindings::SampleDesc,
     // TODO
     // pub render_pass: Option<&RenderPass>,
     node_mask: u32,
@@ -497,7 +515,7 @@ impl GraphicsPipelineDesc {
             sample_mask: 0xFFFFFFFF,
             rasterizer_desc: rasterizer_desc,
             depth_stencil_desc: depth_stencil_desc,
-            input_layouts: Vec::default(),
+            input_layouts: Vec::new(),
             primitive_topology: PrimitiveTopology::TriangleList,
             num_viewports: 1,
             num_render_targets: 0,
@@ -516,7 +534,7 @@ impl GraphicsPipelineDesc {
             dsv_format: bindings::TEX_FORMAT_UNKNOWN,
             read_only_dsv: false,
             node_mask: 0,
-            sample_desc: SampleDesc {
+            sample_desc: bindings::SampleDesc {
                 Count: 1,
                 Quality: 0,
             },
@@ -547,8 +565,8 @@ impl GraphicsPipelineDesc {
         self.shading_rate_flags = shading_rate_flags;
         self
     }
-    pub fn rtv_format(mut self, index: usize, value: bindings::_TEXTURE_FORMAT) -> Self {
-        self.rtv_formats[index] = value;
+    pub fn rtv_format<const INDEX: usize>(mut self, value: bindings::_TEXTURE_FORMAT) -> Self {
+        self.rtv_formats[INDEX] = value;
         self
     }
     pub fn dsv_format(mut self, dsv_format: bindings::_TEXTURE_FORMAT) -> Self {
@@ -1031,6 +1049,27 @@ impl PipelineState {
         _shader_type: ShaderType,
     ) -> Option<&[ShaderResourceVariable]> {
         todo!()
+    }
+
+    pub fn get_static_variable_by_name(
+        &self,
+        shader_type: ShaderType,
+        name: &std::ffi::CStr,
+    ) -> Option<ShaderResourceVariable> {
+        let shader_resource_variable = unsafe {
+            (*self.virtual_functions)
+                .PipelineState
+                .GetStaticVariableByName
+                .unwrap_unchecked()(
+                self.pipeline_state, shader_type.into(), name.as_ptr()
+            )
+        };
+
+        if shader_resource_variable.is_null() {
+            None
+        } else {
+            Some(ShaderResourceVariable::new(shader_resource_variable))
+        }
     }
 
     pub fn create_shader_resource_binding(
