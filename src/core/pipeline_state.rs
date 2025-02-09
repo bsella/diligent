@@ -3,6 +3,7 @@ use static_assertions::const_assert;
 
 use super::device_object::{AsDeviceObject, DeviceObject};
 use super::graphics_types::{PrimitiveTopology, ShaderType, ShaderTypes};
+use super::input_layout::LayoutElement;
 use super::pipeline_resource_signature::{ImmutableSamplerDesc, PipelineResourceSignature};
 use super::resource_mapping::ResourceMapping;
 use super::shader::Shader;
@@ -249,13 +250,60 @@ bitflags! {
 const_assert!(bindings::PIPELINE_SHADING_RATE_FLAG_LAST == 2);
 
 pub struct PipelineResourceLayoutDesc<'a> {
-    pub default_variable_type: ShaderResourceVariableType,
-    pub default_variable_merge_stages: ShaderTypes,
-    pub variables: Vec<ShaderResourceVariableDesc<'a>>,
-    pub immutable_samplers: Vec<ImmutableSamplerDesc<'a>>,
+    default_variable_type: ShaderResourceVariableType,
+    default_variable_merge_stages: ShaderTypes,
+    variables: Vec<ShaderResourceVariableDesc<'a>>,
+    immutable_samplers: Vec<ImmutableSamplerDesc<'a>>,
 }
 
-pub struct PipelineStateDesc<'a> {
+impl<'a> PipelineResourceLayoutDesc<'a> {
+    fn new(pipeline_type: bindings::_PIPELINE_TYPE) -> Self {
+        PipelineResourceLayoutDesc {
+            default_variable_type: ShaderResourceVariableType::Static,
+            default_variable_merge_stages: match pipeline_type {
+                bindings::PIPELINE_TYPE_GRAPHICS => ShaderTypes::AllGraphics,
+                bindings::PIPELINE_TYPE_COMPUTE => ShaderTypes::Compute,
+                bindings::PIPELINE_TYPE_MESH => ShaderTypes::AllMesh,
+                bindings::PIPELINE_TYPE_RAY_TRACING => ShaderTypes::AllRayTracing,
+                bindings::PIPELINE_TYPE_TILE => ShaderTypes::Tile,
+                _ => panic!("Unknown pipeline type"),
+            },
+            variables: Vec::new(),
+            immutable_samplers: Vec::new(),
+        }
+    }
+}
+
+impl<'a> Into<bindings::PipelineResourceLayoutDesc> for PipelineResourceLayoutDesc<'a> {
+    fn into(self) -> bindings::PipelineResourceLayoutDesc {
+        bindings::PipelineResourceLayoutDesc {
+            DefaultVariableType: self.default_variable_type.into(),
+            DefaultVariableMergeStages: self.default_variable_merge_stages.bits(),
+            NumVariables: self.variables.len() as u32,
+            Variables: if self.variables.is_empty() {
+                std::ptr::null()
+            } else {
+                self.variables
+                    .into_iter()
+                    .map(|var| var.into())
+                    .collect::<Vec<bindings::ShaderResourceVariableDesc>>()
+                    .as_ptr()
+            },
+            NumImmutableSamplers: self.immutable_samplers.len() as u32,
+            ImmutableSamplers: if self.immutable_samplers.is_empty() {
+                std::ptr::null()
+            } else {
+                self.immutable_samplers
+                    .into_iter()
+                    .map(|var| var.into())
+                    .collect::<Vec<bindings::ImmutableSamplerDesc>>()
+                    .as_ptr()
+            },
+        }
+    }
+}
+
+struct PipelineStateDesc<'a> {
     name: &'a std::ffi::CStr,
     pipeline_type: bindings::_PIPELINE_TYPE,
     srb_allocation_granularity: u32,
@@ -263,12 +311,69 @@ pub struct PipelineStateDesc<'a> {
     resource_layout: PipelineResourceLayoutDesc<'a>,
 }
 
-pub struct PipelineStateCreateInfo<'a> {
-    pub pso_desc: PipelineStateDesc<'a>,
-    pub flags: PipelineStateObjectCreateFlags,
-    pub resource_signatures: &'a [&'a PipelineResourceSignature],
+impl<'a> PipelineStateDesc<'a> {
+    fn new(name: &'a std::ffi::CStr, pipeline_type: bindings::_PIPELINE_TYPE) -> Self {
+        PipelineStateDesc {
+            name: name,
+            pipeline_type: pipeline_type,
+            srb_allocation_granularity: 1,
+            immediate_context_mask: 1,
+            resource_layout: PipelineResourceLayoutDesc::new(pipeline_type),
+        }
+    }
+}
+
+impl<'a> Into<bindings::PipelineStateDesc> for PipelineStateDesc<'a> {
+    fn into(self) -> bindings::PipelineStateDesc {
+        bindings::PipelineStateDesc {
+            _DeviceObjectAttribs: bindings::DeviceObjectAttribs {
+                Name: self.name.as_ptr(),
+            },
+            PipelineType: self.pipeline_type as u8,
+            SRBAllocationGranularity: self.srb_allocation_granularity,
+            ImmediateContextMask: self.immediate_context_mask,
+            ResourceLayout: self.resource_layout.into(),
+        }
+    }
+}
+
+struct PipelineStateCreateInfo<'a> {
+    pso_desc: PipelineStateDesc<'a>,
+    flags: PipelineStateObjectCreateFlags,
+    resource_signatures: Vec<&'a PipelineResourceSignature>,
     //TODO
     //pub pPSOCache: *mut IPipelineStateCache,
+}
+
+impl<'a> Into<bindings::PipelineStateCreateInfo> for PipelineStateCreateInfo<'a> {
+    fn into(self) -> bindings::PipelineStateCreateInfo {
+        bindings::PipelineStateCreateInfo {
+            PSODesc: self.pso_desc.into(),
+            Flags: self.flags.bits(),
+            ResourceSignaturesCount: self.resource_signatures.len() as u32,
+            ppResourceSignatures: if self.resource_signatures.is_empty() {
+                std::ptr::null_mut()
+            } else {
+                self.resource_signatures
+                    .iter()
+                    .map(|rs| rs.pipeline_resource_signature)
+                    .collect::<Vec<*mut bindings::IPipelineResourceSignature>>()
+                    .as_mut_ptr()
+            },
+            pPSOCache: std::ptr::null_mut(), // TODO
+            pInternalData: std::ptr::null_mut(),
+        }
+    }
+}
+
+impl<'a> PipelineStateCreateInfo<'a> {
+    fn new(name: &'a std::ffi::CStr, pipeline_type: bindings::_PIPELINE_TYPE) -> Self {
+        PipelineStateCreateInfo {
+            pso_desc: PipelineStateDesc::new(name, pipeline_type),
+            flags: PipelineStateObjectCreateFlags::None,
+            resource_signatures: Vec::new(),
+        }
+    }
 }
 
 pub struct RenderTargetBlendDesc {
@@ -327,6 +432,40 @@ impl RenderTargetBlendDesc {
     }
 }
 
+impl Into<bindings::RenderTargetBlendDesc> for RenderTargetBlendDesc {
+    fn into(self) -> bindings::RenderTargetBlendDesc {
+        bindings::RenderTargetBlendDesc {
+            BlendEnable: self.blend_enable,
+            LogicOperationEnable: self.logic_operation_enable,
+            SrcBlend: self.src_blend.into(),
+            DestBlend: self.dest_blend.into(),
+            BlendOp: self.blend_op.into(),
+            SrcBlendAlpha: self.src_blend_alpha.into(),
+            DestBlendAlpha: self.dest_blend_alpha.into(),
+            BlendOpAlpha: self.blend_op_alpha.into(),
+            LogicOp: self.logic_op.into(),
+            RenderTargetWriteMask: self.render_target_write_mask.bits() as bindings::COLOR_MASK,
+        }
+    }
+}
+
+impl Default for RenderTargetBlendDesc {
+    fn default() -> Self {
+        RenderTargetBlendDesc {
+            blend_enable: false,
+            logic_operation_enable: false,
+            src_blend: BlendFactor::One,
+            dest_blend: BlendFactor::Zero,
+            blend_op: BlendOperation::Add,
+            src_blend_alpha: BlendFactor::One,
+            dest_blend_alpha: BlendFactor::Zero,
+            blend_op_alpha: BlendOperation::Add,
+            logic_op: LogicOperation::NoOp,
+            render_target_write_mask: ColorMask::RGBA,
+        }
+    }
+}
+
 pub struct BlendStateDesc {
     alpha_to_coverage_enable: bool,
     independent_blend_enable: bool,
@@ -348,6 +487,35 @@ impl BlendStateDesc {
     ) -> Self {
         self.render_targets[INDEX] = render_target_blend_desc;
         self
+    }
+}
+
+impl Into<bindings::BlendStateDesc> for BlendStateDesc {
+    fn into(self) -> bindings::BlendStateDesc {
+        bindings::BlendStateDesc {
+            AlphaToCoverageEnable: self.alpha_to_coverage_enable,
+            IndependentBlendEnable: self.independent_blend_enable,
+            RenderTargets: self.render_targets.map(|rt| rt.into()),
+        }
+    }
+}
+
+impl Default for BlendStateDesc {
+    fn default() -> Self {
+        BlendStateDesc {
+            alpha_to_coverage_enable: false,
+            independent_blend_enable: false,
+            render_targets: [
+                RenderTargetBlendDesc::default(),
+                RenderTargetBlendDesc::default(),
+                RenderTargetBlendDesc::default(),
+                RenderTargetBlendDesc::default(),
+                RenderTargetBlendDesc::default(),
+                RenderTargetBlendDesc::default(),
+                RenderTargetBlendDesc::default(),
+                RenderTargetBlendDesc::default(),
+            ],
+        }
     }
 }
 
@@ -402,6 +570,38 @@ impl RasterizerStateDesc {
     }
 }
 
+impl Into<bindings::RasterizerStateDesc> for RasterizerStateDesc {
+    fn into(self) -> bindings::RasterizerStateDesc {
+        bindings::RasterizerStateDesc {
+            FillMode: self.fill_mode.into(),
+            CullMode: self.cull_mode.into(),
+            FrontCounterClockwise: self.front_counter_clockwise,
+            DepthClipEnable: self.depth_clip_enable,
+            ScissorEnable: self.scissor_enable,
+            AntialiasedLineEnable: self.antialiased_line_enable,
+            DepthBias: self.depth_bias,
+            DepthBiasClamp: self.depth_bias_clamp,
+            SlopeScaledDepthBias: self.slope_scaled_depth_bias,
+        }
+    }
+}
+
+impl Default for RasterizerStateDesc {
+    fn default() -> Self {
+        RasterizerStateDesc {
+            fill_mode: FillMode::Solid,
+            cull_mode: CullMode::Back,
+            front_counter_clockwise: false,
+            depth_clip_enable: true,
+            scissor_enable: false,
+            antialiased_line_enable: false,
+            depth_bias: 0,
+            depth_bias_clamp: 0.0,
+            slope_scaled_depth_bias: 0.0,
+        }
+    }
+}
+
 pub struct StencilOperationsDesc {
     stencil_fail_op: StencilOperation,
     stencil_depth_fail_op: StencilOperation,
@@ -425,6 +625,28 @@ impl StencilOperationsDesc {
     pub fn stencil_func(mut self, stencil_func: ComparisonFunction) -> Self {
         self.stencil_func = stencil_func;
         self
+    }
+}
+
+impl Into<bindings::StencilOpDesc> for StencilOperationsDesc {
+    fn into(self) -> bindings::StencilOpDesc {
+        bindings::StencilOpDesc {
+            StencilFailOp: self.stencil_fail_op.into(),
+            StencilDepthFailOp: self.stencil_depth_fail_op.into(),
+            StencilPassOp: self.stencil_pass_op.into(),
+            StencilFunc: self.stencil_func.into(),
+        }
+    }
+}
+
+impl Default for StencilOperationsDesc {
+    fn default() -> Self {
+        StencilOperationsDesc {
+            stencil_fail_op: StencilOperation::Keep,
+            stencil_depth_fail_op: StencilOperation::Keep,
+            stencil_pass_op: StencilOperation::Keep,
+            stencil_func: ComparisonFunction::Always,
+        }
     }
 }
 
@@ -474,12 +696,42 @@ impl DepthStencilStateDesc {
     }
 }
 
+impl Into<bindings::DepthStencilStateDesc> for DepthStencilStateDesc {
+    fn into(self) -> bindings::DepthStencilStateDesc {
+        bindings::DepthStencilStateDesc {
+            DepthEnable: self.depth_enable,
+            DepthWriteEnable: self.depth_write_enable,
+            DepthFunc: self.depth_func.into(),
+            StencilEnable: self.stencil_enable,
+            StencilReadMask: self.stencil_read_mask,
+            StencilWriteMask: self.stencil_write_mask,
+            FrontFace: self.front_face.into(),
+            BackFace: self.back_face.into(),
+        }
+    }
+}
+
+impl Default for DepthStencilStateDesc {
+    fn default() -> Self {
+        DepthStencilStateDesc {
+            depth_enable: true,
+            depth_write_enable: true,
+            depth_func: ComparisonFunction::Less,
+            stencil_enable: false,
+            stencil_read_mask: 0xff,
+            stencil_write_mask: 0xff,
+            front_face: StencilOperationsDesc::default(),
+            back_face: StencilOperationsDesc::default(),
+        }
+    }
+}
+
 pub struct GraphicsPipelineDesc {
     blend_desc: BlendStateDesc,
     sample_mask: u32,
     rasterizer_desc: RasterizerStateDesc,
     depth_stencil_desc: DepthStencilStateDesc,
-    input_layouts: Vec<bindings::LayoutElement>,
+    input_layouts: Vec<LayoutElement>,
     primitive_topology: PrimitiveTopology,
     num_viewports: u8,
     num_render_targets: u8,
@@ -577,6 +829,48 @@ impl GraphicsPipelineDesc {
         self.read_only_dsv = read_only_dsv;
         self
     }
+    pub fn add_input_layout(mut self, input_layout: LayoutElement) -> Self {
+        self.input_layouts.push(input_layout);
+        self
+    }
+}
+
+impl Into<bindings::GraphicsPipelineDesc> for GraphicsPipelineDesc {
+    fn into(self) -> bindings::GraphicsPipelineDesc {
+        let input_layouts = self
+            .input_layouts
+            .into_iter()
+            .map(|layout| layout.into())
+            .collect::<Vec<bindings::LayoutElement>>();
+        bindings::GraphicsPipelineDesc {
+            BlendDesc: self.blend_desc.into(),
+            SampleMask: self.sample_mask,
+            RasterizerDesc: self.rasterizer_desc.into(),
+            DepthStencilDesc: self.depth_stencil_desc.into(),
+            InputLayout: bindings::InputLayoutDesc {
+                LayoutElements: if input_layouts.is_empty() {
+                    std::ptr::null()
+                } else {
+                    input_layouts.as_ptr()
+                },
+                NumElements: input_layouts.len() as u32,
+            },
+            PrimitiveTopology: self.primitive_topology.into(),
+            NumViewports: self.num_viewports,
+            NumRenderTargets: self.num_render_targets,
+            SubpassIndex: self.subpass_index,
+            ShadingRateFlags: self.shading_rate_flags.bits()
+                as bindings::PIPELINE_SHADING_RATE_FLAGS,
+            RTVFormats: self
+                .rtv_formats
+                .map(|format| format as bindings::TEXTURE_FORMAT),
+            DSVFormat: self.dsv_format as bindings::TEXTURE_FORMAT,
+            ReadOnlyDSV: self.read_only_dsv,
+            SmplDesc: self.sample_desc.into(),
+            pRenderPass: std::ptr::null_mut(),
+            NodeMask: self.node_mask,
+        }
+    }
 }
 
 pub struct GraphicsPipelineStateCreateInfo<'a> {
@@ -607,6 +901,13 @@ impl<'a> GraphicsPipelineStateCreateInfo<'a> {
             amplification_shader: None,
             mesh_shader: None,
         }
+    }
+
+    pub fn add_resource_signature(mut self, signature: &'a PipelineResourceSignature) -> Self {
+        self.pipeline_state_create_info
+            .resource_signatures
+            .push(&signature);
+        self
     }
 
     pub fn vertex_shader(mut self, shader: &'a Shader) -> Self {
@@ -671,289 +972,6 @@ impl<'a> Into<bindings::GraphicsPipelineStateCreateInfo> for GraphicsPipelineSta
             pMS: self
                 .mesh_shader
                 .map_or(std::ptr::null_mut(), |shader| shader.shader),
-        }
-    }
-}
-
-impl<'a> Into<bindings::PipelineStateCreateInfo> for PipelineStateCreateInfo<'a> {
-    fn into(self) -> bindings::PipelineStateCreateInfo {
-        bindings::PipelineStateCreateInfo {
-            PSODesc: self.pso_desc.into(),
-            Flags: self.flags.bits(),
-            ResourceSignaturesCount: self.resource_signatures.len() as u32,
-            ppResourceSignatures: if self.resource_signatures.is_empty() {
-                std::ptr::null_mut()
-            } else {
-                self.resource_signatures
-                    .iter()
-                    .map(|rs| rs.pipeline_resource_signature)
-                    .collect::<Vec<*mut bindings::IPipelineResourceSignature>>()
-                    .as_mut_ptr()
-            },
-            pPSOCache: std::ptr::null_mut(), // TODO
-            pInternalData: std::ptr::null_mut(),
-        }
-    }
-}
-impl<'a> Into<bindings::PipelineStateDesc> for PipelineStateDesc<'a> {
-    fn into(self) -> bindings::PipelineStateDesc {
-        bindings::PipelineStateDesc {
-            _DeviceObjectAttribs: bindings::DeviceObjectAttribs {
-                Name: self.name.as_ptr(),
-            },
-            PipelineType: self.pipeline_type as u8,
-            SRBAllocationGranularity: self.srb_allocation_granularity,
-            ImmediateContextMask: self.immediate_context_mask,
-            ResourceLayout: self.resource_layout.into(),
-        }
-    }
-}
-
-impl Into<bindings::GraphicsPipelineDesc> for GraphicsPipelineDesc {
-    fn into(self) -> bindings::GraphicsPipelineDesc {
-        bindings::GraphicsPipelineDesc {
-            BlendDesc: self.blend_desc.into(),
-            SampleMask: self.sample_mask,
-            RasterizerDesc: self.rasterizer_desc.into(),
-            DepthStencilDesc: self.depth_stencil_desc.into(),
-            InputLayout: bindings::InputLayoutDesc {
-                LayoutElements: if self.input_layouts.is_empty() {
-                    std::ptr::null()
-                } else {
-                    self.input_layouts.as_ptr()
-                },
-                NumElements: self.input_layouts.len() as u32,
-            },
-            PrimitiveTopology: self.primitive_topology.into(),
-            NumViewports: self.num_viewports,
-            NumRenderTargets: self.num_render_targets,
-            SubpassIndex: self.subpass_index,
-            ShadingRateFlags: self.shading_rate_flags.bits()
-                as bindings::PIPELINE_SHADING_RATE_FLAGS,
-            RTVFormats: self
-                .rtv_formats
-                .map(|format| format as bindings::TEXTURE_FORMAT),
-            DSVFormat: self.dsv_format as bindings::TEXTURE_FORMAT,
-            ReadOnlyDSV: self.read_only_dsv,
-            SmplDesc: self.sample_desc.into(),
-            pRenderPass: std::ptr::null_mut(),
-            NodeMask: self.node_mask,
-        }
-    }
-}
-
-impl Into<bindings::BlendStateDesc> for BlendStateDesc {
-    fn into(self) -> bindings::BlendStateDesc {
-        bindings::BlendStateDesc {
-            AlphaToCoverageEnable: self.alpha_to_coverage_enable,
-            IndependentBlendEnable: self.independent_blend_enable,
-            RenderTargets: self.render_targets.map(|rt| rt.into()),
-        }
-    }
-}
-
-impl<'a> Into<bindings::PipelineResourceLayoutDesc> for PipelineResourceLayoutDesc<'a> {
-    fn into(self) -> bindings::PipelineResourceLayoutDesc {
-        bindings::PipelineResourceLayoutDesc {
-            DefaultVariableType: self.default_variable_type.into(),
-            DefaultVariableMergeStages: self.default_variable_merge_stages.bits(),
-            NumVariables: self.variables.len() as u32,
-            Variables: if self.variables.is_empty() {
-                std::ptr::null()
-            } else {
-                self.variables
-                    .into_iter()
-                    .map(|var| var.into())
-                    .collect::<Vec<bindings::ShaderResourceVariableDesc>>()
-                    .as_ptr()
-            },
-            NumImmutableSamplers: self.immutable_samplers.len() as u32,
-            ImmutableSamplers: if self.immutable_samplers.is_empty() {
-                std::ptr::null()
-            } else {
-                self.immutable_samplers
-                    .into_iter()
-                    .map(|var| var.into())
-                    .collect::<Vec<bindings::ImmutableSamplerDesc>>()
-                    .as_ptr()
-            },
-        }
-    }
-}
-
-impl Into<bindings::RasterizerStateDesc> for RasterizerStateDesc {
-    fn into(self) -> bindings::RasterizerStateDesc {
-        bindings::RasterizerStateDesc {
-            FillMode: self.fill_mode.into(),
-            CullMode: self.cull_mode.into(),
-            FrontCounterClockwise: self.front_counter_clockwise,
-            DepthClipEnable: self.depth_clip_enable,
-            ScissorEnable: self.scissor_enable,
-            AntialiasedLineEnable: self.antialiased_line_enable,
-            DepthBias: self.depth_bias,
-            DepthBiasClamp: self.depth_bias_clamp,
-            SlopeScaledDepthBias: self.slope_scaled_depth_bias,
-        }
-    }
-}
-
-impl Into<bindings::DepthStencilStateDesc> for DepthStencilStateDesc {
-    fn into(self) -> bindings::DepthStencilStateDesc {
-        bindings::DepthStencilStateDesc {
-            DepthEnable: self.depth_enable,
-            DepthWriteEnable: self.depth_write_enable,
-            DepthFunc: self.depth_func.into(),
-            StencilEnable: self.stencil_enable,
-            StencilReadMask: self.stencil_read_mask,
-            StencilWriteMask: self.stencil_write_mask,
-            FrontFace: self.front_face.into(),
-            BackFace: self.back_face.into(),
-        }
-    }
-}
-
-impl Into<bindings::StencilOpDesc> for StencilOperationsDesc {
-    fn into(self) -> bindings::StencilOpDesc {
-        bindings::StencilOpDesc {
-            StencilFailOp: self.stencil_fail_op.into(),
-            StencilDepthFailOp: self.stencil_depth_fail_op.into(),
-            StencilPassOp: self.stencil_pass_op.into(),
-            StencilFunc: self.stencil_func.into(),
-        }
-    }
-}
-
-impl Into<bindings::RenderTargetBlendDesc> for RenderTargetBlendDesc {
-    fn into(self) -> bindings::RenderTargetBlendDesc {
-        bindings::RenderTargetBlendDesc {
-            BlendEnable: self.blend_enable,
-            LogicOperationEnable: self.logic_operation_enable,
-            SrcBlend: self.src_blend.into(),
-            DestBlend: self.dest_blend.into(),
-            BlendOp: self.blend_op.into(),
-            SrcBlendAlpha: self.src_blend_alpha.into(),
-            DestBlendAlpha: self.dest_blend_alpha.into(),
-            BlendOpAlpha: self.blend_op_alpha.into(),
-            LogicOp: self.logic_op.into(),
-            RenderTargetWriteMask: self.render_target_write_mask.bits() as bindings::COLOR_MASK,
-        }
-    }
-}
-
-impl<'a> PipelineStateCreateInfo<'a> {
-    fn new(name: &'a std::ffi::CStr, pipeline_type: bindings::_PIPELINE_TYPE) -> Self {
-        PipelineStateCreateInfo {
-            pso_desc: PipelineStateDesc::new(name, pipeline_type),
-            flags: PipelineStateObjectCreateFlags::None,
-            resource_signatures: &[],
-        }
-    }
-}
-
-impl<'a> PipelineStateDesc<'a> {
-    fn new(name: &'a std::ffi::CStr, pipeline_type: bindings::_PIPELINE_TYPE) -> Self {
-        PipelineStateDesc {
-            name: name,
-            pipeline_type: pipeline_type,
-            srb_allocation_granularity: 1,
-            immediate_context_mask: 1,
-            resource_layout: PipelineResourceLayoutDesc::new(pipeline_type),
-        }
-    }
-}
-
-impl Default for BlendStateDesc {
-    fn default() -> Self {
-        BlendStateDesc {
-            alpha_to_coverage_enable: false,
-            independent_blend_enable: false,
-            render_targets: [
-                RenderTargetBlendDesc::default(),
-                RenderTargetBlendDesc::default(),
-                RenderTargetBlendDesc::default(),
-                RenderTargetBlendDesc::default(),
-                RenderTargetBlendDesc::default(),
-                RenderTargetBlendDesc::default(),
-                RenderTargetBlendDesc::default(),
-                RenderTargetBlendDesc::default(),
-            ],
-        }
-    }
-}
-
-impl Default for RasterizerStateDesc {
-    fn default() -> Self {
-        RasterizerStateDesc {
-            fill_mode: FillMode::Solid,
-            cull_mode: CullMode::Back,
-            front_counter_clockwise: false,
-            depth_clip_enable: true,
-            scissor_enable: false,
-            antialiased_line_enable: false,
-            depth_bias: 0,
-            depth_bias_clamp: 0.0,
-            slope_scaled_depth_bias: 0.0,
-        }
-    }
-}
-
-impl Default for DepthStencilStateDesc {
-    fn default() -> Self {
-        DepthStencilStateDesc {
-            depth_enable: true,
-            depth_write_enable: true,
-            depth_func: ComparisonFunction::Less,
-            stencil_enable: false,
-            stencil_read_mask: 0xff,
-            stencil_write_mask: 0xff,
-            front_face: StencilOperationsDesc::default(),
-            back_face: StencilOperationsDesc::default(),
-        }
-    }
-}
-
-impl<'a> PipelineResourceLayoutDesc<'a> {
-    fn new(pipeline_type: bindings::_PIPELINE_TYPE) -> Self {
-        PipelineResourceLayoutDesc {
-            default_variable_type: ShaderResourceVariableType::Static,
-            default_variable_merge_stages: match pipeline_type {
-                bindings::PIPELINE_TYPE_GRAPHICS => ShaderTypes::AllGraphics,
-                bindings::PIPELINE_TYPE_COMPUTE => ShaderTypes::Compute,
-                bindings::PIPELINE_TYPE_MESH => ShaderTypes::AllMesh,
-                bindings::PIPELINE_TYPE_RAY_TRACING => ShaderTypes::AllRayTracing,
-                bindings::PIPELINE_TYPE_TILE => ShaderTypes::Tile,
-                _ => panic!("Unknown shader type"),
-            },
-            variables: Vec::new(),
-            immutable_samplers: Vec::new(),
-        }
-    }
-}
-
-impl Default for RenderTargetBlendDesc {
-    fn default() -> Self {
-        RenderTargetBlendDesc {
-            blend_enable: false,
-            logic_operation_enable: false,
-            src_blend: BlendFactor::One,
-            dest_blend: BlendFactor::Zero,
-            blend_op: BlendOperation::Add,
-            src_blend_alpha: BlendFactor::One,
-            dest_blend_alpha: BlendFactor::Zero,
-            blend_op_alpha: BlendOperation::Add,
-            logic_op: LogicOperation::NoOp,
-            render_target_write_mask: ColorMask::RGBA,
-        }
-    }
-}
-
-impl Default for StencilOperationsDesc {
-    fn default() -> Self {
-        StencilOperationsDesc {
-            stencil_fail_op: StencilOperation::Keep,
-            stencil_depth_fail_op: StencilOperation::Keep,
-            stencil_pass_op: StencilOperation::Keep,
-            stencil_func: ComparisonFunction::Always,
         }
     }
 }

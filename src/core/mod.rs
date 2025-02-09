@@ -8,6 +8,7 @@ pub mod device_context;
 pub mod engine_factory;
 pub mod fence;
 pub mod graphics_types;
+pub mod input_layout;
 pub mod pipeline_resource_signature;
 pub mod pipeline_state;
 pub mod render_device;

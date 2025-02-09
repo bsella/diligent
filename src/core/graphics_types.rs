@@ -405,3 +405,32 @@ pub enum RenderDeviceType {
     WEBGPU,
 }
 const_assert!(bindings::RENDER_DEVICE_TYPE_COUNT == 8);
+
+pub enum ValueType {
+    Int8,
+    Int16,
+    Int32,
+    Uint8,
+    Uint16,
+    Uint32,
+    Float16,
+    Float32,
+    Float64,
+}
+const_assert!(bindings::VT_NUM_TYPES == 10);
+
+impl Into<bindings::VALUE_TYPE> for ValueType {
+    fn into(self) -> bindings::VALUE_TYPE {
+        (match self {
+            ValueType::Int8 => bindings::VT_INT8,
+            ValueType::Int16 => bindings::VT_INT16,
+            ValueType::Int32 => bindings::VT_INT32,
+            ValueType::Uint8 => bindings::VT_UINT8,
+            ValueType::Uint16 => bindings::VT_UINT16,
+            ValueType::Uint32 => bindings::VT_UINT32,
+            ValueType::Float16 => bindings::VT_FLOAT16,
+            ValueType::Float32 => bindings::VT_FLOAT32,
+            ValueType::Float64 => bindings::VT_FLOAT64,
+        }) as bindings::VALUE_TYPE
+    }
+}

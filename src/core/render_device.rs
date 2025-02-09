@@ -7,7 +7,7 @@ use super::data_blob::DataBlob;
 use super::graphics_types::RenderDeviceType;
 use super::sampler::Sampler;
 use super::shader::{Shader, ShaderCreateInfo};
-use super::texture::Texture;
+use super::texture::{Texture, TextureDesc};
 
 use super::fence::Fence;
 use super::object::{AsObject, Object};
@@ -67,7 +67,7 @@ impl RenderDevice {
                 self.render_device,
                 std::ptr::addr_of!(buffer_desc),
                 match buffer_data {
-                    Some(data) => std::ptr::addr_of!(data) as *const bindings::BufferData,
+                    Some(&data) => std::ptr::addr_of!(data),
                     None => std::ptr::null(),
                 },
                 std::ptr::addr_of_mut!(buffer_ptr),
@@ -105,19 +105,20 @@ impl RenderDevice {
 
     pub fn create_texture(
         &self,
-        texture_desc: &bindings::TextureDesc,
+        texture_desc: TextureDesc,
         texture_data: Option<&bindings::TextureData>,
     ) -> Option<Texture> {
         let mut texture_ptr = std::ptr::null_mut();
+        let texture_desc = texture_desc.into();
         unsafe {
             (*self.virtual_functions)
                 .RenderDevice
                 .CreateTexture
                 .unwrap_unchecked()(
                 self.render_device,
-                texture_desc,
+                std::ptr::addr_of!(texture_desc),
                 match texture_data {
-                    Some(data) => std::ptr::addr_of!(data) as *const bindings::TextureData,
+                    Some(&data) => std::ptr::addr_of!(data),
                     None => std::ptr::null(),
                 },
                 std::ptr::addr_of_mut!(texture_ptr),
@@ -127,7 +128,7 @@ impl RenderDevice {
         if texture_ptr.is_null() {
             None
         } else {
-            Some(Texture::new(texture_ptr, texture_desc))
+            Some(Texture::new(texture_ptr))
         }
     }
 
