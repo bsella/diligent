@@ -11,9 +11,23 @@ use super::{
 };
 
 pub struct ImmutableSamplerDesc<'a> {
-    pub shader_stages: ShaderTypes,
-    pub sampler_or_texture_name: &'a std::ffi::CStr,
-    pub sampler_desc: SamplerDesc<'a>,
+    shader_stages: ShaderTypes,
+    sampler_or_texture_name: &'a std::ffi::CStr,
+    sampler_desc: SamplerDesc<'a>,
+}
+
+impl<'a> ImmutableSamplerDesc<'a> {
+    pub fn new(
+        shader_stages: ShaderTypes,
+        sampler_or_texture_name: &'a std::ffi::CStr,
+        sampler_desc: SamplerDesc<'a>,
+    ) -> Self {
+        ImmutableSamplerDesc {
+            shader_stages,
+            sampler_or_texture_name,
+            sampler_desc,
+        }
+    }
 }
 
 impl<'a> Into<bindings::ImmutableSamplerDesc> for ImmutableSamplerDesc<'a> {

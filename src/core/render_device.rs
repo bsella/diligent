@@ -1,18 +1,18 @@
 use crate::bindings;
 
-use std::option::Option;
-
 use super::buffer::{Buffer, BufferDesc};
 use super::data_blob::DataBlob;
+use super::device_context::DeviceContext;
+use super::fence::Fence;
 use super::graphics_types::RenderDeviceType;
+use super::object::{AsObject, Object};
+use super::pipeline_state::{
+    GraphicsPipelineStateCreateInfo, GraphicsPipelineStateCreateInfoWrapper, PipelineState,
+};
+use super::resource_mapping::ResourceMapping;
 use super::sampler::Sampler;
 use super::shader::{Shader, ShaderCreateInfo};
-use super::texture::{Texture, TextureDesc};
-
-use super::fence::Fence;
-use super::object::{AsObject, Object};
-use super::pipeline_state::{GraphicsPipelineStateCreateInfo, PipelineState};
-use super::resource_mapping::ResourceMapping;
+use super::texture::{Texture, TextureDesc, TextureSubResource};
 
 pub struct RenderDeviceInfo {
     device_type: RenderDeviceType,
@@ -106,10 +106,23 @@ impl RenderDevice {
     pub fn create_texture(
         &self,
         texture_desc: TextureDesc,
-        texture_data: Option<&bindings::TextureData>,
+        subresources: Vec<TextureSubResource>,
+        device_context: Option<&DeviceContext>,
     ) -> Option<Texture> {
         let mut texture_ptr = std::ptr::null_mut();
         let texture_desc = texture_desc.into();
+
+        let mut subresources: Vec<_> = subresources
+            .into_iter()
+            .map(|subres| subres.into())
+            .collect();
+
+        let texture_data = bindings::TextureData {
+            NumSubresources: subresources.len() as u32,
+            pSubResources: subresources.as_mut_ptr(),
+            pContext: device_context.map_or(std::ptr::null_mut(), |c| c.device_context),
+        };
+
         unsafe {
             (*self.virtual_functions)
                 .RenderDevice
@@ -117,9 +130,10 @@ impl RenderDevice {
                 .unwrap_unchecked()(
                 self.render_device,
                 std::ptr::addr_of!(texture_desc),
-                match texture_data {
-                    Some(&data) => std::ptr::addr_of!(data),
-                    None => std::ptr::null(),
+                if device_context.is_none() && subresources.is_empty() {
+                    std::ptr::null()
+                } else {
+                    std::ptr::addr_of!(texture_data)
                 },
                 std::ptr::addr_of_mut!(texture_ptr),
             )
@@ -180,13 +194,17 @@ impl RenderDevice {
         pipeline_ci: GraphicsPipelineStateCreateInfo,
     ) -> Option<PipelineState> {
         let mut pipeline_state_ptr = std::ptr::null_mut();
+
+        let pipeline_ci_wrapper: GraphicsPipelineStateCreateInfoWrapper = pipeline_ci.into();
+        let pipeline_ci = pipeline_ci_wrapper.get();
+
         unsafe {
             (*self.virtual_functions)
                 .RenderDevice
                 .CreateGraphicsPipelineState
                 .unwrap_unchecked()(
                 self.render_device,
-                std::ptr::from_ref(&pipeline_ci.into()),
+                std::ptr::addr_of!(pipeline_ci),
                 std::ptr::addr_of_mut!(pipeline_state_ptr),
             );
         }

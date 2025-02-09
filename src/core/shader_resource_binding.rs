@@ -76,6 +76,30 @@ impl ShaderResourceBinding {
         todo!()
     }
 
+    pub fn get_variable_by_name(
+        &self,
+        name: &std::ffi::CStr,
+        shader_stages: ShaderTypes,
+    ) -> Option<ShaderResourceVariable> {
+        let variable = unsafe {
+            (*self.virtual_functions)
+                .ShaderResourceBinding
+                .GetVariableByName
+                .unwrap_unchecked()(
+                self.shader_resource_binding,
+                shader_stages.bits() as bindings::SHADER_TYPE,
+                name.as_ptr(),
+            )
+        };
+        if variable.is_null() {
+            None
+        } else {
+            let srv = ShaderResourceVariable::new(variable);
+            srv.as_object().add_ref();
+            Some(srv)
+        }
+    }
+
     pub fn static_resources_initialized(&self) -> bool {
         unsafe {
             (*self.virtual_functions)

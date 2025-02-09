@@ -19,13 +19,13 @@ impl Into<bindings::INPUT_ELEMENT_FREQUENCY> for InputElementFrequency {
     }
 }
 
-pub struct LayoutElement {
+pub struct LayoutElement<'a> {
     input_index: u32,
     buffer_slot: u32,
     num_components: u32,
     value_type: ValueType,
 
-    hlsl_semantic: std::ffi::CString,
+    hlsl_semantic: &'a std::ffi::CStr,
     is_normalized: bool,
     relative_offset: u32,
     stride: u32,
@@ -33,7 +33,7 @@ pub struct LayoutElement {
     instance_data_step_rate: u32,
 }
 
-impl LayoutElement {
+impl<'a> LayoutElement<'a> {
     pub fn new(
         input_index: u32,
         buffer_slot: u32,
@@ -46,7 +46,7 @@ impl LayoutElement {
             num_components,
             value_type,
 
-            hlsl_semantic: std::ffi::CString::new("ATTRIB").unwrap(),
+            hlsl_semantic: &c"ATTRIB",
             is_normalized: true,
             relative_offset: bindings::LAYOUT_ELEMENT_AUTO_OFFSET,
             stride: bindings::LAYOUT_ELEMENT_AUTO_STRIDE,
@@ -55,8 +55,8 @@ impl LayoutElement {
         }
     }
 
-    pub fn hlsl_semantic(mut self, hlsl_semantic: &std::ffi::CStr) -> Self {
-        self.hlsl_semantic = hlsl_semantic.to_owned();
+    pub fn hlsl_semantic(mut self, hlsl_semantic: &'a std::ffi::CStr) -> Self {
+        self.hlsl_semantic = hlsl_semantic;
         self
     }
     pub fn is_normalized(mut self, is_normalized: bool) -> Self {
@@ -81,7 +81,7 @@ impl LayoutElement {
     }
 }
 
-impl Into<bindings::LayoutElement> for LayoutElement {
+impl<'a> Into<bindings::LayoutElement> for LayoutElement<'a> {
     fn into(self) -> bindings::LayoutElement {
         bindings::LayoutElement {
             HLSLSemantic: self.hlsl_semantic.as_ptr(),

@@ -3,8 +3,9 @@ use static_assertions::const_assert;
 
 use crate::bindings;
 
+use super::buffer::Buffer;
 use super::graphics_types::{BindFlags, CpuAccessFlags, Usage};
-use super::texture_view::TextureView;
+use super::texture_view::{TextureView, TextureViewType};
 
 use super::device_object::{AsDeviceObject, DeviceObject};
 use super::object::AsObject;
@@ -50,6 +51,63 @@ bitflags! {
     }
 }
 
+pub enum TextureSubResData<'a> {
+    CPU(&'a [u8]),
+    GPU(&'a Buffer),
+}
+
+pub struct TextureSubResource<'a> {
+    source: TextureSubResData<'a>,
+    source_offset: u64,
+    stride: u64,
+    depth_stride: u64,
+}
+
+impl<'a> TextureSubResource<'a> {
+    pub fn new_cpu(data: &'a [u8], stride: u64) -> Self {
+        TextureSubResource {
+            source: TextureSubResData::CPU(data),
+            stride,
+            source_offset: 0,
+            depth_stride: 0,
+        }
+    }
+
+    pub fn new_gpu(data: &'a Buffer, source_offset: u64, stride: u64) -> Self {
+        TextureSubResource {
+            source: TextureSubResData::GPU(data),
+            stride,
+            source_offset,
+            depth_stride: 0,
+        }
+    }
+
+    pub fn depth_stride(mut self, depth_stride: u64) -> Self {
+        self.depth_stride = depth_stride;
+        self
+    }
+}
+
+impl<'a> Into<bindings::TextureSubResData> for TextureSubResource<'a> {
+    fn into(self) -> bindings::TextureSubResData {
+        bindings::TextureSubResData {
+            pData: if let TextureSubResData::CPU(data) = self.source {
+                data.as_ptr() as *const std::ffi::c_void
+            } else {
+                std::ptr::null()
+            },
+            pSrcBuffer: if let TextureSubResData::GPU(buffer) = self.source {
+                buffer.buffer
+            } else {
+                std::ptr::null_mut()
+            },
+            DepthStride: self.depth_stride,
+            SrcOffset: self.source_offset,
+            Stride: self.stride,
+        }
+    }
+}
+
 pub struct TextureDesc<'a> {
     name: &'a std::ffi::CStr,
 
@@ -83,7 +141,7 @@ impl<'a> Into<bindings::TextureDesc> for TextureDesc<'a> {
             TextureDimension::Texture3D { depth } => {
                 bindings::TextureDesc__bindgen_ty_1 { Depth: depth }
             }
-            _ => bindings::TextureDesc__bindgen_ty_1 { ArraySize: 0 },
+            _ => bindings::TextureDesc__bindgen_ty_1 { ArraySize: 1 },
         };
 
         bindings::TextureDesc {
@@ -189,8 +247,6 @@ pub struct Texture {
     pub(crate) texture: *mut bindings::ITexture,
     virtual_functions: *mut bindings::ITextureVtbl,
 
-    default_view: Option<TextureView>,
-
     device_object: DeviceObject,
 }
 
@@ -202,56 +258,11 @@ impl AsDeviceObject for Texture {
 
 impl Texture {
     pub(crate) fn new(texture_ptr: *mut bindings::ITexture) -> Self {
-        let mut texture = Texture {
+        Texture {
             device_object: DeviceObject::new(texture_ptr as *mut bindings::IDeviceObject),
             texture: texture_ptr,
             virtual_functions: unsafe { (*texture_ptr).pVtbl },
-            default_view: None,
-        };
-
-        fn bind_flags_to_texture_view_type(
-            bind_flag: bindings::BIND_FLAGS,
-        ) -> bindings::_TEXTURE_VIEW_TYPE {
-            if bind_flag & bindings::BIND_SHADER_RESOURCE != 0 {
-                bindings::TEXTURE_VIEW_SHADER_RESOURCE
-            } else if bind_flag & bindings::BIND_RENDER_TARGET != 0 {
-                bindings::BUFFER_VIEW_SHADER_RESOURCE
-            } else if bind_flag & bindings::BIND_DEPTH_STENCIL != 0 {
-                bindings::TEXTURE_VIEW_DEPTH_STENCIL
-            } else if bind_flag & bindings::BIND_UNORDERED_ACCESS != 0 {
-                bindings::TEXTURE_VIEW_UNORDERED_ACCESS
-            } else if bind_flag & bindings::BIND_SHADING_RATE != 0 {
-                bindings::TEXTURE_VIEW_SHADING_RATE
-            } else {
-                bindings::TEXTURE_VIEW_UNDEFINED
-            }
         }
-
-        let texture_desc = unsafe {
-            &*((*(*texture_ptr).pVtbl)
-                .DeviceObject
-                .GetDesc
-                .unwrap_unchecked()(texture_ptr as *mut bindings::IDeviceObject)
-                as *const bindings::TextureDesc)
-        };
-
-        let texture_view_type = bind_flags_to_texture_view_type(texture_desc.BindFlags);
-
-        if texture_view_type != bindings::BUFFER_VIEW_UNDEFINED {
-            let texture_view = TextureView::new(
-                unsafe {
-                    (*(*texture_ptr).pVtbl)
-                        .Texture
-                        .GetDefaultView
-                        .unwrap_unchecked()(texture_ptr, texture_view_type as u8)
-                },
-                std::ptr::addr_of!(texture),
-            );
-            texture_view.as_device_object().as_object().add_ref();
-            texture.default_view = Some(texture_view);
-        }
-
-        texture
     }
 
     pub fn get_desc(&self) -> &bindings::TextureDesc {
@@ -289,21 +300,20 @@ impl Texture {
         }
     }
 
-    pub fn get_default_view(
-        &self,
-        texture_view_type: bindings::TEXTURE_VIEW_TYPE,
-    ) -> Option<&TextureView> {
-        if unsafe {
+    pub fn get_default_view(&self, texture_view_type: TextureViewType) -> Option<TextureView> {
+        let texture_view_ptr = unsafe {
             (*self.virtual_functions)
                 .Texture
                 .GetDefaultView
-                .unwrap_unchecked()(self.texture, texture_view_type)
-        }
-        .is_null()
-        {
+                .unwrap_unchecked()(self.texture, texture_view_type.into())
+        };
+        if texture_view_ptr.is_null() {
             None
         } else {
-            self.default_view.as_ref()
+            let texture_view = TextureView::new(texture_view_ptr, std::ptr::addr_of!(*self));
+            texture_view.as_device_object().as_object().add_ref();
+
+            Some(texture_view)
         }
     }
 

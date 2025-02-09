@@ -32,6 +32,26 @@ pub struct ShaderResourceVariableDesc<'a> {
     flags: ShaderVariableFlags,
 }
 
+impl<'a> ShaderResourceVariableDesc<'a> {
+    pub fn new(
+        name: &'a std::ffi::CStr,
+        variable_type: ShaderResourceVariableType,
+        shader_stages: ShaderTypes,
+    ) -> Self {
+        ShaderResourceVariableDesc {
+            name,
+            variable_type,
+            shader_stages,
+            flags: ShaderVariableFlags::None,
+        }
+    }
+
+    pub fn flags(mut self, flags: ShaderVariableFlags) -> Self {
+        self.flags = flags;
+        self
+    }
+}
+
 impl<'a> Into<bindings::ShaderResourceVariableDesc> for ShaderResourceVariableDesc<'a> {
     fn into(self) -> bindings::ShaderResourceVariableDesc {
         bindings::ShaderResourceVariableDesc {

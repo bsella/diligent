@@ -4,6 +4,7 @@ use static_assertions::const_assert;
 use super::device_object::{AsDeviceObject, DeviceObject};
 use super::graphics_types::{PrimitiveTopology, ShaderType, ShaderTypes};
 use super::input_layout::LayoutElement;
+use super::object::AsObject;
 use super::pipeline_resource_signature::{ImmutableSamplerDesc, PipelineResourceSignature};
 use super::resource_mapping::ResourceMapping;
 use super::shader::Shader;
@@ -257,10 +258,10 @@ pub struct PipelineResourceLayoutDesc<'a> {
 }
 
 impl<'a> PipelineResourceLayoutDesc<'a> {
-    fn new(pipeline_type: bindings::_PIPELINE_TYPE) -> Self {
+    fn new<const PIPELINE_TYPE: bindings::PIPELINE_TYPE>() -> Self {
         PipelineResourceLayoutDesc {
             default_variable_type: ShaderResourceVariableType::Static,
-            default_variable_merge_stages: match pipeline_type {
+            default_variable_merge_stages: match PIPELINE_TYPE as bindings::_PIPELINE_TYPE {
                 bindings::PIPELINE_TYPE_GRAPHICS => ShaderTypes::AllGraphics,
                 bindings::PIPELINE_TYPE_COMPUTE => ShaderTypes::Compute,
                 bindings::PIPELINE_TYPE_MESH => ShaderTypes::AllMesh,
@@ -274,81 +275,128 @@ impl<'a> PipelineResourceLayoutDesc<'a> {
     }
 }
 
-impl<'a> Into<bindings::PipelineResourceLayoutDesc> for PipelineResourceLayoutDesc<'a> {
-    fn into(self) -> bindings::PipelineResourceLayoutDesc {
-        bindings::PipelineResourceLayoutDesc {
+pub(crate) struct PipelineResourceLayoutDescWrapper {
+    _variables: Vec<bindings::ShaderResourceVariableDesc>,
+    _immutable_samplers: Vec<bindings::ImmutableSamplerDesc>,
+    prld: bindings::PipelineResourceLayoutDesc,
+}
+
+impl PipelineResourceLayoutDescWrapper {
+    pub(crate) fn get(&self) -> bindings::PipelineResourceLayoutDesc {
+        self.prld
+    }
+}
+
+impl<'a> Into<PipelineResourceLayoutDescWrapper> for PipelineResourceLayoutDesc<'a> {
+    fn into(self) -> PipelineResourceLayoutDescWrapper {
+        let variables: Vec<_> = self.variables.into_iter().map(|var| var.into()).collect();
+        let immutable_samplers: Vec<_> = self
+            .immutable_samplers
+            .into_iter()
+            .map(|var| var.into())
+            .collect();
+
+        let prld = bindings::PipelineResourceLayoutDesc {
             DefaultVariableType: self.default_variable_type.into(),
             DefaultVariableMergeStages: self.default_variable_merge_stages.bits(),
-            NumVariables: self.variables.len() as u32,
-            Variables: if self.variables.is_empty() {
+            NumVariables: variables.len() as u32,
+            Variables: if variables.is_empty() {
                 std::ptr::null()
             } else {
-                self.variables
-                    .into_iter()
-                    .map(|var| var.into())
-                    .collect::<Vec<bindings::ShaderResourceVariableDesc>>()
-                    .as_ptr()
+                variables.as_ptr()
             },
-            NumImmutableSamplers: self.immutable_samplers.len() as u32,
-            ImmutableSamplers: if self.immutable_samplers.is_empty() {
+            NumImmutableSamplers: immutable_samplers.len() as u32,
+            ImmutableSamplers: if immutable_samplers.is_empty() {
                 std::ptr::null()
             } else {
-                self.immutable_samplers
-                    .into_iter()
-                    .map(|var| var.into())
-                    .collect::<Vec<bindings::ImmutableSamplerDesc>>()
-                    .as_ptr()
+                immutable_samplers.as_ptr()
             },
+        };
+
+        PipelineResourceLayoutDescWrapper {
+            prld,
+            _variables: variables,
+            _immutable_samplers: immutable_samplers,
         }
     }
 }
 
-struct PipelineStateDesc<'a> {
+struct PipelineStateDesc<'a, const PIPELINE_TYPE: bindings::PIPELINE_TYPE> {
     name: &'a std::ffi::CStr,
-    pipeline_type: bindings::_PIPELINE_TYPE,
     srb_allocation_granularity: u32,
     immediate_context_mask: u64,
     resource_layout: PipelineResourceLayoutDesc<'a>,
 }
 
-impl<'a> PipelineStateDesc<'a> {
-    fn new(name: &'a std::ffi::CStr, pipeline_type: bindings::_PIPELINE_TYPE) -> Self {
+impl<'a, const PIPELINE_TYPE: bindings::PIPELINE_TYPE> PipelineStateDesc<'a, PIPELINE_TYPE> {
+    fn new(name: &'a std::ffi::CStr) -> Self {
         PipelineStateDesc {
             name: name,
-            pipeline_type: pipeline_type,
             srb_allocation_granularity: 1,
             immediate_context_mask: 1,
-            resource_layout: PipelineResourceLayoutDesc::new(pipeline_type),
+            resource_layout: PipelineResourceLayoutDesc::new::<PIPELINE_TYPE>(),
         }
     }
 }
 
-impl<'a> Into<bindings::PipelineStateDesc> for PipelineStateDesc<'a> {
-    fn into(self) -> bindings::PipelineStateDesc {
-        bindings::PipelineStateDesc {
+pub(crate) struct PipelineStateDescWrapper {
+    _prld: PipelineResourceLayoutDescWrapper,
+    psd: bindings::PipelineStateDesc,
+}
+
+impl PipelineStateDescWrapper {
+    pub(crate) fn get(&self) -> bindings::PipelineStateDesc {
+        self.psd
+    }
+}
+
+impl<'a, const PIPELINE_TYPE: bindings::PIPELINE_TYPE> Into<PipelineStateDescWrapper>
+    for PipelineStateDesc<'a, PIPELINE_TYPE>
+{
+    fn into(self) -> PipelineStateDescWrapper {
+        let prld: PipelineResourceLayoutDescWrapper = self.resource_layout.into();
+
+        let psd = bindings::PipelineStateDesc {
             _DeviceObjectAttribs: bindings::DeviceObjectAttribs {
                 Name: self.name.as_ptr(),
             },
-            PipelineType: self.pipeline_type as u8,
+            PipelineType: PIPELINE_TYPE,
             SRBAllocationGranularity: self.srb_allocation_granularity,
             ImmediateContextMask: self.immediate_context_mask,
-            ResourceLayout: self.resource_layout.into(),
-        }
+            ResourceLayout: prld.get(),
+        };
+
+        PipelineStateDescWrapper { _prld: prld, psd }
     }
 }
 
-struct PipelineStateCreateInfo<'a> {
-    pso_desc: PipelineStateDesc<'a>,
+struct PipelineStateCreateInfo<'a, const PIPELINE_TYPE: bindings::PIPELINE_TYPE> {
+    pso_desc: PipelineStateDesc<'a, PIPELINE_TYPE>,
     flags: PipelineStateObjectCreateFlags,
     resource_signatures: Vec<&'a PipelineResourceSignature>,
     //TODO
     //pub pPSOCache: *mut IPipelineStateCache,
 }
 
-impl<'a> Into<bindings::PipelineStateCreateInfo> for PipelineStateCreateInfo<'a> {
-    fn into(self) -> bindings::PipelineStateCreateInfo {
-        bindings::PipelineStateCreateInfo {
-            PSODesc: self.pso_desc.into(),
+pub(crate) struct PipelineStateCreateInfoWrapper {
+    _psd: PipelineStateDescWrapper,
+    ci: bindings::PipelineStateCreateInfo,
+}
+
+impl PipelineStateCreateInfoWrapper {
+    pub(crate) fn get(&self) -> bindings::PipelineStateCreateInfo {
+        self.ci
+    }
+}
+
+impl<'a, const PIPELINE_TYPE: bindings::PIPELINE_TYPE> Into<PipelineStateCreateInfoWrapper>
+    for PipelineStateCreateInfo<'a, PIPELINE_TYPE>
+{
+    fn into(self) -> PipelineStateCreateInfoWrapper {
+        let psd: PipelineStateDescWrapper = self.pso_desc.into();
+
+        let ci = bindings::PipelineStateCreateInfo {
+            PSODesc: psd.get(),
             Flags: self.flags.bits(),
             ResourceSignaturesCount: self.resource_signatures.len() as u32,
             ppResourceSignatures: if self.resource_signatures.is_empty() {
@@ -362,14 +410,16 @@ impl<'a> Into<bindings::PipelineStateCreateInfo> for PipelineStateCreateInfo<'a>
             },
             pPSOCache: std::ptr::null_mut(), // TODO
             pInternalData: std::ptr::null_mut(),
-        }
+        };
+
+        PipelineStateCreateInfoWrapper { _psd: psd, ci }
     }
 }
 
-impl<'a> PipelineStateCreateInfo<'a> {
-    fn new(name: &'a std::ffi::CStr, pipeline_type: bindings::_PIPELINE_TYPE) -> Self {
+impl<'a, const PIPELINE_TYPE: bindings::PIPELINE_TYPE> PipelineStateCreateInfo<'a, PIPELINE_TYPE> {
+    fn new(name: &'a std::ffi::CStr) -> Self {
         PipelineStateCreateInfo {
-            pso_desc: PipelineStateDesc::new(name, pipeline_type),
+            pso_desc: PipelineStateDesc::new(name),
             flags: PipelineStateObjectCreateFlags::None,
             resource_signatures: Vec::new(),
         }
@@ -726,12 +776,12 @@ impl Default for DepthStencilStateDesc {
     }
 }
 
-pub struct GraphicsPipelineDesc {
+pub struct GraphicsPipelineDesc<'a> {
     blend_desc: BlendStateDesc,
     sample_mask: u32,
     rasterizer_desc: RasterizerStateDesc,
     depth_stencil_desc: DepthStencilStateDesc,
-    input_layouts: Vec<LayoutElement>,
+    input_layouts: Vec<LayoutElement<'a>>,
     primitive_topology: PrimitiveTopology,
     num_viewports: u8,
     num_render_targets: u8,
@@ -746,7 +796,7 @@ pub struct GraphicsPipelineDesc {
     node_mask: u32,
 }
 
-impl Default for GraphicsPipelineDesc {
+impl<'a> Default for GraphicsPipelineDesc<'a> {
     fn default() -> Self {
         GraphicsPipelineDesc::new(
             BlendStateDesc::default(),
@@ -756,7 +806,7 @@ impl Default for GraphicsPipelineDesc {
     }
 }
 
-impl GraphicsPipelineDesc {
+impl<'a> GraphicsPipelineDesc<'a> {
     pub fn new(
         blend_desc: BlendStateDesc,
         rasterizer_desc: RasterizerStateDesc,
@@ -829,31 +879,43 @@ impl GraphicsPipelineDesc {
         self.read_only_dsv = read_only_dsv;
         self
     }
-    pub fn add_input_layout(mut self, input_layout: LayoutElement) -> Self {
+    pub fn add_input_layout(mut self, input_layout: LayoutElement<'a>) -> Self {
         self.input_layouts.push(input_layout);
         self
     }
 }
 
-impl Into<bindings::GraphicsPipelineDesc> for GraphicsPipelineDesc {
-    fn into(self) -> bindings::GraphicsPipelineDesc {
-        let input_layouts = self
+pub(crate) struct GraphicsPipelineDescWrapper {
+    _aux_input_layouts: Vec<bindings::LayoutElement>,
+    desc: bindings::GraphicsPipelineDesc,
+}
+
+impl GraphicsPipelineDescWrapper {
+    pub(crate) fn get(&self) -> bindings::GraphicsPipelineDesc {
+        self.desc
+    }
+}
+
+impl<'a> Into<GraphicsPipelineDescWrapper> for GraphicsPipelineDesc<'a> {
+    fn into(self) -> GraphicsPipelineDescWrapper {
+        let aux_input_layouts: Vec<bindings::LayoutElement> = self
             .input_layouts
             .into_iter()
             .map(|layout| layout.into())
-            .collect::<Vec<bindings::LayoutElement>>();
-        bindings::GraphicsPipelineDesc {
+            .collect();
+
+        let desc = bindings::GraphicsPipelineDesc {
             BlendDesc: self.blend_desc.into(),
             SampleMask: self.sample_mask,
             RasterizerDesc: self.rasterizer_desc.into(),
             DepthStencilDesc: self.depth_stencil_desc.into(),
             InputLayout: bindings::InputLayoutDesc {
-                LayoutElements: if input_layouts.is_empty() {
+                LayoutElements: if aux_input_layouts.is_empty() {
                     std::ptr::null()
                 } else {
-                    input_layouts.as_ptr()
+                    aux_input_layouts.as_ptr()
                 },
-                NumElements: input_layouts.len() as u32,
+                NumElements: aux_input_layouts.len() as u32,
             },
             PrimitiveTopology: self.primitive_topology.into(),
             NumViewports: self.num_viewports,
@@ -869,13 +931,23 @@ impl Into<bindings::GraphicsPipelineDesc> for GraphicsPipelineDesc {
             SmplDesc: self.sample_desc.into(),
             pRenderPass: std::ptr::null_mut(),
             NodeMask: self.node_mask,
+        };
+
+        GraphicsPipelineDescWrapper {
+            _aux_input_layouts: aux_input_layouts,
+            desc,
         }
     }
 }
 
+// For now, couldn't find any practical way to provide the `bindings::PIPELINE_TYPE_GRAPHICS` value
+// directly to the PipelineStateCreateInfo<> template member. This happens because the compiler can't
+// convert a `::std::os::raw::c_uint` into a `u8` implicitly in compile time. If you know of a better
+// way of doing this, feel free to make a pull request.
+const_assert!(bindings::PIPELINE_TYPE_GRAPHICS == 0);
 pub struct GraphicsPipelineStateCreateInfo<'a> {
-    pipeline_state_create_info: PipelineStateCreateInfo<'a>,
-    graphics_pipeline_desc: GraphicsPipelineDesc,
+    pipeline_state_create_info: PipelineStateCreateInfo<'a, 0>,
+    graphics_pipeline_desc: GraphicsPipelineDesc<'a>,
     vertex_shader: Option<&'a Shader>,
     pixel_shader: Option<&'a Shader>,
     domain_shader: Option<&'a Shader>,
@@ -886,13 +958,10 @@ pub struct GraphicsPipelineStateCreateInfo<'a> {
 }
 
 impl<'a> GraphicsPipelineStateCreateInfo<'a> {
-    pub fn new(name: &'a std::ffi::CStr, graphics_pipeline_desc: GraphicsPipelineDesc) -> Self {
+    pub fn new(name: &'a std::ffi::CStr, graphics_pipeline_desc: GraphicsPipelineDesc<'a>) -> Self {
         GraphicsPipelineStateCreateInfo {
-            pipeline_state_create_info: PipelineStateCreateInfo::new(
-                name,
-                bindings::PIPELINE_TYPE_GRAPHICS,
-            ),
-            graphics_pipeline_desc: graphics_pipeline_desc,
+            pipeline_state_create_info: PipelineStateCreateInfo::new(name),
+            graphics_pipeline_desc,
             vertex_shader: None,
             pixel_shader: None,
             domain_shader: None,
@@ -907,6 +976,27 @@ impl<'a> GraphicsPipelineStateCreateInfo<'a> {
         self.pipeline_state_create_info
             .resource_signatures
             .push(&signature);
+        self
+    }
+
+    pub fn add_shader_resource_variable(
+        mut self,
+        variable: ShaderResourceVariableDesc<'a>,
+    ) -> Self {
+        self.pipeline_state_create_info
+            .pso_desc
+            .resource_layout
+            .variables
+            .push(variable);
+        self
+    }
+
+    pub fn add_immutable_sampler_desc(mut self, sampler: ImmutableSamplerDesc<'a>) -> Self {
+        self.pipeline_state_create_info
+            .pso_desc
+            .resource_layout
+            .immutable_samplers
+            .push(sampler);
         self
     }
 
@@ -946,11 +1036,25 @@ impl<'a> GraphicsPipelineStateCreateInfo<'a> {
     }
 }
 
-impl<'a> Into<bindings::GraphicsPipelineStateCreateInfo> for GraphicsPipelineStateCreateInfo<'a> {
-    fn into(self) -> bindings::GraphicsPipelineStateCreateInfo {
-        bindings::GraphicsPipelineStateCreateInfo {
-            _PipelineStateCreateInfo: self.pipeline_state_create_info.into(),
-            GraphicsPipeline: self.graphics_pipeline_desc.into(),
+pub(crate) struct GraphicsPipelineStateCreateInfoWrapper {
+    _pci: PipelineStateCreateInfoWrapper,
+    _gpd: GraphicsPipelineDescWrapper,
+    ci: bindings::GraphicsPipelineStateCreateInfo,
+}
+
+impl GraphicsPipelineStateCreateInfoWrapper {
+    pub(crate) fn get(&self) -> bindings::GraphicsPipelineStateCreateInfo {
+        self.ci
+    }
+}
+
+impl<'a> Into<GraphicsPipelineStateCreateInfoWrapper> for GraphicsPipelineStateCreateInfo<'a> {
+    fn into(self) -> GraphicsPipelineStateCreateInfoWrapper {
+        let pci: PipelineStateCreateInfoWrapper = self.pipeline_state_create_info.into();
+        let gpd: GraphicsPipelineDescWrapper = self.graphics_pipeline_desc.into();
+        let ci = bindings::GraphicsPipelineStateCreateInfo {
+            _PipelineStateCreateInfo: pci.get(),
+            GraphicsPipeline: gpd.get(),
             pVS: self
                 .vertex_shader
                 .map_or(std::ptr::null_mut(), |shader| shader.shader),
@@ -972,6 +1076,12 @@ impl<'a> Into<bindings::GraphicsPipelineStateCreateInfo> for GraphicsPipelineSta
             pMS: self
                 .mesh_shader
                 .map_or(std::ptr::null_mut(), |shader| shader.shader),
+        };
+
+        GraphicsPipelineStateCreateInfoWrapper {
+            _pci: pci,
+            _gpd: gpd,
+            ci,
         }
     }
 }
@@ -1086,13 +1196,15 @@ impl PipelineState {
         if shader_resource_variable.is_null() {
             None
         } else {
-            Some(ShaderResourceVariable::new(shader_resource_variable))
+            let srv = ShaderResourceVariable::new(shader_resource_variable);
+            srv.as_object().add_ref();
+            Some(srv)
         }
     }
 
     pub fn create_shader_resource_binding(
         &self,
-        init_static_resources: Option<bool>,
+        init_static_resources: bool,
     ) -> Option<ShaderResourceBinding> {
         let mut shader_resource_binding_ptr: *mut bindings::IShaderResourceBinding =
             std::ptr::null_mut();
@@ -1103,7 +1215,7 @@ impl PipelineState {
                 .unwrap_unchecked()(
                 self.pipeline_state,
                 std::ptr::addr_of_mut!(shader_resource_binding_ptr),
-                init_static_resources.unwrap_or(false),
+                init_static_resources,
             );
         }
         if shader_resource_binding_ptr.is_null() {

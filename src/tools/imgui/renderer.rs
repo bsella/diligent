@@ -1,5 +1,7 @@
 use std::os::raw::c_void;
 
+use imgui::TextureId;
+
 use crate::{
     bindings,
     core::{
@@ -7,17 +9,23 @@ use crate::{
         device_context::DeviceContext,
         graphics_types::{
             BindFlags, CpuAccessFlags, PrimitiveTopology, RenderDeviceType, SetShaderResourceFlags,
-            ShaderType, Usage, ValueType,
+            ShaderType, ShaderTypes, TextureAddressMode, Usage, ValueType,
         },
         input_layout::LayoutElement,
+        pipeline_resource_signature::ImmutableSamplerDesc,
         pipeline_state::{
             BlendFactor, BlendOperation, BlendStateDesc, ColorMask, CullMode,
             DepthStencilStateDesc, GraphicsPipelineDesc, GraphicsPipelineStateCreateInfo,
             PipelineState, RasterizerStateDesc, RenderTargetBlendDesc,
         },
         render_device::RenderDevice,
+        sampler::SamplerDesc,
         shader::{ShaderCreateInfo, ShaderSource},
-        texture::{TextureDesc, TextureDimension},
+        shader_resource_variable::{
+            ShaderResourceVariable, ShaderResourceVariableDesc, ShaderResourceVariableType,
+        },
+        texture::{TextureDesc, TextureDimension, TextureSubResource},
+        texture_view::{TextureView, TextureViewType},
     },
 };
 
@@ -380,6 +388,8 @@ const PIXEL_SHADER_GAMMA_SPIRV: &[u32] = &[
 pub struct ImguiRenderer {
     context: imgui::Context,
     pipeline_state: PipelineState,
+    font_texture_view: TextureView,
+    texture_var: ShaderResourceVariable,
 }
 
 #[derive(Eq, PartialEq)]
@@ -538,25 +548,20 @@ impl ImguiRenderer {
             .add_input_layout(LayoutElement::new(2, 0, 4, ValueType::Uint8).is_normalized(true)),
         )
         .vertex_shader(&vertex_shader)
-        .pixel_shader(&pixel_shader);
-
-        // ShaderResourceVariableDesc Variables[] =
-        //    {
-        //        {SHADER_TYPE_PIXEL, "Texture", SHADER_RESOURCE_VARIABLE_TYPE_DYNAMIC} //
-        //    };
-        // PSOCreateInfo.PSODesc.ResourceLayout.Variables    = Variables;
-        // PSOCreateInfo.PSODesc.ResourceLayout.NumVariables = _countof(Variables);
-
-        // SamplerDesc SamLinearWrap;
-        // SamLinearWrap.AddressU = TEXTURE_ADDRESS_WRAP;
-        // SamLinearWrap.AddressV = TEXTURE_ADDRESS_WRAP;
-        // SamLinearWrap.AddressW = TEXTURE_ADDRESS_WRAP;
-        // ImmutableSamplerDesc ImtblSamplers[] =
-        //    {
-        //        {SHADER_TYPE_PIXEL, "Texture", SamLinearWrap} //
-        //    };
-        // PSOCreateInfo.PSODesc.ResourceLayout.ImmutableSamplers    = ImtblSamplers;
-        // PSOCreateInfo.PSODesc.ResourceLayout.NumImmutableSamplers = _countof(ImtblSamplers);
+        .pixel_shader(&pixel_shader)
+        .add_shader_resource_variable(ShaderResourceVariableDesc::new(
+            c"Texture",
+            ShaderResourceVariableType::Dynamic,
+            ShaderTypes::Pixel,
+        ))
+        .add_immutable_sampler_desc(ImmutableSamplerDesc::new(
+            ShaderTypes::Pixel,
+            c"Texture",
+            SamplerDesc::new(c"Texture Sampler")
+                .address_u(TextureAddressMode::Wrap)
+                .address_v(TextureAddressMode::Wrap)
+                .address_w(TextureAddressMode::Wrap),
+        ));
 
         let pipeline_state = create_info
             .device
@@ -583,11 +588,6 @@ impl ImguiRenderer {
         let font_atlas = imgui_context.fonts();
         let font_atlas_texture = font_atlas.build_rgba32_texture();
 
-        // unsigned char* pData  = nullptr;
-        // int            Width  = 0;
-        // int            Weight = 0;
-        // IO.Fonts->GetTexDataAsRGBA32(&pData, &Width, &Weight);
-
         let font_texture_desc = TextureDesc::new(
             c"Imgui font texture",
             TextureDimension::Texture2D,
@@ -598,20 +598,31 @@ impl ImguiRenderer {
         .bind_flags(BindFlags::ShaderResourcec)
         .usage(Usage::Immutable);
 
-        // TextureSubResData Mip0Data[] = {{pData, 4 * Uint64{FontTexDesc.Width}}};
-        // TextureData       InitData(Mip0Data, _countof(Mip0Data));
+        let font_texture = create_info
+            .device
+            .create_texture(
+                font_texture_desc,
+                vec![TextureSubResource::new_cpu(
+                    font_atlas_texture.data,
+                    4 * font_atlas_texture.width as u64,
+                )],
+                None,
+            )
+            .unwrap();
 
-        // RefCntAutoPtr<ITexture> pFontTex;
-        // m_pDevice->CreateTexture(FontTexDesc, &InitData, &pFontTex);
-        // m_pFontSRV = pFontTex->GetDefaultView(TEXTURE_VIEW_SHADER_RESOURCE);
+        let font_texture_view = font_texture
+            .get_default_view(TextureViewType::ShaderResource)
+            .unwrap();
 
-        // m_pSRB.Release();
-        // m_pPSO->CreateShaderResourceBinding(&m_pSRB, true);
-        // m_pTextureVar = m_pSRB->GetVariableByName(SHADER_TYPE_PIXEL, "Texture");
-        // VERIFY_EXPR(m_pTextureVar != nullptr);
+        let srb = pipeline_state.create_shader_resource_binding(true).unwrap();
 
-        // // Store our identifier
-        // IO.Fonts->TexID = (ImTextureID)m_pFontSRV;
+        let texture_var = srb
+            .get_variable_by_name(c"Texture", ShaderTypes::Pixel)
+            .unwrap();
+
+        // Store our identifier
+        imgui_context.fonts().tex_id =
+            TextureId::new(std::ptr::addr_of!(font_texture_view) as usize);
 
         imgui_context.io_mut().display_size =
             [create_info.initial_width, create_info.initial_height];
@@ -619,6 +630,8 @@ impl ImguiRenderer {
         ImguiRenderer {
             context: imgui_context,
             pipeline_state,
+            font_texture_view,
+            texture_var,
         }
     }
 
@@ -633,6 +646,7 @@ impl ImguiRenderer {
     }
 
     pub fn render(&mut self, device_context: &DeviceContext) {
+        let ui = self.context.new_frame();
         let draw_data = self.context.render();
         // TODO : RenderDrawData
     }

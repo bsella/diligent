@@ -4,9 +4,12 @@ use crate::{
         device_context::ResourceStateTransitionMode, engine_factory::EngineFactoryImplementation,
         swap_chain::SwapChain,
     },
-    tools::native_app::{
-        app::{App, GoldenImageMode},
-        events::{EventHandler, EventResult},
+    tools::{
+        imgui::renderer::{ImguiRenderer, ImguiRendererCreateInfo},
+        native_app::{
+            app::{App, GoldenImageMode},
+            events::{EventHandler, EventResult},
+        },
     },
 };
 
@@ -134,6 +137,14 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
     where
         EH: EventHandler,
     {
+        let mut imgui_renderer = ImguiRenderer::new(ImguiRendererCreateInfo::new(
+            self.sample.get_render_device(),
+            self.swap_chain.get_desc().ColorBufferFormat,
+            self.swap_chain.get_desc().DepthBufferFormat,
+            self.width,
+            self.height,
+        ));
+
         loop {
             if let Some(event) = event_handler.poll_event() {
                 match event_handler.handle_event(&event) {
@@ -149,6 +160,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             self.update(0.0, 0.0);
 
             self.render();
+            imgui_renderer.render(self.sample.get_immediate_context());
 
             self.present();
 
