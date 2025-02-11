@@ -9,11 +9,6 @@ pub enum GoldenImageMode {
     CompareUpdate,
 }
 
-pub enum ApiImplementation {
-    Vulkan,
-    OpenGL,
-}
-
 pub trait App {
     fn new<EngineFactory: EngineFactoryImplementation>(
         engine_create_info: EngineFactory::EngineCreateInfo,

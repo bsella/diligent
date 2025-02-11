@@ -7,7 +7,10 @@ use crate::{
         swap_chain::SwapChain,
     },
     tools::{
-        imgui::renderer::{ImguiRenderer, ImguiRendererCreateInfo},
+        imgui::{
+            events::imgui_handle_event,
+            renderer::{ImguiRenderer, ImguiRendererCreateInfo},
+        },
         native_app::{
             app::{App, GoldenImageMode},
             events::{EventHandler, EventResult},
@@ -18,7 +21,7 @@ use crate::{
 use super::sample::SampleBase;
 
 pub struct SampleApp<Sample: SampleBase> {
-    app_title: String,
+    _app_title: String,
     swap_chain: SwapChain,
 
     _golden_image_mode: GoldenImageMode,
@@ -30,15 +33,15 @@ pub struct SampleApp<Sample: SampleBase> {
 
     current_time: f64,
 
-    width: u16,
-    height: u16,
+    _width: u16,
+    _height: u16,
 
     imgui_renderer: ImguiRenderer,
 }
 
 impl<GenericSample: SampleBase> SampleApp<GenericSample> {
-    fn get_title(&self) -> &str {
-        self.app_title.as_str()
+    fn _get_title(&self) -> &str {
+        self._app_title.as_str()
     }
 
     fn window_resize(&mut self, width: u32, height: u32) {
@@ -152,7 +155,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
         ));
 
         SampleApp::<GenericSample> {
-            app_title: GenericSample::get_name().to_string(),
+            _app_title: GenericSample::get_name().to_string(),
             swap_chain,
 
             _golden_image_mode: GoldenImageMode::None,
@@ -164,8 +167,8 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
 
             current_time: 0.0,
 
-            width: initial_width,
-            height: initial_height,
+            _width: initial_width,
+            _height: initial_height,
 
             imgui_renderer,
         }
@@ -177,21 +180,27 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
     {
         loop {
             if let Some(event) = event_handler.poll_event() {
-                match event_handler.handle_event(&event) {
+                let event = event_handler.handle_event(&event);
+                match event {
                     EventResult::Quit => break,
                     EventResult::Continue => {}
                     EventResult::Resize { width, height } => {
                         self.window_resize(width as u32, height as u32)
                     }
+                    _ => {}
                 }
+
+                let event = imgui_handle_event(self.imgui_renderer.io_mut(), event);
+
+                self.sample.handle_event(event);
             }
 
             // TODO implement timer
             self.update(0.0, 0.0);
 
-            self.update_ui();
-
             self.render();
+
+            self.update_ui();
             self.imgui_renderer.render(
                 self.sample.get_immediate_context(),
                 self.sample.get_render_device(),

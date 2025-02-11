@@ -4,10 +4,13 @@ use xcb::{x, Xid};
 
 use crate::{
     bindings,
-    core::vk::engine_factory_vk::{EngineFactoryVk, EngineVkCreateInfo},
+    core::{
+        graphics_types::RenderDeviceType,
+        vk::engine_factory_vk::{EngineFactoryVk, EngineVkCreateInfo},
+    },
     tools::native_app::{
-        app::{ApiImplementation, App},
-        events::{EventHandler, EventResult},
+        app::App,
+        events::{EventHandler, EventResult, MouseButton},
     },
 };
 
@@ -134,16 +137,54 @@ impl EventHandler for XcbEventHandler {
                 }
                 return EventResult::Continue;
             }
+
             xcb::Event::X(x::Event::KeyRelease(_key_event)) => {
                 // TODO
                 EventResult::Continue
             }
+
             xcb::Event::X(x::Event::DestroyNotify(_destroy_event)) => EventResult::Quit,
 
             xcb::Event::X(x::Event::ConfigureNotify(configure_event)) => EventResult::Resize {
                 width: configure_event.width(),
                 height: configure_event.height(),
             },
+
+            xcb::Event::X(xcb::x::Event::MotionNotify(motion_event)) => EventResult::MouseMove {
+                x: motion_event.event_x(),
+                y: motion_event.event_y(),
+            },
+
+            xcb::Event::X(xcb::x::Event::ButtonPress(press_event)) => match press_event.detail() {
+                1 => EventResult::MouseDown {
+                    button: MouseButton::Left,
+                },
+                2 => EventResult::MouseDown {
+                    button: MouseButton::Right,
+                },
+                3 => EventResult::MouseDown {
+                    button: MouseButton::Middle,
+                },
+                4 => EventResult::MouseWheel { up: true },
+                5 => EventResult::MouseWheel { up: false },
+                _ => EventResult::Continue,
+            },
+
+            xcb::Event::X(xcb::x::Event::ButtonRelease(release_event)) => {
+                match release_event.detail() {
+                    1 => EventResult::MouseUp {
+                        button: MouseButton::Left,
+                    },
+                    2 => EventResult::MouseUp {
+                        button: MouseButton::Right,
+                    },
+                    3 => EventResult::MouseUp {
+                        button: MouseButton::Middle,
+                    },
+                    _ => EventResult::Continue,
+                }
+            }
+
             _ => EventResult::Continue,
         }
     }
@@ -165,16 +206,16 @@ where
         pDisplay: std::ptr::null_mut(),
     };
 
-    let api = ApiImplementation::Vulkan;
+    let api = RenderDeviceType::VULKAN;
 
     let app = match api {
-        ApiImplementation::Vulkan => Application::new::<EngineFactoryVk>(
+        RenderDeviceType::VULKAN => Application::new::<EngineFactoryVk>(
             EngineVkCreateInfo::default(),
             Some(&native_window),
             width,
             height,
         ),
-        ApiImplementation::OpenGL => panic!(),
+        _ => panic!(),
     };
 
     connection.flush().unwrap();

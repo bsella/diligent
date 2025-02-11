@@ -3,7 +3,7 @@ use std::{ops::BitAnd, os::raw::c_void};
 use imgui::{
     internal::RawWrapper,
     sys::{ImDrawIdx, ImDrawVert},
-    TextureId, Ui,
+    Io, TextureId, Ui,
 };
 
 use crate::{
@@ -666,6 +666,10 @@ impl ImguiRenderer {
             index_buffer_size: 2048,
             vertex_constant_buffer,
         }
+    }
+
+    pub fn io_mut(&mut self) -> &mut Io {
+        self.context.io_mut()
     }
 
     pub fn new_frame(&mut self) -> &mut Ui {

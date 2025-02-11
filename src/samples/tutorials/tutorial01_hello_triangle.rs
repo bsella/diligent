@@ -16,23 +16,25 @@ use diligent::core::shader::ShaderCreateInfo;
 use diligent::core::shader::ShaderLanguage;
 use diligent::core::shader::ShaderSource;
 use diligent::core::swap_chain::SwapChain;
-use diligent::samples::sample::Sample;
 use diligent::samples::sample::SampleBase;
 use diligent::samples::sample_app::SampleApp;
 use diligent::tools::native_app;
 
 struct HelloTriangle {
-    sample: Sample,
+    render_device: RenderDevice,
+    immediate_contexts: Vec<DeviceContext>,
+    _deferred_contexts: Vec<DeviceContext>,
 
     pipeline_state: PipelineState,
 }
 
 impl SampleBase for HelloTriangle {
-    fn get_immediate_context(&self) -> &DeviceContext {
-        self.sample.get_immediate_context()
-    }
     fn get_render_device(&self) -> &RenderDevice {
-        self.sample.get_render_device()
+        &self.render_device
+    }
+
+    fn get_immediate_context(&self) -> &DeviceContext {
+        self.immediate_contexts.first().unwrap()
     }
 
     fn new(
@@ -140,19 +142,12 @@ void main(in PSInput PSIn, out PSOutput PSOut)
             .unwrap();
 
         HelloTriangle {
-            sample: Sample::new(
-                render_device,
-                immediate_contexts,
-                deferred_contexts,
-                swap_chain,
-            ),
-            pipeline_state: pipeline_state,
+            render_device,
+            immediate_contexts,
+            _deferred_contexts: deferred_contexts,
+            pipeline_state,
         }
     }
-
-    fn pre_window_resize(&mut self) {}
-
-    fn window_resize(&mut self, _width: u32, _height: u32) {}
 
     fn render(&self, swap_chain: &SwapChain) {
         let immediate_context = self.get_immediate_context();
@@ -177,8 +172,6 @@ void main(in PSInput PSIn, out PSOutput PSOut)
         // use any resources.
         immediate_context.draw(DrawAttribs::new(3));
     }
-
-    fn update(&self, _current_time: f64, _elapsed_time: f64) {}
 
     fn get_name() -> &'static str {
         "Tutorial01: Hello Triangle"
