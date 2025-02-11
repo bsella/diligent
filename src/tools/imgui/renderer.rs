@@ -1,15 +1,22 @@
-use std::os::raw::c_void;
+use std::{ops::BitAnd, os::raw::c_void};
 
-use imgui::TextureId;
+use imgui::{
+    internal::RawWrapper,
+    sys::{ImDrawIdx, ImDrawVert},
+    TextureId, Ui,
+};
 
 use crate::{
     bindings,
     core::{
-        buffer::BufferDesc,
-        device_context::DeviceContext,
+        buffer::{Buffer, BufferDesc},
+        device_context::{
+            DeviceContext, DrawFlags, DrawIndexedAttribs, Rect, ResourceStateTransitionMode,
+            SetVertexBufferFlags, Viewport,
+        },
         graphics_types::{
-            BindFlags, CpuAccessFlags, PrimitiveTopology, RenderDeviceType, SetShaderResourceFlags,
-            ShaderType, ShaderTypes, TextureAddressMode, Usage, ValueType,
+            BindFlags, CpuAccessFlags, MapFlags, MapType, PrimitiveTopology, RenderDeviceType,
+            SetShaderResourceFlags, ShaderType, ShaderTypes, TextureAddressMode, Usage, ValueType,
         },
         input_layout::LayoutElement,
         pipeline_resource_signature::ImmutableSamplerDesc,
@@ -21,6 +28,7 @@ use crate::{
         render_device::RenderDevice,
         sampler::SamplerDesc,
         shader::{ShaderCreateInfo, ShaderSource},
+        shader_resource_binding::ShaderResourceBinding,
         shader_resource_variable::{
             ShaderResourceVariable, ShaderResourceVariableDesc, ShaderResourceVariableType,
         },
@@ -388,8 +396,18 @@ const PIXEL_SHADER_GAMMA_SPIRV: &[u32] = &[
 pub struct ImguiRenderer {
     context: imgui::Context,
     pipeline_state: PipelineState,
-    font_texture_view: TextureView,
+    _font_texture_view: TextureView,
     texture_var: ShaderResourceVariable,
+    shader_resource_binding: ShaderResourceBinding,
+
+    vertex_constant_buffer: Buffer,
+
+    base_vertex_supported: bool,
+
+    vertex_buffer: Option<Buffer>,
+    vertex_buffer_size: u32,
+    index_buffer: Option<Buffer>,
+    index_buffer_size: u32,
 }
 
 #[derive(Eq, PartialEq)]
@@ -614,9 +632,9 @@ impl ImguiRenderer {
             .get_default_view(TextureViewType::ShaderResource)
             .unwrap();
 
-        let srb = pipeline_state.create_shader_resource_binding(true).unwrap();
+        let shader_resource_binding = pipeline_state.create_shader_resource_binding(true).unwrap();
 
-        let texture_var = srb
+        let texture_var = shader_resource_binding
             .get_variable_by_name(c"Texture", ShaderTypes::Pixel)
             .unwrap();
 
@@ -628,26 +646,308 @@ impl ImguiRenderer {
             [create_info.initial_width, create_info.initial_height];
 
         ImguiRenderer {
+            base_vertex_supported: create_info
+                .device
+                .get_adapter_info()
+                .DrawCommand
+                .CapFlags
+                .bitand(
+                    bindings::DRAW_COMMAND_CAP_FLAG_BASE_VERTEX as bindings::DRAW_COMMAND_CAP_FLAGS,
+                )
+                != 0,
             context: imgui_context,
             pipeline_state,
-            font_texture_view,
+            _font_texture_view: font_texture_view,
+            shader_resource_binding,
             texture_var,
+            vertex_buffer: None,
+            vertex_buffer_size: 1024,
+            index_buffer: None,
+            index_buffer_size: 2048,
+            vertex_constant_buffer,
         }
     }
 
-    #[inline]
-    pub fn context(&self) -> &imgui::Context {
-        &self.context
+    pub fn new_frame(&mut self) -> &mut Ui {
+        self.context.new_frame()
     }
 
-    #[inline]
-    pub fn context_mut(&mut self) -> &mut imgui::Context {
-        &mut self.context
-    }
-
-    pub fn render(&mut self, device_context: &DeviceContext) {
-        let ui = self.context.new_frame();
+    pub fn render(&mut self, device_context: &DeviceContext, render_device: &RenderDevice) {
         let draw_data = self.context.render();
-        // TODO : RenderDrawData
+
+        // Avoid rendering when minimized
+        if draw_data.display_size[0] <= 0.0
+            || draw_data.display_size[1] <= 0.0
+            || draw_data.draw_lists_count() == 0
+        {
+            return;
+        }
+
+        // Resize the vertex buffer if needed
+        let vertex_buffer = if self.vertex_buffer.is_none()
+            || self.vertex_buffer_size < draw_data.total_vtx_count as u32
+        {
+            while self.vertex_buffer_size < draw_data.total_vtx_count as u32 {
+                self.vertex_buffer_size *= 2
+            }
+
+            let buffer_desc = BufferDesc::new(
+                c"Imgui vertex buffer",
+                (self.vertex_buffer_size as usize * std::mem::size_of::<imgui::DrawVert>()) as u64,
+            )
+            .usage(Usage::Dynamic)
+            .cpu_access_flags(CpuAccessFlags::Write)
+            .bind_flags(BindFlags::VertexBuffer);
+
+            self.vertex_buffer
+                .insert(render_device.create_buffer(buffer_desc, None).unwrap())
+        } else {
+            self.vertex_buffer.as_mut().unwrap()
+        };
+
+        // Resize the index buffer if needed
+        let index_buffer = if self.index_buffer.is_none()
+            || self.index_buffer_size < draw_data.total_idx_count as u32
+        {
+            while self.index_buffer_size < draw_data.total_idx_count as u32 {
+                self.index_buffer_size *= 2
+            }
+
+            let buffer_desc = BufferDesc::new(
+                c"Imgui index buffer",
+                (self.index_buffer_size as usize * std::mem::size_of::<imgui::DrawIdx>()) as u64,
+            )
+            .usage(Usage::Dynamic)
+            .cpu_access_flags(CpuAccessFlags::Write)
+            .bind_flags(BindFlags::IndexBuffer);
+
+            self.index_buffer
+                .insert(render_device.create_buffer(buffer_desc, None).unwrap())
+        } else {
+            self.index_buffer.as_mut().unwrap()
+        };
+
+        // Transfer the vertex and index buffer from imgui data into our GPU buffers
+        {
+            let mut vb_data =
+                device_context.map_buffer(vertex_buffer, MapType::Write, MapFlags::Discard);
+            let mut ib_data =
+                device_context.map_buffer(index_buffer, MapType::Write, MapFlags::Discard);
+
+            for draw_list in draw_data.draw_lists() {
+                let vtx_buffer = draw_list.vtx_buffer();
+                let idx_buffer = draw_list.idx_buffer();
+                unsafe {
+                    std::ptr::copy_nonoverlapping(
+                        vtx_buffer.as_ptr() as *const u8,
+                        vb_data,
+                        vtx_buffer.len() * std::mem::size_of::<imgui::DrawVert>(),
+                    );
+                    std::ptr::copy_nonoverlapping(
+                        idx_buffer.as_ptr() as *const u8,
+                        ib_data,
+                        idx_buffer.len() * std::mem::size_of::<imgui::DrawIdx>(),
+                    );
+                    vb_data = vb_data.offset(
+                        vtx_buffer.len() as isize * std::mem::size_of::<imgui::DrawVert>() as isize,
+                    );
+                    ib_data = ib_data.offset(
+                        idx_buffer.len() as isize * std::mem::size_of::<imgui::DrawIdx>() as isize,
+                    );
+                }
+            }
+
+            device_context.unmap_buffer(index_buffer, MapType::Write);
+            device_context.unmap_buffer(vertex_buffer, MapType::Write);
+        }
+
+        // Setup orthographic projection matrix into our constant buffer
+        // Our visible imgui space lies from pDrawData->DisplayPos (top left) to pDrawData->DisplayPos+data_data->DisplaySize (bottom right).
+        // DisplayPos is (0,0) for single viewport apps.
+        {
+            // DisplaySize always refers to the logical dimensions that account for pre-transform, hence
+            // the aspect ratio will be correct after applying appropriate rotation.
+            let l = draw_data.display_pos[0];
+            let r = draw_data.display_pos[0] + draw_data.display_size[0];
+            let t = draw_data.display_pos[1];
+            let b = draw_data.display_pos[1] + draw_data.display_size[1];
+
+            let projection = [
+                2.0 / (r - l),
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                2.0 / (t - b),
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.5,
+                0.0,
+                (r + l) / (l - r),
+                (t + b) / (b - t),
+                0.5,
+                1.0,
+            ];
+
+            {
+                let projection_data = device_context.map_buffer(
+                    &self.vertex_constant_buffer,
+                    MapType::Write,
+                    MapFlags::Discard,
+                );
+                unsafe {
+                    std::ptr::copy_nonoverlapping(
+                        projection.as_ptr() as *const u8,
+                        projection_data,
+                        std::mem::size_of_val(&projection),
+                    );
+                }
+                device_context.unmap_buffer(&self.vertex_constant_buffer, MapType::Write);
+            }
+        }
+
+        // Setup the render state
+        {
+            // Setup shader and vertex buffers
+            device_context.set_vertex_buffers(
+                &[vertex_buffer],
+                &[0],
+                ResourceStateTransitionMode::Transition,
+                SetVertexBufferFlags::Reset,
+            );
+            device_context.set_index_buffer(
+                &index_buffer,
+                0,
+                ResourceStateTransitionMode::Transition,
+            );
+            device_context.set_pipeline_state(&self.pipeline_state);
+
+            device_context.set_blend_factors(&[0.0, 0.0, 0.0, 0.0]);
+
+            let viewport = Viewport::new(
+                0.0,
+                0.0,
+                draw_data.display_size[0],
+                draw_data.display_size[1],
+            )
+            .min_depth(0.0)
+            .max_depth(1.0);
+
+            device_context.set_viewports(
+                vec![viewport],
+                draw_data.display_size[0] as u32,
+                draw_data.display_size[1] as u32,
+            );
+        }
+
+        // Render command lists
+        // (Because we merged all buffers into a single one, we maintain our own offset into them)
+        let mut global_idx_offset: u32 = 0;
+        let mut global_vtx_offset: u32 = 0;
+
+        let mut last_texture_view: *const TextureView = std::ptr::null();
+        for cmd_list in draw_data.draw_lists() {
+            for cmd in cmd_list.commands() {
+                match cmd {
+                    imgui::DrawCmd::Elements { count, cmd_params } => {
+                        if count == 0 {
+                            continue;
+                        }
+
+                        // Apply scissor/clipping rectangle
+                        let clip_rect = [
+                            (cmd_params.clip_rect[0] - draw_data.display_pos[0])
+                                * draw_data.framebuffer_scale[0],
+                            (cmd_params.clip_rect[1] - draw_data.display_pos[1])
+                                * draw_data.framebuffer_scale[1],
+                            (cmd_params.clip_rect[2] - draw_data.display_pos[0])
+                                * draw_data.framebuffer_scale[0],
+                            (cmd_params.clip_rect[3] - draw_data.display_pos[1])
+                                * draw_data.framebuffer_scale[1],
+                        ];
+
+                        // Apply pretransform
+                        //clip_rect = TransformClipRect(draw_data.display_size, clip_rect);
+
+                        let scissor = Rect::new(
+                            clip_rect[0].max(0.0) as i32,
+                            clip_rect[1].max(0.0) as i32,
+                            clip_rect[2].min(draw_data.display_size[0]) as i32,
+                            clip_rect[3].min(draw_data.display_size[1]) as i32,
+                        );
+
+                        if !scissor.is_valid() {
+                            continue;
+                        }
+
+                        device_context.set_scissor_rects(
+                            vec![scissor],
+                            draw_data.display_size[0] as u32,
+                            draw_data.display_size[1] as u32,
+                        );
+
+                        // Bind texture
+                        let texture_view = cmd_params.texture_id.id() as *const TextureView;
+
+                        if texture_view != last_texture_view {
+                            last_texture_view = texture_view;
+
+                            //self.texture_var
+                            //    .set(unsafe { &*texture_view }, SetShaderResourceFlags::None);
+                            self.texture_var
+                                .set(&self._font_texture_view, SetShaderResourceFlags::None);
+
+                            device_context.commit_shader_resources(
+                                &self.shader_resource_binding,
+                                ResourceStateTransitionMode::Transition,
+                            );
+                        }
+
+                        let draw_attribs = {
+                            let draw_attribs = DrawIndexedAttribs::new(
+                                count as u32,
+                                if std::mem::size_of::<ImDrawIdx>() == std::mem::size_of::<u16>() {
+                                    ValueType::Uint16
+                                } else {
+                                    ValueType::Uint32
+                                },
+                            )
+                            .flags(DrawFlags::VerifyStates)
+                            .first_index_location(cmd_params.idx_offset as u32 + global_idx_offset);
+
+                            if self.base_vertex_supported {
+                                draw_attribs
+                                    .base_vertex(cmd_params.vtx_offset as u32 + global_vtx_offset)
+                            } else {
+                                let offset = std::mem::size_of::<ImDrawVert>()
+                                    * (cmd_params.vtx_offset + global_vtx_offset as usize);
+                                device_context.set_vertex_buffers(
+                                    &[vertex_buffer],
+                                    &[offset as u64],
+                                    ResourceStateTransitionMode::Transition,
+                                    SetVertexBufferFlags::None,
+                                );
+                                draw_attribs
+                            }
+                        };
+                        device_context.draw_indexed(draw_attribs);
+                    }
+                    imgui::DrawCmd::RawCallback { callback, raw_cmd } => unsafe {
+                        callback(cmd_list.raw(), raw_cmd);
+                    },
+                    imgui::DrawCmd::ResetRenderState => {
+                        // User callback, registered via ImDrawList::AddCallback()
+                        // (ImDrawCallback_ResetRenderState is a special callback value used by the user to request the renderer to reset render state.)
+                        //if (pCmd->UserCallback == ImDrawCallback_ResetRenderState)
+                        //    SetupRenderState();
+                    }
+                }
+            }
+
+            global_idx_offset += cmd_list.idx_buffer().len() as u32;
+            global_vtx_offset += cmd_list.vtx_buffer().len() as u32;
+        }
     }
 }

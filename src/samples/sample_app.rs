@@ -1,3 +1,5 @@
+use imgui::{Ui, WindowFlags};
+
 use crate::{
     bindings::{self, NativeWindow},
     core::{
@@ -30,6 +32,8 @@ pub struct SampleApp<Sample: SampleBase> {
 
     width: u16,
     height: u16,
+
+    imgui_renderer: ImguiRenderer,
 }
 
 impl<GenericSample: SampleBase> SampleApp<GenericSample> {
@@ -53,9 +57,35 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
 
         // TODO : update app settings
 
-        // TODO Imgui
-
         self.sample.update(current_time, elapsed_time);
+    }
+
+    fn update_ui(&mut self) -> &mut Ui {
+        let ui = self.imgui_renderer.new_frame();
+
+        let swap_chain_desc = self.swap_chain.get_desc();
+
+        let adapters_wnd_width = swap_chain_desc.Width.min(330);
+
+        if let Some(_window_tokend) = ui
+            .window("Adapters")
+            .size([adapters_wnd_width as f32, 0.0], imgui::Condition::Always)
+            .position(
+                [
+                    10.0f32.max(swap_chain_desc.Width as f32 - adapters_wnd_width as f32) - 10.0,
+                    10.0,
+                ],
+                imgui::Condition::Always,
+            )
+            .flags(WindowFlags::NO_RESIZE)
+            .collapsed(true, imgui::Condition::FirstUseEver)
+            .begin()
+        {
+            ui.text_disabled(format!("Adapter: {} ({} MB)", "test", 5));
+
+            ui.checkbox("VSync", &mut self.vsync);
+        }
+        ui
     }
 
     fn render(&self) {
@@ -71,8 +101,6 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
 
         // Restore default render target in case the sample has changed it
         context.set_render_targets(&[&rtv], Some(&dsv), ResourceStateTransitionMode::Transition);
-
-        // TODO Imgui
     }
 
     fn present(&mut self) {
@@ -115,6 +143,14 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             &swap_chain,
         );
 
+        let imgui_renderer = ImguiRenderer::new(ImguiRendererCreateInfo::new(
+            sample.get_render_device(),
+            swap_chain.get_desc().ColorBufferFormat,
+            swap_chain.get_desc().DepthBufferFormat,
+            initial_width,
+            initial_height,
+        ));
+
         SampleApp::<GenericSample> {
             app_title: GenericSample::get_name().to_string(),
             swap_chain,
@@ -130,6 +166,8 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
 
             width: initial_width,
             height: initial_height,
+
+            imgui_renderer,
         }
     }
 
@@ -137,14 +175,6 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
     where
         EH: EventHandler,
     {
-        let mut imgui_renderer = ImguiRenderer::new(ImguiRendererCreateInfo::new(
-            self.sample.get_render_device(),
-            self.swap_chain.get_desc().ColorBufferFormat,
-            self.swap_chain.get_desc().DepthBufferFormat,
-            self.width,
-            self.height,
-        ));
-
         loop {
             if let Some(event) = event_handler.poll_event() {
                 match event_handler.handle_event(&event) {
@@ -159,8 +189,13 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             // TODO implement timer
             self.update(0.0, 0.0);
 
+            self.update_ui();
+
             self.render();
-            imgui_renderer.render(self.sample.get_immediate_context());
+            self.imgui_renderer.render(
+                self.sample.get_immediate_context(),
+                self.sample.get_render_device(),
+            );
 
             self.present();
 

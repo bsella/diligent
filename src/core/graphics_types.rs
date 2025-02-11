@@ -434,3 +434,28 @@ impl Into<bindings::VALUE_TYPE> for ValueType {
         }) as bindings::VALUE_TYPE
     }
 }
+
+pub enum MapType {
+    Read,
+    Write,
+    ReadWrite,
+}
+
+impl Into<bindings::MAP_TYPE> for MapType {
+    fn into(self) -> bindings::MAP_TYPE {
+        (match self {
+            MapType::Read => bindings::MAP_READ,
+            MapType::Write => bindings::MAP_WRITE,
+            MapType::ReadWrite => bindings::MAP_READ_WRITE,
+        }) as bindings::MAP_TYPE
+    }
+}
+
+bitflags! {
+    pub struct MapFlags: bindings::_MAP_FLAGS {
+        const None        = bindings::MAP_FLAG_NONE;
+        const DoNotWait   = bindings::MAP_FLAG_DO_NOT_WAIT;
+        const Discard     = bindings::MAP_FLAG_DISCARD;
+        const NoOverwrite = bindings::MAP_FLAG_NO_OVERWRITE;
+    }
+}

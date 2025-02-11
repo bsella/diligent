@@ -5,6 +5,7 @@ use crate::bindings;
 use super::{
     buffer::Buffer,
     fence::Fence,
+    graphics_types::{MapFlags, MapType, ValueType},
     object::{AsObject, Object},
     pipeline_state::PipelineState,
     shader_resource_binding::ShaderResourceBinding,
@@ -20,6 +21,13 @@ bitflags! {
         const VerifyRenderTargets          = bindings::DRAW_FLAG_VERIFY_RENDER_TARGETS;
         const VerifyAll                    = bindings::DRAW_FLAG_VERIFY_ALL;
         const DynamicResourceBuffersIntact = bindings::DRAW_FLAG_DYNAMIC_RESOURCE_BUFFERS_INTACT;
+    }
+}
+
+bitflags! {
+    pub struct SetVertexBufferFlags: bindings::_SET_VERTEX_BUFFERS_FLAGS {
+        const None  = bindings::SET_VERTEX_BUFFERS_FLAG_NONE;
+        const Reset = bindings::SET_VERTEX_BUFFERS_FLAG_RESET;
     }
 }
 
@@ -42,10 +50,6 @@ impl DrawAttribs {
         }
     }
 
-    pub fn num_vertices(mut self, num_vertices: u32) -> Self {
-        self.num_vertices = num_vertices;
-        self
-    }
     pub fn flags(mut self, flags: DrawFlags) -> Self {
         self.flags = flags;
         self
@@ -76,6 +80,67 @@ impl Into<bindings::DrawAttribs> for DrawAttribs {
     }
 }
 
+pub struct DrawIndexedAttribs {
+    num_indices: u32,
+    index_type: ValueType,
+
+    flags: DrawFlags,
+    num_instances: u32,
+    first_index_location: u32,
+    base_vertex: u32,
+    first_instance_location: u32,
+}
+
+impl DrawIndexedAttribs {
+    pub fn new(num_indices: u32, index_type: ValueType) -> Self {
+        DrawIndexedAttribs {
+            num_indices,
+            index_type,
+
+            flags: DrawFlags::None,
+            num_instances: 1,
+            first_index_location: 0,
+            base_vertex: 0,
+            first_instance_location: 0,
+        }
+    }
+
+    pub fn flags(mut self, flags: DrawFlags) -> Self {
+        self.flags = flags;
+        self
+    }
+    pub fn num_instances(mut self, num_instances: u32) -> Self {
+        self.num_instances = num_instances;
+        self
+    }
+    pub fn first_index_location(mut self, first_index_location: u32) -> Self {
+        self.first_index_location = first_index_location;
+        self
+    }
+    pub fn base_vertex(mut self, base_vertex: u32) -> Self {
+        self.base_vertex = base_vertex;
+        self
+    }
+    pub fn first_instance_location(mut self, first_instance_location: u32) -> Self {
+        self.first_instance_location = first_instance_location;
+        self
+    }
+}
+
+impl Into<bindings::DrawIndexedAttribs> for DrawIndexedAttribs {
+    fn into(self) -> bindings::DrawIndexedAttribs {
+        bindings::DrawIndexedAttribs {
+            BaseVertex: self.base_vertex,
+            FirstIndexLocation: self.first_index_location,
+            FirstInstanceLocation: self.first_instance_location,
+            Flags: self.flags.bits() as bindings::DRAW_FLAGS,
+            IndexType: self.index_type.into(),
+            NumIndices: self.num_indices,
+            NumInstances: self.num_instances,
+        }
+    }
+}
+
 pub enum ResourceStateTransitionMode {
     None,
     Transition,
@@ -91,6 +156,83 @@ impl Into<bindings::RESOURCE_STATE_TRANSITION_MODE> for ResourceStateTransitionM
             }
             ResourceStateTransitionMode::Verify => bindings::RESOURCE_STATE_TRANSITION_MODE_VERIFY,
         }) as bindings::RESOURCE_STATE_TRANSITION_MODE
+    }
+}
+
+pub struct Viewport {
+    top_left_x: f32,
+    top_left_y: f32,
+    width: f32,
+    height: f32,
+    min_depth: f32,
+    max_depth: f32,
+}
+
+impl Viewport {
+    pub fn new(top_left_x: f32, top_left_y: f32, width: f32, height: f32) -> Self {
+        Viewport {
+            top_left_x,
+            top_left_y,
+            width,
+            height,
+            min_depth: 0.0,
+            max_depth: 1.0,
+        }
+    }
+    pub fn min_depth(mut self, min_depth: f32) -> Self {
+        self.min_depth = min_depth;
+        self
+    }
+    pub fn max_depth(mut self, max_depth: f32) -> Self {
+        self.max_depth = max_depth;
+        self
+    }
+}
+
+impl Into<bindings::Viewport> for Viewport {
+    fn into(self) -> bindings::Viewport {
+        bindings::Viewport {
+            TopLeftX: self.top_left_x,
+            TopLeftY: self.top_left_y,
+            Width: self.width,
+            Height: self.height,
+            MinDepth: self.min_depth,
+            MaxDepth: self.max_depth,
+        }
+    }
+}
+
+#[derive(Eq, PartialEq)]
+pub struct Rect {
+    left: i32,
+    top: i32,
+    right: i32,
+    bottom: i32,
+}
+
+impl Rect {
+    pub fn new(left: i32, top: i32, right: i32, bottom: i32) -> Self {
+        Rect {
+            left,
+            top,
+            right,
+            bottom,
+        }
+    }
+
+    pub fn is_valid(&self) -> bool {
+        self.right > self.left && self.bottom > self.top
+    }
+}
+
+impl Into<bindings::Rect> for Rect {
+    fn into(self) -> bindings::Rect {
+        bindings::Rect {
+            bottom: self.bottom,
+            left: self.left,
+            right: self.right,
+            top: self.top,
+        }
     }
 }
 
@@ -197,7 +339,7 @@ impl DeviceContext {
         buffers: &[&Buffer],
         offsets: &[u64],
         state_transition_mode: ResourceStateTransitionMode,
-        flags: bindings::SET_VERTEX_BUFFERS_FLAGS,
+        flags: SetVertexBufferFlags,
     ) {
         let num_buffers = buffers.len();
         let buffer_pointers = Vec::from_iter(buffers.iter().map(|buffer| buffer.buffer));
@@ -212,7 +354,7 @@ impl DeviceContext {
                 buffer_pointers.as_ptr(),
                 offsets.as_ptr(),
                 state_transition_mode.into(),
-                flags,
+                flags.bits() as bindings::SET_VERTEX_BUFFERS_FLAGS,
             )
         }
     }
@@ -247,10 +389,14 @@ impl DeviceContext {
 
     pub fn set_viewports(
         &self,
-        viewports: &[bindings::Viewport],
+        viewports: Vec<Viewport>,
         render_target_width: u32,
         render_target_height: u32,
     ) {
+        let viewports: Vec<_> = viewports
+            .into_iter()
+            .map(|viewport| viewport.into())
+            .collect();
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -267,10 +413,12 @@ impl DeviceContext {
 
     pub fn set_scissor_rects(
         &self,
-        rects: &[bindings::Rect],
+        rects: Vec<Rect>,
         render_target_width: u32,
         render_target_height: u32,
     ) {
+        let rects: Vec<_> = rects.into_iter().map(|rect| rect.into()).collect();
+
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -340,7 +488,7 @@ impl DeviceContext {
     }
 
     pub fn draw(&self, attribs: DrawAttribs) {
-        let attribs: bindings::DrawAttribs = attribs.into();
+        let attribs = attribs.into();
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -349,12 +497,13 @@ impl DeviceContext {
         }
     }
 
-    pub fn draw_indexed(&self, attribs: &bindings::DrawIndexedAttribs) {
+    pub fn draw_indexed(&self, attribs: DrawIndexedAttribs) {
+        let attribs = attribs.into();
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
                 .DrawIndexed
-                .unwrap_unchecked()(self.device_context, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.device_context, std::ptr::addr_of!(attribs))
         }
     }
 
@@ -638,12 +787,7 @@ impl DeviceContext {
         }
     }
 
-    pub fn map_buffer(
-        &self,
-        buffer: &mut Buffer,
-        map_type: bindings::_MAP_TYPE,
-        map_flags: bindings::_MAP_FLAGS,
-    ) -> *mut u8 {
+    pub fn map_buffer(&self, buffer: &Buffer, map_type: MapType, map_flags: MapFlags) -> *mut u8 {
         let mut ptr = std::ptr::null_mut() as *mut std::os::raw::c_void;
         unsafe {
             (*self.virtual_functions)
@@ -652,24 +796,20 @@ impl DeviceContext {
                 .unwrap_unchecked()(
                 self.device_context,
                 buffer.buffer,
-                map_type as bindings::MAP_TYPE,
-                map_flags as bindings::MAP_FLAGS,
+                map_type.into(),
+                map_flags.bits() as bindings::MAP_FLAGS,
                 std::ptr::addr_of_mut!(ptr),
             );
         }
         ptr as *mut u8
     }
 
-    pub fn unmap_buffer(&self, buffer: &mut Buffer, map_type: bindings::_MAP_TYPE) {
+    pub fn unmap_buffer(&self, buffer: &Buffer, map_type: MapType) {
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
                 .UnmapBuffer
-                .unwrap_unchecked()(
-                self.device_context,
-                buffer.buffer,
-                map_type as bindings::MAP_TYPE,
-            )
+                .unwrap_unchecked()(self.device_context, buffer.buffer, map_type.into())
         }
     }
 

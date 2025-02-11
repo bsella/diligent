@@ -1221,7 +1221,9 @@ impl PipelineState {
         if shader_resource_binding_ptr.is_null() {
             None
         } else {
-            Some(ShaderResourceBinding::new(shader_resource_binding_ptr))
+            let srb = ShaderResourceBinding::new(shader_resource_binding_ptr);
+            srb.as_object().add_ref();
+            Some(srb)
         }
     }
 
