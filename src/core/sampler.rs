@@ -16,7 +16,7 @@ bitflags! {
         const SubsampledCoarseReconstruction = bindings::SAMPLER_FLAG_SUBSAMPLED_COARSE_RECONSTRUCTION;
     }
 }
-const_assert!(bindings::SAMPLER_FLAG_SUBSAMPLED_COARSE_RECONSTRUCTION == 2);
+const_assert!(bindings::SAMPLER_FLAG_LAST == 2);
 
 pub struct SamplerDesc<'a> {
     name: &'a std::ffi::CStr,
