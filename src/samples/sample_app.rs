@@ -178,11 +178,11 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
     where
         EH: EventHandler,
     {
-        loop {
-            if let Some(event) = event_handler.poll_event() {
+        'main: loop {
+            while let Some(event) = event_handler.poll_event() {
                 let event = event_handler.handle_event(&event);
                 match event {
-                    EventResult::Quit => break,
+                    EventResult::Quit => break 'main,
                     EventResult::Continue => {}
                     EventResult::Resize { width, height } => {
                         self.window_resize(width as u32, height as u32)
