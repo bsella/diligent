@@ -10,9 +10,9 @@ pub enum InputElementFrequency {
 }
 const_assert!(bindings::INPUT_ELEMENT_FREQUENCY_NUM_FREQUENCIES == 3);
 
-impl Into<bindings::INPUT_ELEMENT_FREQUENCY> for InputElementFrequency {
-    fn into(self) -> bindings::INPUT_ELEMENT_FREQUENCY {
-        (match self {
+impl From<&InputElementFrequency> for bindings::INPUT_ELEMENT_FREQUENCY {
+    fn from(value: &InputElementFrequency) -> Self {
+        (match value {
             InputElementFrequency::PerVertex => bindings::INPUT_ELEMENT_FREQUENCY_PER_VERTEX,
             InputElementFrequency::PerInstance => bindings::INPUT_ELEMENT_FREQUENCY_PER_INSTANCE,
         }) as bindings::INPUT_ELEMENT_FREQUENCY
@@ -81,19 +81,19 @@ impl<'a> LayoutElement<'a> {
     }
 }
 
-impl<'a> Into<bindings::LayoutElement> for LayoutElement<'a> {
-    fn into(self) -> bindings::LayoutElement {
+impl From<&LayoutElement<'_>> for bindings::LayoutElement {
+    fn from(value: &LayoutElement) -> Self {
         bindings::LayoutElement {
-            HLSLSemantic: self.hlsl_semantic.as_ptr(),
-            InputIndex: self.input_index,
-            BufferSlot: self.buffer_slot,
-            NumComponents: self.num_components,
-            ValueType: self.value_type.into(),
-            IsNormalized: self.is_normalized,
-            RelativeOffset: self.relative_offset,
-            Stride: self.stride,
-            Frequency: self.frequency.into(),
-            InstanceDataStepRate: self.instance_data_step_rate,
+            HLSLSemantic: value.hlsl_semantic.as_ptr(),
+            InputIndex: value.input_index,
+            BufferSlot: value.buffer_slot,
+            NumComponents: value.num_components,
+            ValueType: bindings::VALUE_TYPE::from(&value.value_type),
+            IsNormalized: value.is_normalized,
+            RelativeOffset: value.relative_offset,
+            Stride: value.stride,
+            Frequency: bindings::INPUT_ELEMENT_FREQUENCY::from(&value.frequency),
+            InstanceDataStepRate: value.instance_data_step_rate,
         }
     }
 }

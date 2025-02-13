@@ -498,7 +498,7 @@ impl ImguiRenderer {
                     shader_ci.add_macro(c"SRGBA_TO_LINEAR(col)", c"")
                 }
             };
-            create_info.device.create_shader(shader_ci).unwrap()
+            create_info.device.create_shader(&shader_ci).unwrap()
         };
 
         let pixel_shader = {
@@ -535,7 +535,7 @@ impl ImguiRenderer {
             };
 
             let shader_ci = ShaderCreateInfo::new(c"Imgui PS", shader_source, ShaderType::Pixel);
-            create_info.device.create_shader(shader_ci).unwrap()
+            create_info.device.create_shader(&shader_ci).unwrap()
         };
 
         let pipeline_state_ci = GraphicsPipelineStateCreateInfo::new(
@@ -583,7 +583,7 @@ impl ImguiRenderer {
 
         let pipeline_state = create_info
             .device
-            .create_graphics_pipeline_state(pipeline_state_ci)
+            .create_graphics_pipeline_state(&pipeline_state_ci)
             .unwrap();
 
         let vertex_constant_buffer = {
@@ -594,7 +594,10 @@ impl ImguiRenderer {
             .usage(Usage::Dynamic)
             .bind_flags(BindFlags::UniformBuffer)
             .cpu_access_flags(CpuAccessFlags::Write);
-            create_info.device.create_buffer(buffer_desc, None).unwrap()
+            create_info
+                .device
+                .create_buffer(&buffer_desc, None)
+                .unwrap()
         };
 
         pipeline_state
@@ -619,8 +622,8 @@ impl ImguiRenderer {
         let font_texture = create_info
             .device
             .create_texture(
-                font_texture_desc,
-                vec![TextureSubResource::new_cpu(
+                &font_texture_desc,
+                &[&TextureSubResource::new_cpu(
                     font_atlas_texture.data,
                     4 * font_atlas_texture.width as u64,
                 )],
@@ -704,7 +707,7 @@ impl ImguiRenderer {
             .bind_flags(BindFlags::VertexBuffer);
 
             self.vertex_buffer
-                .insert(render_device.create_buffer(buffer_desc, None).unwrap())
+                .insert(render_device.create_buffer(&buffer_desc, None).unwrap())
         } else {
             self.vertex_buffer.as_mut().unwrap()
         };
@@ -726,7 +729,7 @@ impl ImguiRenderer {
             .bind_flags(BindFlags::IndexBuffer);
 
             self.index_buffer
-                .insert(render_device.create_buffer(buffer_desc, None).unwrap())
+                .insert(render_device.create_buffer(&buffer_desc, None).unwrap())
         } else {
             self.index_buffer.as_mut().unwrap()
         };
@@ -840,7 +843,7 @@ impl ImguiRenderer {
             .max_depth(1.0);
 
             device_context.set_viewports(
-                vec![viewport],
+                &[&viewport],
                 draw_data.display_size[0] as u32,
                 draw_data.display_size[1] as u32,
             );
@@ -887,7 +890,7 @@ impl ImguiRenderer {
                         }
 
                         device_context.set_scissor_rects(
-                            vec![scissor],
+                            &[&scissor],
                             draw_data.display_size[0] as u32,
                             draw_data.display_size[1] as u32,
                         );
@@ -936,7 +939,7 @@ impl ImguiRenderer {
                                 draw_attribs
                             }
                         };
-                        device_context.draw_indexed(draw_attribs);
+                        device_context.draw_indexed(&draw_attribs);
                     }
                     imgui::DrawCmd::RawCallback { callback, raw_cmd } => unsafe {
                         callback(cmd_list.raw(), raw_cmd);

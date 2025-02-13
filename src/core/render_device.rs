@@ -53,12 +53,12 @@ impl RenderDevice {
 
     pub fn create_buffer(
         &self,
-        buffer_desc: BufferDesc,
+        buffer_desc: &BufferDesc,
         buffer_data: Option<&bindings::BufferData>,
     ) -> Option<Buffer> {
         let mut buffer_ptr = std::ptr::null_mut();
 
-        let buffer_desc = buffer_desc.into();
+        let buffer_desc = bindings::BufferDesc::from(buffer_desc);
         unsafe {
             (*self.virtual_functions)
                 .RenderDevice
@@ -81,16 +81,19 @@ impl RenderDevice {
         }
     }
 
-    pub fn create_shader(&self, shader_ci: ShaderCreateInfo) -> Result<Shader, DataBlob> {
+    pub fn create_shader(&self, shader_ci: &ShaderCreateInfo) -> Result<Shader, DataBlob> {
         let mut shader_ptr: *mut bindings::IShader = std::ptr::null_mut();
         let mut data_blob_ptr: *mut bindings::IDataBlob = std::ptr::null_mut();
+
+        let shader_ci = bindings::ShaderCreateInfo::from(shader_ci);
+
         unsafe {
             (*self.virtual_functions)
                 .RenderDevice
                 .CreateShader
                 .unwrap_unchecked()(
                 self.render_device,
-                std::ptr::from_ref(&shader_ci.into()),
+                std::ptr::addr_of!(shader_ci),
                 std::ptr::addr_of_mut!(shader_ptr),
                 std::ptr::addr_of_mut!(data_blob_ptr),
             );
@@ -105,16 +108,16 @@ impl RenderDevice {
 
     pub fn create_texture(
         &self,
-        texture_desc: TextureDesc,
-        subresources: Vec<TextureSubResource>,
+        texture_desc: &TextureDesc,
+        subresources: &[&TextureSubResource],
         device_context: Option<&DeviceContext>,
     ) -> Option<Texture> {
         let mut texture_ptr = std::ptr::null_mut();
-        let texture_desc = texture_desc.into();
+        let texture_desc = bindings::TextureDesc::from(texture_desc);
 
         let mut subresources: Vec<_> = subresources
-            .into_iter()
-            .map(|subres| subres.into())
+            .iter()
+            .map(|&subres| bindings::TextureSubResData::from(subres))
             .collect();
 
         let texture_data = bindings::TextureData {
@@ -191,11 +194,11 @@ impl RenderDevice {
 
     pub fn create_graphics_pipeline_state(
         &self,
-        pipeline_ci: GraphicsPipelineStateCreateInfo,
+        pipeline_ci: &GraphicsPipelineStateCreateInfo,
     ) -> Option<PipelineState> {
         let mut pipeline_state_ptr = std::ptr::null_mut();
 
-        let pipeline_ci_wrapper: GraphicsPipelineStateCreateInfoWrapper = pipeline_ci.into();
+        let pipeline_ci_wrapper = GraphicsPipelineStateCreateInfoWrapper::from(pipeline_ci);
         let pipeline_ci = pipeline_ci_wrapper.get();
 
         unsafe {

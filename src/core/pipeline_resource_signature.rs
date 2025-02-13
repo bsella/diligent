@@ -30,12 +30,12 @@ impl<'a> ImmutableSamplerDesc<'a> {
     }
 }
 
-impl<'a> Into<bindings::ImmutableSamplerDesc> for ImmutableSamplerDesc<'a> {
-    fn into(self) -> bindings::ImmutableSamplerDesc {
+impl From<&ImmutableSamplerDesc<'_>> for bindings::ImmutableSamplerDesc {
+    fn from(value: &ImmutableSamplerDesc<'_>) -> Self {
         bindings::ImmutableSamplerDesc {
-            ShaderStages: self.shader_stages.bits() as bindings::SHADER_TYPE,
-            SamplerOrTextureName: self.sampler_or_texture_name.as_ptr(),
-            Desc: self.sampler_desc.into(),
+            ShaderStages: value.shader_stages.bits() as bindings::SHADER_TYPE,
+            SamplerOrTextureName: value.sampler_or_texture_name.as_ptr(),
+            Desc: bindings::SamplerDesc::from(&value.sampler_desc),
         }
     }
 }
@@ -78,7 +78,7 @@ impl PipelineResourceSignature {
             let virtual_functions =
                 unsafe { (*(*pipeline_rs_ptr).pVtbl).PipelineResourceSignature };
 
-            let shader_type = shader_type.into();
+            let shader_type = bindings::SHADER_TYPE::from(&shader_type);
 
             let num_variables = unsafe {
                 virtual_functions.GetStaticVariableCount.unwrap_unchecked()(

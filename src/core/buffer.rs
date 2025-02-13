@@ -19,9 +19,9 @@ pub enum BufferMode {
 }
 const_assert!(bindings::BUFFER_MODE_NUM_MODES == 4);
 
-impl Into<bindings::BUFFER_MODE> for BufferMode {
-    fn into(self) -> bindings::BUFFER_MODE {
-        (match self {
+impl From<&BufferMode> for bindings::BUFFER_MODE {
+    fn from(value: &BufferMode) -> Self {
+        (match value {
             BufferMode::Undefined => bindings::BUFFER_MODE_UNDEFINED,
             BufferMode::Formatted => bindings::BUFFER_MODE_FORMATTED,
             BufferMode::Structured => bindings::BUFFER_MODE_STRUCTURED,
@@ -51,20 +51,20 @@ pub struct BufferDesc<'a> {
     immediate_context_mask: u64,
 }
 
-impl<'a> Into<bindings::BufferDesc> for BufferDesc<'a> {
-    fn into(self) -> bindings::BufferDesc {
+impl From<&BufferDesc<'_>> for bindings::BufferDesc {
+    fn from(value: &BufferDesc) -> Self {
         bindings::BufferDesc {
             _DeviceObjectAttribs: bindings::DeviceObjectAttribs {
-                Name: self.name.as_ptr(),
+                Name: value.name.as_ptr(),
             },
-            Size: self.size,
-            BindFlags: self.bind_flags.bits(),
-            Usage: self.usage.into(),
-            CPUAccessFlags: self.cpu_access_flags.bits() as u8,
-            Mode: self.mode.into(),
-            MiscFlags: self.misc_flags.bits() as u8,
-            ElementByteStride: self.element_byte_stride,
-            ImmediateContextMask: self.immediate_context_mask,
+            Size: value.size,
+            BindFlags: value.bind_flags.bits(),
+            Usage: bindings::USAGE::from(&value.usage),
+            CPUAccessFlags: value.cpu_access_flags.bits() as u8,
+            Mode: bindings::BUFFER_MODE::from(&value.mode),
+            MiscFlags: value.misc_flags.bits() as u8,
+            ElementByteStride: value.element_byte_stride,
+            ImmediateContextMask: value.immediate_context_mask,
         }
     }
 }
@@ -190,7 +190,7 @@ impl Buffer {
         }
     }
 
-    pub fn create_view(&mut self, view_desc: bindings::BufferViewDesc) -> Option<BufferView> {
+    pub fn create_view(&mut self, view_desc: &bindings::BufferViewDesc) -> Option<BufferView> {
         let mut buffer_view_ptr: *mut bindings::IBufferView = std::ptr::null_mut();
         unsafe {
             (*self.virtual_functions)
@@ -198,7 +198,7 @@ impl Buffer {
                 .CreateView
                 .unwrap_unchecked()(
                 self.buffer,
-                &view_desc,
+                view_desc,
                 std::ptr::addr_of_mut!(buffer_view_ptr),
             );
         }

@@ -27,9 +27,9 @@ pub enum ShaderLanguage {
     WGSL,
 }
 
-impl Into<bindings::SHADER_SOURCE_LANGUAGE> for ShaderLanguage {
-    fn into(self) -> bindings::SHADER_SOURCE_LANGUAGE {
-        (match self {
+impl From<&ShaderLanguage> for bindings::SHADER_SOURCE_LANGUAGE {
+    fn from(value: &ShaderLanguage) -> Self {
+        (match value {
             ShaderLanguage::Default => bindings::SHADER_SOURCE_LANGUAGE_DEFAULT,
             ShaderLanguage::HLSL => bindings::SHADER_SOURCE_LANGUAGE_HLSL,
             ShaderLanguage::GLSL => bindings::SHADER_SOURCE_LANGUAGE_GLSL,
@@ -49,9 +49,9 @@ pub enum ShaderCompiler {
     FXC,
 }
 
-impl Into<bindings::SHADER_COMPILER> for ShaderCompiler {
-    fn into(self) -> bindings::SHADER_COMPILER {
-        (match self {
+impl From<&ShaderCompiler> for bindings::SHADER_COMPILER {
+    fn from(value: &ShaderCompiler) -> Self {
+        (match value {
             ShaderCompiler::Default => bindings::SHADER_COMPILER_DEFAULT,
             ShaderCompiler::GLSLANG => bindings::SHADER_COMPILER_GLSLANG,
             ShaderCompiler::DXC => bindings::SHADER_COMPILER_DXC,
@@ -143,34 +143,39 @@ impl<'a> ShaderCreateInfo<'a> {
     }
 }
 
-impl<'a> Into<bindings::ShaderCreateInfo> for ShaderCreateInfo<'a> {
-    fn into(self) -> bindings::ShaderCreateInfo {
-        let macros = Vec::from_iter(self.macros.iter().map(|(name, def)| bindings::ShaderMacro {
-            Name: name.as_ptr(),
-            Definition: def.as_ptr(),
-        }));
+impl From<&ShaderCreateInfo<'_>> for bindings::ShaderCreateInfo {
+    fn from(value: &ShaderCreateInfo<'_>) -> Self {
+        let macros = Vec::from_iter(
+            value
+                .macros
+                .iter()
+                .map(|(name, def)| bindings::ShaderMacro {
+                    Name: name.as_ptr(),
+                    Definition: def.as_ptr(),
+                }),
+        );
         bindings::ShaderCreateInfo {
-            FilePath: match &self.source {
+            FilePath: match &value.source {
                 ShaderSource::FilePath(path) => path.as_os_str().as_bytes().as_ptr() as *const i8,
                 _ => std::ptr::null(),
             },
             pShaderSourceStreamFactory: std::ptr::null_mut(), // TODO
-            Source: match self.source {
+            Source: match value.source {
                 ShaderSource::SourceCode(code) => code.as_ptr() as *const i8,
                 _ => std::ptr::null(),
             },
-            ByteCode: match self.source {
+            ByteCode: match value.source {
                 ShaderSource::ByteCode(code, _) => code,
                 _ => std::ptr::null(),
             },
             __bindgen_anon_1: bindings::ShaderCreateInfo__bindgen_ty_1 {
-                ByteCodeSize: match self.source {
+                ByteCodeSize: match value.source {
                     ShaderSource::ByteCode(_, size) => size,
                     ShaderSource::SourceCode(code) => code.len(),
                     _ => 0,
                 },
             },
-            EntryPoint: self.entry_point.as_ptr(),
+            EntryPoint: value.entry_point.as_ptr(),
             Macros: bindings::ShaderMacroArray {
                 Elements: macros.as_ptr(),
                 Count: macros.len() as u32,
@@ -178,30 +183,30 @@ impl<'a> Into<bindings::ShaderCreateInfo> for ShaderCreateInfo<'a> {
             Desc: bindings::ShaderDesc {
                 _DeviceObjectAttribs: {
                     bindings::DeviceObjectAttribs {
-                        Name: self.desc.name.as_ptr(),
+                        Name: value.desc.name.as_ptr(),
                     }
                 },
-                ShaderType: self.desc.shader_type.into(),
-                UseCombinedTextureSamplers: self.desc.use_combined_texture_samplers,
-                CombinedSamplerSuffix: self.desc.combined_sampler_suffix.as_ptr(),
+                ShaderType: bindings::SHADER_TYPE::from(&value.desc.shader_type),
+                UseCombinedTextureSamplers: value.desc.use_combined_texture_samplers,
+                CombinedSamplerSuffix: value.desc.combined_sampler_suffix.as_ptr(),
             },
-            SourceLanguage: self.source_language.into(),
-            ShaderCompiler: self.compiler.into(),
+            SourceLanguage: bindings::SHADER_SOURCE_LANGUAGE::from(&value.source_language),
+            ShaderCompiler: bindings::SHADER_COMPILER::from(&value.compiler),
             HLSLVersion: bindings::ShaderVersion {
-                Major: self.language_version.Major,
-                Minor: self.language_version.Minor,
+                Major: value.language_version.Major,
+                Minor: value.language_version.Minor,
             },
             GLSLVersion: bindings::ShaderVersion {
-                Major: self.language_version.Major,
-                Minor: self.language_version.Minor,
+                Major: value.language_version.Major,
+                Minor: value.language_version.Minor,
             },
             GLESSLVersion: bindings::ShaderVersion {
-                Major: self.language_version.Major,
-                Minor: self.language_version.Minor,
+                Major: value.language_version.Major,
+                Minor: value.language_version.Minor,
             },
             MSLVersion: bindings::ShaderVersion {
-                Major: self.language_version.Major,
-                Minor: self.language_version.Minor,
+                Major: value.language_version.Major,
+                Minor: value.language_version.Minor,
             },
             // TODO
             CompileFlags: 0,

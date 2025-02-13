@@ -116,26 +116,26 @@ impl<'a> SamplerDesc<'a> {
     }
 }
 
-impl<'a> Into<bindings::SamplerDesc> for SamplerDesc<'a> {
-    fn into(self) -> bindings::SamplerDesc {
+impl From<&SamplerDesc<'_>> for bindings::SamplerDesc {
+    fn from(value: &SamplerDesc<'_>) -> Self {
         bindings::SamplerDesc {
             _DeviceObjectAttribs: bindings::DeviceObjectAttribs {
-                Name: self.name.as_ptr(),
+                Name: value.name.as_ptr(),
             },
-            MinFilter: self.min_filter.into(),
-            MagFilter: self.mag_filter.into(),
-            MipFilter: self.mip_filter.into(),
-            AddressU: self.address_u.into(),
-            AddressV: self.address_v.into(),
-            AddressW: self.address_w.into(),
-            Flags: self.flags.bits() as bindings::SAMPLER_FLAGS,
-            UnnormalizedCoords: self.unnormalized_coords,
-            MipLODBias: self.mip_lod_bias,
-            MaxAnisotropy: self.max_anisotropy,
-            ComparisonFunc: self.comparison_func.into(),
-            BorderColor: self.border_color,
-            MinLOD: self.min_lod,
-            MaxLOD: self.max_lod,
+            MinFilter: bindings::FILTER_TYPE::from(&value.min_filter),
+            MagFilter: bindings::FILTER_TYPE::from(&value.mag_filter),
+            MipFilter: bindings::FILTER_TYPE::from(&value.mip_filter),
+            AddressU: bindings::TEXTURE_ADDRESS_MODE::from(&value.address_u),
+            AddressV: bindings::TEXTURE_ADDRESS_MODE::from(&value.address_v),
+            AddressW: bindings::TEXTURE_ADDRESS_MODE::from(&value.address_w),
+            Flags: value.flags.bits() as bindings::SAMPLER_FLAGS,
+            UnnormalizedCoords: value.unnormalized_coords,
+            MipLODBias: value.mip_lod_bias,
+            MaxAnisotropy: value.max_anisotropy,
+            ComparisonFunc: bindings::COMPARISON_FUNCTION::from(&value.comparison_func),
+            BorderColor: value.border_color,
+            MinLOD: value.min_lod,
+            MaxLOD: value.max_lod,
         }
     }
 }

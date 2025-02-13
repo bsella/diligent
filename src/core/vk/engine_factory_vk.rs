@@ -140,7 +140,7 @@ impl EngineFactoryImplementation for EngineFactoryVk {
 
     fn create_device_and_contexts(
         &self,
-        create_info: Self::EngineCreateInfo,
+        create_info: &Self::EngineCreateInfo,
     ) -> Option<(RenderDevice, Vec<DeviceContext>, Vec<DeviceContext>)> {
         let num_immediate_contexts =
             std::cmp::max(create_info.engine_create_info.num_immediate_contexts, 1) as usize;
@@ -177,7 +177,9 @@ impl EngineFactoryImplementation for EngineFactoryVk {
                 vec_string_to_vec_cstring_ptr(&create_info.ignore_debug_message_names);
 
             let create_info = bindings::EngineVkCreateInfo {
-                _EngineCreateInfo: create_info.engine_create_info.into(),
+                _EngineCreateInfo: bindings::EngineCreateInfo::from(
+                    &create_info.engine_create_info,
+                ),
                 InstanceLayerCount: create_info.instance_layer_names.len() as u32,
                 ppInstanceLayerNames: if instance_layer_names.is_empty() {
                     std::ptr::null()
@@ -222,7 +224,7 @@ impl EngineFactoryImplementation for EngineFactoryVk {
 
                 QueryPoolSizes: create_info.query_pool_sizes,
 
-                pDxCompilerPath: if let Some(path) = create_info.dx_compiler_path {
+                pDxCompilerPath: if let Some(path) = &create_info.dx_compiler_path {
                     path.as_os_str().as_bytes().as_ptr() as *const i8
                 } else {
                     std::ptr::null()

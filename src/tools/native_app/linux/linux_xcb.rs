@@ -210,7 +210,7 @@ where
 
     let app = match api {
         RenderDeviceType::VULKAN => Application::new::<EngineFactoryVk>(
-            EngineVkCreateInfo::default(),
+            &EngineVkCreateInfo::default(),
             Some(&native_window),
             width,
             height,

@@ -9,7 +9,7 @@ use super::{
     object::{AsObject, Object},
     pipeline_state::PipelineState,
     shader_resource_binding::ShaderResourceBinding,
-    texture::Texture,
+    texture::{Texture, TextureSubResource},
     texture_view::TextureView,
 };
 
@@ -68,14 +68,14 @@ impl DrawAttribs {
     }
 }
 
-impl Into<bindings::DrawAttribs> for DrawAttribs {
-    fn into(self) -> bindings::DrawAttribs {
+impl From<&DrawAttribs> for bindings::DrawAttribs {
+    fn from(value: &DrawAttribs) -> Self {
         bindings::DrawAttribs {
-            NumVertices: self.num_vertices,
-            Flags: self.flags.bits() as bindings::DRAW_FLAGS,
-            NumInstances: self.num_instances,
-            StartVertexLocation: self.start_vertex_location,
-            FirstInstanceLocation: self.first_instance_location,
+            NumVertices: value.num_vertices,
+            Flags: value.flags.bits() as bindings::DRAW_FLAGS,
+            NumInstances: value.num_instances,
+            StartVertexLocation: value.start_vertex_location,
+            FirstInstanceLocation: value.first_instance_location,
         }
     }
 }
@@ -127,16 +127,16 @@ impl DrawIndexedAttribs {
     }
 }
 
-impl Into<bindings::DrawIndexedAttribs> for DrawIndexedAttribs {
-    fn into(self) -> bindings::DrawIndexedAttribs {
+impl From<&DrawIndexedAttribs> for bindings::DrawIndexedAttribs {
+    fn from(value: &DrawIndexedAttribs) -> Self {
         bindings::DrawIndexedAttribs {
-            BaseVertex: self.base_vertex,
-            FirstIndexLocation: self.first_index_location,
-            FirstInstanceLocation: self.first_instance_location,
-            Flags: self.flags.bits() as bindings::DRAW_FLAGS,
-            IndexType: self.index_type.into(),
-            NumIndices: self.num_indices,
-            NumInstances: self.num_instances,
+            BaseVertex: value.base_vertex,
+            FirstIndexLocation: value.first_index_location,
+            FirstInstanceLocation: value.first_instance_location,
+            Flags: value.flags.bits() as bindings::DRAW_FLAGS,
+            IndexType: bindings::VALUE_TYPE::from(&value.index_type),
+            NumIndices: value.num_indices,
+            NumInstances: value.num_instances,
         }
     }
 }
@@ -147,9 +147,9 @@ pub enum ResourceStateTransitionMode {
     Verify,
 }
 
-impl Into<bindings::RESOURCE_STATE_TRANSITION_MODE> for ResourceStateTransitionMode {
-    fn into(self) -> bindings::RESOURCE_STATE_TRANSITION_MODE {
-        (match self {
+impl From<&ResourceStateTransitionMode> for bindings::RESOURCE_STATE_TRANSITION_MODE {
+    fn from(value: &ResourceStateTransitionMode) -> Self {
+        (match value {
             ResourceStateTransitionMode::None => bindings::RESOURCE_STATE_TRANSITION_MODE_NONE,
             ResourceStateTransitionMode::Transition => {
                 bindings::RESOURCE_STATE_TRANSITION_MODE_TRANSITION
@@ -189,15 +189,15 @@ impl Viewport {
     }
 }
 
-impl Into<bindings::Viewport> for Viewport {
-    fn into(self) -> bindings::Viewport {
+impl From<&Viewport> for bindings::Viewport {
+    fn from(value: &Viewport) -> Self {
         bindings::Viewport {
-            TopLeftX: self.top_left_x,
-            TopLeftY: self.top_left_y,
-            Width: self.width,
-            Height: self.height,
-            MinDepth: self.min_depth,
-            MaxDepth: self.max_depth,
+            TopLeftX: value.top_left_x,
+            TopLeftY: value.top_left_y,
+            Width: value.width,
+            Height: value.height,
+            MinDepth: value.min_depth,
+            MaxDepth: value.max_depth,
         }
     }
 }
@@ -225,13 +225,13 @@ impl Rect {
     }
 }
 
-impl Into<bindings::Rect> for Rect {
-    fn into(self) -> bindings::Rect {
+impl From<&Rect> for bindings::Rect {
+    fn from(value: &Rect) -> Self {
         bindings::Rect {
-            bottom: self.bottom,
-            left: self.left,
-            right: self.right,
-            top: self.top,
+            bottom: value.bottom,
+            left: value.left,
+            right: value.right,
+            top: value.top,
         }
     }
 }
@@ -311,7 +311,7 @@ impl DeviceContext {
                 .unwrap_unchecked()(
                 self.device_context,
                 shader_resource_binding.shader_resource_binding,
-                state_transition_mode.into(),
+                bindings::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
             )
         }
     }
@@ -353,7 +353,7 @@ impl DeviceContext {
                 num_buffers as u32,
                 buffer_pointers.as_ptr(),
                 offsets.as_ptr(),
-                state_transition_mode.into(),
+                bindings::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
                 flags.bits() as bindings::SET_VERTEX_BUFFERS_FLAGS,
             )
         }
@@ -382,20 +382,20 @@ impl DeviceContext {
                 self.device_context,
                 index_buffer.buffer,
                 offset,
-                state_transition_mode.into(),
+                bindings::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
             )
         }
     }
 
     pub fn set_viewports(
         &self,
-        viewports: Vec<Viewport>,
+        viewports: &[&Viewport],
         render_target_width: u32,
         render_target_height: u32,
     ) {
         let viewports: Vec<_> = viewports
-            .into_iter()
-            .map(|viewport| viewport.into())
+            .iter()
+            .map(|&viewport| bindings::Viewport::from(viewport))
             .collect();
         unsafe {
             (*self.virtual_functions)
@@ -413,11 +413,14 @@ impl DeviceContext {
 
     pub fn set_scissor_rects(
         &self,
-        rects: Vec<Rect>,
+        rects: &[&Rect],
         render_target_width: u32,
         render_target_height: u32,
     ) {
-        let rects: Vec<_> = rects.into_iter().map(|rect| rect.into()).collect();
+        let rects: Vec<_> = rects
+            .iter()
+            .map(|&rect| bindings::Rect::from(rect))
+            .collect();
 
         unsafe {
             (*self.virtual_functions)
@@ -455,7 +458,7 @@ impl DeviceContext {
                 num_render_targets as u32,
                 render_target_pointers.as_mut_ptr(),
                 depth_stencil.map_or(std::ptr::null_mut(), |v| v.texture_view),
-                state_transition_mode.into(),
+                bindings::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
             )
         }
     }
@@ -487,8 +490,8 @@ impl DeviceContext {
         }
     }
 
-    pub fn draw(&self, attribs: DrawAttribs) {
-        let attribs = attribs.into();
+    pub fn draw(&self, attribs: &DrawAttribs) {
+        let attribs = bindings::DrawAttribs::from(attribs);
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -497,8 +500,8 @@ impl DeviceContext {
         }
     }
 
-    pub fn draw_indexed(&self, attribs: DrawIndexedAttribs) {
-        let attribs = attribs.into();
+    pub fn draw_indexed(&self, attribs: &DrawIndexedAttribs) {
+        let attribs = bindings::DrawIndexedAttribs::from(attribs);
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -620,7 +623,7 @@ impl DeviceContext {
                 bindings::CLEAR_DEPTH_FLAG,
                 depth,
                 0,
-                state_transition_mode.into(),
+                bindings::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
             )
         }
     }
@@ -641,7 +644,7 @@ impl DeviceContext {
                 bindings::CLEAR_STENCIL_FLAG,
                 0.0,
                 stencil,
-                state_transition_mode.into(),
+                bindings::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
             )
         }
     }
@@ -663,7 +666,7 @@ impl DeviceContext {
                 bindings::CLEAR_STENCIL_FLAG | bindings::CLEAR_DEPTH_FLAG,
                 depth,
                 stencil,
-                state_transition_mode.into(),
+                bindings::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
             )
         }
     }
@@ -682,7 +685,7 @@ impl DeviceContext {
                 self.device_context,
                 view.texture_view,
                 (*rgba).as_ptr() as *const std::os::raw::c_void,
-                state_transition_mode.into(),
+                bindings::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
             )
         }
     }
@@ -755,7 +758,7 @@ impl DeviceContext {
                 offset,
                 size,
                 std::ptr::from_ref(data) as *const std::os::raw::c_void,
-                state_transition_mode.into(),
+                bindings::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
             )
         }
     }
@@ -778,11 +781,11 @@ impl DeviceContext {
                 self.device_context,
                 src_buffer.buffer,
                 src_offset,
-                src_buffer_transition_mode.into(),
+                bindings::RESOURCE_STATE_TRANSITION_MODE::from(&src_buffer_transition_mode),
                 dst_buffer.buffer,
                 dst_offset,
                 size,
-                dst_buffer_transition_mode.into(),
+                bindings::RESOURCE_STATE_TRANSITION_MODE::from(&dst_buffer_transition_mode),
             )
         }
     }
@@ -796,7 +799,7 @@ impl DeviceContext {
                 .unwrap_unchecked()(
                 self.device_context,
                 buffer.buffer,
-                map_type.into(),
+                bindings::MAP_TYPE::from(&map_type),
                 map_flags.bits() as bindings::MAP_FLAGS,
                 std::ptr::addr_of_mut!(ptr),
             );
@@ -809,7 +812,11 @@ impl DeviceContext {
             (*self.virtual_functions)
                 .DeviceContext
                 .UnmapBuffer
-                .unwrap_unchecked()(self.device_context, buffer.buffer, map_type.into())
+                .unwrap_unchecked()(
+                self.device_context,
+                buffer.buffer,
+                bindings::MAP_TYPE::from(&map_type),
+            )
         }
     }
 
@@ -819,10 +826,12 @@ impl DeviceContext {
         mip_level: u32,
         slice: u32,
         dst_box: &bindings::Box,
-        subres_data: &bindings::TextureSubResData,
+        subres_data: &TextureSubResource,
         src_buffer_transition_mode: ResourceStateTransitionMode,
         texture_transition_mode: ResourceStateTransitionMode,
     ) {
+        let subres_data = bindings::TextureSubResData::from(subres_data);
+
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -833,9 +842,9 @@ impl DeviceContext {
                 mip_level,
                 slice,
                 std::ptr::from_ref(dst_box),
-                std::ptr::from_ref(subres_data),
-                src_buffer_transition_mode.into(),
-                texture_transition_mode.into(),
+                std::ptr::addr_of!(subres_data),
+                bindings::RESOURCE_STATE_TRANSITION_MODE::from(&src_buffer_transition_mode),
+                bindings::RESOURCE_STATE_TRANSITION_MODE::from(&texture_transition_mode),
             )
         }
     }

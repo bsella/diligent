@@ -14,9 +14,9 @@ pub enum TextureViewType {
     ShadingRate,
 }
 
-impl Into<bindings::TEXTURE_VIEW_TYPE> for TextureViewType {
-    fn into(self) -> bindings::TEXTURE_VIEW_TYPE {
-        (match self {
+impl From<&TextureViewType> for bindings::TEXTURE_VIEW_TYPE {
+    fn from(value: &TextureViewType) -> Self {
+        (match value {
             TextureViewType::ShaderResource => bindings::TEXTURE_VIEW_SHADER_RESOURCE,
             TextureViewType::RenderTarget => bindings::TEXTURE_VIEW_RENDER_TARGET,
             TextureViewType::DepthStencil => bindings::TEXTURE_VIEW_DEPTH_STENCIL,

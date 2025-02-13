@@ -15,9 +15,9 @@ pub enum ShaderResourceVariableType {
 }
 const_assert!(bindings::SHADER_RESOURCE_VARIABLE_TYPE_NUM_TYPES == 3);
 
-impl Into<bindings::SHADER_RESOURCE_VARIABLE_TYPE> for ShaderResourceVariableType {
-    fn into(self) -> bindings::SHADER_RESOURCE_VARIABLE_TYPE {
-        (match self {
+impl From<&ShaderResourceVariableType> for bindings::SHADER_RESOURCE_VARIABLE_TYPE {
+    fn from(value: &ShaderResourceVariableType) -> Self {
+        (match value {
             ShaderResourceVariableType::Static => bindings::SHADER_RESOURCE_VARIABLE_TYPE_STATIC,
             ShaderResourceVariableType::Mutable => bindings::SHADER_RESOURCE_VARIABLE_TYPE_MUTABLE,
             ShaderResourceVariableType::Dynamic => bindings::SHADER_RESOURCE_VARIABLE_TYPE_DYNAMIC,
@@ -52,13 +52,13 @@ impl<'a> ShaderResourceVariableDesc<'a> {
     }
 }
 
-impl<'a> Into<bindings::ShaderResourceVariableDesc> for ShaderResourceVariableDesc<'a> {
-    fn into(self) -> bindings::ShaderResourceVariableDesc {
+impl From<&ShaderResourceVariableDesc<'_>> for bindings::ShaderResourceVariableDesc {
+    fn from(value: &ShaderResourceVariableDesc<'_>) -> Self {
         bindings::ShaderResourceVariableDesc {
-            Name: self.name.as_ptr(),
-            ShaderStages: self.shader_stages.bits() as bindings::SHADER_TYPE,
-            Type: self.variable_type.into(),
-            Flags: self.flags.bits() as bindings::SHADER_VARIABLE_FLAGS,
+            Name: value.name.as_ptr(),
+            ShaderStages: value.shader_stages.bits() as bindings::SHADER_TYPE,
+            Type: bindings::SHADER_RESOURCE_VARIABLE_TYPE::from(&value.variable_type),
+            Flags: value.flags.bits() as bindings::SHADER_VARIABLE_FLAGS,
         }
     }
 }

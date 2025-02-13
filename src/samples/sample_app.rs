@@ -117,7 +117,7 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
 
 impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
     fn new<EngineFactory: EngineFactoryImplementation>(
-        engine_create_info: EngineFactory::EngineCreateInfo,
+        engine_create_info: &EngineFactory::EngineCreateInfo,
         window: Option<&NativeWindow>,
         initial_width: u16,
         initial_height: u16,

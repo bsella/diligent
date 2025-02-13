@@ -21,9 +21,9 @@ pub enum TextureDimension {
 }
 const_assert!(bindings::RESOURCE_DIM_NUM_DIMENSIONS == 9);
 
-impl Into<bindings::RESOURCE_DIMENSION> for TextureDimension {
-    fn into(self) -> bindings::RESOURCE_DIMENSION {
-        (match self {
+impl From<&TextureDimension> for bindings::RESOURCE_DIMENSION {
+    fn from(value: &TextureDimension) -> Self {
+        (match value {
             TextureDimension::Texture1D => bindings::RESOURCE_DIM_TEX_1D,
             TextureDimension::Texture1DArray { array_size: _ } => {
                 bindings::RESOURCE_DIM_TEX_1D_ARRAY
@@ -88,22 +88,22 @@ impl<'a> TextureSubResource<'a> {
     }
 }
 
-impl<'a> Into<bindings::TextureSubResData> for TextureSubResource<'a> {
-    fn into(self) -> bindings::TextureSubResData {
+impl From<&TextureSubResource<'_>> for bindings::TextureSubResData {
+    fn from(value: &TextureSubResource<'_>) -> Self {
         bindings::TextureSubResData {
-            pData: if let TextureSubResData::CPU(data) = self.source {
+            pData: if let TextureSubResData::CPU(data) = value.source {
                 data.as_ptr() as *const std::ffi::c_void
             } else {
                 std::ptr::null()
             },
-            pSrcBuffer: if let TextureSubResData::GPU(buffer) = self.source {
+            pSrcBuffer: if let TextureSubResData::GPU(buffer) = value.source {
                 buffer.buffer
             } else {
                 std::ptr::null_mut()
             },
-            DepthStride: self.depth_stride,
-            SrcOffset: self.source_offset,
-            Stride: self.stride,
+            DepthStride: value.depth_stride,
+            SrcOffset: value.source_offset,
+            Stride: value.stride,
         }
     }
 }
@@ -128,9 +128,9 @@ pub struct TextureDesc<'a> {
     immediate_context_mask: u64,
 }
 
-impl<'a> Into<bindings::TextureDesc> for TextureDesc<'a> {
-    fn into(self) -> bindings::TextureDesc {
-        let anon = match self.dimension {
+impl From<&TextureDesc<'_>> for bindings::TextureDesc {
+    fn from(value: &TextureDesc<'_>) -> Self {
+        let anon = match value.dimension {
             TextureDimension::Texture1DArray { array_size }
             | TextureDimension::Texture2DArray { array_size }
             | TextureDimension::TextureCubeArray { array_size } => {
@@ -146,27 +146,27 @@ impl<'a> Into<bindings::TextureDesc> for TextureDesc<'a> {
 
         bindings::TextureDesc {
             _DeviceObjectAttribs: bindings::DeviceObjectAttribs {
-                Name: self.name.as_ptr(),
+                Name: value.name.as_ptr(),
             },
-            Type: self.dimension.into(),
-            Width: self.width,
-            Height: self.height,
-            Format: self.format as bindings::TEXTURE_FORMAT,
-            MipLevels: self.mip_levels,
-            SampleCount: self.sample_count,
-            BindFlags: self.bind_flags.bits(),
-            Usage: self.usage.into(),
-            CPUAccessFlags: self.cpu_access_flags.bits() as u8,
-            MiscFlags: self.misc_flags.bits() as u8,
+            Type: bindings::RESOURCE_DIMENSION::from(&value.dimension),
+            Width: value.width,
+            Height: value.height,
+            Format: value.format as bindings::TEXTURE_FORMAT,
+            MipLevels: value.mip_levels,
+            SampleCount: value.sample_count,
+            BindFlags: value.bind_flags.bits(),
+            Usage: bindings::USAGE::from(&value.usage),
+            CPUAccessFlags: value.cpu_access_flags.bits() as u8,
+            MiscFlags: value.misc_flags.bits() as u8,
             ClearValue: bindings::OptimizedClearValue {
-                Color: self.clear_color,
+                Color: value.clear_color,
                 DepthStencil: bindings::DepthStencilClearValue {
-                    Depth: self.clear_depth,
-                    Stencil: self.clear_stencil,
+                    Depth: value.clear_depth,
+                    Stencil: value.clear_stencil,
                 },
-                Format: self.format as bindings::TEXTURE_FORMAT,
+                Format: value.format as bindings::TEXTURE_FORMAT,
             },
-            ImmediateContextMask: self.immediate_context_mask,
+            ImmediateContextMask: value.immediate_context_mask,
             __bindgen_anon_1: anon,
         }
     }
@@ -305,7 +305,10 @@ impl Texture {
             (*self.virtual_functions)
                 .Texture
                 .GetDefaultView
-                .unwrap_unchecked()(self.texture, texture_view_type.into())
+                .unwrap_unchecked()(
+                self.texture,
+                bindings::TEXTURE_VIEW_TYPE::from(&texture_view_type),
+            )
         };
         if texture_view_ptr.is_null() {
             None

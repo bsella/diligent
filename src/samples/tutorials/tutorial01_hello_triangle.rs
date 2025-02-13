@@ -78,7 +78,7 @@ void main(in uint VertId : SV_VertexID, out PSInput PSIn)
             // OpenGL backend requires emulated combined HLSL texture samplers (g_Texture + g_Texture_sampler combination)
             .use_combined_texture_samplers(true);
 
-            render_device.create_shader(shader_create_info).unwrap()
+            render_device.create_shader(&shader_create_info).unwrap()
         };
 
         let pixel_shader = {
@@ -110,7 +110,7 @@ void main(in PSInput PSIn, out PSOutput PSOut)
             // OpenGL backend requires emulated combined HLSL texture samplers (g_Texture + g_Texture_sampler combination)
             .use_combined_texture_samplers(true);
 
-            render_device.create_shader(shader_create_info).unwrap()
+            render_device.create_shader(&shader_create_info).unwrap()
         };
 
         let graphics_pipeline_desc = GraphicsPipelineDesc::new(
@@ -138,7 +138,7 @@ void main(in PSInput PSIn, out PSOutput PSOut)
 
         // Finally, create the pipeline state
         let pipeline_state = render_device
-            .create_graphics_pipeline_state(pso_create_info)
+            .create_graphics_pipeline_state(&pso_create_info)
             .unwrap();
 
         HelloTriangle {
@@ -170,7 +170,7 @@ void main(in PSInput PSIn, out PSOutput PSOut)
 
         // Typically we should now call CommitShaderResources(), however shaders in this example don't
         // use any resources.
-        immediate_context.draw(DrawAttribs::new(3));
+        immediate_context.draw(&DrawAttribs::new(3));
     }
 
     fn get_name() -> &'static str {

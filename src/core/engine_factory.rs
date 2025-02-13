@@ -59,22 +59,22 @@ impl Default for EngineCreateInfo {
     }
 }
 
-impl Into<bindings::EngineCreateInfo> for EngineCreateInfo {
-    fn into(self) -> bindings::EngineCreateInfo {
+impl From<&EngineCreateInfo> for bindings::EngineCreateInfo {
+    fn from(value: &EngineCreateInfo) -> Self {
         bindings::EngineCreateInfo {
-            EngineAPIVersion: self.engine_api_version,
-            AdapterId: self.adapter_id,
-            GraphicsAPIVersion: self.graphics_api_version,
+            EngineAPIVersion: value.engine_api_version,
+            AdapterId: value.adapter_id,
+            GraphicsAPIVersion: value.graphics_api_version,
             pImmediateContextInfo: std::ptr::null(),
-            NumImmediateContexts: self.num_immediate_contexts,
-            NumDeferredContexts: self.num_deferred_contexts,
-            Features: self.features,
-            EnableValidation: self.enable_validation,
-            ValidationFlags: self.validation_flags,
+            NumImmediateContexts: value.num_immediate_contexts,
+            NumDeferredContexts: value.num_deferred_contexts,
+            Features: value.features,
+            EnableValidation: value.enable_validation,
+            ValidationFlags: value.validation_flags,
             pRawMemAllocator: std::ptr::null_mut() as *mut bindings::IMemoryAllocator,
             pAsyncShaderCompilationThreadPool: std::ptr::null_mut() as *mut bindings::IThreadPool,
-            NumAsyncShaderCompilationThreads: self.num_async_shader_compilation_threads,
-            Padding: self.padding,
+            NumAsyncShaderCompilationThreads: value.num_async_shader_compilation_threads,
+            Padding: value.padding,
             pXRAttribs: std::ptr::null() as *const bindings::OpenXRAttribs,
         }
     }
@@ -98,7 +98,7 @@ pub trait EngineFactoryImplementation {
 
     fn create_device_and_contexts(
         &self,
-        create_info: Self::EngineCreateInfo,
+        create_info: &Self::EngineCreateInfo,
     ) -> Option<(RenderDevice, Vec<DeviceContext>, Vec<DeviceContext>)>;
 
     fn create_swap_chain(

@@ -102,9 +102,9 @@ pub enum ShaderType {
     Tile,
 }
 
-impl Into<bindings::SHADER_TYPE> for ShaderType {
-    fn into(self) -> bindings::SHADER_TYPE {
-        (match self {
+impl From<&ShaderType> for bindings::SHADER_TYPE {
+    fn from(value: &ShaderType) -> Self {
+        (match value {
             ShaderType::Vertex => bindings::SHADER_TYPE_VERTEX,
             ShaderType::Pixel => bindings::SHADER_TYPE_PIXEL,
             ShaderType::Geometry => bindings::SHADER_TYPE_GEOMETRY,
@@ -140,9 +140,9 @@ pub enum FilterType {
 }
 const_assert!(bindings::FILTER_TYPE_NUM_FILTERS == 13);
 
-impl Into<bindings::FILTER_TYPE> for FilterType {
-    fn into(self) -> bindings::FILTER_TYPE {
-        (match self {
+impl From<&FilterType> for bindings::FILTER_TYPE {
+    fn from(value: &FilterType) -> Self {
+        (match value {
             FilterType::Point => bindings::FILTER_TYPE_POINT,
             FilterType::Linear => bindings::FILTER_TYPE_LINEAR,
             FilterType::Anisotropic => bindings::FILTER_TYPE_ANISOTROPIC,
@@ -168,9 +168,9 @@ pub enum TextureAddressMode {
 }
 const_assert!(bindings::TEXTURE_ADDRESS_NUM_MODES == 6);
 
-impl Into<bindings::TEXTURE_ADDRESS_MODE> for TextureAddressMode {
-    fn into(self) -> bindings::TEXTURE_ADDRESS_MODE {
-        (match self {
+impl From<&TextureAddressMode> for bindings::TEXTURE_ADDRESS_MODE {
+    fn from(value: &TextureAddressMode) -> Self {
+        (match value {
             TextureAddressMode::Wrap => bindings::TEXTURE_ADDRESS_WRAP,
             TextureAddressMode::Mirror => bindings::TEXTURE_ADDRESS_MIRROR,
             TextureAddressMode::Clamp => bindings::TEXTURE_ADDRESS_CLAMP,
@@ -225,9 +225,9 @@ pub enum PrimitiveTopology {
 }
 const_assert!(bindings::PRIMITIVE_TOPOLOGY_NUM_TOPOLOGIES == 42);
 
-impl Into<bindings::PRIMITIVE_TOPOLOGY> for PrimitiveTopology {
-    fn into(self) -> bindings::PRIMITIVE_TOPOLOGY {
-        (match self {
+impl From<&PrimitiveTopology> for bindings::PRIMITIVE_TOPOLOGY {
+    fn from(value: &PrimitiveTopology) -> Self {
+        (match value {
             PrimitiveTopology::TriangleList => bindings::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
             PrimitiveTopology::TriangleStrip => bindings::PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
             PrimitiveTopology::PointList => bindings::PRIMITIVE_TOPOLOGY_POINT_LIST,
@@ -366,9 +366,9 @@ pub enum Usage {
 }
 const_assert!(bindings::USAGE_NUM_USAGES == 6);
 
-impl Into<bindings::USAGE> for Usage {
-    fn into(self) -> bindings::USAGE {
-        (match self {
+impl From<&Usage> for bindings::USAGE {
+    fn from(value: &Usage) -> Self {
+        (match value {
             Usage::Immutable => bindings::USAGE_IMMUTABLE,
             Usage::Default => bindings::USAGE_DEFAULT,
             Usage::Dynamic => bindings::USAGE_DYNAMIC,
@@ -419,9 +419,9 @@ pub enum ValueType {
 }
 const_assert!(bindings::VT_NUM_TYPES == 10);
 
-impl Into<bindings::VALUE_TYPE> for ValueType {
-    fn into(self) -> bindings::VALUE_TYPE {
-        (match self {
+impl From<&ValueType> for bindings::VALUE_TYPE {
+    fn from(value: &ValueType) -> Self {
+        (match value {
             ValueType::Int8 => bindings::VT_INT8,
             ValueType::Int16 => bindings::VT_INT16,
             ValueType::Int32 => bindings::VT_INT32,
@@ -441,9 +441,9 @@ pub enum MapType {
     ReadWrite,
 }
 
-impl Into<bindings::MAP_TYPE> for MapType {
-    fn into(self) -> bindings::MAP_TYPE {
-        (match self {
+impl From<&MapType> for bindings::MAP_TYPE {
+    fn from(value: &MapType) -> Self {
+        (match value {
             MapType::Read => bindings::MAP_READ,
             MapType::Write => bindings::MAP_WRITE,
             MapType::ReadWrite => bindings::MAP_READ_WRITE,
