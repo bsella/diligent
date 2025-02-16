@@ -459,3 +459,611 @@ bitflags! {
         const NoOverwrite = bindings::MAP_FLAG_NO_OVERWRITE;
     }
 }
+
+pub struct Version {
+    pub major: u32,
+    pub minor: u32,
+}
+
+impl Version {
+    pub fn new(major: u32, minor: u32) -> Self {
+        Version { major, minor }
+    }
+}
+
+pub enum AdapterType {
+    Unkndown,
+    Software,
+    Integrated,
+    Discrete,
+}
+const_assert!(bindings::ADAPTER_TYPE_COUNT == 4);
+
+pub enum AdapterVendor {
+    Unknown,
+    Nvidia,
+    AMD,
+    Intel,
+    ARM,
+    Qualcomm,
+    Imgtech,
+    Msft,
+    Apple,
+    Mesa,
+    Broadcom,
+}
+const_assert!(bindings::ADAPTER_VENDOR_LAST == 10);
+
+pub struct AdapterMemoryInfo {
+    pub local_memory: u64,
+    pub host_visible_memory: u64,
+    pub unified_memory: u64,
+    pub max_memory_allocation: u64,
+    pub unified_memory_cpu_access: CpuAccessFlags,
+    pub memoryless_texture_bind_flags: BindFlags,
+}
+
+bitflags! {
+    pub struct RaytracingCapFlags : bindings::_RAY_TRACING_CAP_FLAGS {
+        const None               = bindings::RAY_TRACING_CAP_FLAG_NONE;
+        const StandaloneShaders  = bindings::RAY_TRACING_CAP_FLAG_STANDALONE_SHADERS;
+        const InlineRayTracing   = bindings::RAY_TRACING_CAP_FLAG_INLINE_RAY_TRACING;
+        const IndirectRayTracing = bindings::RAY_TRACING_CAP_FLAG_INDIRECT_RAY_TRACING;
+    }
+}
+
+pub struct RayTracingProperties {
+    pub max_recursion_depth: u32,
+    pub shader_group_handle_size: u32,
+    pub max_shader_record_stride: u32,
+    pub shader_group_base_alignment: u32,
+    pub max_ray_gen_threads: u32,
+    pub max_instances_per_tlas: u32,
+    pub max_primitives_per_blas: u32,
+    pub max_geometries_per_blas: u32,
+    pub vertex_buffer_alignment: u32,
+    pub index_buffer_alignment: u32,
+    pub transform_buffer_alignment: u32,
+    pub box_buffer_alignment: u32,
+    pub scratch_buffer_alignment: u32,
+    pub instance_buffer_alignment: u32,
+    pub cap_flags: RaytracingCapFlags,
+}
+
+bitflags! {
+    pub struct WaveFeature : bindings::_WAVE_FEATURE {
+        const Unknown         = bindings::WAVE_FEATURE_UNKNOWN;
+        const Basic           = bindings::WAVE_FEATURE_BASIC;
+        const Vote            = bindings::WAVE_FEATURE_VOTE;
+        const Arithmetic      = bindings::WAVE_FEATURE_ARITHMETIC;
+        const Ballout         = bindings::WAVE_FEATURE_BALLOUT;
+        const Shuffle         = bindings::WAVE_FEATURE_SHUFFLE;
+        const ShuffleRelative = bindings::WAVE_FEATURE_SHUFFLE_RELATIVE;
+        const Clustered       = bindings::WAVE_FEATURE_CLUSTERED;
+        const Quad            = bindings::WAVE_FEATURE_QUAD;
+    }
+}
+const_assert!(bindings::WAVE_FEATURE_LAST == 128);
+
+pub struct WaveOpProperties {
+    pub min_size: u32,
+    pub max_size: u32,
+    pub supported_stages: ShaderTypes,
+    pub features: WaveFeature,
+}
+
+pub struct BufferProperties {
+    pub constant_buffer_offset_alignment: u32,
+    pub structured_buffer_offset_alignment: u32,
+}
+
+pub struct TextureProperties {
+    pub max_texture1d_dimension: u32,
+    pub max_texture1d_array_slices: u32,
+    pub max_texture2d_dimension: u32,
+    pub max_texture2d_array_slices: u32,
+    pub max_texture3d_dimension: u32,
+    pub max_texture_cube_dimension: u32,
+    pub texture2dms_supported: bool,
+    pub texture2dms_array_supported: bool,
+    pub texture_view_supported: bool,
+    pub cubemap_arrays_supported: bool,
+    pub texture_view2d_on3d_supported: bool,
+}
+
+pub struct SamplerProperties {
+    pub border_sampling_mode_supported: bool,
+    pub max_anisotropy: u8,
+    pub lod_bias_supported: bool,
+}
+
+pub struct MeshShaderProperties {
+    pub max_thread_group_count_x: u32,
+    pub max_thread_group_count_y: u32,
+    pub max_thread_group_count_z: u32,
+    pub max_thread_group_total_count: u32,
+}
+
+pub enum ShadingRate {
+    _1X1,
+    _1X2,
+    _1X4,
+    _2X1,
+    _2X2,
+    _2X4,
+    _4X1,
+    _4X2,
+    _4X4,
+}
+const_assert!(bindings::SHADING_RATE_MAX == 10);
+
+bitflags! {
+    pub struct SampleCount : bindings::_SAMPLE_COUNT {
+        const None = bindings::SAMPLE_COUNT_NONE;
+        const _1   = bindings::SAMPLE_COUNT_1;
+        const _2   = bindings::SAMPLE_COUNT_2;
+        const _4   = bindings::SAMPLE_COUNT_4;
+        const _8   = bindings::SAMPLE_COUNT_8;
+        const _16  = bindings::SAMPLE_COUNT_16;
+        const _32  = bindings::SAMPLE_COUNT_32;
+        const _64  = bindings::SAMPLE_COUNT_64;
+    }
+}
+const_assert!(bindings::SAMPLE_COUNT_MAX == 64);
+
+pub struct ShadingRateMode {
+    pub rate: ShadingRate,
+    pub sample_bits: SampleCount,
+}
+
+bitflags! {
+    pub struct ShadingRateCapFlags : bindings::_SHADING_RATE_CAP_FLAGS {
+        const None                              = bindings::SHADING_RATE_CAP_FLAG_NONE;
+        const PerDraw                           = bindings::SHADING_RATE_CAP_FLAG_PER_DRAW;
+        const PerPrimitive                      = bindings::SHADING_RATE_CAP_FLAG_PER_PRIMITIVE;
+        const TextureBased                      = bindings::SHADING_RATE_CAP_FLAG_TEXTURE_BASED;
+        const SampleMask                        = bindings::SHADING_RATE_CAP_FLAG_SAMPLE_MASK;
+        const ShaderSampleMask                  = bindings::SHADING_RATE_CAP_FLAG_SHADER_SAMPLE_MASK;
+        const ShaderDepthStencilWrite           = bindings::SHADING_RATE_CAP_FLAG_SHADER_DEPTH_STENCIL_WRITE;
+        const PerPrimitiveWithMultipleViewports = bindings::SHADING_RATE_CAP_FLAG_PER_PRIMITIVE_WITH_MULTIPLE_VIEWPORTS;
+        const SameTextureForWholeRenderpass     = bindings::SHADING_RATE_CAP_FLAG_SAME_TEXTURE_FOR_WHOLE_RENDERPASS;
+        const TextureArray                      = bindings::SHADING_RATE_CAP_FLAG_TEXTURE_ARRAY;
+        const ShadingRateShaderInput            = bindings::SHADING_RATE_CAP_FLAG_SHADING_RATE_SHADER_INPUT;
+        const AdditionalInvocations             = bindings::SHADING_RATE_CAP_FLAG_ADDITIONAL_INVOCATIONS;
+        const Non_subsampledRenderTarget        = bindings::SHADING_RATE_CAP_FLAG_NON_SUBSAMPLED_RENDER_TARGET;
+        const Subsampled_renderTarget           = bindings::SHADING_RATE_CAP_FLAG_SUBSAMPLED_RENDER_TARGET;
+    }
+}
+
+bitflags! {
+    pub struct ShadingRayeCombiner : bindings::_SHADING_RATE_COMBINER {
+        const Passthrough = bindings::SHADING_RATE_COMBINER_PASSTHROUGH;
+        const Override    = bindings::SHADING_RATE_COMBINER_OVERRIDE;
+        const Min         = bindings::SHADING_RATE_COMBINER_MIN;
+        const Max         = bindings::SHADING_RATE_COMBINER_MAX;
+        const Sum         = bindings::SHADING_RATE_COMBINER_SUM;
+        const Mul         = bindings::SHADING_RATE_COMBINER_MUL;
+    }
+}
+const_assert!(bindings::SAMPLE_COUNT_MAX == 64);
+
+bitflags! {
+    pub struct ShadingRateFormat : bindings::_SHADING_RATE_FORMAT {
+        const Unknown    = bindings::SHADING_RATE_FORMAT_UNKNOWN;
+        const Palette    = bindings::SHADING_RATE_FORMAT_PALETTE;
+        const Unorm8     = bindings::SHADING_RATE_FORMAT_UNORM8;
+        const ColRowFp32 = bindings::SHADING_RATE_FORMAT_COL_ROW_FP32;
+    }
+}
+
+bitflags! {
+    pub struct ShadingRateTextureAccess : bindings::_SHADING_RATE_TEXTURE_ACCESS {
+        const Unknown  = bindings::SHADING_RATE_TEXTURE_ACCESS_UNKNOWN;
+        const OnGpu    = bindings::SHADING_RATE_TEXTURE_ACCESS_ON_GPU;
+        const OnSubmit = bindings::SHADING_RATE_TEXTURE_ACCESS_ON_SUBMIT;
+        const OnSetRtv = bindings::SHADING_RATE_TEXTURE_ACCESS_ON_SET_RTV;
+    }
+}
+
+pub struct ShadingRateProperties {
+    pub shading_rates: Vec<ShadingRateMode>,
+    pub cap_flags: ShadingRateCapFlags,
+    pub combiners: ShadingRayeCombiner,
+    pub format: ShadingRateFormat,
+    pub shading_rate_texture_access: ShadingRateTextureAccess,
+    pub bind_flags: BindFlags,
+    pub min_tile_size: [u32; 2usize],
+    pub max_tile_size: [u32; 2usize],
+    pub max_subsampled_array_slices: u32,
+}
+
+pub struct ComputeShaderProperties {
+    pub shared_memory_size: u32,
+    pub max_thread_group_invocations: u32,
+    pub max_thread_group_size_x: u32,
+    pub max_thread_group_size_y: u32,
+    pub max_thread_group_size_z: u32,
+    pub max_thread_group_count_x: u32,
+    pub max_thread_group_count_y: u32,
+    pub max_thread_group_count_z: u32,
+}
+
+bitflags! {
+    pub struct DrawCommandCapFlags : bindings::_DRAW_COMMAND_CAP_FLAGS {
+        const None                      = bindings::DRAW_COMMAND_CAP_FLAG_NONE;
+        const BaseVertex                = bindings::DRAW_COMMAND_CAP_FLAG_BASE_VERTEX;
+        const DrawIndirect              = bindings::DRAW_COMMAND_CAP_FLAG_DRAW_INDIRECT;
+        const DrawIndirectFirstInstance = bindings::DRAW_COMMAND_CAP_FLAG_DRAW_INDIRECT_FIRST_INSTANCE;
+        const NativeMultiDrawIndirect   = bindings::DRAW_COMMAND_CAP_FLAG_NATIVE_MULTI_DRAW_INDIRECT;
+        const DrawIndirectCounterBuffer = bindings::DRAW_COMMAND_CAP_FLAG_DRAW_INDIRECT_COUNTER_BUFFER;
+    }
+}
+
+pub struct DrawCommandProperties {
+    pub cap_flags: DrawCommandCapFlags,
+    pub max_index_value: u32,
+    pub max_draw_indirect_count: u32,
+}
+
+bitflags! {
+    pub struct SparseResourceCapFlags : bindings::_SPARSE_RESOURCE_CAP_FLAGS {
+        const None                     = bindings::SPARSE_RESOURCE_CAP_FLAG_NONE;
+        const ShaderResourceResidency  = bindings::SPARSE_RESOURCE_CAP_FLAG_SHADER_RESOURCE_RESIDENCY;
+        const Buffer                   = bindings::SPARSE_RESOURCE_CAP_FLAG_BUFFER;
+        const Texture2D                = bindings::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_2D;
+        const Texture3D                = bindings::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_3D;
+        const Texture2Samples          = bindings::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_2_SAMPLES;
+        const Texture4Samples          = bindings::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_4_SAMPLES;
+        const Texture8Samples          = bindings::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_8_SAMPLES;
+        const Texture16Samples         = bindings::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_16_SAMPLES;
+        const Aliased                  = bindings::SPARSE_RESOURCE_CAP_FLAG_ALIASED;
+        const Standard2DTileShape      = bindings::SPARSE_RESOURCE_CAP_FLAG_STANDARD_2D_TILE_SHAPE;
+        const Standard2DMSTileShape    = bindings::SPARSE_RESOURCE_CAP_FLAG_STANDARD_2DMS_TILE_SHAPE;
+        const Standard3DTileShape      = bindings::SPARSE_RESOURCE_CAP_FLAG_STANDARD_3D_TILE_SHAPE;
+        const AlignedMipSize           = bindings::SPARSE_RESOURCE_CAP_FLAG_ALIGNED_MIP_SIZE;
+        const NonResidentStrict        = bindings::SPARSE_RESOURCE_CAP_FLAG_NON_RESIDENT_STRICT;
+        const Texture2dArrayMipTail    = bindings::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_2D_ARRAY_MIP_TAIL;
+        const BufferStandardBlock      = bindings::SPARSE_RESOURCE_CAP_FLAG_BUFFER_STANDARD_BLOCK;
+        const NonResidentSafe          = bindings::SPARSE_RESOURCE_CAP_FLAG_NON_RESIDENT_SAFE;
+        const MixedResourceTypeSupport = bindings::SPARSE_RESOURCE_CAP_FLAG_MIXED_RESOURCE_TYPE_SUPPORT;
+    }
+}
+
+pub struct SparseResourceProperties {
+    pub address_space_size: u64,
+    pub resource_space_size: u64,
+    pub cap_flags: SparseResourceCapFlags,
+    pub standard_block_size: u32,
+    pub buffer_bind_flags: BindFlags,
+}
+
+pub enum DeviceFeatureState {
+    Disabled,
+    Enabled,
+    Optional,
+}
+
+impl Into<DeviceFeatureState> for bindings::DEVICE_FEATURE_STATE {
+    fn into(self) -> DeviceFeatureState {
+        match self as bindings::_DEVICE_FEATURE_STATE {
+            bindings::DEVICE_FEATURE_STATE_DISABLED => DeviceFeatureState::Disabled,
+            bindings::DEVICE_FEATURE_STATE_ENABLED => DeviceFeatureState::Enabled,
+            bindings::DEVICE_FEATURE_STATE_OPTIONAL => DeviceFeatureState::Optional,
+            _ => panic!(),
+        }
+    }
+}
+
+pub struct DeviceFeatures {
+    pub separable_programs: DeviceFeatureState,
+    pub shader_resource_queries: DeviceFeatureState,
+    pub wireframe_fill: DeviceFeatureState,
+    pub multithreaded_resource_creation: DeviceFeatureState,
+    pub compute_shaders: DeviceFeatureState,
+    pub geometry_shaders: DeviceFeatureState,
+    pub tessellation: DeviceFeatureState,
+    pub mesh_shaders: DeviceFeatureState,
+    pub ray_tracing: DeviceFeatureState,
+    pub bindless_resources: DeviceFeatureState,
+    pub occlusion_queries: DeviceFeatureState,
+    pub binary_occlusion_queries: DeviceFeatureState,
+    pub timestamp_queries: DeviceFeatureState,
+    pub pipeline_statistics_queries: DeviceFeatureState,
+    pub duration_queries: DeviceFeatureState,
+    pub depth_bias_clamp: DeviceFeatureState,
+    pub depth_clamp: DeviceFeatureState,
+    pub independent_blend: DeviceFeatureState,
+    pub dual_source_blend: DeviceFeatureState,
+    pub multi_viewport: DeviceFeatureState,
+    pub texture_compression_bc: DeviceFeatureState,
+    pub texture_compression_etc2: DeviceFeatureState,
+    pub vertex_pipeline_uav_writes_and_atomics: DeviceFeatureState,
+    pub pixel_uav_writes_and_atomics: DeviceFeatureState,
+    pub texture_uav_extended_formats: DeviceFeatureState,
+    pub shader_float16: DeviceFeatureState,
+    pub resource_buffer16_bit_access: DeviceFeatureState,
+    pub uniform_buffer16_bit_access: DeviceFeatureState,
+    pub shader_input_output16: DeviceFeatureState,
+    pub shader_int8: DeviceFeatureState,
+    pub resource_buffer8_bit_access: DeviceFeatureState,
+    pub uniform_buffer8_bit_access: DeviceFeatureState,
+    pub shader_resource_static_arrays: DeviceFeatureState,
+    pub shader_resource_runtime_arrays: DeviceFeatureState,
+    pub wave_op: DeviceFeatureState,
+    pub instance_data_step_rate: DeviceFeatureState,
+    pub native_fence: DeviceFeatureState,
+    pub tile_shaders: DeviceFeatureState,
+    pub transfer_queue_timestamp_queries: DeviceFeatureState,
+    pub variable_rate_shading: DeviceFeatureState,
+    pub sparse_resources: DeviceFeatureState,
+    pub subpass_framebuffer_fetch: DeviceFeatureState,
+    pub texture_component_swizzle: DeviceFeatureState,
+    pub texture_subresource_views: DeviceFeatureState,
+    pub native_multi_draw: DeviceFeatureState,
+    pub async_shader_compilation: DeviceFeatureState,
+    pub formatted_buffers: DeviceFeatureState,
+}
+
+bitflags! {
+    pub struct CommandQueueType : bindings::_COMMAND_QUEUE_TYPE {
+        const Unknown       = bindings::COMMAND_QUEUE_TYPE_UNKNOWN;
+        const Transfer      = bindings::COMMAND_QUEUE_TYPE_TRANSFER;
+        const Compute       = bindings::COMMAND_QUEUE_TYPE_COMPUTE;
+        const Graphics      = bindings::COMMAND_QUEUE_TYPE_GRAPHICS;
+        const PrimaryMask   = bindings::COMMAND_QUEUE_TYPE_PRIMARY_MASK;
+        const SparseBinding = bindings::COMMAND_QUEUE_TYPE_SPARSE_BINDING;
+    }
+}
+const_assert!(bindings::COMMAND_QUEUE_TYPE_MAX_BIT == 7);
+
+pub struct CommandQueueInfo {
+    pub queue_type: CommandQueueType,
+    pub max_device_contexts: u32,
+    pub texture_copy_granularity: [u32; 3usize],
+}
+
+impl Into<CommandQueueInfo> for bindings::CommandQueueInfo {
+    fn into(self) -> CommandQueueInfo {
+        CommandQueueInfo {
+            queue_type: CommandQueueType::from_bits_retain(self.QueueType.into()),
+            max_device_contexts: self.MaxDeviceContexts,
+            texture_copy_granularity: self.TextureCopyGranularity,
+        }
+    }
+}
+
+pub struct GraphicsAdapterInfo {
+    pub description: String,
+    pub adapter_type: AdapterType,
+    pub vendor: AdapterVendor,
+    pub vendor_id: u32,
+    pub device_id: u32,
+    pub num_outputs: u32,
+    pub memory: AdapterMemoryInfo,
+    pub ray_tracing: RayTracingProperties,
+    pub wave_op: WaveOpProperties,
+    pub buffer: BufferProperties,
+    pub texture: TextureProperties,
+    pub sampler: SamplerProperties,
+    pub mesh_shader: MeshShaderProperties,
+    pub shading_rate: ShadingRateProperties,
+    pub compute_shader: ComputeShaderProperties,
+    pub draw_command: DrawCommandProperties,
+    pub sparse_resources: SparseResourceProperties,
+    pub features: DeviceFeatures,
+    pub queues: Vec<CommandQueueInfo>,
+}
+
+impl Into<GraphicsAdapterInfo> for bindings::GraphicsAdapterInfo {
+    fn into(self) -> GraphicsAdapterInfo {
+        GraphicsAdapterInfo {
+            description: std::ffi::CString::from_vec_with_nul(Vec::from_iter(
+                self.Description.into_iter().map(|c| c as u8),
+            ))
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_owned(),
+            adapter_type: match self.Type as bindings::_ADAPTER_TYPE {
+                bindings::ADAPTER_TYPE_UNKNOWN => AdapterType::Unkndown,
+                bindings::ADAPTER_TYPE_SOFTWARE => AdapterType::Software,
+                bindings::ADAPTER_TYPE_INTEGRATED => AdapterType::Integrated,
+                bindings::ADAPTER_TYPE_DISCRETE => AdapterType::Discrete,
+                _ => panic!(),
+            },
+            vendor: match self.Vendor as bindings::_ADAPTER_VENDOR {
+                bindings::ADAPTER_VENDOR_UNKNOWN => AdapterVendor::Unknown,
+                bindings::ADAPTER_VENDOR_NVIDIA => AdapterVendor::Nvidia,
+                bindings::ADAPTER_VENDOR_AMD => AdapterVendor::AMD,
+                bindings::ADAPTER_VENDOR_INTEL => AdapterVendor::Intel,
+                bindings::ADAPTER_VENDOR_ARM => AdapterVendor::ARM,
+                bindings::ADAPTER_VENDOR_QUALCOMM => AdapterVendor::Qualcomm,
+                bindings::ADAPTER_VENDOR_IMGTECH => AdapterVendor::Imgtech,
+                bindings::ADAPTER_VENDOR_MSFT => AdapterVendor::Msft,
+                bindings::ADAPTER_VENDOR_APPLE => AdapterVendor::Apple,
+                bindings::ADAPTER_VENDOR_MESA => AdapterVendor::Mesa,
+                bindings::ADAPTER_VENDOR_BROADCOM => AdapterVendor::Broadcom,
+                _ => panic!(),
+            },
+            vendor_id: self.VendorId,
+            device_id: self.DeviceId,
+            num_outputs: self.NumOutputs,
+            memory: AdapterMemoryInfo {
+                local_memory: self.Memory.LocalMemory,
+                host_visible_memory: self.Memory.HostVisibleMemory,
+                unified_memory: self.Memory.UnifiedMemory,
+                max_memory_allocation: self.Memory.MaxMemoryAllocation,
+                unified_memory_cpu_access: CpuAccessFlags::from_bits_retain(
+                    self.Memory.UnifiedMemoryCPUAccess.into(),
+                ),
+                memoryless_texture_bind_flags: BindFlags::from_bits_retain(
+                    self.Memory.MemorylessTextureBindFlags.into(),
+                ),
+            },
+            ray_tracing: RayTracingProperties {
+                max_recursion_depth: self.RayTracing.MaxRecursionDepth,
+                shader_group_handle_size: self.RayTracing.ShaderGroupHandleSize,
+                max_shader_record_stride: self.RayTracing.MaxShaderRecordStride,
+                shader_group_base_alignment: self.RayTracing.ShaderGroupBaseAlignment,
+                max_ray_gen_threads: self.RayTracing.MaxRayGenThreads,
+                max_instances_per_tlas: self.RayTracing.MaxInstancesPerTLAS,
+                max_primitives_per_blas: self.RayTracing.MaxPrimitivesPerBLAS,
+                max_geometries_per_blas: self.RayTracing.MaxGeometriesPerBLAS,
+                vertex_buffer_alignment: self.RayTracing.VertexBufferAlignment,
+                index_buffer_alignment: self.RayTracing.IndexBufferAlignment,
+                transform_buffer_alignment: self.RayTracing.TransformBufferAlignment,
+                box_buffer_alignment: self.RayTracing.BoxBufferAlignment,
+                scratch_buffer_alignment: self.RayTracing.ScratchBufferAlignment,
+                instance_buffer_alignment: self.RayTracing.InstanceBufferAlignment,
+                cap_flags: RaytracingCapFlags::from_bits_retain(self.RayTracing.CapFlags.into()),
+            },
+            wave_op: WaveOpProperties {
+                min_size: self.WaveOp.MinSize,
+                max_size: self.WaveOp.MaxSize,
+                supported_stages: ShaderTypes::from_bits_retain(self.WaveOp.SupportedStages),
+                features: WaveFeature::from_bits_retain(self.WaveOp.Features),
+            },
+            buffer: BufferProperties {
+                constant_buffer_offset_alignment: self.Buffer.ConstantBufferOffsetAlignment,
+                structured_buffer_offset_alignment: self.Buffer.StructuredBufferOffsetAlignment,
+            },
+            texture: TextureProperties {
+                max_texture1d_dimension: self.Texture.MaxTexture1DDimension,
+                max_texture1d_array_slices: self.Texture.MaxTexture1DArraySlices,
+                max_texture2d_dimension: self.Texture.MaxTexture2DDimension,
+                max_texture2d_array_slices: self.Texture.MaxTexture2DArraySlices,
+                max_texture3d_dimension: self.Texture.MaxTexture3DDimension,
+                max_texture_cube_dimension: self.Texture.MaxTextureCubeDimension,
+                texture2dms_supported: self.Texture.Texture2DMSSupported,
+                texture2dms_array_supported: self.Texture.Texture2DMSArraySupported,
+                texture_view_supported: self.Texture.TextureViewSupported,
+                cubemap_arrays_supported: self.Texture.CubemapArraysSupported,
+                texture_view2d_on3d_supported: self.Texture.TextureView2DOn3DSupported,
+            },
+            sampler: SamplerProperties {
+                border_sampling_mode_supported: self.Sampler.BorderSamplingModeSupported,
+                max_anisotropy: self.Sampler.MaxAnisotropy,
+                lod_bias_supported: self.Sampler.LODBiasSupported,
+            },
+            mesh_shader: MeshShaderProperties {
+                max_thread_group_count_x: self.MeshShader.MaxThreadGroupCountX,
+                max_thread_group_count_y: self.MeshShader.MaxThreadGroupCountY,
+                max_thread_group_count_z: self.MeshShader.MaxThreadGroupCountZ,
+                max_thread_group_total_count: self.MeshShader.MaxThreadGroupTotalCount,
+            },
+            shading_rate: ShadingRateProperties {
+                shading_rates: Vec::from_iter(
+                    self.ShadingRate
+                        .ShadingRates
+                        .into_iter()
+                        .map(|sr| ShadingRateMode {
+                            rate: match sr.Rate as bindings::_SHADING_RATE {
+                                bindings::SHADING_RATE_1X1 => ShadingRate::_1X1,
+                                bindings::SHADING_RATE_1X2 => ShadingRate::_1X2,
+                                bindings::SHADING_RATE_1X4 => ShadingRate::_1X4,
+                                bindings::SHADING_RATE_2X1 => ShadingRate::_2X1,
+                                bindings::SHADING_RATE_2X2 => ShadingRate::_2X2,
+                                bindings::SHADING_RATE_2X4 => ShadingRate::_2X4,
+                                bindings::SHADING_RATE_4X1 => ShadingRate::_4X1,
+                                bindings::SHADING_RATE_4X2 => ShadingRate::_4X2,
+                                bindings::SHADING_RATE_4X4 => ShadingRate::_4X4,
+                                _ => panic!(),
+                            },
+                            sample_bits: SampleCount::from_bits_retain(sr.SampleBits.into()),
+                        })
+                        .take(self.ShadingRate.NumShadingRates.into()),
+                ),
+                cap_flags: ShadingRateCapFlags::from_bits_retain(self.ShadingRate.CapFlags.into()),
+                combiners: ShadingRayeCombiner::from_bits_retain(self.ShadingRate.Combiners.into()),
+                format: ShadingRateFormat::from_bits_retain(self.ShadingRate.Format.into()),
+                shading_rate_texture_access: ShadingRateTextureAccess::from_bits_retain(
+                    self.ShadingRate.ShadingRateTextureAccess.into(),
+                ),
+                bind_flags: BindFlags::from_bits_retain(self.ShadingRate.BindFlags),
+                min_tile_size: self.ShadingRate.MinTileSize,
+                max_tile_size: self.ShadingRate.MaxTileSize,
+                max_subsampled_array_slices: self.ShadingRate.MaxSabsampledArraySlices,
+            },
+            compute_shader: ComputeShaderProperties {
+                shared_memory_size: self.ComputeShader.SharedMemorySize,
+                max_thread_group_invocations: self.ComputeShader.MaxThreadGroupInvocations,
+                max_thread_group_size_x: self.ComputeShader.MaxThreadGroupSizeX,
+                max_thread_group_size_y: self.ComputeShader.MaxThreadGroupSizeY,
+                max_thread_group_size_z: self.ComputeShader.MaxThreadGroupSizeZ,
+                max_thread_group_count_x: self.ComputeShader.MaxThreadGroupCountX,
+                max_thread_group_count_y: self.ComputeShader.MaxThreadGroupCountY,
+                max_thread_group_count_z: self.ComputeShader.MaxThreadGroupCountZ,
+            },
+            draw_command: DrawCommandProperties {
+                cap_flags: DrawCommandCapFlags::from_bits_retain(self.DrawCommand.CapFlags.into()),
+                max_index_value: self.DrawCommand.MaxIndexValue,
+                max_draw_indirect_count: self.DrawCommand.MaxDrawIndirectCount,
+            },
+            sparse_resources: SparseResourceProperties {
+                address_space_size: self.SparseResources.AddressSpaceSize,
+                resource_space_size: self.SparseResources.ResourceSpaceSize,
+                cap_flags: SparseResourceCapFlags::from_bits_retain(self.SparseResources.CapFlags),
+                standard_block_size: self.SparseResources.StandardBlockSize,
+                buffer_bind_flags: BindFlags::from_bits_retain(
+                    self.SparseResources.BufferBindFlags,
+                ),
+            },
+            features: DeviceFeatures {
+                separable_programs: self.Features.SeparablePrograms.into(),
+                shader_resource_queries: self.Features.ShaderResourceQueries.into(),
+                wireframe_fill: self.Features.WireframeFill.into(),
+                multithreaded_resource_creation: self.Features.MultithreadedResourceCreation.into(),
+                compute_shaders: self.Features.ComputeShaders.into(),
+                geometry_shaders: self.Features.GeometryShaders.into(),
+                tessellation: self.Features.Tessellation.into(),
+                mesh_shaders: self.Features.MeshShaders.into(),
+                ray_tracing: self.Features.RayTracing.into(),
+                bindless_resources: self.Features.BindlessResources.into(),
+                occlusion_queries: self.Features.OcclusionQueries.into(),
+                binary_occlusion_queries: self.Features.BinaryOcclusionQueries.into(),
+                timestamp_queries: self.Features.TimestampQueries.into(),
+                pipeline_statistics_queries: self.Features.PipelineStatisticsQueries.into(),
+                duration_queries: self.Features.DurationQueries.into(),
+                depth_bias_clamp: self.Features.DepthBiasClamp.into(),
+                depth_clamp: self.Features.DepthClamp.into(),
+                independent_blend: self.Features.IndependentBlend.into(),
+                dual_source_blend: self.Features.DualSourceBlend.into(),
+                multi_viewport: self.Features.MultiViewport.into(),
+                texture_compression_bc: self.Features.TextureCompressionBC.into(),
+                texture_compression_etc2: self.Features.TextureCompressionETC2.into(),
+                vertex_pipeline_uav_writes_and_atomics: self
+                    .Features
+                    .VertexPipelineUAVWritesAndAtomics
+                    .into(),
+                pixel_uav_writes_and_atomics: self.Features.PixelUAVWritesAndAtomics.into(),
+                texture_uav_extended_formats: self.Features.TextureUAVExtendedFormats.into(),
+                shader_float16: self.Features.ShaderFloat16.into(),
+                resource_buffer16_bit_access: self.Features.ResourceBuffer16BitAccess.into(),
+                uniform_buffer16_bit_access: self.Features.UniformBuffer16BitAccess.into(),
+                shader_input_output16: self.Features.ShaderInputOutput16.into(),
+                shader_int8: self.Features.ShaderInt8.into(),
+                resource_buffer8_bit_access: self.Features.ResourceBuffer8BitAccess.into(),
+                uniform_buffer8_bit_access: self.Features.UniformBuffer8BitAccess.into(),
+                shader_resource_static_arrays: self.Features.ShaderResourceStaticArrays.into(),
+                shader_resource_runtime_arrays: self.Features.ShaderResourceRuntimeArrays.into(),
+                wave_op: self.Features.WaveOp.into(),
+                instance_data_step_rate: self.Features.InstanceDataStepRate.into(),
+                native_fence: self.Features.NativeFence.into(),
+                tile_shaders: self.Features.TileShaders.into(),
+                transfer_queue_timestamp_queries: self
+                    .Features
+                    .TransferQueueTimestampQueries
+                    .into(),
+                variable_rate_shading: self.Features.VariableRateShading.into(),
+                sparse_resources: self.Features.SparseResources.into(),
+                subpass_framebuffer_fetch: self.Features.SubpassFramebufferFetch.into(),
+                texture_component_swizzle: self.Features.TextureComponentSwizzle.into(),
+                texture_subresource_views: self.Features.TextureSubresourceViews.into(),
+                native_multi_draw: self.Features.NativeMultiDraw.into(),
+                async_shader_compilation: self.Features.AsyncShaderCompilation.into(),
+                formatted_buffers: self.Features.FormattedBuffers.into(),
+            },
+            queues: Vec::from_iter(self.Queues.into_iter().map(|queue| queue.into())),
+        }
+    }
+}

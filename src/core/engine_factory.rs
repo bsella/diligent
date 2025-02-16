@@ -3,8 +3,12 @@ use std::os::raw::c_void;
 use crate::bindings;
 
 use super::{
-    data_blob::DataBlob, device_context::DeviceContext, object::Object,
-    render_device::RenderDevice, swap_chain::SwapChain,
+    data_blob::DataBlob,
+    device_context::DeviceContext,
+    graphics_types::{GraphicsAdapterInfo, Version},
+    object::Object,
+    render_device::RenderDevice,
+    swap_chain::SwapChain,
 };
 
 pub struct EngineCreateInfo {
@@ -152,12 +156,15 @@ impl EngineFactory {
         }
     }
 
-    pub fn enumerate_adapters(
-        &self,
-        version: bindings::Version,
-    ) -> Vec<bindings::GraphicsAdapterInfo> {
+    pub fn enumerate_adapters(&self, version: Version) -> Vec<GraphicsAdapterInfo> {
         let mut num_adapters: u32 = 0;
-        let adapters_ptr = std::ptr::null_mut();
+        let version = bindings::Version {
+            Major: version.major,
+            Minor: version.minor,
+        };
+
+        // The first call of EnumerateAdapters with nullptr as the adapters gets the number
+        // of adapters
         unsafe {
             (*self.virtual_functions)
                 .EngineFactory
@@ -165,14 +172,31 @@ impl EngineFactory {
                 .unwrap_unchecked()(
                 self.engine_factory,
                 version,
-                &mut num_adapters,
+                std::ptr::addr_of_mut!(num_adapters),
+                std::ptr::null_mut(),
+            );
+        }
+
+        let adapters_ptr = std::ptr::null_mut();
+
+        // The second call of EnumerateAdapters gets a pointer to the adapters
+        let adapters = unsafe {
+            (*self.virtual_functions)
+                .EngineFactory
+                .EnumerateAdapters
+                .unwrap_unchecked()(
+                self.engine_factory,
+                version,
+                std::ptr::addr_of_mut!(num_adapters),
                 adapters_ptr,
             );
 
             let num_adapters = num_adapters as usize;
 
             Vec::from_raw_parts(adapters_ptr, num_adapters, num_adapters)
-        }
+        };
+
+        adapters.into_iter().map(|adapter| adapter.into()).collect()
     }
 
     //pub fn create_dearchiver(&self, create_info : &bindings::DearchiverCreateInfo) -> bindings::IDearchiver;
