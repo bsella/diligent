@@ -471,12 +471,44 @@ impl Version {
     }
 }
 
+#[derive(PartialEq, Eq, Clone)]
 pub enum AdapterType {
-    Unkndown,
+    Unknown,
     Software,
     Integrated,
     Discrete,
 }
+
+impl AdapterType {
+    const fn priority(&self) -> u8 {
+        match self {
+            AdapterType::Unknown => 0,
+            AdapterType::Software => 1,
+            AdapterType::Integrated => 2,
+            AdapterType::Discrete => 3,
+        }
+    }
+}
+
+// Prefer Discrete over Integrated over Software
+const_assert!(
+    AdapterType::Discrete.priority() > AdapterType::Integrated.priority()
+        && AdapterType::Integrated.priority() > AdapterType::Software.priority()
+        && AdapterType::Software.priority() > AdapterType::Unknown.priority()
+);
+
+impl Ord for AdapterType {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.priority().cmp(&other.priority())
+    }
+}
+
+impl PartialOrd for AdapterType {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(&other))
+    }
+}
+
 const_assert!(bindings::ADAPTER_TYPE_COUNT == 4);
 
 pub enum AdapterVendor {
@@ -754,6 +786,16 @@ impl Into<DeviceFeatureState> for bindings::DEVICE_FEATURE_STATE {
     }
 }
 
+impl From<&DeviceFeatureState> for bindings::DEVICE_FEATURE_STATE {
+    fn from(value: &DeviceFeatureState) -> Self {
+        (match value {
+            DeviceFeatureState::Disabled => bindings::DEVICE_FEATURE_STATE_DISABLED,
+            DeviceFeatureState::Enabled => bindings::DEVICE_FEATURE_STATE_ENABLED,
+            DeviceFeatureState::Optional => bindings::DEVICE_FEATURE_STATE_OPTIONAL,
+        }) as bindings::DEVICE_FEATURE_STATE
+    }
+}
+
 pub struct DeviceFeatures {
     pub separable_programs: DeviceFeatureState,
     pub shader_resource_queries: DeviceFeatureState,
@@ -802,6 +844,156 @@ pub struct DeviceFeatures {
     pub native_multi_draw: DeviceFeatureState,
     pub async_shader_compilation: DeviceFeatureState,
     pub formatted_buffers: DeviceFeatureState,
+}
+
+impl Default for DeviceFeatures {
+    fn default() -> Self {
+        DeviceFeatures {
+            separable_programs: DeviceFeatureState::Disabled,
+            shader_resource_queries: DeviceFeatureState::Disabled,
+            wireframe_fill: DeviceFeatureState::Disabled,
+            multithreaded_resource_creation: DeviceFeatureState::Disabled,
+            compute_shaders: DeviceFeatureState::Disabled,
+            geometry_shaders: DeviceFeatureState::Disabled,
+            tessellation: DeviceFeatureState::Disabled,
+            mesh_shaders: DeviceFeatureState::Disabled,
+            ray_tracing: DeviceFeatureState::Disabled,
+            bindless_resources: DeviceFeatureState::Disabled,
+            occlusion_queries: DeviceFeatureState::Disabled,
+            binary_occlusion_queries: DeviceFeatureState::Disabled,
+            timestamp_queries: DeviceFeatureState::Disabled,
+            pipeline_statistics_queries: DeviceFeatureState::Disabled,
+            duration_queries: DeviceFeatureState::Disabled,
+            depth_bias_clamp: DeviceFeatureState::Disabled,
+            depth_clamp: DeviceFeatureState::Disabled,
+            independent_blend: DeviceFeatureState::Disabled,
+            dual_source_blend: DeviceFeatureState::Disabled,
+            multi_viewport: DeviceFeatureState::Disabled,
+            texture_compression_bc: DeviceFeatureState::Disabled,
+            texture_compression_etc2: DeviceFeatureState::Disabled,
+            vertex_pipeline_uav_writes_and_atomics: DeviceFeatureState::Disabled,
+            pixel_uav_writes_and_atomics: DeviceFeatureState::Disabled,
+            texture_uav_extended_formats: DeviceFeatureState::Disabled,
+            shader_float16: DeviceFeatureState::Disabled,
+            resource_buffer16_bit_access: DeviceFeatureState::Disabled,
+            uniform_buffer16_bit_access: DeviceFeatureState::Disabled,
+            shader_input_output16: DeviceFeatureState::Disabled,
+            shader_int8: DeviceFeatureState::Disabled,
+            resource_buffer8_bit_access: DeviceFeatureState::Disabled,
+            uniform_buffer8_bit_access: DeviceFeatureState::Disabled,
+            shader_resource_static_arrays: DeviceFeatureState::Disabled,
+            shader_resource_runtime_arrays: DeviceFeatureState::Disabled,
+            wave_op: DeviceFeatureState::Disabled,
+            instance_data_step_rate: DeviceFeatureState::Disabled,
+            native_fence: DeviceFeatureState::Disabled,
+            tile_shaders: DeviceFeatureState::Disabled,
+            transfer_queue_timestamp_queries: DeviceFeatureState::Disabled,
+            variable_rate_shading: DeviceFeatureState::Disabled,
+            sparse_resources: DeviceFeatureState::Disabled,
+            subpass_framebuffer_fetch: DeviceFeatureState::Disabled,
+            texture_component_swizzle: DeviceFeatureState::Disabled,
+            texture_subresource_views: DeviceFeatureState::Disabled,
+            native_multi_draw: DeviceFeatureState::Disabled,
+            async_shader_compilation: DeviceFeatureState::Disabled,
+            formatted_buffers: DeviceFeatureState::Disabled,
+        }
+    }
+}
+
+impl From<&DeviceFeatures> for bindings::DeviceFeatures {
+    fn from(value: &DeviceFeatures) -> Self {
+        bindings::DeviceFeatures {
+            SeparablePrograms: bindings::DEVICE_FEATURE_STATE::from(&value.separable_programs),
+            ShaderResourceQueries: bindings::DEVICE_FEATURE_STATE::from(
+                &value.shader_resource_queries,
+            ),
+            WireframeFill: bindings::DEVICE_FEATURE_STATE::from(&value.wireframe_fill),
+            MultithreadedResourceCreation: bindings::DEVICE_FEATURE_STATE::from(
+                &value.multithreaded_resource_creation,
+            ),
+            ComputeShaders: bindings::DEVICE_FEATURE_STATE::from(&value.compute_shaders),
+            GeometryShaders: bindings::DEVICE_FEATURE_STATE::from(&value.geometry_shaders),
+            Tessellation: bindings::DEVICE_FEATURE_STATE::from(&value.tessellation),
+            MeshShaders: bindings::DEVICE_FEATURE_STATE::from(&value.mesh_shaders),
+            RayTracing: bindings::DEVICE_FEATURE_STATE::from(&value.ray_tracing),
+            BindlessResources: bindings::DEVICE_FEATURE_STATE::from(&value.bindless_resources),
+            OcclusionQueries: bindings::DEVICE_FEATURE_STATE::from(&value.occlusion_queries),
+            BinaryOcclusionQueries: bindings::DEVICE_FEATURE_STATE::from(
+                &value.binary_occlusion_queries,
+            ),
+            TimestampQueries: bindings::DEVICE_FEATURE_STATE::from(&value.timestamp_queries),
+            PipelineStatisticsQueries: bindings::DEVICE_FEATURE_STATE::from(
+                &value.pipeline_statistics_queries,
+            ),
+            DurationQueries: bindings::DEVICE_FEATURE_STATE::from(&value.duration_queries),
+            DepthBiasClamp: bindings::DEVICE_FEATURE_STATE::from(&value.depth_bias_clamp),
+            DepthClamp: bindings::DEVICE_FEATURE_STATE::from(&value.depth_clamp),
+            IndependentBlend: bindings::DEVICE_FEATURE_STATE::from(&value.independent_blend),
+            DualSourceBlend: bindings::DEVICE_FEATURE_STATE::from(&value.dual_source_blend),
+            MultiViewport: bindings::DEVICE_FEATURE_STATE::from(&value.multi_viewport),
+            TextureCompressionBC: bindings::DEVICE_FEATURE_STATE::from(
+                &value.texture_compression_bc,
+            ),
+            TextureCompressionETC2: bindings::DEVICE_FEATURE_STATE::from(
+                &value.texture_compression_etc2,
+            ),
+            VertexPipelineUAVWritesAndAtomics: bindings::DEVICE_FEATURE_STATE::from(
+                &value.vertex_pipeline_uav_writes_and_atomics,
+            ),
+            PixelUAVWritesAndAtomics: bindings::DEVICE_FEATURE_STATE::from(
+                &value.pixel_uav_writes_and_atomics,
+            ),
+            TextureUAVExtendedFormats: bindings::DEVICE_FEATURE_STATE::from(
+                &value.texture_uav_extended_formats,
+            ),
+            ShaderFloat16: bindings::DEVICE_FEATURE_STATE::from(&value.shader_float16),
+            ResourceBuffer16BitAccess: bindings::DEVICE_FEATURE_STATE::from(
+                &value.resource_buffer16_bit_access,
+            ),
+            UniformBuffer16BitAccess: bindings::DEVICE_FEATURE_STATE::from(
+                &value.uniform_buffer16_bit_access,
+            ),
+            ShaderInputOutput16: bindings::DEVICE_FEATURE_STATE::from(&value.shader_input_output16),
+            ShaderInt8: bindings::DEVICE_FEATURE_STATE::from(&value.shader_int8),
+            ResourceBuffer8BitAccess: bindings::DEVICE_FEATURE_STATE::from(
+                &value.resource_buffer8_bit_access,
+            ),
+            UniformBuffer8BitAccess: bindings::DEVICE_FEATURE_STATE::from(
+                &value.uniform_buffer8_bit_access,
+            ),
+            ShaderResourceStaticArrays: bindings::DEVICE_FEATURE_STATE::from(
+                &value.shader_resource_static_arrays,
+            ),
+            ShaderResourceRuntimeArrays: bindings::DEVICE_FEATURE_STATE::from(
+                &value.shader_resource_runtime_arrays,
+            ),
+            WaveOp: bindings::DEVICE_FEATURE_STATE::from(&value.wave_op),
+            InstanceDataStepRate: bindings::DEVICE_FEATURE_STATE::from(
+                &value.instance_data_step_rate,
+            ),
+            NativeFence: bindings::DEVICE_FEATURE_STATE::from(&value.native_fence),
+            TileShaders: bindings::DEVICE_FEATURE_STATE::from(&value.tile_shaders),
+            TransferQueueTimestampQueries: bindings::DEVICE_FEATURE_STATE::from(
+                &value.transfer_queue_timestamp_queries,
+            ),
+            VariableRateShading: bindings::DEVICE_FEATURE_STATE::from(&value.variable_rate_shading),
+            SparseResources: bindings::DEVICE_FEATURE_STATE::from(&value.sparse_resources),
+            SubpassFramebufferFetch: bindings::DEVICE_FEATURE_STATE::from(
+                &value.subpass_framebuffer_fetch,
+            ),
+            TextureComponentSwizzle: bindings::DEVICE_FEATURE_STATE::from(
+                &value.texture_component_swizzle,
+            ),
+            TextureSubresourceViews: bindings::DEVICE_FEATURE_STATE::from(
+                &value.texture_subresource_views,
+            ),
+            NativeMultiDraw: bindings::DEVICE_FEATURE_STATE::from(&value.native_multi_draw),
+            AsyncShaderCompilation: bindings::DEVICE_FEATURE_STATE::from(
+                &value.async_shader_compilation,
+            ),
+            FormattedBuffers: bindings::DEVICE_FEATURE_STATE::from(&value.formatted_buffers),
+        }
+    }
 }
 
 bitflags! {
@@ -856,16 +1048,21 @@ pub struct GraphicsAdapterInfo {
 
 impl Into<GraphicsAdapterInfo> for bindings::GraphicsAdapterInfo {
     fn into(self) -> GraphicsAdapterInfo {
+        let desc_vec = Vec::from_iter(
+            self.Description
+                .split_inclusive(|&c| c == 0)
+                .next()
+                .unwrap()
+                .iter()
+                .map(|&c| c as u8),
+        );
+
+        let desc_cstring = std::ffi::CString::from_vec_with_nul(desc_vec).unwrap();
+
         GraphicsAdapterInfo {
-            description: std::ffi::CString::from_vec_with_nul(Vec::from_iter(
-                self.Description.into_iter().map(|c| c as u8),
-            ))
-            .unwrap()
-            .to_str()
-            .unwrap()
-            .to_owned(),
+            description: desc_cstring.into_string().unwrap(), //desc.to_str().unwrap().to_owned(),
             adapter_type: match self.Type as bindings::_ADAPTER_TYPE {
-                bindings::ADAPTER_TYPE_UNKNOWN => AdapterType::Unkndown,
+                bindings::ADAPTER_TYPE_UNKNOWN => AdapterType::Unknown,
                 bindings::ADAPTER_TYPE_SOFTWARE => AdapterType::Software,
                 bindings::ADAPTER_TYPE_INTEGRATED => AdapterType::Integrated,
                 bindings::ADAPTER_TYPE_DISCRETE => AdapterType::Discrete,

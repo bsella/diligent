@@ -8,7 +8,6 @@ use crate::core::engine_factory::EngineCreateInfo;
 use crate::core::engine_factory::EngineFactory;
 
 use crate::core::engine_factory::AsEngineFactory;
-use crate::core::engine_factory::EngineFactoryImplementation;
 use crate::core::render_device::RenderDevice;
 use crate::core::swap_chain::SwapChain;
 
@@ -38,10 +37,10 @@ pub struct EngineVkCreateInfo {
     dx_compiler_path: Option<PathBuf>,
 }
 
-impl Default for EngineVkCreateInfo {
-    fn default() -> Self {
+impl EngineVkCreateInfo {
+    pub fn new(engine_create_info: EngineCreateInfo) -> Self {
         EngineVkCreateInfo {
-            engine_create_info: EngineCreateInfo::default(),
+            engine_create_info,
 
             instance_layer_names: Vec::new(),
             instance_extension_names: Vec::new(),
@@ -99,6 +98,12 @@ impl Default for EngineVkCreateInfo {
     }
 }
 
+impl Default for EngineVkCreateInfo {
+    fn default() -> Self {
+        EngineVkCreateInfo::new(EngineCreateInfo::default())
+    }
+}
+
 pub struct EngineFactoryVk {
     engine_factory_vk: *mut bindings::IEngineFactoryVk,
     virtual_functions: *mut bindings::IEngineFactoryVkVtbl,
@@ -124,23 +129,21 @@ impl AsEngineFactory for EngineFactoryVk {
     }
 }
 
-impl EngineFactoryImplementation for EngineFactoryVk {
-    type EngineCreateInfo = EngineVkCreateInfo;
+pub fn get_engine_factory_vk() -> EngineFactoryVk {
+    let engine_factory_vk = unsafe { bindings::Diligent_GetEngineFactoryVk() };
 
-    fn get() -> Self {
-        let engine_factory_vk = unsafe { bindings::Diligent_GetEngineFactoryVk() };
-        let engine_factory_ptr = engine_factory_vk as *mut bindings::IEngineFactory;
+    EngineFactoryVk {
+        engine_factory_vk,
+        virtual_functions: unsafe { (*engine_factory_vk).pVtbl },
 
-        EngineFactoryVk {
-            engine_factory: EngineFactory::new(engine_factory_ptr),
-            virtual_functions: unsafe { (*engine_factory_vk).pVtbl },
-            engine_factory_vk: engine_factory_vk,
-        }
+        engine_factory: EngineFactory::new(engine_factory_vk as *mut bindings::IEngineFactory),
     }
+}
 
-    fn create_device_and_contexts(
+impl EngineFactoryVk {
+    pub fn create_device_and_contexts(
         &self,
-        create_info: &Self::EngineCreateInfo,
+        create_info: &EngineVkCreateInfo,
     ) -> Option<(RenderDevice, Vec<DeviceContext>, Vec<DeviceContext>)> {
         let num_immediate_contexts =
             std::cmp::max(create_info.engine_create_info.num_immediate_contexts, 1) as usize;
@@ -167,13 +170,13 @@ impl EngineFactoryImplementation for EngineFactoryVk {
                 (cstrings, ptrs)
             }
 
-            let (_, instance_layer_names) =
+            let (_a, instance_layer_names) =
                 vec_string_to_vec_cstring_ptr(&create_info.instance_layer_names);
-            let (_, instance_extension_names) =
+            let (_a, instance_extension_names) =
                 vec_string_to_vec_cstring_ptr(&create_info.instance_extension_names);
-            let (_, device_extension_names) =
+            let (_a, device_extension_names) =
                 vec_string_to_vec_cstring_ptr(&create_info.device_extension_names);
-            let (_, ignore_debug_message_names) =
+            let (_a, ignore_debug_message_names) =
                 vec_string_to_vec_cstring_ptr(&create_info.ignore_debug_message_names);
 
             let create_info = bindings::EngineVkCreateInfo {
@@ -265,7 +268,7 @@ impl EngineFactoryImplementation for EngineFactoryVk {
         }
     }
 
-    fn create_swap_chain(
+    pub fn create_swap_chain(
         &self,
         device: &RenderDevice,
         immediate_context: &DeviceContext,

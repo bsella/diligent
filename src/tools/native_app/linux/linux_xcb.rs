@@ -4,10 +4,7 @@ use xcb::{x, Xid};
 
 use crate::{
     bindings,
-    core::{
-        graphics_types::RenderDeviceType,
-        vk::engine_factory_vk::{EngineFactoryVk, EngineVkCreateInfo},
-    },
+    core::{engine_factory::EngineCreateInfo, graphics_types::RenderDeviceType},
     tools::native_app::{
         app::App,
         events::{EventHandler, EventResult, MouseButton},
@@ -206,17 +203,16 @@ where
         pDisplay: std::ptr::null_mut(),
     };
 
-    let api = RenderDeviceType::VULKAN;
+    // TODO : Get other device types from console arguments
+    let device_type = RenderDeviceType::VULKAN;
 
-    let app = match api {
-        RenderDeviceType::VULKAN => Application::new::<EngineFactoryVk>(
-            &EngineVkCreateInfo::default(),
-            Some(&native_window),
-            width,
-            height,
-        ),
-        _ => panic!(),
-    };
+    let app = Application::new(
+        device_type,
+        EngineCreateInfo::default(),
+        Some(&native_window),
+        width,
+        height,
+    );
 
     connection.flush().unwrap();
 

@@ -3,8 +3,11 @@ use imgui::{Ui, WindowFlags};
 use crate::{
     bindings::{self, NativeWindow},
     core::{
-        device_context::ResourceStateTransitionMode, engine_factory::EngineFactoryImplementation,
+        device_context::ResourceStateTransitionMode,
+        engine_factory::{AsEngineFactory, EngineCreateInfo},
+        graphics_types::{AdapterMemoryInfo, AdapterType, GraphicsAdapterInfo, RenderDeviceType},
         swap_chain::SwapChain,
+        vk::engine_factory_vk::{get_engine_factory_vk, EngineVkCreateInfo},
     },
     tools::{
         imgui::{
@@ -75,7 +78,7 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
             .size([adapters_wnd_width as f32, 0.0], imgui::Condition::Always)
             .position(
                 [
-                    10.0f32.max(swap_chain_desc.Width as f32 - adapters_wnd_width as f32) - 10.0,
+                    (swap_chain_desc.Width as f32 - adapters_wnd_width as f32).max(10.0) - 10.0,
                     10.0,
                 ],
                 imgui::Condition::Always,
@@ -116,28 +119,132 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
 }
 
 impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
-    fn new<EngineFactory: EngineFactoryImplementation>(
-        engine_create_info: &EngineFactory::EngineCreateInfo,
+    fn new(
+        device_type: RenderDeviceType,
+        mut engine_create_info: EngineCreateInfo,
         window: Option<&NativeWindow>,
         initial_width: u16,
         initial_height: u16,
     ) -> Self {
         let swap_chain_desc = bindings::SwapChainDesc::default();
 
-        let engine_factory = EngineFactory::get();
+        //#[cfg(any(
+        //    feature = "D3D11_SUPPORTED",
+        //    feature = "D3D12_SUPPORTED",
+        //    feature = "VULKAN_SUPPORTED",
+        //    feature = "WEBGPU_SUPPORTED"
+        //))]
+        fn find_adapter(
+            mut adapter_index: Option<usize>,
+            adapter_type: AdapterType,
+            adapters: &[GraphicsAdapterInfo],
+        ) -> Option<usize> {
+            let mut adapter_type = adapter_type.clone();
 
-        let (render_device, immediate_contexts, deferred_contexts) = engine_factory
-            .create_device_and_contexts(engine_create_info)
-            .unwrap();
+            if let Some(adap_id) = adapter_index {
+                if adap_id < adapters.len() {
+                    adapter_type = adapters.get(adap_id).unwrap().adapter_type.clone();
+                } else {
+                    //LOG_ERROR_MESSAGE("Adapter ID (", AdapterId, ") is invalid. Only ", Adapters.size(), " compatible ", (Adapters.size() == 1 ? "adapter" : "adapters"), " present in the system");
+                    adapter_index = None;
+                }
+            }
 
-        let swap_chain = engine_factory
-            .create_swap_chain(
-                &render_device,
-                immediate_contexts.first().unwrap(),
-                &swap_chain_desc,
-                window,
-            )
-            .unwrap();
+            if adapter_index.is_none() && adapter_type != AdapterType::Unknown {
+                adapter_index = adapters
+                    .iter()
+                    .position(|adapter| adapter.adapter_type == adapter_type)
+                    .map_or(None, |id| Some(id));
+            };
+
+            if adapter_index.is_none() {
+                adapter_type = AdapterType::Unknown;
+
+                let mut curr_adapter_mem: Option<&AdapterMemoryInfo> = None;
+                let mut curr_total_memory = 0u64;
+
+                for (i, adapter) in adapters.iter().enumerate() {
+                    if adapter.adapter_type > adapter_type {
+                        // Prefer Discrete over Integrated over Software
+                        adapter_type = adapter.adapter_type.clone();
+                        adapter_index = Some(i);
+                    } else if adapter.adapter_type == adapter_type {
+                        // Select adapter with more memory
+                        let new_adapter_mem = &adapter.memory;
+                        let new_total_memory = new_adapter_mem.local_memory
+                            + new_adapter_mem.host_visible_memory
+                            + new_adapter_mem.unified_memory;
+
+                        if let Some(adapter_mem) = curr_adapter_mem {
+                            let total_memory = adapter_mem.local_memory
+                                + adapter_mem.host_visible_memory
+                                + adapter_mem.unified_memory;
+                            if total_memory > curr_total_memory {
+                                curr_adapter_mem = Some(&new_adapter_mem);
+                                curr_total_memory = total_memory;
+                                adapter_index = Some(i);
+                            }
+                        } else {
+                            curr_adapter_mem = Some(&new_adapter_mem);
+                            curr_total_memory = new_total_memory;
+                            adapter_index = Some(i);
+                        }
+                    }
+                }
+            }
+
+            if let Some(adapter_index) = adapter_index {
+                let adaper_description = &adapters.get(adapter_index).unwrap().description;
+                println!("Using adapter {adapter_index}, : '{adaper_description}'");
+            }
+
+            adapter_index
+        }
+
+        let (render_device, immediate_contexts, deferred_contexts, swap_chain) = match device_type {
+            RenderDeviceType::D3D11 => panic!(),
+            RenderDeviceType::D3D12 => panic!(),
+            RenderDeviceType::GL => panic!(),
+            RenderDeviceType::GLES => panic!(),
+            RenderDeviceType::VULKAN => {
+                let engine_factory = get_engine_factory_vk();
+
+                if let Some(adapter_index) = find_adapter(
+                    None,
+                    AdapterType::Unknown,
+                    engine_factory
+                        .as_engine_factory()
+                        .enumerate_adapters(&engine_create_info.graphics_api_version)
+                        .as_slice(),
+                ) {
+                    engine_create_info.adapter_index.replace(adapter_index);
+                }
+
+                let engine_vk_create_info = EngineVkCreateInfo::new(engine_create_info);
+
+                let (render_device, immediate_contexts, deferred_contexts) = engine_factory
+                    .create_device_and_contexts(&engine_vk_create_info)
+                    .unwrap();
+
+                let swap_chain = engine_factory
+                    .create_swap_chain(
+                        &render_device,
+                        immediate_contexts.first().unwrap(),
+                        &swap_chain_desc,
+                        window,
+                    )
+                    .unwrap();
+
+                (
+                    render_device,
+                    immediate_contexts,
+                    deferred_contexts,
+                    swap_chain,
+                )
+            }
+            RenderDeviceType::METAL => panic!(),
+            RenderDeviceType::WEBGPU => panic!(),
+        };
 
         let sample = GenericSample::new(
             render_device,

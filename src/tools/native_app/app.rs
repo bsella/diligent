@@ -1,4 +1,7 @@
-use crate::{bindings::NativeWindow, core::engine_factory::EngineFactoryImplementation};
+use crate::{
+    bindings::NativeWindow,
+    core::{engine_factory::EngineCreateInfo, graphics_types::RenderDeviceType},
+};
 
 use super::events::EventHandler;
 
@@ -10,8 +13,9 @@ pub enum GoldenImageMode {
 }
 
 pub trait App {
-    fn new<EngineFactory: EngineFactoryImplementation>(
-        engine_create_info: &EngineFactory::EngineCreateInfo,
+    fn new(
+        device_type: RenderDeviceType,
+        engine_create_info: EngineCreateInfo,
         window: Option<&NativeWindow>,
         initial_width: u16,
         initial_height: u16,
