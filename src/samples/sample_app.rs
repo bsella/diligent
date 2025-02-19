@@ -40,6 +40,8 @@ pub struct SampleApp<Sample: SampleBase> {
     _height: u16,
 
     imgui_renderer: ImguiRenderer,
+
+    graphics_adapter: Option<GraphicsAdapterInfo>,
 }
 
 impl<GenericSample: SampleBase> SampleApp<GenericSample> {
@@ -87,7 +89,15 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
             .collapsed(true, imgui::Condition::FirstUseEver)
             .begin()
         {
-            ui.text_disabled(format!("Adapter: {} ({} MB)", "test", 5));
+            if let Some(adapter) = &self.graphics_adapter {
+                if adapter.adapter_type != AdapterType::Unknown {
+                    ui.text_disabled(format!(
+                        "Adapter: {} ({} MB)",
+                        adapter.description,
+                        adapter.memory.local_memory >> 20
+                    ));
+                }
+            }
 
             ui.checkbox("VSync", &mut self.vsync);
         }
@@ -196,50 +206,54 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             adapter_index
         }
 
-        let (render_device, immediate_contexts, deferred_contexts, swap_chain) = match device_type {
-            RenderDeviceType::D3D11 => panic!(),
-            RenderDeviceType::D3D12 => panic!(),
-            RenderDeviceType::GL => panic!(),
-            RenderDeviceType::GLES => panic!(),
-            RenderDeviceType::VULKAN => {
-                let engine_factory = get_engine_factory_vk();
+        let (render_device, immediate_contexts, deferred_contexts, swap_chain, adapter) =
+            match device_type {
+                RenderDeviceType::D3D11 => panic!(),
+                RenderDeviceType::D3D12 => panic!(),
+                RenderDeviceType::GL => panic!(),
+                RenderDeviceType::GLES => panic!(),
+                RenderDeviceType::VULKAN => {
+                    let engine_factory = get_engine_factory_vk();
 
-                if let Some(adapter_index) = find_adapter(
-                    None,
-                    AdapterType::Unknown,
-                    engine_factory
+                    let adapters = engine_factory
                         .as_engine_factory()
-                        .enumerate_adapters(&engine_create_info.graphics_api_version)
-                        .as_slice(),
-                ) {
-                    engine_create_info.adapter_index.replace(adapter_index);
-                }
+                        .enumerate_adapters(&engine_create_info.graphics_api_version);
 
-                let engine_vk_create_info = EngineVkCreateInfo::new(engine_create_info);
+                    let chosen_adapter = if let Some(adapter_index) =
+                        find_adapter(None, AdapterType::Unknown, adapters.as_slice())
+                    {
+                        engine_create_info.adapter_index.replace(adapter_index);
+                        adapters.into_iter().nth(adapter_index)
+                    } else {
+                        None
+                    };
 
-                let (render_device, immediate_contexts, deferred_contexts) = engine_factory
-                    .create_device_and_contexts(&engine_vk_create_info)
-                    .unwrap();
+                    let engine_vk_create_info = EngineVkCreateInfo::new(engine_create_info);
 
-                let swap_chain = engine_factory
-                    .create_swap_chain(
-                        &render_device,
-                        immediate_contexts.first().unwrap(),
-                        &swap_chain_desc,
-                        window,
+                    let (render_device, immediate_contexts, deferred_contexts) = engine_factory
+                        .create_device_and_contexts(&engine_vk_create_info)
+                        .unwrap();
+
+                    let swap_chain = engine_factory
+                        .create_swap_chain(
+                            &render_device,
+                            immediate_contexts.first().unwrap(),
+                            &swap_chain_desc,
+                            window,
+                        )
+                        .unwrap();
+
+                    (
+                        render_device,
+                        immediate_contexts,
+                        deferred_contexts,
+                        swap_chain,
+                        chosen_adapter,
                     )
-                    .unwrap();
-
-                (
-                    render_device,
-                    immediate_contexts,
-                    deferred_contexts,
-                    swap_chain,
-                )
-            }
-            RenderDeviceType::METAL => panic!(),
-            RenderDeviceType::WEBGPU => panic!(),
-        };
+                }
+                RenderDeviceType::METAL => panic!(),
+                RenderDeviceType::WEBGPU => panic!(),
+            };
 
         let sample = GenericSample::new(
             render_device,
@@ -273,6 +287,8 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             _height: initial_height,
 
             imgui_renderer,
+
+            graphics_adapter: adapter,
         }
     }
 
