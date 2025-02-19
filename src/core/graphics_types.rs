@@ -471,7 +471,7 @@ impl Version {
     }
 }
 
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq)]
 pub enum AdapterType {
     Unknown,
     Software,

@@ -5,7 +5,7 @@ use crate::{
     core::{
         device_context::ResourceStateTransitionMode,
         engine_factory::{AsEngineFactory, EngineCreateInfo},
-        graphics_types::{AdapterMemoryInfo, AdapterType, GraphicsAdapterInfo, RenderDeviceType},
+        graphics_types::{AdapterType, GraphicsAdapterInfo, RenderDeviceType},
         swap_chain::SwapChain,
         vk::engine_factory_vk::{get_engine_factory_vk, EngineVkCreateInfo},
     },
@@ -139,57 +139,52 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             adapter_type: AdapterType,
             adapters: &[GraphicsAdapterInfo],
         ) -> Option<usize> {
-            let mut adapter_type = adapter_type.clone();
+            let mut adapter_type = &adapter_type;
 
             if let Some(adap_id) = adapter_index {
                 if adap_id < adapters.len() {
-                    adapter_type = adapters.get(adap_id).unwrap().adapter_type.clone();
+                    adapter_type = &adapters.get(adap_id).unwrap().adapter_type;
                 } else {
                     //LOG_ERROR_MESSAGE("Adapter ID (", AdapterId, ") is invalid. Only ", Adapters.size(), " compatible ", (Adapters.size() == 1 ? "adapter" : "adapters"), " present in the system");
                     adapter_index = None;
                 }
             }
 
-            if adapter_index.is_none() && adapter_type != AdapterType::Unknown {
+            if adapter_index.is_none() && *adapter_type != AdapterType::Unknown {
                 adapter_index = adapters
                     .iter()
-                    .position(|adapter| adapter.adapter_type == adapter_type)
+                    .position(|adapter| adapter.adapter_type == *adapter_type)
                     .map_or(None, |id| Some(id));
             };
 
             if adapter_index.is_none() {
-                adapter_type = AdapterType::Unknown;
+                if let Some((index, _best_adapter)) =
+                    adapters
+                        .iter()
+                        .enumerate()
+                        .max_by(|(_, &ref adapter1), (_, &ref adapter2)| {
+                            // Prefer Discrete over Integrated over Software
+                            let compare_type =
+                                |adapter1: &GraphicsAdapterInfo, adapter2: &GraphicsAdapterInfo| {
+                                    adapter1.adapter_type.cmp(&adapter2.adapter_type)
+                                };
 
-                let mut curr_adapter_mem: Option<&AdapterMemoryInfo> = None;
-                let mut curr_total_memory = 0u64;
+                            // Select adapter with most memory
+                            let get_total_mem = |adapter: &GraphicsAdapterInfo| {
+                                adapter.memory.local_memory
+                                    + adapter.memory.host_visible_memory
+                                    + adapter.memory.unified_memory
+                            };
+                            let compare_memory =
+                                |adapter1: &GraphicsAdapterInfo, adapter2: &GraphicsAdapterInfo| {
+                                    get_total_mem(adapter1).cmp(&get_total_mem(adapter2))
+                                };
 
-                for (i, adapter) in adapters.iter().enumerate() {
-                    if adapter.adapter_type > adapter_type {
-                        // Prefer Discrete over Integrated over Software
-                        adapter_type = adapter.adapter_type.clone();
-                        adapter_index = Some(i);
-                    } else if adapter.adapter_type == adapter_type {
-                        // Select adapter with more memory
-                        let new_adapter_mem = &adapter.memory;
-                        let new_total_memory = new_adapter_mem.local_memory
-                            + new_adapter_mem.host_visible_memory
-                            + new_adapter_mem.unified_memory;
-
-                        if let Some(adapter_mem) = curr_adapter_mem {
-                            let total_memory = adapter_mem.local_memory
-                                + adapter_mem.host_visible_memory
-                                + adapter_mem.unified_memory;
-                            if total_memory > curr_total_memory {
-                                curr_adapter_mem = Some(&new_adapter_mem);
-                                curr_total_memory = total_memory;
-                                adapter_index = Some(i);
-                            }
-                        } else {
-                            curr_adapter_mem = Some(&new_adapter_mem);
-                            curr_total_memory = new_total_memory;
-                            adapter_index = Some(i);
-                        }
-                    }
+                            compare_type(&adapter1, &adapter2)
+                                .then(compare_memory(&adapter1, &adapter2))
+                        })
+                {
+                    adapter_index = Some(index);
                 }
             }
 
