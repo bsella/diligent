@@ -70,6 +70,7 @@ impl AsDeviceObject for PipelineResourceSignature {
 }
 
 impl PipelineResourceSignature {
+    #[allow(dead_code)]
     pub(crate) fn new(pipeline_rs_ptr: *mut bindings::IPipelineResourceSignature) -> Self {
         fn create_shader_resource_variables(
             pipeline_rs_ptr: *mut bindings::IPipelineResourceSignature,
