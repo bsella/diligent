@@ -5,6 +5,10 @@ edition = "2021"
 build = "build.rs"
 exclude = ["/DiligentEngine"]
 
+description = "A port of the Diligent Engine to Rust"
+
+license-file = "LICENSE.md"
+
 [build-dependencies]
 bindgen = "0.71.1"
 cmake   = "0.1"
