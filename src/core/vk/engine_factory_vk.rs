@@ -11,6 +11,7 @@ use crate::core::engine_factory::AsEngineFactory;
 use crate::core::render_device::RenderDevice;
 use crate::core::swap_chain::SwapChain;
 use crate::core::swap_chain::SwapChainDesc;
+use crate::tools::native_app::NativeWindow;
 
 pub struct EngineVkCreateInfo {
     engine_create_info: EngineCreateInfo,
@@ -274,10 +275,13 @@ impl EngineFactoryVk {
         device: &RenderDevice,
         immediate_context: &DeviceContext,
         swapchain_desc: &SwapChainDesc,
-        window: Option<&bindings::NativeWindow>,
+        window: Option<&NativeWindow>,
     ) -> Option<SwapChain> {
         let swapchain_desc = bindings::SwapChainDesc::from(swapchain_desc);
         let mut swap_chain_ptr = std::ptr::null_mut();
+
+        let window = window.map(|window| bindings::NativeWindow::from(window));
+
         unsafe {
             (*self.virtual_functions)
                 .EngineFactoryVk
@@ -287,11 +291,9 @@ impl EngineFactoryVk {
                 device.render_device,
                 immediate_context.device_context,
                 std::ptr::addr_of!(swapchain_desc),
-                if let Some(window) = window {
-                    std::ptr::from_ref(window)
-                } else {
-                    std::ptr::null()
-                },
+                window
+                    .as_ref()
+                    .map_or(std::ptr::null(), |window| std::ptr::from_ref(window)),
                 std::ptr::addr_of_mut!(swap_chain_ptr),
             );
         }

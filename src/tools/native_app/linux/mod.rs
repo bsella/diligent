@@ -3,6 +3,9 @@ use super::app::App;
 #[cfg(feature = "VULKAN_SUPPORTED")]
 mod linux_xcb;
 
+#[cfg(feature = "VULKAN_SUPPORTED")]
+pub type NativeWindow = linux_xcb::NativeWindow;
+
 #[cfg(not(feature = "VULKAN_SUPPORTED"))]
 mod linux_xlib;
 

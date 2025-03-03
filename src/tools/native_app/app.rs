@@ -1,6 +1,6 @@
-use crate::{bindings::NativeWindow, core::engine_factory::EngineCreateInfo};
+use crate::core::engine_factory::EngineCreateInfo;
 
-use super::{app_settings::AppSettings, events::EventHandler};
+use super::{app_settings::AppSettings, events::EventHandler, NativeWindow};
 
 pub enum GoldenImageMode {
     None,

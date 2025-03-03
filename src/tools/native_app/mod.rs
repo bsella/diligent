@@ -8,6 +8,9 @@ pub mod events;
 mod linux;
 
 #[cfg(target_os = "linux")]
+pub type NativeWindow = linux::NativeWindow;
+
+#[cfg(target_os = "linux")]
 pub fn main<Application>() -> Result<(), std::io::Error>
 where
     Application: App,

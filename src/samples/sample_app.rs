@@ -1,7 +1,6 @@
 use imgui::WindowFlags;
 
 use crate::{
-    bindings::NativeWindow,
     core::{
         device_context::ResourceStateTransitionMode,
         engine_factory::{AsEngineFactory, EngineCreateInfo},
@@ -18,6 +17,7 @@ use crate::{
         native_app::{
             app::{App, GoldenImageMode},
             events::{EventHandler, EventResult},
+            NativeWindow,
         },
     },
 };

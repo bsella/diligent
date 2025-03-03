@@ -1,5 +1,3 @@
-use std::os::raw::c_void;
-
 use xcb::{x, Xid};
 
 use crate::{
@@ -11,6 +9,30 @@ use crate::{
         events::{EventHandler, EventResult, MouseButton},
     },
 };
+
+pub struct NativeWindow {
+    window_id: u32,
+    xcb_connection_ptr: *mut xcb::ffi::xcb_connection_t,
+}
+
+impl NativeWindow {
+    fn new(window_id: u32, xcb_connection_ptr: *mut xcb::ffi::xcb_connection_t) -> Self {
+        NativeWindow {
+            window_id,
+            xcb_connection_ptr,
+        }
+    }
+}
+
+impl From<&NativeWindow> for bindings::NativeWindow {
+    fn from(value: &NativeWindow) -> Self {
+        bindings::NativeWindow {
+            WindowId: value.window_id,
+            pXCBConnection: value.xcb_connection_ptr as *mut ::std::os::raw::c_void,
+            pDisplay: std::ptr::null_mut(),
+        }
+    }
+}
 
 fn init_connection_and_window(
     width: u16,
@@ -197,11 +219,7 @@ where
     let (connection, window, atom_delete_window) =
         init_connection_and_window(width, height).unwrap();
 
-    let native_window = bindings::NativeWindow {
-        WindowId: window.resource_id(),
-        pXCBConnection: connection.get_raw_conn() as *mut c_void,
-        pDisplay: std::ptr::null_mut(),
-    };
+    let native_window = NativeWindow::new(window.resource_id(), connection.get_raw_conn());
 
     let app = Application::new(
         settings,
