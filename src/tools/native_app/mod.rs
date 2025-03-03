@@ -1,5 +1,6 @@
 use app::App;
 pub mod app;
+pub mod app_settings;
 
 pub mod events;
 
@@ -11,5 +12,6 @@ pub fn main<Application>() -> Result<(), std::io::Error>
 where
     Application: App,
 {
-    linux::main::<Application>()
+    let settings = Application::parse_settings_from_cli();
+    linux::main::<Application>(settings)
 }

@@ -7,9 +7,9 @@ mod linux_xcb;
 mod linux_xlib;
 
 #[cfg(feature = "VULKAN_SUPPORTED")]
-pub fn main<Application>() -> Result<(), std::io::Error>
+pub fn main<Application>(settings: Application::AppSettings) -> Result<(), std::io::Error>
 where
     Application: App,
 {
-    linux_xcb::main::<Application>()
+    linux_xcb::main::<Application>(settings)
 }

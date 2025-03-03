@@ -4,9 +4,10 @@ use xcb::{x, Xid};
 
 use crate::{
     bindings,
-    core::{engine_factory::EngineCreateInfo, graphics_types::RenderDeviceType},
+    core::engine_factory::EngineCreateInfo,
     tools::native_app::{
         app::App,
+        app_settings::AppSettings,
         events::{EventHandler, EventResult, MouseButton},
     },
 };
@@ -187,12 +188,11 @@ impl EventHandler for XcbEventHandler {
     }
 }
 
-pub(super) fn main<Application>() -> Result<(), std::io::Error>
+pub(super) fn main<Application>(settings: Application::AppSettings) -> Result<(), std::io::Error>
 where
     Application: App,
 {
-    let width = 1024;
-    let height = 768;
+    let (width, height) = settings.get_window_dimensions();
 
     let (connection, window, atom_delete_window) =
         init_connection_and_window(width, height).unwrap();
@@ -203,11 +203,8 @@ where
         pDisplay: std::ptr::null_mut(),
     };
 
-    // TODO : Get other device types from console arguments
-    let device_type = RenderDeviceType::VULKAN;
-
     let app = Application::new(
-        device_type,
+        settings,
         EngineCreateInfo::default(),
         Some(&native_window),
         width,

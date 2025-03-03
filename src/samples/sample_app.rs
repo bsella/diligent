@@ -1,4 +1,4 @@
-use imgui::{Ui, WindowFlags};
+use imgui::WindowFlags;
 
 use crate::{
     bindings::{self, NativeWindow},
@@ -9,6 +9,7 @@ use crate::{
         swap_chain::SwapChain,
         vk::engine_factory_vk::{get_engine_factory_vk, EngineVkCreateInfo},
     },
+    samples::sample_app_settings::SampleAppSettings,
     tools::{
         imgui::{
             events::imgui_handle_event,
@@ -21,10 +22,11 @@ use crate::{
     },
 };
 
-use super::sample::SampleBase;
+use super::{sample::SampleBase, sample_app_settings::parse_sample_app_settings};
 
 pub struct SampleApp<Sample: SampleBase> {
     _app_title: String,
+
     swap_chain: SwapChain,
 
     _golden_image_mode: GoldenImageMode,
@@ -36,12 +38,12 @@ pub struct SampleApp<Sample: SampleBase> {
 
     current_time: f64,
 
-    _width: u16,
-    _height: u16,
-
     imgui_renderer: ImguiRenderer,
 
     graphics_adapter: Option<GraphicsAdapterInfo>,
+
+    show_ui: bool,
+    show_adapters_dialog: bool,
 }
 
 impl<GenericSample: SampleBase> SampleApp<GenericSample> {
@@ -68,40 +70,42 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
         self.sample.update(current_time, elapsed_time);
     }
 
-    fn update_ui(&mut self) -> &mut Ui {
+    fn update_ui(&mut self) {
         let ui = self.imgui_renderer.new_frame();
 
         let swap_chain_desc = self.swap_chain.get_desc();
 
         let adapters_wnd_width = swap_chain_desc.Width.min(330);
 
-        if let Some(_window_tokend) = ui
-            .window("Adapters")
-            .size([adapters_wnd_width as f32, 0.0], imgui::Condition::Always)
-            .position(
-                [
-                    (swap_chain_desc.Width as f32 - adapters_wnd_width as f32).max(10.0) - 10.0,
-                    10.0,
-                ],
-                imgui::Condition::Always,
-            )
-            .flags(WindowFlags::NO_RESIZE)
-            .collapsed(true, imgui::Condition::FirstUseEver)
-            .begin()
-        {
-            if let Some(adapter) = &self.graphics_adapter {
-                if adapter.adapter_type != AdapterType::Unknown {
-                    ui.text_disabled(format!(
-                        "Adapter: {} ({} MB)",
-                        adapter.description,
-                        adapter.memory.local_memory >> 20
-                    ));
+        if self.show_adapters_dialog {
+            if let Some(_window_token) = ui
+                .window("Adapters")
+                .size([adapters_wnd_width as f32, 0.0], imgui::Condition::Always)
+                .position(
+                    [
+                        (swap_chain_desc.Width as f32 - adapters_wnd_width as f32).max(10.0) - 10.0,
+                        10.0,
+                    ],
+                    imgui::Condition::Always,
+                )
+                .flags(WindowFlags::NO_RESIZE)
+                .collapsed(true, imgui::Condition::FirstUseEver)
+                .begin()
+            {
+                if let Some(adapter) = &self.graphics_adapter {
+                    if adapter.adapter_type != AdapterType::Unknown {
+                        ui.text_disabled(format!(
+                            "Adapter: {} ({} MB)",
+                            adapter.description,
+                            adapter.memory.local_memory >> 20
+                        ));
+                    }
                 }
-            }
 
-            ui.checkbox("VSync", &mut self.vsync);
+                ui.checkbox("VSync", &mut self.vsync);
+            }
         }
-        ui
+        self.sample.update_ui(ui);
     }
 
     fn render(&self) {
@@ -129,8 +133,14 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
 }
 
 impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
+    type AppSettings = SampleAppSettings;
+
+    fn parse_settings_from_cli() -> SampleAppSettings {
+        parse_sample_app_settings()
+    }
+
     fn new(
-        device_type: RenderDeviceType,
+        app_settings: SampleAppSettings,
         mut engine_create_info: EngineCreateInfo,
         window: Option<&NativeWindow>,
         initial_width: u16,
@@ -207,7 +217,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
         }
 
         let (render_device, immediate_contexts, deferred_contexts, swap_chain, adapter) =
-            match device_type {
+            match app_settings.device_type {
                 RenderDeviceType::D3D11 => panic!(),
                 RenderDeviceType::D3D12 => panic!(),
                 RenderDeviceType::GL => panic!(),
@@ -219,9 +229,11 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
                         .as_engine_factory()
                         .enumerate_adapters(&engine_create_info.graphics_api_version);
 
-                    let chosen_adapter = if let Some(adapter_index) =
-                        find_adapter(None, AdapterType::Unknown, adapters.as_slice())
-                    {
+                    let chosen_adapter = if let Some(adapter_index) = find_adapter(
+                        app_settings.adapter_index,
+                        app_settings.adapter_type,
+                        adapters.as_slice(),
+                    ) {
                         engine_create_info.adapter_index.replace(adapter_index);
                         adapters.into_iter().nth(adapter_index)
                     } else {
@@ -272,6 +284,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
 
         SampleApp::<GenericSample> {
             _app_title: GenericSample::get_name().to_string(),
+
             swap_chain,
 
             _golden_image_mode: GoldenImageMode::None,
@@ -279,12 +292,12 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
 
             sample,
 
-            vsync: false,
+            vsync: app_settings.vsync,
+
+            show_ui: app_settings.show_ui,
+            show_adapters_dialog: app_settings.show_adapters_dialog,
 
             current_time: 0.0,
-
-            _width: initial_width,
-            _height: initial_height,
 
             imgui_renderer,
 
@@ -318,11 +331,13 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
 
             self.render();
 
-            self.update_ui();
-            self.imgui_renderer.render(
-                self.sample.get_immediate_context(),
-                self.sample.get_render_device(),
-            );
+            if self.show_ui {
+                self.update_ui();
+                self.imgui_renderer.render(
+                    self.sample.get_immediate_context(),
+                    self.sample.get_render_device(),
+                );
+            }
 
             self.present();
 

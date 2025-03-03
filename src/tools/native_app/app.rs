@@ -1,9 +1,6 @@
-use crate::{
-    bindings::NativeWindow,
-    core::{engine_factory::EngineCreateInfo, graphics_types::RenderDeviceType},
-};
+use crate::{bindings::NativeWindow, core::engine_factory::EngineCreateInfo};
 
-use super::events::EventHandler;
+use super::{app_settings::AppSettings, events::EventHandler};
 
 pub enum GoldenImageMode {
     None,
@@ -13,8 +10,12 @@ pub enum GoldenImageMode {
 }
 
 pub trait App {
+    type AppSettings: AppSettings;
+
+    fn parse_settings_from_cli() -> Self::AppSettings;
+
     fn new(
-        device_type: RenderDeviceType,
+        app_settings: Self::AppSettings,
         engine_create_info: EngineCreateInfo,
         window: Option<&NativeWindow>,
         initial_width: u16,
