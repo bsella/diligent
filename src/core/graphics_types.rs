@@ -1264,3 +1264,37 @@ impl Into<GraphicsAdapterInfo> for bindings::GraphicsAdapterInfo {
         }
     }
 }
+
+pub enum SurfaceTransform {
+    Optimal,
+    Identity,
+    Rotate90,
+    Rotate180,
+    Rotate270,
+    HorizontalMirror,
+    HorizontalMirrorRotate90,
+    HorizontalMirrorRotate180,
+    HorizontalMirrorRotate270,
+}
+
+impl From<&SurfaceTransform> for bindings::SURFACE_TRANSFORM {
+    fn from(value: &SurfaceTransform) -> Self {
+        (match value {
+            SurfaceTransform::Optimal => bindings::SURFACE_TRANSFORM_OPTIMAL,
+            SurfaceTransform::Identity => bindings::SURFACE_TRANSFORM_IDENTITY,
+            SurfaceTransform::Rotate90 => bindings::SURFACE_TRANSFORM_ROTATE_90,
+            SurfaceTransform::Rotate180 => bindings::SURFACE_TRANSFORM_ROTATE_180,
+            SurfaceTransform::Rotate270 => bindings::SURFACE_TRANSFORM_ROTATE_270,
+            SurfaceTransform::HorizontalMirror => bindings::SURFACE_TRANSFORM_HORIZONTAL_MIRROR,
+            SurfaceTransform::HorizontalMirrorRotate90 => {
+                bindings::SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_90
+            }
+            SurfaceTransform::HorizontalMirrorRotate180 => {
+                bindings::SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_180
+            }
+            SurfaceTransform::HorizontalMirrorRotate270 => {
+                bindings::SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270
+            }
+        }) as bindings::SURFACE_TRANSFORM
+    }
+}

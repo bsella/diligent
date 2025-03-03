@@ -1,12 +1,12 @@
 use imgui::WindowFlags;
 
 use crate::{
-    bindings::{self, NativeWindow},
+    bindings::NativeWindow,
     core::{
         device_context::ResourceStateTransitionMode,
         engine_factory::{AsEngineFactory, EngineCreateInfo},
         graphics_types::{AdapterType, GraphicsAdapterInfo, RenderDeviceType},
-        swap_chain::SwapChain,
+        swap_chain::{SwapChain, SwapChainDesc},
         vk::engine_factory_vk::{get_engine_factory_vk, EngineVkCreateInfo},
     },
     samples::sample_app_settings::SampleAppSettings,
@@ -146,7 +146,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
         initial_width: u16,
         initial_height: u16,
     ) -> Self {
-        let swap_chain_desc = bindings::SwapChainDesc::default();
+        let swap_chain_desc = SwapChainDesc::default();
 
         //#[cfg(any(
         //    feature = "D3D11_SUPPORTED",

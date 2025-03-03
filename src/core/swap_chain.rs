@@ -1,23 +1,111 @@
+use bitflags::bitflags;
+use static_assertions::const_assert;
+
 use crate::bindings;
 
 use super::{
+    graphics_types::SurfaceTransform,
     object::{AsObject, Object},
     texture_view::TextureView,
 };
 
-impl Default for bindings::SwapChainDesc {
+bitflags! {
+    pub struct SwapChainUsageFlags: bindings::_SWAP_CHAIN_USAGE_FLAGS {
+        const None            = bindings::SWAP_CHAIN_USAGE_NONE;
+        const RenderTarget    = bindings::SWAP_CHAIN_USAGE_RENDER_TARGET;
+        const ShaderResource  = bindings::SWAP_CHAIN_USAGE_SHADER_RESOURCE;
+        const InputAttachment = bindings::SWAP_CHAIN_USAGE_INPUT_ATTACHMENT;
+        const CopySource      = bindings::SWAP_CHAIN_USAGE_COPY_SOURCE;
+    }
+}
+const_assert!(bindings::SWAP_CHAIN_USAGE_LAST == 8);
+
+pub struct SwapChainDesc {
+    width: u32,
+    height: u32,
+    color_buffer_format: bindings::TEXTURE_FORMAT,
+    depth_buffer_format: bindings::TEXTURE_FORMAT,
+    usage: SwapChainUsageFlags,
+    pre_transform: SurfaceTransform,
+    buffer_count: u32,
+    default_depth_value: f32,
+    default_stencil_value: u8,
+    is_primary: bool,
+}
+
+impl SwapChainDesc {
+    pub fn width(mut self, width: u32) -> Self {
+        self.width = width;
+        self
+    }
+    pub fn height(mut self, height: u32) -> Self {
+        self.height = height;
+        self
+    }
+    pub fn color_buffer_format(mut self, color_buffer_format: bindings::TEXTURE_FORMAT) -> Self {
+        self.color_buffer_format = color_buffer_format;
+        self
+    }
+    pub fn depth_buffer_format(mut self, depth_buffer_format: bindings::TEXTURE_FORMAT) -> Self {
+        self.depth_buffer_format = depth_buffer_format;
+        self
+    }
+    pub fn usage(mut self, usage: SwapChainUsageFlags) -> Self {
+        self.usage = usage;
+        self
+    }
+    pub fn pre_transform(mut self, pre_transform: SurfaceTransform) -> Self {
+        self.pre_transform = pre_transform;
+        self
+    }
+    pub fn buffer_count(mut self, buffer_count: u32) -> Self {
+        self.buffer_count = buffer_count;
+        self
+    }
+    pub fn default_depth_value(mut self, default_depth_value: f32) -> Self {
+        self.default_depth_value = default_depth_value;
+        self
+    }
+    pub fn default_stencil_value(mut self, default_stencil_value: u8) -> Self {
+        self.default_stencil_value = default_stencil_value;
+        self
+    }
+    pub fn is_primary(mut self, is_primary: bool) -> Self {
+        self.is_primary = is_primary;
+        self
+    }
+}
+
+impl Default for SwapChainDesc {
     fn default() -> Self {
+        SwapChainDesc {
+            width: 0,
+            height: 0,
+            color_buffer_format: bindings::TEX_FORMAT_RGBA8_UNORM_SRGB as u16,
+            depth_buffer_format: bindings::TEX_FORMAT_D32_FLOAT as u16,
+            usage: SwapChainUsageFlags::RenderTarget,
+            pre_transform: SurfaceTransform::Optimal,
+            buffer_count: 2,
+            default_depth_value: 1.0,
+            default_stencil_value: 0,
+            is_primary: true,
+        }
+    }
+}
+
+impl From<&SwapChainDesc> for bindings::SwapChainDesc {
+    fn from(value: &SwapChainDesc) -> Self {
         bindings::SwapChainDesc {
-            Width: 0,
-            Height: 0,
-            ColorBufferFormat: bindings::TEX_FORMAT_RGBA8_UNORM_SRGB as u16,
-            DepthBufferFormat: bindings::TEX_FORMAT_D32_FLOAT as u16,
-            Usage: bindings::SWAP_CHAIN_USAGE_RENDER_TARGET,
-            PreTransform: bindings::SURFACE_TRANSFORM_OPTIMAL,
-            BufferCount: 2,
-            DefaultDepthValue: 1.0,
-            DefaultStencilValue: 0,
-            IsPrimary: true,
+            Width: value.width,
+            Height: value.height,
+            ColorBufferFormat: value.color_buffer_format,
+            DepthBufferFormat: value.depth_buffer_format,
+            Usage: value.usage.bits(),
+            PreTransform: bindings::SURFACE_TRANSFORM::from(&value.pre_transform),
+            BufferCount: value.buffer_count,
+            DefaultDepthValue: value.default_depth_value,
+            DefaultStencilValue: value.default_stencil_value,
+            IsPrimary: value.is_primary,
         }
     }
 }
