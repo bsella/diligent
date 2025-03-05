@@ -2,6 +2,7 @@ use diligent::bindings;
 use diligent::core::device_context::DeviceContext;
 use diligent::core::device_context::DrawAttribs;
 use diligent::core::device_context::ResourceStateTransitionMode;
+use diligent::core::engine_factory::EngineFactory;
 use diligent::core::graphics_types::PrimitiveTopology;
 use diligent::core::graphics_types::ShaderType;
 use diligent::core::pipeline_state::BlendStateDesc;
@@ -23,7 +24,6 @@ use diligent::tools::native_app;
 struct HelloTriangle {
     render_device: RenderDevice,
     immediate_contexts: Vec<DeviceContext>,
-    _deferred_contexts: Vec<DeviceContext>,
 
     pipeline_state: PipelineState,
 }
@@ -38,9 +38,10 @@ impl SampleBase for HelloTriangle {
     }
 
     fn new(
+        _engine_factory: &EngineFactory,
         render_device: RenderDevice,
         immediate_contexts: Vec<DeviceContext>,
-        deferred_contexts: Vec<DeviceContext>,
+        _deferred_contexts: Vec<DeviceContext>,
         swap_chain: &SwapChain,
     ) -> Self {
         let vertex_shader = {
@@ -144,7 +145,6 @@ void main(in PSInput PSIn, out PSOutput PSOut)
         HelloTriangle {
             render_device,
             immediate_contexts,
-            _deferred_contexts: deferred_contexts,
             pipeline_state,
         }
     }

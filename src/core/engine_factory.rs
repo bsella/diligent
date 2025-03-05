@@ -1,4 +1,4 @@
-use std::os::raw::c_void;
+use std::{os::raw::c_void, path::PathBuf};
 
 use crate::bindings;
 
@@ -6,6 +6,7 @@ use super::{
     data_blob::DataBlob,
     graphics_types::{DeviceFeatures, GraphicsAdapterInfo, Version},
     object::Object,
+    shader::ShaderSourceInputStreamFactory,
 };
 
 pub struct EngineCreateInfo {
@@ -115,10 +116,39 @@ impl EngineFactory {
         }
     }
 
-    //fn create_default_shader_source_stream_factory(&self, search_directories: Vec<PathBuf>) -> bindings::IShaderSourceInputStreamFactory;
+    pub fn create_default_shader_source_stream_factory(
+        &self,
+        search_directories: &[&PathBuf],
+    ) -> Option<ShaderSourceInputStreamFactory> {
+        let mut search = String::new();
+
+        search_directories.iter().for_each(|&dir| {
+            search += dir.to_str().to_owned().unwrap();
+            search += ";"
+        });
+
+        let search = std::ffi::CString::new(search).unwrap();
+
+        let mut stream_factory_ptr = std::ptr::null_mut();
+        unsafe {
+            (*self.virtual_functions)
+                .EngineFactory
+                .CreateDefaultShaderSourceStreamFactory
+                .unwrap_unchecked()(
+                self.engine_factory,
+                search.as_ptr(),
+                std::ptr::addr_of_mut!(stream_factory_ptr),
+            );
+        }
+        if stream_factory_ptr.is_null() {
+            None
+        } else {
+            Some(ShaderSourceInputStreamFactory::new(stream_factory_ptr))
+        }
+    }
 
     pub fn create_data_blob<T>(&self, initial_size: usize, data: *const T) -> Option<DataBlob> {
-        let mut data_blob_ptr: *mut bindings::IDataBlob = std::ptr::null_mut();
+        let mut data_blob_ptr = std::ptr::null_mut();
         unsafe {
             (*self.virtual_functions)
                 .EngineFactory

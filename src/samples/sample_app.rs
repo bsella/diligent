@@ -6,7 +6,7 @@ use crate::{
         engine_factory::{AsEngineFactory, EngineCreateInfo},
         graphics_types::{AdapterType, GraphicsAdapterInfo, RenderDeviceType},
         swap_chain::{SwapChain, SwapChainDesc},
-        vk::engine_factory_vk::{get_engine_factory_vk, EngineVkCreateInfo},
+        vk::engine_factory_vk::{get_engine_factory_vk, EngineFactoryVk, EngineVkCreateInfo},
     },
     samples::sample_app_settings::SampleAppSettings,
     tools::{
@@ -44,6 +44,18 @@ pub struct SampleApp<Sample: SampleBase> {
 
     show_ui: bool,
     show_adapters_dialog: bool,
+}
+
+enum EngineFactory {
+    VULKAN(EngineFactoryVk),
+}
+
+impl AsEngineFactory for EngineFactory {
+    fn as_engine_factory(&self) -> &crate::core::engine_factory::EngineFactory {
+        match self {
+            Self::VULKAN(factory) => factory.as_engine_factory(),
+        }
+    }
 }
 
 impl<GenericSample: SampleBase> SampleApp<GenericSample> {
@@ -216,30 +228,34 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             adapter_index
         }
 
-        let (render_device, immediate_contexts, deferred_contexts, swap_chain, adapter) =
-            match app_settings.device_type {
-                RenderDeviceType::D3D11 => panic!(),
-                RenderDeviceType::D3D12 => panic!(),
-                RenderDeviceType::GL => panic!(),
-                RenderDeviceType::GLES => panic!(),
-                RenderDeviceType::VULKAN => {
-                    let engine_factory = get_engine_factory_vk();
+        let engine_factory = match app_settings.device_type {
+            RenderDeviceType::D3D11 => panic!(),
+            RenderDeviceType::D3D12 => panic!(),
+            RenderDeviceType::GL => panic!(),
+            RenderDeviceType::GLES => panic!(),
+            RenderDeviceType::VULKAN => EngineFactory::VULKAN(get_engine_factory_vk()),
+            RenderDeviceType::METAL => panic!(),
+            RenderDeviceType::WEBGPU => panic!(),
+        };
 
-                    let adapters = engine_factory
-                        .as_engine_factory()
-                        .enumerate_adapters(&engine_create_info.graphics_api_version);
+        let adapters = engine_factory
+            .as_engine_factory()
+            .enumerate_adapters(&engine_create_info.graphics_api_version);
 
-                    let chosen_adapter = if let Some(adapter_index) = find_adapter(
-                        app_settings.adapter_index,
-                        app_settings.adapter_type,
-                        adapters.as_slice(),
-                    ) {
-                        engine_create_info.adapter_index.replace(adapter_index);
-                        adapters.into_iter().nth(adapter_index)
-                    } else {
-                        None
-                    };
+        let adapter = if let Some(adapter_index) = find_adapter(
+            app_settings.adapter_index,
+            app_settings.adapter_type,
+            adapters.as_slice(),
+        ) {
+            engine_create_info.adapter_index.replace(adapter_index);
+            adapters.into_iter().nth(adapter_index)
+        } else {
+            None
+        };
 
+        let (render_device, immediate_contexts, deferred_contexts, swap_chain) =
+            match &engine_factory {
+                EngineFactory::VULKAN(engine_factory) => {
                     let engine_vk_create_info = EngineVkCreateInfo::new(engine_create_info);
 
                     let (render_device, immediate_contexts, deferred_contexts) = engine_factory
@@ -260,14 +276,12 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
                         immediate_contexts,
                         deferred_contexts,
                         swap_chain,
-                        chosen_adapter,
                     )
                 }
-                RenderDeviceType::METAL => panic!(),
-                RenderDeviceType::WEBGPU => panic!(),
             };
 
         let sample = GenericSample::new(
+            engine_factory.as_engine_factory(),
             render_device,
             immediate_contexts,
             deferred_contexts,

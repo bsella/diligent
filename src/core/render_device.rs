@@ -1,3 +1,5 @@
+use std::os::raw::c_void;
+
 use crate::bindings;
 
 use super::buffer::{Buffer, BufferDesc};
@@ -51,11 +53,7 @@ impl RenderDevice {
         }
     }
 
-    pub fn create_buffer(
-        &self,
-        buffer_desc: &BufferDesc,
-        buffer_data: Option<&bindings::BufferData>,
-    ) -> Option<Buffer> {
+    pub fn create_buffer(&self, buffer_desc: &BufferDesc) -> Option<Buffer> {
         let mut buffer_ptr = std::ptr::null_mut();
 
         let buffer_desc = bindings::BufferDesc::from(buffer_desc);
@@ -66,10 +64,41 @@ impl RenderDevice {
                 .unwrap_unchecked()(
                 self.render_device,
                 std::ptr::addr_of!(buffer_desc),
-                match buffer_data {
-                    Some(&data) => std::ptr::addr_of!(data),
-                    None => std::ptr::null(),
-                },
+                std::ptr::null(),
+                std::ptr::addr_of_mut!(buffer_ptr),
+            )
+        }
+
+        if buffer_ptr.is_null() {
+            None
+        } else {
+            Some(Buffer::new(buffer_ptr))
+        }
+    }
+
+    pub fn create_buffer_with_data<T>(
+        &self,
+        buffer_desc: &BufferDesc,
+        buffer_data: &[T],
+        device_context: Option<&DeviceContext>,
+    ) -> Option<Buffer> {
+        let mut buffer_ptr = std::ptr::null_mut();
+
+        let buffer_data = bindings::BufferData {
+            pData: buffer_data.as_ptr() as *const c_void,
+            DataSize: std::mem::size_of_val(buffer_data) as u64,
+            pContext: device_context.map_or(std::ptr::null_mut(), |context| context.device_context),
+        };
+
+        let buffer_desc = bindings::BufferDesc::from(buffer_desc);
+        unsafe {
+            (*self.virtual_functions)
+                .RenderDevice
+                .CreateBuffer
+                .unwrap_unchecked()(
+                self.render_device,
+                std::ptr::from_ref(&buffer_desc),
+                std::ptr::from_ref(&buffer_data),
                 std::ptr::addr_of_mut!(buffer_ptr),
             )
         }

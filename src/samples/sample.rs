@@ -1,12 +1,16 @@
 use imgui::Ui;
 
 use crate::{
-    core::{device_context::DeviceContext, render_device::RenderDevice, swap_chain::SwapChain},
+    core::{
+        device_context::DeviceContext, engine_factory::EngineFactory, render_device::RenderDevice,
+        swap_chain::SwapChain,
+    },
     tools::native_app::events::EventResult,
 };
 
 pub trait SampleBase {
     fn new(
+        engine_factory: &EngineFactory,
         render_device: RenderDevice,
         immediate_contexts: Vec<DeviceContext>,
         deferred_contexts: Vec<DeviceContext>,

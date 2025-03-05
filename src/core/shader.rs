@@ -3,15 +3,19 @@ use std::{
     path::PathBuf,
 };
 
+use bitflags::bitflags;
+use static_assertions::const_assert;
+
 use crate::bindings::{self, Version};
 
 use super::{
     device_object::{AsDeviceObject, DeviceObject},
     graphics_types::ShaderType,
+    object::{AsObject, Object},
 };
 
 pub enum ShaderSource<'a> {
-    FilePath(PathBuf), // TODO Option<IShaderSourceInputStreamFactory>
+    FilePath(PathBuf),
     SourceCode(&'a str),
     ByteCode(*const c_void, usize),
 }
@@ -70,6 +74,17 @@ impl Default for bindings::ShaderResourceDesc {
     }
 }
 
+bitflags! {
+    pub struct ShaderCompileFlags : bindings::_SHADER_COMPILE_FLAGS {
+        const None                  = bindings::SHADER_COMPILE_FLAG_NONE;
+        const EnableUnboundedArrays = bindings::SHADER_COMPILE_FLAG_ENABLE_UNBOUNDED_ARRAYS;
+        const SkipReflection        = bindings::SHADER_COMPILE_FLAG_SKIP_REFLECTION;
+        const Asynchronous          = bindings::SHADER_COMPILE_FLAG_ASYNCHRONOUS;
+        const PackMatrixRowMajor    = bindings::SHADER_COMPILE_FLAG_PACK_MATRIX_ROW_MAJOR;
+    }
+}
+const_assert!(bindings::SHADER_COMPILE_FLAG_LAST == 8);
+
 pub struct ShaderDesc<'a> {
     name: &'a std::ffi::CStr,
     shader_type: ShaderType,
@@ -79,13 +94,14 @@ pub struct ShaderDesc<'a> {
 
 pub struct ShaderCreateInfo<'a> {
     source: ShaderSource<'a>,
-    // TODO IShaderSourceInputStreamFactory
+    shader_source_input_stream_factory: Option<&'a ShaderSourceInputStreamFactory>,
     entry_point: &'a std::ffi::CStr,
     macros: Vec<(&'a std::ffi::CStr, &'a std::ffi::CStr)>,
     desc: ShaderDesc<'a>,
     source_language: ShaderLanguage,
     compiler: ShaderCompiler,
     language_version: Version,
+    compile_flags: ShaderCompileFlags,
 }
 
 impl<'a> ShaderCreateInfo<'a> {
@@ -95,50 +111,72 @@ impl<'a> ShaderCreateInfo<'a> {
         shader_type: ShaderType,
     ) -> Self {
         ShaderCreateInfo {
-            source: source,
+            source,
+            shader_source_input_stream_factory: None,
             entry_point: c"main",
             macros: Vec::new(),
             desc: ShaderDesc::new(name, shader_type),
             source_language: ShaderLanguage::Default,
             compiler: ShaderCompiler::Default,
             language_version: Version { Major: 0, Minor: 0 },
+            compile_flags: ShaderCompileFlags::None,
         }
     }
 
-    pub fn entry_point(mut self, entry_point: &'a std::ffi::CStr) -> ShaderCreateInfo<'a> {
+    pub fn entry_point(mut self, entry_point: &'a std::ffi::CStr) -> Self {
         self.entry_point = entry_point;
         self
     }
 
-    pub fn add_macro(
-        mut self,
-        name: &'a std::ffi::CStr,
-        definition: &'a std::ffi::CStr,
-    ) -> ShaderCreateInfo<'a> {
+    pub fn add_macro(mut self, name: &'a std::ffi::CStr, definition: &'a std::ffi::CStr) -> Self {
         self.macros.push((name, definition));
         self
     }
 
-    pub fn use_combined_texture_samplers(
-        mut self,
-        use_combined_texture_samplers: bool,
-    ) -> ShaderCreateInfo<'a> {
+    pub fn use_combined_texture_samplers(mut self, use_combined_texture_samplers: bool) -> Self {
         self.desc.use_combined_texture_samplers = use_combined_texture_samplers;
         self
     }
 
-    pub fn language(mut self, language: ShaderLanguage) -> ShaderCreateInfo<'a> {
+    pub fn language(mut self, language: ShaderLanguage) -> Self {
         self.source_language = language;
         self
     }
 
-    pub fn compiler(mut self, compiler: ShaderCompiler) -> ShaderCreateInfo<'a> {
+    pub fn compiler(mut self, compiler: ShaderCompiler) -> Self {
         self.compiler = compiler;
         self
     }
 
-    pub fn language_version(mut self, version: Version) -> ShaderCreateInfo<'a> {
+    pub fn language_version(mut self, version: Version) -> Self {
         self.language_version = version;
+        self
+    }
+
+    pub fn compile_flags(mut self, compile_flags: ShaderCompileFlags) -> Self {
+        self.compile_flags = compile_flags;
+        self
+    }
+
+    pub fn shader_source_input_stream_factory(
+        mut self,
+        shader_source_input_stream_factory: Option<&'a ShaderSourceInputStreamFactory>,
+    ) -> Self {
+        self.shader_source_input_stream_factory = shader_source_input_stream_factory;
+        self
+    }
+
+    pub fn name(mut self, name: &'a std::ffi::CStr) -> Self {
+        self.desc.name = name;
+        self
+    }
+    pub fn source(mut self, source: ShaderSource<'a>) -> Self {
+        self.source = source;
+        self
+    }
+
+    pub fn shader_type(mut self, shader_type: ShaderType) -> Self {
+        self.desc.shader_type = shader_type;
         self
     }
 }
@@ -159,7 +197,11 @@ impl From<&ShaderCreateInfo<'_>> for bindings::ShaderCreateInfo {
                 ShaderSource::FilePath(path) => path.as_os_str().as_bytes().as_ptr() as *const i8,
                 _ => std::ptr::null(),
             },
-            pShaderSourceStreamFactory: std::ptr::null_mut(), // TODO
+            pShaderSourceStreamFactory: value
+                .shader_source_input_stream_factory
+                .map_or(std::ptr::null_mut(), |stream_factory| {
+                    stream_factory.factory_ptr
+                }),
             Source: match value.source {
                 ShaderSource::SourceCode(code) => code.as_ptr() as *const i8,
                 _ => std::ptr::null(),
@@ -209,7 +251,7 @@ impl From<&ShaderCreateInfo<'_>> for bindings::ShaderCreateInfo {
                 Minor: value.language_version.Minor,
             },
             // TODO
-            CompileFlags: 0,
+            CompileFlags: value.compile_flags.bits(),
             LoadConstantBufferReflection: false,
             GLSLExtensions: std::ptr::null(),
             WebGPUEmulatedArrayIndexSuffix: std::ptr::null(),
@@ -314,4 +356,32 @@ impl Shader {
                 .unwrap_unchecked()(self.shader, wait_for_completion)
         }
     }
+}
+
+pub struct ShaderSourceInputStreamFactory {
+    pub(crate) factory_ptr: *mut bindings::IShaderSourceInputStreamFactory,
+    #[allow(dead_code)] // TODO : imlement methods of ShaderSourceInputStreamFactory
+    virtual_functions: *mut bindings::IShaderSourceInputStreamFactoryVtbl,
+
+    object: Object,
+}
+
+impl AsObject for ShaderSourceInputStreamFactory {
+    fn as_object(&self) -> &Object {
+        &self.object
+    }
+}
+
+impl ShaderSourceInputStreamFactory {
+    pub(crate) fn new(factory_ptr: *mut bindings::IShaderSourceInputStreamFactory) -> Self {
+        ShaderSourceInputStreamFactory {
+            factory_ptr,
+            virtual_functions: unsafe { (*factory_ptr).pVtbl },
+            object: Object::new(factory_ptr as *mut bindings::IObject),
+        }
+    }
+
+    //pub fn create_input_stream(&self, name : &std::ffi::CStr, IFileStream** ppStream);
+
+    //pub fn create_input_stream2(&self, name : &std::ffi::CStr, CREATE_SHADER_SOURCE_INPUT_STREAM_FLAGS Flags, IFileStream** ppStream);
 }

@@ -594,10 +594,7 @@ impl ImguiRenderer {
             .usage(Usage::Dynamic)
             .bind_flags(BindFlags::UniformBuffer)
             .cpu_access_flags(CpuAccessFlags::Write);
-            create_info
-                .device
-                .create_buffer(&buffer_desc, None)
-                .unwrap()
+            create_info.device.create_buffer(&buffer_desc).unwrap()
         };
 
         pipeline_state
@@ -707,7 +704,7 @@ impl ImguiRenderer {
             .bind_flags(BindFlags::VertexBuffer);
 
             self.vertex_buffer
-                .insert(render_device.create_buffer(&buffer_desc, None).unwrap())
+                .insert(render_device.create_buffer(&buffer_desc).unwrap())
         } else {
             self.vertex_buffer.as_mut().unwrap()
         };
@@ -729,7 +726,7 @@ impl ImguiRenderer {
             .bind_flags(BindFlags::IndexBuffer);
 
             self.index_buffer
-                .insert(render_device.create_buffer(&buffer_desc, None).unwrap())
+                .insert(render_device.create_buffer(&buffer_desc).unwrap())
         } else {
             self.index_buffer.as_mut().unwrap()
         };
@@ -779,23 +776,12 @@ impl ImguiRenderer {
             let t = draw_data.display_pos[1];
             let b = draw_data.display_pos[1] + draw_data.display_size[1];
 
+            #[rustfmt::skip]
             let projection = [
-                2.0 / (r - l),
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                2.0 / (t - b),
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.5,
-                0.0,
-                (r + l) / (l - r),
-                (t + b) / (b - t),
-                0.5,
-                1.0,
+                    2.0 / (r - l),               0.0, 0.0, 0.0,
+                              0.0,     2.0 / (t - b), 0.0, 0.0,
+                              0.0,               0.0, 0.5, 0.0,
+                (r + l) / (l - r), (t + b) / (b - t), 0.5, 1.0,
             ];
 
             {

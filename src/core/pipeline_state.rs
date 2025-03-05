@@ -826,7 +826,7 @@ impl<'a> GraphicsPipelineDesc<'a> {
         GraphicsPipelineDesc {
             blend_desc: blend_desc,
             sample_mask: 0xFFFFFFFF,
-            rasterizer_desc: rasterizer_desc,
+            rasterizer_desc,
             depth_stencil_desc: depth_stencil_desc,
             input_layouts: Vec::new(),
             primitive_topology: PrimitiveTopology::TriangleList,
@@ -981,6 +981,28 @@ impl<'a> GraphicsPipelineStateCreateInfo<'a> {
             amplification_shader: None,
             mesh_shader: None,
         }
+    }
+
+    pub fn default_variable_type(
+        mut self,
+        default_variable_type: ShaderResourceVariableType,
+    ) -> Self {
+        self.pipeline_state_create_info
+            .pso_desc
+            .resource_layout
+            .default_variable_type = default_variable_type;
+        self
+    }
+
+    pub fn default_variable_merge_stages(
+        mut self,
+        default_variable_merge_stages: ShaderTypes,
+    ) -> Self {
+        self.pipeline_state_create_info
+            .pso_desc
+            .resource_layout
+            .default_variable_merge_stages = default_variable_merge_stages;
+        self
     }
 
     pub fn add_resource_signature(mut self, signature: &'a PipelineResourceSignature) -> Self {
