@@ -323,6 +323,10 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
     where
         EH: EventHandler,
     {
+        let start_time = std::time::Instant::now();
+
+        let mut last_time = start_time;
+
         'main: loop {
             while let Some(event) = event_handler.poll_event() {
                 let event = event_handler.handle_event(&event);
@@ -340,8 +344,16 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
                 self.sample.handle_event(event);
             }
 
-            // TODO implement timer
-            self.update(0.0, 0.0);
+            {
+                let now = std::time::Instant::now();
+
+                self.update(
+                    now.duration_since(start_time).as_secs_f64(),
+                    now.duration_since(last_time).as_secs_f64(),
+                );
+
+                last_time = now;
+            }
 
             self.render();
 

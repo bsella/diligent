@@ -1,6 +1,8 @@
 mod device_object;
 mod object;
 
+pub mod accessories;
+
 pub mod buffer;
 pub mod buffer_view;
 pub mod data_blob;

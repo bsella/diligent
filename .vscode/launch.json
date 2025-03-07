@@ -14,9 +14,21 @@
                     "--example",
                     "Tutorial01_HelloTriangle"
                 ],
-                "cwd": "${workspaceFolder}",
             },
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}/src/samples/tutorials/assets",
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Tutorial02 : Cube",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example",
+                    "Tutorial02_Cube"
+                ],
+            },
+            "cwd": "${workspaceFolder}/src/samples/tutorials/assets",
         }
     ]
 }
