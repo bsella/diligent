@@ -12,7 +12,6 @@ use super::shader_resource_binding::ShaderResourceBinding;
 use super::shader_resource_variable::{
     ShaderResourceVariable, ShaderResourceVariableDesc, ShaderResourceVariableType,
 };
-use crate::bindings;
 
 pub enum BlendFactor {
     Zero,
@@ -33,29 +32,29 @@ pub enum BlendFactor {
     Src1Alpha,
     InvSrc1Alpha,
 }
-const_assert!(bindings::BLEND_OPERATION_NUM_OPERATIONS == 6);
+const_assert!(diligent_sys::BLEND_OPERATION_NUM_OPERATIONS == 6);
 
-impl From<&BlendFactor> for bindings::BLEND_FACTOR {
+impl From<&BlendFactor> for diligent_sys::BLEND_FACTOR {
     fn from(value: &BlendFactor) -> Self {
         (match value {
-            BlendFactor::Zero => bindings::BLEND_FACTOR_ZERO,
-            BlendFactor::One => bindings::BLEND_FACTOR_ONE,
-            BlendFactor::SrcColor => bindings::BLEND_FACTOR_SRC_COLOR,
-            BlendFactor::InvSrcColor => bindings::BLEND_FACTOR_INV_SRC_COLOR,
-            BlendFactor::SrcAlpha => bindings::BLEND_FACTOR_SRC_ALPHA,
-            BlendFactor::InvSrcAlpha => bindings::BLEND_FACTOR_INV_SRC_ALPHA,
-            BlendFactor::DestAlpha => bindings::BLEND_FACTOR_DEST_ALPHA,
-            BlendFactor::InvDestAlpha => bindings::BLEND_FACTOR_INV_DEST_ALPHA,
-            BlendFactor::DestColor => bindings::BLEND_FACTOR_DEST_COLOR,
-            BlendFactor::InvDestColor => bindings::BLEND_FACTOR_INV_DEST_COLOR,
-            BlendFactor::SrcAlphaSat => bindings::BLEND_FACTOR_SRC_ALPHA_SAT,
-            BlendFactor::BlendFactor => bindings::BLEND_FACTOR_BLEND_FACTOR,
-            BlendFactor::InvBlendFactor => bindings::BLEND_FACTOR_INV_BLEND_FACTOR,
-            BlendFactor::Src1Color => bindings::BLEND_FACTOR_SRC1_COLOR,
-            BlendFactor::InvSrc1Color => bindings::BLEND_FACTOR_INV_SRC1_COLOR,
-            BlendFactor::Src1Alpha => bindings::BLEND_FACTOR_SRC1_ALPHA,
-            BlendFactor::InvSrc1Alpha => bindings::BLEND_FACTOR_INV_SRC1_ALPHA,
-        }) as bindings::BLEND_FACTOR
+            BlendFactor::Zero => diligent_sys::BLEND_FACTOR_ZERO,
+            BlendFactor::One => diligent_sys::BLEND_FACTOR_ONE,
+            BlendFactor::SrcColor => diligent_sys::BLEND_FACTOR_SRC_COLOR,
+            BlendFactor::InvSrcColor => diligent_sys::BLEND_FACTOR_INV_SRC_COLOR,
+            BlendFactor::SrcAlpha => diligent_sys::BLEND_FACTOR_SRC_ALPHA,
+            BlendFactor::InvSrcAlpha => diligent_sys::BLEND_FACTOR_INV_SRC_ALPHA,
+            BlendFactor::DestAlpha => diligent_sys::BLEND_FACTOR_DEST_ALPHA,
+            BlendFactor::InvDestAlpha => diligent_sys::BLEND_FACTOR_INV_DEST_ALPHA,
+            BlendFactor::DestColor => diligent_sys::BLEND_FACTOR_DEST_COLOR,
+            BlendFactor::InvDestColor => diligent_sys::BLEND_FACTOR_INV_DEST_COLOR,
+            BlendFactor::SrcAlphaSat => diligent_sys::BLEND_FACTOR_SRC_ALPHA_SAT,
+            BlendFactor::BlendFactor => diligent_sys::BLEND_FACTOR_BLEND_FACTOR,
+            BlendFactor::InvBlendFactor => diligent_sys::BLEND_FACTOR_INV_BLEND_FACTOR,
+            BlendFactor::Src1Color => diligent_sys::BLEND_FACTOR_SRC1_COLOR,
+            BlendFactor::InvSrc1Color => diligent_sys::BLEND_FACTOR_INV_SRC1_COLOR,
+            BlendFactor::Src1Alpha => diligent_sys::BLEND_FACTOR_SRC1_ALPHA,
+            BlendFactor::InvSrc1Alpha => diligent_sys::BLEND_FACTOR_INV_SRC1_ALPHA,
+        }) as diligent_sys::BLEND_FACTOR
     }
 }
 
@@ -66,17 +65,17 @@ pub enum BlendOperation {
     Min,
     Max,
 }
-const_assert!(bindings::BLEND_OPERATION_NUM_OPERATIONS == 6);
+const_assert!(diligent_sys::BLEND_OPERATION_NUM_OPERATIONS == 6);
 
-impl From<&BlendOperation> for bindings::BLEND_OPERATION {
+impl From<&BlendOperation> for diligent_sys::BLEND_OPERATION {
     fn from(value: &BlendOperation) -> Self {
         (match value {
-            BlendOperation::Add => bindings::BLEND_OPERATION_ADD,
-            BlendOperation::Subtract => bindings::BLEND_OPERATION_SUBTRACT,
-            BlendOperation::RevSubtract => bindings::BLEND_OPERATION_REV_SUBTRACT,
-            BlendOperation::Min => bindings::BLEND_OPERATION_MIN,
-            BlendOperation::Max => bindings::BLEND_OPERATION_MAX,
-        }) as bindings::BLEND_OPERATION
+            BlendOperation::Add => diligent_sys::BLEND_OPERATION_ADD,
+            BlendOperation::Subtract => diligent_sys::BLEND_OPERATION_SUBTRACT,
+            BlendOperation::RevSubtract => diligent_sys::BLEND_OPERATION_REV_SUBTRACT,
+            BlendOperation::Min => diligent_sys::BLEND_OPERATION_MIN,
+            BlendOperation::Max => diligent_sys::BLEND_OPERATION_MAX,
+        }) as diligent_sys::BLEND_OPERATION
     }
 }
 
@@ -98,28 +97,28 @@ pub enum LogicOperation {
     OrReverse,
     OrInverted,
 }
-const_assert!(bindings::LOGIC_OP_NUM_OPERATIONS == 16);
+const_assert!(diligent_sys::LOGIC_OP_NUM_OPERATIONS == 16);
 
-impl From<&LogicOperation> for bindings::LOGIC_OPERATION {
+impl From<&LogicOperation> for diligent_sys::LOGIC_OPERATION {
     fn from(value: &LogicOperation) -> Self {
         (match value {
-            LogicOperation::Clear => bindings::LOGIC_OP_CLEAR,
-            LogicOperation::Set => bindings::LOGIC_OP_SET,
-            LogicOperation::Copy => bindings::LOGIC_OP_COPY,
-            LogicOperation::CopyInverted => bindings::LOGIC_OP_COPY_INVERTED,
-            LogicOperation::NoOp => bindings::LOGIC_OP_NOOP,
-            LogicOperation::Invert => bindings::LOGIC_OP_INVERT,
-            LogicOperation::And => bindings::LOGIC_OP_AND,
-            LogicOperation::Nand => bindings::LOGIC_OP_NAND,
-            LogicOperation::Or => bindings::LOGIC_OP_OR,
-            LogicOperation::Nor => bindings::LOGIC_OP_NOR,
-            LogicOperation::Xor => bindings::LOGIC_OP_XOR,
-            LogicOperation::Equiv => bindings::LOGIC_OP_EQUIV,
-            LogicOperation::AndReverse => bindings::LOGIC_OP_AND_REVERSE,
-            LogicOperation::AndInverted => bindings::LOGIC_OP_AND_INVERTED,
-            LogicOperation::OrReverse => bindings::LOGIC_OP_OR_REVERSE,
-            LogicOperation::OrInverted => bindings::LOGIC_OP_OR_INVERTED,
-        }) as bindings::LOGIC_OPERATION
+            LogicOperation::Clear => diligent_sys::LOGIC_OP_CLEAR,
+            LogicOperation::Set => diligent_sys::LOGIC_OP_SET,
+            LogicOperation::Copy => diligent_sys::LOGIC_OP_COPY,
+            LogicOperation::CopyInverted => diligent_sys::LOGIC_OP_COPY_INVERTED,
+            LogicOperation::NoOp => diligent_sys::LOGIC_OP_NOOP,
+            LogicOperation::Invert => diligent_sys::LOGIC_OP_INVERT,
+            LogicOperation::And => diligent_sys::LOGIC_OP_AND,
+            LogicOperation::Nand => diligent_sys::LOGIC_OP_NAND,
+            LogicOperation::Or => diligent_sys::LOGIC_OP_OR,
+            LogicOperation::Nor => diligent_sys::LOGIC_OP_NOR,
+            LogicOperation::Xor => diligent_sys::LOGIC_OP_XOR,
+            LogicOperation::Equiv => diligent_sys::LOGIC_OP_EQUIV,
+            LogicOperation::AndReverse => diligent_sys::LOGIC_OP_AND_REVERSE,
+            LogicOperation::AndInverted => diligent_sys::LOGIC_OP_AND_INVERTED,
+            LogicOperation::OrReverse => diligent_sys::LOGIC_OP_OR_REVERSE,
+            LogicOperation::OrInverted => diligent_sys::LOGIC_OP_OR_INVERTED,
+        }) as diligent_sys::LOGIC_OPERATION
     }
 }
 
@@ -128,12 +127,12 @@ pub enum FillMode {
     Solid,
 }
 
-impl From<&FillMode> for bindings::FILL_MODE {
+impl From<&FillMode> for diligent_sys::FILL_MODE {
     fn from(value: &FillMode) -> Self {
         (match value {
-            FillMode::Wireframe => bindings::FILL_MODE_WIREFRAME,
-            FillMode::Solid => bindings::FILL_MODE_SOLID,
-        }) as bindings::FILL_MODE
+            FillMode::Wireframe => diligent_sys::FILL_MODE_WIREFRAME,
+            FillMode::Solid => diligent_sys::FILL_MODE_SOLID,
+        }) as diligent_sys::FILL_MODE
     }
 }
 
@@ -143,13 +142,13 @@ pub enum CullMode {
     Back,
 }
 
-impl From<&CullMode> for bindings::CULL_MODE {
+impl From<&CullMode> for diligent_sys::CULL_MODE {
     fn from(value: &CullMode) -> Self {
         (match value {
-            CullMode::None => bindings::CULL_MODE_NONE,
-            CullMode::Front => bindings::CULL_MODE_FRONT,
-            CullMode::Back => bindings::CULL_MODE_BACK,
-        }) as bindings::CULL_MODE
+            CullMode::None => diligent_sys::CULL_MODE_NONE,
+            CullMode::Front => diligent_sys::CULL_MODE_FRONT,
+            CullMode::Back => diligent_sys::CULL_MODE_BACK,
+        }) as diligent_sys::CULL_MODE
     }
 }
 
@@ -163,20 +162,20 @@ pub enum StencilOperation {
     IncrWrap,
     DecrWrap,
 }
-const_assert!(bindings::STENCIL_OP_NUM_OPS == 9);
+const_assert!(diligent_sys::STENCIL_OP_NUM_OPS == 9);
 
-impl From<&StencilOperation> for bindings::STENCIL_OP {
+impl From<&StencilOperation> for diligent_sys::STENCIL_OP {
     fn from(value: &StencilOperation) -> Self {
         (match value {
-            StencilOperation::Keep => bindings::STENCIL_OP_KEEP,
-            StencilOperation::Zero => bindings::STENCIL_OP_ZERO,
-            StencilOperation::Replace => bindings::STENCIL_OP_REPLACE,
-            StencilOperation::IncrSat => bindings::STENCIL_OP_INCR_SAT,
-            StencilOperation::DecrSat => bindings::STENCIL_OP_DECR_SAT,
-            StencilOperation::Invert => bindings::STENCIL_OP_INVERT,
-            StencilOperation::IncrWrap => bindings::STENCIL_OP_INCR_WRAP,
-            StencilOperation::DecrWrap => bindings::STENCIL_OP_DECR_WRAP,
-        }) as bindings::STENCIL_OP
+            StencilOperation::Keep => diligent_sys::STENCIL_OP_KEEP,
+            StencilOperation::Zero => diligent_sys::STENCIL_OP_ZERO,
+            StencilOperation::Replace => diligent_sys::STENCIL_OP_REPLACE,
+            StencilOperation::IncrSat => diligent_sys::STENCIL_OP_INCR_SAT,
+            StencilOperation::DecrSat => diligent_sys::STENCIL_OP_DECR_SAT,
+            StencilOperation::Invert => diligent_sys::STENCIL_OP_INVERT,
+            StencilOperation::IncrWrap => diligent_sys::STENCIL_OP_INCR_WRAP,
+            StencilOperation::DecrWrap => diligent_sys::STENCIL_OP_DECR_WRAP,
+        }) as diligent_sys::STENCIL_OP
     }
 }
 
@@ -190,65 +189,65 @@ pub enum ComparisonFunction {
     GreaterEqual,
     Always,
 }
-const_assert!(bindings::COMPARISON_FUNC_NUM_FUNCTIONS == 9);
+const_assert!(diligent_sys::COMPARISON_FUNC_NUM_FUNCTIONS == 9);
 
-impl From<&ComparisonFunction> for bindings::COMPARISON_FUNCTION {
+impl From<&ComparisonFunction> for diligent_sys::COMPARISON_FUNCTION {
     fn from(value: &ComparisonFunction) -> Self {
         (match value {
-            ComparisonFunction::Never => bindings::COMPARISON_FUNC_NEVER,
-            ComparisonFunction::Less => bindings::COMPARISON_FUNC_LESS,
-            ComparisonFunction::Equal => bindings::COMPARISON_FUNC_EQUAL,
-            ComparisonFunction::LessEqual => bindings::COMPARISON_FUNC_LESS_EQUAL,
-            ComparisonFunction::Greater => bindings::COMPARISON_FUNC_GREATER,
-            ComparisonFunction::NotEqual => bindings::COMPARISON_FUNC_NOT_EQUAL,
-            ComparisonFunction::GreaterEqual => bindings::COMPARISON_FUNC_GREATER_EQUAL,
-            ComparisonFunction::Always => bindings::COMPARISON_FUNC_ALWAYS,
-        }) as bindings::COMPARISON_FUNCTION
+            ComparisonFunction::Never => diligent_sys::COMPARISON_FUNC_NEVER,
+            ComparisonFunction::Less => diligent_sys::COMPARISON_FUNC_LESS,
+            ComparisonFunction::Equal => diligent_sys::COMPARISON_FUNC_EQUAL,
+            ComparisonFunction::LessEqual => diligent_sys::COMPARISON_FUNC_LESS_EQUAL,
+            ComparisonFunction::Greater => diligent_sys::COMPARISON_FUNC_GREATER,
+            ComparisonFunction::NotEqual => diligent_sys::COMPARISON_FUNC_NOT_EQUAL,
+            ComparisonFunction::GreaterEqual => diligent_sys::COMPARISON_FUNC_GREATER_EQUAL,
+            ComparisonFunction::Always => diligent_sys::COMPARISON_FUNC_ALWAYS,
+        }) as diligent_sys::COMPARISON_FUNCTION
     }
 }
 
 bitflags! {
-    pub struct ShaderVariableFlags: bindings::_SHADER_VARIABLE_FLAGS {
-        const None                           = bindings::SHADER_VARIABLE_FLAG_NONE;
-        const NoDynamicBuffers               = bindings::SHADER_VARIABLE_FLAG_NO_DYNAMIC_BUFFERS;
-        const GeneralInputAttachmentVk       = bindings::SHADER_VARIABLE_FLAG_GENERAL_INPUT_ATTACHMENT_VK;
-        const UnfilterableFloatTextureWebgpu = bindings::SHADER_VARIABLE_FLAG_UNFILTERABLE_FLOAT_TEXTURE_WEBGPU;
-        const NonFilteringSamplerWebgpu      = bindings::SHADER_VARIABLE_FLAG_NON_FILTERING_SAMPLER_WEBGPU;
+    pub struct ShaderVariableFlags: diligent_sys::_SHADER_VARIABLE_FLAGS {
+        const None                           = diligent_sys::SHADER_VARIABLE_FLAG_NONE;
+        const NoDynamicBuffers               = diligent_sys::SHADER_VARIABLE_FLAG_NO_DYNAMIC_BUFFERS;
+        const GeneralInputAttachmentVk       = diligent_sys::SHADER_VARIABLE_FLAG_GENERAL_INPUT_ATTACHMENT_VK;
+        const UnfilterableFloatTextureWebgpu = diligent_sys::SHADER_VARIABLE_FLAG_UNFILTERABLE_FLOAT_TEXTURE_WEBGPU;
+        const NonFilteringSamplerWebgpu      = diligent_sys::SHADER_VARIABLE_FLAG_NON_FILTERING_SAMPLER_WEBGPU;
     }
 }
-const_assert!(bindings::SHADER_VARIABLE_FLAG_LAST == 8);
+const_assert!(diligent_sys::SHADER_VARIABLE_FLAG_LAST == 8);
 
 bitflags! {
-    pub struct ColorMask: bindings::_COLOR_MASK {
-        const NONE  = bindings::COLOR_MASK_NONE;
-        const RED   = bindings::COLOR_MASK_RED;
-        const GREEN = bindings::COLOR_MASK_GREEN;
-        const BLUE  = bindings::COLOR_MASK_BLUE;
-        const ALPHA = bindings::COLOR_MASK_ALPHA;
-        const RGB   = bindings::COLOR_MASK_RGB;
-        const RGBA  = bindings::COLOR_MASK_ALL;
+    pub struct ColorMask: diligent_sys::_COLOR_MASK {
+        const NONE  = diligent_sys::COLOR_MASK_NONE;
+        const RED   = diligent_sys::COLOR_MASK_RED;
+        const GREEN = diligent_sys::COLOR_MASK_GREEN;
+        const BLUE  = diligent_sys::COLOR_MASK_BLUE;
+        const ALPHA = diligent_sys::COLOR_MASK_ALPHA;
+        const RGB   = diligent_sys::COLOR_MASK_RGB;
+        const RGBA  = diligent_sys::COLOR_MASK_ALL;
     }
 }
 
 bitflags! {
-    pub struct PipelineStateObjectCreateFlags: bindings::_PSO_CREATE_FLAGS {
-        const None                           = bindings::PSO_CREATE_FLAG_NONE;
-        const IgnoreMissingVariables         = bindings::PSO_CREATE_FLAG_IGNORE_MISSING_VARIABLES;
-        const IgnoreMissingImmutableSamplers = bindings::PSO_CREATE_FLAG_IGNORE_MISSING_IMMUTABLE_SAMPLERS;
-        const DontRemapShaderResources       = bindings::PSO_CREATE_FLAG_DONT_REMAP_SHADER_RESOURCES;
-        const Asynchronous                   = bindings::PSO_CREATE_FLAG_ASYNCHRONOUS;
+    pub struct PipelineStateObjectCreateFlags: diligent_sys::_PSO_CREATE_FLAGS {
+        const None                           = diligent_sys::PSO_CREATE_FLAG_NONE;
+        const IgnoreMissingVariables         = diligent_sys::PSO_CREATE_FLAG_IGNORE_MISSING_VARIABLES;
+        const IgnoreMissingImmutableSamplers = diligent_sys::PSO_CREATE_FLAG_IGNORE_MISSING_IMMUTABLE_SAMPLERS;
+        const DontRemapShaderResources       = diligent_sys::PSO_CREATE_FLAG_DONT_REMAP_SHADER_RESOURCES;
+        const Asynchronous                   = diligent_sys::PSO_CREATE_FLAG_ASYNCHRONOUS;
     }
 }
-const_assert!(bindings::PSO_CREATE_FLAG_LAST == 8);
+const_assert!(diligent_sys::PSO_CREATE_FLAG_LAST == 8);
 
 bitflags! {
-    pub struct PipelineShadingRateFlags: bindings::_PIPELINE_SHADING_RATE_FLAGS {
-        const None         = bindings::PIPELINE_SHADING_RATE_FLAG_NONE;
-        const PerPrimitive = bindings::PIPELINE_SHADING_RATE_FLAG_PER_PRIMITIVE;
-        const TextureBased = bindings::PIPELINE_SHADING_RATE_FLAG_TEXTURE_BASED;
+    pub struct PipelineShadingRateFlags: diligent_sys::_PIPELINE_SHADING_RATE_FLAGS {
+        const None         = diligent_sys::PIPELINE_SHADING_RATE_FLAG_NONE;
+        const PerPrimitive = diligent_sys::PIPELINE_SHADING_RATE_FLAG_PER_PRIMITIVE;
+        const TextureBased = diligent_sys::PIPELINE_SHADING_RATE_FLAG_TEXTURE_BASED;
     }
 }
-const_assert!(bindings::PIPELINE_SHADING_RATE_FLAG_LAST == 2);
+const_assert!(diligent_sys::PIPELINE_SHADING_RATE_FLAG_LAST == 2);
 
 pub struct PipelineResourceLayoutDesc<'a> {
     default_variable_type: ShaderResourceVariableType,
@@ -258,15 +257,15 @@ pub struct PipelineResourceLayoutDesc<'a> {
 }
 
 impl<'a> PipelineResourceLayoutDesc<'a> {
-    fn new<const PIPELINE_TYPE: bindings::PIPELINE_TYPE>() -> Self {
+    fn new<const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE>() -> Self {
         PipelineResourceLayoutDesc {
             default_variable_type: ShaderResourceVariableType::Static,
-            default_variable_merge_stages: match PIPELINE_TYPE as bindings::_PIPELINE_TYPE {
-                bindings::PIPELINE_TYPE_GRAPHICS => ShaderTypes::AllGraphics,
-                bindings::PIPELINE_TYPE_COMPUTE => ShaderTypes::Compute,
-                bindings::PIPELINE_TYPE_MESH => ShaderTypes::AllMesh,
-                bindings::PIPELINE_TYPE_RAY_TRACING => ShaderTypes::AllRayTracing,
-                bindings::PIPELINE_TYPE_TILE => ShaderTypes::Tile,
+            default_variable_merge_stages: match PIPELINE_TYPE as diligent_sys::_PIPELINE_TYPE {
+                diligent_sys::PIPELINE_TYPE_GRAPHICS => ShaderTypes::AllGraphics,
+                diligent_sys::PIPELINE_TYPE_COMPUTE => ShaderTypes::Compute,
+                diligent_sys::PIPELINE_TYPE_MESH => ShaderTypes::AllMesh,
+                diligent_sys::PIPELINE_TYPE_RAY_TRACING => ShaderTypes::AllRayTracing,
+                diligent_sys::PIPELINE_TYPE_TILE => ShaderTypes::Tile,
                 _ => panic!("Unknown pipeline type"),
             },
             variables: Vec::new(),
@@ -276,13 +275,13 @@ impl<'a> PipelineResourceLayoutDesc<'a> {
 }
 
 pub(crate) struct PipelineResourceLayoutDescWrapper {
-    _variables: Vec<bindings::ShaderResourceVariableDesc>,
-    _immutable_samplers: Vec<bindings::ImmutableSamplerDesc>,
-    prld: bindings::PipelineResourceLayoutDesc,
+    _variables: Vec<diligent_sys::ShaderResourceVariableDesc>,
+    _immutable_samplers: Vec<diligent_sys::ImmutableSamplerDesc>,
+    prld: diligent_sys::PipelineResourceLayoutDesc,
 }
 
 impl PipelineResourceLayoutDescWrapper {
-    pub(crate) fn get(&self) -> bindings::PipelineResourceLayoutDesc {
+    pub(crate) fn get(&self) -> diligent_sys::PipelineResourceLayoutDesc {
         self.prld
     }
 }
@@ -292,17 +291,17 @@ impl From<&PipelineResourceLayoutDesc<'_>> for PipelineResourceLayoutDescWrapper
         let variables: Vec<_> = value
             .variables
             .iter()
-            .map(|var| bindings::ShaderResourceVariableDesc::from(var))
+            .map(|var| diligent_sys::ShaderResourceVariableDesc::from(var))
             .collect();
 
         let immutable_samplers: Vec<_> = value
             .immutable_samplers
             .iter()
-            .map(|var| bindings::ImmutableSamplerDesc::from(var))
+            .map(|var| diligent_sys::ImmutableSamplerDesc::from(var))
             .collect();
 
-        let prld = bindings::PipelineResourceLayoutDesc {
-            DefaultVariableType: bindings::SHADER_RESOURCE_VARIABLE_TYPE::from(
+        let prld = diligent_sys::PipelineResourceLayoutDesc {
+            DefaultVariableType: diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE::from(
                 &value.default_variable_type,
             ),
             DefaultVariableMergeStages: value.default_variable_merge_stages.bits(),
@@ -328,14 +327,14 @@ impl From<&PipelineResourceLayoutDesc<'_>> for PipelineResourceLayoutDescWrapper
     }
 }
 
-struct PipelineStateDesc<'a, const PIPELINE_TYPE: bindings::PIPELINE_TYPE> {
+struct PipelineStateDesc<'a, const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE> {
     name: &'a std::ffi::CStr,
     srb_allocation_granularity: u32,
     immediate_context_mask: u64,
     resource_layout: PipelineResourceLayoutDesc<'a>,
 }
 
-impl<'a, const PIPELINE_TYPE: bindings::PIPELINE_TYPE> PipelineStateDesc<'a, PIPELINE_TYPE> {
+impl<'a, const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE> PipelineStateDesc<'a, PIPELINE_TYPE> {
     fn new(name: &'a std::ffi::CStr) -> Self {
         PipelineStateDesc {
             name: name,
@@ -348,23 +347,23 @@ impl<'a, const PIPELINE_TYPE: bindings::PIPELINE_TYPE> PipelineStateDesc<'a, PIP
 
 pub(crate) struct PipelineStateDescWrapper {
     _prld: PipelineResourceLayoutDescWrapper,
-    psd: bindings::PipelineStateDesc,
+    psd: diligent_sys::PipelineStateDesc,
 }
 
 impl PipelineStateDescWrapper {
-    pub(crate) fn get(&self) -> bindings::PipelineStateDesc {
+    pub(crate) fn get(&self) -> diligent_sys::PipelineStateDesc {
         self.psd
     }
 }
 
-impl<const PIPELINE_TYPE: bindings::PIPELINE_TYPE> From<&PipelineStateDesc<'_, PIPELINE_TYPE>>
+impl<const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE> From<&PipelineStateDesc<'_, PIPELINE_TYPE>>
     for PipelineStateDescWrapper
 {
     fn from(value: &PipelineStateDesc<'_, PIPELINE_TYPE>) -> Self {
         let prld = PipelineResourceLayoutDescWrapper::from(&value.resource_layout);
 
-        let psd = bindings::PipelineStateDesc {
-            _DeviceObjectAttribs: bindings::DeviceObjectAttribs {
+        let psd = diligent_sys::PipelineStateDesc {
+            _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
                 Name: value.name.as_ptr(),
             },
             PipelineType: PIPELINE_TYPE,
@@ -377,7 +376,7 @@ impl<const PIPELINE_TYPE: bindings::PIPELINE_TYPE> From<&PipelineStateDesc<'_, P
     }
 }
 
-struct PipelineStateCreateInfo<'a, const PIPELINE_TYPE: bindings::PIPELINE_TYPE> {
+struct PipelineStateCreateInfo<'a, const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE> {
     pso_desc: PipelineStateDesc<'a, PIPELINE_TYPE>,
     flags: PipelineStateObjectCreateFlags,
     resource_signatures: Vec<&'a PipelineResourceSignature>,
@@ -387,22 +386,22 @@ struct PipelineStateCreateInfo<'a, const PIPELINE_TYPE: bindings::PIPELINE_TYPE>
 
 pub(crate) struct PipelineStateCreateInfoWrapper {
     _psd: PipelineStateDescWrapper,
-    ci: bindings::PipelineStateCreateInfo,
+    ci: diligent_sys::PipelineStateCreateInfo,
 }
 
 impl PipelineStateCreateInfoWrapper {
-    pub(crate) fn get(&self) -> bindings::PipelineStateCreateInfo {
+    pub(crate) fn get(&self) -> diligent_sys::PipelineStateCreateInfo {
         self.ci
     }
 }
 
-impl<const PIPELINE_TYPE: bindings::PIPELINE_TYPE> From<&PipelineStateCreateInfo<'_, PIPELINE_TYPE>>
-    for PipelineStateCreateInfoWrapper
+impl<const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE>
+    From<&PipelineStateCreateInfo<'_, PIPELINE_TYPE>> for PipelineStateCreateInfoWrapper
 {
     fn from(value: &PipelineStateCreateInfo<'_, PIPELINE_TYPE>) -> Self {
         let psd = PipelineStateDescWrapper::from(&value.pso_desc);
 
-        let ci = bindings::PipelineStateCreateInfo {
+        let ci = diligent_sys::PipelineStateCreateInfo {
             PSODesc: psd.get(),
             Flags: value.flags.bits(),
             ResourceSignaturesCount: value.resource_signatures.len() as u32,
@@ -413,7 +412,7 @@ impl<const PIPELINE_TYPE: bindings::PIPELINE_TYPE> From<&PipelineStateCreateInfo
                     .resource_signatures
                     .iter()
                     .map(|rs| rs.pipeline_resource_signature)
-                    .collect::<Vec<*mut bindings::IPipelineResourceSignature>>()
+                    .collect::<Vec<*mut diligent_sys::IPipelineResourceSignature>>()
                     .as_mut_ptr()
             },
             pPSOCache: std::ptr::null_mut(), // TODO
@@ -424,7 +423,9 @@ impl<const PIPELINE_TYPE: bindings::PIPELINE_TYPE> From<&PipelineStateCreateInfo
     }
 }
 
-impl<'a, const PIPELINE_TYPE: bindings::PIPELINE_TYPE> PipelineStateCreateInfo<'a, PIPELINE_TYPE> {
+impl<'a, const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE>
+    PipelineStateCreateInfo<'a, PIPELINE_TYPE>
+{
     fn new(name: &'a std::ffi::CStr) -> Self {
         PipelineStateCreateInfo {
             pso_desc: PipelineStateDesc::new(name),
@@ -490,19 +491,20 @@ impl RenderTargetBlendDesc {
     }
 }
 
-impl From<&RenderTargetBlendDesc> for bindings::RenderTargetBlendDesc {
+impl From<&RenderTargetBlendDesc> for diligent_sys::RenderTargetBlendDesc {
     fn from(value: &RenderTargetBlendDesc) -> Self {
-        bindings::RenderTargetBlendDesc {
+        diligent_sys::RenderTargetBlendDesc {
             BlendEnable: value.blend_enable,
             LogicOperationEnable: value.logic_operation_enable,
-            SrcBlend: bindings::BLEND_FACTOR::from(&value.src_blend),
-            DestBlend: bindings::BLEND_FACTOR::from(&value.dest_blend),
-            BlendOp: bindings::BLEND_OPERATION::from(&value.blend_op),
-            SrcBlendAlpha: bindings::BLEND_FACTOR::from(&value.src_blend_alpha),
-            DestBlendAlpha: bindings::BLEND_FACTOR::from(&value.dest_blend_alpha),
-            BlendOpAlpha: bindings::BLEND_OPERATION::from(&value.blend_op_alpha),
-            LogicOp: bindings::LOGIC_OPERATION::from(&value.logic_op),
-            RenderTargetWriteMask: value.render_target_write_mask.bits() as bindings::COLOR_MASK,
+            SrcBlend: diligent_sys::BLEND_FACTOR::from(&value.src_blend),
+            DestBlend: diligent_sys::BLEND_FACTOR::from(&value.dest_blend),
+            BlendOp: diligent_sys::BLEND_OPERATION::from(&value.blend_op),
+            SrcBlendAlpha: diligent_sys::BLEND_FACTOR::from(&value.src_blend_alpha),
+            DestBlendAlpha: diligent_sys::BLEND_FACTOR::from(&value.dest_blend_alpha),
+            BlendOpAlpha: diligent_sys::BLEND_OPERATION::from(&value.blend_op_alpha),
+            LogicOp: diligent_sys::LOGIC_OPERATION::from(&value.logic_op),
+            RenderTargetWriteMask: value.render_target_write_mask.bits()
+                as diligent_sys::COLOR_MASK,
         }
     }
 }
@@ -548,15 +550,15 @@ impl BlendStateDesc {
     }
 }
 
-impl From<&BlendStateDesc> for bindings::BlendStateDesc {
+impl From<&BlendStateDesc> for diligent_sys::BlendStateDesc {
     fn from(value: &BlendStateDesc) -> Self {
-        bindings::BlendStateDesc {
+        diligent_sys::BlendStateDesc {
             AlphaToCoverageEnable: value.alpha_to_coverage_enable,
             IndependentBlendEnable: value.independent_blend_enable,
             RenderTargets: value
                 .render_targets
                 .each_ref()
-                .map(|rt| bindings::RenderTargetBlendDesc::from(rt)),
+                .map(|rt| diligent_sys::RenderTargetBlendDesc::from(rt)),
         }
     }
 }
@@ -631,11 +633,11 @@ impl RasterizerStateDesc {
     }
 }
 
-impl From<&RasterizerStateDesc> for bindings::RasterizerStateDesc {
+impl From<&RasterizerStateDesc> for diligent_sys::RasterizerStateDesc {
     fn from(value: &RasterizerStateDesc) -> Self {
-        bindings::RasterizerStateDesc {
-            FillMode: bindings::FILL_MODE::from(&value.fill_mode),
-            CullMode: bindings::CULL_MODE::from(&value.cull_mode),
+        diligent_sys::RasterizerStateDesc {
+            FillMode: diligent_sys::FILL_MODE::from(&value.fill_mode),
+            CullMode: diligent_sys::CULL_MODE::from(&value.cull_mode),
             FrontCounterClockwise: value.front_counter_clockwise,
             DepthClipEnable: value.depth_clip_enable,
             ScissorEnable: value.scissor_enable,
@@ -689,13 +691,13 @@ impl StencilOperationsDesc {
     }
 }
 
-impl From<&StencilOperationsDesc> for bindings::StencilOpDesc {
+impl From<&StencilOperationsDesc> for diligent_sys::StencilOpDesc {
     fn from(value: &StencilOperationsDesc) -> Self {
-        bindings::StencilOpDesc {
-            StencilFailOp: bindings::STENCIL_OP::from(&value.stencil_fail_op),
-            StencilDepthFailOp: bindings::STENCIL_OP::from(&value.stencil_depth_fail_op),
-            StencilPassOp: bindings::STENCIL_OP::from(&value.stencil_pass_op),
-            StencilFunc: bindings::COMPARISON_FUNCTION::from(&value.stencil_func),
+        diligent_sys::StencilOpDesc {
+            StencilFailOp: diligent_sys::STENCIL_OP::from(&value.stencil_fail_op),
+            StencilDepthFailOp: diligent_sys::STENCIL_OP::from(&value.stencil_depth_fail_op),
+            StencilPassOp: diligent_sys::STENCIL_OP::from(&value.stencil_pass_op),
+            StencilFunc: diligent_sys::COMPARISON_FUNCTION::from(&value.stencil_func),
         }
     }
 }
@@ -757,17 +759,17 @@ impl DepthStencilStateDesc {
     }
 }
 
-impl From<&DepthStencilStateDesc> for bindings::DepthStencilStateDesc {
+impl From<&DepthStencilStateDesc> for diligent_sys::DepthStencilStateDesc {
     fn from(value: &DepthStencilStateDesc) -> Self {
-        bindings::DepthStencilStateDesc {
+        diligent_sys::DepthStencilStateDesc {
             DepthEnable: value.depth_enable,
             DepthWriteEnable: value.depth_write_enable,
-            DepthFunc: bindings::COMPARISON_FUNCTION::from(&value.depth_func),
+            DepthFunc: diligent_sys::COMPARISON_FUNCTION::from(&value.depth_func),
             StencilEnable: value.stencil_enable,
             StencilReadMask: value.stencil_read_mask,
             StencilWriteMask: value.stencil_write_mask,
-            FrontFace: bindings::StencilOpDesc::from(&value.front_face),
-            BackFace: bindings::StencilOpDesc::from(&value.back_face),
+            FrontFace: diligent_sys::StencilOpDesc::from(&value.front_face),
+            BackFace: diligent_sys::StencilOpDesc::from(&value.back_face),
         }
     }
 }
@@ -798,10 +800,10 @@ pub struct GraphicsPipelineDesc<'a> {
     num_render_targets: u8,
     subpass_index: u8,
     shading_rate_flags: PipelineShadingRateFlags,
-    rtv_formats: [bindings::_TEXTURE_FORMAT; 8usize],
-    dsv_format: bindings::_TEXTURE_FORMAT,
+    rtv_formats: [diligent_sys::_TEXTURE_FORMAT; 8usize],
+    dsv_format: diligent_sys::_TEXTURE_FORMAT,
     read_only_dsv: bool,
-    sample_desc: bindings::SampleDesc,
+    sample_desc: diligent_sys::SampleDesc,
     // TODO
     // pub render_pass: Option<&RenderPass>,
     node_mask: u32,
@@ -835,19 +837,19 @@ impl<'a> GraphicsPipelineDesc<'a> {
             subpass_index: 0,
             shading_rate_flags: PipelineShadingRateFlags::None,
             rtv_formats: [
-                bindings::TEX_FORMAT_UNKNOWN,
-                bindings::TEX_FORMAT_UNKNOWN,
-                bindings::TEX_FORMAT_UNKNOWN,
-                bindings::TEX_FORMAT_UNKNOWN,
-                bindings::TEX_FORMAT_UNKNOWN,
-                bindings::TEX_FORMAT_UNKNOWN,
-                bindings::TEX_FORMAT_UNKNOWN,
-                bindings::TEX_FORMAT_UNKNOWN,
+                diligent_sys::TEX_FORMAT_UNKNOWN,
+                diligent_sys::TEX_FORMAT_UNKNOWN,
+                diligent_sys::TEX_FORMAT_UNKNOWN,
+                diligent_sys::TEX_FORMAT_UNKNOWN,
+                diligent_sys::TEX_FORMAT_UNKNOWN,
+                diligent_sys::TEX_FORMAT_UNKNOWN,
+                diligent_sys::TEX_FORMAT_UNKNOWN,
+                diligent_sys::TEX_FORMAT_UNKNOWN,
             ],
-            dsv_format: bindings::TEX_FORMAT_UNKNOWN,
+            dsv_format: diligent_sys::TEX_FORMAT_UNKNOWN,
             read_only_dsv: false,
             node_mask: 0,
-            sample_desc: bindings::SampleDesc {
+            sample_desc: diligent_sys::SampleDesc {
                 Count: 1,
                 Quality: 0,
             },
@@ -878,11 +880,11 @@ impl<'a> GraphicsPipelineDesc<'a> {
         self.shading_rate_flags = shading_rate_flags;
         self
     }
-    pub fn rtv_format<const INDEX: usize>(mut self, value: bindings::_TEXTURE_FORMAT) -> Self {
+    pub fn rtv_format<const INDEX: usize>(mut self, value: diligent_sys::_TEXTURE_FORMAT) -> Self {
         self.rtv_formats[INDEX] = value;
         self
     }
-    pub fn dsv_format(mut self, dsv_format: bindings::_TEXTURE_FORMAT) -> Self {
+    pub fn dsv_format(mut self, dsv_format: diligent_sys::_TEXTURE_FORMAT) -> Self {
         self.dsv_format = dsv_format;
         self
     }
@@ -897,30 +899,30 @@ impl<'a> GraphicsPipelineDesc<'a> {
 }
 
 pub(crate) struct GraphicsPipelineDescWrapper {
-    _aux_input_layouts: Vec<bindings::LayoutElement>,
-    desc: bindings::GraphicsPipelineDesc,
+    _aux_input_layouts: Vec<diligent_sys::LayoutElement>,
+    desc: diligent_sys::GraphicsPipelineDesc,
 }
 
 impl GraphicsPipelineDescWrapper {
-    pub(crate) fn get(&self) -> bindings::GraphicsPipelineDesc {
+    pub(crate) fn get(&self) -> diligent_sys::GraphicsPipelineDesc {
         self.desc
     }
 }
 
 impl From<&GraphicsPipelineDesc<'_>> for GraphicsPipelineDescWrapper {
     fn from(value: &GraphicsPipelineDesc<'_>) -> Self {
-        let aux_input_layouts: Vec<bindings::LayoutElement> = value
+        let aux_input_layouts: Vec<diligent_sys::LayoutElement> = value
             .input_layouts
             .iter()
-            .map(|layout| bindings::LayoutElement::from(layout))
+            .map(|layout| diligent_sys::LayoutElement::from(layout))
             .collect();
 
-        let desc = bindings::GraphicsPipelineDesc {
-            BlendDesc: bindings::BlendStateDesc::from(&value.blend_desc),
+        let desc = diligent_sys::GraphicsPipelineDesc {
+            BlendDesc: diligent_sys::BlendStateDesc::from(&value.blend_desc),
             SampleMask: value.sample_mask,
-            RasterizerDesc: bindings::RasterizerStateDesc::from(&value.rasterizer_desc),
-            DepthStencilDesc: bindings::DepthStencilStateDesc::from(&value.depth_stencil_desc),
-            InputLayout: bindings::InputLayoutDesc {
+            RasterizerDesc: diligent_sys::RasterizerStateDesc::from(&value.rasterizer_desc),
+            DepthStencilDesc: diligent_sys::DepthStencilStateDesc::from(&value.depth_stencil_desc),
+            InputLayout: diligent_sys::InputLayoutDesc {
                 LayoutElements: if aux_input_layouts.is_empty() {
                     std::ptr::null()
                 } else {
@@ -928,16 +930,16 @@ impl From<&GraphicsPipelineDesc<'_>> for GraphicsPipelineDescWrapper {
                 },
                 NumElements: aux_input_layouts.len() as u32,
             },
-            PrimitiveTopology: bindings::PRIMITIVE_TOPOLOGY::from(&value.primitive_topology),
+            PrimitiveTopology: diligent_sys::PRIMITIVE_TOPOLOGY::from(&value.primitive_topology),
             NumViewports: value.num_viewports,
             NumRenderTargets: value.num_render_targets,
             SubpassIndex: value.subpass_index,
             ShadingRateFlags: value.shading_rate_flags.bits()
-                as bindings::PIPELINE_SHADING_RATE_FLAGS,
+                as diligent_sys::PIPELINE_SHADING_RATE_FLAGS,
             RTVFormats: value
                 .rtv_formats
-                .map(|format| format as bindings::TEXTURE_FORMAT),
-            DSVFormat: value.dsv_format as bindings::TEXTURE_FORMAT,
+                .map(|format| format as diligent_sys::TEXTURE_FORMAT),
+            DSVFormat: value.dsv_format as diligent_sys::TEXTURE_FORMAT,
             ReadOnlyDSV: value.read_only_dsv,
             SmplDesc: value.sample_desc.into(),
             pRenderPass: std::ptr::null_mut(),
@@ -951,11 +953,11 @@ impl From<&GraphicsPipelineDesc<'_>> for GraphicsPipelineDescWrapper {
     }
 }
 
-// For now, couldn't find any practical way to provide the `bindings::PIPELINE_TYPE_GRAPHICS` value
+// For now, couldn't find any practical way to provide the `diligent_sys::PIPELINE_TYPE_GRAPHICS` value
 // directly to the PipelineStateCreateInfo<> template member. This happens because the compiler can't
 // convert a `::std::os::raw::c_uint` into a `u8` implicitly in compile time. If you know of a better
 // way of doing this, feel free to make a pull request.
-const_assert!(bindings::PIPELINE_TYPE_GRAPHICS == 0);
+const_assert!(diligent_sys::PIPELINE_TYPE_GRAPHICS == 0);
 pub struct GraphicsPipelineStateCreateInfo<'a> {
     pipeline_state_create_info: PipelineStateCreateInfo<'a, 0>,
     graphics_pipeline_desc: GraphicsPipelineDesc<'a>,
@@ -1072,11 +1074,11 @@ impl<'a> GraphicsPipelineStateCreateInfo<'a> {
 pub(crate) struct GraphicsPipelineStateCreateInfoWrapper {
     _pci: PipelineStateCreateInfoWrapper,
     _gpd: GraphicsPipelineDescWrapper,
-    ci: bindings::GraphicsPipelineStateCreateInfo,
+    ci: diligent_sys::GraphicsPipelineStateCreateInfo,
 }
 
 impl GraphicsPipelineStateCreateInfoWrapper {
-    pub(crate) fn get(&self) -> bindings::GraphicsPipelineStateCreateInfo {
+    pub(crate) fn get(&self) -> diligent_sys::GraphicsPipelineStateCreateInfo {
         self.ci
     }
 }
@@ -1085,7 +1087,7 @@ impl From<&GraphicsPipelineStateCreateInfo<'_>> for GraphicsPipelineStateCreateI
     fn from(value: &GraphicsPipelineStateCreateInfo<'_>) -> Self {
         let pci = PipelineStateCreateInfoWrapper::from(&value.pipeline_state_create_info);
         let gpd = GraphicsPipelineDescWrapper::from(&value.graphics_pipeline_desc);
-        let ci = bindings::GraphicsPipelineStateCreateInfo {
+        let ci = diligent_sys::GraphicsPipelineStateCreateInfo {
             _PipelineStateCreateInfo: pci.get(),
             GraphicsPipeline: gpd.get(),
             pVS: value
@@ -1120,8 +1122,8 @@ impl From<&GraphicsPipelineStateCreateInfo<'_>> for GraphicsPipelineStateCreateI
 }
 
 pub struct PipelineState {
-    pub(crate) pipeline_state: *mut bindings::IPipelineState,
-    virtual_functions: *mut bindings::IPipelineStateVtbl,
+    pub(crate) pipeline_state: *mut diligent_sys::IPipelineState,
+    virtual_functions: *mut diligent_sys::IPipelineStateVtbl,
 
     device_object: DeviceObject,
 }
@@ -1133,27 +1135,30 @@ impl AsDeviceObject for PipelineState {
 }
 
 impl PipelineState {
-    pub(crate) fn new(pipeline_state_ptr: *mut bindings::IPipelineState) -> Self {
+    pub(crate) fn new(pipeline_state_ptr: *mut diligent_sys::IPipelineState) -> Self {
         PipelineState {
             pipeline_state: pipeline_state_ptr,
             virtual_functions: unsafe { (*pipeline_state_ptr).pVtbl },
-            device_object: DeviceObject::new(pipeline_state_ptr as *mut bindings::IDeviceObject),
+            device_object: DeviceObject::new(
+                pipeline_state_ptr as *mut diligent_sys::IDeviceObject,
+            ),
         }
     }
 
-    pub fn get_desc(&self) -> &bindings::PipelineStateDesc {
+    pub fn get_desc(&self) -> &diligent_sys::PipelineStateDesc {
         unsafe {
             ((*self.virtual_functions)
                 .DeviceObject
                 .GetDesc
-                .unwrap_unchecked()(self.pipeline_state as *mut bindings::IDeviceObject)
-                as *const bindings::PipelineStateDesc)
+                .unwrap_unchecked()(
+                self.pipeline_state as *mut diligent_sys::IDeviceObject
+            ) as *const diligent_sys::PipelineStateDesc)
                 .as_ref()
                 .unwrap_unchecked()
         }
     }
 
-    pub fn get_graphics_pipeline_desc(&self) -> &bindings::GraphicsPipelineDesc {
+    pub fn get_graphics_pipeline_desc(&self) -> &diligent_sys::GraphicsPipelineDesc {
         unsafe {
             (*self.virtual_functions)
                 .PipelineState
@@ -1164,7 +1169,7 @@ impl PipelineState {
         }
     }
 
-    pub fn get_ray_tracing_pipeline_desc(&self) -> &bindings::RayTracingPipelineDesc {
+    pub fn get_ray_tracing_pipeline_desc(&self) -> &diligent_sys::RayTracingPipelineDesc {
         unsafe {
             (*self.virtual_functions)
                 .PipelineState
@@ -1175,7 +1180,7 @@ impl PipelineState {
         }
     }
 
-    pub fn get_tile_pipeline_desc(&self) -> &bindings::TilePipelineDesc {
+    pub fn get_tile_pipeline_desc(&self) -> &diligent_sys::TilePipelineDesc {
         unsafe {
             (*self.virtual_functions)
                 .PipelineState
@@ -1190,7 +1195,7 @@ impl PipelineState {
         &mut self,
         shader_type: ShaderType,
         resource_mapping: &ResourceMapping,
-        flags: bindings::BIND_SHADER_RESOURCES_FLAGS,
+        flags: diligent_sys::BIND_SHADER_RESOURCES_FLAGS,
     ) {
         unsafe {
             (*self.virtual_functions)
@@ -1198,7 +1203,7 @@ impl PipelineState {
                 .BindStaticResources
                 .unwrap_unchecked()(
                 self.pipeline_state,
-                bindings::SHADER_TYPE::from(&shader_type),
+                diligent_sys::SHADER_TYPE::from(&shader_type),
                 resource_mapping.resource_mapping,
                 flags,
             )
@@ -1223,7 +1228,7 @@ impl PipelineState {
                 .GetStaticVariableByName
                 .unwrap_unchecked()(
                 self.pipeline_state,
-                bindings::SHADER_TYPE::from(&shader_type),
+                diligent_sys::SHADER_TYPE::from(&shader_type),
                 name.as_ptr(),
             )
         };
@@ -1241,7 +1246,7 @@ impl PipelineState {
         &self,
         init_static_resources: bool,
     ) -> Option<ShaderResourceBinding> {
-        let mut shader_resource_binding_ptr: *mut bindings::IShaderResourceBinding =
+        let mut shader_resource_binding_ptr: *mut diligent_sys::IShaderResourceBinding =
             std::ptr::null_mut();
         unsafe {
             (*self.virtual_functions)
@@ -1299,7 +1304,10 @@ impl PipelineState {
         todo!()
     }
 
-    pub fn get_status(&self, wait_for_completion: Option<bool>) -> bindings::PIPELINE_STATE_STATUS {
+    pub fn get_status(
+        &self,
+        wait_for_completion: Option<bool>,
+    ) -> diligent_sys::PIPELINE_STATE_STATUS {
         unsafe {
             (*self.virtual_functions)
                 .PipelineState

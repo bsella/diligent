@@ -6,11 +6,9 @@ use std::{
 use bitflags::bitflags;
 use static_assertions::const_assert;
 
-use crate::bindings::{self, ShaderMacro, Version};
-
 use super::{
     device_object::{AsDeviceObject, DeviceObject},
-    graphics_types::ShaderType,
+    graphics_types::{ShaderType, Version},
     object::{AsObject, Object},
 };
 
@@ -31,18 +29,18 @@ pub enum ShaderLanguage {
     WGSL,
 }
 
-impl From<&ShaderLanguage> for bindings::SHADER_SOURCE_LANGUAGE {
+impl From<&ShaderLanguage> for diligent_sys::SHADER_SOURCE_LANGUAGE {
     fn from(value: &ShaderLanguage) -> Self {
         (match value {
-            ShaderLanguage::Default => bindings::SHADER_SOURCE_LANGUAGE_DEFAULT,
-            ShaderLanguage::HLSL => bindings::SHADER_SOURCE_LANGUAGE_HLSL,
-            ShaderLanguage::GLSL => bindings::SHADER_SOURCE_LANGUAGE_GLSL,
-            ShaderLanguage::GLSLVerbatim => bindings::SHADER_SOURCE_LANGUAGE_GLSL_VERBATIM,
-            ShaderLanguage::MSL => bindings::SHADER_SOURCE_LANGUAGE_MSL,
-            ShaderLanguage::MSLVerbatim => bindings::SHADER_SOURCE_LANGUAGE_MSL_VERBATIM,
-            ShaderLanguage::MTLB => bindings::SHADER_SOURCE_LANGUAGE_MTLB,
-            ShaderLanguage::WGSL => bindings::SHADER_SOURCE_LANGUAGE_WGSL,
-        }) as bindings::SHADER_SOURCE_LANGUAGE
+            ShaderLanguage::Default => diligent_sys::SHADER_SOURCE_LANGUAGE_DEFAULT,
+            ShaderLanguage::HLSL => diligent_sys::SHADER_SOURCE_LANGUAGE_HLSL,
+            ShaderLanguage::GLSL => diligent_sys::SHADER_SOURCE_LANGUAGE_GLSL,
+            ShaderLanguage::GLSLVerbatim => diligent_sys::SHADER_SOURCE_LANGUAGE_GLSL_VERBATIM,
+            ShaderLanguage::MSL => diligent_sys::SHADER_SOURCE_LANGUAGE_MSL,
+            ShaderLanguage::MSLVerbatim => diligent_sys::SHADER_SOURCE_LANGUAGE_MSL_VERBATIM,
+            ShaderLanguage::MTLB => diligent_sys::SHADER_SOURCE_LANGUAGE_MTLB,
+            ShaderLanguage::WGSL => diligent_sys::SHADER_SOURCE_LANGUAGE_WGSL,
+        }) as diligent_sys::SHADER_SOURCE_LANGUAGE
     }
 }
 
@@ -53,37 +51,67 @@ pub enum ShaderCompiler {
     FXC,
 }
 
-impl From<&ShaderCompiler> for bindings::SHADER_COMPILER {
+impl From<&ShaderCompiler> for diligent_sys::SHADER_COMPILER {
     fn from(value: &ShaderCompiler) -> Self {
         (match value {
-            ShaderCompiler::Default => bindings::SHADER_COMPILER_DEFAULT,
-            ShaderCompiler::GLSLANG => bindings::SHADER_COMPILER_GLSLANG,
-            ShaderCompiler::DXC => bindings::SHADER_COMPILER_DXC,
-            ShaderCompiler::FXC => bindings::SHADER_COMPILER_FXC,
-        }) as bindings::SHADER_COMPILER
+            ShaderCompiler::Default => diligent_sys::SHADER_COMPILER_DEFAULT,
+            ShaderCompiler::GLSLANG => diligent_sys::SHADER_COMPILER_GLSLANG,
+            ShaderCompiler::DXC => diligent_sys::SHADER_COMPILER_DXC,
+            ShaderCompiler::FXC => diligent_sys::SHADER_COMPILER_FXC,
+        }) as diligent_sys::SHADER_COMPILER
     }
 }
 
-impl Default for bindings::ShaderResourceDesc {
-    fn default() -> Self {
-        bindings::ShaderResourceDesc {
-            Name: std::ptr::null(),
-            Type: bindings::SHADER_RESOURCE_TYPE_UNKNOWN as u8,
-            ArraySize: 0,
+pub enum ShaderResourceType {
+    Unknown,
+    ConstantBuffer,
+    TextureSRV,
+    BufferSRV,
+    TextureUAV,
+    BufferUAV,
+    Sampler,
+    InputAttachment,
+    AccelStruct,
+}
+const_assert!(diligent_sys::SHADER_RESOURCE_TYPE_LAST == 8);
+
+impl Into<ShaderResourceType> for diligent_sys::SHADER_RESOURCE_TYPE {
+    fn into(self) -> ShaderResourceType {
+        match self as diligent_sys::_SHADER_RESOURCE_TYPE {
+            diligent_sys::SHADER_RESOURCE_TYPE_UNKNOWN => ShaderResourceType::Unknown,
+            diligent_sys::SHADER_RESOURCE_TYPE_CONSTANT_BUFFER => {
+                ShaderResourceType::ConstantBuffer
+            }
+            diligent_sys::SHADER_RESOURCE_TYPE_TEXTURE_SRV => ShaderResourceType::TextureSRV,
+            diligent_sys::SHADER_RESOURCE_TYPE_BUFFER_SRV => ShaderResourceType::BufferSRV,
+            diligent_sys::SHADER_RESOURCE_TYPE_TEXTURE_UAV => ShaderResourceType::TextureUAV,
+            diligent_sys::SHADER_RESOURCE_TYPE_BUFFER_UAV => ShaderResourceType::BufferUAV,
+            diligent_sys::SHADER_RESOURCE_TYPE_SAMPLER => ShaderResourceType::Sampler,
+            diligent_sys::SHADER_RESOURCE_TYPE_INPUT_ATTACHMENT => {
+                ShaderResourceType::InputAttachment
+            }
+            diligent_sys::SHADER_RESOURCE_TYPE_ACCEL_STRUCT => ShaderResourceType::AccelStruct,
+            _ => panic!(),
         }
     }
 }
 
+pub struct ShaderResourceDesc<'a> {
+    pub name: &'a std::ffi::CStr,
+    pub resource_type: ShaderResourceType,
+    pub array_size: usize,
+}
+
 bitflags! {
-    pub struct ShaderCompileFlags : bindings::_SHADER_COMPILE_FLAGS {
-        const None                  = bindings::SHADER_COMPILE_FLAG_NONE;
-        const EnableUnboundedArrays = bindings::SHADER_COMPILE_FLAG_ENABLE_UNBOUNDED_ARRAYS;
-        const SkipReflection        = bindings::SHADER_COMPILE_FLAG_SKIP_REFLECTION;
-        const Asynchronous          = bindings::SHADER_COMPILE_FLAG_ASYNCHRONOUS;
-        const PackMatrixRowMajor    = bindings::SHADER_COMPILE_FLAG_PACK_MATRIX_ROW_MAJOR;
+    pub struct ShaderCompileFlags : diligent_sys::_SHADER_COMPILE_FLAGS {
+        const None                  = diligent_sys::SHADER_COMPILE_FLAG_NONE;
+        const EnableUnboundedArrays = diligent_sys::SHADER_COMPILE_FLAG_ENABLE_UNBOUNDED_ARRAYS;
+        const SkipReflection        = diligent_sys::SHADER_COMPILE_FLAG_SKIP_REFLECTION;
+        const Asynchronous          = diligent_sys::SHADER_COMPILE_FLAG_ASYNCHRONOUS;
+        const PackMatrixRowMajor    = diligent_sys::SHADER_COMPILE_FLAG_PACK_MATRIX_ROW_MAJOR;
     }
 }
-const_assert!(bindings::SHADER_COMPILE_FLAG_LAST == 8);
+const_assert!(diligent_sys::SHADER_COMPILE_FLAG_LAST == 8);
 
 pub struct ShaderDesc<'a> {
     name: &'a std::ffi::CStr,
@@ -118,7 +146,7 @@ impl<'a> ShaderCreateInfo<'a> {
             desc: ShaderDesc::new(name, shader_type),
             source_language: ShaderLanguage::Default,
             compiler: ShaderCompiler::Default,
-            language_version: Version { Major: 0, Minor: 0 },
+            language_version: Version { major: 0, minor: 0 },
             compile_flags: ShaderCompileFlags::None,
         }
     }
@@ -182,28 +210,29 @@ impl<'a> ShaderCreateInfo<'a> {
 }
 
 pub(crate) struct ShaderCreateInfoWrapper {
-    _macros: Vec<ShaderMacro>,
-    sci: bindings::ShaderCreateInfo,
+    _macros: Vec<diligent_sys::ShaderMacro>,
+    sci: diligent_sys::ShaderCreateInfo,
 }
 impl ShaderCreateInfoWrapper {
-    pub fn get(&self) -> &bindings::ShaderCreateInfo {
+    pub fn get(&self) -> &diligent_sys::ShaderCreateInfo {
         &self.sci
     }
 }
 
 impl From<&ShaderCreateInfo<'_>> for ShaderCreateInfoWrapper {
     fn from(value: &ShaderCreateInfo<'_>) -> Self {
-        let macros = Vec::from_iter(
-            value
-                .macros
-                .iter()
-                .map(|(name, def)| bindings::ShaderMacro {
-                    Name: name.as_ptr(),
-                    Definition: def.as_ptr(),
-                }),
-        );
+        let macros =
+            Vec::from_iter(
+                value
+                    .macros
+                    .iter()
+                    .map(|(name, def)| diligent_sys::ShaderMacro {
+                        Name: name.as_ptr(),
+                        Definition: def.as_ptr(),
+                    }),
+            );
 
-        let sci = bindings::ShaderCreateInfo {
+        let sci = diligent_sys::ShaderCreateInfo {
             FilePath: match &value.source {
                 ShaderSource::FilePath(path) => path.as_os_str().as_bytes().as_ptr() as *const i8,
                 _ => std::ptr::null(),
@@ -221,7 +250,7 @@ impl From<&ShaderCreateInfo<'_>> for ShaderCreateInfoWrapper {
                 ShaderSource::ByteCode(code, _) => code,
                 _ => std::ptr::null(),
             },
-            __bindgen_anon_1: bindings::ShaderCreateInfo__bindgen_ty_1 {
+            __bindgen_anon_1: diligent_sys::ShaderCreateInfo__bindgen_ty_1 {
                 ByteCodeSize: match value.source {
                     ShaderSource::ByteCode(_, size) => size,
                     ShaderSource::SourceCode(code) => code.len(),
@@ -229,37 +258,37 @@ impl From<&ShaderCreateInfo<'_>> for ShaderCreateInfoWrapper {
                 },
             },
             EntryPoint: value.entry_point.as_ptr(),
-            Macros: bindings::ShaderMacroArray {
+            Macros: diligent_sys::ShaderMacroArray {
                 Elements: macros.as_ptr(),
                 Count: macros.len() as u32,
             },
-            Desc: bindings::ShaderDesc {
+            Desc: diligent_sys::ShaderDesc {
                 _DeviceObjectAttribs: {
-                    bindings::DeviceObjectAttribs {
+                    diligent_sys::DeviceObjectAttribs {
                         Name: value.desc.name.as_ptr(),
                     }
                 },
-                ShaderType: bindings::SHADER_TYPE::from(&value.desc.shader_type),
+                ShaderType: diligent_sys::SHADER_TYPE::from(&value.desc.shader_type),
                 UseCombinedTextureSamplers: value.desc.use_combined_texture_samplers,
                 CombinedSamplerSuffix: value.desc.combined_sampler_suffix.as_ptr(),
             },
-            SourceLanguage: bindings::SHADER_SOURCE_LANGUAGE::from(&value.source_language),
-            ShaderCompiler: bindings::SHADER_COMPILER::from(&value.compiler),
-            HLSLVersion: bindings::ShaderVersion {
-                Major: value.language_version.Major,
-                Minor: value.language_version.Minor,
+            SourceLanguage: diligent_sys::SHADER_SOURCE_LANGUAGE::from(&value.source_language),
+            ShaderCompiler: diligent_sys::SHADER_COMPILER::from(&value.compiler),
+            HLSLVersion: diligent_sys::ShaderVersion {
+                Major: value.language_version.major,
+                Minor: value.language_version.minor,
             },
-            GLSLVersion: bindings::ShaderVersion {
-                Major: value.language_version.Major,
-                Minor: value.language_version.Minor,
+            GLSLVersion: diligent_sys::ShaderVersion {
+                Major: value.language_version.major,
+                Minor: value.language_version.minor,
             },
-            GLESSLVersion: bindings::ShaderVersion {
-                Major: value.language_version.Major,
-                Minor: value.language_version.Minor,
+            GLESSLVersion: diligent_sys::ShaderVersion {
+                Major: value.language_version.major,
+                Minor: value.language_version.minor,
             },
-            MSLVersion: bindings::ShaderVersion {
-                Major: value.language_version.Major,
-                Minor: value.language_version.Minor,
+            MSLVersion: diligent_sys::ShaderVersion {
+                Major: value.language_version.major,
+                Minor: value.language_version.minor,
             },
             // TODO
             CompileFlags: value.compile_flags.bits(),
@@ -287,8 +316,8 @@ impl<'a> ShaderDesc<'a> {
 }
 
 pub struct Shader {
-    pub(crate) shader: *mut bindings::IShader,
-    virtual_functions: *mut bindings::IShaderVtbl,
+    pub(crate) shader: *mut diligent_sys::IShader,
+    virtual_functions: *mut diligent_sys::IShaderVtbl,
 
     device_object: DeviceObject,
 }
@@ -300,25 +329,25 @@ impl AsDeviceObject for Shader {
 }
 
 impl Shader {
-    pub(crate) fn new(shader_ptr: *mut bindings::IShader) -> Self {
+    pub(crate) fn new(shader_ptr: *mut diligent_sys::IShader) -> Self {
         Shader {
             shader: shader_ptr,
             virtual_functions: unsafe { (*shader_ptr).pVtbl },
-            device_object: DeviceObject::new(shader_ptr as *mut bindings::IDeviceObject),
+            device_object: DeviceObject::new(shader_ptr as *mut diligent_sys::IDeviceObject),
         }
     }
 
-    pub fn get_desc(&self) -> bindings::ShaderDesc {
+    pub fn get_desc(&self) -> diligent_sys::ShaderDesc {
         unsafe {
             *((*self.virtual_functions)
                 .DeviceObject
                 .GetDesc
-                .unwrap_unchecked()(self.shader as *mut bindings::IDeviceObject)
-                as *const bindings::ShaderDesc)
+                .unwrap_unchecked()(self.shader as *mut diligent_sys::IDeviceObject)
+                as *const diligent_sys::ShaderDesc)
         }
     }
 
-    pub fn get_resources(&self) -> Vec<bindings::ShaderResourceDesc> {
+    pub fn get_resources(&self) -> Vec<diligent_sys::ShaderResourceDesc> {
         unsafe {
             let num_resources = (*self.virtual_functions)
                 .Shader
@@ -339,7 +368,10 @@ impl Shader {
         }
     }
 
-    pub fn get_constant_buffer_desc(&self, index: u32) -> Option<&bindings::ShaderCodeBufferDesc> {
+    pub fn get_constant_buffer_desc(
+        &self,
+        index: u32,
+    ) -> Option<&diligent_sys::ShaderCodeBufferDesc> {
         unsafe {
             (*self.virtual_functions)
                 .Shader
@@ -364,7 +396,7 @@ impl Shader {
         size
     }
 
-    pub fn get_status(&self, wait_for_completion: bool) -> bindings::SHADER_STATUS {
+    pub fn get_status(&self, wait_for_completion: bool) -> diligent_sys::SHADER_STATUS {
         unsafe {
             (*self.virtual_functions)
                 .Shader
@@ -375,9 +407,9 @@ impl Shader {
 }
 
 pub struct ShaderSourceInputStreamFactory {
-    pub(crate) factory_ptr: *mut bindings::IShaderSourceInputStreamFactory,
+    pub(crate) factory_ptr: *mut diligent_sys::IShaderSourceInputStreamFactory,
     #[allow(dead_code)] // TODO : imlement methods of ShaderSourceInputStreamFactory
-    virtual_functions: *mut bindings::IShaderSourceInputStreamFactoryVtbl,
+    virtual_functions: *mut diligent_sys::IShaderSourceInputStreamFactoryVtbl,
 
     object: Object,
 }
@@ -389,11 +421,11 @@ impl AsObject for ShaderSourceInputStreamFactory {
 }
 
 impl ShaderSourceInputStreamFactory {
-    pub(crate) fn new(factory_ptr: *mut bindings::IShaderSourceInputStreamFactory) -> Self {
+    pub(crate) fn new(factory_ptr: *mut diligent_sys::IShaderSourceInputStreamFactory) -> Self {
         ShaderSourceInputStreamFactory {
             factory_ptr,
             virtual_functions: unsafe { (*factory_ptr).pVtbl },
-            object: Object::new(factory_ptr as *mut bindings::IObject),
+            object: Object::new(factory_ptr as *mut diligent_sys::IObject),
         }
     }
 

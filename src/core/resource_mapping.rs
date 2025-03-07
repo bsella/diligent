@@ -1,15 +1,13 @@
 use std::collections::BTreeMap;
 
-use crate::bindings;
-
 use super::{
     device_object::{AsDeviceObject, DeviceObject},
     object::{AsObject, Object},
 };
 
 pub struct ResourceMapping {
-    pub(crate) resource_mapping: *mut bindings::IResourceMapping,
-    virtual_functions: *mut bindings::IResourceMappingVtbl,
+    pub(crate) resource_mapping: *mut diligent_sys::IResourceMapping,
+    virtual_functions: *mut diligent_sys::IResourceMappingVtbl,
 
     resources: BTreeMap<String, Vec<*const DeviceObject>>,
 
@@ -23,11 +21,11 @@ impl AsObject for ResourceMapping {
 }
 
 impl ResourceMapping {
-    pub(crate) fn new(resource_mapping_ptr: *mut bindings::IResourceMapping) -> Self {
+    pub(crate) fn new(resource_mapping_ptr: *mut diligent_sys::IResourceMapping) -> Self {
         ResourceMapping {
             resource_mapping: resource_mapping_ptr,
             virtual_functions: unsafe { (*resource_mapping_ptr).pVtbl },
-            object: Object::new(resource_mapping_ptr as *mut bindings::IObject),
+            object: Object::new(resource_mapping_ptr as *mut diligent_sys::IObject),
 
             // We're assuming that resource_mapping_ptr is a pointer to a newly created resource
             // mapping that does not contain any resources for now

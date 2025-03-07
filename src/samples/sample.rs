@@ -1,10 +1,12 @@
 use imgui::Ui;
 
 use crate::{
-    bindings::{self, SwapChainDesc},
     core::{
-        device_context::DeviceContext, engine_factory::EngineFactory, render_device::RenderDevice,
-        swap_chain::SwapChain,
+        device_context::DeviceContext,
+        engine_factory::EngineFactory,
+        graphics_types::SurfaceTransform,
+        render_device::RenderDevice,
+        swap_chain::{SwapChain, SwapChainDesc},
     },
     tools::native_app::events::EventResult,
 };
@@ -16,13 +18,13 @@ pub fn get_adjusted_projection_matrix(
     near_plane: f32,
     far_plane: f32,
 ) -> glam::Mat4 {
-    let aspect_ratio = swap_chain_desc.Width as f32 / swap_chain_desc.Height as f32;
+    let aspect_ratio = swap_chain_desc.width as f32 / swap_chain_desc.height as f32;
 
-    let fov = match swap_chain_desc.PreTransform {
-        bindings::SURFACE_TRANSFORM_ROTATE_90
-        | bindings::SURFACE_TRANSFORM_ROTATE_270
-        | bindings::SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_90
-        | bindings::SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270 => {
+    let fov = match swap_chain_desc.pre_transform {
+        SurfaceTransform::Rotate90
+        | SurfaceTransform::Rotate270
+        | SurfaceTransform::HorizontalMirrorRotate90
+        | SurfaceTransform::HorizontalMirrorRotate270 => {
             // When the screen is rotated, vertical FOV becomes horizontal FOV
             fov_y * aspect_ratio
         }
@@ -38,27 +40,27 @@ pub fn get_surface_pretransform_matrix(
     swap_chain_desc: &SwapChainDesc,
     camera_view_axis: &glam::Vec3,
 ) -> glam::Mat4 {
-    match swap_chain_desc.PreTransform
+    match swap_chain_desc.pre_transform
     {
-        bindings::SURFACE_TRANSFORM_ROTATE_90 =>
+        SurfaceTransform::Rotate90 =>
             // The image content is rotated 90 degrees clockwise.
             glam::Mat4::from_quat(glam::Quat::from_axis_angle(*camera_view_axis, -std::f32::consts::PI / 2.0)),
 
-        bindings::SURFACE_TRANSFORM_ROTATE_180 =>
+            SurfaceTransform::Rotate180 =>
         // The image content is rotated 180 degrees clockwise.
         glam::Mat4::from_quat(glam::Quat::from_axis_angle(*camera_view_axis, -std::f32::consts::PI)),
 
-        bindings::SURFACE_TRANSFORM_ROTATE_270 =>
+        SurfaceTransform::Rotate270 =>
         // The image content is rotated 270 degrees clockwise.
         glam::Mat4::from_quat(glam::Quat::from_axis_angle(*camera_view_axis, -std::f32::consts::PI* 3.0 / 2.0)),
 
-        bindings::SURFACE_TRANSFORM_OPTIMAL=>
+        SurfaceTransform::Optimal=>
             panic!("SURFACE_TRANSFORM_OPTIMAL is only valid as parameter during swap chain initialization."),
 
-        bindings::SURFACE_TRANSFORM_HORIZONTAL_MIRROR|
-        bindings::SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_90|
-        bindings::SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_180|
-        bindings::SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270 =>
+        SurfaceTransform::HorizontalMirror|
+        SurfaceTransform::HorizontalMirrorRotate90|
+        SurfaceTransform::HorizontalMirrorRotate180|
+        SurfaceTransform::HorizontalMirrorRotate270 =>
             panic!("Mirror transforms are not supported"),
 
         _=> glam::Mat4::IDENTITY

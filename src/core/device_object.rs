@@ -1,10 +1,8 @@
-use crate::bindings;
-
 use super::object::{AsObject, Object};
 
 pub struct DeviceObject {
-    pub(crate) device_object: *mut bindings::IDeviceObject,
-    virtual_functions: *mut bindings::IDeviceObjectVtbl,
+    pub(crate) device_object: *mut diligent_sys::IDeviceObject,
+    virtual_functions: *mut diligent_sys::IDeviceObjectVtbl,
     object: Object,
 }
 
@@ -19,15 +17,15 @@ pub trait AsDeviceObject {
 }
 
 impl DeviceObject {
-    pub(crate) fn new(device_object: *mut bindings::IDeviceObject) -> Self {
+    pub(crate) fn new(device_object: *mut diligent_sys::IDeviceObject) -> Self {
         DeviceObject {
             virtual_functions: unsafe { (*device_object).pVtbl },
             device_object: device_object,
-            object: Object::new(device_object as *mut bindings::IObject),
+            object: Object::new(device_object as *mut diligent_sys::IObject),
         }
     }
 
-    pub fn get_desc(&self) -> &bindings::DeviceObjectAttribs {
+    pub fn get_desc(&self) -> &diligent_sys::DeviceObjectAttribs {
         unsafe {
             (*self.virtual_functions)
                 .DeviceObject

@@ -1,7 +1,5 @@
 use std::os::raw::c_void;
 
-use crate::bindings;
-
 use super::buffer::{Buffer, BufferDesc};
 use super::data_blob::DataBlob;
 use super::device_context::DeviceContext;
@@ -32,8 +30,8 @@ impl RenderDeviceInfo {
 }
 
 pub struct RenderDevice {
-    pub(crate) render_device: *mut bindings::IRenderDevice,
-    virtual_functions: *mut bindings::IRenderDeviceVtbl,
+    pub(crate) render_device: *mut diligent_sys::IRenderDevice,
+    virtual_functions: *mut diligent_sys::IRenderDeviceVtbl,
 
     object: Object,
 }
@@ -45,18 +43,18 @@ impl AsObject for RenderDevice {
 }
 
 impl RenderDevice {
-    pub(crate) fn new(render_device_ptr: *mut bindings::IRenderDevice) -> Self {
+    pub(crate) fn new(render_device_ptr: *mut diligent_sys::IRenderDevice) -> Self {
         RenderDevice {
             render_device: render_device_ptr,
             virtual_functions: unsafe { (*render_device_ptr).pVtbl },
-            object: Object::new(render_device_ptr as *mut bindings::IObject),
+            object: Object::new(render_device_ptr as *mut diligent_sys::IObject),
         }
     }
 
     pub fn create_buffer(&self, buffer_desc: &BufferDesc) -> Option<Buffer> {
         let mut buffer_ptr = std::ptr::null_mut();
 
-        let buffer_desc = bindings::BufferDesc::from(buffer_desc);
+        let buffer_desc = diligent_sys::BufferDesc::from(buffer_desc);
         unsafe {
             (*self.virtual_functions)
                 .RenderDevice
@@ -84,13 +82,13 @@ impl RenderDevice {
     ) -> Option<Buffer> {
         let mut buffer_ptr = std::ptr::null_mut();
 
-        let buffer_data = bindings::BufferData {
+        let buffer_data = diligent_sys::BufferData {
             pData: std::ptr::from_ref(buffer_data) as *const c_void,
             DataSize: std::mem::size_of_val(buffer_data) as u64,
             pContext: device_context.map_or(std::ptr::null_mut(), |context| context.device_context),
         };
 
-        let buffer_desc = bindings::BufferDesc::from(buffer_desc);
+        let buffer_desc = diligent_sys::BufferDesc::from(buffer_desc);
         unsafe {
             (*self.virtual_functions)
                 .RenderDevice
@@ -111,8 +109,8 @@ impl RenderDevice {
     }
 
     pub fn create_shader(&self, shader_ci: &ShaderCreateInfo) -> Result<Shader, DataBlob> {
-        let mut shader_ptr: *mut bindings::IShader = std::ptr::null_mut();
-        let mut data_blob_ptr: *mut bindings::IDataBlob = std::ptr::null_mut();
+        let mut shader_ptr: *mut diligent_sys::IShader = std::ptr::null_mut();
+        let mut data_blob_ptr: *mut diligent_sys::IDataBlob = std::ptr::null_mut();
 
         let shader_ci_wrapper = ShaderCreateInfoWrapper::from(shader_ci);
         let shader_ci = shader_ci_wrapper.get();
@@ -143,14 +141,14 @@ impl RenderDevice {
         device_context: Option<&DeviceContext>,
     ) -> Option<Texture> {
         let mut texture_ptr = std::ptr::null_mut();
-        let texture_desc = bindings::TextureDesc::from(texture_desc);
+        let texture_desc = diligent_sys::TextureDesc::from(texture_desc);
 
         let mut subresources: Vec<_> = subresources
             .iter()
-            .map(|&subres| bindings::TextureSubResData::from(subres))
+            .map(|&subres| diligent_sys::TextureSubResData::from(subres))
             .collect();
 
-        let texture_data = bindings::TextureData {
+        let texture_data = diligent_sys::TextureData {
             NumSubresources: subresources.len() as u32,
             pSubResources: subresources.as_mut_ptr(),
             pContext: device_context.map_or(std::ptr::null_mut(), |c| c.device_context),
@@ -179,15 +177,15 @@ impl RenderDevice {
         }
     }
 
-    pub fn create_sampler(&self, sampler_desc: &bindings::SamplerDesc) -> Option<Sampler> {
-        let mut sampler_ptr: *mut bindings::ISampler = std::ptr::null_mut();
+    pub fn create_sampler(&self, sampler_desc: &diligent_sys::SamplerDesc) -> Option<Sampler> {
+        let mut sampler_ptr: *mut diligent_sys::ISampler = std::ptr::null_mut();
         unsafe {
             (*self.virtual_functions)
                 .RenderDevice
                 .CreateSampler
                 .unwrap_unchecked()(
                 self.render_device,
-                std::ptr::addr_of!(sampler_desc) as *const bindings::SamplerDesc,
+                std::ptr::addr_of!(sampler_desc) as *const diligent_sys::SamplerDesc,
                 std::ptr::addr_of_mut!(sampler_ptr),
             );
         }
@@ -201,7 +199,7 @@ impl RenderDevice {
 
     pub fn create_resource_mapping(
         &self,
-        resource_mapping_ci: &bindings::ResourceMappingCreateInfo,
+        resource_mapping_ci: &diligent_sys::ResourceMappingCreateInfo,
     ) -> Option<ResourceMapping> {
         let mut resource_mapping_ptr = std::ptr::null_mut();
         unsafe {
@@ -250,7 +248,7 @@ impl RenderDevice {
 
     pub fn create_compute_pipeline_state(
         &self,
-        pipeline_ci: &bindings::ComputePipelineStateCreateInfo,
+        pipeline_ci: &diligent_sys::ComputePipelineStateCreateInfo,
     ) -> Option<PipelineState> {
         let mut pipeline_state_ptr = std::ptr::null_mut();
         unsafe {
@@ -273,7 +271,7 @@ impl RenderDevice {
 
     pub fn create_ray_tracing_pipeline_state(
         &self,
-        pipeline_ci: &bindings::RayTracingPipelineStateCreateInfo,
+        pipeline_ci: &diligent_sys::RayTracingPipelineStateCreateInfo,
     ) -> Option<PipelineState> {
         let mut pipeline_state_ptr = std::ptr::null_mut();
         unsafe {
@@ -295,7 +293,7 @@ impl RenderDevice {
 
     pub fn create_tile_pipeline_state(
         &self,
-        pipeline_ci: &bindings::TilePipelineStateCreateInfo,
+        pipeline_ci: &diligent_sys::TilePipelineStateCreateInfo,
     ) -> Option<PipelineState> {
         let mut pipeline_state_ptr = std::ptr::null_mut();
         unsafe {
@@ -315,7 +313,7 @@ impl RenderDevice {
         }
     }
 
-    pub fn create_fence(&self, fence_desc: &bindings::FenceDesc) -> Option<Fence> {
+    pub fn create_fence(&self, fence_desc: &diligent_sys::FenceDesc) -> Option<Fence> {
         let mut fence_ptr = std::ptr::null_mut();
         unsafe {
             (*self.virtual_functions)
@@ -343,7 +341,7 @@ impl RenderDevice {
     // pub fn create_pipeline_resource_signature();
     // pub fn create_device_memory();
 
-    pub fn get_adapter_info(&self) -> &bindings::GraphicsAdapterInfo {
+    pub fn get_adapter_info(&self) -> &diligent_sys::GraphicsAdapterInfo {
         unsafe {
             (*self.virtual_functions)
                 .RenderDevice
@@ -366,13 +364,13 @@ impl RenderDevice {
 
         RenderDeviceInfo {
             device_type: match render_device_info.Type {
-                bindings::RENDER_DEVICE_TYPE_D3D11 => RenderDeviceType::D3D11,
-                bindings::RENDER_DEVICE_TYPE_D3D12 => RenderDeviceType::D3D12,
-                bindings::RENDER_DEVICE_TYPE_GL => RenderDeviceType::GL,
-                bindings::RENDER_DEVICE_TYPE_GLES => RenderDeviceType::GLES,
-                bindings::RENDER_DEVICE_TYPE_VULKAN => RenderDeviceType::VULKAN,
-                bindings::RENDER_DEVICE_TYPE_METAL => RenderDeviceType::METAL,
-                bindings::RENDER_DEVICE_TYPE_WEBGPU => RenderDeviceType::WEBGPU,
+                diligent_sys::RENDER_DEVICE_TYPE_D3D11 => RenderDeviceType::D3D11,
+                diligent_sys::RENDER_DEVICE_TYPE_D3D12 => RenderDeviceType::D3D12,
+                diligent_sys::RENDER_DEVICE_TYPE_GL => RenderDeviceType::GL,
+                diligent_sys::RENDER_DEVICE_TYPE_GLES => RenderDeviceType::GLES,
+                diligent_sys::RENDER_DEVICE_TYPE_VULKAN => RenderDeviceType::VULKAN,
+                diligent_sys::RENDER_DEVICE_TYPE_METAL => RenderDeviceType::METAL,
+                diligent_sys::RENDER_DEVICE_TYPE_WEBGPU => RenderDeviceType::WEBGPU,
                 _ => panic!(),
             },
         }
@@ -380,8 +378,8 @@ impl RenderDevice {
 
     pub fn get_texture_format_info(
         &self,
-        format: bindings::TEXTURE_FORMAT,
-    ) -> &bindings::TextureFormatInfo {
+        format: diligent_sys::TEXTURE_FORMAT,
+    ) -> &diligent_sys::TextureFormatInfo {
         unsafe {
             (*self.virtual_functions)
                 .RenderDevice
@@ -394,8 +392,8 @@ impl RenderDevice {
 
     pub fn get_texture_format_info_ext(
         &self,
-        format: bindings::TEXTURE_FORMAT,
-    ) -> &bindings::TextureFormatInfoExt {
+        format: diligent_sys::TEXTURE_FORMAT,
+    ) -> &diligent_sys::TextureFormatInfoExt {
         unsafe {
             (*self.virtual_functions)
                 .RenderDevice
@@ -408,10 +406,10 @@ impl RenderDevice {
 
     pub fn get_sparse_texture_format_info(
         &self,
-        format: bindings::TEXTURE_FORMAT,
-        dimension: bindings::RESOURCE_DIMENSION,
+        format: diligent_sys::TEXTURE_FORMAT,
+        dimension: diligent_sys::RESOURCE_DIMENSION,
         sample_count: u32,
-    ) -> bindings::SparseTextureFormatInfo {
+    ) -> diligent_sys::SparseTextureFormatInfo {
         unsafe {
             (*self.virtual_functions)
                 .RenderDevice

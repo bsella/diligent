@@ -1,12 +1,10 @@
-use crate::bindings;
-
 pub(crate) struct Object {
-    pub(crate) object: *mut bindings::IObject,
-    virtual_functions: *mut bindings::IObjectVtbl,
+    pub(crate) object: *mut diligent_sys::IObject,
+    virtual_functions: *mut diligent_sys::IObjectVtbl,
 }
 
 impl Object {
-    pub(crate) fn new(object: *mut bindings::IObject) -> Self {
+    pub(crate) fn new(object: *mut diligent_sys::IObject) -> Self {
         Object {
             virtual_functions: unsafe { (*object).pVtbl },
             object: object,

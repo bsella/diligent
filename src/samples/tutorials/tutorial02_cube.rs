@@ -1,7 +1,6 @@
 use std::path::PathBuf;
 
 use diligent::{
-    bindings,
     core::{
         accessories::linear_to_srgba,
         buffer::{Buffer, BufferDesc},
@@ -63,12 +62,14 @@ impl SampleBase for Cube {
         _deferred_contexts: Vec<DeviceContext>,
         swap_chain: &SwapChain,
     ) -> Self {
+        let swap_chain_desc = swap_chain.get_desc();
+
         // If the swap chain color buffer format is a non-sRGB UNORM format,
         // we need to manually convert pixel shader output to gamma space.
-        let convert_ps_output_to_gamma = swap_chain.get_desc().ColorBufferFormat
-            == bindings::TEX_FORMAT_RGBA8_UNORM as bindings::TEXTURE_FORMAT
-            || swap_chain.get_desc().ColorBufferFormat
-                == bindings::TEX_FORMAT_BGRA8_UNORM as bindings::TEXTURE_FORMAT;
+        let convert_ps_output_to_gamma = swap_chain_desc.color_buffer_format
+            == diligent_sys::TEX_FORMAT_RGBA8_UNORM as diligent_sys::TEXTURE_FORMAT
+            || swap_chain_desc.color_buffer_format
+                == diligent_sys::TEX_FORMAT_BGRA8_UNORM as diligent_sys::TEXTURE_FORMAT;
 
         // In this tutorial, we will load shaders from file. To be able to do that,
         // we need to create a shader source stream factory
@@ -146,9 +147,9 @@ impl SampleBase for Cube {
             // This tutorial will render to a single render target
             .num_render_targets(1)
             // Set render target format which is the format of the swap chain's color buffer
-            .rtv_format::<0>(swap_chain.get_desc().ColorBufferFormat as bindings::_TEXTURE_FORMAT)
+            .rtv_format::<0>(swap_chain_desc.color_buffer_format as diligent_sys::_TEXTURE_FORMAT)
             // Set depth buffer format which is the format of the swap chain's back buffer
-            .dsv_format(swap_chain.get_desc().DepthBufferFormat as bindings::_TEXTURE_FORMAT)
+            .dsv_format(swap_chain_desc.depth_buffer_format as diligent_sys::_TEXTURE_FORMAT)
             // Primitive topology defines what kind of primitives will be rendered by this pipeline state
             .primitive_topology(PrimitiveTopology::TriangleList)
             // Define vertex shader input layout
@@ -202,14 +203,14 @@ impl SampleBase for Cube {
 
         #[rustfmt::skip]
         const CUBE_VERTS : [Vertex; 8] = [
-            Vertex{ pos:[-1.0, -1.0,-1.0,], color:[1.0, 0.0, 0.0, 1.0] },
-            Vertex{ pos:[-1.0,  1.0,-1.0,], color:[0.0, 1.0, 0.0, 1.0] },
-            Vertex{ pos:[ 1.0,  1.0,-1.0,], color:[0.0, 0.0, 1.0, 1.0] },
-            Vertex{ pos:[ 1.0, -1.0,-1.0,], color:[1.0, 1.0, 1.0, 1.0] },
-            Vertex{ pos:[-1.0, -1.0, 1.0,], color:[1.0, 1.0, 0.0, 1.0] },
-            Vertex{ pos:[-1.0,  1.0, 1.0,], color:[0.0, 1.0, 1.0, 1.0] },
-            Vertex{ pos:[ 1.0,  1.0, 1.0,], color:[1.0, 0.0, 1.0, 1.0] },
-            Vertex{ pos:[ 1.0, -1.0, 1.0,], color:[0.2, 0.2, 0.2, 1.0] },
+            Vertex{ pos:[-1.0, -1.0, -1.0], color:[1.0, 0.0, 0.0, 1.0] },
+            Vertex{ pos:[-1.0,  1.0, -1.0], color:[0.0, 1.0, 0.0, 1.0] },
+            Vertex{ pos:[ 1.0,  1.0, -1.0], color:[0.0, 0.0, 1.0, 1.0] },
+            Vertex{ pos:[ 1.0, -1.0, -1.0], color:[1.0, 1.0, 1.0, 1.0] },
+            Vertex{ pos:[-1.0, -1.0,  1.0], color:[1.0, 1.0, 0.0, 1.0] },
+            Vertex{ pos:[-1.0,  1.0,  1.0], color:[0.0, 1.0, 1.0, 1.0] },
+            Vertex{ pos:[ 1.0,  1.0,  1.0], color:[1.0, 0.0, 1.0, 1.0] },
+            Vertex{ pos:[ 1.0, -1.0,  1.0], color:[0.2, 0.2, 0.2, 1.0] },
         ];
 
         // Create a vertex buffer that stores cube vertices
@@ -300,11 +301,11 @@ impl SampleBase for Cube {
 
             // Get pretransform matrix that rotates the scene according the surface orientation
             let srf_pre_transform =
-                get_surface_pretransform_matrix(swap_chain_desc, &glam::Vec3::new(0.0, 0.0, 1.0));
+                get_surface_pretransform_matrix(&swap_chain_desc, &glam::Vec3::new(0.0, 0.0, 1.0));
 
             // Get projection matrix adjusted to the current screen orientation
             let proj = get_adjusted_projection_matrix(
-                swap_chain_desc,
+                &swap_chain_desc,
                 std::f32::consts::PI / 4.0,
                 0.1,
                 100.0,

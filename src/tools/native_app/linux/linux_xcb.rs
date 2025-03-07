@@ -1,7 +1,6 @@
 use xcb::{x, Xid};
 
 use crate::{
-    bindings,
     core::engine_factory::EngineCreateInfo,
     tools::native_app::{
         app::App,
@@ -24,9 +23,9 @@ impl NativeWindow {
     }
 }
 
-impl From<&NativeWindow> for bindings::NativeWindow {
+impl From<&NativeWindow> for diligent_sys::NativeWindow {
     fn from(value: &NativeWindow) -> Self {
-        bindings::NativeWindow {
+        diligent_sys::NativeWindow {
             WindowId: value.window_id,
             pXCBConnection: value.xcb_connection_ptr as *mut ::std::os::raw::c_void,
             pDisplay: std::ptr::null_mut(),

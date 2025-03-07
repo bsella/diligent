@@ -1,7 +1,5 @@
 use bitflags::bitflags;
 
-use crate::bindings;
-
 use super::{
     buffer::Buffer,
     fence::Fence,
@@ -14,20 +12,20 @@ use super::{
 };
 
 bitflags! {
-    pub struct DrawFlags: bindings::_DRAW_FLAGS {
-        const None                         = bindings::DRAW_FLAG_NONE;
-        const VerifyStates                 = bindings::DRAW_FLAG_VERIFY_STATES;
-        const VerifyDrawAttribs            = bindings::DRAW_FLAG_VERIFY_DRAW_ATTRIBS;
-        const VerifyRenderTargets          = bindings::DRAW_FLAG_VERIFY_RENDER_TARGETS;
-        const VerifyAll                    = bindings::DRAW_FLAG_VERIFY_ALL;
-        const DynamicResourceBuffersIntact = bindings::DRAW_FLAG_DYNAMIC_RESOURCE_BUFFERS_INTACT;
+    pub struct DrawFlags: diligent_sys::_DRAW_FLAGS {
+        const None                         = diligent_sys::DRAW_FLAG_NONE;
+        const VerifyStates                 = diligent_sys::DRAW_FLAG_VERIFY_STATES;
+        const VerifyDrawAttribs            = diligent_sys::DRAW_FLAG_VERIFY_DRAW_ATTRIBS;
+        const VerifyRenderTargets          = diligent_sys::DRAW_FLAG_VERIFY_RENDER_TARGETS;
+        const VerifyAll                    = diligent_sys::DRAW_FLAG_VERIFY_ALL;
+        const DynamicResourceBuffersIntact = diligent_sys::DRAW_FLAG_DYNAMIC_RESOURCE_BUFFERS_INTACT;
     }
 }
 
 bitflags! {
-    pub struct SetVertexBufferFlags: bindings::_SET_VERTEX_BUFFERS_FLAGS {
-        const None  = bindings::SET_VERTEX_BUFFERS_FLAG_NONE;
-        const Reset = bindings::SET_VERTEX_BUFFERS_FLAG_RESET;
+    pub struct SetVertexBufferFlags: diligent_sys::_SET_VERTEX_BUFFERS_FLAGS {
+        const None  = diligent_sys::SET_VERTEX_BUFFERS_FLAG_NONE;
+        const Reset = diligent_sys::SET_VERTEX_BUFFERS_FLAG_RESET;
     }
 }
 
@@ -68,11 +66,11 @@ impl DrawAttribs {
     }
 }
 
-impl From<&DrawAttribs> for bindings::DrawAttribs {
+impl From<&DrawAttribs> for diligent_sys::DrawAttribs {
     fn from(value: &DrawAttribs) -> Self {
-        bindings::DrawAttribs {
+        diligent_sys::DrawAttribs {
             NumVertices: value.num_vertices,
-            Flags: value.flags.bits() as bindings::DRAW_FLAGS,
+            Flags: value.flags.bits() as diligent_sys::DRAW_FLAGS,
             NumInstances: value.num_instances,
             StartVertexLocation: value.start_vertex_location,
             FirstInstanceLocation: value.first_instance_location,
@@ -127,14 +125,14 @@ impl DrawIndexedAttribs {
     }
 }
 
-impl From<&DrawIndexedAttribs> for bindings::DrawIndexedAttribs {
+impl From<&DrawIndexedAttribs> for diligent_sys::DrawIndexedAttribs {
     fn from(value: &DrawIndexedAttribs) -> Self {
-        bindings::DrawIndexedAttribs {
+        diligent_sys::DrawIndexedAttribs {
             BaseVertex: value.base_vertex,
             FirstIndexLocation: value.first_index_location,
             FirstInstanceLocation: value.first_instance_location,
-            Flags: value.flags.bits() as bindings::DRAW_FLAGS,
-            IndexType: bindings::VALUE_TYPE::from(&value.index_type),
+            Flags: value.flags.bits() as diligent_sys::DRAW_FLAGS,
+            IndexType: diligent_sys::VALUE_TYPE::from(&value.index_type),
             NumIndices: value.num_indices,
             NumInstances: value.num_instances,
         }
@@ -147,15 +145,17 @@ pub enum ResourceStateTransitionMode {
     Verify,
 }
 
-impl From<&ResourceStateTransitionMode> for bindings::RESOURCE_STATE_TRANSITION_MODE {
+impl From<&ResourceStateTransitionMode> for diligent_sys::RESOURCE_STATE_TRANSITION_MODE {
     fn from(value: &ResourceStateTransitionMode) -> Self {
         (match value {
-            ResourceStateTransitionMode::None => bindings::RESOURCE_STATE_TRANSITION_MODE_NONE,
+            ResourceStateTransitionMode::None => diligent_sys::RESOURCE_STATE_TRANSITION_MODE_NONE,
             ResourceStateTransitionMode::Transition => {
-                bindings::RESOURCE_STATE_TRANSITION_MODE_TRANSITION
+                diligent_sys::RESOURCE_STATE_TRANSITION_MODE_TRANSITION
             }
-            ResourceStateTransitionMode::Verify => bindings::RESOURCE_STATE_TRANSITION_MODE_VERIFY,
-        }) as bindings::RESOURCE_STATE_TRANSITION_MODE
+            ResourceStateTransitionMode::Verify => {
+                diligent_sys::RESOURCE_STATE_TRANSITION_MODE_VERIFY
+            }
+        }) as diligent_sys::RESOURCE_STATE_TRANSITION_MODE
     }
 }
 
@@ -189,9 +189,9 @@ impl Viewport {
     }
 }
 
-impl From<&Viewport> for bindings::Viewport {
+impl From<&Viewport> for diligent_sys::Viewport {
     fn from(value: &Viewport) -> Self {
-        bindings::Viewport {
+        diligent_sys::Viewport {
             TopLeftX: value.top_left_x,
             TopLeftY: value.top_left_y,
             Width: value.width,
@@ -225,9 +225,9 @@ impl Rect {
     }
 }
 
-impl From<&Rect> for bindings::Rect {
+impl From<&Rect> for diligent_sys::Rect {
     fn from(value: &Rect) -> Self {
-        bindings::Rect {
+        diligent_sys::Rect {
             bottom: value.bottom,
             left: value.left,
             right: value.right,
@@ -237,8 +237,8 @@ impl From<&Rect> for bindings::Rect {
 }
 
 pub struct DeviceContext {
-    pub(crate) device_context: *mut bindings::IDeviceContext,
-    virtual_functions: *mut bindings::IDeviceContextVtbl,
+    pub(crate) device_context: *mut diligent_sys::IDeviceContext,
+    virtual_functions: *mut diligent_sys::IDeviceContextVtbl,
 
     object: Object,
 }
@@ -250,15 +250,15 @@ impl AsObject for DeviceContext {
 }
 
 impl DeviceContext {
-    pub(crate) fn new(device_context: *mut bindings::IDeviceContext) -> Self {
+    pub(crate) fn new(device_context: *mut diligent_sys::IDeviceContext) -> Self {
         DeviceContext {
             device_context: device_context,
             virtual_functions: unsafe { (*device_context).pVtbl },
-            object: Object::new(device_context as *mut bindings::IObject),
+            object: Object::new(device_context as *mut diligent_sys::IObject),
         }
     }
 
-    pub fn get_desc(&self) -> &bindings::DeviceContextDesc {
+    pub fn get_desc(&self) -> &diligent_sys::DeviceContextDesc {
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -311,7 +311,7 @@ impl DeviceContext {
                 .unwrap_unchecked()(
                 self.device_context,
                 shader_resource_binding.shader_resource_binding,
-                bindings::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
+                diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
             )
         }
     }
@@ -353,8 +353,8 @@ impl DeviceContext {
                 num_buffers as u32,
                 buffer_pointers.as_ptr(),
                 offsets.as_ptr(),
-                bindings::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
-                flags.bits() as bindings::SET_VERTEX_BUFFERS_FLAGS,
+                diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
+                flags.bits() as diligent_sys::SET_VERTEX_BUFFERS_FLAGS,
             )
         }
     }
@@ -382,7 +382,7 @@ impl DeviceContext {
                 self.device_context,
                 index_buffer.buffer,
                 offset,
-                bindings::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
+                diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
             )
         }
     }
@@ -395,7 +395,7 @@ impl DeviceContext {
     ) {
         let viewports: Vec<_> = viewports
             .iter()
-            .map(|&viewport| bindings::Viewport::from(viewport))
+            .map(|&viewport| diligent_sys::Viewport::from(viewport))
             .collect();
         unsafe {
             (*self.virtual_functions)
@@ -419,7 +419,7 @@ impl DeviceContext {
     ) {
         let rects: Vec<_> = rects
             .iter()
-            .map(|&rect| bindings::Rect::from(rect))
+            .map(|&rect| diligent_sys::Rect::from(rect))
             .collect();
 
         unsafe {
@@ -458,12 +458,12 @@ impl DeviceContext {
                 num_render_targets as u32,
                 render_target_pointers.as_mut_ptr(),
                 depth_stencil.map_or(std::ptr::null_mut(), |v| v.texture_view),
-                bindings::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
+                diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
             )
         }
     }
 
-    pub fn begin_render_pass(&self, attribs: &bindings::BeginRenderPassAttribs) {
+    pub fn begin_render_pass(&self, attribs: &diligent_sys::BeginRenderPassAttribs) {
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -491,7 +491,7 @@ impl DeviceContext {
     }
 
     pub fn draw(&self, attribs: &DrawAttribs) {
-        let attribs = bindings::DrawAttribs::from(attribs);
+        let attribs = diligent_sys::DrawAttribs::from(attribs);
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -501,7 +501,7 @@ impl DeviceContext {
     }
 
     pub fn draw_indexed(&self, attribs: &DrawIndexedAttribs) {
-        let attribs = bindings::DrawIndexedAttribs::from(attribs);
+        let attribs = diligent_sys::DrawIndexedAttribs::from(attribs);
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -510,7 +510,7 @@ impl DeviceContext {
         }
     }
 
-    pub fn draw_indirect(&self, attribs: &bindings::DrawIndirectAttribs) {
+    pub fn draw_indirect(&self, attribs: &diligent_sys::DrawIndirectAttribs) {
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -519,7 +519,7 @@ impl DeviceContext {
         }
     }
 
-    pub fn draw_indexed_indirect(&self, attribs: &bindings::DrawIndexedIndirectAttribs) {
+    pub fn draw_indexed_indirect(&self, attribs: &diligent_sys::DrawIndexedIndirectAttribs) {
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -528,7 +528,7 @@ impl DeviceContext {
         }
     }
 
-    pub fn draw_mesh(&self, attribs: &bindings::DrawMeshAttribs) {
+    pub fn draw_mesh(&self, attribs: &diligent_sys::DrawMeshAttribs) {
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -537,7 +537,7 @@ impl DeviceContext {
         }
     }
 
-    pub fn draw_mesh_indirect(&self, attribs: &bindings::DrawMeshIndirectAttribs) {
+    pub fn draw_mesh_indirect(&self, attribs: &diligent_sys::DrawMeshIndirectAttribs) {
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -546,7 +546,7 @@ impl DeviceContext {
         }
     }
 
-    pub fn multi_draw(&self, attribs: &bindings::MultiDrawAttribs) {
+    pub fn multi_draw(&self, attribs: &diligent_sys::MultiDrawAttribs) {
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -555,7 +555,7 @@ impl DeviceContext {
         }
     }
 
-    pub fn multi_draw_indexed(&self, attribs: &bindings::MultiDrawIndexedAttribs) {
+    pub fn multi_draw_indexed(&self, attribs: &diligent_sys::MultiDrawIndexedAttribs) {
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -564,7 +564,7 @@ impl DeviceContext {
         }
     }
 
-    pub fn dispatch_compute(&self, attribs: &bindings::DispatchComputeAttribs) {
+    pub fn dispatch_compute(&self, attribs: &diligent_sys::DispatchComputeAttribs) {
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -573,7 +573,10 @@ impl DeviceContext {
         }
     }
 
-    pub fn dispatch_compute_indirect(&self, attribs: &bindings::DispatchComputeIndirectAttribs) {
+    pub fn dispatch_compute_indirect(
+        &self,
+        attribs: &diligent_sys::DispatchComputeIndirectAttribs,
+    ) {
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -582,7 +585,7 @@ impl DeviceContext {
         }
     }
 
-    pub fn dispatch_tile(&self, attribs: &bindings::DispatchTileAttribs) {
+    pub fn dispatch_tile(&self, attribs: &diligent_sys::DispatchTileAttribs) {
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -620,10 +623,10 @@ impl DeviceContext {
                 .unwrap_unchecked()(
                 self.device_context,
                 view.texture_view,
-                bindings::CLEAR_DEPTH_FLAG,
+                diligent_sys::CLEAR_DEPTH_FLAG,
                 depth,
                 0,
-                bindings::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
+                diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
             )
         }
     }
@@ -641,10 +644,10 @@ impl DeviceContext {
                 .unwrap_unchecked()(
                 self.device_context,
                 view.texture_view,
-                bindings::CLEAR_STENCIL_FLAG,
+                diligent_sys::CLEAR_STENCIL_FLAG,
                 0.0,
                 stencil,
-                bindings::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
+                diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
             )
         }
     }
@@ -663,10 +666,10 @@ impl DeviceContext {
                 .unwrap_unchecked()(
                 self.device_context,
                 view.texture_view,
-                bindings::CLEAR_STENCIL_FLAG | bindings::CLEAR_DEPTH_FLAG,
+                diligent_sys::CLEAR_STENCIL_FLAG | diligent_sys::CLEAR_DEPTH_FLAG,
                 depth,
                 stencil,
-                bindings::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
+                diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
             )
         }
     }
@@ -685,7 +688,7 @@ impl DeviceContext {
                 self.device_context,
                 view.texture_view,
                 (*rgba).as_ptr() as *const std::os::raw::c_void,
-                bindings::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
+                diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
             )
         }
     }
@@ -758,7 +761,7 @@ impl DeviceContext {
                 offset,
                 size,
                 std::ptr::from_ref(data) as *const std::os::raw::c_void,
-                bindings::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
+                diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
             )
         }
     }
@@ -781,11 +784,11 @@ impl DeviceContext {
                 self.device_context,
                 src_buffer.buffer,
                 src_offset,
-                bindings::RESOURCE_STATE_TRANSITION_MODE::from(&src_buffer_transition_mode),
+                diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&src_buffer_transition_mode),
                 dst_buffer.buffer,
                 dst_offset,
                 size,
-                bindings::RESOURCE_STATE_TRANSITION_MODE::from(&dst_buffer_transition_mode),
+                diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&dst_buffer_transition_mode),
             )
         }
     }
@@ -799,8 +802,8 @@ impl DeviceContext {
                 .unwrap_unchecked()(
                 self.device_context,
                 buffer.buffer,
-                bindings::MAP_TYPE::from(&map_type),
-                map_flags.bits() as bindings::MAP_FLAGS,
+                diligent_sys::MAP_TYPE::from(&map_type),
+                map_flags.bits() as diligent_sys::MAP_FLAGS,
                 std::ptr::addr_of_mut!(ptr),
             );
         }
@@ -815,7 +818,7 @@ impl DeviceContext {
                 .unwrap_unchecked()(
                 self.device_context,
                 buffer.buffer,
-                bindings::MAP_TYPE::from(&map_type),
+                diligent_sys::MAP_TYPE::from(&map_type),
             )
         }
     }
@@ -825,12 +828,12 @@ impl DeviceContext {
         texture: &mut Texture,
         mip_level: u32,
         slice: u32,
-        dst_box: &bindings::Box,
+        dst_box: &diligent_sys::Box,
         subres_data: &TextureSubResource,
         src_buffer_transition_mode: ResourceStateTransitionMode,
         texture_transition_mode: ResourceStateTransitionMode,
     ) {
-        let subres_data = bindings::TextureSubResData::from(subres_data);
+        let subres_data = diligent_sys::TextureSubResData::from(subres_data);
 
         unsafe {
             (*self.virtual_functions)
@@ -843,13 +846,13 @@ impl DeviceContext {
                 slice,
                 std::ptr::from_ref(dst_box),
                 std::ptr::addr_of!(subres_data),
-                bindings::RESOURCE_STATE_TRANSITION_MODE::from(&src_buffer_transition_mode),
-                bindings::RESOURCE_STATE_TRANSITION_MODE::from(&texture_transition_mode),
+                diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&src_buffer_transition_mode),
+                diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&texture_transition_mode),
             )
         }
     }
 
-    pub fn copy_texture(&self, copy_attribs: &bindings::CopyTextureAttribs) {
+    pub fn copy_texture(&self, copy_attribs: &diligent_sys::CopyTextureAttribs) {
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -909,7 +912,7 @@ impl DeviceContext {
         }
     }
 
-    pub fn transition_resource_states(&self, barriers: &[bindings::StateTransitionDesc]) {
+    pub fn transition_resource_states(&self, barriers: &[diligent_sys::StateTransitionDesc]) {
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -926,7 +929,7 @@ impl DeviceContext {
         &self,
         src_texture: &Texture,
         dst_texture: &mut Texture,
-        resolve_attribs: &bindings::ResolveTextureSubresourceAttribs,
+        resolve_attribs: &diligent_sys::ResolveTextureSubresourceAttribs,
     ) {
         unsafe {
             (*self.virtual_functions)
@@ -941,7 +944,7 @@ impl DeviceContext {
         }
     }
 
-    pub fn build_blas(&self, attribs: &bindings::BuildBLASAttribs) {
+    pub fn build_blas(&self, attribs: &diligent_sys::BuildBLASAttribs) {
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -950,7 +953,7 @@ impl DeviceContext {
         }
     }
 
-    pub fn build_tlas(&self, attribs: &bindings::BuildTLASAttribs) {
+    pub fn build_tlas(&self, attribs: &diligent_sys::BuildTLASAttribs) {
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -959,7 +962,7 @@ impl DeviceContext {
         }
     }
 
-    pub fn copy_blas(&self, attribs: &bindings::CopyBLASAttribs) {
+    pub fn copy_blas(&self, attribs: &diligent_sys::CopyBLASAttribs) {
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -968,7 +971,7 @@ impl DeviceContext {
         }
     }
 
-    pub fn copy_tlas(&self, attribs: &bindings::CopyTLASAttribs) {
+    pub fn copy_tlas(&self, attribs: &diligent_sys::CopyTLASAttribs) {
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -977,7 +980,7 @@ impl DeviceContext {
         }
     }
 
-    pub fn write_blas_compacted_size(&self, attribs: &bindings::WriteBLASCompactedSizeAttribs) {
+    pub fn write_blas_compacted_size(&self, attribs: &diligent_sys::WriteBLASCompactedSizeAttribs) {
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -986,7 +989,7 @@ impl DeviceContext {
         }
     }
 
-    pub fn write_tlas_compacted_size(&self, attribs: &bindings::WriteTLASCompactedSizeAttribs) {
+    pub fn write_tlas_compacted_size(&self, attribs: &diligent_sys::WriteTLASCompactedSizeAttribs) {
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -995,7 +998,7 @@ impl DeviceContext {
         }
     }
 
-    pub fn trace_rays(&self, attribs: &bindings::TraceRaysAttribs) {
+    pub fn trace_rays(&self, attribs: &diligent_sys::TraceRaysAttribs) {
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -1004,7 +1007,7 @@ impl DeviceContext {
         }
     }
 
-    pub fn trace_rays_indirect(&self, attribs: &bindings::TraceRaysIndirectAttribs) {
+    pub fn trace_rays_indirect(&self, attribs: &diligent_sys::TraceRaysIndirectAttribs) {
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -1076,9 +1079,9 @@ impl DeviceContext {
 
     pub fn set_shading_rate(
         &self,
-        base_rate: bindings::_SHADING_RATE,
-        primitive_combiner: bindings::_SHADING_RATE_COMBINER,
-        texture_combiner: bindings::_SHADING_RATE_COMBINER,
+        base_rate: diligent_sys::_SHADING_RATE,
+        primitive_combiner: diligent_sys::_SHADING_RATE_COMBINER,
+        texture_combiner: diligent_sys::_SHADING_RATE_COMBINER,
     ) {
         unsafe {
             (*self.virtual_functions)
@@ -1086,14 +1089,17 @@ impl DeviceContext {
                 .SetShadingRate
                 .unwrap_unchecked()(
                 self.device_context,
-                base_rate as bindings::SHADING_RATE,
-                primitive_combiner as bindings::SHADING_RATE_COMBINER,
-                texture_combiner as bindings::SHADING_RATE_COMBINER,
+                base_rate as diligent_sys::SHADING_RATE,
+                primitive_combiner as diligent_sys::SHADING_RATE_COMBINER,
+                texture_combiner as diligent_sys::SHADING_RATE_COMBINER,
             )
         }
     }
 
-    pub fn bind_sparse_resource_memory(&self, attribs: &bindings::BindSparseResourceMemoryAttribs) {
+    pub fn bind_sparse_resource_memory(
+        &self,
+        attribs: &diligent_sys::BindSparseResourceMemoryAttribs,
+    ) {
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -1111,7 +1117,7 @@ impl DeviceContext {
         }
     }
 
-    pub fn get_stats(&self) -> &bindings::DeviceContextStats {
+    pub fn get_stats(&self) -> &diligent_sys::DeviceContextStats {
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext

@@ -1,8 +1,6 @@
 use bitflags::bitflags;
 use static_assertions::const_assert;
 
-use crate::bindings;
-
 use super::buffer_view::BufferView;
 
 use super::graphics_types::{BindFlags, CpuAccessFlags, Usage};
@@ -17,23 +15,23 @@ pub enum BufferMode {
     Structured,
     Raw,
 }
-const_assert!(bindings::BUFFER_MODE_NUM_MODES == 4);
+const_assert!(diligent_sys::BUFFER_MODE_NUM_MODES == 4);
 
-impl From<&BufferMode> for bindings::BUFFER_MODE {
+impl From<&BufferMode> for diligent_sys::BUFFER_MODE {
     fn from(value: &BufferMode) -> Self {
         (match value {
-            BufferMode::Undefined => bindings::BUFFER_MODE_UNDEFINED,
-            BufferMode::Formatted => bindings::BUFFER_MODE_FORMATTED,
-            BufferMode::Structured => bindings::BUFFER_MODE_STRUCTURED,
-            BufferMode::Raw => bindings::BUFFER_MODE_RAW,
-        }) as bindings::BUFFER_MODE
+            BufferMode::Undefined => diligent_sys::BUFFER_MODE_UNDEFINED,
+            BufferMode::Formatted => diligent_sys::BUFFER_MODE_FORMATTED,
+            BufferMode::Structured => diligent_sys::BUFFER_MODE_STRUCTURED,
+            BufferMode::Raw => diligent_sys::BUFFER_MODE_RAW,
+        }) as diligent_sys::BUFFER_MODE
     }
 }
 
 bitflags! {
-    pub struct MiscBufferFlags: bindings::_MISC_BUFFER_FLAGS {
-        const None            = bindings::MISC_BUFFER_FLAG_NONE;
-        const SparceAliasing  = bindings::MISC_BUFFER_FLAG_SPARSE_ALIASING;
+    pub struct MiscBufferFlags: diligent_sys::_MISC_BUFFER_FLAGS {
+        const None            = diligent_sys::MISC_BUFFER_FLAG_NONE;
+        const SparceAliasing  = diligent_sys::MISC_BUFFER_FLAG_SPARSE_ALIASING;
     }
 }
 
@@ -51,17 +49,17 @@ pub struct BufferDesc<'a> {
     immediate_context_mask: u64,
 }
 
-impl From<&BufferDesc<'_>> for bindings::BufferDesc {
+impl From<&BufferDesc<'_>> for diligent_sys::BufferDesc {
     fn from(value: &BufferDesc) -> Self {
-        bindings::BufferDesc {
-            _DeviceObjectAttribs: bindings::DeviceObjectAttribs {
+        diligent_sys::BufferDesc {
+            _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
                 Name: value.name.as_ptr(),
             },
             Size: value.size,
             BindFlags: value.bind_flags.bits(),
-            Usage: bindings::USAGE::from(&value.usage),
+            Usage: diligent_sys::USAGE::from(&value.usage),
             CPUAccessFlags: value.cpu_access_flags.bits() as u8,
-            Mode: bindings::BUFFER_MODE::from(&value.mode),
+            Mode: diligent_sys::BUFFER_MODE::from(&value.mode),
             MiscFlags: value.misc_flags.bits() as u8,
             ElementByteStride: value.element_byte_stride,
             ImmediateContextMask: value.immediate_context_mask,
@@ -116,8 +114,8 @@ impl<'a> BufferDesc<'a> {
 }
 
 pub struct Buffer {
-    pub(crate) buffer: *mut bindings::IBuffer,
-    virtual_functions: *mut bindings::IBufferVtbl,
+    pub(crate) buffer: *mut diligent_sys::IBuffer,
+    virtual_functions: *mut diligent_sys::IBufferVtbl,
 
     default_view: Option<BufferView>,
 
@@ -131,23 +129,23 @@ impl AsDeviceObject for Buffer {
 }
 
 impl Buffer {
-    pub(crate) fn new(buffer_ptr: *mut bindings::IBuffer) -> Self {
+    pub(crate) fn new(buffer_ptr: *mut diligent_sys::IBuffer) -> Self {
         let mut buffer = Buffer {
-            device_object: DeviceObject::new(buffer_ptr as *mut bindings::IDeviceObject),
+            device_object: DeviceObject::new(buffer_ptr as *mut diligent_sys::IDeviceObject),
             buffer: buffer_ptr,
             virtual_functions: unsafe { (*buffer_ptr).pVtbl },
             default_view: None,
         };
 
         fn bind_flags_to_buffer_view_type(
-            bind_flags: bindings::BIND_FLAGS,
-        ) -> bindings::BUFFER_VIEW_TYPE {
-            if bind_flags & bindings::BIND_UNORDERED_ACCESS != 0 {
-                bindings::BUFFER_VIEW_UNORDERED_ACCESS as u8
-            } else if bind_flags & bindings::BIND_SHADER_RESOURCE != 0 {
-                bindings::BUFFER_VIEW_SHADER_RESOURCE as u8
+            bind_flags: diligent_sys::BIND_FLAGS,
+        ) -> diligent_sys::BUFFER_VIEW_TYPE {
+            if bind_flags & diligent_sys::BIND_UNORDERED_ACCESS != 0 {
+                diligent_sys::BUFFER_VIEW_UNORDERED_ACCESS as u8
+            } else if bind_flags & diligent_sys::BIND_SHADER_RESOURCE != 0 {
+                diligent_sys::BUFFER_VIEW_SHADER_RESOURCE as u8
             } else {
-                bindings::BUFFER_VIEW_UNDEFINED as u8
+                diligent_sys::BUFFER_VIEW_UNDEFINED as u8
             }
         }
 
@@ -155,13 +153,13 @@ impl Buffer {
             &*((*(*buffer_ptr).pVtbl)
                 .DeviceObject
                 .GetDesc
-                .unwrap_unchecked()(buffer_ptr as *mut bindings::IDeviceObject)
-                as *const bindings::BufferDesc)
+                .unwrap_unchecked()(buffer_ptr as *mut diligent_sys::IDeviceObject)
+                as *const diligent_sys::BufferDesc)
         };
 
         let buffer_view_type = bind_flags_to_buffer_view_type(buffer_desc.BindFlags);
 
-        if buffer_view_type != (bindings::BUFFER_VIEW_UNDEFINED as u8) {
+        if buffer_view_type != (diligent_sys::BUFFER_VIEW_UNDEFINED as u8) {
             let buffer_view = BufferView::new(
                 unsafe {
                     (*(*buffer_ptr).pVtbl)
@@ -178,20 +176,20 @@ impl Buffer {
         buffer
     }
 
-    pub fn get_desc(&self) -> &bindings::BufferDesc {
+    pub fn get_desc(&self) -> &diligent_sys::BufferDesc {
         unsafe {
             ((*self.virtual_functions)
                 .DeviceObject
                 .GetDesc
-                .unwrap_unchecked()(self.buffer as *mut bindings::IDeviceObject)
-                as *const bindings::BufferDesc)
+                .unwrap_unchecked()(self.buffer as *mut diligent_sys::IDeviceObject)
+                as *const diligent_sys::BufferDesc)
                 .as_ref()
                 .unwrap_unchecked()
         }
     }
 
-    pub fn create_view(&mut self, view_desc: &bindings::BufferViewDesc) -> Option<BufferView> {
-        let mut buffer_view_ptr: *mut bindings::IBufferView = std::ptr::null_mut();
+    pub fn create_view(&mut self, view_desc: &diligent_sys::BufferViewDesc) -> Option<BufferView> {
+        let mut buffer_view_ptr: *mut diligent_sys::IBufferView = std::ptr::null_mut();
         unsafe {
             (*self.virtual_functions)
                 .Buffer
@@ -209,7 +207,10 @@ impl Buffer {
         }
     }
 
-    pub fn get_default_view(&self, view_type: bindings::BUFFER_VIEW_TYPE) -> Option<&BufferView> {
+    pub fn get_default_view(
+        &self,
+        view_type: diligent_sys::BUFFER_VIEW_TYPE,
+    ) -> Option<&BufferView> {
         if unsafe {
             (*self.virtual_functions)
                 .Buffer
@@ -233,15 +234,15 @@ impl Buffer {
         }
     }
 
-    pub fn set_state(&mut self, state: bindings::RESOURCE_STATE) {
+    pub fn set_state(&mut self, state: diligent_sys::RESOURCE_STATE) {
         unsafe { (*self.virtual_functions).Buffer.SetState.unwrap_unchecked()(self.buffer, state) }
     }
 
-    pub fn get_state(&self) -> bindings::RESOURCE_STATE {
+    pub fn get_state(&self) -> diligent_sys::RESOURCE_STATE {
         unsafe { (*self.virtual_functions).Buffer.GetState.unwrap_unchecked()(self.buffer) }
     }
 
-    pub fn get_memory_properties(&self) -> bindings::MEMORY_PROPERTIES {
+    pub fn get_memory_properties(&self) -> diligent_sys::MEMORY_PROPERTIES {
         unsafe {
             (*self.virtual_functions)
                 .Buffer
@@ -268,7 +269,7 @@ impl Buffer {
         }
     }
 
-    pub fn get_sparse_properties(&self) -> bindings::SparseBufferProperties {
+    pub fn get_sparse_properties(&self) -> diligent_sys::SparseBufferProperties {
         unsafe {
             (*self.virtual_functions)
                 .Buffer

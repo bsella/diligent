@@ -1,7 +1,5 @@
 use std::{os::raw::c_void, path::PathBuf};
 
-use crate::bindings;
-
 use super::{
     data_blob::DataBlob,
     graphics_types::{DeviceFeatures, GraphicsAdapterInfo, Version},
@@ -16,7 +14,7 @@ pub struct EngineCreateInfo {
     pub graphics_api_version: Version,
 
     // TODO
-    //immediate_context_info: Option<bindings::ImmediateContextCreateInfo>,
+    //immediate_context_info: Option<diligent_sys::ImmediateContextCreateInfo>,
     pub num_immediate_contexts: u32,
     pub num_deferred_contexts: u32,
 
@@ -24,7 +22,7 @@ pub struct EngineCreateInfo {
 
     pub enable_validation: bool,
 
-    pub validation_flags: bindings::VALIDATION_FLAGS,
+    pub validation_flags: diligent_sys::VALIDATION_FLAGS,
 
     // TODO
     //struct IMemoryAllocator* pRawMemAllocator       DEFAULT_INITIALIZER(nullptr);
@@ -37,7 +35,7 @@ pub struct EngineCreateInfo {
 impl Default for EngineCreateInfo {
     fn default() -> Self {
         EngineCreateInfo {
-            engine_api_version: bindings::DILIGENT_API_VERSION as i32,
+            engine_api_version: diligent_sys::DILIGENT_API_VERSION as i32,
             adapter_index: None,
             graphics_api_version: Version { major: 0, minor: 0 },
 
@@ -51,42 +49,43 @@ impl Default for EngineCreateInfo {
             #[cfg(not(debug_assertions))]
             enable_validation: false,
 
-            validation_flags: bindings::VALIDATION_FLAG_NONE,
+            validation_flags: diligent_sys::VALIDATION_FLAG_NONE,
 
             num_async_shader_compilation_threads: 0xFFFFFFFF,
         }
     }
 }
 
-impl From<&EngineCreateInfo> for bindings::EngineCreateInfo {
+impl From<&EngineCreateInfo> for diligent_sys::EngineCreateInfo {
     fn from(value: &EngineCreateInfo) -> Self {
-        bindings::EngineCreateInfo {
+        diligent_sys::EngineCreateInfo {
             EngineAPIVersion: value.engine_api_version,
             AdapterId: value
                 .adapter_index
-                .unwrap_or(bindings::DEFAULT_ADAPTER_ID as usize) as u32,
-            GraphicsAPIVersion: bindings::Version {
+                .unwrap_or(diligent_sys::DEFAULT_ADAPTER_ID as usize) as u32,
+            GraphicsAPIVersion: diligent_sys::Version {
                 Major: value.graphics_api_version.minor,
                 Minor: value.graphics_api_version.minor,
             },
             pImmediateContextInfo: std::ptr::null(),
             NumImmediateContexts: value.num_immediate_contexts,
             NumDeferredContexts: value.num_deferred_contexts,
-            Features: bindings::DeviceFeatures::from(&value.features),
+            Features: diligent_sys::DeviceFeatures::from(&value.features),
             EnableValidation: value.enable_validation,
             ValidationFlags: value.validation_flags,
-            pRawMemAllocator: std::ptr::null_mut() as *mut bindings::IMemoryAllocator,
-            pAsyncShaderCompilationThreadPool: std::ptr::null_mut() as *mut bindings::IThreadPool,
+            pRawMemAllocator: std::ptr::null_mut() as *mut diligent_sys::IMemoryAllocator,
+            pAsyncShaderCompilationThreadPool: std::ptr::null_mut()
+                as *mut diligent_sys::IThreadPool,
             NumAsyncShaderCompilationThreads: value.num_async_shader_compilation_threads,
             Padding: 0,
-            pXRAttribs: std::ptr::null() as *const bindings::OpenXRAttribs,
+            pXRAttribs: std::ptr::null() as *const diligent_sys::OpenXRAttribs,
         }
     }
 }
 
 pub struct EngineFactory {
-    pub(crate) engine_factory: *mut bindings::IEngineFactory,
-    virtual_functions: *mut bindings::IEngineFactoryVtbl,
+    pub(crate) engine_factory: *mut diligent_sys::IEngineFactory,
+    virtual_functions: *mut diligent_sys::IEngineFactoryVtbl,
 
     _object: Object,
 }
@@ -96,16 +95,16 @@ pub trait AsEngineFactory {
 }
 
 impl EngineFactory {
-    pub(crate) fn new(engine_factory: *mut bindings::IEngineFactory) -> Self {
+    pub(crate) fn new(engine_factory: *mut diligent_sys::IEngineFactory) -> Self {
         EngineFactory {
             engine_factory,
             virtual_functions: unsafe { (*engine_factory).pVtbl },
 
-            _object: Object::new(engine_factory as *mut bindings::IObject),
+            _object: Object::new(engine_factory as *mut diligent_sys::IObject),
         }
     }
 
-    pub fn get_api_info(&self) -> &bindings::APIInfo {
+    pub fn get_api_info(&self) -> &diligent_sys::APIInfo {
         unsafe {
             (*self.virtual_functions)
                 .EngineFactory
@@ -169,7 +168,7 @@ impl EngineFactory {
 
     pub fn enumerate_adapters(&self, version: &Version) -> Vec<GraphicsAdapterInfo> {
         let mut num_adapters: u32 = 0;
-        let version = bindings::Version {
+        let version = diligent_sys::Version {
             Major: version.major,
             Minor: version.minor,
         };
@@ -211,9 +210,9 @@ impl EngineFactory {
         }
     }
 
-    //pub fn create_dearchiver(&self, create_info : &bindings::DearchiverCreateInfo) -> bindings::IDearchiver;
+    //pub fn create_dearchiver(&self, create_info : &diligent_sys::DearchiverCreateInfo) -> diligent_sys::IDearchiver;
 
-    pub fn set_message_callback(&self, callback: bindings::DebugMessageCallbackType) {
+    pub fn set_message_callback(&self, callback: diligent_sys::DebugMessageCallbackType) {
         unsafe {
             (*self.virtual_functions)
                 .EngineFactory

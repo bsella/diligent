@@ -1,8 +1,6 @@
 use bitflags::bitflags;
 use static_assertions::const_assert;
 
-use crate::bindings;
-
 use super::buffer::Buffer;
 use super::graphics_types::{BindFlags, CpuAccessFlags, Usage};
 use super::texture_view::{TextureView, TextureViewType};
@@ -19,35 +17,35 @@ pub enum TextureDimension {
     TextureCube,
     TextureCubeArray { array_size: u32 },
 }
-const_assert!(bindings::RESOURCE_DIM_NUM_DIMENSIONS == 9);
+const_assert!(diligent_sys::RESOURCE_DIM_NUM_DIMENSIONS == 9);
 
-impl From<&TextureDimension> for bindings::RESOURCE_DIMENSION {
+impl From<&TextureDimension> for diligent_sys::RESOURCE_DIMENSION {
     fn from(value: &TextureDimension) -> Self {
         (match value {
-            TextureDimension::Texture1D => bindings::RESOURCE_DIM_TEX_1D,
+            TextureDimension::Texture1D => diligent_sys::RESOURCE_DIM_TEX_1D,
             TextureDimension::Texture1DArray { array_size: _ } => {
-                bindings::RESOURCE_DIM_TEX_1D_ARRAY
+                diligent_sys::RESOURCE_DIM_TEX_1D_ARRAY
             }
-            TextureDimension::Texture2D => bindings::RESOURCE_DIM_TEX_2D,
+            TextureDimension::Texture2D => diligent_sys::RESOURCE_DIM_TEX_2D,
             TextureDimension::Texture2DArray { array_size: _ } => {
-                bindings::RESOURCE_DIM_TEX_2D_ARRAY
+                diligent_sys::RESOURCE_DIM_TEX_2D_ARRAY
             }
-            TextureDimension::Texture3D { depth: _ } => bindings::RESOURCE_DIM_TEX_3D,
-            TextureDimension::TextureCube => bindings::RESOURCE_DIM_TEX_CUBE,
+            TextureDimension::Texture3D { depth: _ } => diligent_sys::RESOURCE_DIM_TEX_3D,
+            TextureDimension::TextureCube => diligent_sys::RESOURCE_DIM_TEX_CUBE,
             TextureDimension::TextureCubeArray { array_size: _ } => {
-                bindings::RESOURCE_DIM_TEX_CUBE_ARRAY
+                diligent_sys::RESOURCE_DIM_TEX_CUBE_ARRAY
             }
-        }) as bindings::RESOURCE_DIMENSION
+        }) as diligent_sys::RESOURCE_DIMENSION
     }
 }
 
 bitflags! {
-    pub struct MiscTextureFlags: bindings::_MISC_TEXTURE_FLAGS {
-        const None           = bindings::MISC_TEXTURE_FLAG_NONE;
-        const GenerateMips   = bindings::MISC_TEXTURE_FLAG_GENERATE_MIPS;
-        const Memoryless     = bindings::MISC_TEXTURE_FLAG_MEMORYLESS;
-        const SparseAliasing = bindings::MISC_TEXTURE_FLAG_SPARSE_ALIASING;
-        const Subsampled     = bindings::MISC_TEXTURE_FLAG_SUBSAMPLED;
+    pub struct MiscTextureFlags: diligent_sys::_MISC_TEXTURE_FLAGS {
+        const None           = diligent_sys::MISC_TEXTURE_FLAG_NONE;
+        const GenerateMips   = diligent_sys::MISC_TEXTURE_FLAG_GENERATE_MIPS;
+        const Memoryless     = diligent_sys::MISC_TEXTURE_FLAG_MEMORYLESS;
+        const SparseAliasing = diligent_sys::MISC_TEXTURE_FLAG_SPARSE_ALIASING;
+        const Subsampled     = diligent_sys::MISC_TEXTURE_FLAG_SUBSAMPLED;
     }
 }
 
@@ -88,9 +86,9 @@ impl<'a> TextureSubResource<'a> {
     }
 }
 
-impl From<&TextureSubResource<'_>> for bindings::TextureSubResData {
+impl From<&TextureSubResource<'_>> for diligent_sys::TextureSubResData {
     fn from(value: &TextureSubResource<'_>) -> Self {
-        bindings::TextureSubResData {
+        diligent_sys::TextureSubResData {
             pData: if let TextureSubResData::CPU(data) = value.source {
                 data.as_ptr() as *const std::ffi::c_void
             } else {
@@ -114,7 +112,7 @@ pub struct TextureDesc<'a> {
     dimension: TextureDimension,
     width: u32,
     height: u32,
-    format: bindings::_TEXTURE_FORMAT,
+    format: diligent_sys::_TEXTURE_FORMAT,
 
     mip_levels: u32,
     sample_count: u32,
@@ -128,43 +126,43 @@ pub struct TextureDesc<'a> {
     immediate_context_mask: u64,
 }
 
-impl From<&TextureDesc<'_>> for bindings::TextureDesc {
+impl From<&TextureDesc<'_>> for diligent_sys::TextureDesc {
     fn from(value: &TextureDesc<'_>) -> Self {
         let anon = match value.dimension {
             TextureDimension::Texture1DArray { array_size }
             | TextureDimension::Texture2DArray { array_size }
             | TextureDimension::TextureCubeArray { array_size } => {
-                bindings::TextureDesc__bindgen_ty_1 {
+                diligent_sys::TextureDesc__bindgen_ty_1 {
                     ArraySize: array_size,
                 }
             }
             TextureDimension::Texture3D { depth } => {
-                bindings::TextureDesc__bindgen_ty_1 { Depth: depth }
+                diligent_sys::TextureDesc__bindgen_ty_1 { Depth: depth }
             }
-            _ => bindings::TextureDesc__bindgen_ty_1 { ArraySize: 1 },
+            _ => diligent_sys::TextureDesc__bindgen_ty_1 { ArraySize: 1 },
         };
 
-        bindings::TextureDesc {
-            _DeviceObjectAttribs: bindings::DeviceObjectAttribs {
+        diligent_sys::TextureDesc {
+            _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
                 Name: value.name.as_ptr(),
             },
-            Type: bindings::RESOURCE_DIMENSION::from(&value.dimension),
+            Type: diligent_sys::RESOURCE_DIMENSION::from(&value.dimension),
             Width: value.width,
             Height: value.height,
-            Format: value.format as bindings::TEXTURE_FORMAT,
+            Format: value.format as diligent_sys::TEXTURE_FORMAT,
             MipLevels: value.mip_levels,
             SampleCount: value.sample_count,
             BindFlags: value.bind_flags.bits(),
-            Usage: bindings::USAGE::from(&value.usage),
+            Usage: diligent_sys::USAGE::from(&value.usage),
             CPUAccessFlags: value.cpu_access_flags.bits() as u8,
             MiscFlags: value.misc_flags.bits() as u8,
-            ClearValue: bindings::OptimizedClearValue {
+            ClearValue: diligent_sys::OptimizedClearValue {
                 Color: value.clear_color,
-                DepthStencil: bindings::DepthStencilClearValue {
+                DepthStencil: diligent_sys::DepthStencilClearValue {
                     Depth: value.clear_depth,
                     Stencil: value.clear_stencil,
                 },
-                Format: value.format as bindings::TEXTURE_FORMAT,
+                Format: value.format as diligent_sys::TEXTURE_FORMAT,
             },
             ImmediateContextMask: value.immediate_context_mask,
             __bindgen_anon_1: anon,
@@ -178,7 +176,7 @@ impl<'a> TextureDesc<'a> {
         dimension: TextureDimension,
         width: u32,
         height: u32,
-        format: bindings::_TEXTURE_FORMAT,
+        format: diligent_sys::_TEXTURE_FORMAT,
     ) -> Self {
         TextureDesc {
             name,
@@ -244,8 +242,8 @@ impl<'a> TextureDesc<'a> {
 }
 
 pub struct Texture {
-    pub(crate) texture: *mut bindings::ITexture,
-    virtual_functions: *mut bindings::ITextureVtbl,
+    pub(crate) texture: *mut diligent_sys::ITexture,
+    virtual_functions: *mut diligent_sys::ITextureVtbl,
 
     device_object: DeviceObject,
 }
@@ -257,21 +255,21 @@ impl AsDeviceObject for Texture {
 }
 
 impl Texture {
-    pub(crate) fn new(texture_ptr: *mut bindings::ITexture) -> Self {
+    pub(crate) fn new(texture_ptr: *mut diligent_sys::ITexture) -> Self {
         Texture {
-            device_object: DeviceObject::new(texture_ptr as *mut bindings::IDeviceObject),
+            device_object: DeviceObject::new(texture_ptr as *mut diligent_sys::IDeviceObject),
             texture: texture_ptr,
             virtual_functions: unsafe { (*texture_ptr).pVtbl },
         }
     }
 
-    pub fn get_desc(&self) -> &bindings::TextureDesc {
+    pub fn get_desc(&self) -> &diligent_sys::TextureDesc {
         unsafe {
             ((*self.virtual_functions)
                 .DeviceObject
                 .GetDesc
-                .unwrap_unchecked()(self.texture as *mut bindings::IDeviceObject)
-                as *const bindings::TextureDesc)
+                .unwrap_unchecked()(self.texture as *mut diligent_sys::IDeviceObject)
+                as *const diligent_sys::TextureDesc)
                 .as_ref()
                 .unwrap_unchecked()
         }
@@ -279,16 +277,16 @@ impl Texture {
 
     pub fn create_view(
         &mut self,
-        texture_view_desc: &bindings::TextureViewDesc,
+        texture_view_desc: &diligent_sys::TextureViewDesc,
     ) -> Option<TextureView> {
-        let mut texture_view_ptr: *mut bindings::ITextureView = std::ptr::null_mut();
+        let mut texture_view_ptr: *mut diligent_sys::ITextureView = std::ptr::null_mut();
         unsafe {
             (*self.virtual_functions)
                 .Texture
                 .CreateView
                 .unwrap_unchecked()(
                 self.texture,
-                std::ptr::addr_of!(texture_view_desc) as *const bindings::TextureViewDesc,
+                std::ptr::addr_of!(texture_view_desc) as *const diligent_sys::TextureViewDesc,
                 std::ptr::addr_of_mut!(texture_view_ptr),
             );
         }
@@ -307,7 +305,7 @@ impl Texture {
                 .GetDefaultView
                 .unwrap_unchecked()(
                 self.texture,
-                bindings::TEXTURE_VIEW_TYPE::from(&texture_view_type),
+                diligent_sys::TEXTURE_VIEW_TYPE::from(&texture_view_type),
             )
         };
         if texture_view_ptr.is_null() {
@@ -329,7 +327,7 @@ impl Texture {
         }
     }
 
-    pub fn set_state(&mut self, state: bindings::RESOURCE_STATE) {
+    pub fn set_state(&mut self, state: diligent_sys::RESOURCE_STATE) {
         unsafe {
             (*self.virtual_functions)
                 .Texture
@@ -338,7 +336,7 @@ impl Texture {
         }
     }
 
-    pub fn get_state(&self) -> bindings::RESOURCE_STATE {
+    pub fn get_state(&self) -> diligent_sys::RESOURCE_STATE {
         unsafe {
             (*self.virtual_functions)
                 .Texture
@@ -347,7 +345,7 @@ impl Texture {
         }
     }
 
-    pub fn get_sparse_properties(&self) -> &bindings::SparseTextureProperties {
+    pub fn get_sparse_properties(&self) -> &diligent_sys::SparseTextureProperties {
         unsafe {
             (*self.virtual_functions)
                 .Texture

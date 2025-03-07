@@ -1,8 +1,6 @@
 use bitflags::bitflags;
 use static_assertions::const_assert;
 
-use crate::bindings;
-
 use super::{
     graphics_types::SurfaceTransform,
     object::{AsObject, Object},
@@ -10,27 +8,27 @@ use super::{
 };
 
 bitflags! {
-    pub struct SwapChainUsageFlags: bindings::_SWAP_CHAIN_USAGE_FLAGS {
-        const None            = bindings::SWAP_CHAIN_USAGE_NONE;
-        const RenderTarget    = bindings::SWAP_CHAIN_USAGE_RENDER_TARGET;
-        const ShaderResource  = bindings::SWAP_CHAIN_USAGE_SHADER_RESOURCE;
-        const InputAttachment = bindings::SWAP_CHAIN_USAGE_INPUT_ATTACHMENT;
-        const CopySource      = bindings::SWAP_CHAIN_USAGE_COPY_SOURCE;
+    pub struct SwapChainUsageFlags: diligent_sys::_SWAP_CHAIN_USAGE_FLAGS {
+        const None            = diligent_sys::SWAP_CHAIN_USAGE_NONE;
+        const RenderTarget    = diligent_sys::SWAP_CHAIN_USAGE_RENDER_TARGET;
+        const ShaderResource  = diligent_sys::SWAP_CHAIN_USAGE_SHADER_RESOURCE;
+        const InputAttachment = diligent_sys::SWAP_CHAIN_USAGE_INPUT_ATTACHMENT;
+        const CopySource      = diligent_sys::SWAP_CHAIN_USAGE_COPY_SOURCE;
     }
 }
-const_assert!(bindings::SWAP_CHAIN_USAGE_LAST == 8);
+const_assert!(diligent_sys::SWAP_CHAIN_USAGE_LAST == 8);
 
 pub struct SwapChainDesc {
-    width: u32,
-    height: u32,
-    color_buffer_format: bindings::TEXTURE_FORMAT,
-    depth_buffer_format: bindings::TEXTURE_FORMAT,
-    usage: SwapChainUsageFlags,
-    pre_transform: SurfaceTransform,
-    buffer_count: u32,
-    default_depth_value: f32,
-    default_stencil_value: u8,
-    is_primary: bool,
+    pub width: u32,
+    pub height: u32,
+    pub color_buffer_format: diligent_sys::TEXTURE_FORMAT,
+    pub depth_buffer_format: diligent_sys::TEXTURE_FORMAT,
+    pub usage: SwapChainUsageFlags,
+    pub pre_transform: SurfaceTransform,
+    pub buffer_count: u32,
+    pub default_depth_value: f32,
+    pub default_stencil_value: u8,
+    pub is_primary: bool,
 }
 
 impl SwapChainDesc {
@@ -42,11 +40,17 @@ impl SwapChainDesc {
         self.height = height;
         self
     }
-    pub fn color_buffer_format(mut self, color_buffer_format: bindings::TEXTURE_FORMAT) -> Self {
+    pub fn color_buffer_format(
+        mut self,
+        color_buffer_format: diligent_sys::TEXTURE_FORMAT,
+    ) -> Self {
         self.color_buffer_format = color_buffer_format;
         self
     }
-    pub fn depth_buffer_format(mut self, depth_buffer_format: bindings::TEXTURE_FORMAT) -> Self {
+    pub fn depth_buffer_format(
+        mut self,
+        depth_buffer_format: diligent_sys::TEXTURE_FORMAT,
+    ) -> Self {
         self.depth_buffer_format = depth_buffer_format;
         self
     }
@@ -81,8 +85,8 @@ impl Default for SwapChainDesc {
         SwapChainDesc {
             width: 0,
             height: 0,
-            color_buffer_format: bindings::TEX_FORMAT_RGBA8_UNORM_SRGB as u16,
-            depth_buffer_format: bindings::TEX_FORMAT_D32_FLOAT as u16,
+            color_buffer_format: diligent_sys::TEX_FORMAT_RGBA8_UNORM_SRGB as u16,
+            depth_buffer_format: diligent_sys::TEX_FORMAT_D32_FLOAT as u16,
             usage: SwapChainUsageFlags::RenderTarget,
             pre_transform: SurfaceTransform::Optimal,
             buffer_count: 2,
@@ -93,15 +97,15 @@ impl Default for SwapChainDesc {
     }
 }
 
-impl From<&SwapChainDesc> for bindings::SwapChainDesc {
+impl From<&SwapChainDesc> for diligent_sys::SwapChainDesc {
     fn from(value: &SwapChainDesc) -> Self {
-        bindings::SwapChainDesc {
+        diligent_sys::SwapChainDesc {
             Width: value.width,
             Height: value.height,
             ColorBufferFormat: value.color_buffer_format,
             DepthBufferFormat: value.depth_buffer_format,
             Usage: value.usage.bits(),
-            PreTransform: bindings::SURFACE_TRANSFORM::from(&value.pre_transform),
+            PreTransform: diligent_sys::SURFACE_TRANSFORM::from(&value.pre_transform),
             BufferCount: value.buffer_count,
             DefaultDepthValue: value.default_depth_value,
             DefaultStencilValue: value.default_stencil_value,
@@ -110,9 +114,26 @@ impl From<&SwapChainDesc> for bindings::SwapChainDesc {
     }
 }
 
+impl From<&diligent_sys::SwapChainDesc> for SwapChainDesc {
+    fn from(value: &diligent_sys::SwapChainDesc) -> Self {
+        SwapChainDesc {
+            width: value.Width,
+            height: value.Height,
+            color_buffer_format: value.ColorBufferFormat,
+            depth_buffer_format: value.DepthBufferFormat,
+            usage: SwapChainUsageFlags::from_bits_retain(value.Usage),
+            pre_transform: SurfaceTransform::from(&value.PreTransform),
+            buffer_count: value.BufferCount,
+            default_depth_value: value.DefaultDepthValue,
+            default_stencil_value: value.DefaultStencilValue,
+            is_primary: value.IsPrimary,
+        }
+    }
+}
+
 pub struct SwapChain {
-    pub(crate) swap_chain: *mut bindings::ISwapChain,
-    virtual_functions: *mut bindings::ISwapChainVtbl,
+    pub(crate) swap_chain: *mut diligent_sys::ISwapChain,
+    virtual_functions: *mut diligent_sys::ISwapChainVtbl,
 
     object: Object,
 }
@@ -124,11 +145,11 @@ impl AsObject for SwapChain {
 }
 
 impl SwapChain {
-    pub(crate) fn new(swap_chain_ptr: *mut bindings::ISwapChain) -> Self {
+    pub(crate) fn new(swap_chain_ptr: *mut diligent_sys::ISwapChain) -> Self {
         SwapChain {
             swap_chain: swap_chain_ptr,
             virtual_functions: unsafe { (*swap_chain_ptr).pVtbl },
-            object: Object::new(swap_chain_ptr as *mut bindings::IObject),
+            object: Object::new(swap_chain_ptr as *mut diligent_sys::IObject),
         }
     }
 
@@ -141,22 +162,24 @@ impl SwapChain {
         }
     }
 
-    pub fn get_desc(&self) -> &bindings::SwapChainDesc {
-        unsafe {
+    pub fn get_desc(&self) -> SwapChainDesc {
+        let swap_chain_desc = unsafe {
             (*self.virtual_functions)
                 .SwapChain
                 .GetDesc
                 .unwrap_unchecked()(self.swap_chain)
             .as_ref()
             .unwrap_unchecked()
-        }
+        };
+
+        SwapChainDesc::from(swap_chain_desc)
     }
 
     pub fn resize(
         &self,
         new_width: u32,
         new_height: u32,
-        new_transform: Option<bindings::SURFACE_TRANSFORM>,
+        new_transform: Option<diligent_sys::SURFACE_TRANSFORM>,
     ) {
         unsafe {
             (*self.virtual_functions)
@@ -166,12 +189,12 @@ impl SwapChain {
                 self.swap_chain,
                 new_width,
                 new_height,
-                new_transform.unwrap_or(bindings::SURFACE_TRANSFORM_OPTIMAL),
+                new_transform.unwrap_or(diligent_sys::SURFACE_TRANSFORM_OPTIMAL),
             )
         }
     }
 
-    pub fn set_fullscreen_mode(&self, display_mode: &bindings::DisplayModeAttribs) {
+    pub fn set_fullscreen_mode(&self, display_mode: &diligent_sys::DisplayModeAttribs) {
         unsafe {
             (*self.virtual_functions)
                 .SwapChain

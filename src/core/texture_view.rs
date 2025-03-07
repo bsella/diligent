@@ -1,5 +1,3 @@
-use crate::bindings;
-
 use super::sampler::Sampler;
 use super::texture::Texture;
 
@@ -14,22 +12,24 @@ pub enum TextureViewType {
     ShadingRate,
 }
 
-impl From<&TextureViewType> for bindings::TEXTURE_VIEW_TYPE {
+impl From<&TextureViewType> for diligent_sys::TEXTURE_VIEW_TYPE {
     fn from(value: &TextureViewType) -> Self {
         (match value {
-            TextureViewType::ShaderResource => bindings::TEXTURE_VIEW_SHADER_RESOURCE,
-            TextureViewType::RenderTarget => bindings::TEXTURE_VIEW_RENDER_TARGET,
-            TextureViewType::DepthStencil => bindings::TEXTURE_VIEW_DEPTH_STENCIL,
-            TextureViewType::ReadOnlyDepthStencil => bindings::TEXTURE_VIEW_READ_ONLY_DEPTH_STENCIL,
-            TextureViewType::UnorderedAccess => bindings::TEXTURE_VIEW_UNDEFINED,
-            TextureViewType::ShadingRate => bindings::TEXTURE_VIEW_SHADING_RATE,
-        }) as bindings::TEXTURE_VIEW_TYPE
+            TextureViewType::ShaderResource => diligent_sys::TEXTURE_VIEW_SHADER_RESOURCE,
+            TextureViewType::RenderTarget => diligent_sys::TEXTURE_VIEW_RENDER_TARGET,
+            TextureViewType::DepthStencil => diligent_sys::TEXTURE_VIEW_DEPTH_STENCIL,
+            TextureViewType::ReadOnlyDepthStencil => {
+                diligent_sys::TEXTURE_VIEW_READ_ONLY_DEPTH_STENCIL
+            }
+            TextureViewType::UnorderedAccess => diligent_sys::TEXTURE_VIEW_UNDEFINED,
+            TextureViewType::ShadingRate => diligent_sys::TEXTURE_VIEW_SHADING_RATE,
+        }) as diligent_sys::TEXTURE_VIEW_TYPE
     }
 }
 
 pub struct TextureView {
-    pub(crate) texture_view: *mut bindings::ITextureView,
-    virtual_functions: *mut bindings::ITextureViewVtbl,
+    pub(crate) texture_view: *mut diligent_sys::ITextureView,
+    virtual_functions: *mut diligent_sys::ITextureViewVtbl,
     texture: *const Texture,
 
     pub(crate) device_object: DeviceObject,
@@ -42,22 +42,26 @@ impl AsDeviceObject for TextureView {
 }
 
 impl TextureView {
-    pub(crate) fn new(texture_view: *mut bindings::ITextureView, texture: *const Texture) -> Self {
+    pub(crate) fn new(
+        texture_view: *mut diligent_sys::ITextureView,
+        texture: *const Texture,
+    ) -> Self {
         TextureView {
             virtual_functions: unsafe { (*texture_view).pVtbl },
             texture_view,
             texture,
-            device_object: DeviceObject::new(texture_view as *mut bindings::IDeviceObject),
+            device_object: DeviceObject::new(texture_view as *mut diligent_sys::IDeviceObject),
         }
     }
 
-    pub fn get_desc(&self) -> bindings::TextureViewDesc {
+    pub fn get_desc(&self) -> diligent_sys::TextureViewDesc {
         unsafe {
             *((*self.virtual_functions)
                 .DeviceObject
                 .GetDesc
-                .unwrap_unchecked()(self.texture_view as *mut bindings::IDeviceObject)
-                as *const bindings::TextureViewDesc)
+                .unwrap_unchecked()(
+                self.texture_view as *mut diligent_sys::IDeviceObject
+            ) as *const diligent_sys::TextureViewDesc)
         }
     }
 

@@ -1,0 +1,14 @@
+[package]
+name = "diligent_sys"
+version = "0.1.0"
+edition = "2021"
+build = "build.rs"
+exclude = ["/DiligentEngine", "**/assets"]
+
+[build-dependencies]
+bindgen = "0.71.1"
+cmake   = "0.1"
+
+[lib]
+name = "diligent_sys"
+path = "lib.rs"

@@ -1,4 +1,5 @@
-use crate::bindings;
+use std::mem::MaybeUninit;
+
 use static_assertions::const_assert;
 
 use super::{
@@ -6,6 +7,7 @@ use super::{
     graphics_types::{SetShaderResourceFlags, ShaderTypes},
     object::{AsObject, Object},
     pipeline_state::ShaderVariableFlags,
+    shader::ShaderResourceDesc,
 };
 
 pub enum ShaderResourceVariableType {
@@ -13,15 +15,38 @@ pub enum ShaderResourceVariableType {
     Mutable,
     Dynamic,
 }
-const_assert!(bindings::SHADER_RESOURCE_VARIABLE_TYPE_NUM_TYPES == 3);
+const_assert!(diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_NUM_TYPES == 3);
 
-impl From<&ShaderResourceVariableType> for bindings::SHADER_RESOURCE_VARIABLE_TYPE {
+impl From<&ShaderResourceVariableType> for diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE {
     fn from(value: &ShaderResourceVariableType) -> Self {
         (match value {
-            ShaderResourceVariableType::Static => bindings::SHADER_RESOURCE_VARIABLE_TYPE_STATIC,
-            ShaderResourceVariableType::Mutable => bindings::SHADER_RESOURCE_VARIABLE_TYPE_MUTABLE,
-            ShaderResourceVariableType::Dynamic => bindings::SHADER_RESOURCE_VARIABLE_TYPE_DYNAMIC,
-        }) as bindings::SHADER_RESOURCE_VARIABLE_TYPE
+            ShaderResourceVariableType::Static => {
+                diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_STATIC
+            }
+            ShaderResourceVariableType::Mutable => {
+                diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_MUTABLE
+            }
+            ShaderResourceVariableType::Dynamic => {
+                diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_DYNAMIC
+            }
+        }) as diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE
+    }
+}
+
+impl Into<ShaderResourceVariableType> for diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE {
+    fn into(self) -> ShaderResourceVariableType {
+        match self as diligent_sys::_SHADER_RESOURCE_VARIABLE_TYPE {
+            diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_STATIC => {
+                ShaderResourceVariableType::Static
+            }
+            diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_MUTABLE => {
+                ShaderResourceVariableType::Mutable
+            }
+            diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_DYNAMIC => {
+                ShaderResourceVariableType::Dynamic
+            }
+            _ => panic!(),
+        }
     }
 }
 
@@ -52,20 +77,20 @@ impl<'a> ShaderResourceVariableDesc<'a> {
     }
 }
 
-impl From<&ShaderResourceVariableDesc<'_>> for bindings::ShaderResourceVariableDesc {
+impl From<&ShaderResourceVariableDesc<'_>> for diligent_sys::ShaderResourceVariableDesc {
     fn from(value: &ShaderResourceVariableDesc<'_>) -> Self {
-        bindings::ShaderResourceVariableDesc {
+        diligent_sys::ShaderResourceVariableDesc {
             Name: value.name.as_ptr(),
-            ShaderStages: value.shader_stages.bits() as bindings::SHADER_TYPE,
-            Type: bindings::SHADER_RESOURCE_VARIABLE_TYPE::from(&value.variable_type),
-            Flags: value.flags.bits() as bindings::SHADER_VARIABLE_FLAGS,
+            ShaderStages: value.shader_stages.bits() as diligent_sys::SHADER_TYPE,
+            Type: diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE::from(&value.variable_type),
+            Flags: value.flags.bits() as diligent_sys::SHADER_VARIABLE_FLAGS,
         }
     }
 }
 
 pub struct ShaderResourceVariable {
-    pub(crate) shader_resource_variable: *mut bindings::IShaderResourceVariable,
-    virtual_functions: *mut bindings::IShaderResourceVariableVtbl,
+    pub(crate) shader_resource_variable: *mut diligent_sys::IShaderResourceVariable,
+    virtual_functions: *mut diligent_sys::IShaderResourceVariableVtbl,
     object: Object,
 }
 
@@ -76,11 +101,13 @@ impl AsObject for ShaderResourceVariable {
 }
 
 impl ShaderResourceVariable {
-    pub(crate) fn new(shader_resource_variable: *mut bindings::IShaderResourceVariable) -> Self {
+    pub(crate) fn new(
+        shader_resource_variable: *mut diligent_sys::IShaderResourceVariable,
+    ) -> Self {
         ShaderResourceVariable {
             virtual_functions: unsafe { (*shader_resource_variable).pVtbl },
             shader_resource_variable,
-            object: Object::new(shader_resource_variable as *mut bindings::IObject),
+            object: Object::new(shader_resource_variable as *mut diligent_sys::IObject),
         }
     }
 
@@ -127,7 +154,7 @@ impl ShaderResourceVariable {
         offset: u64,
         size: u64,
         array_index: Option<u32>,
-        flags: Option<bindings::SET_SHADER_RESOURCE_FLAGS>,
+        flags: Option<diligent_sys::SET_SHADER_RESOURCE_FLAGS>,
     ) {
         unsafe {
             (*self.virtual_functions)
@@ -139,7 +166,7 @@ impl ShaderResourceVariable {
                 offset,
                 size,
                 array_index.unwrap_or(0),
-                flags.unwrap_or(bindings::SET_SHADER_RESOURCE_FLAG_NONE),
+                flags.unwrap_or(diligent_sys::SET_SHADER_RESOURCE_FLAG_NONE),
             )
         }
     }
@@ -157,27 +184,36 @@ impl ShaderResourceVariable {
         }
     }
 
-    pub fn get_type(&self) -> bindings::SHADER_RESOURCE_VARIABLE_TYPE {
+    pub fn get_type(&self) -> ShaderResourceVariableType {
         unsafe {
             (*self.virtual_functions)
                 .ShaderResourceVariable
                 .GetType
                 .unwrap_unchecked()(self.shader_resource_variable)
         }
+        .into()
     }
 
-    pub fn get_resource_desc(&self) -> bindings::ShaderResourceDesc {
-        let mut shader_resource_desc = bindings::ShaderResourceDesc::default();
-        unsafe {
+    pub fn get_resource_desc(&self) -> ShaderResourceDesc {
+        let shader_resource_desc = unsafe {
+            let mut shader_resource_desc: MaybeUninit<diligent_sys::ShaderResourceDesc> =
+                std::mem::MaybeUninit::uninit();
+
             (*self.virtual_functions)
                 .ShaderResourceVariable
                 .GetResourceDesc
                 .unwrap_unchecked()(
                 self.shader_resource_variable,
-                std::ptr::addr_of_mut!(shader_resource_desc),
+                shader_resource_desc.as_mut_ptr(),
             );
+            shader_resource_desc.assume_init()
+        };
+
+        ShaderResourceDesc {
+            name: unsafe { std::ffi::CStr::from_ptr(shader_resource_desc.Name) },
+            array_size: shader_resource_desc.ArraySize as usize,
+            resource_type: shader_resource_desc.Type.into(),
         }
-        shader_resource_desc
     }
 
     pub fn get_index(&self) -> u32 {

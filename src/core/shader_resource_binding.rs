@@ -1,5 +1,3 @@
-use crate::bindings;
-
 use super::{
     graphics_types::ShaderTypes,
     object::{AsObject, Object},
@@ -9,8 +7,8 @@ use super::{
 };
 
 pub struct ShaderResourceBinding {
-    pub(crate) shader_resource_binding: *mut bindings::IShaderResourceBinding,
-    virtual_functions: *mut bindings::IShaderResourceBindingVtbl,
+    pub(crate) shader_resource_binding: *mut diligent_sys::IShaderResourceBinding,
+    virtual_functions: *mut diligent_sys::IShaderResourceBindingVtbl,
 
     object: Object,
 }
@@ -22,11 +20,11 @@ impl AsObject for ShaderResourceBinding {
 }
 
 impl ShaderResourceBinding {
-    pub(crate) fn new(srb_ptr: *mut bindings::IShaderResourceBinding) -> Self {
+    pub(crate) fn new(srb_ptr: *mut diligent_sys::IShaderResourceBinding) -> Self {
         ShaderResourceBinding {
             shader_resource_binding: srb_ptr,
             virtual_functions: unsafe { (*srb_ptr).pVtbl },
-            object: Object::new(srb_ptr as *mut bindings::IObject),
+            object: Object::new(srb_ptr as *mut diligent_sys::IObject),
         }
     }
 
@@ -38,7 +36,7 @@ impl ShaderResourceBinding {
         &self,
         shader_stages: ShaderTypes,
         resource_mapping: &ResourceMapping,
-        flags: bindings::BIND_SHADER_RESOURCES_FLAGS,
+        flags: diligent_sys::BIND_SHADER_RESOURCES_FLAGS,
     ) {
         unsafe {
             (*self.virtual_functions)
@@ -46,7 +44,7 @@ impl ShaderResourceBinding {
                 .BindResources
                 .unwrap_unchecked()(
                 self.shader_resource_binding,
-                shader_stages.bits() as bindings::SHADER_TYPE,
+                shader_stages.bits() as diligent_sys::SHADER_TYPE,
                 resource_mapping.resource_mapping,
                 flags,
             )
@@ -57,15 +55,15 @@ impl ShaderResourceBinding {
         &self,
         shader_stages: ShaderTypes,
         resource_mapping: &ResourceMapping,
-        flags: bindings::BIND_SHADER_RESOURCES_FLAGS,
-    ) -> bindings::SHADER_RESOURCE_VARIABLE_TYPE_FLAGS {
+        flags: diligent_sys::BIND_SHADER_RESOURCES_FLAGS,
+    ) -> diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_FLAGS {
         unsafe {
             (*self.virtual_functions)
                 .ShaderResourceBinding
                 .CheckResources
                 .unwrap_unchecked()(
                 self.shader_resource_binding,
-                shader_stages.bits() as bindings::SHADER_TYPE,
+                shader_stages.bits() as diligent_sys::SHADER_TYPE,
                 resource_mapping.resource_mapping,
                 flags,
             )
@@ -87,7 +85,7 @@ impl ShaderResourceBinding {
                 .GetVariableByName
                 .unwrap_unchecked()(
                 self.shader_resource_binding,
-                shader_stages.bits() as bindings::SHADER_TYPE,
+                shader_stages.bits() as diligent_sys::SHADER_TYPE,
                 name.as_ptr(),
             )
         };

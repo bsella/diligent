@@ -2,7 +2,6 @@ use super::graphics_types::ShaderType;
 use super::sampler::SamplerDesc;
 use super::shader_resource_variable::ShaderResourceVariable;
 use super::{graphics_types::ShaderTypes, object::AsObject};
-use crate::bindings;
 
 use super::{
     device_object::{AsDeviceObject, DeviceObject},
@@ -30,19 +29,19 @@ impl<'a> ImmutableSamplerDesc<'a> {
     }
 }
 
-impl From<&ImmutableSamplerDesc<'_>> for bindings::ImmutableSamplerDesc {
+impl From<&ImmutableSamplerDesc<'_>> for diligent_sys::ImmutableSamplerDesc {
     fn from(value: &ImmutableSamplerDesc<'_>) -> Self {
-        bindings::ImmutableSamplerDesc {
-            ShaderStages: value.shader_stages.bits() as bindings::SHADER_TYPE,
+        diligent_sys::ImmutableSamplerDesc {
+            ShaderStages: value.shader_stages.bits() as diligent_sys::SHADER_TYPE,
             SamplerOrTextureName: value.sampler_or_texture_name.as_ptr(),
-            Desc: bindings::SamplerDesc::from(&value.sampler_desc),
+            Desc: diligent_sys::SamplerDesc::from(&value.sampler_desc),
         }
     }
 }
 
 pub struct PipelineResourceSignature {
-    pub(crate) pipeline_resource_signature: *mut bindings::IPipelineResourceSignature,
-    virtual_functions: *mut bindings::IPipelineResourceSignatureVtbl,
+    pub(crate) pipeline_resource_signature: *mut diligent_sys::IPipelineResourceSignature,
+    virtual_functions: *mut diligent_sys::IPipelineResourceSignatureVtbl,
 
     vertex_static_variables: Vec<ShaderResourceVariable>,
     pixel_static_variables: Vec<ShaderResourceVariable>,
@@ -71,15 +70,15 @@ impl AsDeviceObject for PipelineResourceSignature {
 
 impl PipelineResourceSignature {
     #[allow(dead_code)]
-    pub(crate) fn new(pipeline_rs_ptr: *mut bindings::IPipelineResourceSignature) -> Self {
+    pub(crate) fn new(pipeline_rs_ptr: *mut diligent_sys::IPipelineResourceSignature) -> Self {
         fn create_shader_resource_variables(
-            pipeline_rs_ptr: *mut bindings::IPipelineResourceSignature,
+            pipeline_rs_ptr: *mut diligent_sys::IPipelineResourceSignature,
             shader_type: ShaderType,
         ) -> Vec<ShaderResourceVariable> {
             let virtual_functions =
                 unsafe { (*(*pipeline_rs_ptr).pVtbl).PipelineResourceSignature };
 
-            let shader_type = bindings::SHADER_TYPE::from(&shader_type);
+            let shader_type = diligent_sys::SHADER_TYPE::from(&shader_type);
 
             let num_variables = unsafe {
                 virtual_functions.GetStaticVariableCount.unwrap_unchecked()(
@@ -95,7 +94,7 @@ impl PipelineResourceSignature {
             };
 
             fn create_srv_and_add_ref(
-                srv_ptr: *mut bindings::IShaderResourceVariable,
+                srv_ptr: *mut diligent_sys::IShaderResourceVariable,
             ) -> ShaderResourceVariable {
                 let srv = ShaderResourceVariable::new(srv_ptr);
                 srv.as_object().add_ref();
@@ -115,7 +114,7 @@ impl PipelineResourceSignature {
             pipeline_resource_signature: pipeline_rs_ptr,
             virtual_functions: unsafe { (*pipeline_rs_ptr).pVtbl },
 
-            device_object: DeviceObject::new(pipeline_rs_ptr as *mut bindings::IDeviceObject),
+            device_object: DeviceObject::new(pipeline_rs_ptr as *mut diligent_sys::IDeviceObject),
 
             vertex_static_variables: Vec::new(),
             pixel_static_variables: Vec::new(),
@@ -135,14 +134,14 @@ impl PipelineResourceSignature {
         }
     }
 
-    pub fn get_desc(&self) -> &bindings::PipelineResourceSignatureDesc {
+    pub fn get_desc(&self) -> &diligent_sys::PipelineResourceSignatureDesc {
         unsafe {
             ((*self.virtual_functions)
                 .DeviceObject
                 .GetDesc
                 .unwrap_unchecked()(
-                self.pipeline_resource_signature as *mut bindings::IDeviceObject,
-            ) as *const bindings::PipelineResourceSignatureDesc)
+                self.pipeline_resource_signature as *mut diligent_sys::IDeviceObject,
+            ) as *const diligent_sys::PipelineResourceSignatureDesc)
                 .as_ref()
                 .unwrap_unchecked()
         }
@@ -175,7 +174,7 @@ impl PipelineResourceSignature {
         &self,
         shader_stages: ShaderTypes,
         resource_mapping: &ResourceMapping,
-        flags: bindings::BIND_SHADER_RESOURCES_FLAGS,
+        flags: diligent_sys::BIND_SHADER_RESOURCES_FLAGS,
     ) {
         unsafe {
             (*self.virtual_functions)
@@ -183,7 +182,7 @@ impl PipelineResourceSignature {
                 .BindStaticResources
                 .unwrap_unchecked()(
                 self.pipeline_resource_signature,
-                shader_stages.bits() as bindings::SHADER_TYPE,
+                shader_stages.bits() as diligent_sys::SHADER_TYPE,
                 resource_mapping.resource_mapping,
                 flags,
             );

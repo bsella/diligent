@@ -2,7 +2,6 @@ use std::ffi::c_void;
 use std::os::unix::ffi::OsStrExt;
 use std::path::PathBuf;
 
-use crate::bindings;
 use crate::core::device_context::DeviceContext;
 use crate::core::engine_factory::EngineCreateInfo;
 use crate::core::engine_factory::EngineFactory;
@@ -24,8 +23,8 @@ pub struct EngineVkCreateInfo {
     vk_allocator: *mut c_void,
     ignore_debug_message_names: Vec<String>,
 
-    main_descriptor_pool_size: bindings::VulkanDescriptorPoolSize,
-    dynamic_descriptor_pool_size: bindings::VulkanDescriptorPoolSize,
+    main_descriptor_pool_size: diligent_sys::VulkanDescriptorPoolSize,
+    dynamic_descriptor_pool_size: diligent_sys::VulkanDescriptorPoolSize,
 
     device_local_memory_page_size: u32,
     host_visible_memory_page_size: u32,
@@ -50,7 +49,7 @@ impl EngineVkCreateInfo {
             device_extension_features: std::ptr::null_mut(),
             vk_allocator: std::ptr::null_mut(),
             ignore_debug_message_names: Vec::new(),
-            main_descriptor_pool_size: bindings::VulkanDescriptorPoolSize {
+            main_descriptor_pool_size: diligent_sys::VulkanDescriptorPoolSize {
                 MaxDescriptorSets: 8192,
                 NumSeparateSamplerDescriptors: 1024,
                 NumCombinedSamplerDescriptors: 8192,
@@ -64,7 +63,7 @@ impl EngineVkCreateInfo {
                 NumAccelStructDescriptors: 256,
             },
 
-            dynamic_descriptor_pool_size: bindings::VulkanDescriptorPoolSize {
+            dynamic_descriptor_pool_size: diligent_sys::VulkanDescriptorPoolSize {
                 MaxDescriptorSets: 2048,
                 NumSeparateSamplerDescriptors: 256,
                 NumCombinedSamplerDescriptors: 2048,
@@ -107,8 +106,8 @@ impl Default for EngineVkCreateInfo {
 }
 
 pub struct EngineFactoryVk {
-    engine_factory_vk: *mut bindings::IEngineFactoryVk,
-    virtual_functions: *mut bindings::IEngineFactoryVkVtbl,
+    engine_factory_vk: *mut diligent_sys::IEngineFactoryVk,
+    virtual_functions: *mut diligent_sys::IEngineFactoryVkVtbl,
 
     engine_factory: EngineFactory,
 }
@@ -132,13 +131,13 @@ impl AsEngineFactory for EngineFactoryVk {
 }
 
 pub fn get_engine_factory_vk() -> EngineFactoryVk {
-    let engine_factory_vk = unsafe { bindings::Diligent_GetEngineFactoryVk() };
+    let engine_factory_vk = unsafe { diligent_sys::Diligent_GetEngineFactoryVk() };
 
     EngineFactoryVk {
         engine_factory_vk,
         virtual_functions: unsafe { (*engine_factory_vk).pVtbl },
 
-        engine_factory: EngineFactory::new(engine_factory_vk as *mut bindings::IEngineFactory),
+        engine_factory: EngineFactory::new(engine_factory_vk as *mut diligent_sys::IEngineFactory),
     }
 }
 
@@ -181,8 +180,8 @@ impl EngineFactoryVk {
             let (_a, ignore_debug_message_names) =
                 vec_string_to_vec_cstring_ptr(&create_info.ignore_debug_message_names);
 
-            let create_info = bindings::EngineVkCreateInfo {
-                _EngineCreateInfo: bindings::EngineCreateInfo::from(
+            let create_info = diligent_sys::EngineVkCreateInfo {
+                _EngineCreateInfo: diligent_sys::EngineCreateInfo::from(
                     &create_info.engine_create_info,
                 ),
                 InstanceLayerCount: create_info.instance_layer_names.len() as u32,
@@ -277,10 +276,10 @@ impl EngineFactoryVk {
         swapchain_desc: &SwapChainDesc,
         window: Option<&NativeWindow>,
     ) -> Option<SwapChain> {
-        let swapchain_desc = bindings::SwapChainDesc::from(swapchain_desc);
+        let swapchain_desc = diligent_sys::SwapChainDesc::from(swapchain_desc);
         let mut swap_chain_ptr = std::ptr::null_mut();
 
-        let window = window.map(|window| bindings::NativeWindow::from(window));
+        let window = window.map(|window| diligent_sys::NativeWindow::from(window));
 
         unsafe {
             (*self.virtual_functions)

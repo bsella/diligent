@@ -1,88 +1,32 @@
 use bitflags::bitflags;
 use static_assertions::const_assert;
 
-use crate::bindings;
-
-impl Default for bindings::DeviceFeatures {
-    fn default() -> Self {
-        bindings::DeviceFeatures {
-            SeparablePrograms: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            ShaderResourceQueries: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            WireframeFill: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            MultithreadedResourceCreation: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            ComputeShaders: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            GeometryShaders: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            Tessellation: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            MeshShaders: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            RayTracing: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            BindlessResources: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            OcclusionQueries: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            BinaryOcclusionQueries: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            TimestampQueries: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            PipelineStatisticsQueries: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            DurationQueries: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            DepthBiasClamp: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            DepthClamp: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            IndependentBlend: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            DualSourceBlend: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            MultiViewport: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            TextureCompressionBC: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            TextureCompressionETC2: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            VertexPipelineUAVWritesAndAtomics: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            PixelUAVWritesAndAtomics: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            TextureUAVExtendedFormats: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            ShaderFloat16: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            ResourceBuffer16BitAccess: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            UniformBuffer16BitAccess: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            ShaderInputOutput16: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            ShaderInt8: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            ResourceBuffer8BitAccess: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            UniformBuffer8BitAccess: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            ShaderResourceStaticArrays: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            ShaderResourceRuntimeArrays: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            WaveOp: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            InstanceDataStepRate: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            NativeFence: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            TileShaders: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            TransferQueueTimestampQueries: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            VariableRateShading: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            SparseResources: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            SubpassFramebufferFetch: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            TextureComponentSwizzle: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            TextureSubresourceViews: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            NativeMultiDraw: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            AsyncShaderCompilation: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-            FormattedBuffers: bindings::DEVICE_FEATURE_STATE_DISABLED as u8,
-        }
-    }
-}
-
 bitflags! {
-    pub struct ShaderTypes: bindings::_SHADER_TYPE {
-        const Vertex          = bindings::SHADER_TYPE_VERTEX;
-        const Pixel           = bindings::SHADER_TYPE_PIXEL;
-        const Geometry        = bindings::SHADER_TYPE_GEOMETRY;
-        const Hull            = bindings::SHADER_TYPE_HULL;
-        const Domain          = bindings::SHADER_TYPE_DOMAIN;
-        const Compute         = bindings::SHADER_TYPE_COMPUTE;
-        const Amplification   = bindings::SHADER_TYPE_AMPLIFICATION;
-        const Mesh            = bindings::SHADER_TYPE_MESH;
-        const RayGen          = bindings::SHADER_TYPE_RAY_GEN;
-        const RayMiss         = bindings::SHADER_TYPE_RAY_MISS;
-        const RayClosestHit   = bindings::SHADER_TYPE_RAY_CLOSEST_HIT;
-        const RayAnyHit       = bindings::SHADER_TYPE_RAY_ANY_HIT;
-        const RayIntersection = bindings::SHADER_TYPE_RAY_INTERSECTION;
-        const Callable        = bindings::SHADER_TYPE_CALLABLE;
-        const Tile            = bindings::SHADER_TYPE_TILE;
+    pub struct ShaderTypes: diligent_sys::_SHADER_TYPE {
+        const Vertex          = diligent_sys::SHADER_TYPE_VERTEX;
+        const Pixel           = diligent_sys::SHADER_TYPE_PIXEL;
+        const Geometry        = diligent_sys::SHADER_TYPE_GEOMETRY;
+        const Hull            = diligent_sys::SHADER_TYPE_HULL;
+        const Domain          = diligent_sys::SHADER_TYPE_DOMAIN;
+        const Compute         = diligent_sys::SHADER_TYPE_COMPUTE;
+        const Amplification   = diligent_sys::SHADER_TYPE_AMPLIFICATION;
+        const Mesh            = diligent_sys::SHADER_TYPE_MESH;
+        const RayGen          = diligent_sys::SHADER_TYPE_RAY_GEN;
+        const RayMiss         = diligent_sys::SHADER_TYPE_RAY_MISS;
+        const RayClosestHit   = diligent_sys::SHADER_TYPE_RAY_CLOSEST_HIT;
+        const RayAnyHit       = diligent_sys::SHADER_TYPE_RAY_ANY_HIT;
+        const RayIntersection = diligent_sys::SHADER_TYPE_RAY_INTERSECTION;
+        const Callable        = diligent_sys::SHADER_TYPE_CALLABLE;
+        const Tile            = diligent_sys::SHADER_TYPE_TILE;
 
-        const VertexPixel   = bindings::SHADER_TYPE_VS_PS;
-        const AllGraphics   = bindings::SHADER_TYPE_ALL_GRAPHICS;
-        const AllMesh       = bindings::SHADER_TYPE_ALL_MESH;
-        const AllRayTracing = bindings::SHADER_TYPE_ALL_RAY_TRACING;
-        const All           = bindings::SHADER_TYPE_ALL;
+        const VertexPixel   = diligent_sys::SHADER_TYPE_VS_PS;
+        const AllGraphics   = diligent_sys::SHADER_TYPE_ALL_GRAPHICS;
+        const AllMesh       = diligent_sys::SHADER_TYPE_ALL_MESH;
+        const AllRayTracing = diligent_sys::SHADER_TYPE_ALL_RAY_TRACING;
+        const All           = diligent_sys::SHADER_TYPE_ALL;
     }
 }
-const_assert!(bindings::SHADER_TYPE_LAST == 16384);
+const_assert!(diligent_sys::SHADER_TYPE_LAST == 16384);
 
 pub enum ShaderType {
     Vertex,
@@ -102,25 +46,25 @@ pub enum ShaderType {
     Tile,
 }
 
-impl From<&ShaderType> for bindings::SHADER_TYPE {
+impl From<&ShaderType> for diligent_sys::SHADER_TYPE {
     fn from(value: &ShaderType) -> Self {
         (match value {
-            ShaderType::Vertex => bindings::SHADER_TYPE_VERTEX,
-            ShaderType::Pixel => bindings::SHADER_TYPE_PIXEL,
-            ShaderType::Geometry => bindings::SHADER_TYPE_GEOMETRY,
-            ShaderType::Hull => bindings::SHADER_TYPE_HULL,
-            ShaderType::Domain => bindings::SHADER_TYPE_DOMAIN,
-            ShaderType::Compute => bindings::SHADER_TYPE_COMPUTE,
-            ShaderType::Amplification => bindings::SHADER_TYPE_AMPLIFICATION,
-            ShaderType::Mesh => bindings::SHADER_TYPE_MESH,
-            ShaderType::RayGen => bindings::SHADER_TYPE_RAY_GEN,
-            ShaderType::RayMiss => bindings::SHADER_TYPE_RAY_MISS,
-            ShaderType::RayClosestHit => bindings::SHADER_TYPE_RAY_CLOSEST_HIT,
-            ShaderType::RayAnyHit => bindings::SHADER_TYPE_RAY_ANY_HIT,
-            ShaderType::RayIntersection => bindings::SHADER_TYPE_RAY_INTERSECTION,
-            ShaderType::Callable => bindings::SHADER_TYPE_CALLABLE,
-            ShaderType::Tile => bindings::SHADER_TYPE_TILE,
-        }) as bindings::SHADER_TYPE
+            ShaderType::Vertex => diligent_sys::SHADER_TYPE_VERTEX,
+            ShaderType::Pixel => diligent_sys::SHADER_TYPE_PIXEL,
+            ShaderType::Geometry => diligent_sys::SHADER_TYPE_GEOMETRY,
+            ShaderType::Hull => diligent_sys::SHADER_TYPE_HULL,
+            ShaderType::Domain => diligent_sys::SHADER_TYPE_DOMAIN,
+            ShaderType::Compute => diligent_sys::SHADER_TYPE_COMPUTE,
+            ShaderType::Amplification => diligent_sys::SHADER_TYPE_AMPLIFICATION,
+            ShaderType::Mesh => diligent_sys::SHADER_TYPE_MESH,
+            ShaderType::RayGen => diligent_sys::SHADER_TYPE_RAY_GEN,
+            ShaderType::RayMiss => diligent_sys::SHADER_TYPE_RAY_MISS,
+            ShaderType::RayClosestHit => diligent_sys::SHADER_TYPE_RAY_CLOSEST_HIT,
+            ShaderType::RayAnyHit => diligent_sys::SHADER_TYPE_RAY_ANY_HIT,
+            ShaderType::RayIntersection => diligent_sys::SHADER_TYPE_RAY_INTERSECTION,
+            ShaderType::Callable => diligent_sys::SHADER_TYPE_CALLABLE,
+            ShaderType::Tile => diligent_sys::SHADER_TYPE_TILE,
+        }) as diligent_sys::SHADER_TYPE
     }
 }
 
@@ -138,24 +82,24 @@ pub enum FilterType {
     MaximumLinear,
     MaximumAnisotropic,
 }
-const_assert!(bindings::FILTER_TYPE_NUM_FILTERS == 13);
+const_assert!(diligent_sys::FILTER_TYPE_NUM_FILTERS == 13);
 
-impl From<&FilterType> for bindings::FILTER_TYPE {
+impl From<&FilterType> for diligent_sys::FILTER_TYPE {
     fn from(value: &FilterType) -> Self {
         (match value {
-            FilterType::Point => bindings::FILTER_TYPE_POINT,
-            FilterType::Linear => bindings::FILTER_TYPE_LINEAR,
-            FilterType::Anisotropic => bindings::FILTER_TYPE_ANISOTROPIC,
-            FilterType::ComparisonPoint => bindings::FILTER_TYPE_COMPARISON_POINT,
-            FilterType::ComparisonLinear => bindings::FILTER_TYPE_COMPARISON_LINEAR,
-            FilterType::ComparisonAnisotropic => bindings::FILTER_TYPE_COMPARISON_ANISOTROPIC,
-            FilterType::MinimumPoint => bindings::FILTER_TYPE_MINIMUM_POINT,
-            FilterType::MinimumLinear => bindings::FILTER_TYPE_MINIMUM_LINEAR,
-            FilterType::MinimumAnisotropic => bindings::FILTER_TYPE_MINIMUM_ANISOTROPIC,
-            FilterType::MaximumPoint => bindings::FILTER_TYPE_MAXIMUM_POINT,
-            FilterType::MaximumLinear => bindings::FILTER_TYPE_MAXIMUM_LINEAR,
-            FilterType::MaximumAnisotropic => bindings::FILTER_TYPE_MAXIMUM_ANISOTROPIC,
-        }) as bindings::FILTER_TYPE
+            FilterType::Point => diligent_sys::FILTER_TYPE_POINT,
+            FilterType::Linear => diligent_sys::FILTER_TYPE_LINEAR,
+            FilterType::Anisotropic => diligent_sys::FILTER_TYPE_ANISOTROPIC,
+            FilterType::ComparisonPoint => diligent_sys::FILTER_TYPE_COMPARISON_POINT,
+            FilterType::ComparisonLinear => diligent_sys::FILTER_TYPE_COMPARISON_LINEAR,
+            FilterType::ComparisonAnisotropic => diligent_sys::FILTER_TYPE_COMPARISON_ANISOTROPIC,
+            FilterType::MinimumPoint => diligent_sys::FILTER_TYPE_MINIMUM_POINT,
+            FilterType::MinimumLinear => diligent_sys::FILTER_TYPE_MINIMUM_LINEAR,
+            FilterType::MinimumAnisotropic => diligent_sys::FILTER_TYPE_MINIMUM_ANISOTROPIC,
+            FilterType::MaximumPoint => diligent_sys::FILTER_TYPE_MAXIMUM_POINT,
+            FilterType::MaximumLinear => diligent_sys::FILTER_TYPE_MAXIMUM_LINEAR,
+            FilterType::MaximumAnisotropic => diligent_sys::FILTER_TYPE_MAXIMUM_ANISOTROPIC,
+        }) as diligent_sys::FILTER_TYPE
     }
 }
 
@@ -166,17 +110,17 @@ pub enum TextureAddressMode {
     Border,
     MirrorOnce,
 }
-const_assert!(bindings::TEXTURE_ADDRESS_NUM_MODES == 6);
+const_assert!(diligent_sys::TEXTURE_ADDRESS_NUM_MODES == 6);
 
-impl From<&TextureAddressMode> for bindings::TEXTURE_ADDRESS_MODE {
+impl From<&TextureAddressMode> for diligent_sys::TEXTURE_ADDRESS_MODE {
     fn from(value: &TextureAddressMode) -> Self {
         (match value {
-            TextureAddressMode::Wrap => bindings::TEXTURE_ADDRESS_WRAP,
-            TextureAddressMode::Mirror => bindings::TEXTURE_ADDRESS_MIRROR,
-            TextureAddressMode::Clamp => bindings::TEXTURE_ADDRESS_CLAMP,
-            TextureAddressMode::Border => bindings::TEXTURE_ADDRESS_BORDER,
-            TextureAddressMode::MirrorOnce => bindings::TEXTURE_ADDRESS_MIRROR_ONCE,
-        }) as bindings::TEXTURE_ADDRESS_MODE
+            TextureAddressMode::Wrap => diligent_sys::TEXTURE_ADDRESS_WRAP,
+            TextureAddressMode::Mirror => diligent_sys::TEXTURE_ADDRESS_MIRROR,
+            TextureAddressMode::Clamp => diligent_sys::TEXTURE_ADDRESS_CLAMP,
+            TextureAddressMode::Border => diligent_sys::TEXTURE_ADDRESS_BORDER,
+            TextureAddressMode::MirrorOnce => diligent_sys::TEXTURE_ADDRESS_MIRROR_ONCE,
+        }) as diligent_sys::TEXTURE_ADDRESS_MODE
     }
 }
 
@@ -223,138 +167,142 @@ pub enum PrimitiveTopology {
     ControlPointPatchList31,
     ControlPointPatchList32,
 }
-const_assert!(bindings::PRIMITIVE_TOPOLOGY_NUM_TOPOLOGIES == 42);
+const_assert!(diligent_sys::PRIMITIVE_TOPOLOGY_NUM_TOPOLOGIES == 42);
 
-impl From<&PrimitiveTopology> for bindings::PRIMITIVE_TOPOLOGY {
+impl From<&PrimitiveTopology> for diligent_sys::PRIMITIVE_TOPOLOGY {
     fn from(value: &PrimitiveTopology) -> Self {
         (match value {
-            PrimitiveTopology::TriangleList => bindings::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-            PrimitiveTopology::TriangleStrip => bindings::PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
-            PrimitiveTopology::PointList => bindings::PRIMITIVE_TOPOLOGY_POINT_LIST,
-            PrimitiveTopology::LineList => bindings::PRIMITIVE_TOPOLOGY_LINE_LIST,
-            PrimitiveTopology::LineStrip => bindings::PRIMITIVE_TOPOLOGY_LINE_STRIP,
-            PrimitiveTopology::TriangleListAdj => bindings::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST_ADJ,
-            PrimitiveTopology::TriangleStripAdj => bindings::PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_ADJ,
-            PrimitiveTopology::LineListAdj => bindings::PRIMITIVE_TOPOLOGY_LINE_LIST_ADJ,
-            PrimitiveTopology::LineStripAdj => bindings::PRIMITIVE_TOPOLOGY_LINE_STRIP_ADJ,
+            PrimitiveTopology::TriangleList => diligent_sys::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+            PrimitiveTopology::TriangleStrip => diligent_sys::PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
+            PrimitiveTopology::PointList => diligent_sys::PRIMITIVE_TOPOLOGY_POINT_LIST,
+            PrimitiveTopology::LineList => diligent_sys::PRIMITIVE_TOPOLOGY_LINE_LIST,
+            PrimitiveTopology::LineStrip => diligent_sys::PRIMITIVE_TOPOLOGY_LINE_STRIP,
+            PrimitiveTopology::TriangleListAdj => {
+                diligent_sys::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST_ADJ
+            }
+            PrimitiveTopology::TriangleStripAdj => {
+                diligent_sys::PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_ADJ
+            }
+            PrimitiveTopology::LineListAdj => diligent_sys::PRIMITIVE_TOPOLOGY_LINE_LIST_ADJ,
+            PrimitiveTopology::LineStripAdj => diligent_sys::PRIMITIVE_TOPOLOGY_LINE_STRIP_ADJ,
             PrimitiveTopology::ControlPointPatchList1 => {
-                bindings::PRIMITIVE_TOPOLOGY_1_CONTROL_POINT_PATCHLIST
+                diligent_sys::PRIMITIVE_TOPOLOGY_1_CONTROL_POINT_PATCHLIST
             }
             PrimitiveTopology::ControlPointPatchList2 => {
-                bindings::PRIMITIVE_TOPOLOGY_2_CONTROL_POINT_PATCHLIST
+                diligent_sys::PRIMITIVE_TOPOLOGY_2_CONTROL_POINT_PATCHLIST
             }
             PrimitiveTopology::ControlPointPatchList3 => {
-                bindings::PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST
+                diligent_sys::PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST
             }
             PrimitiveTopology::ControlPointPatchList4 => {
-                bindings::PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST
+                diligent_sys::PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST
             }
             PrimitiveTopology::ControlPointPatchList5 => {
-                bindings::PRIMITIVE_TOPOLOGY_5_CONTROL_POINT_PATCHLIST
+                diligent_sys::PRIMITIVE_TOPOLOGY_5_CONTROL_POINT_PATCHLIST
             }
             PrimitiveTopology::ControlPointPatchList6 => {
-                bindings::PRIMITIVE_TOPOLOGY_6_CONTROL_POINT_PATCHLIST
+                diligent_sys::PRIMITIVE_TOPOLOGY_6_CONTROL_POINT_PATCHLIST
             }
             PrimitiveTopology::ControlPointPatchList7 => {
-                bindings::PRIMITIVE_TOPOLOGY_7_CONTROL_POINT_PATCHLIST
+                diligent_sys::PRIMITIVE_TOPOLOGY_7_CONTROL_POINT_PATCHLIST
             }
             PrimitiveTopology::ControlPointPatchList8 => {
-                bindings::PRIMITIVE_TOPOLOGY_8_CONTROL_POINT_PATCHLIST
+                diligent_sys::PRIMITIVE_TOPOLOGY_8_CONTROL_POINT_PATCHLIST
             }
             PrimitiveTopology::ControlPointPatchList9 => {
-                bindings::PRIMITIVE_TOPOLOGY_9_CONTROL_POINT_PATCHLIST
+                diligent_sys::PRIMITIVE_TOPOLOGY_9_CONTROL_POINT_PATCHLIST
             }
             PrimitiveTopology::ControlPointPatchList10 => {
-                bindings::PRIMITIVE_TOPOLOGY_10_CONTROL_POINT_PATCHLIST
+                diligent_sys::PRIMITIVE_TOPOLOGY_10_CONTROL_POINT_PATCHLIST
             }
             PrimitiveTopology::ControlPointPatchList11 => {
-                bindings::PRIMITIVE_TOPOLOGY_11_CONTROL_POINT_PATCHLIST
+                diligent_sys::PRIMITIVE_TOPOLOGY_11_CONTROL_POINT_PATCHLIST
             }
             PrimitiveTopology::ControlPointPatchList12 => {
-                bindings::PRIMITIVE_TOPOLOGY_12_CONTROL_POINT_PATCHLIST
+                diligent_sys::PRIMITIVE_TOPOLOGY_12_CONTROL_POINT_PATCHLIST
             }
             PrimitiveTopology::ControlPointPatchList13 => {
-                bindings::PRIMITIVE_TOPOLOGY_13_CONTROL_POINT_PATCHLIST
+                diligent_sys::PRIMITIVE_TOPOLOGY_13_CONTROL_POINT_PATCHLIST
             }
             PrimitiveTopology::ControlPointPatchList14 => {
-                bindings::PRIMITIVE_TOPOLOGY_14_CONTROL_POINT_PATCHLIST
+                diligent_sys::PRIMITIVE_TOPOLOGY_14_CONTROL_POINT_PATCHLIST
             }
             PrimitiveTopology::ControlPointPatchList15 => {
-                bindings::PRIMITIVE_TOPOLOGY_15_CONTROL_POINT_PATCHLIST
+                diligent_sys::PRIMITIVE_TOPOLOGY_15_CONTROL_POINT_PATCHLIST
             }
             PrimitiveTopology::ControlPointPatchList16 => {
-                bindings::PRIMITIVE_TOPOLOGY_16_CONTROL_POINT_PATCHLIST
+                diligent_sys::PRIMITIVE_TOPOLOGY_16_CONTROL_POINT_PATCHLIST
             }
             PrimitiveTopology::ControlPointPatchList17 => {
-                bindings::PRIMITIVE_TOPOLOGY_17_CONTROL_POINT_PATCHLIST
+                diligent_sys::PRIMITIVE_TOPOLOGY_17_CONTROL_POINT_PATCHLIST
             }
             PrimitiveTopology::ControlPointPatchList18 => {
-                bindings::PRIMITIVE_TOPOLOGY_18_CONTROL_POINT_PATCHLIST
+                diligent_sys::PRIMITIVE_TOPOLOGY_18_CONTROL_POINT_PATCHLIST
             }
             PrimitiveTopology::ControlPointPatchList19 => {
-                bindings::PRIMITIVE_TOPOLOGY_19_CONTROL_POINT_PATCHLIST
+                diligent_sys::PRIMITIVE_TOPOLOGY_19_CONTROL_POINT_PATCHLIST
             }
             PrimitiveTopology::ControlPointPatchList20 => {
-                bindings::PRIMITIVE_TOPOLOGY_20_CONTROL_POINT_PATCHLIST
+                diligent_sys::PRIMITIVE_TOPOLOGY_20_CONTROL_POINT_PATCHLIST
             }
             PrimitiveTopology::ControlPointPatchList21 => {
-                bindings::PRIMITIVE_TOPOLOGY_21_CONTROL_POINT_PATCHLIST
+                diligent_sys::PRIMITIVE_TOPOLOGY_21_CONTROL_POINT_PATCHLIST
             }
             PrimitiveTopology::ControlPointPatchList22 => {
-                bindings::PRIMITIVE_TOPOLOGY_22_CONTROL_POINT_PATCHLIST
+                diligent_sys::PRIMITIVE_TOPOLOGY_22_CONTROL_POINT_PATCHLIST
             }
             PrimitiveTopology::ControlPointPatchList23 => {
-                bindings::PRIMITIVE_TOPOLOGY_23_CONTROL_POINT_PATCHLIST
+                diligent_sys::PRIMITIVE_TOPOLOGY_23_CONTROL_POINT_PATCHLIST
             }
             PrimitiveTopology::ControlPointPatchList24 => {
-                bindings::PRIMITIVE_TOPOLOGY_24_CONTROL_POINT_PATCHLIST
+                diligent_sys::PRIMITIVE_TOPOLOGY_24_CONTROL_POINT_PATCHLIST
             }
             PrimitiveTopology::ControlPointPatchList25 => {
-                bindings::PRIMITIVE_TOPOLOGY_25_CONTROL_POINT_PATCHLIST
+                diligent_sys::PRIMITIVE_TOPOLOGY_25_CONTROL_POINT_PATCHLIST
             }
             PrimitiveTopology::ControlPointPatchList26 => {
-                bindings::PRIMITIVE_TOPOLOGY_26_CONTROL_POINT_PATCHLIST
+                diligent_sys::PRIMITIVE_TOPOLOGY_26_CONTROL_POINT_PATCHLIST
             }
             PrimitiveTopology::ControlPointPatchList27 => {
-                bindings::PRIMITIVE_TOPOLOGY_27_CONTROL_POINT_PATCHLIST
+                diligent_sys::PRIMITIVE_TOPOLOGY_27_CONTROL_POINT_PATCHLIST
             }
             PrimitiveTopology::ControlPointPatchList28 => {
-                bindings::PRIMITIVE_TOPOLOGY_28_CONTROL_POINT_PATCHLIST
+                diligent_sys::PRIMITIVE_TOPOLOGY_28_CONTROL_POINT_PATCHLIST
             }
             PrimitiveTopology::ControlPointPatchList29 => {
-                bindings::PRIMITIVE_TOPOLOGY_29_CONTROL_POINT_PATCHLIST
+                diligent_sys::PRIMITIVE_TOPOLOGY_29_CONTROL_POINT_PATCHLIST
             }
             PrimitiveTopology::ControlPointPatchList30 => {
-                bindings::PRIMITIVE_TOPOLOGY_30_CONTROL_POINT_PATCHLIST
+                diligent_sys::PRIMITIVE_TOPOLOGY_30_CONTROL_POINT_PATCHLIST
             }
             PrimitiveTopology::ControlPointPatchList31 => {
-                bindings::PRIMITIVE_TOPOLOGY_31_CONTROL_POINT_PATCHLIST
+                diligent_sys::PRIMITIVE_TOPOLOGY_31_CONTROL_POINT_PATCHLIST
             }
             PrimitiveTopology::ControlPointPatchList32 => {
-                bindings::PRIMITIVE_TOPOLOGY_32_CONTROL_POINT_PATCHLIST
+                diligent_sys::PRIMITIVE_TOPOLOGY_32_CONTROL_POINT_PATCHLIST
             }
-        }) as bindings::PRIMITIVE_TOPOLOGY
+        }) as diligent_sys::PRIMITIVE_TOPOLOGY
     }
 }
 
 bitflags! {
-    pub struct BindFlags: bindings::BIND_FLAGS {
-        const None             = bindings::BIND_NONE;
-        const VertexBuffer     = bindings::BIND_VERTEX_BUFFER;
-        const IndexBuffer      = bindings::BIND_INDEX_BUFFER;
-        const UniformBuffer    = bindings::BIND_UNIFORM_BUFFER;
-        const ShaderResourcec  = bindings::BIND_SHADER_RESOURCE;
-        const StreamOutput     = bindings::BIND_STREAM_OUTPUT;
-        const RenderTarget     = bindings::BIND_RENDER_TARGET;
-        const DepthStencil     = bindings::BIND_DEPTH_STENCIL;
-        const UnorderedAccess  = bindings::BIND_UNORDERED_ACCESS;
-        const IndirectDrawArgs = bindings::BIND_INDIRECT_DRAW_ARGS;
-        const InputAttachement = bindings::BIND_INPUT_ATTACHMENT;
-        const RayTracing       = bindings::BIND_RAY_TRACING;
-        const ShadingRate      = bindings::BIND_SHADING_RATE;
+    pub struct BindFlags: diligent_sys::BIND_FLAGS {
+        const None             = diligent_sys::BIND_NONE;
+        const VertexBuffer     = diligent_sys::BIND_VERTEX_BUFFER;
+        const IndexBuffer      = diligent_sys::BIND_INDEX_BUFFER;
+        const UniformBuffer    = diligent_sys::BIND_UNIFORM_BUFFER;
+        const ShaderResourcec  = diligent_sys::BIND_SHADER_RESOURCE;
+        const StreamOutput     = diligent_sys::BIND_STREAM_OUTPUT;
+        const RenderTarget     = diligent_sys::BIND_RENDER_TARGET;
+        const DepthStencil     = diligent_sys::BIND_DEPTH_STENCIL;
+        const UnorderedAccess  = diligent_sys::BIND_UNORDERED_ACCESS;
+        const IndirectDrawArgs = diligent_sys::BIND_INDIRECT_DRAW_ARGS;
+        const InputAttachement = diligent_sys::BIND_INPUT_ATTACHMENT;
+        const RayTracing       = diligent_sys::BIND_RAY_TRACING;
+        const ShadingRate      = diligent_sys::BIND_SHADING_RATE;
     }
 }
-const_assert!(bindings::BIND_FLAG_LAST == 2048);
+const_assert!(diligent_sys::BIND_FLAG_LAST == 2048);
 
 pub enum Usage {
     Immutable,
@@ -364,34 +312,34 @@ pub enum Usage {
     Unified,
     Sparse,
 }
-const_assert!(bindings::USAGE_NUM_USAGES == 6);
+const_assert!(diligent_sys::USAGE_NUM_USAGES == 6);
 
-impl From<&Usage> for bindings::USAGE {
+impl From<&Usage> for diligent_sys::USAGE {
     fn from(value: &Usage) -> Self {
         (match value {
-            Usage::Immutable => bindings::USAGE_IMMUTABLE,
-            Usage::Default => bindings::USAGE_DEFAULT,
-            Usage::Dynamic => bindings::USAGE_DYNAMIC,
-            Usage::Staging => bindings::USAGE_STAGING,
-            Usage::Unified => bindings::USAGE_UNIFIED,
-            Usage::Sparse => bindings::USAGE_SPARSE,
-        }) as bindings::USAGE
+            Usage::Immutable => diligent_sys::USAGE_IMMUTABLE,
+            Usage::Default => diligent_sys::USAGE_DEFAULT,
+            Usage::Dynamic => diligent_sys::USAGE_DYNAMIC,
+            Usage::Staging => diligent_sys::USAGE_STAGING,
+            Usage::Unified => diligent_sys::USAGE_UNIFIED,
+            Usage::Sparse => diligent_sys::USAGE_SPARSE,
+        }) as diligent_sys::USAGE
     }
 }
 
 bitflags! {
-    pub struct CpuAccessFlags: bindings::_CPU_ACCESS_FLAGS {
-        const None  = bindings::CPU_ACCESS_NONE;
-        const Read  = bindings::CPU_ACCESS_READ;
-        const Write = bindings::CPU_ACCESS_WRITE;
+    pub struct CpuAccessFlags: diligent_sys::_CPU_ACCESS_FLAGS {
+        const None  = diligent_sys::CPU_ACCESS_NONE;
+        const Read  = diligent_sys::CPU_ACCESS_READ;
+        const Write = diligent_sys::CPU_ACCESS_WRITE;
     }
 }
-const_assert!(bindings::CPU_ACCESS_FLAG_LAST == 2);
+const_assert!(diligent_sys::CPU_ACCESS_FLAG_LAST == 2);
 
 bitflags! {
-    pub struct SetShaderResourceFlags: bindings::_SET_SHADER_RESOURCE_FLAGS {
-        const None          = bindings::SET_SHADER_RESOURCE_FLAG_NONE;
-        const AllowOverrite = bindings::SET_SHADER_RESOURCE_FLAG_ALLOW_OVERWRITE;
+    pub struct SetShaderResourceFlags: diligent_sys::_SET_SHADER_RESOURCE_FLAGS {
+        const None          = diligent_sys::SET_SHADER_RESOURCE_FLAG_NONE;
+        const AllowOverrite = diligent_sys::SET_SHADER_RESOURCE_FLAG_ALLOW_OVERWRITE;
     }
 }
 
@@ -404,7 +352,7 @@ pub enum RenderDeviceType {
     METAL,
     WEBGPU,
 }
-const_assert!(bindings::RENDER_DEVICE_TYPE_COUNT == 8);
+const_assert!(diligent_sys::RENDER_DEVICE_TYPE_COUNT == 8);
 
 pub enum ValueType {
     Int8,
@@ -417,21 +365,21 @@ pub enum ValueType {
     Float32,
     Float64,
 }
-const_assert!(bindings::VT_NUM_TYPES == 10);
+const_assert!(diligent_sys::VT_NUM_TYPES == 10);
 
-impl From<&ValueType> for bindings::VALUE_TYPE {
+impl From<&ValueType> for diligent_sys::VALUE_TYPE {
     fn from(value: &ValueType) -> Self {
         (match value {
-            ValueType::Int8 => bindings::VT_INT8,
-            ValueType::Int16 => bindings::VT_INT16,
-            ValueType::Int32 => bindings::VT_INT32,
-            ValueType::Uint8 => bindings::VT_UINT8,
-            ValueType::Uint16 => bindings::VT_UINT16,
-            ValueType::Uint32 => bindings::VT_UINT32,
-            ValueType::Float16 => bindings::VT_FLOAT16,
-            ValueType::Float32 => bindings::VT_FLOAT32,
-            ValueType::Float64 => bindings::VT_FLOAT64,
-        }) as bindings::VALUE_TYPE
+            ValueType::Int8 => diligent_sys::VT_INT8,
+            ValueType::Int16 => diligent_sys::VT_INT16,
+            ValueType::Int32 => diligent_sys::VT_INT32,
+            ValueType::Uint8 => diligent_sys::VT_UINT8,
+            ValueType::Uint16 => diligent_sys::VT_UINT16,
+            ValueType::Uint32 => diligent_sys::VT_UINT32,
+            ValueType::Float16 => diligent_sys::VT_FLOAT16,
+            ValueType::Float32 => diligent_sys::VT_FLOAT32,
+            ValueType::Float64 => diligent_sys::VT_FLOAT64,
+        }) as diligent_sys::VALUE_TYPE
     }
 }
 
@@ -441,22 +389,22 @@ pub enum MapType {
     ReadWrite,
 }
 
-impl From<&MapType> for bindings::MAP_TYPE {
+impl From<&MapType> for diligent_sys::MAP_TYPE {
     fn from(value: &MapType) -> Self {
         (match value {
-            MapType::Read => bindings::MAP_READ,
-            MapType::Write => bindings::MAP_WRITE,
-            MapType::ReadWrite => bindings::MAP_READ_WRITE,
-        }) as bindings::MAP_TYPE
+            MapType::Read => diligent_sys::MAP_READ,
+            MapType::Write => diligent_sys::MAP_WRITE,
+            MapType::ReadWrite => diligent_sys::MAP_READ_WRITE,
+        }) as diligent_sys::MAP_TYPE
     }
 }
 
 bitflags! {
-    pub struct MapFlags: bindings::_MAP_FLAGS {
-        const None        = bindings::MAP_FLAG_NONE;
-        const DoNotWait   = bindings::MAP_FLAG_DO_NOT_WAIT;
-        const Discard     = bindings::MAP_FLAG_DISCARD;
-        const NoOverwrite = bindings::MAP_FLAG_NO_OVERWRITE;
+    pub struct MapFlags: diligent_sys::_MAP_FLAGS {
+        const None        = diligent_sys::MAP_FLAG_NONE;
+        const DoNotWait   = diligent_sys::MAP_FLAG_DO_NOT_WAIT;
+        const Discard     = diligent_sys::MAP_FLAG_DISCARD;
+        const NoOverwrite = diligent_sys::MAP_FLAG_NO_OVERWRITE;
     }
 }
 
@@ -509,7 +457,7 @@ impl PartialOrd for AdapterType {
     }
 }
 
-const_assert!(bindings::ADAPTER_TYPE_COUNT == 4);
+const_assert!(diligent_sys::ADAPTER_TYPE_COUNT == 4);
 
 pub enum AdapterVendor {
     Unknown,
@@ -524,7 +472,7 @@ pub enum AdapterVendor {
     Mesa,
     Broadcom,
 }
-const_assert!(bindings::ADAPTER_VENDOR_LAST == 10);
+const_assert!(diligent_sys::ADAPTER_VENDOR_LAST == 10);
 
 pub struct AdapterMemoryInfo {
     pub local_memory: u64,
@@ -536,11 +484,11 @@ pub struct AdapterMemoryInfo {
 }
 
 bitflags! {
-    pub struct RaytracingCapFlags : bindings::_RAY_TRACING_CAP_FLAGS {
-        const None               = bindings::RAY_TRACING_CAP_FLAG_NONE;
-        const StandaloneShaders  = bindings::RAY_TRACING_CAP_FLAG_STANDALONE_SHADERS;
-        const InlineRayTracing   = bindings::RAY_TRACING_CAP_FLAG_INLINE_RAY_TRACING;
-        const IndirectRayTracing = bindings::RAY_TRACING_CAP_FLAG_INDIRECT_RAY_TRACING;
+    pub struct RaytracingCapFlags : diligent_sys::_RAY_TRACING_CAP_FLAGS {
+        const None               = diligent_sys::RAY_TRACING_CAP_FLAG_NONE;
+        const StandaloneShaders  = diligent_sys::RAY_TRACING_CAP_FLAG_STANDALONE_SHADERS;
+        const InlineRayTracing   = diligent_sys::RAY_TRACING_CAP_FLAG_INLINE_RAY_TRACING;
+        const IndirectRayTracing = diligent_sys::RAY_TRACING_CAP_FLAG_INDIRECT_RAY_TRACING;
     }
 }
 
@@ -563,19 +511,19 @@ pub struct RayTracingProperties {
 }
 
 bitflags! {
-    pub struct WaveFeature : bindings::_WAVE_FEATURE {
-        const Unknown         = bindings::WAVE_FEATURE_UNKNOWN;
-        const Basic           = bindings::WAVE_FEATURE_BASIC;
-        const Vote            = bindings::WAVE_FEATURE_VOTE;
-        const Arithmetic      = bindings::WAVE_FEATURE_ARITHMETIC;
-        const Ballout         = bindings::WAVE_FEATURE_BALLOUT;
-        const Shuffle         = bindings::WAVE_FEATURE_SHUFFLE;
-        const ShuffleRelative = bindings::WAVE_FEATURE_SHUFFLE_RELATIVE;
-        const Clustered       = bindings::WAVE_FEATURE_CLUSTERED;
-        const Quad            = bindings::WAVE_FEATURE_QUAD;
+    pub struct WaveFeature : diligent_sys::_WAVE_FEATURE {
+        const Unknown         = diligent_sys::WAVE_FEATURE_UNKNOWN;
+        const Basic           = diligent_sys::WAVE_FEATURE_BASIC;
+        const Vote            = diligent_sys::WAVE_FEATURE_VOTE;
+        const Arithmetic      = diligent_sys::WAVE_FEATURE_ARITHMETIC;
+        const Ballout         = diligent_sys::WAVE_FEATURE_BALLOUT;
+        const Shuffle         = diligent_sys::WAVE_FEATURE_SHUFFLE;
+        const ShuffleRelative = diligent_sys::WAVE_FEATURE_SHUFFLE_RELATIVE;
+        const Clustered       = diligent_sys::WAVE_FEATURE_CLUSTERED;
+        const Quad            = diligent_sys::WAVE_FEATURE_QUAD;
     }
 }
-const_assert!(bindings::WAVE_FEATURE_LAST == 128);
+const_assert!(diligent_sys::WAVE_FEATURE_LAST == 128);
 
 pub struct WaveOpProperties {
     pub min_size: u32,
@@ -627,21 +575,21 @@ pub enum ShadingRate {
     _4X2,
     _4X4,
 }
-const_assert!(bindings::SHADING_RATE_MAX == 10);
+const_assert!(diligent_sys::SHADING_RATE_MAX == 10);
 
 bitflags! {
-    pub struct SampleCount : bindings::_SAMPLE_COUNT {
-        const None = bindings::SAMPLE_COUNT_NONE;
-        const _1   = bindings::SAMPLE_COUNT_1;
-        const _2   = bindings::SAMPLE_COUNT_2;
-        const _4   = bindings::SAMPLE_COUNT_4;
-        const _8   = bindings::SAMPLE_COUNT_8;
-        const _16  = bindings::SAMPLE_COUNT_16;
-        const _32  = bindings::SAMPLE_COUNT_32;
-        const _64  = bindings::SAMPLE_COUNT_64;
+    pub struct SampleCount : diligent_sys::_SAMPLE_COUNT {
+        const None = diligent_sys::SAMPLE_COUNT_NONE;
+        const _1   = diligent_sys::SAMPLE_COUNT_1;
+        const _2   = diligent_sys::SAMPLE_COUNT_2;
+        const _4   = diligent_sys::SAMPLE_COUNT_4;
+        const _8   = diligent_sys::SAMPLE_COUNT_8;
+        const _16  = diligent_sys::SAMPLE_COUNT_16;
+        const _32  = diligent_sys::SAMPLE_COUNT_32;
+        const _64  = diligent_sys::SAMPLE_COUNT_64;
     }
 }
-const_assert!(bindings::SAMPLE_COUNT_MAX == 64);
+const_assert!(diligent_sys::SAMPLE_COUNT_MAX == 64);
 
 pub struct ShadingRateMode {
     pub rate: ShadingRate,
@@ -649,51 +597,51 @@ pub struct ShadingRateMode {
 }
 
 bitflags! {
-    pub struct ShadingRateCapFlags : bindings::_SHADING_RATE_CAP_FLAGS {
-        const None                              = bindings::SHADING_RATE_CAP_FLAG_NONE;
-        const PerDraw                           = bindings::SHADING_RATE_CAP_FLAG_PER_DRAW;
-        const PerPrimitive                      = bindings::SHADING_RATE_CAP_FLAG_PER_PRIMITIVE;
-        const TextureBased                      = bindings::SHADING_RATE_CAP_FLAG_TEXTURE_BASED;
-        const SampleMask                        = bindings::SHADING_RATE_CAP_FLAG_SAMPLE_MASK;
-        const ShaderSampleMask                  = bindings::SHADING_RATE_CAP_FLAG_SHADER_SAMPLE_MASK;
-        const ShaderDepthStencilWrite           = bindings::SHADING_RATE_CAP_FLAG_SHADER_DEPTH_STENCIL_WRITE;
-        const PerPrimitiveWithMultipleViewports = bindings::SHADING_RATE_CAP_FLAG_PER_PRIMITIVE_WITH_MULTIPLE_VIEWPORTS;
-        const SameTextureForWholeRenderpass     = bindings::SHADING_RATE_CAP_FLAG_SAME_TEXTURE_FOR_WHOLE_RENDERPASS;
-        const TextureArray                      = bindings::SHADING_RATE_CAP_FLAG_TEXTURE_ARRAY;
-        const ShadingRateShaderInput            = bindings::SHADING_RATE_CAP_FLAG_SHADING_RATE_SHADER_INPUT;
-        const AdditionalInvocations             = bindings::SHADING_RATE_CAP_FLAG_ADDITIONAL_INVOCATIONS;
-        const Non_subsampledRenderTarget        = bindings::SHADING_RATE_CAP_FLAG_NON_SUBSAMPLED_RENDER_TARGET;
-        const Subsampled_renderTarget           = bindings::SHADING_RATE_CAP_FLAG_SUBSAMPLED_RENDER_TARGET;
+    pub struct ShadingRateCapFlags : diligent_sys::_SHADING_RATE_CAP_FLAGS {
+        const None                              = diligent_sys::SHADING_RATE_CAP_FLAG_NONE;
+        const PerDraw                           = diligent_sys::SHADING_RATE_CAP_FLAG_PER_DRAW;
+        const PerPrimitive                      = diligent_sys::SHADING_RATE_CAP_FLAG_PER_PRIMITIVE;
+        const TextureBased                      = diligent_sys::SHADING_RATE_CAP_FLAG_TEXTURE_BASED;
+        const SampleMask                        = diligent_sys::SHADING_RATE_CAP_FLAG_SAMPLE_MASK;
+        const ShaderSampleMask                  = diligent_sys::SHADING_RATE_CAP_FLAG_SHADER_SAMPLE_MASK;
+        const ShaderDepthStencilWrite           = diligent_sys::SHADING_RATE_CAP_FLAG_SHADER_DEPTH_STENCIL_WRITE;
+        const PerPrimitiveWithMultipleViewports = diligent_sys::SHADING_RATE_CAP_FLAG_PER_PRIMITIVE_WITH_MULTIPLE_VIEWPORTS;
+        const SameTextureForWholeRenderpass     = diligent_sys::SHADING_RATE_CAP_FLAG_SAME_TEXTURE_FOR_WHOLE_RENDERPASS;
+        const TextureArray                      = diligent_sys::SHADING_RATE_CAP_FLAG_TEXTURE_ARRAY;
+        const ShadingRateShaderInput            = diligent_sys::SHADING_RATE_CAP_FLAG_SHADING_RATE_SHADER_INPUT;
+        const AdditionalInvocations             = diligent_sys::SHADING_RATE_CAP_FLAG_ADDITIONAL_INVOCATIONS;
+        const Non_subsampledRenderTarget        = diligent_sys::SHADING_RATE_CAP_FLAG_NON_SUBSAMPLED_RENDER_TARGET;
+        const Subsampled_renderTarget           = diligent_sys::SHADING_RATE_CAP_FLAG_SUBSAMPLED_RENDER_TARGET;
     }
 }
 
 bitflags! {
-    pub struct ShadingRayeCombiner : bindings::_SHADING_RATE_COMBINER {
-        const Passthrough = bindings::SHADING_RATE_COMBINER_PASSTHROUGH;
-        const Override    = bindings::SHADING_RATE_COMBINER_OVERRIDE;
-        const Min         = bindings::SHADING_RATE_COMBINER_MIN;
-        const Max         = bindings::SHADING_RATE_COMBINER_MAX;
-        const Sum         = bindings::SHADING_RATE_COMBINER_SUM;
-        const Mul         = bindings::SHADING_RATE_COMBINER_MUL;
+    pub struct ShadingRayeCombiner : diligent_sys::_SHADING_RATE_COMBINER {
+        const Passthrough = diligent_sys::SHADING_RATE_COMBINER_PASSTHROUGH;
+        const Override    = diligent_sys::SHADING_RATE_COMBINER_OVERRIDE;
+        const Min         = diligent_sys::SHADING_RATE_COMBINER_MIN;
+        const Max         = diligent_sys::SHADING_RATE_COMBINER_MAX;
+        const Sum         = diligent_sys::SHADING_RATE_COMBINER_SUM;
+        const Mul         = diligent_sys::SHADING_RATE_COMBINER_MUL;
     }
 }
-const_assert!(bindings::SAMPLE_COUNT_MAX == 64);
+const_assert!(diligent_sys::SAMPLE_COUNT_MAX == 64);
 
 bitflags! {
-    pub struct ShadingRateFormat : bindings::_SHADING_RATE_FORMAT {
-        const Unknown    = bindings::SHADING_RATE_FORMAT_UNKNOWN;
-        const Palette    = bindings::SHADING_RATE_FORMAT_PALETTE;
-        const Unorm8     = bindings::SHADING_RATE_FORMAT_UNORM8;
-        const ColRowFp32 = bindings::SHADING_RATE_FORMAT_COL_ROW_FP32;
+    pub struct ShadingRateFormat : diligent_sys::_SHADING_RATE_FORMAT {
+        const Unknown    = diligent_sys::SHADING_RATE_FORMAT_UNKNOWN;
+        const Palette    = diligent_sys::SHADING_RATE_FORMAT_PALETTE;
+        const Unorm8     = diligent_sys::SHADING_RATE_FORMAT_UNORM8;
+        const ColRowFp32 = diligent_sys::SHADING_RATE_FORMAT_COL_ROW_FP32;
     }
 }
 
 bitflags! {
-    pub struct ShadingRateTextureAccess : bindings::_SHADING_RATE_TEXTURE_ACCESS {
-        const Unknown  = bindings::SHADING_RATE_TEXTURE_ACCESS_UNKNOWN;
-        const OnGpu    = bindings::SHADING_RATE_TEXTURE_ACCESS_ON_GPU;
-        const OnSubmit = bindings::SHADING_RATE_TEXTURE_ACCESS_ON_SUBMIT;
-        const OnSetRtv = bindings::SHADING_RATE_TEXTURE_ACCESS_ON_SET_RTV;
+    pub struct ShadingRateTextureAccess : diligent_sys::_SHADING_RATE_TEXTURE_ACCESS {
+        const Unknown  = diligent_sys::SHADING_RATE_TEXTURE_ACCESS_UNKNOWN;
+        const OnGpu    = diligent_sys::SHADING_RATE_TEXTURE_ACCESS_ON_GPU;
+        const OnSubmit = diligent_sys::SHADING_RATE_TEXTURE_ACCESS_ON_SUBMIT;
+        const OnSetRtv = diligent_sys::SHADING_RATE_TEXTURE_ACCESS_ON_SET_RTV;
     }
 }
 
@@ -721,13 +669,13 @@ pub struct ComputeShaderProperties {
 }
 
 bitflags! {
-    pub struct DrawCommandCapFlags : bindings::_DRAW_COMMAND_CAP_FLAGS {
-        const None                      = bindings::DRAW_COMMAND_CAP_FLAG_NONE;
-        const BaseVertex                = bindings::DRAW_COMMAND_CAP_FLAG_BASE_VERTEX;
-        const DrawIndirect              = bindings::DRAW_COMMAND_CAP_FLAG_DRAW_INDIRECT;
-        const DrawIndirectFirstInstance = bindings::DRAW_COMMAND_CAP_FLAG_DRAW_INDIRECT_FIRST_INSTANCE;
-        const NativeMultiDrawIndirect   = bindings::DRAW_COMMAND_CAP_FLAG_NATIVE_MULTI_DRAW_INDIRECT;
-        const DrawIndirectCounterBuffer = bindings::DRAW_COMMAND_CAP_FLAG_DRAW_INDIRECT_COUNTER_BUFFER;
+    pub struct DrawCommandCapFlags : diligent_sys::_DRAW_COMMAND_CAP_FLAGS {
+        const None                      = diligent_sys::DRAW_COMMAND_CAP_FLAG_NONE;
+        const BaseVertex                = diligent_sys::DRAW_COMMAND_CAP_FLAG_BASE_VERTEX;
+        const DrawIndirect              = diligent_sys::DRAW_COMMAND_CAP_FLAG_DRAW_INDIRECT;
+        const DrawIndirectFirstInstance = diligent_sys::DRAW_COMMAND_CAP_FLAG_DRAW_INDIRECT_FIRST_INSTANCE;
+        const NativeMultiDrawIndirect   = diligent_sys::DRAW_COMMAND_CAP_FLAG_NATIVE_MULTI_DRAW_INDIRECT;
+        const DrawIndirectCounterBuffer = diligent_sys::DRAW_COMMAND_CAP_FLAG_DRAW_INDIRECT_COUNTER_BUFFER;
     }
 }
 
@@ -738,26 +686,26 @@ pub struct DrawCommandProperties {
 }
 
 bitflags! {
-    pub struct SparseResourceCapFlags : bindings::_SPARSE_RESOURCE_CAP_FLAGS {
-        const None                     = bindings::SPARSE_RESOURCE_CAP_FLAG_NONE;
-        const ShaderResourceResidency  = bindings::SPARSE_RESOURCE_CAP_FLAG_SHADER_RESOURCE_RESIDENCY;
-        const Buffer                   = bindings::SPARSE_RESOURCE_CAP_FLAG_BUFFER;
-        const Texture2D                = bindings::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_2D;
-        const Texture3D                = bindings::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_3D;
-        const Texture2Samples          = bindings::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_2_SAMPLES;
-        const Texture4Samples          = bindings::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_4_SAMPLES;
-        const Texture8Samples          = bindings::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_8_SAMPLES;
-        const Texture16Samples         = bindings::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_16_SAMPLES;
-        const Aliased                  = bindings::SPARSE_RESOURCE_CAP_FLAG_ALIASED;
-        const Standard2DTileShape      = bindings::SPARSE_RESOURCE_CAP_FLAG_STANDARD_2D_TILE_SHAPE;
-        const Standard2DMSTileShape    = bindings::SPARSE_RESOURCE_CAP_FLAG_STANDARD_2DMS_TILE_SHAPE;
-        const Standard3DTileShape      = bindings::SPARSE_RESOURCE_CAP_FLAG_STANDARD_3D_TILE_SHAPE;
-        const AlignedMipSize           = bindings::SPARSE_RESOURCE_CAP_FLAG_ALIGNED_MIP_SIZE;
-        const NonResidentStrict        = bindings::SPARSE_RESOURCE_CAP_FLAG_NON_RESIDENT_STRICT;
-        const Texture2dArrayMipTail    = bindings::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_2D_ARRAY_MIP_TAIL;
-        const BufferStandardBlock      = bindings::SPARSE_RESOURCE_CAP_FLAG_BUFFER_STANDARD_BLOCK;
-        const NonResidentSafe          = bindings::SPARSE_RESOURCE_CAP_FLAG_NON_RESIDENT_SAFE;
-        const MixedResourceTypeSupport = bindings::SPARSE_RESOURCE_CAP_FLAG_MIXED_RESOURCE_TYPE_SUPPORT;
+    pub struct SparseResourceCapFlags : diligent_sys::_SPARSE_RESOURCE_CAP_FLAGS {
+        const None                     = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_NONE;
+        const ShaderResourceResidency  = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_SHADER_RESOURCE_RESIDENCY;
+        const Buffer                   = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_BUFFER;
+        const Texture2D                = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_2D;
+        const Texture3D                = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_3D;
+        const Texture2Samples          = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_2_SAMPLES;
+        const Texture4Samples          = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_4_SAMPLES;
+        const Texture8Samples          = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_8_SAMPLES;
+        const Texture16Samples         = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_16_SAMPLES;
+        const Aliased                  = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_ALIASED;
+        const Standard2DTileShape      = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_STANDARD_2D_TILE_SHAPE;
+        const Standard2DMSTileShape    = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_STANDARD_2DMS_TILE_SHAPE;
+        const Standard3DTileShape      = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_STANDARD_3D_TILE_SHAPE;
+        const AlignedMipSize           = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_ALIGNED_MIP_SIZE;
+        const NonResidentStrict        = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_NON_RESIDENT_STRICT;
+        const Texture2dArrayMipTail    = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_2D_ARRAY_MIP_TAIL;
+        const BufferStandardBlock      = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_BUFFER_STANDARD_BLOCK;
+        const NonResidentSafe          = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_NON_RESIDENT_SAFE;
+        const MixedResourceTypeSupport = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_MIXED_RESOURCE_TYPE_SUPPORT;
     }
 }
 
@@ -775,24 +723,24 @@ pub enum DeviceFeatureState {
     Optional,
 }
 
-impl Into<DeviceFeatureState> for bindings::DEVICE_FEATURE_STATE {
+impl Into<DeviceFeatureState> for diligent_sys::DEVICE_FEATURE_STATE {
     fn into(self) -> DeviceFeatureState {
-        match self as bindings::_DEVICE_FEATURE_STATE {
-            bindings::DEVICE_FEATURE_STATE_DISABLED => DeviceFeatureState::Disabled,
-            bindings::DEVICE_FEATURE_STATE_ENABLED => DeviceFeatureState::Enabled,
-            bindings::DEVICE_FEATURE_STATE_OPTIONAL => DeviceFeatureState::Optional,
+        match self as diligent_sys::_DEVICE_FEATURE_STATE {
+            diligent_sys::DEVICE_FEATURE_STATE_DISABLED => DeviceFeatureState::Disabled,
+            diligent_sys::DEVICE_FEATURE_STATE_ENABLED => DeviceFeatureState::Enabled,
+            diligent_sys::DEVICE_FEATURE_STATE_OPTIONAL => DeviceFeatureState::Optional,
             _ => panic!(),
         }
     }
 }
 
-impl From<&DeviceFeatureState> for bindings::DEVICE_FEATURE_STATE {
+impl From<&DeviceFeatureState> for diligent_sys::DEVICE_FEATURE_STATE {
     fn from(value: &DeviceFeatureState) -> Self {
         (match value {
-            DeviceFeatureState::Disabled => bindings::DEVICE_FEATURE_STATE_DISABLED,
-            DeviceFeatureState::Enabled => bindings::DEVICE_FEATURE_STATE_ENABLED,
-            DeviceFeatureState::Optional => bindings::DEVICE_FEATURE_STATE_OPTIONAL,
-        }) as bindings::DEVICE_FEATURE_STATE
+            DeviceFeatureState::Disabled => diligent_sys::DEVICE_FEATURE_STATE_DISABLED,
+            DeviceFeatureState::Enabled => diligent_sys::DEVICE_FEATURE_STATE_ENABLED,
+            DeviceFeatureState::Optional => diligent_sys::DEVICE_FEATURE_STATE_OPTIONAL,
+        }) as diligent_sys::DEVICE_FEATURE_STATE
     }
 }
 
@@ -900,113 +848,117 @@ impl Default for DeviceFeatures {
     }
 }
 
-impl From<&DeviceFeatures> for bindings::DeviceFeatures {
+impl From<&DeviceFeatures> for diligent_sys::DeviceFeatures {
     fn from(value: &DeviceFeatures) -> Self {
-        bindings::DeviceFeatures {
-            SeparablePrograms: bindings::DEVICE_FEATURE_STATE::from(&value.separable_programs),
-            ShaderResourceQueries: bindings::DEVICE_FEATURE_STATE::from(
+        diligent_sys::DeviceFeatures {
+            SeparablePrograms: diligent_sys::DEVICE_FEATURE_STATE::from(&value.separable_programs),
+            ShaderResourceQueries: diligent_sys::DEVICE_FEATURE_STATE::from(
                 &value.shader_resource_queries,
             ),
-            WireframeFill: bindings::DEVICE_FEATURE_STATE::from(&value.wireframe_fill),
-            MultithreadedResourceCreation: bindings::DEVICE_FEATURE_STATE::from(
+            WireframeFill: diligent_sys::DEVICE_FEATURE_STATE::from(&value.wireframe_fill),
+            MultithreadedResourceCreation: diligent_sys::DEVICE_FEATURE_STATE::from(
                 &value.multithreaded_resource_creation,
             ),
-            ComputeShaders: bindings::DEVICE_FEATURE_STATE::from(&value.compute_shaders),
-            GeometryShaders: bindings::DEVICE_FEATURE_STATE::from(&value.geometry_shaders),
-            Tessellation: bindings::DEVICE_FEATURE_STATE::from(&value.tessellation),
-            MeshShaders: bindings::DEVICE_FEATURE_STATE::from(&value.mesh_shaders),
-            RayTracing: bindings::DEVICE_FEATURE_STATE::from(&value.ray_tracing),
-            BindlessResources: bindings::DEVICE_FEATURE_STATE::from(&value.bindless_resources),
-            OcclusionQueries: bindings::DEVICE_FEATURE_STATE::from(&value.occlusion_queries),
-            BinaryOcclusionQueries: bindings::DEVICE_FEATURE_STATE::from(
+            ComputeShaders: diligent_sys::DEVICE_FEATURE_STATE::from(&value.compute_shaders),
+            GeometryShaders: diligent_sys::DEVICE_FEATURE_STATE::from(&value.geometry_shaders),
+            Tessellation: diligent_sys::DEVICE_FEATURE_STATE::from(&value.tessellation),
+            MeshShaders: diligent_sys::DEVICE_FEATURE_STATE::from(&value.mesh_shaders),
+            RayTracing: diligent_sys::DEVICE_FEATURE_STATE::from(&value.ray_tracing),
+            BindlessResources: diligent_sys::DEVICE_FEATURE_STATE::from(&value.bindless_resources),
+            OcclusionQueries: diligent_sys::DEVICE_FEATURE_STATE::from(&value.occlusion_queries),
+            BinaryOcclusionQueries: diligent_sys::DEVICE_FEATURE_STATE::from(
                 &value.binary_occlusion_queries,
             ),
-            TimestampQueries: bindings::DEVICE_FEATURE_STATE::from(&value.timestamp_queries),
-            PipelineStatisticsQueries: bindings::DEVICE_FEATURE_STATE::from(
+            TimestampQueries: diligent_sys::DEVICE_FEATURE_STATE::from(&value.timestamp_queries),
+            PipelineStatisticsQueries: diligent_sys::DEVICE_FEATURE_STATE::from(
                 &value.pipeline_statistics_queries,
             ),
-            DurationQueries: bindings::DEVICE_FEATURE_STATE::from(&value.duration_queries),
-            DepthBiasClamp: bindings::DEVICE_FEATURE_STATE::from(&value.depth_bias_clamp),
-            DepthClamp: bindings::DEVICE_FEATURE_STATE::from(&value.depth_clamp),
-            IndependentBlend: bindings::DEVICE_FEATURE_STATE::from(&value.independent_blend),
-            DualSourceBlend: bindings::DEVICE_FEATURE_STATE::from(&value.dual_source_blend),
-            MultiViewport: bindings::DEVICE_FEATURE_STATE::from(&value.multi_viewport),
-            TextureCompressionBC: bindings::DEVICE_FEATURE_STATE::from(
+            DurationQueries: diligent_sys::DEVICE_FEATURE_STATE::from(&value.duration_queries),
+            DepthBiasClamp: diligent_sys::DEVICE_FEATURE_STATE::from(&value.depth_bias_clamp),
+            DepthClamp: diligent_sys::DEVICE_FEATURE_STATE::from(&value.depth_clamp),
+            IndependentBlend: diligent_sys::DEVICE_FEATURE_STATE::from(&value.independent_blend),
+            DualSourceBlend: diligent_sys::DEVICE_FEATURE_STATE::from(&value.dual_source_blend),
+            MultiViewport: diligent_sys::DEVICE_FEATURE_STATE::from(&value.multi_viewport),
+            TextureCompressionBC: diligent_sys::DEVICE_FEATURE_STATE::from(
                 &value.texture_compression_bc,
             ),
-            TextureCompressionETC2: bindings::DEVICE_FEATURE_STATE::from(
+            TextureCompressionETC2: diligent_sys::DEVICE_FEATURE_STATE::from(
                 &value.texture_compression_etc2,
             ),
-            VertexPipelineUAVWritesAndAtomics: bindings::DEVICE_FEATURE_STATE::from(
+            VertexPipelineUAVWritesAndAtomics: diligent_sys::DEVICE_FEATURE_STATE::from(
                 &value.vertex_pipeline_uav_writes_and_atomics,
             ),
-            PixelUAVWritesAndAtomics: bindings::DEVICE_FEATURE_STATE::from(
+            PixelUAVWritesAndAtomics: diligent_sys::DEVICE_FEATURE_STATE::from(
                 &value.pixel_uav_writes_and_atomics,
             ),
-            TextureUAVExtendedFormats: bindings::DEVICE_FEATURE_STATE::from(
+            TextureUAVExtendedFormats: diligent_sys::DEVICE_FEATURE_STATE::from(
                 &value.texture_uav_extended_formats,
             ),
-            ShaderFloat16: bindings::DEVICE_FEATURE_STATE::from(&value.shader_float16),
-            ResourceBuffer16BitAccess: bindings::DEVICE_FEATURE_STATE::from(
+            ShaderFloat16: diligent_sys::DEVICE_FEATURE_STATE::from(&value.shader_float16),
+            ResourceBuffer16BitAccess: diligent_sys::DEVICE_FEATURE_STATE::from(
                 &value.resource_buffer16_bit_access,
             ),
-            UniformBuffer16BitAccess: bindings::DEVICE_FEATURE_STATE::from(
+            UniformBuffer16BitAccess: diligent_sys::DEVICE_FEATURE_STATE::from(
                 &value.uniform_buffer16_bit_access,
             ),
-            ShaderInputOutput16: bindings::DEVICE_FEATURE_STATE::from(&value.shader_input_output16),
-            ShaderInt8: bindings::DEVICE_FEATURE_STATE::from(&value.shader_int8),
-            ResourceBuffer8BitAccess: bindings::DEVICE_FEATURE_STATE::from(
+            ShaderInputOutput16: diligent_sys::DEVICE_FEATURE_STATE::from(
+                &value.shader_input_output16,
+            ),
+            ShaderInt8: diligent_sys::DEVICE_FEATURE_STATE::from(&value.shader_int8),
+            ResourceBuffer8BitAccess: diligent_sys::DEVICE_FEATURE_STATE::from(
                 &value.resource_buffer8_bit_access,
             ),
-            UniformBuffer8BitAccess: bindings::DEVICE_FEATURE_STATE::from(
+            UniformBuffer8BitAccess: diligent_sys::DEVICE_FEATURE_STATE::from(
                 &value.uniform_buffer8_bit_access,
             ),
-            ShaderResourceStaticArrays: bindings::DEVICE_FEATURE_STATE::from(
+            ShaderResourceStaticArrays: diligent_sys::DEVICE_FEATURE_STATE::from(
                 &value.shader_resource_static_arrays,
             ),
-            ShaderResourceRuntimeArrays: bindings::DEVICE_FEATURE_STATE::from(
+            ShaderResourceRuntimeArrays: diligent_sys::DEVICE_FEATURE_STATE::from(
                 &value.shader_resource_runtime_arrays,
             ),
-            WaveOp: bindings::DEVICE_FEATURE_STATE::from(&value.wave_op),
-            InstanceDataStepRate: bindings::DEVICE_FEATURE_STATE::from(
+            WaveOp: diligent_sys::DEVICE_FEATURE_STATE::from(&value.wave_op),
+            InstanceDataStepRate: diligent_sys::DEVICE_FEATURE_STATE::from(
                 &value.instance_data_step_rate,
             ),
-            NativeFence: bindings::DEVICE_FEATURE_STATE::from(&value.native_fence),
-            TileShaders: bindings::DEVICE_FEATURE_STATE::from(&value.tile_shaders),
-            TransferQueueTimestampQueries: bindings::DEVICE_FEATURE_STATE::from(
+            NativeFence: diligent_sys::DEVICE_FEATURE_STATE::from(&value.native_fence),
+            TileShaders: diligent_sys::DEVICE_FEATURE_STATE::from(&value.tile_shaders),
+            TransferQueueTimestampQueries: diligent_sys::DEVICE_FEATURE_STATE::from(
                 &value.transfer_queue_timestamp_queries,
             ),
-            VariableRateShading: bindings::DEVICE_FEATURE_STATE::from(&value.variable_rate_shading),
-            SparseResources: bindings::DEVICE_FEATURE_STATE::from(&value.sparse_resources),
-            SubpassFramebufferFetch: bindings::DEVICE_FEATURE_STATE::from(
+            VariableRateShading: diligent_sys::DEVICE_FEATURE_STATE::from(
+                &value.variable_rate_shading,
+            ),
+            SparseResources: diligent_sys::DEVICE_FEATURE_STATE::from(&value.sparse_resources),
+            SubpassFramebufferFetch: diligent_sys::DEVICE_FEATURE_STATE::from(
                 &value.subpass_framebuffer_fetch,
             ),
-            TextureComponentSwizzle: bindings::DEVICE_FEATURE_STATE::from(
+            TextureComponentSwizzle: diligent_sys::DEVICE_FEATURE_STATE::from(
                 &value.texture_component_swizzle,
             ),
-            TextureSubresourceViews: bindings::DEVICE_FEATURE_STATE::from(
+            TextureSubresourceViews: diligent_sys::DEVICE_FEATURE_STATE::from(
                 &value.texture_subresource_views,
             ),
-            NativeMultiDraw: bindings::DEVICE_FEATURE_STATE::from(&value.native_multi_draw),
-            AsyncShaderCompilation: bindings::DEVICE_FEATURE_STATE::from(
+            NativeMultiDraw: diligent_sys::DEVICE_FEATURE_STATE::from(&value.native_multi_draw),
+            AsyncShaderCompilation: diligent_sys::DEVICE_FEATURE_STATE::from(
                 &value.async_shader_compilation,
             ),
-            FormattedBuffers: bindings::DEVICE_FEATURE_STATE::from(&value.formatted_buffers),
+            FormattedBuffers: diligent_sys::DEVICE_FEATURE_STATE::from(&value.formatted_buffers),
         }
     }
 }
 
 bitflags! {
-    pub struct CommandQueueType : bindings::_COMMAND_QUEUE_TYPE {
-        const Unknown       = bindings::COMMAND_QUEUE_TYPE_UNKNOWN;
-        const Transfer      = bindings::COMMAND_QUEUE_TYPE_TRANSFER;
-        const Compute       = bindings::COMMAND_QUEUE_TYPE_COMPUTE;
-        const Graphics      = bindings::COMMAND_QUEUE_TYPE_GRAPHICS;
-        const PrimaryMask   = bindings::COMMAND_QUEUE_TYPE_PRIMARY_MASK;
-        const SparseBinding = bindings::COMMAND_QUEUE_TYPE_SPARSE_BINDING;
+    pub struct CommandQueueType : diligent_sys::_COMMAND_QUEUE_TYPE {
+        const Unknown       = diligent_sys::COMMAND_QUEUE_TYPE_UNKNOWN;
+        const Transfer      = diligent_sys::COMMAND_QUEUE_TYPE_TRANSFER;
+        const Compute       = diligent_sys::COMMAND_QUEUE_TYPE_COMPUTE;
+        const Graphics      = diligent_sys::COMMAND_QUEUE_TYPE_GRAPHICS;
+        const PrimaryMask   = diligent_sys::COMMAND_QUEUE_TYPE_PRIMARY_MASK;
+        const SparseBinding = diligent_sys::COMMAND_QUEUE_TYPE_SPARSE_BINDING;
     }
 }
-const_assert!(bindings::COMMAND_QUEUE_TYPE_MAX_BIT == 7);
+const_assert!(diligent_sys::COMMAND_QUEUE_TYPE_MAX_BIT == 7);
 
 pub struct CommandQueueInfo {
     pub queue_type: CommandQueueType,
@@ -1014,7 +966,7 @@ pub struct CommandQueueInfo {
     pub texture_copy_granularity: [u32; 3usize],
 }
 
-impl Into<CommandQueueInfo> for bindings::CommandQueueInfo {
+impl Into<CommandQueueInfo> for diligent_sys::CommandQueueInfo {
     fn into(self) -> CommandQueueInfo {
         CommandQueueInfo {
             queue_type: CommandQueueType::from_bits_retain(self.QueueType.into()),
@@ -1046,7 +998,7 @@ pub struct GraphicsAdapterInfo {
     pub queues: Vec<CommandQueueInfo>,
 }
 
-impl Into<GraphicsAdapterInfo> for bindings::GraphicsAdapterInfo {
+impl Into<GraphicsAdapterInfo> for diligent_sys::GraphicsAdapterInfo {
     fn into(self) -> GraphicsAdapterInfo {
         let desc_vec = Vec::from_iter(
             self.Description
@@ -1061,25 +1013,25 @@ impl Into<GraphicsAdapterInfo> for bindings::GraphicsAdapterInfo {
 
         GraphicsAdapterInfo {
             description: desc_cstring.into_string().unwrap(), //desc.to_str().unwrap().to_owned(),
-            adapter_type: match self.Type as bindings::_ADAPTER_TYPE {
-                bindings::ADAPTER_TYPE_UNKNOWN => AdapterType::Unknown,
-                bindings::ADAPTER_TYPE_SOFTWARE => AdapterType::Software,
-                bindings::ADAPTER_TYPE_INTEGRATED => AdapterType::Integrated,
-                bindings::ADAPTER_TYPE_DISCRETE => AdapterType::Discrete,
+            adapter_type: match self.Type as diligent_sys::_ADAPTER_TYPE {
+                diligent_sys::ADAPTER_TYPE_UNKNOWN => AdapterType::Unknown,
+                diligent_sys::ADAPTER_TYPE_SOFTWARE => AdapterType::Software,
+                diligent_sys::ADAPTER_TYPE_INTEGRATED => AdapterType::Integrated,
+                diligent_sys::ADAPTER_TYPE_DISCRETE => AdapterType::Discrete,
                 _ => panic!(),
             },
-            vendor: match self.Vendor as bindings::_ADAPTER_VENDOR {
-                bindings::ADAPTER_VENDOR_UNKNOWN => AdapterVendor::Unknown,
-                bindings::ADAPTER_VENDOR_NVIDIA => AdapterVendor::Nvidia,
-                bindings::ADAPTER_VENDOR_AMD => AdapterVendor::AMD,
-                bindings::ADAPTER_VENDOR_INTEL => AdapterVendor::Intel,
-                bindings::ADAPTER_VENDOR_ARM => AdapterVendor::ARM,
-                bindings::ADAPTER_VENDOR_QUALCOMM => AdapterVendor::Qualcomm,
-                bindings::ADAPTER_VENDOR_IMGTECH => AdapterVendor::Imgtech,
-                bindings::ADAPTER_VENDOR_MSFT => AdapterVendor::Msft,
-                bindings::ADAPTER_VENDOR_APPLE => AdapterVendor::Apple,
-                bindings::ADAPTER_VENDOR_MESA => AdapterVendor::Mesa,
-                bindings::ADAPTER_VENDOR_BROADCOM => AdapterVendor::Broadcom,
+            vendor: match self.Vendor as diligent_sys::_ADAPTER_VENDOR {
+                diligent_sys::ADAPTER_VENDOR_UNKNOWN => AdapterVendor::Unknown,
+                diligent_sys::ADAPTER_VENDOR_NVIDIA => AdapterVendor::Nvidia,
+                diligent_sys::ADAPTER_VENDOR_AMD => AdapterVendor::AMD,
+                diligent_sys::ADAPTER_VENDOR_INTEL => AdapterVendor::Intel,
+                diligent_sys::ADAPTER_VENDOR_ARM => AdapterVendor::ARM,
+                diligent_sys::ADAPTER_VENDOR_QUALCOMM => AdapterVendor::Qualcomm,
+                diligent_sys::ADAPTER_VENDOR_IMGTECH => AdapterVendor::Imgtech,
+                diligent_sys::ADAPTER_VENDOR_MSFT => AdapterVendor::Msft,
+                diligent_sys::ADAPTER_VENDOR_APPLE => AdapterVendor::Apple,
+                diligent_sys::ADAPTER_VENDOR_MESA => AdapterVendor::Mesa,
+                diligent_sys::ADAPTER_VENDOR_BROADCOM => AdapterVendor::Broadcom,
                 _ => panic!(),
             },
             vendor_id: self.VendorId,
@@ -1154,16 +1106,16 @@ impl Into<GraphicsAdapterInfo> for bindings::GraphicsAdapterInfo {
                         .ShadingRates
                         .into_iter()
                         .map(|sr| ShadingRateMode {
-                            rate: match sr.Rate as bindings::_SHADING_RATE {
-                                bindings::SHADING_RATE_1X1 => ShadingRate::_1X1,
-                                bindings::SHADING_RATE_1X2 => ShadingRate::_1X2,
-                                bindings::SHADING_RATE_1X4 => ShadingRate::_1X4,
-                                bindings::SHADING_RATE_2X1 => ShadingRate::_2X1,
-                                bindings::SHADING_RATE_2X2 => ShadingRate::_2X2,
-                                bindings::SHADING_RATE_2X4 => ShadingRate::_2X4,
-                                bindings::SHADING_RATE_4X1 => ShadingRate::_4X1,
-                                bindings::SHADING_RATE_4X2 => ShadingRate::_4X2,
-                                bindings::SHADING_RATE_4X4 => ShadingRate::_4X4,
+                            rate: match sr.Rate as diligent_sys::_SHADING_RATE {
+                                diligent_sys::SHADING_RATE_1X1 => ShadingRate::_1X1,
+                                diligent_sys::SHADING_RATE_1X2 => ShadingRate::_1X2,
+                                diligent_sys::SHADING_RATE_1X4 => ShadingRate::_1X4,
+                                diligent_sys::SHADING_RATE_2X1 => ShadingRate::_2X1,
+                                diligent_sys::SHADING_RATE_2X2 => ShadingRate::_2X2,
+                                diligent_sys::SHADING_RATE_2X4 => ShadingRate::_2X4,
+                                diligent_sys::SHADING_RATE_4X1 => ShadingRate::_4X1,
+                                diligent_sys::SHADING_RATE_4X2 => ShadingRate::_4X2,
+                                diligent_sys::SHADING_RATE_4X4 => ShadingRate::_4X4,
                                 _ => panic!(),
                             },
                             sample_bits: SampleCount::from_bits_retain(sr.SampleBits.into()),
@@ -1277,24 +1229,47 @@ pub enum SurfaceTransform {
     HorizontalMirrorRotate270,
 }
 
-impl From<&SurfaceTransform> for bindings::SURFACE_TRANSFORM {
+impl From<&SurfaceTransform> for diligent_sys::SURFACE_TRANSFORM {
     fn from(value: &SurfaceTransform) -> Self {
         (match value {
-            SurfaceTransform::Optimal => bindings::SURFACE_TRANSFORM_OPTIMAL,
-            SurfaceTransform::Identity => bindings::SURFACE_TRANSFORM_IDENTITY,
-            SurfaceTransform::Rotate90 => bindings::SURFACE_TRANSFORM_ROTATE_90,
-            SurfaceTransform::Rotate180 => bindings::SURFACE_TRANSFORM_ROTATE_180,
-            SurfaceTransform::Rotate270 => bindings::SURFACE_TRANSFORM_ROTATE_270,
-            SurfaceTransform::HorizontalMirror => bindings::SURFACE_TRANSFORM_HORIZONTAL_MIRROR,
+            SurfaceTransform::Optimal => diligent_sys::SURFACE_TRANSFORM_OPTIMAL,
+            SurfaceTransform::Identity => diligent_sys::SURFACE_TRANSFORM_IDENTITY,
+            SurfaceTransform::Rotate90 => diligent_sys::SURFACE_TRANSFORM_ROTATE_90,
+            SurfaceTransform::Rotate180 => diligent_sys::SURFACE_TRANSFORM_ROTATE_180,
+            SurfaceTransform::Rotate270 => diligent_sys::SURFACE_TRANSFORM_ROTATE_270,
+            SurfaceTransform::HorizontalMirror => diligent_sys::SURFACE_TRANSFORM_HORIZONTAL_MIRROR,
             SurfaceTransform::HorizontalMirrorRotate90 => {
-                bindings::SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_90
+                diligent_sys::SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_90
             }
             SurfaceTransform::HorizontalMirrorRotate180 => {
-                bindings::SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_180
+                diligent_sys::SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_180
             }
             SurfaceTransform::HorizontalMirrorRotate270 => {
-                bindings::SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270
+                diligent_sys::SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270
             }
-        }) as bindings::SURFACE_TRANSFORM
+        }) as diligent_sys::SURFACE_TRANSFORM
+    }
+}
+
+impl From<&diligent_sys::SURFACE_TRANSFORM> for SurfaceTransform {
+    fn from(value: &diligent_sys::SURFACE_TRANSFORM) -> Self {
+        match *value as diligent_sys::_SURFACE_TRANSFORM {
+            diligent_sys::SURFACE_TRANSFORM_OPTIMAL => SurfaceTransform::Optimal,
+            diligent_sys::SURFACE_TRANSFORM_IDENTITY => SurfaceTransform::Identity,
+            diligent_sys::SURFACE_TRANSFORM_ROTATE_90 => SurfaceTransform::Rotate90,
+            diligent_sys::SURFACE_TRANSFORM_ROTATE_180 => SurfaceTransform::Rotate180,
+            diligent_sys::SURFACE_TRANSFORM_ROTATE_270 => SurfaceTransform::Rotate270,
+            diligent_sys::SURFACE_TRANSFORM_HORIZONTAL_MIRROR => SurfaceTransform::HorizontalMirror,
+            diligent_sys::SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_90 => {
+                SurfaceTransform::HorizontalMirrorRotate90
+            }
+            diligent_sys::SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_180 => {
+                SurfaceTransform::HorizontalMirrorRotate180
+            }
+            diligent_sys::SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270 => {
+                SurfaceTransform::HorizontalMirrorRotate270
+            }
+            _ => panic!(),
+        }
     }
 }

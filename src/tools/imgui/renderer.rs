@@ -6,35 +6,32 @@ use imgui::{
     Io, TextureId, Ui,
 };
 
-use crate::{
-    bindings,
-    core::{
-        buffer::{Buffer, BufferDesc},
-        device_context::{
-            DeviceContext, DrawFlags, DrawIndexedAttribs, Rect, ResourceStateTransitionMode,
-            SetVertexBufferFlags, Viewport,
-        },
-        graphics_types::{
-            BindFlags, CpuAccessFlags, MapFlags, MapType, PrimitiveTopology, RenderDeviceType,
-            SetShaderResourceFlags, ShaderType, ShaderTypes, TextureAddressMode, Usage, ValueType,
-        },
-        input_layout::LayoutElement,
-        pipeline_resource_signature::ImmutableSamplerDesc,
-        pipeline_state::{
-            BlendFactor, BlendOperation, BlendStateDesc, ColorMask, CullMode,
-            DepthStencilStateDesc, GraphicsPipelineDesc, GraphicsPipelineStateCreateInfo,
-            PipelineState, RasterizerStateDesc, RenderTargetBlendDesc,
-        },
-        render_device::RenderDevice,
-        sampler::SamplerDesc,
-        shader::{ShaderCreateInfo, ShaderSource},
-        shader_resource_binding::ShaderResourceBinding,
-        shader_resource_variable::{
-            ShaderResourceVariable, ShaderResourceVariableDesc, ShaderResourceVariableType,
-        },
-        texture::{TextureDesc, TextureDimension, TextureSubResource},
-        texture_view::{TextureView, TextureViewType},
+use crate::core::{
+    buffer::{Buffer, BufferDesc},
+    device_context::{
+        DeviceContext, DrawFlags, DrawIndexedAttribs, Rect, ResourceStateTransitionMode,
+        SetVertexBufferFlags, Viewport,
     },
+    graphics_types::{
+        BindFlags, CpuAccessFlags, MapFlags, MapType, PrimitiveTopology, RenderDeviceType,
+        SetShaderResourceFlags, ShaderType, ShaderTypes, TextureAddressMode, Usage, ValueType,
+    },
+    input_layout::LayoutElement,
+    pipeline_resource_signature::ImmutableSamplerDesc,
+    pipeline_state::{
+        BlendFactor, BlendOperation, BlendStateDesc, ColorMask, CullMode, DepthStencilStateDesc,
+        GraphicsPipelineDesc, GraphicsPipelineStateCreateInfo, PipelineState, RasterizerStateDesc,
+        RenderTargetBlendDesc,
+    },
+    render_device::RenderDevice,
+    sampler::SamplerDesc,
+    shader::{ShaderCreateInfo, ShaderSource},
+    shader_resource_binding::ShaderResourceBinding,
+    shader_resource_variable::{
+        ShaderResourceVariable, ShaderResourceVariableDesc, ShaderResourceVariableType,
+    },
+    texture::{TextureDesc, TextureDimension, TextureSubResource},
+    texture_view::{TextureView, TextureViewType},
 };
 
 const GAMMA_TO_LINEAR: &std::ffi::CStr =
@@ -420,8 +417,8 @@ pub enum ColorConversionMode {
 pub struct ImguiRendererCreateInfo<'a> {
     device: &'a RenderDevice,
 
-    back_buffer_format: bindings::TEXTURE_FORMAT,
-    depth_buffer_format: bindings::TEXTURE_FORMAT,
+    back_buffer_format: diligent_sys::TEXTURE_FORMAT,
+    depth_buffer_format: diligent_sys::TEXTURE_FORMAT,
 
     color_conversion: ColorConversionMode,
 
@@ -432,8 +429,8 @@ pub struct ImguiRendererCreateInfo<'a> {
 impl<'a> ImguiRendererCreateInfo<'a> {
     pub fn new(
         device: &'a RenderDevice,
-        back_buffer_format: bindings::TEXTURE_FORMAT,
-        depth_buffer_format: bindings::TEXTURE_FORMAT,
+        back_buffer_format: diligent_sys::TEXTURE_FORMAT,
+        depth_buffer_format: diligent_sys::TEXTURE_FORMAT,
         initial_width: u16,
         initial_height: u16,
     ) -> Self {
@@ -460,7 +457,7 @@ impl ImguiRenderer {
         let srgb_framebuffer = true;
         //let srgb_framebuffer = GetTextureFormatAttribs(create_info.back_buffer_format)
         //    .ComponentType
-        //    == bindings::COMPONENT_TYPE_UNORM_SRGB;
+        //    == diligent_sys::COMPONENT_TYPE_UNORM_SRGB;
         let manual_srgb = (create_info.color_conversion == ColorConversionMode::Auto
             && srgb_framebuffer)
             || (create_info.color_conversion == ColorConversionMode::SrgbToLinear);
@@ -558,8 +555,8 @@ impl ImguiRenderer {
                 DepthStencilStateDesc::default().depth_enable(false),
             )
             .num_render_targets(1)
-            .rtv_format::<0>(create_info.back_buffer_format as bindings::_TEXTURE_FORMAT)
-            .dsv_format(create_info.depth_buffer_format as bindings::_TEXTURE_FORMAT)
+            .rtv_format::<0>(create_info.back_buffer_format as diligent_sys::_TEXTURE_FORMAT)
+            .dsv_format(create_info.depth_buffer_format as diligent_sys::_TEXTURE_FORMAT)
             .primitive_topology(PrimitiveTopology::TriangleList)
             .add_input_layout(LayoutElement::new(0, 0, 2, ValueType::Float32))
             .add_input_layout(LayoutElement::new(1, 0, 2, ValueType::Float32))
@@ -611,7 +608,7 @@ impl ImguiRenderer {
             TextureDimension::Texture2D,
             font_atlas_texture.width,
             font_atlas_texture.height,
-            bindings::TEX_FORMAT_RGBA8_UNORM,
+            diligent_sys::TEX_FORMAT_RGBA8_UNORM,
         )
         .bind_flags(BindFlags::ShaderResourcec)
         .usage(Usage::Immutable);
@@ -652,7 +649,8 @@ impl ImguiRenderer {
                 .DrawCommand
                 .CapFlags
                 .bitand(
-                    bindings::DRAW_COMMAND_CAP_FLAG_BASE_VERTEX as bindings::DRAW_COMMAND_CAP_FLAGS,
+                    diligent_sys::DRAW_COMMAND_CAP_FLAG_BASE_VERTEX
+                        as diligent_sys::DRAW_COMMAND_CAP_FLAGS,
                 )
                 != 0,
             context: imgui_context,

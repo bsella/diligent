@@ -1,12 +1,10 @@
 use core::fmt;
 
-use crate::bindings;
-
 use super::object::{AsObject, Object};
 
 pub struct DataBlob {
-    data_blob: *mut bindings::IDataBlob,
-    virtual_functions: *mut bindings::IDataBlobVtbl,
+    data_blob: *mut diligent_sys::IDataBlob,
+    virtual_functions: *mut diligent_sys::IDataBlobVtbl,
 
     object: Object,
 }
@@ -32,21 +30,18 @@ impl fmt::Debug for DataBlob {
 }
 
 impl DataBlob {
-    pub(crate) fn new(data_blob_ptr: *mut bindings::IDataBlob) -> Self {
+    pub(crate) fn new(data_blob_ptr: *mut diligent_sys::IDataBlob) -> Self {
         DataBlob {
             data_blob: data_blob_ptr,
             virtual_functions: unsafe { (*data_blob_ptr).pVtbl },
 
-            object: Object::new(data_blob_ptr as *mut bindings::IObject),
+            object: Object::new(data_blob_ptr as *mut diligent_sys::IObject),
         }
     }
 
     pub fn resize(&mut self, new_size: usize) {
         unsafe {
-            (*self.virtual_functions)
-                .DataBlob
-                .Resize
-                .unwrap_unchecked()(self.data_blob, new_size)
+            (*self.virtual_functions).DataBlob.Resize.unwrap_unchecked()(self.data_blob, new_size)
         }
     }
 

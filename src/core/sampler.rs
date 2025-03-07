@@ -1,5 +1,3 @@
-use crate::bindings;
-
 use bitflags::bitflags;
 use static_assertions::const_assert;
 
@@ -10,13 +8,13 @@ use super::{
 };
 
 bitflags! {
-    pub struct SamplerFlags: bindings::_SAMPLER_FLAGS {
-        const None                           = bindings::SAMPLER_FLAG_NONE;
-        const Subsampled                     = bindings::SAMPLER_FLAG_SUBSAMPLED;
-        const SubsampledCoarseReconstruction = bindings::SAMPLER_FLAG_SUBSAMPLED_COARSE_RECONSTRUCTION;
+    pub struct SamplerFlags: diligent_sys::_SAMPLER_FLAGS {
+        const None                           = diligent_sys::SAMPLER_FLAG_NONE;
+        const Subsampled                     = diligent_sys::SAMPLER_FLAG_SUBSAMPLED;
+        const SubsampledCoarseReconstruction = diligent_sys::SAMPLER_FLAG_SUBSAMPLED_COARSE_RECONSTRUCTION;
     }
 }
-const_assert!(bindings::SAMPLER_FLAG_LAST == 2);
+const_assert!(diligent_sys::SAMPLER_FLAG_LAST == 2);
 
 pub struct SamplerDesc<'a> {
     name: &'a std::ffi::CStr,
@@ -116,23 +114,23 @@ impl<'a> SamplerDesc<'a> {
     }
 }
 
-impl From<&SamplerDesc<'_>> for bindings::SamplerDesc {
+impl From<&SamplerDesc<'_>> for diligent_sys::SamplerDesc {
     fn from(value: &SamplerDesc<'_>) -> Self {
-        bindings::SamplerDesc {
-            _DeviceObjectAttribs: bindings::DeviceObjectAttribs {
+        diligent_sys::SamplerDesc {
+            _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
                 Name: value.name.as_ptr(),
             },
-            MinFilter: bindings::FILTER_TYPE::from(&value.min_filter),
-            MagFilter: bindings::FILTER_TYPE::from(&value.mag_filter),
-            MipFilter: bindings::FILTER_TYPE::from(&value.mip_filter),
-            AddressU: bindings::TEXTURE_ADDRESS_MODE::from(&value.address_u),
-            AddressV: bindings::TEXTURE_ADDRESS_MODE::from(&value.address_v),
-            AddressW: bindings::TEXTURE_ADDRESS_MODE::from(&value.address_w),
-            Flags: value.flags.bits() as bindings::SAMPLER_FLAGS,
+            MinFilter: diligent_sys::FILTER_TYPE::from(&value.min_filter),
+            MagFilter: diligent_sys::FILTER_TYPE::from(&value.mag_filter),
+            MipFilter: diligent_sys::FILTER_TYPE::from(&value.mip_filter),
+            AddressU: diligent_sys::TEXTURE_ADDRESS_MODE::from(&value.address_u),
+            AddressV: diligent_sys::TEXTURE_ADDRESS_MODE::from(&value.address_v),
+            AddressW: diligent_sys::TEXTURE_ADDRESS_MODE::from(&value.address_w),
+            Flags: value.flags.bits() as diligent_sys::SAMPLER_FLAGS,
             UnnormalizedCoords: value.unnormalized_coords,
             MipLODBias: value.mip_lod_bias,
             MaxAnisotropy: value.max_anisotropy,
-            ComparisonFunc: bindings::COMPARISON_FUNCTION::from(&value.comparison_func),
+            ComparisonFunc: diligent_sys::COMPARISON_FUNCTION::from(&value.comparison_func),
             BorderColor: value.border_color,
             MinLOD: value.min_lod,
             MaxLOD: value.max_lod,
@@ -141,8 +139,8 @@ impl From<&SamplerDesc<'_>> for bindings::SamplerDesc {
 }
 
 pub struct Sampler {
-    pub(crate) sampler: *mut bindings::ISampler,
-    virtual_functions: *mut bindings::ISamplerVtbl,
+    pub(crate) sampler: *mut diligent_sys::ISampler,
+    virtual_functions: *mut diligent_sys::ISamplerVtbl,
 
     device_object: DeviceObject,
 }
@@ -154,21 +152,21 @@ impl AsDeviceObject for Sampler {
 }
 
 impl Sampler {
-    pub(crate) fn new(sampler_ptr: *mut bindings::ISampler) -> Self {
+    pub(crate) fn new(sampler_ptr: *mut diligent_sys::ISampler) -> Self {
         Sampler {
             sampler: sampler_ptr,
             virtual_functions: unsafe { (*sampler_ptr).pVtbl },
-            device_object: DeviceObject::new(sampler_ptr as *mut bindings::IDeviceObject),
+            device_object: DeviceObject::new(sampler_ptr as *mut diligent_sys::IDeviceObject),
         }
     }
 
-    pub fn get_desc(&self) -> &bindings::SamplerDesc {
+    pub fn get_desc(&self) -> &diligent_sys::SamplerDesc {
         unsafe {
             ((*self.virtual_functions)
                 .DeviceObject
                 .GetDesc
-                .unwrap_unchecked()(self.sampler as *mut bindings::IDeviceObject)
-                as *const bindings::SamplerDesc)
+                .unwrap_unchecked()(self.sampler as *mut diligent_sys::IDeviceObject)
+                as *const diligent_sys::SamplerDesc)
                 .as_ref()
                 .unwrap_unchecked()
         }

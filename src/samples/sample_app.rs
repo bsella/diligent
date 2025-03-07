@@ -71,7 +71,7 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
         let swap_chain_desc = self.swap_chain.get_desc();
 
         self.sample
-            .window_resize(swap_chain_desc.Width, swap_chain_desc.Height);
+            .window_resize(swap_chain_desc.width, swap_chain_desc.height);
     }
 
     fn update(&mut self, current_time: f64, elapsed_time: f64) {
@@ -87,7 +87,7 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
 
         let swap_chain_desc = self.swap_chain.get_desc();
 
-        let adapters_wnd_width = swap_chain_desc.Width.min(330);
+        let adapters_wnd_width = swap_chain_desc.width.min(330);
 
         if self.show_adapters_dialog {
             if let Some(_window_token) = ui
@@ -95,7 +95,7 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
                 .size([adapters_wnd_width as f32, 0.0], imgui::Condition::Always)
                 .position(
                     [
-                        (swap_chain_desc.Width as f32 - adapters_wnd_width as f32).max(10.0) - 10.0,
+                        (swap_chain_desc.width as f32 - adapters_wnd_width as f32).max(10.0) - 10.0,
                         10.0,
                     ],
                     imgui::Condition::Always,
@@ -288,10 +288,12 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             &swap_chain,
         );
 
+        let swap_chain_desc = swap_chain.get_desc();
+
         let imgui_renderer = ImguiRenderer::new(ImguiRendererCreateInfo::new(
             sample.get_render_device(),
-            swap_chain.get_desc().ColorBufferFormat,
-            swap_chain.get_desc().DepthBufferFormat,
+            swap_chain_desc.color_buffer_format,
+            swap_chain_desc.depth_buffer_format,
             initial_width,
             initial_height,
         ));
