@@ -742,22 +742,11 @@ impl ImguiRenderer {
                 let vtx_buffer = draw_list.vtx_buffer();
                 let idx_buffer = draw_list.idx_buffer();
                 unsafe {
-                    std::ptr::copy_nonoverlapping(
-                        vtx_buffer.as_ptr() as *const u8,
-                        vb_data,
-                        vtx_buffer.len() * std::mem::size_of::<imgui::DrawVert>(),
-                    );
-                    std::ptr::copy_nonoverlapping(
-                        idx_buffer.as_ptr() as *const u8,
-                        ib_data,
-                        idx_buffer.len() * std::mem::size_of::<imgui::DrawIdx>(),
-                    );
-                    vb_data = vb_data.offset(
-                        vtx_buffer.len() as isize * std::mem::size_of::<imgui::DrawVert>() as isize,
-                    );
-                    ib_data = ib_data.offset(
-                        idx_buffer.len() as isize * std::mem::size_of::<imgui::DrawIdx>() as isize,
-                    );
+                    std::ptr::copy_nonoverlapping(vtx_buffer.as_ptr(), vb_data, vtx_buffer.len());
+                    std::ptr::copy_nonoverlapping(idx_buffer.as_ptr(), ib_data, idx_buffer.len());
+
+                    vb_data = vb_data.offset(vtx_buffer.len() as isize);
+                    ib_data = ib_data.offset(idx_buffer.len() as isize);
                 }
             }
 

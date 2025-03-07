@@ -790,7 +790,7 @@ impl DeviceContext {
         }
     }
 
-    pub fn map_buffer(&self, buffer: &Buffer, map_type: MapType, map_flags: MapFlags) -> *mut u8 {
+    pub fn map_buffer<T>(&self, buffer: &Buffer, map_type: MapType, map_flags: MapFlags) -> *mut T {
         let mut ptr = std::ptr::null_mut() as *mut std::os::raw::c_void;
         unsafe {
             (*self.virtual_functions)
@@ -804,7 +804,7 @@ impl DeviceContext {
                 std::ptr::addr_of_mut!(ptr),
             );
         }
-        ptr as *mut u8
+        ptr as *mut T
     }
 
     pub fn unmap_buffer(&self, buffer: &Buffer, map_type: MapType) {
