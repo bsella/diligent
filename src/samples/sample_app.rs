@@ -4,7 +4,7 @@ use crate::{
     core::{
         device_context::ResourceStateTransitionMode,
         engine_factory::{AsEngineFactory, EngineCreateInfo},
-        graphics_types::{AdapterType, GraphicsAdapterInfo, RenderDeviceType},
+        graphics_types::{AdapterType, GraphicsAdapterInfo, RenderDeviceType, SurfaceTransform},
         swap_chain::{SwapChain, SwapChainDesc},
         vk::engine_factory_vk::{get_engine_factory_vk, EngineFactoryVk, EngineVkCreateInfo},
     },
@@ -66,7 +66,8 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
     fn window_resize(&mut self, width: u32, height: u32) {
         self.sample.pre_window_resize();
 
-        self.swap_chain.resize(width, height, None);
+        self.swap_chain
+            .resize(width, height, SurfaceTransform::Optimal);
 
         let swap_chain_desc = self.swap_chain.get_desc();
 

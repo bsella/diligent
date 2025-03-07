@@ -44,7 +44,7 @@ impl ShaderResourceBinding {
                 .BindResources
                 .unwrap_unchecked()(
                 self.shader_resource_binding,
-                shader_stages.bits() as diligent_sys::SHADER_TYPE,
+                shader_stages.bits(),
                 resource_mapping.resource_mapping,
                 flags,
             )
@@ -63,7 +63,7 @@ impl ShaderResourceBinding {
                 .CheckResources
                 .unwrap_unchecked()(
                 self.shader_resource_binding,
-                shader_stages.bits() as diligent_sys::SHADER_TYPE,
+                shader_stages.bits(),
                 resource_mapping.resource_mapping,
                 flags,
             )
@@ -85,7 +85,7 @@ impl ShaderResourceBinding {
                 .GetVariableByName
                 .unwrap_unchecked()(
                 self.shader_resource_binding,
-                shader_stages.bits() as diligent_sys::SHADER_TYPE,
+                shader_stages.bits(),
                 name.as_ptr(),
             )
         };

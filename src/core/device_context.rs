@@ -3,7 +3,7 @@ use bitflags::bitflags;
 use super::{
     buffer::Buffer,
     fence::Fence,
-    graphics_types::{MapFlags, MapType, ValueType},
+    graphics_types::{MapFlags, MapType, ShadingRate, ShadingRateCombiner, ValueType},
     object::{AsObject, Object},
     pipeline_state::PipelineState,
     shader_resource_binding::ShaderResourceBinding,
@@ -1079,9 +1079,9 @@ impl DeviceContext {
 
     pub fn set_shading_rate(
         &self,
-        base_rate: diligent_sys::_SHADING_RATE,
-        primitive_combiner: diligent_sys::_SHADING_RATE_COMBINER,
-        texture_combiner: diligent_sys::_SHADING_RATE_COMBINER,
+        base_rate: &ShadingRate,
+        primitive_combiner: &ShadingRateCombiner,
+        texture_combiner: &ShadingRateCombiner,
     ) {
         unsafe {
             (*self.virtual_functions)
@@ -1089,9 +1089,9 @@ impl DeviceContext {
                 .SetShadingRate
                 .unwrap_unchecked()(
                 self.device_context,
-                base_rate as diligent_sys::SHADING_RATE,
-                primitive_combiner as diligent_sys::SHADING_RATE_COMBINER,
-                texture_combiner as diligent_sys::SHADING_RATE_COMBINER,
+                diligent_sys::SHADING_RATE::from(base_rate),
+                primitive_combiner.bits() as diligent_sys::SHADING_RATE_COMBINER,
+                texture_combiner.bits() as diligent_sys::SHADING_RATE_COMBINER,
             )
         }
     }

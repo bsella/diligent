@@ -175,12 +175,7 @@ impl SwapChain {
         SwapChainDesc::from(swap_chain_desc)
     }
 
-    pub fn resize(
-        &self,
-        new_width: u32,
-        new_height: u32,
-        new_transform: Option<diligent_sys::SURFACE_TRANSFORM>,
-    ) {
+    pub fn resize(&self, new_width: u32, new_height: u32, new_transform: SurfaceTransform) {
         unsafe {
             (*self.virtual_functions)
                 .SwapChain
@@ -189,7 +184,7 @@ impl SwapChain {
                 self.swap_chain,
                 new_width,
                 new_height,
-                new_transform.unwrap_or(diligent_sys::SURFACE_TRANSFORM_OPTIMAL),
+                diligent_sys::SURFACE_TRANSFORM::from(&new_transform),
             )
         }
     }

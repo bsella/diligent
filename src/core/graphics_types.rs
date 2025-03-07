@@ -577,6 +577,22 @@ pub enum ShadingRate {
 }
 const_assert!(diligent_sys::SHADING_RATE_MAX == 10);
 
+impl From<&ShadingRate> for diligent_sys::SHADING_RATE {
+    fn from(value: &ShadingRate) -> Self {
+        (match value {
+            ShadingRate::_1X1 => diligent_sys::SHADING_RATE_1X1,
+            ShadingRate::_1X2 => diligent_sys::SHADING_RATE_1X2,
+            ShadingRate::_1X4 => diligent_sys::SHADING_RATE_1X4,
+            ShadingRate::_2X1 => diligent_sys::SHADING_RATE_2X1,
+            ShadingRate::_2X2 => diligent_sys::SHADING_RATE_2X2,
+            ShadingRate::_2X4 => diligent_sys::SHADING_RATE_2X4,
+            ShadingRate::_4X1 => diligent_sys::SHADING_RATE_4X1,
+            ShadingRate::_4X2 => diligent_sys::SHADING_RATE_4X2,
+            ShadingRate::_4X4 => diligent_sys::SHADING_RATE_4X4,
+        }) as diligent_sys::SHADING_RATE
+    }
+}
+
 bitflags! {
     pub struct SampleCount : diligent_sys::_SAMPLE_COUNT {
         const None = diligent_sys::SAMPLE_COUNT_NONE;
@@ -616,7 +632,7 @@ bitflags! {
 }
 
 bitflags! {
-    pub struct ShadingRayeCombiner : diligent_sys::_SHADING_RATE_COMBINER {
+    pub struct ShadingRateCombiner : diligent_sys::_SHADING_RATE_COMBINER {
         const Passthrough = diligent_sys::SHADING_RATE_COMBINER_PASSTHROUGH;
         const Override    = diligent_sys::SHADING_RATE_COMBINER_OVERRIDE;
         const Min         = diligent_sys::SHADING_RATE_COMBINER_MIN;
@@ -648,7 +664,7 @@ bitflags! {
 pub struct ShadingRateProperties {
     pub shading_rates: Vec<ShadingRateMode>,
     pub cap_flags: ShadingRateCapFlags,
-    pub combiners: ShadingRayeCombiner,
+    pub combiners: ShadingRateCombiner,
     pub format: ShadingRateFormat,
     pub shading_rate_texture_access: ShadingRateTextureAccess,
     pub bind_flags: BindFlags,
@@ -1123,7 +1139,7 @@ impl Into<GraphicsAdapterInfo> for diligent_sys::GraphicsAdapterInfo {
                         .take(self.ShadingRate.NumShadingRates.into()),
                 ),
                 cap_flags: ShadingRateCapFlags::from_bits_retain(self.ShadingRate.CapFlags.into()),
-                combiners: ShadingRayeCombiner::from_bits_retain(self.ShadingRate.Combiners.into()),
+                combiners: ShadingRateCombiner::from_bits_retain(self.ShadingRate.Combiners.into()),
                 format: ShadingRateFormat::from_bits_retain(self.ShadingRate.Format.into()),
                 shading_rate_texture_access: ShadingRateTextureAccess::from_bits_retain(
                     self.ShadingRate.ShadingRateTextureAccess.into(),

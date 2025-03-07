@@ -102,6 +102,16 @@ pub struct ShaderResourceDesc<'a> {
     pub array_size: usize,
 }
 
+impl From<diligent_sys::ShaderResourceDesc> for ShaderResourceDesc<'_> {
+    fn from(value: diligent_sys::ShaderResourceDesc) -> Self {
+        ShaderResourceDesc {
+            name: unsafe { std::ffi::CStr::from_ptr(value.Name) },
+            array_size: value.ArraySize as usize,
+            resource_type: value.Type.into(),
+        }
+    }
+}
+
 bitflags! {
     pub struct ShaderCompileFlags : diligent_sys::_SHADER_COMPILE_FLAGS {
         const None                  = diligent_sys::SHADER_COMPILE_FLAG_NONE;
@@ -347,7 +357,7 @@ impl Shader {
         }
     }
 
-    pub fn get_resources(&self) -> Vec<diligent_sys::ShaderResourceDesc> {
+    pub fn get_resources(&self) -> Vec<ShaderResourceDesc<'_>> {
         unsafe {
             let num_resources = (*self.virtual_functions)
                 .Shader
@@ -362,7 +372,7 @@ impl Shader {
                     .Shader
                     .GetResourceDesc
                     .unwrap_unchecked()(self.shader, index, resources_ptr);
-                resources.push(*resources_ptr);
+                resources.push(ShaderResourceDesc::from(*resources_ptr));
             }
             resources
         }

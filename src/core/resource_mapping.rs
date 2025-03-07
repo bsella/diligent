@@ -33,7 +33,7 @@ impl ResourceMapping {
         }
     }
 
-    pub fn add_resource<DO: AsDeviceObject>(&mut self, name: &str, object: &DO, is_unique: bool) {
+    pub fn add_resource(&mut self, name: &str, object: &impl AsDeviceObject, is_unique: bool) {
         {
             let name = std::ffi::CString::new(name).unwrap();
             unsafe {
@@ -54,10 +54,10 @@ impl ResourceMapping {
             .push(std::ptr::addr_of!(*object.as_device_object()));
     }
 
-    pub fn add_resource_array<DO: AsDeviceObject>(
+    pub fn add_resource_array(
         &mut self,
         name: &str,
-        device_objects: &[DO],
+        device_objects: &[impl AsDeviceObject],
         is_unique: bool,
     ) {
         let object_ptrs = Vec::from_iter(

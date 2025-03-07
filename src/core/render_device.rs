@@ -10,7 +10,7 @@ use super::pipeline_state::{
     GraphicsPipelineStateCreateInfo, GraphicsPipelineStateCreateInfoWrapper, PipelineState,
 };
 use super::resource_mapping::ResourceMapping;
-use super::sampler::Sampler;
+use super::sampler::{Sampler, SamplerDesc};
 use super::shader::{Shader, ShaderCreateInfo, ShaderCreateInfoWrapper};
 use super::texture::{Texture, TextureDesc, TextureSubResource};
 
@@ -177,7 +177,9 @@ impl RenderDevice {
         }
     }
 
-    pub fn create_sampler(&self, sampler_desc: &diligent_sys::SamplerDesc) -> Option<Sampler> {
+    pub fn create_sampler(&self, sampler_desc: &SamplerDesc) -> Option<Sampler> {
+        let sampler_desc = diligent_sys::SamplerDesc::from(sampler_desc);
+
         let mut sampler_ptr: *mut diligent_sys::ISampler = std::ptr::null_mut();
         unsafe {
             (*self.virtual_functions)
@@ -185,7 +187,7 @@ impl RenderDevice {
                 .CreateSampler
                 .unwrap_unchecked()(
                 self.render_device,
-                std::ptr::addr_of!(sampler_desc) as *const diligent_sys::SamplerDesc,
+                std::ptr::addr_of!(sampler_desc),
                 std::ptr::addr_of_mut!(sampler_ptr),
             );
         }

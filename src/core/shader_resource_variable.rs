@@ -111,7 +111,7 @@ impl ShaderResourceVariable {
         }
     }
 
-    pub fn set<DO: AsDeviceObject>(&mut self, device_object: &DO, flags: SetShaderResourceFlags) {
+    pub fn set(&mut self, device_object: &impl AsDeviceObject, flags: SetShaderResourceFlags) {
         unsafe {
             (*self.virtual_functions)
                 .ShaderResourceVariable
@@ -124,9 +124,9 @@ impl ShaderResourceVariable {
         }
     }
 
-    pub fn set_array<DO: AsDeviceObject>(
+    pub fn set_array(
         &mut self,
-        device_objects: &[DO],
+        device_objects: &[impl AsDeviceObject],
         flags: SetShaderResourceFlags,
     ) {
         let object_ptrs = Vec::from_iter(
@@ -148,13 +148,13 @@ impl ShaderResourceVariable {
         }
     }
 
-    pub fn set_buffer_range<DO: AsDeviceObject>(
+    pub fn set_buffer_range(
         &mut self,
-        device_object: &DO,
+        device_object: &impl AsDeviceObject,
         offset: u64,
         size: u64,
         array_index: Option<u32>,
-        flags: Option<diligent_sys::SET_SHADER_RESOURCE_FLAGS>,
+        flags: SetShaderResourceFlags,
     ) {
         unsafe {
             (*self.virtual_functions)
@@ -166,7 +166,7 @@ impl ShaderResourceVariable {
                 offset,
                 size,
                 array_index.unwrap_or(0),
-                flags.unwrap_or(diligent_sys::SET_SHADER_RESOURCE_FLAG_NONE),
+                flags.bits(),
             )
         }
     }
