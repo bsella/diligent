@@ -79,13 +79,13 @@ impl RenderDevice {
     pub fn create_buffer_with_data<T>(
         &self,
         buffer_desc: &BufferDesc,
-        buffer_data: &[T],
+        buffer_data: &T,
         device_context: Option<&DeviceContext>,
     ) -> Option<Buffer> {
         let mut buffer_ptr = std::ptr::null_mut();
 
         let buffer_data = bindings::BufferData {
-            pData: buffer_data.as_ptr() as *const c_void,
+            pData: std::ptr::from_ref(buffer_data) as *const c_void,
             DataSize: std::mem::size_of_val(buffer_data) as u64,
             pContext: device_context.map_or(std::ptr::null_mut(), |context| context.device_context),
         };
