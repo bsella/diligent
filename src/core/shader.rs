@@ -6,7 +6,7 @@ use std::{
 use bitflags::bitflags;
 use static_assertions::const_assert;
 
-use crate::bindings::{self, Version};
+use crate::bindings::{self, ShaderMacro, Version};
 
 use super::{
     device_object::{AsDeviceObject, DeviceObject},
@@ -181,7 +181,17 @@ impl<'a> ShaderCreateInfo<'a> {
     }
 }
 
-impl From<&ShaderCreateInfo<'_>> for bindings::ShaderCreateInfo {
+pub(crate) struct ShaderCreateInfoWrapper {
+    _macros: Vec<ShaderMacro>,
+    sci: bindings::ShaderCreateInfo,
+}
+impl ShaderCreateInfoWrapper {
+    pub fn get(&self) -> &bindings::ShaderCreateInfo {
+        &self.sci
+    }
+}
+
+impl From<&ShaderCreateInfo<'_>> for ShaderCreateInfoWrapper {
     fn from(value: &ShaderCreateInfo<'_>) -> Self {
         let macros = Vec::from_iter(
             value
@@ -192,7 +202,8 @@ impl From<&ShaderCreateInfo<'_>> for bindings::ShaderCreateInfo {
                     Definition: def.as_ptr(),
                 }),
         );
-        bindings::ShaderCreateInfo {
+
+        let sci = bindings::ShaderCreateInfo {
             FilePath: match &value.source {
                 ShaderSource::FilePath(path) => path.as_os_str().as_bytes().as_ptr() as *const i8,
                 _ => std::ptr::null(),
@@ -255,6 +266,11 @@ impl From<&ShaderCreateInfo<'_>> for bindings::ShaderCreateInfo {
             LoadConstantBufferReflection: false,
             GLSLExtensions: std::ptr::null(),
             WebGPUEmulatedArrayIndexSuffix: std::ptr::null(),
+        };
+
+        ShaderCreateInfoWrapper {
+            _macros: macros,
+            sci,
         }
     }
 }

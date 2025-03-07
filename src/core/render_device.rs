@@ -13,7 +13,7 @@ use super::pipeline_state::{
 };
 use super::resource_mapping::ResourceMapping;
 use super::sampler::Sampler;
-use super::shader::{Shader, ShaderCreateInfo};
+use super::shader::{Shader, ShaderCreateInfo, ShaderCreateInfoWrapper};
 use super::texture::{Texture, TextureDesc, TextureSubResource};
 
 pub struct RenderDeviceInfo {
@@ -114,7 +114,8 @@ impl RenderDevice {
         let mut shader_ptr: *mut bindings::IShader = std::ptr::null_mut();
         let mut data_blob_ptr: *mut bindings::IDataBlob = std::ptr::null_mut();
 
-        let shader_ci = bindings::ShaderCreateInfo::from(shader_ci);
+        let shader_ci_wrapper = ShaderCreateInfoWrapper::from(shader_ci);
+        let shader_ci = shader_ci_wrapper.get();
 
         unsafe {
             (*self.virtual_functions)
@@ -122,7 +123,7 @@ impl RenderDevice {
                 .CreateShader
                 .unwrap_unchecked()(
                 self.render_device,
-                std::ptr::addr_of!(shader_ci),
+                std::ptr::from_ref(shader_ci),
                 std::ptr::addr_of_mut!(shader_ptr),
                 std::ptr::addr_of_mut!(data_blob_ptr),
             );
