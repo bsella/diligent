@@ -71,8 +71,6 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
     fn update(&mut self, current_time: f64, elapsed_time: f64) {
         self.current_time = current_time;
 
-        // TODO : update app settings
-
         self.sample.update(current_time, elapsed_time);
     }
 
@@ -153,12 +151,6 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
     ) -> Self {
         let swap_chain_desc = SwapChainDesc::default();
 
-        //#[cfg(any(
-        //    feature = "D3D11_SUPPORTED",
-        //    feature = "D3D12_SUPPORTED",
-        //    feature = "VULKAN_SUPPORTED",
-        //    feature = "WEBGPU_SUPPORTED"
-        //))]
         fn find_adapter(
             mut adapter_index: Option<usize>,
             adapter_type: &AdapterType,
