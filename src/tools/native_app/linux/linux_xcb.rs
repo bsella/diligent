@@ -93,14 +93,6 @@ fn init_connection_and_window(
         data: &[atom_wm_delete_window],
     });
 
-    connection.send_request(&x::ChangeProperty {
-        mode: x::PropMode::Replace,
-        window,
-        property: x::ATOM_WM_NAME,
-        r#type: x::ATOM_STRING,
-        data: b"Test",
-    });
-
     // TODO : set the XCB_ATOM_WM_NORMAL_HINTS for minimal window size
 
     connection.send_request(&x::MapWindow { window });
@@ -125,13 +117,13 @@ fn init_connection_and_window(
     Ok((connection, window, atom_wm_delete_window))
 }
 
-struct XcbEventHandler {
-    connection: xcb::Connection,
+struct XcbEventHandler<'a> {
+    connection: &'a xcb::Connection,
     atom_delete_window: xcb::x::Atom,
 }
 
-impl XcbEventHandler {
-    fn new(connection: xcb::Connection, atom_delete_window: xcb::x::Atom) -> Self {
+impl<'a> XcbEventHandler<'a> {
+    fn new(connection: &'a xcb::Connection, atom_delete_window: xcb::x::Atom) -> Self {
         XcbEventHandler {
             connection,
             atom_delete_window,
@@ -139,7 +131,7 @@ impl XcbEventHandler {
     }
 }
 
-impl EventHandler for XcbEventHandler {
+impl<'a> EventHandler for XcbEventHandler<'a> {
     type EventType = xcb::Event;
 
     fn poll_event(&self) -> Option<xcb::Event> {
@@ -220,15 +212,23 @@ where
 
     let native_window = NativeWindow::new(window.resource_id(), connection.get_raw_conn());
 
-    let app = Application::new(
-        settings,
-        EngineCreateInfo::default(),
-        Some(&native_window),
-        width,
-        height,
-    );
+    let app = Application::new(settings, EngineCreateInfo::default(), Some(&native_window));
 
     connection.flush().unwrap();
 
-    app.run(XcbEventHandler::new(connection, atom_delete_window))
+    let update_window_title = |title: &str| {
+        connection.send_request(&x::ChangeProperty {
+            mode: x::PropMode::Replace,
+            window,
+            property: x::ATOM_WM_NAME,
+            r#type: x::ATOM_STRING,
+            data: title.as_bytes(),
+        });
+        connection.flush().unwrap();
+    };
+
+    app.run(
+        XcbEventHandler::new(&connection, atom_delete_window),
+        Some(update_window_title),
+    )
 }

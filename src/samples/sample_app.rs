@@ -2,6 +2,8 @@ use imgui::WindowFlags;
 
 use crate::{
     core::{
+        accessories::get_render_device_type_string,
+        api_info::API_VERSION,
         device_context::ResourceStateTransitionMode,
         engine_factory::{AsEngineFactory, EngineCreateInfo},
         graphics_types::{AdapterType, GraphicsAdapterInfo, RenderDeviceType, SurfaceTransform},
@@ -25,8 +27,6 @@ use crate::{
 use super::{sample::SampleBase, sample_app_settings::parse_sample_app_settings};
 
 pub struct SampleApp<Sample: SampleBase> {
-    _app_title: String,
-
     swap_chain: SwapChain,
 
     _golden_image_mode: GoldenImageMode,
@@ -34,16 +34,13 @@ pub struct SampleApp<Sample: SampleBase> {
 
     sample: Sample,
 
-    vsync: bool,
-
     current_time: f64,
 
     imgui_renderer: ImguiRenderer,
 
-    graphics_adapter: Option<GraphicsAdapterInfo>,
+    app_settings: SampleAppSettings,
 
-    show_ui: bool,
-    show_adapters_dialog: bool,
+    graphics_adapter: Option<GraphicsAdapterInfo>,
 }
 
 enum EngineFactory {
@@ -59,10 +56,6 @@ impl AsEngineFactory for EngineFactory {
 }
 
 impl<GenericSample: SampleBase> SampleApp<GenericSample> {
-    fn _get_title(&self) -> &str {
-        self._app_title.as_str()
-    }
-
     fn window_resize(&mut self, width: u32, height: u32) {
         self.sample.pre_window_resize();
 
@@ -90,7 +83,7 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
 
         let adapters_wnd_width = swap_chain_desc.width.min(330);
 
-        if self.show_adapters_dialog {
+        if self.app_settings.show_adapters_dialog {
             if let Some(_window_token) = ui
                 .window("Adapters")
                 .size([adapters_wnd_width as f32, 0.0], imgui::Condition::Always)
@@ -115,7 +108,7 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
                     }
                 }
 
-                ui.checkbox("VSync", &mut self.vsync);
+                ui.checkbox("VSync", &mut self.app_settings.vsync);
             }
         }
         self.sample.update_ui(ui);
@@ -139,7 +132,8 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
     fn present(&mut self) {
         // TODO screen capture
 
-        self.swap_chain.present(if self.vsync { 1 } else { 0 });
+        self.swap_chain
+            .present(if self.app_settings.vsync { 1 } else { 0 });
 
         // TODO screen capture
     }
@@ -156,8 +150,6 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
         app_settings: SampleAppSettings,
         mut engine_create_info: EngineCreateInfo,
         window: Option<&NativeWindow>,
-        initial_width: u16,
-        initial_height: u16,
     ) -> Self {
         let swap_chain_desc = SwapChainDesc::default();
 
@@ -169,10 +161,10 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
         //))]
         fn find_adapter(
             mut adapter_index: Option<usize>,
-            adapter_type: AdapterType,
+            adapter_type: &AdapterType,
             adapters: &[GraphicsAdapterInfo],
         ) -> Option<usize> {
-            let mut adapter_type = &adapter_type;
+            let mut adapter_type = adapter_type;
 
             if let Some(adap_id) = adapter_index {
                 if adap_id < adapters.len() {
@@ -245,7 +237,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
 
         let adapter = if let Some(adapter_index) = find_adapter(
             app_settings.adapter_index,
-            app_settings.adapter_type,
+            &app_settings.adapter_type,
             adapters.as_slice(),
         ) {
             engine_create_info.adapter_index.replace(adapter_index);
@@ -295,13 +287,11 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             sample.get_render_device(),
             swap_chain_desc.color_buffer_format,
             swap_chain_desc.depth_buffer_format,
-            initial_width,
-            initial_height,
+            app_settings.width,
+            app_settings.height,
         ));
 
         SampleApp::<GenericSample> {
-            _app_title: GenericSample::get_name().to_string(),
-
             swap_chain,
 
             _golden_image_mode: GoldenImageMode::None,
@@ -309,10 +299,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
 
             sample,
 
-            vsync: app_settings.vsync,
-
-            show_ui: app_settings.show_ui,
-            show_adapters_dialog: app_settings.show_adapters_dialog,
+            app_settings,
 
             current_time: 0.0,
 
@@ -322,13 +309,24 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
         }
     }
 
-    fn run<EH>(mut self, mut event_handler: EH) -> Result<(), std::io::Error>
-    where
-        EH: EventHandler,
-    {
+    fn run(
+        mut self,
+        mut event_handler: impl EventHandler,
+        update_window_title_cb: Option<impl Fn(&str) -> ()>,
+    ) -> Result<(), std::io::Error> {
         let start_time = std::time::Instant::now();
 
         let mut last_time = start_time;
+
+        if let Some(update_window) = &update_window_title_cb {
+            let app_title = String::from(GenericSample::get_name())
+                + " ("
+                + get_render_device_type_string(&self.app_settings.device_type, false)
+                + ", API "
+                + format!("{API_VERSION}").as_str()
+                + ")";
+            update_window(app_title.as_str());
+        }
 
         'main: loop {
             while let Some(event) = event_handler.poll_event() {
@@ -360,7 +358,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
 
             self.render();
 
-            if self.show_ui {
+            if self.app_settings.show_ui {
                 self.update_ui();
                 self.imgui_renderer.render(
                     self.sample.get_immediate_context(),
@@ -369,8 +367,6 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             }
 
             self.present();
-
-            //TODO update title
         }
 
         Ok(())

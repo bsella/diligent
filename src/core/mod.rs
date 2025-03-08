@@ -3,6 +3,8 @@ mod object;
 
 pub mod accessories;
 
+pub mod api_info;
+
 pub mod buffer;
 pub mod buffer_view;
 pub mod data_blob;

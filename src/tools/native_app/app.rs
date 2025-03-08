@@ -18,9 +18,11 @@ pub trait App {
         app_settings: Self::AppSettings,
         engine_create_info: EngineCreateInfo,
         window: Option<&NativeWindow>,
-        initial_width: u16,
-        initial_height: u16,
     ) -> Self;
 
-    fn run<EH: EventHandler>(self, event_handler: EH) -> Result<(), std::io::Error>;
+    fn run(
+        self,
+        event_handler: impl EventHandler,
+        update_window_title_cb: Option<impl Fn(&str)>,
+    ) -> Result<(), std::io::Error>;
 }
