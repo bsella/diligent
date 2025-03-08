@@ -1,9 +1,9 @@
 use bitflags::bitflags;
 
 use super::{
-    buffer::Buffer,
+    buffer::{Buffer, BufferMapReadToken, BufferMapReadWriteToken, BufferMapWriteToken},
     fence::Fence,
-    graphics_types::{MapFlags, MapType, ShadingRate, ShadingRateCombiner, ValueType},
+    graphics_types::{MapFlags, ShadingRate, ShadingRateCombiner, ValueType},
     object::{AsObject, Object},
     pipeline_state::PipelineState,
     shader_resource_binding::ShaderResourceBinding,
@@ -238,7 +238,7 @@ impl From<&Rect> for diligent_sys::Rect {
 
 pub struct DeviceContext {
     pub(crate) device_context: *mut diligent_sys::IDeviceContext,
-    virtual_functions: *mut diligent_sys::IDeviceContextVtbl,
+    pub(crate) virtual_functions: *mut diligent_sys::IDeviceContextVtbl,
 
     object: Object,
 }
@@ -793,34 +793,28 @@ impl DeviceContext {
         }
     }
 
-    pub fn map_buffer<T>(&self, buffer: &Buffer, map_type: MapType, map_flags: MapFlags) -> *mut T {
-        let mut ptr = std::ptr::null_mut() as *mut std::os::raw::c_void;
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .MapBuffer
-                .unwrap_unchecked()(
-                self.device_context,
-                buffer.buffer,
-                diligent_sys::MAP_TYPE::from(&map_type),
-                map_flags.bits() as diligent_sys::MAP_FLAGS,
-                std::ptr::addr_of_mut!(ptr),
-            );
-        }
-        ptr as *mut T
+    pub fn map_buffer_read<'a, T>(
+        &'a self,
+        buffer: &'a Buffer,
+        map_flags: MapFlags,
+    ) -> BufferMapReadToken<'a, T> {
+        BufferMapReadToken::new(self, buffer, map_flags.bits() as diligent_sys::MAP_FLAGS)
     }
 
-    pub fn unmap_buffer(&self, buffer: &Buffer, map_type: MapType) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .UnmapBuffer
-                .unwrap_unchecked()(
-                self.device_context,
-                buffer.buffer,
-                diligent_sys::MAP_TYPE::from(&map_type),
-            )
-        }
+    pub fn map_buffer_write<'a, T>(
+        &'a self,
+        buffer: &'a Buffer,
+        map_flags: MapFlags,
+    ) -> BufferMapWriteToken<'a, T> {
+        BufferMapWriteToken::new(self, buffer, map_flags.bits() as diligent_sys::MAP_FLAGS)
+    }
+
+    pub fn map_buffer_read_write<'a, T>(
+        &'a self,
+        buffer: &'a Buffer,
+        map_flags: MapFlags,
+    ) -> BufferMapReadWriteToken<'a, T> {
+        BufferMapReadWriteToken::new(self, buffer, map_flags.bits() as diligent_sys::MAP_FLAGS)
     }
 
     pub fn update_texture(

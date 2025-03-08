@@ -13,7 +13,7 @@ use crate::core::{
         SetVertexBufferFlags, Viewport,
     },
     graphics_types::{
-        BindFlags, CpuAccessFlags, MapFlags, MapType, PrimitiveTopology, RenderDeviceType,
+        BindFlags, CpuAccessFlags, MapFlags, PrimitiveTopology, RenderDeviceType,
         SetShaderResourceFlags, ShaderType, ShaderTypes, TextureAddressMode, Usage, ValueType,
     },
     input_layout::LayoutElement,
@@ -731,10 +731,11 @@ impl ImguiRenderer {
 
         // Transfer the vertex and index buffer from imgui data into our GPU buffers
         {
-            let mut vb_data =
-                device_context.map_buffer(vertex_buffer, MapType::Write, MapFlags::Discard);
-            let mut ib_data =
-                device_context.map_buffer(index_buffer, MapType::Write, MapFlags::Discard);
+            let vb_access = device_context.map_buffer_write(vertex_buffer, MapFlags::Discard);
+            let ib_access = device_context.map_buffer_write(index_buffer, MapFlags::Discard);
+
+            let mut vb_data = vb_access.get_ptr_mut();
+            let mut ib_data = ib_access.get_ptr_mut();
 
             for draw_list in draw_data.draw_lists() {
                 let vtx_buffer = draw_list.vtx_buffer();
@@ -747,9 +748,6 @@ impl ImguiRenderer {
                     ib_data = ib_data.offset(idx_buffer.len() as isize);
                 }
             }
-
-            device_context.unmap_buffer(index_buffer, MapType::Write);
-            device_context.unmap_buffer(vertex_buffer, MapType::Write);
         }
 
         // Setup orthographic projection matrix into our constant buffer
@@ -772,19 +770,15 @@ impl ImguiRenderer {
             ];
 
             {
-                let projection_data = device_context.map_buffer(
-                    &self.vertex_constant_buffer,
-                    MapType::Write,
-                    MapFlags::Discard,
-                );
+                let projection_data = device_context
+                    .map_buffer_write(&self.vertex_constant_buffer, MapFlags::Discard);
                 unsafe {
                     std::ptr::copy_nonoverlapping(
-                        projection.as_ptr() as *const u8,
-                        projection_data,
+                        projection.as_ptr(),
+                        projection_data.get_ptr_mut(),
                         std::mem::size_of_val(&projection),
                     );
                 }
-                device_context.unmap_buffer(&self.vertex_constant_buffer, MapType::Write);
             }
         }
 

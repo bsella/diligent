@@ -383,22 +383,6 @@ impl From<&ValueType> for diligent_sys::VALUE_TYPE {
     }
 }
 
-pub enum MapType {
-    Read,
-    Write,
-    ReadWrite,
-}
-
-impl From<&MapType> for diligent_sys::MAP_TYPE {
-    fn from(value: &MapType) -> Self {
-        (match value {
-            MapType::Read => diligent_sys::MAP_READ,
-            MapType::Write => diligent_sys::MAP_WRITE,
-            MapType::ReadWrite => diligent_sys::MAP_READ_WRITE,
-        }) as diligent_sys::MAP_TYPE
-    }
-}
-
 bitflags! {
     pub struct MapFlags: diligent_sys::_MAP_FLAGS {
         const None        = diligent_sys::MAP_FLAG_NONE;

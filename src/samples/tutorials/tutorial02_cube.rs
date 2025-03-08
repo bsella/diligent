@@ -10,8 +10,8 @@ use diligent::{
         },
         engine_factory::EngineFactory,
         graphics_types::{
-            BindFlags, CpuAccessFlags, MapFlags, MapType, PrimitiveTopology,
-            SetShaderResourceFlags, ShaderType, Usage, ValueType,
+            BindFlags, CpuAccessFlags, MapFlags, PrimitiveTopology, SetShaderResourceFlags,
+            ShaderType, Usage, ValueType,
         },
         input_layout::LayoutElement,
         pipeline_state::{
@@ -315,20 +315,16 @@ impl SampleBase for Cube {
 
             {
                 // Map the buffer and write current world-view-projection matrix
-                let constant_buffer_data = immediate_context.map_buffer(
-                    &self.vertex_shader_constant_buffer,
-                    MapType::Write,
-                    MapFlags::Discard,
-                );
+                let constant_buffer_data = immediate_context
+                    .map_buffer_write(&self.vertex_shader_constant_buffer, MapFlags::Discard);
 
                 unsafe {
                     std::ptr::copy_nonoverlapping(
                         std::ptr::from_ref(&model_view_proj),
-                        constant_buffer_data,
+                        constant_buffer_data.get_ptr_mut(),
                         1,
                     );
                 }
-                immediate_context.unmap_buffer(&self.vertex_shader_constant_buffer, MapType::Write);
             }
         }
 
