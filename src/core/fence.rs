@@ -1,3 +1,5 @@
+use static_assertions::const_assert;
+
 use super::device_object::{AsDeviceObject, DeviceObject};
 
 pub struct Fence {
@@ -10,6 +12,39 @@ pub struct Fence {
 impl AsDeviceObject for Fence {
     fn as_device_object(&self) -> &DeviceObject {
         &self.device_object
+    }
+}
+
+pub enum FenceType {
+    CpuWaitOnly,
+    General,
+}
+
+const_assert!(diligent_sys::FENCE_TYPE_LAST == 1);
+
+pub struct FenceDesc<'a> {
+    name: &'a std::ffi::CStr,
+    fence_type: FenceType,
+}
+
+impl From<&FenceDesc<'_>> for diligent_sys::FenceDesc {
+    fn from(value: &FenceDesc) -> Self {
+        diligent_sys::FenceDesc {
+            _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
+                Name: value.name.as_ptr(),
+            },
+            Type: match value.fence_type {
+                FenceType::CpuWaitOnly => diligent_sys::FENCE_TYPE_CPU_WAIT_ONLY,
+                FenceType::General => diligent_sys::FENCE_TYPE_GENERAL,
+            } as diligent_sys::FENCE_TYPE,
+        }
+    }
+}
+
+impl FenceDesc<'_> {
+    pub fn fence_desc(mut self, fence_type: FenceType) -> Self {
+        self.fence_type = fence_type;
+        self
     }
 }
 

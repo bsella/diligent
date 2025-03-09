@@ -25,5 +25,5 @@ pub mod swap_chain;
 pub mod texture;
 pub mod texture_view;
 
-#[cfg(feature = "VULKAN_SUPPORTED")]
+#[cfg(feature = "vulkan")]
 pub mod vk;

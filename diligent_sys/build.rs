@@ -51,6 +51,20 @@ fn generate_diligent_c_bindings(diligent_install_dir: &PathBuf, out_dir: &PathBu
         }
     };
 
+    fn configure_vulkan(builder: bindgen::Builder) -> bindgen::Builder {
+        let builder = builder.clang_arg("-DVULKAN_SUPPORTED=1");
+
+        #[cfg(feature = "vulkan_interop")]
+        let builder = builder
+            .clang_arg("-DVULKAN_INTEROP=1")
+            .clang_arg("-IDiligentEngine/DiligentCore/ThirdParty/Vulkan-Headers/include");
+
+        builder
+    }
+
+    #[cfg(feature = "vulkan")]
+    let builder = configure_vulkan(builder);
+
     let bindings = builder.generate().expect("Unable to generate bindings");
 
     let diligent_bindings_filename = "diligent_bindings.rs";

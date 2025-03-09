@@ -1273,3 +1273,33 @@ impl From<&diligent_sys::SURFACE_TRANSFORM> for SurfaceTransform {
         }
     }
 }
+
+bitflags! {
+    pub struct ResourceState: diligent_sys::_RESOURCE_STATE {
+        const Undefined         = diligent_sys::RESOURCE_STATE_UNDEFINED;
+        const VertexBuffer      = diligent_sys::RESOURCE_STATE_VERTEX_BUFFER;
+        const ConstantBuffer    = diligent_sys::RESOURCE_STATE_CONSTANT_BUFFER;
+        const IndexBuffer       = diligent_sys::RESOURCE_STATE_INDEX_BUFFER;
+        const RenderTarget      = diligent_sys::RESOURCE_STATE_RENDER_TARGET;
+        const UnorderedAccess   = diligent_sys::RESOURCE_STATE_UNORDERED_ACCESS;
+        const DepthWrite        = diligent_sys::RESOURCE_STATE_DEPTH_WRITE;
+        const DepthRead         = diligent_sys::RESOURCE_STATE_DEPTH_READ;
+        const ShaderResource    = diligent_sys::RESOURCE_STATE_SHADER_RESOURCE;
+        const StreamOut         = diligent_sys::RESOURCE_STATE_STREAM_OUT;
+        const IndirectArgument  = diligent_sys::RESOURCE_STATE_INDIRECT_ARGUMENT;
+        const CopyDest          = diligent_sys::RESOURCE_STATE_COPY_DEST;
+        const CopySource        = diligent_sys::RESOURCE_STATE_COPY_SOURCE;
+        const ResolveDest       = diligent_sys::RESOURCE_STATE_RESOLVE_DEST;
+        const ResolveSource     = diligent_sys::RESOURCE_STATE_RESOLVE_SOURCE;
+        const InputAttachment   = diligent_sys::RESOURCE_STATE_INPUT_ATTACHMENT;
+        const Present           = diligent_sys::RESOURCE_STATE_PRESENT;
+        const BuildAsRead       = diligent_sys::RESOURCE_STATE_BUILD_AS_READ;
+        const BuildSsWrite      = diligent_sys::RESOURCE_STATE_BUILD_AS_WRITE;
+        const RayTracing        = diligent_sys::RESOURCE_STATE_RAY_TRACING;
+        const Common            = diligent_sys::RESOURCE_STATE_COMMON;
+        const ShadingRate       = diligent_sys::RESOURCE_STATE_SHADING_RATE;
+        const GenericRead       = diligent_sys::RESOURCE_STATE_GENERIC_READ;
+    }
+}
+
+const_assert!(diligent_sys::RESOURCE_STATE_MAX_BIT == 2097152);

@@ -3,7 +3,7 @@ use super::buffer::Buffer;
 use super::device_object::{AsDeviceObject, DeviceObject};
 
 pub struct BufferView {
-    buffer_view: *mut diligent_sys::IBufferView,
+    pub(crate) buffer_view: *mut diligent_sys::IBufferView,
     virtual_functions: *mut diligent_sys::IBufferViewVtbl,
     buffer: *const Buffer,
 

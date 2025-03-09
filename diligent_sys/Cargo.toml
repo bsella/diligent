@@ -9,6 +9,10 @@ exclude = ["/DiligentEngine", "**/assets"]
 bindgen = "0.71.1"
 cmake   = "0.1"
 
+[features]
+vulkan = []
+vulkan_interop = ["vulkan"]
+
 [lib]
 name = "diligent_sys"
 path = "lib.rs"

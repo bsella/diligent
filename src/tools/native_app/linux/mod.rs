@@ -1,15 +1,15 @@
 use super::app::App;
 
-#[cfg(feature = "VULKAN_SUPPORTED")]
+#[cfg(feature = "vulkan")]
 mod linux_xcb;
 
-#[cfg(feature = "VULKAN_SUPPORTED")]
+#[cfg(feature = "vulkan")]
 pub type NativeWindow = linux_xcb::NativeWindow;
 
-#[cfg(not(feature = "VULKAN_SUPPORTED"))]
+#[cfg(not(feature = "vulkan"))]
 mod linux_xlib;
 
-#[cfg(feature = "VULKAN_SUPPORTED")]
+#[cfg(feature = "vulkan")]
 pub fn main<Application>(settings: Application::AppSettings) -> Result<(), std::io::Error>
 where
     Application: App,

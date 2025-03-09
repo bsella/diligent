@@ -11,7 +11,6 @@ license-file = "LICENSE.md"
 [dependencies]
 static_assertions = "1.1.0"
 bitflags          = "2.6.0"
-libc              = "0.2.0"
 xcb               = { version = "1.5.0" , optional = true }
 imgui             = "0.12.0"
 clap              = { version = "4.5.30", features = ["cargo"] }
@@ -21,8 +20,9 @@ glam              = "0.30.0"
 path = "diligent_sys"
 
 [features]
-default = ["VULKAN_SUPPORTED"]
-VULKAN_SUPPORTED = ["xcb"]
+default = ["vulkan"]
+vulkan = ["diligent_sys/vulkan","xcb"]
+vulkan_interop = ["vulkan", "diligent_sys/vulkan_interop"]
 
 [lib]
 name = "diligent"
