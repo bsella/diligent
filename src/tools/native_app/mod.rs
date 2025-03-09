@@ -5,16 +5,19 @@ pub mod app_settings;
 pub mod events;
 
 #[cfg(target_os = "linux")]
-mod linux;
+#[path = "linux/mod.rs"]
+mod platform;
 
-#[cfg(target_os = "linux")]
-pub type NativeWindow = linux::NativeWindow;
+#[cfg(target_os = "windows")]
+#[path = "windows/mod.rs"]
+mod platform;
 
-#[cfg(target_os = "linux")]
+pub type NativeWindow = platform::NativeWindow;
+
 pub fn main<Application>() -> Result<(), std::io::Error>
 where
     Application: App,
 {
     let settings = Application::parse_settings_from_cli();
-    linux::main::<Application>(settings)
+    platform::main::<Application>(settings)
 }

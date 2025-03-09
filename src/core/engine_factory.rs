@@ -49,7 +49,7 @@ impl Default for EngineCreateInfo {
             #[cfg(not(debug_assertions))]
             enable_validation: false,
 
-            validation_flags: diligent_sys::VALIDATION_FLAG_NONE,
+            validation_flags: diligent_sys::VALIDATION_FLAG_NONE as diligent_sys::VALIDATION_FLAGS,
 
             num_async_shader_compilation_threads: 0xFFFFFFFF,
         }

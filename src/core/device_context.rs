@@ -12,20 +12,20 @@ use super::{
 };
 
 bitflags! {
-    pub struct DrawFlags: diligent_sys::_DRAW_FLAGS {
-        const None                         = diligent_sys::DRAW_FLAG_NONE;
-        const VerifyStates                 = diligent_sys::DRAW_FLAG_VERIFY_STATES;
-        const VerifyDrawAttribs            = diligent_sys::DRAW_FLAG_VERIFY_DRAW_ATTRIBS;
-        const VerifyRenderTargets          = diligent_sys::DRAW_FLAG_VERIFY_RENDER_TARGETS;
-        const VerifyAll                    = diligent_sys::DRAW_FLAG_VERIFY_ALL;
-        const DynamicResourceBuffersIntact = diligent_sys::DRAW_FLAG_DYNAMIC_RESOURCE_BUFFERS_INTACT;
+    pub struct DrawFlags: diligent_sys::DRAW_FLAGS {
+        const None                         = diligent_sys::DRAW_FLAG_NONE as diligent_sys::DRAW_FLAGS;
+        const VerifyStates                 = diligent_sys::DRAW_FLAG_VERIFY_STATES as diligent_sys::DRAW_FLAGS;
+        const VerifyDrawAttribs            = diligent_sys::DRAW_FLAG_VERIFY_DRAW_ATTRIBS as diligent_sys::DRAW_FLAGS;
+        const VerifyRenderTargets          = diligent_sys::DRAW_FLAG_VERIFY_RENDER_TARGETS as diligent_sys::DRAW_FLAGS;
+        const VerifyAll                    = diligent_sys::DRAW_FLAG_VERIFY_ALL as diligent_sys::DRAW_FLAGS;
+        const DynamicResourceBuffersIntact = diligent_sys::DRAW_FLAG_DYNAMIC_RESOURCE_BUFFERS_INTACT as diligent_sys::DRAW_FLAGS;
     }
 }
 
 bitflags! {
-    pub struct SetVertexBufferFlags: diligent_sys::_SET_VERTEX_BUFFERS_FLAGS {
-        const None  = diligent_sys::SET_VERTEX_BUFFERS_FLAG_NONE;
-        const Reset = diligent_sys::SET_VERTEX_BUFFERS_FLAG_RESET;
+    pub struct SetVertexBufferFlags: diligent_sys::SET_VERTEX_BUFFERS_FLAGS {
+        const None  = diligent_sys::SET_VERTEX_BUFFERS_FLAG_NONE as diligent_sys::SET_VERTEX_BUFFERS_FLAGS;
+        const Reset = diligent_sys::SET_VERTEX_BUFFERS_FLAG_RESET as diligent_sys::SET_VERTEX_BUFFERS_FLAGS;
     }
 }
 
@@ -623,7 +623,7 @@ impl DeviceContext {
                 .unwrap_unchecked()(
                 self.device_context,
                 view.texture_view,
-                diligent_sys::CLEAR_DEPTH_FLAG,
+                diligent_sys::CLEAR_DEPTH_FLAG as diligent_sys::CLEAR_DEPTH_STENCIL_FLAGS,
                 depth,
                 0,
                 diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
@@ -644,7 +644,7 @@ impl DeviceContext {
                 .unwrap_unchecked()(
                 self.device_context,
                 view.texture_view,
-                diligent_sys::CLEAR_STENCIL_FLAG,
+                diligent_sys::CLEAR_STENCIL_FLAG as diligent_sys::CLEAR_DEPTH_STENCIL_FLAGS,
                 0.0,
                 stencil,
                 diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
@@ -666,7 +666,8 @@ impl DeviceContext {
                 .unwrap_unchecked()(
                 self.device_context,
                 view.texture_view,
-                diligent_sys::CLEAR_STENCIL_FLAG | diligent_sys::CLEAR_DEPTH_FLAG,
+                diligent_sys::CLEAR_STENCIL_FLAG as diligent_sys::CLEAR_DEPTH_STENCIL_FLAGS
+                    | diligent_sys::CLEAR_DEPTH_FLAG as diligent_sys::CLEAR_DEPTH_STENCIL_FLAGS,
                 depth,
                 stencil,
                 diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),

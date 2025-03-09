@@ -1,7 +1,7 @@
-use std::{
-    os::{raw::c_void, unix::ffi::OsStrExt},
-    path::PathBuf,
-};
+#[cfg(target_os = "linux")]
+use std::os::unix::ffi::OsStrExt;
+
+use std::{os::raw::c_void, path::PathBuf};
 
 use bitflags::bitflags;
 use static_assertions::const_assert;
@@ -113,12 +113,12 @@ impl From<diligent_sys::ShaderResourceDesc> for ShaderResourceDesc<'_> {
 }
 
 bitflags! {
-    pub struct ShaderCompileFlags : diligent_sys::_SHADER_COMPILE_FLAGS {
-        const None                  = diligent_sys::SHADER_COMPILE_FLAG_NONE;
-        const EnableUnboundedArrays = diligent_sys::SHADER_COMPILE_FLAG_ENABLE_UNBOUNDED_ARRAYS;
-        const SkipReflection        = diligent_sys::SHADER_COMPILE_FLAG_SKIP_REFLECTION;
-        const Asynchronous          = diligent_sys::SHADER_COMPILE_FLAG_ASYNCHRONOUS;
-        const PackMatrixRowMajor    = diligent_sys::SHADER_COMPILE_FLAG_PACK_MATRIX_ROW_MAJOR;
+    pub struct ShaderCompileFlags : diligent_sys::SHADER_COMPILE_FLAGS {
+        const None                  = diligent_sys::SHADER_COMPILE_FLAG_NONE as diligent_sys::SHADER_COMPILE_FLAGS;
+        const EnableUnboundedArrays = diligent_sys::SHADER_COMPILE_FLAG_ENABLE_UNBOUNDED_ARRAYS as diligent_sys::SHADER_COMPILE_FLAGS;
+        const SkipReflection        = diligent_sys::SHADER_COMPILE_FLAG_SKIP_REFLECTION as diligent_sys::SHADER_COMPILE_FLAGS;
+        const Asynchronous          = diligent_sys::SHADER_COMPILE_FLAG_ASYNCHRONOUS as diligent_sys::SHADER_COMPILE_FLAGS;
+        const PackMatrixRowMajor    = diligent_sys::SHADER_COMPILE_FLAG_PACK_MATRIX_ROW_MAJOR as diligent_sys::SHADER_COMPILE_FLAGS;
     }
 }
 const_assert!(diligent_sys::SHADER_COMPILE_FLAG_LAST == 8);
@@ -244,7 +244,9 @@ impl From<&ShaderCreateInfo<'_>> for ShaderCreateInfoWrapper {
 
         let sci = diligent_sys::ShaderCreateInfo {
             FilePath: match &value.source {
-                ShaderSource::FilePath(path) => path.as_os_str().as_bytes().as_ptr() as *const i8,
+                ShaderSource::FilePath(path) => {
+                    path.as_os_str().as_encoded_bytes().as_ptr() as *const i8
+                }
                 _ => std::ptr::null(),
             },
             pShaderSourceStreamFactory: value

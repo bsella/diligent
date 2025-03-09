@@ -40,12 +40,12 @@ impl From<&TextureDimension> for diligent_sys::RESOURCE_DIMENSION {
 }
 
 bitflags! {
-    pub struct MiscTextureFlags: diligent_sys::_MISC_TEXTURE_FLAGS {
-        const None           = diligent_sys::MISC_TEXTURE_FLAG_NONE;
-        const GenerateMips   = diligent_sys::MISC_TEXTURE_FLAG_GENERATE_MIPS;
-        const Memoryless     = diligent_sys::MISC_TEXTURE_FLAG_MEMORYLESS;
-        const SparseAliasing = diligent_sys::MISC_TEXTURE_FLAG_SPARSE_ALIASING;
-        const Subsampled     = diligent_sys::MISC_TEXTURE_FLAG_SUBSAMPLED;
+    pub struct MiscTextureFlags: diligent_sys::MISC_TEXTURE_FLAGS {
+        const None           = diligent_sys::MISC_TEXTURE_FLAG_NONE as diligent_sys::MISC_TEXTURE_FLAGS;
+        const GenerateMips   = diligent_sys::MISC_TEXTURE_FLAG_GENERATE_MIPS as diligent_sys::MISC_TEXTURE_FLAGS;
+        const Memoryless     = diligent_sys::MISC_TEXTURE_FLAG_MEMORYLESS as diligent_sys::MISC_TEXTURE_FLAGS;
+        const SparseAliasing = diligent_sys::MISC_TEXTURE_FLAG_SPARSE_ALIASING as diligent_sys::MISC_TEXTURE_FLAGS;
+        const Subsampled     = diligent_sys::MISC_TEXTURE_FLAG_SUBSAMPLED as diligent_sys::MISC_TEXTURE_FLAGS;
     }
 }
 

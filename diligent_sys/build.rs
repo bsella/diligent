@@ -5,28 +5,61 @@ use std::path::PathBuf;
 extern crate bindgen;
 extern crate cmake;
 
+fn configure_cmake_windows_debug(cmake_config: &mut cmake::Config) {
+    //cmake_config.profile("Debug");
+    cmake_config.static_crt(true);
+    cmake_config.no_default_flags(true);
+    cmake_config.cflag("/MDd /Zi /Ob0 /Od /RTC1");
+    cmake_config.cxxflag("/MDd /Zi /Ob0 /Od /RTC1");
+}
+
 fn build_diligent_engine(build_path: &PathBuf, install_prefix: &str) -> PathBuf {
-    let dst = cmake::Config::new("DiligentEngine")
+    let mut cmake_config = cmake::Config::new("DiligentEngine");
+
+    #[cfg(all(debug_assertions, target_os = "windows"))]
+    configure_cmake_windows_debug(&mut cmake_config);
+
+    //#[cfg(not(debug_assertions))]
+    //cmake_config.profile("Release");
+
+    cmake_config
         .out_dir(build_path)
         .define("CMAKE_INSTALL_PREFIX", install_prefix)
         .define("OpenGL_GL_PREFERENCE", "GLVND")
         .define("DILIGENT_BUILD_SAMPLES", "OFF")
         .define("DILIGENT_BUILD_FX", "OFF")
         .define("DILIGENT_BUILD_TOOLS", "OFF")
-        .build()
-        .join("build/install");
+        .define("DILIGENT_NO_ARCHIVER", "ON");
 
+    let dst = cmake_config.build().join("build/install");
+
+    #[cfg(debug_assertions)]
     println!(
         "cargo::rustc-link-search=native={}/lib/DiligentCore/Debug",
         dst.display()
     );
+
+    #[cfg(not(debug_assertions))]
+    println!(
+        "cargo::rustc-link-search=native={}/lib/DiligentCore/Release",
+        dst.display()
+    );
+
+    #[cfg(debug_assertions)]
+    let library_suffix = "d";
+    #[cfg(not(debug_assertions))]
+    let library_suffix = "";
+
     println!("cargo::rustc-link-lib=static=DiligentCore");
-    println!("cargo::rustc-link-lib=static=glslang");
-    println!("cargo::rustc-link-lib=static=SPIRV");
+    println!("cargo::rustc-link-lib=static=glslang{library_suffix}");
+    println!("cargo::rustc-link-lib=static=SPIRV{library_suffix}");
     println!("cargo::rustc-link-lib=static=SPIRV-Tools");
     println!("cargo::rustc-link-lib=static=SPIRV-Tools-opt");
-    println!("cargo::rustc-link-lib=static=spirv-cross-core");
+    println!("cargo::rustc-link-lib=static=spirv-cross-core{library_suffix}");
+
+    #[cfg(target_os = "linux")]
     println!("cargo:rustc-link-lib=dylib=stdc++");
+
     dst
 }
 

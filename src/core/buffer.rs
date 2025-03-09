@@ -30,9 +30,9 @@ impl From<&BufferMode> for diligent_sys::BUFFER_MODE {
 }
 
 bitflags! {
-    pub struct MiscBufferFlags: diligent_sys::_MISC_BUFFER_FLAGS {
-        const None            = diligent_sys::MISC_BUFFER_FLAG_NONE;
-        const SparceAliasing  = diligent_sys::MISC_BUFFER_FLAG_SPARSE_ALIASING;
+    pub struct MiscBufferFlags: diligent_sys::MISC_BUFFER_FLAGS {
+        const None            = diligent_sys::MISC_BUFFER_FLAG_NONE as diligent_sys::MISC_BUFFER_FLAGS;
+        const SparceAliasing  = diligent_sys::MISC_BUFFER_FLAG_SPARSE_ALIASING as diligent_sys::MISC_BUFFER_FLAGS;
     }
 }
 
@@ -141,12 +141,14 @@ impl Buffer {
         fn bind_flags_to_buffer_view_type(
             bind_flags: diligent_sys::BIND_FLAGS,
         ) -> diligent_sys::BUFFER_VIEW_TYPE {
-            if bind_flags & diligent_sys::BIND_UNORDERED_ACCESS != 0 {
-                diligent_sys::BUFFER_VIEW_UNORDERED_ACCESS as u8
-            } else if bind_flags & diligent_sys::BIND_SHADER_RESOURCE != 0 {
-                diligent_sys::BUFFER_VIEW_SHADER_RESOURCE as u8
+            if bind_flags & diligent_sys::BIND_UNORDERED_ACCESS as diligent_sys::BIND_FLAGS != 0 {
+                diligent_sys::BUFFER_VIEW_UNORDERED_ACCESS as diligent_sys::BUFFER_VIEW_TYPE
+            } else if bind_flags & diligent_sys::BIND_SHADER_RESOURCE as diligent_sys::BIND_FLAGS
+                != 0
+            {
+                diligent_sys::BUFFER_VIEW_SHADER_RESOURCE as diligent_sys::BUFFER_VIEW_TYPE
             } else {
-                diligent_sys::BUFFER_VIEW_UNDEFINED as u8
+                diligent_sys::BUFFER_VIEW_UNDEFINED as diligent_sys::BUFFER_VIEW_TYPE
             }
         }
 

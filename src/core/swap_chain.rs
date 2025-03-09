@@ -8,12 +8,12 @@ use super::{
 };
 
 bitflags! {
-    pub struct SwapChainUsageFlags: diligent_sys::_SWAP_CHAIN_USAGE_FLAGS {
-        const None            = diligent_sys::SWAP_CHAIN_USAGE_NONE;
-        const RenderTarget    = diligent_sys::SWAP_CHAIN_USAGE_RENDER_TARGET;
-        const ShaderResource  = diligent_sys::SWAP_CHAIN_USAGE_SHADER_RESOURCE;
-        const InputAttachment = diligent_sys::SWAP_CHAIN_USAGE_INPUT_ATTACHMENT;
-        const CopySource      = diligent_sys::SWAP_CHAIN_USAGE_COPY_SOURCE;
+    pub struct SwapChainUsageFlags: diligent_sys::SWAP_CHAIN_USAGE_FLAGS {
+        const None            = diligent_sys::SWAP_CHAIN_USAGE_NONE as diligent_sys::SWAP_CHAIN_USAGE_FLAGS;
+        const RenderTarget    = diligent_sys::SWAP_CHAIN_USAGE_RENDER_TARGET as diligent_sys::SWAP_CHAIN_USAGE_FLAGS;
+        const ShaderResource  = diligent_sys::SWAP_CHAIN_USAGE_SHADER_RESOURCE as diligent_sys::SWAP_CHAIN_USAGE_FLAGS;
+        const InputAttachment = diligent_sys::SWAP_CHAIN_USAGE_INPUT_ATTACHMENT as diligent_sys::SWAP_CHAIN_USAGE_FLAGS;
+        const CopySource      = diligent_sys::SWAP_CHAIN_USAGE_COPY_SOURCE as diligent_sys::SWAP_CHAIN_USAGE_FLAGS;
     }
 }
 const_assert!(diligent_sys::SWAP_CHAIN_USAGE_LAST == 8);

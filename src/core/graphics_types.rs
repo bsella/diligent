@@ -2,28 +2,28 @@ use bitflags::bitflags;
 use static_assertions::const_assert;
 
 bitflags! {
-    pub struct ShaderTypes: diligent_sys::_SHADER_TYPE {
-        const Vertex          = diligent_sys::SHADER_TYPE_VERTEX;
-        const Pixel           = diligent_sys::SHADER_TYPE_PIXEL;
-        const Geometry        = diligent_sys::SHADER_TYPE_GEOMETRY;
-        const Hull            = diligent_sys::SHADER_TYPE_HULL;
-        const Domain          = diligent_sys::SHADER_TYPE_DOMAIN;
-        const Compute         = diligent_sys::SHADER_TYPE_COMPUTE;
-        const Amplification   = diligent_sys::SHADER_TYPE_AMPLIFICATION;
-        const Mesh            = diligent_sys::SHADER_TYPE_MESH;
-        const RayGen          = diligent_sys::SHADER_TYPE_RAY_GEN;
-        const RayMiss         = diligent_sys::SHADER_TYPE_RAY_MISS;
-        const RayClosestHit   = diligent_sys::SHADER_TYPE_RAY_CLOSEST_HIT;
-        const RayAnyHit       = diligent_sys::SHADER_TYPE_RAY_ANY_HIT;
-        const RayIntersection = diligent_sys::SHADER_TYPE_RAY_INTERSECTION;
-        const Callable        = diligent_sys::SHADER_TYPE_CALLABLE;
-        const Tile            = diligent_sys::SHADER_TYPE_TILE;
+    pub struct ShaderTypes: diligent_sys::SHADER_TYPE {
+        const Vertex          = diligent_sys::SHADER_TYPE_VERTEX as diligent_sys::SHADER_TYPE;
+        const Pixel           = diligent_sys::SHADER_TYPE_PIXEL as diligent_sys::SHADER_TYPE;
+        const Geometry        = diligent_sys::SHADER_TYPE_GEOMETRY as diligent_sys::SHADER_TYPE;
+        const Hull            = diligent_sys::SHADER_TYPE_HULL as diligent_sys::SHADER_TYPE;
+        const Domain          = diligent_sys::SHADER_TYPE_DOMAIN as diligent_sys::SHADER_TYPE;
+        const Compute         = diligent_sys::SHADER_TYPE_COMPUTE as diligent_sys::SHADER_TYPE;
+        const Amplification   = diligent_sys::SHADER_TYPE_AMPLIFICATION as diligent_sys::SHADER_TYPE;
+        const Mesh            = diligent_sys::SHADER_TYPE_MESH as diligent_sys::SHADER_TYPE;
+        const RayGen          = diligent_sys::SHADER_TYPE_RAY_GEN as diligent_sys::SHADER_TYPE;
+        const RayMiss         = diligent_sys::SHADER_TYPE_RAY_MISS as diligent_sys::SHADER_TYPE;
+        const RayClosestHit   = diligent_sys::SHADER_TYPE_RAY_CLOSEST_HIT as diligent_sys::SHADER_TYPE;
+        const RayAnyHit       = diligent_sys::SHADER_TYPE_RAY_ANY_HIT as diligent_sys::SHADER_TYPE;
+        const RayIntersection = diligent_sys::SHADER_TYPE_RAY_INTERSECTION as diligent_sys::SHADER_TYPE;
+        const Callable        = diligent_sys::SHADER_TYPE_CALLABLE as diligent_sys::SHADER_TYPE;
+        const Tile            = diligent_sys::SHADER_TYPE_TILE as diligent_sys::SHADER_TYPE;
 
-        const VertexPixel   = diligent_sys::SHADER_TYPE_VS_PS;
-        const AllGraphics   = diligent_sys::SHADER_TYPE_ALL_GRAPHICS;
-        const AllMesh       = diligent_sys::SHADER_TYPE_ALL_MESH;
-        const AllRayTracing = diligent_sys::SHADER_TYPE_ALL_RAY_TRACING;
-        const All           = diligent_sys::SHADER_TYPE_ALL;
+        const VertexPixel   = diligent_sys::SHADER_TYPE_VS_PS as diligent_sys::SHADER_TYPE;
+        const AllGraphics   = diligent_sys::SHADER_TYPE_ALL_GRAPHICS as diligent_sys::SHADER_TYPE;
+        const AllMesh       = diligent_sys::SHADER_TYPE_ALL_MESH as diligent_sys::SHADER_TYPE;
+        const AllRayTracing = diligent_sys::SHADER_TYPE_ALL_RAY_TRACING as diligent_sys::SHADER_TYPE;
+        const All           = diligent_sys::SHADER_TYPE_ALL as diligent_sys::SHADER_TYPE;
     }
 }
 const_assert!(diligent_sys::SHADER_TYPE_LAST == 16384);
@@ -287,19 +287,19 @@ impl From<&PrimitiveTopology> for diligent_sys::PRIMITIVE_TOPOLOGY {
 
 bitflags! {
     pub struct BindFlags: diligent_sys::BIND_FLAGS {
-        const None             = diligent_sys::BIND_NONE;
-        const VertexBuffer     = diligent_sys::BIND_VERTEX_BUFFER;
-        const IndexBuffer      = diligent_sys::BIND_INDEX_BUFFER;
-        const UniformBuffer    = diligent_sys::BIND_UNIFORM_BUFFER;
-        const ShaderResourcec  = diligent_sys::BIND_SHADER_RESOURCE;
-        const StreamOutput     = diligent_sys::BIND_STREAM_OUTPUT;
-        const RenderTarget     = diligent_sys::BIND_RENDER_TARGET;
-        const DepthStencil     = diligent_sys::BIND_DEPTH_STENCIL;
-        const UnorderedAccess  = diligent_sys::BIND_UNORDERED_ACCESS;
-        const IndirectDrawArgs = diligent_sys::BIND_INDIRECT_DRAW_ARGS;
-        const InputAttachement = diligent_sys::BIND_INPUT_ATTACHMENT;
-        const RayTracing       = diligent_sys::BIND_RAY_TRACING;
-        const ShadingRate      = diligent_sys::BIND_SHADING_RATE;
+        const None             = diligent_sys::BIND_NONE as diligent_sys::BIND_FLAGS;
+        const VertexBuffer     = diligent_sys::BIND_VERTEX_BUFFER as diligent_sys::BIND_FLAGS;
+        const IndexBuffer      = diligent_sys::BIND_INDEX_BUFFER as diligent_sys::BIND_FLAGS;
+        const UniformBuffer    = diligent_sys::BIND_UNIFORM_BUFFER as diligent_sys::BIND_FLAGS;
+        const ShaderResourcec  = diligent_sys::BIND_SHADER_RESOURCE as diligent_sys::BIND_FLAGS;
+        const StreamOutput     = diligent_sys::BIND_STREAM_OUTPUT as diligent_sys::BIND_FLAGS;
+        const RenderTarget     = diligent_sys::BIND_RENDER_TARGET as diligent_sys::BIND_FLAGS;
+        const DepthStencil     = diligent_sys::BIND_DEPTH_STENCIL as diligent_sys::BIND_FLAGS;
+        const UnorderedAccess  = diligent_sys::BIND_UNORDERED_ACCESS as diligent_sys::BIND_FLAGS;
+        const IndirectDrawArgs = diligent_sys::BIND_INDIRECT_DRAW_ARGS as diligent_sys::BIND_FLAGS;
+        const InputAttachement = diligent_sys::BIND_INPUT_ATTACHMENT as diligent_sys::BIND_FLAGS;
+        const RayTracing       = diligent_sys::BIND_RAY_TRACING as diligent_sys::BIND_FLAGS;
+        const ShadingRate      = diligent_sys::BIND_SHADING_RATE as diligent_sys::BIND_FLAGS;
     }
 }
 const_assert!(diligent_sys::BIND_FLAG_LAST == 2048);
@@ -328,18 +328,18 @@ impl From<&Usage> for diligent_sys::USAGE {
 }
 
 bitflags! {
-    pub struct CpuAccessFlags: diligent_sys::_CPU_ACCESS_FLAGS {
-        const None  = diligent_sys::CPU_ACCESS_NONE;
-        const Read  = diligent_sys::CPU_ACCESS_READ;
-        const Write = diligent_sys::CPU_ACCESS_WRITE;
+    pub struct CpuAccessFlags: diligent_sys::CPU_ACCESS_FLAGS {
+        const None  = diligent_sys::CPU_ACCESS_NONE as diligent_sys::CPU_ACCESS_FLAGS;
+        const Read  = diligent_sys::CPU_ACCESS_READ as diligent_sys::CPU_ACCESS_FLAGS;
+        const Write = diligent_sys::CPU_ACCESS_WRITE as diligent_sys::CPU_ACCESS_FLAGS;
     }
 }
 const_assert!(diligent_sys::CPU_ACCESS_FLAG_LAST == 2);
 
 bitflags! {
-    pub struct SetShaderResourceFlags: diligent_sys::_SET_SHADER_RESOURCE_FLAGS {
-        const None          = diligent_sys::SET_SHADER_RESOURCE_FLAG_NONE;
-        const AllowOverrite = diligent_sys::SET_SHADER_RESOURCE_FLAG_ALLOW_OVERWRITE;
+    pub struct SetShaderResourceFlags: diligent_sys::SET_SHADER_RESOURCE_FLAGS {
+        const None          = diligent_sys::SET_SHADER_RESOURCE_FLAG_NONE as diligent_sys::SET_SHADER_RESOURCE_FLAGS;
+        const AllowOverrite = diligent_sys::SET_SHADER_RESOURCE_FLAG_ALLOW_OVERWRITE as diligent_sys::SET_SHADER_RESOURCE_FLAGS;
     }
 }
 
@@ -384,11 +384,11 @@ impl From<&ValueType> for diligent_sys::VALUE_TYPE {
 }
 
 bitflags! {
-    pub struct MapFlags: diligent_sys::_MAP_FLAGS {
-        const None        = diligent_sys::MAP_FLAG_NONE;
-        const DoNotWait   = diligent_sys::MAP_FLAG_DO_NOT_WAIT;
-        const Discard     = diligent_sys::MAP_FLAG_DISCARD;
-        const NoOverwrite = diligent_sys::MAP_FLAG_NO_OVERWRITE;
+    pub struct MapFlags: diligent_sys::MAP_FLAGS {
+        const None        = diligent_sys::MAP_FLAG_NONE as diligent_sys::MAP_FLAGS;
+        const DoNotWait   = diligent_sys::MAP_FLAG_DO_NOT_WAIT as diligent_sys::MAP_FLAGS;
+        const Discard     = diligent_sys::MAP_FLAG_DISCARD as diligent_sys::MAP_FLAGS;
+        const NoOverwrite = diligent_sys::MAP_FLAG_NO_OVERWRITE as diligent_sys::MAP_FLAGS;
     }
 }
 
@@ -468,11 +468,11 @@ pub struct AdapterMemoryInfo {
 }
 
 bitflags! {
-    pub struct RaytracingCapFlags : diligent_sys::_RAY_TRACING_CAP_FLAGS {
-        const None               = diligent_sys::RAY_TRACING_CAP_FLAG_NONE;
-        const StandaloneShaders  = diligent_sys::RAY_TRACING_CAP_FLAG_STANDALONE_SHADERS;
-        const InlineRayTracing   = diligent_sys::RAY_TRACING_CAP_FLAG_INLINE_RAY_TRACING;
-        const IndirectRayTracing = diligent_sys::RAY_TRACING_CAP_FLAG_INDIRECT_RAY_TRACING;
+    pub struct RaytracingCapFlags : diligent_sys::RAY_TRACING_CAP_FLAGS {
+        const None               = diligent_sys::RAY_TRACING_CAP_FLAG_NONE as diligent_sys::RAY_TRACING_CAP_FLAGS;
+        const StandaloneShaders  = diligent_sys::RAY_TRACING_CAP_FLAG_STANDALONE_SHADERS as diligent_sys::RAY_TRACING_CAP_FLAGS;
+        const InlineRayTracing   = diligent_sys::RAY_TRACING_CAP_FLAG_INLINE_RAY_TRACING as diligent_sys::RAY_TRACING_CAP_FLAGS;
+        const IndirectRayTracing = diligent_sys::RAY_TRACING_CAP_FLAG_INDIRECT_RAY_TRACING as diligent_sys::RAY_TRACING_CAP_FLAGS;
     }
 }
 
@@ -495,16 +495,16 @@ pub struct RayTracingProperties {
 }
 
 bitflags! {
-    pub struct WaveFeature : diligent_sys::_WAVE_FEATURE {
-        const Unknown         = diligent_sys::WAVE_FEATURE_UNKNOWN;
-        const Basic           = diligent_sys::WAVE_FEATURE_BASIC;
-        const Vote            = diligent_sys::WAVE_FEATURE_VOTE;
-        const Arithmetic      = diligent_sys::WAVE_FEATURE_ARITHMETIC;
-        const Ballout         = diligent_sys::WAVE_FEATURE_BALLOUT;
-        const Shuffle         = diligent_sys::WAVE_FEATURE_SHUFFLE;
-        const ShuffleRelative = diligent_sys::WAVE_FEATURE_SHUFFLE_RELATIVE;
-        const Clustered       = diligent_sys::WAVE_FEATURE_CLUSTERED;
-        const Quad            = diligent_sys::WAVE_FEATURE_QUAD;
+    pub struct WaveFeature : diligent_sys::WAVE_FEATURE {
+        const Unknown         = diligent_sys::WAVE_FEATURE_UNKNOWN as diligent_sys::WAVE_FEATURE;
+        const Basic           = diligent_sys::WAVE_FEATURE_BASIC as diligent_sys::WAVE_FEATURE;
+        const Vote            = diligent_sys::WAVE_FEATURE_VOTE as diligent_sys::WAVE_FEATURE;
+        const Arithmetic      = diligent_sys::WAVE_FEATURE_ARITHMETIC as diligent_sys::WAVE_FEATURE;
+        const Ballout         = diligent_sys::WAVE_FEATURE_BALLOUT as diligent_sys::WAVE_FEATURE;
+        const Shuffle         = diligent_sys::WAVE_FEATURE_SHUFFLE as diligent_sys::WAVE_FEATURE;
+        const ShuffleRelative = diligent_sys::WAVE_FEATURE_SHUFFLE_RELATIVE as diligent_sys::WAVE_FEATURE;
+        const Clustered       = diligent_sys::WAVE_FEATURE_CLUSTERED as diligent_sys::WAVE_FEATURE;
+        const Quad            = diligent_sys::WAVE_FEATURE_QUAD as diligent_sys::WAVE_FEATURE;
     }
 }
 const_assert!(diligent_sys::WAVE_FEATURE_LAST == 128);
@@ -578,15 +578,15 @@ impl From<&ShadingRate> for diligent_sys::SHADING_RATE {
 }
 
 bitflags! {
-    pub struct SampleCount : diligent_sys::_SAMPLE_COUNT {
-        const None = diligent_sys::SAMPLE_COUNT_NONE;
-        const _1   = diligent_sys::SAMPLE_COUNT_1;
-        const _2   = diligent_sys::SAMPLE_COUNT_2;
-        const _4   = diligent_sys::SAMPLE_COUNT_4;
-        const _8   = diligent_sys::SAMPLE_COUNT_8;
-        const _16  = diligent_sys::SAMPLE_COUNT_16;
-        const _32  = diligent_sys::SAMPLE_COUNT_32;
-        const _64  = diligent_sys::SAMPLE_COUNT_64;
+    pub struct SampleCount : diligent_sys::SAMPLE_COUNT {
+        const None = diligent_sys::SAMPLE_COUNT_NONE as diligent_sys::SAMPLE_COUNT;
+        const _1   = diligent_sys::SAMPLE_COUNT_1 as diligent_sys::SAMPLE_COUNT;
+        const _2   = diligent_sys::SAMPLE_COUNT_2 as diligent_sys::SAMPLE_COUNT;
+        const _4   = diligent_sys::SAMPLE_COUNT_4 as diligent_sys::SAMPLE_COUNT;
+        const _8   = diligent_sys::SAMPLE_COUNT_8 as diligent_sys::SAMPLE_COUNT;
+        const _16  = diligent_sys::SAMPLE_COUNT_16 as diligent_sys::SAMPLE_COUNT;
+        const _32  = diligent_sys::SAMPLE_COUNT_32 as diligent_sys::SAMPLE_COUNT;
+        const _64  = diligent_sys::SAMPLE_COUNT_64 as diligent_sys::SAMPLE_COUNT;
     }
 }
 const_assert!(diligent_sys::SAMPLE_COUNT_MAX == 64);
@@ -597,51 +597,51 @@ pub struct ShadingRateMode {
 }
 
 bitflags! {
-    pub struct ShadingRateCapFlags : diligent_sys::_SHADING_RATE_CAP_FLAGS {
-        const None                              = diligent_sys::SHADING_RATE_CAP_FLAG_NONE;
-        const PerDraw                           = diligent_sys::SHADING_RATE_CAP_FLAG_PER_DRAW;
-        const PerPrimitive                      = diligent_sys::SHADING_RATE_CAP_FLAG_PER_PRIMITIVE;
-        const TextureBased                      = diligent_sys::SHADING_RATE_CAP_FLAG_TEXTURE_BASED;
-        const SampleMask                        = diligent_sys::SHADING_RATE_CAP_FLAG_SAMPLE_MASK;
-        const ShaderSampleMask                  = diligent_sys::SHADING_RATE_CAP_FLAG_SHADER_SAMPLE_MASK;
-        const ShaderDepthStencilWrite           = diligent_sys::SHADING_RATE_CAP_FLAG_SHADER_DEPTH_STENCIL_WRITE;
-        const PerPrimitiveWithMultipleViewports = diligent_sys::SHADING_RATE_CAP_FLAG_PER_PRIMITIVE_WITH_MULTIPLE_VIEWPORTS;
-        const SameTextureForWholeRenderpass     = diligent_sys::SHADING_RATE_CAP_FLAG_SAME_TEXTURE_FOR_WHOLE_RENDERPASS;
-        const TextureArray                      = diligent_sys::SHADING_RATE_CAP_FLAG_TEXTURE_ARRAY;
-        const ShadingRateShaderInput            = diligent_sys::SHADING_RATE_CAP_FLAG_SHADING_RATE_SHADER_INPUT;
-        const AdditionalInvocations             = diligent_sys::SHADING_RATE_CAP_FLAG_ADDITIONAL_INVOCATIONS;
-        const Non_subsampledRenderTarget        = diligent_sys::SHADING_RATE_CAP_FLAG_NON_SUBSAMPLED_RENDER_TARGET;
-        const Subsampled_renderTarget           = diligent_sys::SHADING_RATE_CAP_FLAG_SUBSAMPLED_RENDER_TARGET;
+    pub struct ShadingRateCapFlags : diligent_sys::SHADING_RATE_CAP_FLAGS {
+        const None                              = diligent_sys::SHADING_RATE_CAP_FLAG_NONE as diligent_sys::SHADING_RATE_CAP_FLAGS;
+        const PerDraw                           = diligent_sys::SHADING_RATE_CAP_FLAG_PER_DRAW as diligent_sys::SHADING_RATE_CAP_FLAGS;
+        const PerPrimitive                      = diligent_sys::SHADING_RATE_CAP_FLAG_PER_PRIMITIVE as diligent_sys::SHADING_RATE_CAP_FLAGS;
+        const TextureBased                      = diligent_sys::SHADING_RATE_CAP_FLAG_TEXTURE_BASED as diligent_sys::SHADING_RATE_CAP_FLAGS;
+        const SampleMask                        = diligent_sys::SHADING_RATE_CAP_FLAG_SAMPLE_MASK as diligent_sys::SHADING_RATE_CAP_FLAGS;
+        const ShaderSampleMask                  = diligent_sys::SHADING_RATE_CAP_FLAG_SHADER_SAMPLE_MASK as diligent_sys::SHADING_RATE_CAP_FLAGS;
+        const ShaderDepthStencilWrite           = diligent_sys::SHADING_RATE_CAP_FLAG_SHADER_DEPTH_STENCIL_WRITE as diligent_sys::SHADING_RATE_CAP_FLAGS;
+        const PerPrimitiveWithMultipleViewports = diligent_sys::SHADING_RATE_CAP_FLAG_PER_PRIMITIVE_WITH_MULTIPLE_VIEWPORTS as diligent_sys::SHADING_RATE_CAP_FLAGS;
+        const SameTextureForWholeRenderpass     = diligent_sys::SHADING_RATE_CAP_FLAG_SAME_TEXTURE_FOR_WHOLE_RENDERPASS as diligent_sys::SHADING_RATE_CAP_FLAGS;
+        const TextureArray                      = diligent_sys::SHADING_RATE_CAP_FLAG_TEXTURE_ARRAY as diligent_sys::SHADING_RATE_CAP_FLAGS;
+        const ShadingRateShaderInput            = diligent_sys::SHADING_RATE_CAP_FLAG_SHADING_RATE_SHADER_INPUT as diligent_sys::SHADING_RATE_CAP_FLAGS;
+        const AdditionalInvocations             = diligent_sys::SHADING_RATE_CAP_FLAG_ADDITIONAL_INVOCATIONS as diligent_sys::SHADING_RATE_CAP_FLAGS;
+        const Non_subsampledRenderTarget        = diligent_sys::SHADING_RATE_CAP_FLAG_NON_SUBSAMPLED_RENDER_TARGET as diligent_sys::SHADING_RATE_CAP_FLAGS;
+        const Subsampled_renderTarget           = diligent_sys::SHADING_RATE_CAP_FLAG_SUBSAMPLED_RENDER_TARGET as diligent_sys::SHADING_RATE_CAP_FLAGS;
     }
 }
 
 bitflags! {
-    pub struct ShadingRateCombiner : diligent_sys::_SHADING_RATE_COMBINER {
-        const Passthrough = diligent_sys::SHADING_RATE_COMBINER_PASSTHROUGH;
-        const Override    = diligent_sys::SHADING_RATE_COMBINER_OVERRIDE;
-        const Min         = diligent_sys::SHADING_RATE_COMBINER_MIN;
-        const Max         = diligent_sys::SHADING_RATE_COMBINER_MAX;
-        const Sum         = diligent_sys::SHADING_RATE_COMBINER_SUM;
-        const Mul         = diligent_sys::SHADING_RATE_COMBINER_MUL;
+    pub struct ShadingRateCombiner : diligent_sys::SHADING_RATE_COMBINER {
+        const Passthrough = diligent_sys::SHADING_RATE_COMBINER_PASSTHROUGH as diligent_sys::SHADING_RATE_COMBINER;
+        const Override    = diligent_sys::SHADING_RATE_COMBINER_OVERRIDE as diligent_sys::SHADING_RATE_COMBINER;
+        const Min         = diligent_sys::SHADING_RATE_COMBINER_MIN as diligent_sys::SHADING_RATE_COMBINER;
+        const Max         = diligent_sys::SHADING_RATE_COMBINER_MAX as diligent_sys::SHADING_RATE_COMBINER;
+        const Sum         = diligent_sys::SHADING_RATE_COMBINER_SUM as diligent_sys::SHADING_RATE_COMBINER;
+        const Mul         = diligent_sys::SHADING_RATE_COMBINER_MUL as diligent_sys::SHADING_RATE_COMBINER;
     }
 }
 const_assert!(diligent_sys::SAMPLE_COUNT_MAX == 64);
 
 bitflags! {
-    pub struct ShadingRateFormat : diligent_sys::_SHADING_RATE_FORMAT {
-        const Unknown    = diligent_sys::SHADING_RATE_FORMAT_UNKNOWN;
-        const Palette    = diligent_sys::SHADING_RATE_FORMAT_PALETTE;
-        const Unorm8     = diligent_sys::SHADING_RATE_FORMAT_UNORM8;
-        const ColRowFp32 = diligent_sys::SHADING_RATE_FORMAT_COL_ROW_FP32;
+    pub struct ShadingRateFormat : diligent_sys::SHADING_RATE_FORMAT {
+        const Unknown    = diligent_sys::SHADING_RATE_FORMAT_UNKNOWN as diligent_sys::SHADING_RATE_FORMAT;
+        const Palette    = diligent_sys::SHADING_RATE_FORMAT_PALETTE as diligent_sys::SHADING_RATE_FORMAT;
+        const Unorm8     = diligent_sys::SHADING_RATE_FORMAT_UNORM8 as diligent_sys::SHADING_RATE_FORMAT;
+        const ColRowFp32 = diligent_sys::SHADING_RATE_FORMAT_COL_ROW_FP32 as diligent_sys::SHADING_RATE_FORMAT;
     }
 }
 
 bitflags! {
-    pub struct ShadingRateTextureAccess : diligent_sys::_SHADING_RATE_TEXTURE_ACCESS {
-        const Unknown  = diligent_sys::SHADING_RATE_TEXTURE_ACCESS_UNKNOWN;
-        const OnGpu    = diligent_sys::SHADING_RATE_TEXTURE_ACCESS_ON_GPU;
-        const OnSubmit = diligent_sys::SHADING_RATE_TEXTURE_ACCESS_ON_SUBMIT;
-        const OnSetRtv = diligent_sys::SHADING_RATE_TEXTURE_ACCESS_ON_SET_RTV;
+    pub struct ShadingRateTextureAccess : diligent_sys::SHADING_RATE_TEXTURE_ACCESS {
+        const Unknown  = diligent_sys::SHADING_RATE_TEXTURE_ACCESS_UNKNOWN as diligent_sys::SHADING_RATE_TEXTURE_ACCESS;
+        const OnGpu    = diligent_sys::SHADING_RATE_TEXTURE_ACCESS_ON_GPU as diligent_sys::SHADING_RATE_TEXTURE_ACCESS;
+        const OnSubmit = diligent_sys::SHADING_RATE_TEXTURE_ACCESS_ON_SUBMIT as diligent_sys::SHADING_RATE_TEXTURE_ACCESS;
+        const OnSetRtv = diligent_sys::SHADING_RATE_TEXTURE_ACCESS_ON_SET_RTV as diligent_sys::SHADING_RATE_TEXTURE_ACCESS;
     }
 }
 
@@ -669,13 +669,13 @@ pub struct ComputeShaderProperties {
 }
 
 bitflags! {
-    pub struct DrawCommandCapFlags : diligent_sys::_DRAW_COMMAND_CAP_FLAGS {
-        const None                      = diligent_sys::DRAW_COMMAND_CAP_FLAG_NONE;
-        const BaseVertex                = diligent_sys::DRAW_COMMAND_CAP_FLAG_BASE_VERTEX;
-        const DrawIndirect              = diligent_sys::DRAW_COMMAND_CAP_FLAG_DRAW_INDIRECT;
-        const DrawIndirectFirstInstance = diligent_sys::DRAW_COMMAND_CAP_FLAG_DRAW_INDIRECT_FIRST_INSTANCE;
-        const NativeMultiDrawIndirect   = diligent_sys::DRAW_COMMAND_CAP_FLAG_NATIVE_MULTI_DRAW_INDIRECT;
-        const DrawIndirectCounterBuffer = diligent_sys::DRAW_COMMAND_CAP_FLAG_DRAW_INDIRECT_COUNTER_BUFFER;
+    pub struct DrawCommandCapFlags : diligent_sys::DRAW_COMMAND_CAP_FLAGS {
+        const None                      = diligent_sys::DRAW_COMMAND_CAP_FLAG_NONE as diligent_sys::DRAW_COMMAND_CAP_FLAGS;
+        const BaseVertex                = diligent_sys::DRAW_COMMAND_CAP_FLAG_BASE_VERTEX as diligent_sys::DRAW_COMMAND_CAP_FLAGS;
+        const DrawIndirect              = diligent_sys::DRAW_COMMAND_CAP_FLAG_DRAW_INDIRECT as diligent_sys::DRAW_COMMAND_CAP_FLAGS;
+        const DrawIndirectFirstInstance = diligent_sys::DRAW_COMMAND_CAP_FLAG_DRAW_INDIRECT_FIRST_INSTANCE as diligent_sys::DRAW_COMMAND_CAP_FLAGS;
+        const NativeMultiDrawIndirect   = diligent_sys::DRAW_COMMAND_CAP_FLAG_NATIVE_MULTI_DRAW_INDIRECT as diligent_sys::DRAW_COMMAND_CAP_FLAGS;
+        const DrawIndirectCounterBuffer = diligent_sys::DRAW_COMMAND_CAP_FLAG_DRAW_INDIRECT_COUNTER_BUFFER as diligent_sys::DRAW_COMMAND_CAP_FLAGS;
     }
 }
 
@@ -686,26 +686,26 @@ pub struct DrawCommandProperties {
 }
 
 bitflags! {
-    pub struct SparseResourceCapFlags : diligent_sys::_SPARSE_RESOURCE_CAP_FLAGS {
-        const None                     = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_NONE;
-        const ShaderResourceResidency  = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_SHADER_RESOURCE_RESIDENCY;
-        const Buffer                   = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_BUFFER;
-        const Texture2D                = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_2D;
-        const Texture3D                = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_3D;
-        const Texture2Samples          = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_2_SAMPLES;
-        const Texture4Samples          = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_4_SAMPLES;
-        const Texture8Samples          = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_8_SAMPLES;
-        const Texture16Samples         = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_16_SAMPLES;
-        const Aliased                  = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_ALIASED;
-        const Standard2DTileShape      = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_STANDARD_2D_TILE_SHAPE;
-        const Standard2DMSTileShape    = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_STANDARD_2DMS_TILE_SHAPE;
-        const Standard3DTileShape      = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_STANDARD_3D_TILE_SHAPE;
-        const AlignedMipSize           = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_ALIGNED_MIP_SIZE;
-        const NonResidentStrict        = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_NON_RESIDENT_STRICT;
-        const Texture2dArrayMipTail    = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_2D_ARRAY_MIP_TAIL;
-        const BufferStandardBlock      = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_BUFFER_STANDARD_BLOCK;
-        const NonResidentSafe          = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_NON_RESIDENT_SAFE;
-        const MixedResourceTypeSupport = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_MIXED_RESOURCE_TYPE_SUPPORT;
+    pub struct SparseResourceCapFlags : diligent_sys::SPARSE_RESOURCE_CAP_FLAGS {
+        const None                     = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_NONE as diligent_sys::SPARSE_RESOURCE_CAP_FLAGS;
+        const ShaderResourceResidency  = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_SHADER_RESOURCE_RESIDENCY as diligent_sys::SPARSE_RESOURCE_CAP_FLAGS;
+        const Buffer                   = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_BUFFER as diligent_sys::SPARSE_RESOURCE_CAP_FLAGS;
+        const Texture2D                = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_2D as diligent_sys::SPARSE_RESOURCE_CAP_FLAGS;
+        const Texture3D                = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_3D as diligent_sys::SPARSE_RESOURCE_CAP_FLAGS;
+        const Texture2Samples          = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_2_SAMPLES as diligent_sys::SPARSE_RESOURCE_CAP_FLAGS;
+        const Texture4Samples          = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_4_SAMPLES as diligent_sys::SPARSE_RESOURCE_CAP_FLAGS;
+        const Texture8Samples          = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_8_SAMPLES as diligent_sys::SPARSE_RESOURCE_CAP_FLAGS;
+        const Texture16Samples         = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_16_SAMPLES as diligent_sys::SPARSE_RESOURCE_CAP_FLAGS;
+        const Aliased                  = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_ALIASED as diligent_sys::SPARSE_RESOURCE_CAP_FLAGS;
+        const Standard2DTileShape      = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_STANDARD_2D_TILE_SHAPE as diligent_sys::SPARSE_RESOURCE_CAP_FLAGS;
+        const Standard2DMSTileShape    = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_STANDARD_2DMS_TILE_SHAPE as diligent_sys::SPARSE_RESOURCE_CAP_FLAGS;
+        const Standard3DTileShape      = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_STANDARD_3D_TILE_SHAPE as diligent_sys::SPARSE_RESOURCE_CAP_FLAGS;
+        const AlignedMipSize           = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_ALIGNED_MIP_SIZE as diligent_sys::SPARSE_RESOURCE_CAP_FLAGS;
+        const NonResidentStrict        = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_NON_RESIDENT_STRICT as diligent_sys::SPARSE_RESOURCE_CAP_FLAGS;
+        const Texture2dArrayMipTail    = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_TEXTURE_2D_ARRAY_MIP_TAIL as diligent_sys::SPARSE_RESOURCE_CAP_FLAGS;
+        const BufferStandardBlock      = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_BUFFER_STANDARD_BLOCK as diligent_sys::SPARSE_RESOURCE_CAP_FLAGS;
+        const NonResidentSafe          = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_NON_RESIDENT_SAFE as diligent_sys::SPARSE_RESOURCE_CAP_FLAGS;
+        const MixedResourceTypeSupport = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_MIXED_RESOURCE_TYPE_SUPPORT as diligent_sys::SPARSE_RESOURCE_CAP_FLAGS;
     }
 }
 
@@ -949,13 +949,13 @@ impl From<&DeviceFeatures> for diligent_sys::DeviceFeatures {
 }
 
 bitflags! {
-    pub struct CommandQueueType : diligent_sys::_COMMAND_QUEUE_TYPE {
-        const Unknown       = diligent_sys::COMMAND_QUEUE_TYPE_UNKNOWN;
-        const Transfer      = diligent_sys::COMMAND_QUEUE_TYPE_TRANSFER;
-        const Compute       = diligent_sys::COMMAND_QUEUE_TYPE_COMPUTE;
-        const Graphics      = diligent_sys::COMMAND_QUEUE_TYPE_GRAPHICS;
-        const PrimaryMask   = diligent_sys::COMMAND_QUEUE_TYPE_PRIMARY_MASK;
-        const SparseBinding = diligent_sys::COMMAND_QUEUE_TYPE_SPARSE_BINDING;
+    pub struct CommandQueueType : diligent_sys::COMMAND_QUEUE_TYPE {
+        const Unknown       = diligent_sys::COMMAND_QUEUE_TYPE_UNKNOWN as diligent_sys::COMMAND_QUEUE_TYPE;
+        const Transfer      = diligent_sys::COMMAND_QUEUE_TYPE_TRANSFER as diligent_sys::COMMAND_QUEUE_TYPE;
+        const Compute       = diligent_sys::COMMAND_QUEUE_TYPE_COMPUTE as diligent_sys::COMMAND_QUEUE_TYPE;
+        const Graphics      = diligent_sys::COMMAND_QUEUE_TYPE_GRAPHICS as diligent_sys::COMMAND_QUEUE_TYPE;
+        const PrimaryMask   = diligent_sys::COMMAND_QUEUE_TYPE_PRIMARY_MASK as diligent_sys::COMMAND_QUEUE_TYPE;
+        const SparseBinding = diligent_sys::COMMAND_QUEUE_TYPE_SPARSE_BINDING as diligent_sys::COMMAND_QUEUE_TYPE;
     }
 }
 const_assert!(diligent_sys::COMMAND_QUEUE_TYPE_MAX_BIT == 7);
@@ -1275,30 +1275,30 @@ impl From<&diligent_sys::SURFACE_TRANSFORM> for SurfaceTransform {
 }
 
 bitflags! {
-    pub struct ResourceState: diligent_sys::_RESOURCE_STATE {
-        const Undefined         = diligent_sys::RESOURCE_STATE_UNDEFINED;
-        const VertexBuffer      = diligent_sys::RESOURCE_STATE_VERTEX_BUFFER;
-        const ConstantBuffer    = diligent_sys::RESOURCE_STATE_CONSTANT_BUFFER;
-        const IndexBuffer       = diligent_sys::RESOURCE_STATE_INDEX_BUFFER;
-        const RenderTarget      = diligent_sys::RESOURCE_STATE_RENDER_TARGET;
-        const UnorderedAccess   = diligent_sys::RESOURCE_STATE_UNORDERED_ACCESS;
-        const DepthWrite        = diligent_sys::RESOURCE_STATE_DEPTH_WRITE;
-        const DepthRead         = diligent_sys::RESOURCE_STATE_DEPTH_READ;
-        const ShaderResource    = diligent_sys::RESOURCE_STATE_SHADER_RESOURCE;
-        const StreamOut         = diligent_sys::RESOURCE_STATE_STREAM_OUT;
-        const IndirectArgument  = diligent_sys::RESOURCE_STATE_INDIRECT_ARGUMENT;
-        const CopyDest          = diligent_sys::RESOURCE_STATE_COPY_DEST;
-        const CopySource        = diligent_sys::RESOURCE_STATE_COPY_SOURCE;
-        const ResolveDest       = diligent_sys::RESOURCE_STATE_RESOLVE_DEST;
-        const ResolveSource     = diligent_sys::RESOURCE_STATE_RESOLVE_SOURCE;
-        const InputAttachment   = diligent_sys::RESOURCE_STATE_INPUT_ATTACHMENT;
-        const Present           = diligent_sys::RESOURCE_STATE_PRESENT;
-        const BuildAsRead       = diligent_sys::RESOURCE_STATE_BUILD_AS_READ;
-        const BuildSsWrite      = diligent_sys::RESOURCE_STATE_BUILD_AS_WRITE;
-        const RayTracing        = diligent_sys::RESOURCE_STATE_RAY_TRACING;
-        const Common            = diligent_sys::RESOURCE_STATE_COMMON;
-        const ShadingRate       = diligent_sys::RESOURCE_STATE_SHADING_RATE;
-        const GenericRead       = diligent_sys::RESOURCE_STATE_GENERIC_READ;
+    pub struct ResourceState: diligent_sys::RESOURCE_STATE {
+        const Undefined         = diligent_sys::RESOURCE_STATE_UNDEFINED as diligent_sys::RESOURCE_STATE;
+        const VertexBuffer      = diligent_sys::RESOURCE_STATE_VERTEX_BUFFER as diligent_sys::RESOURCE_STATE;
+        const ConstantBuffer    = diligent_sys::RESOURCE_STATE_CONSTANT_BUFFER as diligent_sys::RESOURCE_STATE;
+        const IndexBuffer       = diligent_sys::RESOURCE_STATE_INDEX_BUFFER as diligent_sys::RESOURCE_STATE;
+        const RenderTarget      = diligent_sys::RESOURCE_STATE_RENDER_TARGET as diligent_sys::RESOURCE_STATE;
+        const UnorderedAccess   = diligent_sys::RESOURCE_STATE_UNORDERED_ACCESS as diligent_sys::RESOURCE_STATE;
+        const DepthWrite        = diligent_sys::RESOURCE_STATE_DEPTH_WRITE as diligent_sys::RESOURCE_STATE;
+        const DepthRead         = diligent_sys::RESOURCE_STATE_DEPTH_READ as diligent_sys::RESOURCE_STATE;
+        const ShaderResource    = diligent_sys::RESOURCE_STATE_SHADER_RESOURCE as diligent_sys::RESOURCE_STATE;
+        const StreamOut         = diligent_sys::RESOURCE_STATE_STREAM_OUT as diligent_sys::RESOURCE_STATE;
+        const IndirectArgument  = diligent_sys::RESOURCE_STATE_INDIRECT_ARGUMENT as diligent_sys::RESOURCE_STATE;
+        const CopyDest          = diligent_sys::RESOURCE_STATE_COPY_DEST as diligent_sys::RESOURCE_STATE;
+        const CopySource        = diligent_sys::RESOURCE_STATE_COPY_SOURCE as diligent_sys::RESOURCE_STATE;
+        const ResolveDest       = diligent_sys::RESOURCE_STATE_RESOLVE_DEST as diligent_sys::RESOURCE_STATE;
+        const ResolveSource     = diligent_sys::RESOURCE_STATE_RESOLVE_SOURCE as diligent_sys::RESOURCE_STATE;
+        const InputAttachment   = diligent_sys::RESOURCE_STATE_INPUT_ATTACHMENT as diligent_sys::RESOURCE_STATE;
+        const Present           = diligent_sys::RESOURCE_STATE_PRESENT as diligent_sys::RESOURCE_STATE;
+        const BuildAsRead       = diligent_sys::RESOURCE_STATE_BUILD_AS_READ as diligent_sys::RESOURCE_STATE;
+        const BuildSsWrite      = diligent_sys::RESOURCE_STATE_BUILD_AS_WRITE as diligent_sys::RESOURCE_STATE;
+        const RayTracing        = diligent_sys::RESOURCE_STATE_RAY_TRACING as diligent_sys::RESOURCE_STATE;
+        const Common            = diligent_sys::RESOURCE_STATE_COMMON as diligent_sys::RESOURCE_STATE;
+        const ShadingRate       = diligent_sys::RESOURCE_STATE_SHADING_RATE as diligent_sys::RESOURCE_STATE;
+        const GenericRead       = diligent_sys::RESOURCE_STATE_GENERIC_READ as diligent_sys::RESOURCE_STATE;
     }
 }
 

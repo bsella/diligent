@@ -1,5 +1,8 @@
 use std::ffi::c_void;
+
+#[cfg(target_os = "linux")]
 use std::os::unix::ffi::OsStrExt;
+
 use std::path::PathBuf;
 
 use crate::core::device_context::DeviceContext;
@@ -229,7 +232,7 @@ impl EngineFactoryVk {
                 QueryPoolSizes: create_info.query_pool_sizes,
 
                 pDxCompilerPath: if let Some(path) = &create_info.dx_compiler_path {
-                    path.as_os_str().as_bytes().as_ptr() as *const i8
+                    path.as_os_str().as_encoded_bytes().as_ptr() as *const i8
                 } else {
                     std::ptr::null()
                 },

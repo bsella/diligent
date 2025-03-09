@@ -207,44 +207,44 @@ impl From<&ComparisonFunction> for diligent_sys::COMPARISON_FUNCTION {
 }
 
 bitflags! {
-    pub struct ShaderVariableFlags: diligent_sys::_SHADER_VARIABLE_FLAGS {
-        const None                           = diligent_sys::SHADER_VARIABLE_FLAG_NONE;
-        const NoDynamicBuffers               = diligent_sys::SHADER_VARIABLE_FLAG_NO_DYNAMIC_BUFFERS;
-        const GeneralInputAttachmentVk       = diligent_sys::SHADER_VARIABLE_FLAG_GENERAL_INPUT_ATTACHMENT_VK;
-        const UnfilterableFloatTextureWebgpu = diligent_sys::SHADER_VARIABLE_FLAG_UNFILTERABLE_FLOAT_TEXTURE_WEBGPU;
-        const NonFilteringSamplerWebgpu      = diligent_sys::SHADER_VARIABLE_FLAG_NON_FILTERING_SAMPLER_WEBGPU;
+    pub struct ShaderVariableFlags: diligent_sys::SHADER_VARIABLE_FLAGS {
+        const None                           = diligent_sys::SHADER_VARIABLE_FLAG_NONE as diligent_sys::SHADER_VARIABLE_FLAGS;
+        const NoDynamicBuffers               = diligent_sys::SHADER_VARIABLE_FLAG_NO_DYNAMIC_BUFFERS as diligent_sys::SHADER_VARIABLE_FLAGS;
+        const GeneralInputAttachmentVk       = diligent_sys::SHADER_VARIABLE_FLAG_GENERAL_INPUT_ATTACHMENT_VK as diligent_sys::SHADER_VARIABLE_FLAGS;
+        const UnfilterableFloatTextureWebgpu = diligent_sys::SHADER_VARIABLE_FLAG_UNFILTERABLE_FLOAT_TEXTURE_WEBGPU as diligent_sys::SHADER_VARIABLE_FLAGS;
+        const NonFilteringSamplerWebgpu      = diligent_sys::SHADER_VARIABLE_FLAG_NON_FILTERING_SAMPLER_WEBGPU as diligent_sys::SHADER_VARIABLE_FLAGS;
     }
 }
 const_assert!(diligent_sys::SHADER_VARIABLE_FLAG_LAST == 8);
 
 bitflags! {
-    pub struct ColorMask: diligent_sys::_COLOR_MASK {
-        const NONE  = diligent_sys::COLOR_MASK_NONE;
-        const RED   = diligent_sys::COLOR_MASK_RED;
-        const GREEN = diligent_sys::COLOR_MASK_GREEN;
-        const BLUE  = diligent_sys::COLOR_MASK_BLUE;
-        const ALPHA = diligent_sys::COLOR_MASK_ALPHA;
-        const RGB   = diligent_sys::COLOR_MASK_RGB;
-        const RGBA  = diligent_sys::COLOR_MASK_ALL;
+    pub struct ColorMask: diligent_sys::COLOR_MASK {
+        const NONE  = diligent_sys::COLOR_MASK_NONE as diligent_sys::COLOR_MASK;
+        const RED   = diligent_sys::COLOR_MASK_RED as diligent_sys::COLOR_MASK;
+        const GREEN = diligent_sys::COLOR_MASK_GREEN as diligent_sys::COLOR_MASK;
+        const BLUE  = diligent_sys::COLOR_MASK_BLUE as diligent_sys::COLOR_MASK;
+        const ALPHA = diligent_sys::COLOR_MASK_ALPHA as diligent_sys::COLOR_MASK;
+        const RGB   = diligent_sys::COLOR_MASK_RGB as diligent_sys::COLOR_MASK;
+        const RGBA  = diligent_sys::COLOR_MASK_ALL as diligent_sys::COLOR_MASK;
     }
 }
 
 bitflags! {
-    pub struct PipelineStateObjectCreateFlags: diligent_sys::_PSO_CREATE_FLAGS {
-        const None                           = diligent_sys::PSO_CREATE_FLAG_NONE;
-        const IgnoreMissingVariables         = diligent_sys::PSO_CREATE_FLAG_IGNORE_MISSING_VARIABLES;
-        const IgnoreMissingImmutableSamplers = diligent_sys::PSO_CREATE_FLAG_IGNORE_MISSING_IMMUTABLE_SAMPLERS;
-        const DontRemapShaderResources       = diligent_sys::PSO_CREATE_FLAG_DONT_REMAP_SHADER_RESOURCES;
-        const Asynchronous                   = diligent_sys::PSO_CREATE_FLAG_ASYNCHRONOUS;
+    pub struct PipelineStateObjectCreateFlags: diligent_sys::PSO_CREATE_FLAGS {
+        const None                           = diligent_sys::PSO_CREATE_FLAG_NONE as diligent_sys::PSO_CREATE_FLAGS;
+        const IgnoreMissingVariables         = diligent_sys::PSO_CREATE_FLAG_IGNORE_MISSING_VARIABLES as diligent_sys::PSO_CREATE_FLAGS;
+        const IgnoreMissingImmutableSamplers = diligent_sys::PSO_CREATE_FLAG_IGNORE_MISSING_IMMUTABLE_SAMPLERS as diligent_sys::PSO_CREATE_FLAGS;
+        const DontRemapShaderResources       = diligent_sys::PSO_CREATE_FLAG_DONT_REMAP_SHADER_RESOURCES as diligent_sys::PSO_CREATE_FLAGS;
+        const Asynchronous                   = diligent_sys::PSO_CREATE_FLAG_ASYNCHRONOUS as diligent_sys::PSO_CREATE_FLAGS;
     }
 }
 const_assert!(diligent_sys::PSO_CREATE_FLAG_LAST == 8);
 
 bitflags! {
-    pub struct PipelineShadingRateFlags: diligent_sys::_PIPELINE_SHADING_RATE_FLAGS {
-        const None         = diligent_sys::PIPELINE_SHADING_RATE_FLAG_NONE;
-        const PerPrimitive = diligent_sys::PIPELINE_SHADING_RATE_FLAG_PER_PRIMITIVE;
-        const TextureBased = diligent_sys::PIPELINE_SHADING_RATE_FLAG_TEXTURE_BASED;
+    pub struct PipelineShadingRateFlags: diligent_sys::PIPELINE_SHADING_RATE_FLAGS {
+        const None         = diligent_sys::PIPELINE_SHADING_RATE_FLAG_NONE as diligent_sys::PIPELINE_SHADING_RATE_FLAGS;
+        const PerPrimitive = diligent_sys::PIPELINE_SHADING_RATE_FLAG_PER_PRIMITIVE as diligent_sys::PIPELINE_SHADING_RATE_FLAGS;
+        const TextureBased = diligent_sys::PIPELINE_SHADING_RATE_FLAG_TEXTURE_BASED as diligent_sys::PIPELINE_SHADING_RATE_FLAGS;
     }
 }
 const_assert!(diligent_sys::PIPELINE_SHADING_RATE_FLAG_LAST == 2);
@@ -386,6 +386,7 @@ struct PipelineStateCreateInfo<'a, const PIPELINE_TYPE: diligent_sys::PIPELINE_T
 
 pub(crate) struct PipelineStateCreateInfoWrapper {
     _psd: PipelineStateDescWrapper,
+    _resource_signatures: Vec<*mut diligent_sys::IPipelineResourceSignature>,
     ci: diligent_sys::PipelineStateCreateInfo,
 }
 
@@ -401,6 +402,12 @@ impl<const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE>
     fn from(value: &PipelineStateCreateInfo<'_, PIPELINE_TYPE>) -> Self {
         let psd = PipelineStateDescWrapper::from(&value.pso_desc);
 
+        let mut resource_signatures = value
+            .resource_signatures
+            .iter()
+            .map(|&rs| rs.pipeline_resource_signature)
+            .collect::<Vec<*mut diligent_sys::IPipelineResourceSignature>>();
+
         let ci = diligent_sys::PipelineStateCreateInfo {
             PSODesc: psd.get(),
             Flags: value.flags.bits(),
@@ -408,18 +415,17 @@ impl<const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE>
             ppResourceSignatures: if value.resource_signatures.is_empty() {
                 std::ptr::null_mut()
             } else {
-                value
-                    .resource_signatures
-                    .iter()
-                    .map(|rs| rs.pipeline_resource_signature)
-                    .collect::<Vec<*mut diligent_sys::IPipelineResourceSignature>>()
-                    .as_mut_ptr()
+                resource_signatures.as_mut_ptr()
             },
             pPSOCache: std::ptr::null_mut(), // TODO
             pInternalData: std::ptr::null_mut(),
         };
 
-        PipelineStateCreateInfoWrapper { _psd: psd, ci }
+        PipelineStateCreateInfoWrapper {
+            _psd: psd,
+            _resource_signatures: resource_signatures,
+            ci,
+        }
     }
 }
 

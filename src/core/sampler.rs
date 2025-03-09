@@ -8,10 +8,10 @@ use super::{
 };
 
 bitflags! {
-    pub struct SamplerFlags: diligent_sys::_SAMPLER_FLAGS {
-        const None                           = diligent_sys::SAMPLER_FLAG_NONE;
-        const Subsampled                     = diligent_sys::SAMPLER_FLAG_SUBSAMPLED;
-        const SubsampledCoarseReconstruction = diligent_sys::SAMPLER_FLAG_SUBSAMPLED_COARSE_RECONSTRUCTION;
+    pub struct SamplerFlags: diligent_sys::SAMPLER_FLAGS {
+        const None                           = diligent_sys::SAMPLER_FLAG_NONE as diligent_sys::SAMPLER_FLAGS;
+        const Subsampled                     = diligent_sys::SAMPLER_FLAG_SUBSAMPLED as diligent_sys::SAMPLER_FLAGS;
+        const SubsampledCoarseReconstruction = diligent_sys::SAMPLER_FLAG_SUBSAMPLED_COARSE_RECONSTRUCTION as diligent_sys::SAMPLER_FLAGS;
     }
 }
 const_assert!(diligent_sys::SAMPLER_FLAG_LAST == 2);
