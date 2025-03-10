@@ -1,8 +1,5 @@
 use std::ffi::c_void;
 
-#[cfg(target_os = "linux")]
-use std::os::unix::ffi::OsStrExt;
-
 use std::path::PathBuf;
 
 use crate::core::device_context::DeviceContext;

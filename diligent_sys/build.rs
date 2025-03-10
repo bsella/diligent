@@ -5,6 +5,7 @@ use std::path::PathBuf;
 extern crate bindgen;
 extern crate cmake;
 
+#[cfg(all(debug_assertions, target_os = "windows"))]
 fn configure_cmake_windows_debug(cmake_config: &mut cmake::Config) {
     //cmake_config.profile("Debug");
     //cmake_config.static_crt(true);
@@ -47,9 +48,9 @@ fn build_diligent_engine(build_path: &PathBuf, install_prefix: &str) -> PathBuf 
         dst.display()
     );
 
-    #[cfg(debug_assertions)]
+    #[cfg(all(debug_assertions, target_os = "windows"))]
     let library_suffix = "d";
-    #[cfg(not(debug_assertions))]
+    #[cfg(any(not(debug_assertions), not(target_os = "windows")))]
     let library_suffix = "";
 
     println!("cargo::rustc-link-lib=static=DiligentCore");

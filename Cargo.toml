@@ -15,8 +15,8 @@ imgui             = "0.12.0"
 clap              = { version = "4.5.30", features = ["cargo"] }
 glam              = "0.30.0"
 
-[target.'cfg(linux)'.dependencies]
-xcb = { version = "1.5.0" , optional = true }
+[target.'cfg(unix)'.dependencies]
+xcb = { version = "1.5.0" }
 
 [target.'cfg(windows)'.dependencies]
 windows = {version = "0.60.0" , features = ["Win32_Foundation", "Win32_Graphics_Gdi", "Win32_System_LibraryLoader", "Win32_UI_WindowsAndMessaging",] }
