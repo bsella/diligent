@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use diligent::{
     core::{
         accessories::linear_to_srgba,
@@ -79,7 +77,7 @@ impl SampleBase for Cube {
 
         let shader_ci = ShaderCreateInfo::new(
             c"Cube VS",
-            ShaderSource::FilePath(PathBuf::from("cube.vsh")),
+            ShaderSource::FilePath(c"cube.vsh"),
             ShaderType::Vertex,
         )
         .entry_point(c"main")
@@ -126,7 +124,7 @@ impl SampleBase for Cube {
             .create_shader(
                 &shader_ci
                     .name(c"Cube PS")
-                    .source(ShaderSource::FilePath(PathBuf::from("cube.psh")))
+                    .source(ShaderSource::FilePath(c"cube.psh"))
                     .shader_type(ShaderType::Pixel),
             )
             .unwrap();

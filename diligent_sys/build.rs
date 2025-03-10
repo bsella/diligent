@@ -7,10 +7,12 @@ extern crate cmake;
 
 fn configure_cmake_windows_debug(cmake_config: &mut cmake::Config) {
     //cmake_config.profile("Debug");
-    cmake_config.static_crt(true);
+    //cmake_config.static_crt(true);
     cmake_config.no_default_flags(true);
     cmake_config.cflag("/MDd /Zi /Ob0 /Od /RTC1");
     cmake_config.cxxflag("/MDd /Zi /Ob0 /Od /RTC1");
+
+    println!("cargo::rustc-link-lib=ucrtd");
 }
 
 fn build_diligent_engine(build_path: &PathBuf, install_prefix: &str) -> PathBuf {

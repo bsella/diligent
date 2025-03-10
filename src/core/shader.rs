@@ -1,7 +1,4 @@
-#[cfg(target_os = "linux")]
-use std::os::unix::ffi::OsStrExt;
-
-use std::{os::raw::c_void, path::PathBuf};
+use std::{ffi::CStr, os::raw::c_void};
 
 use bitflags::bitflags;
 use static_assertions::const_assert;
@@ -13,7 +10,7 @@ use super::{
 };
 
 pub enum ShaderSource<'a> {
-    FilePath(PathBuf),
+    FilePath(&'a CStr),
     SourceCode(&'a str),
     ByteCode(*const c_void, usize),
 }
@@ -244,9 +241,7 @@ impl From<&ShaderCreateInfo<'_>> for ShaderCreateInfoWrapper {
 
         let sci = diligent_sys::ShaderCreateInfo {
             FilePath: match &value.source {
-                ShaderSource::FilePath(path) => {
-                    path.as_os_str().as_encoded_bytes().as_ptr() as *const i8
-                }
+                ShaderSource::FilePath(path) => path.as_ptr(),
                 _ => std::ptr::null(),
             },
             pShaderSourceStreamFactory: value
