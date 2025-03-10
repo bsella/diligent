@@ -26,8 +26,18 @@ path = "diligent_sys"
 
 [features]
 default = ["vulkan"]
+
 vulkan = ["diligent_sys/vulkan"]
 vulkan_interop = ["vulkan", "diligent_sys/vulkan_interop"]
+
+opengl = ["diligent_sys/opengl"]
+opengl_interop = ["opengl", "diligent_sys/opengl_interop"]
+
+d3d11 = ["diligent_sys/d3d11"]
+d3d11_interop = ["d3d11", "diligent_sys/d3d11_interop"]
+
+d3d12 = ["diligent_sys/d3d12"]
+d3d12_interop = ["d3d12", "diligent_sys/d3d12_interop"]
 
 [lib]
 name = "diligent"

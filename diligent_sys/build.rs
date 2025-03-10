@@ -22,9 +22,6 @@ fn build_diligent_engine(build_path: &PathBuf, install_prefix: &str) -> PathBuf 
     #[cfg(all(debug_assertions, target_os = "windows"))]
     configure_cmake_windows_debug(&mut cmake_config);
 
-    //#[cfg(not(debug_assertions))]
-    //cmake_config.profile("Release");
-
     cmake_config
         .out_dir(build_path)
         .define("CMAKE_INSTALL_PREFIX", install_prefix)
@@ -32,7 +29,25 @@ fn build_diligent_engine(build_path: &PathBuf, install_prefix: &str) -> PathBuf 
         .define("DILIGENT_BUILD_SAMPLES", "OFF")
         .define("DILIGENT_BUILD_FX", "OFF")
         .define("DILIGENT_BUILD_TOOLS", "OFF")
+        .define("DILIGENT_BUILD_TESTS", "FALSE")
         .define("DILIGENT_NO_ARCHIVER", "ON");
+
+    {
+        #[cfg(not(feature = "vulkan"))]
+        cmake_config.define("DILIGENT_NO_VULKAN", "ON");
+
+        #[cfg(not(feature = "opengl"))]
+        cmake_config.define("DILIGENT_NO_OPENGL", "ON");
+
+        #[cfg(not(feature = "d3d11"))]
+        cmake_config.define("DILIGENT_NO_DIRECT3D11", "ON");
+
+        #[cfg(not(feature = "d3d12"))]
+        cmake_config.define("DILIGENT_NO_DIRECT3D12", "ON");
+
+        //#[cfg(not(feature = "metal"))]
+        //cmake_config.define("DILIGENT_NO_METAL", "ON");
+    }
 
     let dst = cmake_config.build().join("build/install");
 

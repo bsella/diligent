@@ -13,6 +13,15 @@ cmake   = "0.1.54"
 vulkan = []
 vulkan_interop = ["vulkan"]
 
+opengl = []
+opengl_interop = ["opengl"]
+
+d3d11 = []
+d3d11_interop = ["d3d11"]
+
+d3d12 = []
+d3d12_interop = ["d3d12"]
+
 [lib]
 name = "diligent_sys"
 path = "lib.rs"
