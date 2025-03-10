@@ -42,21 +42,12 @@ impl<'a> EventHandler for Win32EventHandler {
 
     fn handle_event(&mut self, event: &Self::EventType) -> EventResult {
         match event.message {
-            WM_PAINT => {
-                println!("WM_PAINT");
-                unsafe {
-                    let _ = ValidateRect(Some(event.hwnd), None);
-                }
-                EventResult::Continue
-            }
             WM_QUIT => EventResult::Quit,
-            WM_SIZING => {
-                println!("WM_RESIZEEE");
-                EventResult::Resize {
-                    width: (event.lParam.0 & 0xffff) as u16,
-                    height: ((event.lParam.0 >> 16) & 0xffff) as u16,
-                }
-            }
+            // TODO : The resize event is not handled properly for now
+            WM_SIZE | WM_SIZING => EventResult::Resize {
+                width: (event.lParam.0 & 0xffff) as u16,
+                height: ((event.lParam.0 >> 16) & 0xffff) as u16,
+            },
             WM_MOUSEMOVE => EventResult::MouseMove {
                 x: (event.lParam.0 & 0xffff) as i16,
                 y: ((event.lParam.0 >> 16) & 0xffff) as i16,
@@ -79,29 +70,34 @@ impl<'a> EventHandler for Win32EventHandler {
             WM_MBUTTONUP => EventResult::MouseUp {
                 button: super::events::MouseButton::Middle,
             },
-            _ => EventResult::Continue,
+            _ => {
+                //println!("{}", event.message);
+                EventResult::Continue
+            }
         }
     }
 }
 
 extern "system" fn handle_message(
-    window: HWND,
+    hwnd: HWND,
     message: u32,
     wparam: WPARAM,
     lparam: LPARAM,
 ) -> LRESULT {
     //println!("{}", message);
     match message {
-        WM_SIZE => {
-            println!("WM_RESIZE");
+        WM_PAINT => {
+            unsafe {
+                let _ = ValidateRect(Some(hwnd), None);
+            }
             LRESULT(0)
         }
+        WM_SIZE => LRESULT(0),
         WM_DESTROY => {
-            println!("WM_DESTROY");
             unsafe { PostQuitMessage(0) };
             LRESULT(0)
         }
-        _ => unsafe { DefWindowProcW(window, message, wparam, lparam) },
+        _ => unsafe { DefWindowProcW(hwnd, message, wparam, lparam) },
     }
 }
 
@@ -138,7 +134,7 @@ where
         CreateWindowExW(
             WINDOW_EX_STYLE::default(),
             window_class,
-            w!("This is a sample window"),
+            w!(""),
             WS_OVERLAPPEDWINDOW | WS_VISIBLE,
             CW_USEDEFAULT,
             CW_USEDEFAULT,
@@ -156,5 +152,10 @@ where
         EngineCreateInfo::default(),
         Some(&NativeWindow { hwnd: hwnd.0 }),
     )
-    .run(Win32EventHandler, Some(|_str: &str| {}))
+    .run(
+        Win32EventHandler,
+        Some(|title: &str| unsafe {
+            let _ = SetWindowTextW(hwnd, &HSTRING::from(title));
+        }),
+    )
 }
