@@ -45,8 +45,11 @@ fn build_diligent_engine(build_path: &PathBuf, install_prefix: &str) -> PathBuf 
         #[cfg(not(feature = "d3d12"))]
         cmake_config.define("DILIGENT_NO_DIRECT3D12", "ON");
 
-        //#[cfg(not(feature = "metal"))]
-        //cmake_config.define("DILIGENT_NO_METAL", "ON");
+        #[cfg(not(feature = "metal"))]
+        cmake_config.define("DILIGENT_NO_METAL", "ON");
+
+        #[cfg(not(feature = "webgpu"))]
+        cmake_config.define("DILIGENT_NO_WEBGPU", "ON");
     }
 
     let dst = cmake_config.build().join("build/install");
@@ -63,17 +66,21 @@ fn build_diligent_engine(build_path: &PathBuf, install_prefix: &str) -> PathBuf 
         dst.display()
     );
 
-    #[cfg(all(debug_assertions, target_os = "windows"))]
-    let library_suffix = "d";
-    #[cfg(any(not(debug_assertions), not(target_os = "windows")))]
-    let library_suffix = "";
-
     println!("cargo::rustc-link-lib=static=DiligentCore");
-    println!("cargo::rustc-link-lib=static=glslang{library_suffix}");
-    println!("cargo::rustc-link-lib=static=SPIRV{library_suffix}");
-    println!("cargo::rustc-link-lib=static=SPIRV-Tools");
-    println!("cargo::rustc-link-lib=static=SPIRV-Tools-opt");
-    println!("cargo::rustc-link-lib=static=spirv-cross-core{library_suffix}");
+
+    #[cfg(feature = "vulkan")]
+    {
+        #[cfg(all(debug_assertions, target_os = "windows"))]
+        let library_suffix = "d";
+        #[cfg(any(not(debug_assertions), not(target_os = "windows")))]
+        let library_suffix = "";
+
+        println!("cargo::rustc-link-lib=static=glslang{library_suffix}");
+        println!("cargo::rustc-link-lib=static=SPIRV{library_suffix}");
+        println!("cargo::rustc-link-lib=static=SPIRV-Tools");
+        println!("cargo::rustc-link-lib=static=SPIRV-Tools-opt");
+        println!("cargo::rustc-link-lib=static=spirv-cross-core{library_suffix}");
+    }
 
     #[cfg(target_os = "linux")]
     println!("cargo:rustc-link-lib=dylib=stdc++");
@@ -102,6 +109,7 @@ fn generate_diligent_c_bindings(diligent_install_dir: &PathBuf, out_dir: &PathBu
         }
     };
 
+    #[cfg(feature = "vulkan")]
     fn configure_vulkan(builder: bindgen::Builder) -> bindgen::Builder {
         let builder = builder.clang_arg("-DVULKAN_SUPPORTED=1");
 
@@ -113,8 +121,25 @@ fn generate_diligent_c_bindings(diligent_install_dir: &PathBuf, out_dir: &PathBu
         builder
     }
 
+    #[cfg(feature = "opengl")]
+    fn configure_opengl(builder: bindgen::Builder) -> bindgen::Builder {
+        let builder = builder.clang_arg("-DOPENGL_SUPPORTED=1");
+
+        #[cfg(feature = "opengl_interop")]
+        let builder = builder.clang_arg("-DOPENGL_INTEROP=1");
+
+        println!("cargo::rustc-link-lib=GL");
+        println!("cargo::rustc-link-lib=X11");
+        println!("cargo::rustc-link-lib=GLEW");
+
+        builder
+    }
+
     #[cfg(feature = "vulkan")]
     let builder = configure_vulkan(builder);
+
+    #[cfg(feature = "opengl")]
+    let builder = configure_opengl(builder);
 
     let bindings = builder.generate().expect("Unable to generate bindings");
 

@@ -366,12 +366,18 @@ impl RenderDevice {
 
         RenderDeviceInfo {
             device_type: match render_device_info.Type {
+                #[cfg(feature = "d3d11")]
                 diligent_sys::RENDER_DEVICE_TYPE_D3D11 => RenderDeviceType::D3D11,
+                #[cfg(feature = "d3d12")]
                 diligent_sys::RENDER_DEVICE_TYPE_D3D12 => RenderDeviceType::D3D12,
+                #[cfg(feature = "opengl")]
                 diligent_sys::RENDER_DEVICE_TYPE_GL => RenderDeviceType::GL,
-                diligent_sys::RENDER_DEVICE_TYPE_GLES => RenderDeviceType::GLES,
+                //diligent_sys::RENDER_DEVICE_TYPE_GLES => RenderDeviceType::GLES,
+                #[cfg(feature = "vulkan")]
                 diligent_sys::RENDER_DEVICE_TYPE_VULKAN => RenderDeviceType::VULKAN,
+                #[cfg(feature = "metal")]
                 diligent_sys::RENDER_DEVICE_TYPE_METAL => RenderDeviceType::METAL,
+                #[cfg(feature = "webgpu")]
                 diligent_sys::RENDER_DEVICE_TYPE_WEBGPU => RenderDeviceType::WEBGPU,
                 _ => panic!(),
             },

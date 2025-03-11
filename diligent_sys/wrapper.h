@@ -1,7 +1,5 @@
 #define DILIGENT_C_INTERFACE 1
 
-#include <DiligentCore/Graphics/GraphicsEngine/interface/EngineFactory.h>
-
 #ifdef VULKAN_SUPPORTED
 
 #include <DiligentCore/Graphics/GraphicsEngineVulkan/interface/EngineFactoryVk.h>
@@ -31,6 +29,16 @@
 #   include <DiligentCore/Graphics/GraphicsEngineVulkan/interface/TextureViewVk.h>
 #   include <DiligentCore/Graphics/GraphicsEngineVulkan/interface/TextureVk.h>
 #   include <DiligentCore/Graphics/GraphicsEngineVulkan/interface/TopLevelASVk.h>
+#endif
+
+#endif
+
+#ifdef OPENGL_SUPPORTED
+
+#include <DiligentCore/Graphics/GraphicsEngineOpenGL/interface/EngineFactoryOpenGL.h>
+
+#ifdef OPENGL_INTEROP
+    // TODO
 #endif
 
 #endif

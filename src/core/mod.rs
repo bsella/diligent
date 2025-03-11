@@ -27,3 +27,6 @@ pub mod texture_view;
 
 #[cfg(feature = "vulkan")]
 pub mod vk;
+
+#[cfg(feature = "opengl")]
+pub mod gl;

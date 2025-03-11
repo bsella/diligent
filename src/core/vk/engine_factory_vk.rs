@@ -112,17 +112,6 @@ pub struct EngineFactoryVk {
     engine_factory: EngineFactory,
 }
 
-impl EngineFactoryVk {
-    pub fn enable_device_simulation(&self) {
-        unsafe {
-            (*self.virtual_functions)
-                .EngineFactoryVk
-                .EnableDeviceSimulation
-                .unwrap_unchecked()(self.engine_factory_vk);
-        }
-    }
-}
-
 impl AsEngineFactory for EngineFactoryVk {
     #[inline]
     fn as_engine_factory(&self) -> &EngineFactory {
@@ -146,8 +135,12 @@ impl EngineFactoryVk {
         &self,
         create_info: &EngineVkCreateInfo,
     ) -> Option<(RenderDevice, Vec<DeviceContext>, Vec<DeviceContext>)> {
-        let num_immediate_contexts =
-            std::cmp::max(create_info.engine_create_info.num_immediate_contexts, 1) as usize;
+        let num_immediate_contexts = create_info
+            .engine_create_info
+            .immediate_context_info
+            .len()
+            .max(1);
+
         let num_deferred_contexts = create_info.engine_create_info.num_deferred_contexts as usize;
 
         let mut render_device_ptr = std::ptr::null_mut();
@@ -300,6 +293,15 @@ impl EngineFactoryVk {
             None
         } else {
             Some(SwapChain::new(swap_chain_ptr))
+        }
+    }
+
+    pub fn enable_device_simulation(&self) {
+        unsafe {
+            (*self.virtual_functions)
+                .EngineFactoryVk
+                .EnableDeviceSimulation
+                .unwrap_unchecked()(self.engine_factory_vk);
         }
     }
 }

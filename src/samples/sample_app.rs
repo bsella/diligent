@@ -1,5 +1,16 @@
 use imgui::WindowFlags;
 
+#[cfg(feature = "vulkan")]
+use crate::core::vk::engine_factory_vk::{
+    get_engine_factory_vk, EngineFactoryVk, EngineVkCreateInfo,
+};
+
+#[cfg(feature = "opengl")]
+use crate::core::{
+    gl::engine_factory_gl::{get_engine_factory_gl, EngineFactoryOpenGL, EngineGLCreateInfo},
+    graphics_types::DeviceFeatures,
+};
+
 use crate::{
     core::{
         accessories::get_render_device_type_string,
@@ -8,7 +19,6 @@ use crate::{
         engine_factory::{AsEngineFactory, EngineCreateInfo},
         graphics_types::{AdapterType, GraphicsAdapterInfo, RenderDeviceType, SurfaceTransform},
         swap_chain::{SwapChain, SwapChainDesc},
-        vk::engine_factory_vk::{get_engine_factory_vk, EngineFactoryVk, EngineVkCreateInfo},
     },
     samples::sample_app_settings::SampleAppSettings,
     tools::{
@@ -44,13 +54,19 @@ pub struct SampleApp<Sample: SampleBase> {
 }
 
 enum EngineFactory {
+    #[cfg(feature = "vulkan")]
     VULKAN(EngineFactoryVk),
+    #[cfg(feature = "opengl")]
+    OPENGL(EngineFactoryOpenGL),
 }
 
 impl AsEngineFactory for EngineFactory {
     fn as_engine_factory(&self) -> &crate::core::engine_factory::EngineFactory {
         match self {
+            #[cfg(feature = "vulkan")]
             Self::VULKAN(factory) => factory.as_engine_factory(),
+            #[cfg(feature = "opengl")]
+            Self::OPENGL(factory) => factory.as_engine_factory(),
         }
     }
 }
@@ -214,12 +230,18 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
         }
 
         let engine_factory = match app_settings.device_type {
+            #[cfg(feature = "d3d11")]
             RenderDeviceType::D3D11 => panic!(),
+            #[cfg(feature = "d3d12")]
             RenderDeviceType::D3D12 => panic!(),
-            RenderDeviceType::GL => panic!(),
-            RenderDeviceType::GLES => panic!(),
+            #[cfg(feature = "opengl")]
+            RenderDeviceType::GL => EngineFactory::OPENGL(get_engine_factory_gl()),
+            //RenderDeviceType::GLES => panic!(),
+            #[cfg(feature = "vulkan")]
             RenderDeviceType::VULKAN => EngineFactory::VULKAN(get_engine_factory_vk()),
+            #[cfg(feature = "metal")]
             RenderDeviceType::METAL => panic!(),
+            #[cfg(feature = "webgpu")]
             RenderDeviceType::WEBGPU => panic!(),
         };
 
@@ -240,6 +262,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
 
         let (render_device, immediate_contexts, deferred_contexts, swap_chain) =
             match &engine_factory {
+                #[cfg(feature = "vulkan")]
                 EngineFactory::VULKAN(engine_factory) => {
                     let engine_vk_create_info = EngineVkCreateInfo::new(engine_create_info);
 
@@ -262,6 +285,26 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
                         deferred_contexts,
                         swap_chain,
                     )
+                }
+                #[cfg(feature = "opengl")]
+                EngineFactory::OPENGL(engine_factory) => {
+                    if app_settings.non_separable_progs {
+                        engine_create_info.features.separable_programs =
+                            DeviceFeatureState::Disabled;
+                    }
+
+                    if engine_create_info.num_deferred_contexts != 0 {
+                        panic!("Deferred contexts are not supported in OpenGL mode");
+                    }
+
+                    let engine_gl_create_info =
+                        EngineGLCreateInfo::new(window.unwrap(), engine_create_info);
+
+                    let (device, immediate_context, swap_chain) = engine_factory
+                        .create_device_and_swap_chain_gl(&engine_gl_create_info, &swap_chain_desc)
+                        .unwrap();
+
+                    (device, vec![immediate_context], Vec::new(), swap_chain)
                 }
             };
 

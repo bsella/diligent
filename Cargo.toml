@@ -25,6 +25,7 @@ windows = {version = "0.60.0" , features = ["Win32_Foundation", "Win32_Graphics_
 path = "diligent_sys"
 
 [features]
+# Vulkan is present on all platforms, so let's set it as the default backend for now.
 default = ["vulkan"]
 
 vulkan = ["diligent_sys/vulkan"]
@@ -38,6 +39,15 @@ d3d11_interop = ["d3d11", "diligent_sys/d3d11_interop"]
 
 d3d12 = ["diligent_sys/d3d12"]
 d3d12_interop = ["d3d12", "diligent_sys/d3d12_interop"]
+
+metal = ["diligent_sys/metal"]
+metal_interop = ["metal", "diligent_sys/metal_interop"]
+
+gles = ["diligent_sys/gles"]
+gles_interop = ["gles", "diligent_sys/gles_interop"]
+
+webgpu = ["diligent_sys/webgpu"]
+webgpu_interop = ["webgpu", "diligent_sys/webgpu_interop"]
 
 [lib]
 name = "diligent"

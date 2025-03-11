@@ -1,3 +1,5 @@
+//use std::ffi::CStr;
+
 use bitflags::bitflags;
 use static_assertions::const_assert;
 
@@ -344,15 +346,47 @@ bitflags! {
 }
 
 pub enum RenderDeviceType {
+    #[cfg(feature = "d3d11")]
     D3D11,
+    #[cfg(feature = "d3d12")]
     D3D12,
+    #[cfg(feature = "opengl")]
     GL,
-    GLES,
+    #[cfg(feature = "vulkan")]
     VULKAN,
+    #[cfg(feature = "metal")]
     METAL,
+    #[cfg(feature = "webgpu")]
     WEBGPU,
 }
 const_assert!(diligent_sys::RENDER_DEVICE_TYPE_COUNT == 8);
+
+pub const fn get_prefered_device_type() -> RenderDeviceType {
+    // Prefer metal, if it's supported. In other words, prefer Metal if you're on Mac.
+    #[cfg(feature = "metal")]
+    return RenderDeviceType::METAL;
+
+    // If you're on windows, prefer Direct3D12, then Direct3D11.
+    #[allow(unreachable_code)]
+    #[cfg(feature = "d3d12")]
+    return RenderDeviceType::D3D12;
+
+    #[allow(unreachable_code)]
+    #[cfg(feature = "d3d11")]
+    return RenderDeviceType::D3D11;
+
+    #[allow(unreachable_code)]
+    #[cfg(feature = "vulkan")]
+    return RenderDeviceType::VULKAN;
+
+    #[allow(unreachable_code)]
+    #[cfg(feature = "opengl")]
+    return RenderDeviceType::GL;
+
+    #[allow(unreachable_code)]
+    #[cfg(feature = "webgpu")]
+    return RenderDeviceType::WEBGPU;
+}
 
 pub enum ValueType {
     Int8,
@@ -438,6 +472,25 @@ impl Ord for AdapterType {
 impl PartialOrd for AdapterType {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.cmp(&other))
+    }
+}
+
+impl From<&AdapterType> for diligent_sys::ADAPTER_TYPE {
+    fn from(value: &AdapterType) -> Self {
+        match value {
+            AdapterType::Unknown => {
+                diligent_sys::ADAPTER_TYPE_UNKNOWN as diligent_sys::ADAPTER_TYPE
+            }
+            AdapterType::Software => {
+                diligent_sys::ADAPTER_TYPE_SOFTWARE as diligent_sys::ADAPTER_TYPE
+            }
+            AdapterType::Integrated => {
+                diligent_sys::ADAPTER_TYPE_INTEGRATED as diligent_sys::ADAPTER_TYPE
+            }
+            AdapterType::Discrete => {
+                diligent_sys::ADAPTER_TYPE_DISCRETE as diligent_sys::ADAPTER_TYPE
+            }
+        }
     }
 }
 
@@ -1303,3 +1356,17 @@ bitflags! {
 }
 
 const_assert!(diligent_sys::RESOURCE_STATE_MAX_BIT == 2097152);
+
+pub enum QueuePriority {
+    Low,
+    Medium,
+    High,
+    RealTime,
+}
+const_assert!(diligent_sys::QUEUE_PRIORITY_LAST == 4);
+
+//pub struct ImmediateContextCreateInfo<'a> {
+//    name: &'a CStr,
+//    queue_id: u8,
+//    priority: QueuePriority,
+//}

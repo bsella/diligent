@@ -13,9 +13,8 @@ pub struct EngineCreateInfo {
     pub adapter_index: Option<usize>,
     pub graphics_api_version: Version,
 
-    // TODO
-    //immediate_context_info: Option<diligent_sys::ImmediateContextCreateInfo>,
-    pub num_immediate_contexts: u32,
+    pub immediate_context_info: Vec<diligent_sys::ImmediateContextCreateInfo>,
+
     pub num_deferred_contexts: u32,
 
     pub features: DeviceFeatures,
@@ -39,7 +38,7 @@ impl Default for EngineCreateInfo {
             adapter_index: None,
             graphics_api_version: Version { major: 0, minor: 0 },
 
-            num_immediate_contexts: 0,
+            immediate_context_info: Vec::new(),
             num_deferred_contexts: 0,
 
             features: DeviceFeatures::default(),
@@ -68,7 +67,7 @@ impl From<&EngineCreateInfo> for diligent_sys::EngineCreateInfo {
                 Minor: value.graphics_api_version.minor,
             },
             pImmediateContextInfo: std::ptr::null(),
-            NumImmediateContexts: value.num_immediate_contexts,
+            NumImmediateContexts: value.immediate_context_info.len() as u32,
             NumDeferredContexts: value.num_deferred_contexts,
             Features: diligent_sys::DeviceFeatures::from(&value.features),
             EnableValidation: value.enable_validation,

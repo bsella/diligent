@@ -22,6 +22,15 @@ d3d11_interop = ["d3d11"]
 d3d12 = []
 d3d12_interop = ["d3d12"]
 
+metal = []
+metal_interop = ["metal"]
+
+gles = []
+gles_interop = ["gles"]
+
+webgpu = []
+webgpu_interop = ["webgpu"]
+
 [lib]
 name = "diligent_sys"
 path = "lib.rs"

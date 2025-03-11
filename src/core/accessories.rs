@@ -24,22 +24,34 @@ pub fn get_render_device_type_string(
 ) -> &'static str {
     if get_enum_string {
         match device_type {
+            #[cfg(feature = "d3d11")]
             RenderDeviceType::D3D11 => "RENDER_DEVICE_TYPE_D3D11",
+            #[cfg(feature = "d3d12")]
             RenderDeviceType::D3D12 => "RENDER_DEVICE_TYPE_D3D12",
+            #[cfg(feature = "opengl")]
             RenderDeviceType::GL => "RENDER_DEVICE_TYPE_GL",
-            RenderDeviceType::GLES => "RENDER_DEVICE_TYPE_GLES",
+            //RenderDeviceType::GLES => "RENDER_DEVICE_TYPE_GLES",
+            #[cfg(feature = "vulkan")]
             RenderDeviceType::VULKAN => "RENDER_DEVICE_TYPE_VULKAN",
+            #[cfg(feature = "metal")]
             RenderDeviceType::METAL => "RENDER_DEVICE_TYPE_METAL",
+            #[cfg(feature = "webgpu")]
             RenderDeviceType::WEBGPU => "RENDER_DEVICE_TYPE_WEBGPU",
         }
     } else {
         match device_type {
+            #[cfg(feature = "d3d11")]
             RenderDeviceType::D3D11 => "Direct3D11",
+            #[cfg(feature = "d3d12")]
             RenderDeviceType::D3D12 => "Direct3D12",
+            #[cfg(feature = "opengl")]
             RenderDeviceType::GL => "OpenGL",
-            RenderDeviceType::GLES => "OpenGLES",
+            //RenderDeviceType::GLES => "OpenGLES",
+            #[cfg(feature = "vulkan")]
             RenderDeviceType::VULKAN => "Vulkan",
+            #[cfg(feature = "metal")]
             RenderDeviceType::METAL => "Metal",
+            #[cfg(feature = "webgpu")]
             RenderDeviceType::WEBGPU => "WebGPU",
         }
     }

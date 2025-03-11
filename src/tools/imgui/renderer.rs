@@ -1,4 +1,7 @@
-use std::{ops::BitAnd, os::raw::c_void};
+#[cfg(feature = "vulkan")]
+use std::os::raw::c_void;
+
+use std::ops::BitAnd;
 
 use imgui::{
     internal::RawWrapper,
@@ -42,6 +45,7 @@ col.g = GAMMA_TO_LINEAR(col.g);
 col.b = GAMMA_TO_LINEAR(col.b);
 col.a = 1.0 - GAMMA_TO_LINEAR(1.0 - col.a);"#;
 
+#[cfg(any(feature = "d3d11", feature = "d3d12"))]
 const VERTEX_SHADER_HLSL: &str = r#"(
 cbuffer Constants
 {
@@ -70,6 +74,7 @@ void main(in VSInput VSIn, out PSInput PSIn)
 }
 )"#;
 
+#[cfg(any(feature = "d3d11", feature = "d3d12"))]
 const PIXEL_SHADER_HLSL: &str = r#"(
 struct PSInput
 {
@@ -90,6 +95,7 @@ float4 main(in PSInput PSIn) : SV_Target
 }
 )"#;
 
+#[cfg(feature = "opengl")]
 const VERTEX_SHADER_GLSL: &str = r#"(
 #ifdef VULKAN
 #   define BINDING(X) layout(binding=X)
@@ -125,6 +131,7 @@ void main()
 }
 )"#;
 
+#[cfg(feature = "opengl")]
 const PIXEL_SHADER_GLSL: &str = r#"(
 #ifdef VULKAN
 #   define BINDING(X) layout(binding=X)
@@ -149,6 +156,7 @@ void main()
 }
 )"#;
 
+#[cfg(feature = "webgpu")]
 const VERTEX_SHADER_WGSL: &str = r#"(
 struct Constants {
     ProjectionMatrix: mat4x4<f32>
@@ -178,6 +186,7 @@ fn main(in: VSInput) -> PSInput {
 }
 )"#;
 
+#[cfg(feature = "webgpu")]
 const PIXEL_SHADER_WGSL: &str = r#"(
 struct PSInput {
     @builtin(position) pos: vec4f,
@@ -198,6 +207,7 @@ fn main(in: PSInput) -> @location(0) vec4f {
 }
 )"#;
 
+#[cfg(feature = "webgpu")]
 const PIXEL_SHADER_WGSL_GAMMA: &str = r#"(
 struct PSInput {
     @builtin(position) pos: vec4f,
@@ -227,6 +237,7 @@ fn main(in: PSInput) -> @location(0) vec4f {
 }
 )"#;
 
+#[cfg(feature = "vulkan")]
 const VERTEX_SHADER_SPIRV: &[u32] = &[
     0x07230203, 0x00010000, 0x0008000a, 0x00000028, 0x00000000, 0x00020011, 0x00000001, 0x0006000b,
     0x00000001, 0x4c534c47, 0x6474732e, 0x3035342e, 0x00000000, 0x0003000e, 0x00000000, 0x00000001,
@@ -268,6 +279,7 @@ const VERTEX_SHADER_SPIRV: &[u32] = &[
     0x00000014, 0x00000027, 0x00000026, 0x0003003e, 0x00000025, 0x00000027, 0x000100fd, 0x00010038,
 ];
 
+#[cfg(feature = "vulkan")]
 const PIXEL_SHADER_SPIRV: &[u32] = &[
     0x07230203, 0x00010000, 0x0008000a, 0x00000023, 0x00000000, 0x00020011, 0x00000001, 0x0006000b,
     0x00000001, 0x4c534c47, 0x6474732e, 0x3035342e, 0x00000000, 0x0003000e, 0x00000000, 0x00000001,
@@ -300,6 +312,7 @@ const PIXEL_SHADER_SPIRV: &[u32] = &[
     0x00010038,
 ];
 
+#[cfg(feature = "vulkan")]
 const PIXEL_SHADER_GAMMA_SPIRV: &[u32] = &[
     0x07230203, 0x00010000, 0x0008000a, 0x0000007b, 0x00000000, 0x00020011, 0x00000001, 0x0006000b,
     0x00000001, 0x4c534c47, 0x6474732e, 0x3035342e, 0x00000000, 0x0003000e, 0x00000000, 0x00000001,
@@ -468,17 +481,21 @@ impl ImguiRenderer {
         let vertex_shader = {
             let shader_ci = {
                 let shader_source = match device_type {
+                    #[cfg(feature = "vulkan")]
                     RenderDeviceType::VULKAN => ShaderSource::ByteCode(
                         VERTEX_SHADER_SPIRV.as_ptr() as *const c_void,
                         std::mem::size_of_val(VERTEX_SHADER_SPIRV),
                     ),
-                    RenderDeviceType::D3D11 | RenderDeviceType::D3D12 => {
-                        ShaderSource::SourceCode(VERTEX_SHADER_HLSL)
-                    }
-                    RenderDeviceType::GL | RenderDeviceType::GLES => {
-                        ShaderSource::SourceCode(VERTEX_SHADER_GLSL)
-                    }
+                    #[cfg(feature = "d3d11")]
+                    RenderDeviceType::D3D11 => ShaderSource::SourceCode(VERTEX_SHADER_HLSL),
+                    #[cfg(feature = "d3d12")]
+                    RenderDeviceType::D3D12 => ShaderSource::SourceCode(VERTEX_SHADER_HLSL),
+                    #[cfg(feature = "opengl")]
+                    RenderDeviceType::GL => ShaderSource::SourceCode(VERTEX_SHADER_GLSL),
+                    //RenderDeviceType::GLES => ShaderSource::SourceCode(VERTEX_SHADER_GLSL),
+                    #[cfg(feature = "webgpu")]
                     RenderDeviceType::WEBGPU => ShaderSource::SourceCode(VERTEX_SHADER_WGSL),
+                    #[cfg(feature = "metal")]
                     RenderDeviceType::METAL => {
                         todo!()
                     }
@@ -500,6 +517,7 @@ impl ImguiRenderer {
 
         let pixel_shader = {
             let shader_source = match device_type {
+                #[cfg(feature = "vulkan")]
                 RenderDeviceType::VULKAN => {
                     if manual_srgb {
                         ShaderSource::ByteCode(
@@ -513,12 +531,14 @@ impl ImguiRenderer {
                         )
                     }
                 }
-                RenderDeviceType::D3D11 | RenderDeviceType::D3D12 => {
-                    ShaderSource::SourceCode(PIXEL_SHADER_HLSL)
-                }
-                RenderDeviceType::GL | RenderDeviceType::GLES => {
-                    ShaderSource::SourceCode(PIXEL_SHADER_GLSL)
-                }
+                #[cfg(feature = "d3d11")]
+                RenderDeviceType::D3D11 => ShaderSource::SourceCode(PIXEL_SHADER_HLSL),
+                #[cfg(feature = "d3d12")]
+                RenderDeviceType::D3D12 => ShaderSource::SourceCode(PIXEL_SHADER_HLSL),
+                #[cfg(feature = "opengl")]
+                RenderDeviceType::GL => ShaderSource::SourceCode(PIXEL_SHADER_GLSL),
+                //RenderDeviceType::GLES => ShaderSource::SourceCode(PIXEL_SHADER_GLSL),
+                #[cfg(feature = "webgpu")]
                 RenderDeviceType::WEBGPU => {
                     if manual_srgb {
                         ShaderSource::SourceCode(PIXEL_SHADER_WGSL_GAMMA)
@@ -526,6 +546,7 @@ impl ImguiRenderer {
                         ShaderSource::SourceCode(PIXEL_SHADER_WGSL)
                     }
                 }
+                #[cfg(feature = "metal")]
                 RenderDeviceType::METAL => {
                     todo!()
                 }

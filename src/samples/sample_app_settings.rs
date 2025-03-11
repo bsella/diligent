@@ -1,7 +1,7 @@
 use clap::{command, value_parser, Arg};
 
 use crate::{
-    core::graphics_types::{AdapterType, RenderDeviceType},
+    core::graphics_types::{get_prefered_device_type, AdapterType, RenderDeviceType},
     tools::native_app::app_settings::AppSettings,
 };
 
@@ -23,6 +23,8 @@ pub struct SampleAppSettings {
     pub show_adapters_dialog: bool,
 
     pub vsync: bool,
+
+    pub non_separable_progs: bool,
 }
 
 impl AppSettings for SampleAppSettings {
@@ -34,7 +36,23 @@ impl AppSettings for SampleAppSettings {
 pub fn parse_sample_app_settings() -> SampleAppSettings {
     let matches = command!()
         .arg(Arg::new("mode").long("mode").short('m').value_parser([
-            "d3d11_sw", "d3d12_sw", "vk_sw", "d3d11", "d3d12", "gl", "gles", "vk", "mtl", "wgpu",
+            #[cfg(feature = "d3d11")]
+            "d3d11_sw",
+            #[cfg(feature = "d3d12")]
+            "d3d12_sw",
+            #[cfg(feature = "vulkan")]
+            "vk_sw",
+            #[cfg(feature = "d3d11")]
+            "d3d11",
+            #[cfg(feature = "d3d12")]
+            "d3d12",
+            #[cfg(feature = "opengl")]
+            "gl",
+            "gles",
+            #[cfg(feature = "vulkan")]
+            "vk",
+            "mtl",
+            "wgpu",
         ]))
         .arg(Arg::new("adapter").long("adapter"))
         .arg(
@@ -69,12 +87,18 @@ pub fn parse_sample_app_settings() -> SampleAppSettings {
                 .value_parser(value_parser!(bool))
                 .default_value("true"),
         )
+        .arg(
+            Arg::new("non_separable_progs")
+                .long("non_separable_progs")
+                .value_parser(value_parser!(bool))
+                .default_value("false"),
+        )
         // TODO : add a help subcommand for the `--help` flag
         .disable_help_flag(true)
         .get_matches();
 
     let mut settings = SampleAppSettings {
-        device_type: RenderDeviceType::VULKAN,
+        device_type: get_prefered_device_type(),
         width: *matches.get_one::<u16>("width").unwrap(),
         height: *matches.get_one::<u16>("height").unwrap(),
         adapter_index: None,
@@ -84,41 +108,51 @@ pub fn parse_sample_app_settings() -> SampleAppSettings {
         show_adapters_dialog: *matches.get_one::<bool>("adapters_dialog").unwrap(),
         validation: true,
         vsync: *matches.get_one::<bool>("vsync").unwrap(),
+        non_separable_progs: *matches.get_one::<bool>("non_separable_progs").unwrap(),
     };
 
     if let Some(mode) = matches.get_one::<String>("mode") {
         let mode = mode.as_str();
         match mode {
+            #[cfg(feature = "d3d11")]
             "d3d11_sw" => {
                 settings.device_type = RenderDeviceType::D3D11;
                 settings.adapter_type = AdapterType::Software;
             }
+            #[cfg(feature = "d3d12")]
             "d3d12_sw" => {
                 settings.device_type = RenderDeviceType::D3D12;
                 settings.adapter_type = AdapterType::Software;
             }
+            #[cfg(feature = "vulkan")]
             "vk_sw" => {
                 settings.device_type = RenderDeviceType::VULKAN;
                 settings.adapter_type = AdapterType::Software;
             }
+            #[cfg(feature = "d3d11")]
             "d3d11" => {
                 settings.device_type = RenderDeviceType::D3D11;
             }
+            #[cfg(feature = "d3d12")]
             "d3d12" => {
                 settings.device_type = RenderDeviceType::D3D12;
             }
+            #[cfg(feature = "opengl")]
             "gl" => {
                 settings.device_type = RenderDeviceType::GL;
             }
-            "gles" => {
-                settings.device_type = RenderDeviceType::GLES;
-            }
+            //"gles" => {
+            //    settings.device_type = RenderDeviceType::GLES;
+            //}
+            #[cfg(feature = "vulkan")]
             "vk" => {
                 settings.device_type = RenderDeviceType::VULKAN;
             }
+            #[cfg(feature = "metal")]
             "mtl" => {
                 settings.device_type = RenderDeviceType::METAL;
             }
+            #[cfg(feature = "webgpu")]
             "wgpu" => {
                 settings.device_type = RenderDeviceType::WEBGPU;
             }
