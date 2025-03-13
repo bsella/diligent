@@ -12,7 +12,7 @@ use crate::{
 pub struct EngineGLCreateInfo<'a> {
     engine_create_info: EngineCreateInfo,
 
-    window: &'a NativeWindow,
+    window: &'a NativeWindow<'a>,
     zero_to_one_ndz: bool,
     preferred_adapter_type: AdapterType,
 }

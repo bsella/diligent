@@ -23,6 +23,6 @@ pub trait App {
     fn run(
         self,
         event_handler: impl EventHandler,
-        update_window_title_cb: Option<impl Fn(&str)>,
+        update_window_title_cb: impl Fn(&str),
     ) -> Result<(), std::io::Error>;
 }

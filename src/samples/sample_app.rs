@@ -8,7 +8,7 @@ use crate::core::vk::engine_factory_vk::{
 #[cfg(feature = "opengl")]
 use crate::core::{
     gl::engine_factory_gl::{get_engine_factory_gl, EngineFactoryOpenGL, EngineGLCreateInfo},
-    graphics_types::DeviceFeatures,
+    graphics_types::DeviceFeatureState,
 };
 
 use crate::{
@@ -347,20 +347,20 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
     fn run(
         mut self,
         mut event_handler: impl EventHandler,
-        update_window_title_cb: Option<impl Fn(&str) -> ()>,
+        update_window_title_cb: impl Fn(&str),
     ) -> Result<(), std::io::Error> {
         let start_time = std::time::Instant::now();
 
         let mut last_time = start_time;
 
-        if let Some(update_window) = &update_window_title_cb {
+        {
             let app_title = String::from(GenericSample::get_name())
                 + " ("
                 + get_render_device_type_string(&self.app_settings.device_type, false)
                 + ", API "
                 + format!("{API_VERSION}").as_str()
                 + ")";
-            update_window(app_title.as_str());
+            update_window_title_cb(app_title.as_str());
         }
 
         'main: loop {

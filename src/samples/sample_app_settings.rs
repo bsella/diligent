@@ -28,6 +28,9 @@ pub struct SampleAppSettings {
 }
 
 impl AppSettings for SampleAppSettings {
+    fn get_render_device_type(&self) -> &RenderDeviceType {
+        &self.device_type
+    }
     fn get_window_dimensions(&self) -> (u16, u16) {
         (self.width, self.height)
     }

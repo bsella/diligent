@@ -39,14 +39,14 @@ use crate::core::{
 
 const GAMMA_TO_LINEAR: &std::ffi::CStr =
     c"((Gamma) < 0.04045 ? (Gamma) / 12.92 : pow(max((Gamma) + 0.055, 0.0) / 1.055, 2.4))";
-const SRGBA_TO_LINEAR: &std::ffi::CStr = cr#"
-col.r = GAMMA_TO_LINEAR(col.r);
-col.g = GAMMA_TO_LINEAR(col.g);
-col.b = GAMMA_TO_LINEAR(col.b);
+const SRGBA_TO_LINEAR: &std::ffi::CStr = cr#"\
+col.r = GAMMA_TO_LINEAR(col.r);\
+col.g = GAMMA_TO_LINEAR(col.g);\
+col.b = GAMMA_TO_LINEAR(col.b);\
 col.a = 1.0 - GAMMA_TO_LINEAR(1.0 - col.a);"#;
 
 #[cfg(any(feature = "d3d11", feature = "d3d12"))]
-const VERTEX_SHADER_HLSL: &str = r#"(
+const VERTEX_SHADER_HLSL: &str = r#"
 cbuffer Constants
 {
     float4x4 ProjectionMatrix;
@@ -72,10 +72,10 @@ void main(in VSInput VSIn, out PSInput PSIn)
     PSIn.col = VSIn.col;
     PSIn.uv  = VSIn.uv;
 }
-)"#;
+"#;
 
 #[cfg(any(feature = "d3d11", feature = "d3d12"))]
-const PIXEL_SHADER_HLSL: &str = r#"(
+const PIXEL_SHADER_HLSL: &str = r#"
 struct PSInput
 {
     float4 pos : SV_POSITION;
@@ -93,10 +93,10 @@ float4 main(in PSInput PSIn) : SV_Target
     SRGBA_TO_LINEAR(col)
     return col;
 }
-)"#;
+"#;
 
 #[cfg(feature = "opengl")]
-const VERTEX_SHADER_GLSL: &str = r#"(
+const VERTEX_SHADER_GLSL: &str = r#"
 #ifdef VULKAN
 #   define BINDING(X) layout(binding=X)
 #   define OUT_LOCATION(X) layout(location=X) // Requires separable programs
@@ -129,10 +129,10 @@ void main()
     vsout_col = in_col;
     vsout_uv  = in_uv;
 }
-)"#;
+"#;
 
 #[cfg(feature = "opengl")]
-const PIXEL_SHADER_GLSL: &str = r#"(
+const PIXEL_SHADER_GLSL: &str = r#"
 #ifdef VULKAN
 #   define BINDING(X) layout(binding=X)
 #   define IN_LOCATION(X) layout(location=X) // Requires separable programs
@@ -154,10 +154,10 @@ void main()
     SRGBA_TO_LINEAR(col)
     psout_col = col;
 }
-)"#;
+"#;
 
 #[cfg(feature = "webgpu")]
-const VERTEX_SHADER_WGSL: &str = r#"(
+const VERTEX_SHADER_WGSL: &str = r#"
 struct Constants {
     ProjectionMatrix: mat4x4<f32>
 };
@@ -184,10 +184,10 @@ fn main(in: VSInput) -> PSInput {
     out.uv = in.uv;
     return out;
 }
-)"#;
+"#;
 
 #[cfg(feature = "webgpu")]
-const PIXEL_SHADER_WGSL: &str = r#"(
+const PIXEL_SHADER_WGSL: &str = r#"
 struct PSInput {
     @builtin(position) pos: vec4f,
     @location(0)       col: vec4f,
@@ -205,10 +205,10 @@ fn main(in: PSInput) -> @location(0) vec4f {
     col.b *= col.a;
     return col;
 }
-)"#;
+"#;
 
 #[cfg(feature = "webgpu")]
-const PIXEL_SHADER_WGSL_GAMMA: &str = r#"(
+const PIXEL_SHADER_WGSL_GAMMA: &str = r#"
 struct PSInput {
     @builtin(position) pos: vec4f,
     @location(0)       col: vec4f,
@@ -235,7 +235,7 @@ fn main(in: PSInput) -> @location(0) vec4f {
     col.a = 1.0 - col.a;
     return col;
 }
-)"#;
+"#;
 
 #[cfg(feature = "vulkan")]
 const VERTEX_SHADER_SPIRV: &[u32] = &[
@@ -478,45 +478,45 @@ impl ImguiRenderer {
         let device_info = create_info.device.get_device_info();
         let device_type = device_info.device_type();
 
-        let vertex_shader = {
-            let shader_ci = {
-                let shader_source = match device_type {
-                    #[cfg(feature = "vulkan")]
-                    RenderDeviceType::VULKAN => ShaderSource::ByteCode(
-                        VERTEX_SHADER_SPIRV.as_ptr() as *const c_void,
-                        std::mem::size_of_val(VERTEX_SHADER_SPIRV),
-                    ),
-                    #[cfg(feature = "d3d11")]
-                    RenderDeviceType::D3D11 => ShaderSource::SourceCode(VERTEX_SHADER_HLSL),
-                    #[cfg(feature = "d3d12")]
-                    RenderDeviceType::D3D12 => ShaderSource::SourceCode(VERTEX_SHADER_HLSL),
-                    #[cfg(feature = "opengl")]
-                    RenderDeviceType::GL => ShaderSource::SourceCode(VERTEX_SHADER_GLSL),
-                    //RenderDeviceType::GLES => ShaderSource::SourceCode(VERTEX_SHADER_GLSL),
-                    #[cfg(feature = "webgpu")]
-                    RenderDeviceType::WEBGPU => ShaderSource::SourceCode(VERTEX_SHADER_WGSL),
-                    #[cfg(feature = "metal")]
-                    RenderDeviceType::METAL => {
-                        todo!()
-                    }
-                };
-
-                let shader_ci =
-                    ShaderCreateInfo::new(c"Imgui VS", shader_source, ShaderType::Vertex);
-
-                if manual_srgb {
-                    shader_ci
-                        .add_macro(c"GAMMA_TO_LINEAR(Gamma)", GAMMA_TO_LINEAR)
-                        .add_macro(c"SRGBA_TO_LINEAR(col)", SRGBA_TO_LINEAR)
-                } else {
-                    shader_ci.add_macro(c"SRGBA_TO_LINEAR(col)", c"")
+        let shader_ci = {
+            let shader_source = match device_type {
+                #[cfg(feature = "vulkan")]
+                RenderDeviceType::VULKAN => ShaderSource::ByteCode(
+                    VERTEX_SHADER_SPIRV.as_ptr() as *const c_void,
+                    std::mem::size_of_val(VERTEX_SHADER_SPIRV),
+                ),
+                #[cfg(feature = "d3d11")]
+                RenderDeviceType::D3D11 => ShaderSource::SourceCode(VERTEX_SHADER_HLSL),
+                #[cfg(feature = "d3d12")]
+                RenderDeviceType::D3D12 => ShaderSource::SourceCode(VERTEX_SHADER_HLSL),
+                #[cfg(feature = "opengl")]
+                RenderDeviceType::GL => ShaderSource::SourceCode(VERTEX_SHADER_GLSL),
+                //RenderDeviceType::GLES => ShaderSource::SourceCode(VERTEX_SHADER_GLSL),
+                #[cfg(feature = "webgpu")]
+                RenderDeviceType::WEBGPU => ShaderSource::SourceCode(VERTEX_SHADER_WGSL),
+                #[cfg(feature = "metal")]
+                RenderDeviceType::METAL => {
+                    todo!()
                 }
             };
-            create_info.device.create_shader(&shader_ci).unwrap()
+
+            let shader_ci = ShaderCreateInfo::new(c"Imgui VS", shader_source, ShaderType::Vertex);
+
+            if manual_srgb {
+                shader_ci
+                    .add_macro(c"GAMMA_TO_LINEAR(Gamma)", GAMMA_TO_LINEAR)
+                    .add_macro(c"SRGBA_TO_LINEAR(col)", SRGBA_TO_LINEAR)
+            } else {
+                shader_ci.add_macro(c"SRGBA_TO_LINEAR(col)", c"")
+            }
         };
 
-        let pixel_shader = {
-            let shader_source = match device_type {
+        let vertex_shader = create_info.device.create_shader(&shader_ci).unwrap();
+
+        let shader_ci = shader_ci
+            .name(c"Imgui PS")
+            .shader_type(ShaderType::Pixel)
+            .source(match device_type {
                 #[cfg(feature = "vulkan")]
                 RenderDeviceType::VULKAN => {
                     if manual_srgb {
@@ -550,11 +550,9 @@ impl ImguiRenderer {
                 RenderDeviceType::METAL => {
                     todo!()
                 }
-            };
+            });
 
-            let shader_ci = ShaderCreateInfo::new(c"Imgui PS", shader_source, ShaderType::Pixel);
-            create_info.device.create_shader(&shader_ci).unwrap()
-        };
+        let pixel_shader = create_info.device.create_shader(&shader_ci).unwrap();
 
         let pipeline_state_ci = GraphicsPipelineStateCreateInfo::new(
             c"ImGUI PSO",

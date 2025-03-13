@@ -6,32 +6,9 @@ use crate::{
         app::App,
         app_settings::AppSettings,
         events::{EventHandler, EventResult, MouseButton},
+        NativeWindow,
     },
 };
-
-pub struct NativeWindow {
-    window_id: u32,
-    xcb_connection_ptr: *mut xcb::ffi::xcb_connection_t,
-}
-
-impl NativeWindow {
-    fn new(window_id: u32, xcb_connection_ptr: *mut xcb::ffi::xcb_connection_t) -> Self {
-        NativeWindow {
-            window_id,
-            xcb_connection_ptr,
-        }
-    }
-}
-
-impl From<&NativeWindow> for diligent_sys::NativeWindow {
-    fn from(value: &NativeWindow) -> Self {
-        diligent_sys::NativeWindow {
-            WindowId: value.window_id,
-            pXCBConnection: value.xcb_connection_ptr as *mut ::std::os::raw::c_void,
-            pDisplay: std::ptr::null_mut(),
-        }
-    }
-}
 
 fn init_connection_and_window(
     width: u16,
@@ -210,7 +187,10 @@ where
     let (connection, window, atom_delete_window) =
         init_connection_and_window(width, height).unwrap();
 
-    let native_window = NativeWindow::new(window.resource_id(), connection.get_raw_conn());
+    let native_window = NativeWindow::XCB {
+        window_id: window.resource_id(),
+        connection: connection.get_raw_conn(),
+    };
 
     let app = Application::new(settings, EngineCreateInfo::default(), Some(&native_window));
 
@@ -229,6 +209,6 @@ where
 
     app.run(
         XcbEventHandler::new(&connection, atom_delete_window),
-        Some(update_window_title),
+        update_window_title,
     )
 }

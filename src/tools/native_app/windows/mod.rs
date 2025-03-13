@@ -152,10 +152,7 @@ where
         EngineCreateInfo::default(),
         Some(&NativeWindow { hwnd: hwnd.0 }),
     )
-    .run(
-        Win32EventHandler,
-        Some(|title: &str| unsafe {
-            let _ = SetWindowTextW(hwnd, &HSTRING::from(title));
-        }),
-    )
+    .run(Win32EventHandler, &|title: &str| unsafe {
+        let _ = SetWindowTextW(hwnd, &HSTRING::from(title));
+    })
 }
