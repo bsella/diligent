@@ -2,7 +2,9 @@ use std::ffi::c_void;
 
 use std::path::PathBuf;
 
-use crate::core::device_context::DeviceContext;
+use crate::core::device_context::AsDeviceContextCommon;
+use crate::core::device_context::DeferredDeviceContext;
+use crate::core::device_context::ImmediateDeviceContext;
 use crate::core::engine_factory::EngineCreateInfo;
 use crate::core::engine_factory::EngineFactory;
 
@@ -134,7 +136,11 @@ impl EngineFactoryVk {
     pub fn create_device_and_contexts(
         &self,
         create_info: &EngineVkCreateInfo,
-    ) -> Option<(RenderDevice, Vec<DeviceContext>, Vec<DeviceContext>)> {
+    ) -> Option<(
+        RenderDevice,
+        Vec<ImmediateDeviceContext>,
+        Vec<DeferredDeviceContext>,
+    )> {
         let num_immediate_contexts = create_info
             .engine_create_info
             .immediate_context_info
@@ -249,14 +255,14 @@ impl EngineFactoryVk {
                     device_context_ptrs
                         .iter()
                         .take(num_immediate_contexts)
-                        .map(|dc_ptr| DeviceContext::new(*dc_ptr)),
+                        .map(|dc_ptr| ImmediateDeviceContext::new(*dc_ptr)),
                 ),
                 Vec::from_iter(
                     device_context_ptrs
                         .iter()
                         .rev()
                         .take(num_deferred_contexts)
-                        .map(|dc_ptr| DeviceContext::new(*dc_ptr)),
+                        .map(|dc_ptr| DeferredDeviceContext::new(*dc_ptr)),
                 ),
             ))
         }
@@ -265,7 +271,7 @@ impl EngineFactoryVk {
     pub fn create_swap_chain(
         &self,
         device: &RenderDevice,
-        immediate_context: &DeviceContext,
+        immediate_context: &ImmediateDeviceContext,
         swapchain_desc: &SwapChainDesc,
         window: Option<&NativeWindow>,
     ) -> Option<SwapChain> {
@@ -281,7 +287,7 @@ impl EngineFactoryVk {
                 .unwrap_unchecked()(
                 self.engine_factory_vk,
                 device.render_device,
-                immediate_context.device_context,
+                immediate_context.as_device_context().device_context_ptr,
                 std::ptr::addr_of!(swapchain_desc),
                 window
                     .as_ref()

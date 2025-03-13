@@ -15,7 +15,7 @@ use crate::{
     core::{
         accessories::get_render_device_type_string,
         api_info::API_VERSION,
-        device_context::ResourceStateTransitionMode,
+        device_context::{DeviceContext, ResourceStateTransitionMode},
         engine_factory::{AsEngineFactory, EngineCreateInfo},
         graphics_types::{AdapterType, GraphicsAdapterInfo, RenderDeviceType, SurfaceTransform},
         swap_chain::{SwapChain, SwapChainDesc},

@@ -12,8 +12,8 @@ use imgui::{
 use crate::core::{
     buffer::{Buffer, BufferDesc},
     device_context::{
-        DeviceContext, DrawFlags, DrawIndexedAttribs, Rect, ResourceStateTransitionMode,
-        SetVertexBufferFlags, Viewport,
+        DeviceContext, DrawFlags, DrawIndexedAttribs, ImmediateDeviceContext, Rect,
+        ResourceStateTransitionMode, SetVertexBufferFlags, Viewport,
     },
     graphics_types::{
         BindFlags, CpuAccessFlags, MapFlags, PrimitiveTopology, RenderDeviceType,
@@ -640,7 +640,7 @@ impl ImguiRenderer {
                     font_atlas_texture.data,
                     4 * font_atlas_texture.width as u64,
                 )],
-                None,
+                None::<&ImmediateDeviceContext>,
             )
             .unwrap();
 
@@ -693,7 +693,11 @@ impl ImguiRenderer {
         self.context.new_frame()
     }
 
-    pub fn render(&mut self, device_context: &DeviceContext, render_device: &RenderDevice) {
+    pub fn render(
+        &mut self,
+        device_context: &ImmediateDeviceContext,
+        render_device: &RenderDevice,
+    ) {
         let draw_data = self.context.render();
 
         // Avoid rendering when minimized

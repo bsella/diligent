@@ -2,7 +2,7 @@ use imgui::Ui;
 
 use crate::{
     core::{
-        device_context::DeviceContext,
+        device_context::{DeferredDeviceContext, ImmediateDeviceContext},
         engine_factory::EngineFactory,
         graphics_types::SurfaceTransform,
         render_device::RenderDevice,
@@ -71,14 +71,14 @@ pub trait SampleBase {
     fn new(
         engine_factory: &EngineFactory,
         render_device: RenderDevice,
-        immediate_contexts: Vec<DeviceContext>,
-        deferred_contexts: Vec<DeviceContext>,
+        immediate_contexts: Vec<ImmediateDeviceContext>,
+        deferred_contexts: Vec<DeferredDeviceContext>,
         swap_chain: &SwapChain,
     ) -> Self;
 
     fn get_render_device(&self) -> &RenderDevice;
 
-    fn get_immediate_context(&self) -> &DeviceContext;
+    fn get_immediate_context(&self) -> &ImmediateDeviceContext;
 
     fn render(&self, _swap_chain: &SwapChain) {}
 

@@ -3,8 +3,8 @@ use diligent::{
         accessories::linear_to_srgba,
         buffer::{Buffer, BufferDesc},
         device_context::{
-            DeviceContext, DrawFlags, DrawIndexedAttribs, ResourceStateTransitionMode,
-            SetVertexBufferFlags,
+            DeferredDeviceContext, DeviceContext, DrawFlags, DrawIndexedAttribs,
+            ImmediateDeviceContext, ResourceStateTransitionMode, SetVertexBufferFlags,
         },
         engine_factory::EngineFactory,
         graphics_types::{
@@ -31,7 +31,7 @@ use diligent::{
 
 struct Cube {
     render_device: RenderDevice,
-    immediate_contexts: Vec<DeviceContext>,
+    immediate_context: ImmediateDeviceContext,
 
     convert_ps_output_to_gamma: bool,
 
@@ -49,15 +49,15 @@ impl SampleBase for Cube {
         &self.render_device
     }
 
-    fn get_immediate_context(&self) -> &DeviceContext {
-        self.immediate_contexts.first().unwrap()
+    fn get_immediate_context(&self) -> &ImmediateDeviceContext {
+        &self.immediate_context
     }
 
     fn new(
         engine_factory: &EngineFactory,
         render_device: RenderDevice,
-        immediate_contexts: Vec<DeviceContext>,
-        _deferred_contexts: Vec<DeviceContext>,
+        immediate_contexts: Vec<ImmediateDeviceContext>,
+        _deferred_contexts: Vec<DeferredDeviceContext>,
         swap_chain: &SwapChain,
     ) -> Self {
         let swap_chain_desc = swap_chain.get_desc();
@@ -220,7 +220,11 @@ impl SampleBase for Cube {
             .usage(Usage::Immutable)
             .bind_flags(BindFlags::VertexBuffer);
             render_device
-                .create_buffer_with_data(&vertex_buffer_desc, &CUBE_VERTS, None)
+                .create_buffer_with_data(
+                    &vertex_buffer_desc,
+                    &CUBE_VERTS,
+                    None::<&ImmediateDeviceContext>,
+                )
                 .unwrap()
         };
 
@@ -241,7 +245,11 @@ impl SampleBase for Cube {
                     .usage(Usage::Immutable)
                     .bind_flags(BindFlags::IndexBuffer);
             render_device
-                .create_buffer_with_data(&vertex_buffer_desc, &INDICES, None)
+                .create_buffer_with_data(
+                    &vertex_buffer_desc,
+                    &INDICES,
+                    None::<&ImmediateDeviceContext>,
+                )
                 .unwrap()
         };
 
@@ -250,7 +258,7 @@ impl SampleBase for Cube {
             pipeline_state,
             cube_vertex_buffer,
             cube_index_buffer,
-            immediate_contexts,
+            immediate_context: immediate_contexts.into_iter().nth(0).unwrap(),
             render_device,
             srb,
             vertex_shader_constant_buffer,

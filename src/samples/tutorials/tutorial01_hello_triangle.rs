@@ -1,5 +1,7 @@
+use diligent::core::device_context::DeferredDeviceContext;
 use diligent::core::device_context::DeviceContext;
 use diligent::core::device_context::DrawAttribs;
+use diligent::core::device_context::ImmediateDeviceContext;
 use diligent::core::device_context::ResourceStateTransitionMode;
 use diligent::core::engine_factory::EngineFactory;
 use diligent::core::graphics_types::PrimitiveTopology;
@@ -22,7 +24,7 @@ use diligent::tools::native_app;
 
 struct HelloTriangle {
     render_device: RenderDevice,
-    immediate_contexts: Vec<DeviceContext>,
+    immediate_context: ImmediateDeviceContext,
 
     pipeline_state: PipelineState,
 }
@@ -32,15 +34,15 @@ impl SampleBase for HelloTriangle {
         &self.render_device
     }
 
-    fn get_immediate_context(&self) -> &DeviceContext {
-        self.immediate_contexts.first().unwrap()
+    fn get_immediate_context(&self) -> &ImmediateDeviceContext {
+        &self.immediate_context
     }
 
     fn new(
         _engine_factory: &EngineFactory,
         render_device: RenderDevice,
-        immediate_contexts: Vec<DeviceContext>,
-        _deferred_contexts: Vec<DeviceContext>,
+        immediate_contexts: Vec<ImmediateDeviceContext>,
+        _deferred_contexts: Vec<DeferredDeviceContext>,
         swap_chain: &SwapChain,
     ) -> Self {
         let swap_chain_desc = swap_chain.get_desc();
@@ -145,7 +147,7 @@ void main(in PSInput PSIn, out PSOutput PSOut)
 
         HelloTriangle {
             render_device,
-            immediate_contexts,
+            immediate_context: immediate_contexts.into_iter().nth(0).unwrap(),
             pipeline_state,
         }
     }
