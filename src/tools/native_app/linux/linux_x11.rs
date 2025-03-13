@@ -8,7 +8,7 @@ use crate::{
     tools::native_app::{
         app::App,
         app_settings::AppSettings,
-        events::{EventHandler, EventResult},
+        events::{EventHandler, EventResult, MouseButton},
     },
 };
 
@@ -30,8 +30,96 @@ impl EventHandler for X11EventHandler {
         }
     }
 
-    fn handle_event(&mut self, _event: &x11::xlib::XEvent) -> EventResult {
-        EventResult::Continue
+    fn handle_event(&mut self, event: &x11::xlib::XEvent) -> EventResult {
+        unsafe {
+            match event.type_ {
+                x11::xlib::ConfigureNotify => {
+                    let xce =
+                        &*(event as *const x11::xlib::XEvent as *const x11::xlib::XConfigureEvent);
+
+                    if xce.width != 0 && xce.height != 0 {
+                        EventResult::Resize {
+                            width: xce.width as u16,
+                            height: xce.height as u16,
+                        }
+                    } else {
+                        EventResult::Continue
+                    }
+                }
+
+                x11::xlib::ButtonPress => {
+                    let xbe =
+                        &*(event as *const x11::xlib::XEvent as *const x11::xlib::XButtonEvent);
+
+                    match xbe.button {
+                        x11::xlib::Button1 => EventResult::MouseDown {
+                            button: MouseButton::Left,
+                        },
+
+                        x11::xlib::Button2 => EventResult::MouseDown {
+                            button: MouseButton::Middle,
+                        },
+
+                        x11::xlib::Button3 => EventResult::MouseDown {
+                            button: MouseButton::Right,
+                        },
+
+                        x11::xlib::Button4 => EventResult::MouseWheel { up: true },
+
+                        x11::xlib::Button5 => EventResult::MouseWheel { up: false },
+
+                        // Unknown mouse button ?
+                        _ => EventResult::MouseDown {
+                            button: MouseButton::Left,
+                        },
+                    }
+                }
+
+                x11::xlib::ButtonRelease => {
+                    let xbe =
+                        &*(event as *const x11::xlib::XEvent as *const x11::xlib::XButtonEvent);
+
+                    match xbe.button {
+                        x11::xlib::Button1 => EventResult::MouseUp {
+                            button: MouseButton::Left,
+                        },
+
+                        x11::xlib::Button2 => EventResult::MouseUp {
+                            button: MouseButton::Middle,
+                        },
+
+                        x11::xlib::Button3 => EventResult::MouseUp {
+                            button: MouseButton::Right,
+                        },
+
+                        x11::xlib::Button4 => EventResult::MouseWheel { up: true },
+
+                        x11::xlib::Button5 => EventResult::MouseWheel { up: false },
+
+                        // Unknown mouse button ?
+                        _ => EventResult::MouseUp {
+                            button: MouseButton::Left,
+                        },
+                    }
+                }
+
+                x11::xlib::MotionNotify => {
+                    let xme =
+                        &*(event as *const x11::xlib::XEvent as *const x11::xlib::XMotionEvent);
+
+                    EventResult::MouseMove {
+                        x: xme.x as i16,
+                        y: xme.y as i16,
+                    }
+                }
+
+                // TODO : key event
+                x11::xlib::KeyPress => EventResult::Continue,
+                x11::xlib::KeyRelease => EventResult::Continue,
+
+                _ => EventResult::Continue,
+            }
+        }
     }
 }
 
