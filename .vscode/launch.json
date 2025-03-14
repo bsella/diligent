@@ -29,6 +29,19 @@
                 ],
             },
             "cwd": "${workspaceFolder}/src/samples/tutorials/assets",
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Tutorial03 : Texturing",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example",
+                    "Tutorial03_Texturing"
+                ],
+            },
+            "cwd": "${workspaceFolder}/src/samples/tutorials/assets",
         }
     ]
 }

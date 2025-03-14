@@ -111,7 +111,7 @@ impl ShaderResourceVariable {
         }
     }
 
-    pub fn set(&mut self, device_object: &impl AsDeviceObject, flags: SetShaderResourceFlags) {
+    pub fn set(&self, device_object: &impl AsDeviceObject, flags: SetShaderResourceFlags) {
         unsafe {
             (*self.virtual_functions)
                 .ShaderResourceVariable

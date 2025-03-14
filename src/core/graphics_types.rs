@@ -293,7 +293,7 @@ bitflags! {
         const VertexBuffer     = diligent_sys::BIND_VERTEX_BUFFER as diligent_sys::BIND_FLAGS;
         const IndexBuffer      = diligent_sys::BIND_INDEX_BUFFER as diligent_sys::BIND_FLAGS;
         const UniformBuffer    = diligent_sys::BIND_UNIFORM_BUFFER as diligent_sys::BIND_FLAGS;
-        const ShaderResourcec  = diligent_sys::BIND_SHADER_RESOURCE as diligent_sys::BIND_FLAGS;
+        const ShaderResource   = diligent_sys::BIND_SHADER_RESOURCE as diligent_sys::BIND_FLAGS;
         const StreamOutput     = diligent_sys::BIND_STREAM_OUTPUT as diligent_sys::BIND_FLAGS;
         const RenderTarget     = diligent_sys::BIND_RENDER_TARGET as diligent_sys::BIND_FLAGS;
         const DepthStencil     = diligent_sys::BIND_DEPTH_STENCIL as diligent_sys::BIND_FLAGS;

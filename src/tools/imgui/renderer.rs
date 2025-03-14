@@ -554,6 +554,11 @@ impl ImguiRenderer {
 
         let pixel_shader = create_info.device.create_shader(&shader_ci).unwrap();
 
+        let sampler_desc = SamplerDesc::new(c"Texture Sampler")
+            .address_u(TextureAddressMode::Wrap)
+            .address_v(TextureAddressMode::Wrap)
+            .address_w(TextureAddressMode::Wrap);
+
         let pipeline_state_ci = GraphicsPipelineStateCreateInfo::new(
             c"ImGUI PSO",
             GraphicsPipelineDesc::new(
@@ -591,10 +596,7 @@ impl ImguiRenderer {
         .add_immutable_sampler_desc(ImmutableSamplerDesc::new(
             ShaderTypes::Pixel,
             c"Texture",
-            SamplerDesc::new(c"Texture Sampler")
-                .address_u(TextureAddressMode::Wrap)
-                .address_v(TextureAddressMode::Wrap)
-                .address_w(TextureAddressMode::Wrap),
+            &sampler_desc,
         ));
 
         let pipeline_state = create_info
@@ -629,7 +631,7 @@ impl ImguiRenderer {
             font_atlas_texture.height,
             diligent_sys::TEX_FORMAT_RGBA8_UNORM,
         )
-        .bind_flags(BindFlags::ShaderResourcec)
+        .bind_flags(BindFlags::ShaderResource)
         .usage(Usage::Immutable);
 
         let font_texture = create_info

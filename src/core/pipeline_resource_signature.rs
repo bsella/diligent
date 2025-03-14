@@ -12,14 +12,14 @@ use super::{
 pub struct ImmutableSamplerDesc<'a> {
     shader_stages: ShaderTypes,
     sampler_or_texture_name: &'a std::ffi::CStr,
-    sampler_desc: SamplerDesc<'a>,
+    sampler_desc: &'a SamplerDesc<'a>,
 }
 
 impl<'a> ImmutableSamplerDesc<'a> {
     pub fn new(
         shader_stages: ShaderTypes,
         sampler_or_texture_name: &'a std::ffi::CStr,
-        sampler_desc: SamplerDesc<'a>,
+        sampler_desc: &'a SamplerDesc<'a>,
     ) -> Self {
         ImmutableSamplerDesc {
             shader_stages,
@@ -34,7 +34,7 @@ impl From<&ImmutableSamplerDesc<'_>> for diligent_sys::ImmutableSamplerDesc {
         diligent_sys::ImmutableSamplerDesc {
             ShaderStages: value.shader_stages.bits() as diligent_sys::SHADER_TYPE,
             SamplerOrTextureName: value.sampler_or_texture_name.as_ptr(),
-            Desc: diligent_sys::SamplerDesc::from(&value.sampler_desc),
+            Desc: diligent_sys::SamplerDesc::from(value.sampler_desc),
         }
     }
 }
