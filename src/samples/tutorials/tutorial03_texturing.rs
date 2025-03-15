@@ -427,16 +427,10 @@ impl SampleBase for Texturing {
 
             {
                 // Map the buffer and write current world-view-projection matrix
-                let constant_buffer_data = immediate_context
+                let mut constant_buffer_data = immediate_context
                     .map_buffer_write(&self.vertex_shader_constant_buffer, MapFlags::Discard);
 
-                unsafe {
-                    std::ptr::copy_nonoverlapping(
-                        std::ptr::from_ref(&model_view_proj),
-                        constant_buffer_data.get_ptr_mut(),
-                        1,
-                    );
-                }
+                *unsafe { constant_buffer_data.as_mut() } = model_view_proj;
             }
         }
 

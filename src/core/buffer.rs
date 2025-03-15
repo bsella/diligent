@@ -317,8 +317,13 @@ where
             device_context,
         }
     }
-    pub fn get_ptr(&self) -> *const T {
-        self.data_ptr
+
+    pub unsafe fn as_ref(&self) -> &T {
+        self.data_ptr.as_ref().unwrap_unchecked()
+    }
+
+    pub unsafe fn as_slice(&self, len: usize, offset: isize) -> &[T] {
+        std::slice::from_raw_parts(self.data_ptr.offset(offset), len)
     }
 }
 
@@ -375,8 +380,13 @@ where
             device_context,
         }
     }
-    pub fn get_ptr_mut(&self) -> *mut T {
-        self.data_ptr
+
+    pub unsafe fn as_mut(&mut self) -> &mut T {
+        self.data_ptr.as_mut().unwrap_unchecked()
+    }
+
+    pub unsafe fn as_mut_slice(&mut self, len: usize, offset: isize) -> &mut [T] {
+        std::slice::from_raw_parts_mut(self.data_ptr.offset(offset), len)
     }
 }
 
@@ -431,11 +441,21 @@ where
             device_context,
         }
     }
-    pub fn get_ptr(&self) -> *const T {
-        self.data_ptr
+
+    pub unsafe fn as_ref(&self) -> &T {
+        self.data_ptr.as_ref().unwrap_unchecked()
     }
-    pub fn get_ptr_mut(&self) -> *mut T {
-        self.data_ptr
+
+    pub unsafe fn as_slice(&self, len: usize, offset: isize) -> &[T] {
+        std::slice::from_raw_parts(self.data_ptr.offset(offset), len)
+    }
+
+    pub unsafe fn as_mut(&mut self) -> &mut T {
+        self.data_ptr.as_mut().unwrap_unchecked()
+    }
+
+    pub unsafe fn as_mut_slice(&mut self, len: usize, offset: isize) -> &mut [T] {
+        std::slice::from_raw_parts_mut(self.data_ptr.offset(offset), len)
     }
 }
 impl<T, Context> Drop for BufferMapReadWriteToken<'_, T, Context>

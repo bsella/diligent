@@ -756,22 +756,18 @@ impl ImguiRenderer {
 
         // Transfer the vertex and index buffer from imgui data into our GPU buffers
         {
-            let vb_access = device_context.map_buffer_write(vertex_buffer, MapFlags::Discard);
-            let ib_access = device_context.map_buffer_write(index_buffer, MapFlags::Discard);
+            let mut vb_access = device_context.map_buffer_write(vertex_buffer, MapFlags::Discard);
+            let mut ib_access = device_context.map_buffer_write(index_buffer, MapFlags::Discard);
 
-            let mut vb_data = vb_access.get_ptr_mut();
-            let mut ib_data = ib_access.get_ptr_mut();
-
-            for draw_list in draw_data.draw_lists() {
+            for (index, draw_list) in draw_data.draw_lists().enumerate() {
                 let vtx_buffer = draw_list.vtx_buffer();
                 let idx_buffer = draw_list.idx_buffer();
-                unsafe {
-                    std::ptr::copy_nonoverlapping(vtx_buffer.as_ptr(), vb_data, vtx_buffer.len());
-                    std::ptr::copy_nonoverlapping(idx_buffer.as_ptr(), ib_data, idx_buffer.len());
 
-                    vb_data = vb_data.offset(vtx_buffer.len() as isize);
-                    ib_data = ib_data.offset(idx_buffer.len() as isize);
-                }
+                unsafe { vb_access.as_mut_slice(vtx_buffer.len(), index as isize) }
+                    .copy_from_slice(vtx_buffer);
+
+                unsafe { ib_access.as_mut_slice(idx_buffer.len(), index as isize) }
+                    .copy_from_slice(idx_buffer);
             }
         }
 
@@ -795,15 +791,10 @@ impl ImguiRenderer {
             ];
 
             {
-                let projection_data = device_context
-                    .map_buffer_write(&self.vertex_constant_buffer, MapFlags::Discard);
-                unsafe {
-                    std::ptr::copy_nonoverlapping(
-                        projection.as_ptr(),
-                        projection_data.get_ptr_mut(),
-                        std::mem::size_of_val(&projection),
-                    );
-                }
+                let mut projection_data = device_context
+                    .map_buffer_write::<[f32; 16]>(&self.vertex_constant_buffer, MapFlags::Discard);
+
+                *unsafe { projection_data.as_mut() } = projection;
             }
         }
 
