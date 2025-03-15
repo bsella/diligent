@@ -32,7 +32,7 @@ impl<'a> ImmutableSamplerDesc<'a> {
 impl From<&ImmutableSamplerDesc<'_>> for diligent_sys::ImmutableSamplerDesc {
     fn from(value: &ImmutableSamplerDesc<'_>) -> Self {
         diligent_sys::ImmutableSamplerDesc {
-            ShaderStages: value.shader_stages.bits() as diligent_sys::SHADER_TYPE,
+            ShaderStages: value.shader_stages.bits(),
             SamplerOrTextureName: value.sampler_or_texture_name.as_ptr(),
             Desc: diligent_sys::SamplerDesc::from(value.sampler_desc),
         }
@@ -182,7 +182,7 @@ impl PipelineResourceSignature {
                 .BindStaticResources
                 .unwrap_unchecked()(
                 self.pipeline_resource_signature,
-                shader_stages.bits() as diligent_sys::SHADER_TYPE,
+                shader_stages.bits(),
                 resource_mapping.resource_mapping,
                 flags,
             );

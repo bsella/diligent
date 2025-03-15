@@ -70,7 +70,7 @@ impl From<&DrawAttribs> for diligent_sys::DrawAttribs {
     fn from(value: &DrawAttribs) -> Self {
         diligent_sys::DrawAttribs {
             NumVertices: value.num_vertices,
-            Flags: value.flags.bits() as diligent_sys::DRAW_FLAGS,
+            Flags: value.flags.bits(),
             NumInstances: value.num_instances,
             StartVertexLocation: value.start_vertex_location,
             FirstInstanceLocation: value.first_instance_location,
@@ -131,7 +131,7 @@ impl From<&DrawIndexedAttribs> for diligent_sys::DrawIndexedAttribs {
             BaseVertex: value.base_vertex,
             FirstIndexLocation: value.first_index_location,
             FirstInstanceLocation: value.first_instance_location,
-            Flags: value.flags.bits() as diligent_sys::DRAW_FLAGS,
+            Flags: value.flags.bits(),
             IndexType: diligent_sys::VALUE_TYPE::from(&value.index_type),
             NumIndices: value.num_indices,
             NumInstances: value.num_instances,
@@ -367,7 +367,7 @@ where
                 buffer_pointers.as_ptr(),
                 offsets.as_ptr(),
                 diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
-                flags.bits() as diligent_sys::SET_VERTEX_BUFFERS_FLAGS,
+                flags.bits(),
             )
         }
     }
@@ -831,7 +831,7 @@ where
     where
         Self: Sized,
     {
-        BufferMapReadToken::new(self, buffer, map_flags.bits() as diligent_sys::MAP_FLAGS)
+        BufferMapReadToken::new(self, buffer, map_flags.bits())
     }
 
     fn map_buffer_write<'a, T>(
@@ -842,7 +842,7 @@ where
     where
         Self: Sized,
     {
-        BufferMapWriteToken::new(self, buffer, map_flags.bits() as diligent_sys::MAP_FLAGS)
+        BufferMapWriteToken::new(self, buffer, map_flags.bits())
     }
 
     fn map_buffer_read_write<'a, T>(
@@ -853,7 +853,7 @@ where
     where
         Self: Sized,
     {
-        BufferMapReadWriteToken::new(self, buffer, map_flags.bits() as diligent_sys::MAP_FLAGS)
+        BufferMapReadWriteToken::new(self, buffer, map_flags.bits())
     }
 
     fn update_texture(
@@ -1160,8 +1160,8 @@ where
                 .unwrap_unchecked()(
                 self.as_device_context().device_context_ptr,
                 diligent_sys::SHADING_RATE::from(base_rate),
-                primitive_combiner.bits() as diligent_sys::SHADING_RATE_COMBINER,
-                texture_combiner.bits() as diligent_sys::SHADING_RATE_COMBINER,
+                primitive_combiner.bits(),
+                texture_combiner.bits(),
             )
         }
     }
