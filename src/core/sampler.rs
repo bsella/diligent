@@ -1,3 +1,5 @@
+use std::{ffi::CString, str::FromStr};
+
 use bitflags::bitflags;
 use static_assertions::const_assert;
 
@@ -16,8 +18,8 @@ bitflags! {
 }
 const_assert!(diligent_sys::SAMPLER_FLAG_LAST == 2);
 
-pub struct SamplerDesc<'a> {
-    name: &'a std::ffi::CStr,
+pub struct SamplerDesc {
+    name: CString,
     min_filter: FilterType,
     mag_filter: FilterType,
     mip_filter: FilterType,
@@ -34,10 +36,10 @@ pub struct SamplerDesc<'a> {
     max_lod: f32,
 }
 
-impl<'a> SamplerDesc<'a> {
-    pub fn new(name: &'a std::ffi::CStr) -> Self {
+impl SamplerDesc {
+    pub fn new(name: &str) -> Self {
         SamplerDesc {
-            name,
+            name: CString::from_str(name).unwrap(),
             min_filter: FilterType::Linear,
             mag_filter: FilterType::Linear,
             mip_filter: FilterType::Linear,
@@ -114,8 +116,8 @@ impl<'a> SamplerDesc<'a> {
     }
 }
 
-impl From<&SamplerDesc<'_>> for diligent_sys::SamplerDesc {
-    fn from(value: &SamplerDesc<'_>) -> Self {
+impl From<&SamplerDesc> for diligent_sys::SamplerDesc {
+    fn from(value: &SamplerDesc) -> Self {
         diligent_sys::SamplerDesc {
             _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
                 Name: value.name.as_ptr(),

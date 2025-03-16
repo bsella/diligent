@@ -17,7 +17,10 @@ use diligent::{
             GraphicsPipelineStateCreateInfo, PipelineState, RasterizerStateDesc,
         },
         render_device::RenderDevice,
-        shader::{ShaderCompileFlags, ShaderCreateInfo, ShaderLanguage, ShaderSource},
+        shader::{
+            ShaderCompileFlags, ShaderCreateInfo, ShaderLanguage, ShaderSource,
+            ShaderSourceInputStreamFactory,
+        },
         shader_resource_binding::ShaderResourceBinding,
         shader_resource_variable::ShaderResourceVariableType,
         swap_chain::SwapChain,
@@ -75,42 +78,52 @@ impl SampleBase for Cube {
             .create_default_shader_source_stream_factory(&[])
             .unwrap();
 
-        let shader_ci = ShaderCreateInfo::new(
-            c"Cube VS",
-            ShaderSource::FilePath(c"cube.vsh"),
-            ShaderType::Vertex,
-        )
-        .entry_point(c"main")
-        // Tell the system that the shader source code is in HLSL.
-        // For OpenGL, the engine will convert this into GLSL under the hood.
-        .language(ShaderLanguage::HLSL)
-        // OpenGL backend requires emulated combined HLSL texture samplers (g_Texture + g_Texture_sampler combination)
-        .use_combined_texture_samplers(true)
-        // Pack matrices in row-major order
-        .compile_flags(ShaderCompileFlags::PackMatrixRowMajor)
-        // Presentation engine always expects input in gamma space. Normally, pixel shader output is
-        // converted from linear to gamma space by the GPU. However, some platforms (e.g. Android in GLES mode,
-        // or Emscripten in WebGL mode) do not support gamma-correction. In this case the application
-        // has to do the conversion manually.
-        .add_macro(
-            c"CONVERT_PS_OUTPUT_TO_GAMMA",
-            if convert_ps_output_to_gamma {
-                c"1"
-            } else {
-                c"0"
-            },
-        )
-        .shader_source_input_stream_factory(Some(&shader_source_factory));
+        fn common_shader_ci<'a>(
+            name: &'a str,
+            source: ShaderSource<'a>,
+            shader_type: ShaderType,
+            convert_ps_output_to_gamma: bool,
+            shader_source_factory: &'a ShaderSourceInputStreamFactory,
+        ) -> ShaderCreateInfo<'a> {
+            ShaderCreateInfo::new(name, source, shader_type)
+                .entry_point("main")
+                // Tell the system that the shader source code is in HLSL.
+                // For OpenGL, the engine will convert this into GLSL under the hood.
+                .language(ShaderLanguage::HLSL)
+                // OpenGL backend requires emulated combined HLSL texture samplers (g_Texture + g_Texture_sampler combination)
+                .use_combined_texture_samplers(true)
+                // Pack matrices in row-major order
+                .compile_flags(ShaderCompileFlags::PackMatrixRowMajor)
+                // Presentation engine always expects input in gamma space. Normally, pixel shader output is
+                // converted from linear to gamma space by the GPU. However, some platforms (e.g. Android in GLES mode,
+                // or Emscripten in WebGL mode) do not support gamma-correction. In this case the application
+                // has to do the conversion manually.
+                .add_macro(
+                    "CONVERT_PS_OUTPUT_TO_GAMMA",
+                    if convert_ps_output_to_gamma { "1" } else { "0" },
+                )
+                .shader_source_input_stream_factory(Some(&shader_source_factory))
+        }
 
         // Create a vertex shader
-        let vertex_shader = render_device.create_shader(&shader_ci).unwrap();
+        let vertex_shader = {
+            let shader_ci = common_shader_ci(
+                "Cube VS",
+                ShaderSource::FilePath("cube.vsh"),
+                ShaderType::Vertex,
+                convert_ps_output_to_gamma,
+                &shader_source_factory,
+            );
+
+            render_device.create_shader(&shader_ci).unwrap()
+        };
 
         // Create dynamic uniform buffer that will store our transformation matrix
         // Dynamic buffers can be frequently updated by the CPU
         let vertex_shader_constant_buffer = render_device
             .create_buffer(
                 &BufferDesc::new(
-                    c"VS constants CB",
+                    "VS constants CB",
                     (std::mem::size_of::<f32>() * 4 * 4) as u64,
                 )
                 .usage(Usage::Dynamic)
@@ -120,19 +133,22 @@ impl SampleBase for Cube {
             .unwrap();
 
         // Create a pixel shader
-        let pixel_shader = render_device
-            .create_shader(
-                &shader_ci
-                    .name(c"Cube PS")
-                    .source(ShaderSource::FilePath(c"cube.psh"))
-                    .shader_type(ShaderType::Pixel),
-            )
-            .unwrap();
+        let pixel_shader = {
+            let shader_ci = common_shader_ci(
+                "Cube PS",
+                ShaderSource::FilePath("cube.psh"),
+                ShaderType::Pixel,
+                convert_ps_output_to_gamma,
+                &shader_source_factory,
+            );
+
+            render_device.create_shader(&shader_ci).unwrap()
+        };
 
         // Pipeline state object encompasses configuration of all GPU stages
         let pso_create_info = GraphicsPipelineStateCreateInfo::new(
             // Pipeline state name is used by the engine to report issues.
-            c"Cube PSO",
+            "Cube PSO",
             GraphicsPipelineDesc::new(
                 BlendStateDesc::default(),
                 RasterizerStateDesc::default()
@@ -169,7 +185,7 @@ impl SampleBase for Cube {
         // type (SHADER_RESOURCE_VARIABLE_TYPE_STATIC) will be used. Static variables never
         // change and are bound directly through the pipeline state object.
         pipeline_state
-            .get_static_variable_by_name(ShaderType::Vertex, c"Constants")
+            .get_static_variable_by_name(ShaderType::Vertex, "Constants")
             .unwrap()
             .set(&vertex_shader_constant_buffer, SetShaderResourceFlags::None);
 
@@ -214,7 +230,7 @@ impl SampleBase for Cube {
         // Create a vertex buffer that stores cube vertices
         let cube_vertex_buffer = {
             let vertex_buffer_desc = BufferDesc::new(
-                c"Cube vertex buffer",
+                "Cube vertex buffer",
                 std::mem::size_of_val(&CUBE_VERTS) as u64,
             )
             .usage(Usage::Immutable)
@@ -241,7 +257,7 @@ impl SampleBase for Cube {
 
         let cube_index_buffer = {
             let vertex_buffer_desc =
-                BufferDesc::new(c"Cube index buffer", std::mem::size_of_val(&INDICES) as u64)
+                BufferDesc::new("Cube index buffer", std::mem::size_of_val(&INDICES) as u64)
                     .usage(Usage::Immutable)
                     .bind_flags(BindFlags::IndexBuffer);
             render_device

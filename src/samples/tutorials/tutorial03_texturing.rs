@@ -35,6 +35,7 @@ use diligent::core::shader::ShaderCompileFlags;
 use diligent::core::shader::ShaderCreateInfo;
 use diligent::core::shader::ShaderLanguage;
 use diligent::core::shader::ShaderSource;
+use diligent::core::shader::ShaderSourceInputStreamFactory;
 use diligent::core::shader_resource_binding::ShaderResourceBinding;
 use diligent::core::shader_resource_variable::ShaderResourceVariableDesc;
 use diligent::core::shader_resource_variable::ShaderResourceVariableType;
@@ -98,43 +99,53 @@ impl SampleBase for Texturing {
             .create_default_shader_source_stream_factory(&[])
             .unwrap();
 
-        let shader_ci = ShaderCreateInfo::new(
-            c"Cube VS",
-            ShaderSource::FilePath(c"cube_texture.vsh"),
-            ShaderType::Vertex,
-        )
-        .entry_point(c"main")
-        // Tell the system that the shader source code is in HLSL.
-        // For OpenGL, the engine will convert this into GLSL under the hood.
-        .language(ShaderLanguage::HLSL)
-        // OpenGL backend requires emulated combined HLSL texture samplers (g_Texture + g_Texture_sampler combination)
-        .use_combined_texture_samplers(true)
-        // Pack matrices in row-major order
-        .compile_flags(ShaderCompileFlags::PackMatrixRowMajor)
-        // Presentation engine always expects input in gamma space. Normally, pixel shader output is
-        // converted from linear to gamma space by the GPU. However, some platforms (e.g. Android in GLES mode,
-        // or Emscripten in WebGL mode) do not support gamma-correction. In this case the application
-        // has to do the conversion manually.
-        .add_macro(
-            c"CONVERT_PS_OUTPUT_TO_GAMMA",
-            if convert_ps_output_to_gamma {
-                c"1"
-            } else {
-                c"0"
-            },
-        )
-        .shader_source_input_stream_factory(Some(&shader_source_factory));
+        fn common_shader_ci<'a>(
+            name: &'a str,
+            source: ShaderSource<'a>,
+            shader_type: ShaderType,
+            convert_ps_output_to_gamma: bool,
+            shader_source_factory: &'a ShaderSourceInputStreamFactory,
+        ) -> ShaderCreateInfo<'a> {
+            ShaderCreateInfo::new(name, source, shader_type)
+                .entry_point("main")
+                // Tell the system that the shader source code is in HLSL.
+                // For OpenGL, the engine will convert this into GLSL under the hood.
+                .language(ShaderLanguage::HLSL)
+                // OpenGL backend requires emulated combined HLSL texture samplers (g_Texture + g_Texture_sampler combination)
+                .use_combined_texture_samplers(true)
+                // Pack matrices in row-major order
+                .compile_flags(ShaderCompileFlags::PackMatrixRowMajor)
+                // Presentation engine always expects input in gamma space. Normally, pixel shader output is
+                // converted from linear to gamma space by the GPU. However, some platforms (e.g. Android in GLES mode,
+                // or Emscripten in WebGL mode) do not support gamma-correction. In this case the application
+                // has to do the conversion manually.
+                .add_macro(
+                    "CONVERT_PS_OUTPUT_TO_GAMMA",
+                    if convert_ps_output_to_gamma { "1" } else { "0" },
+                )
+                .shader_source_input_stream_factory(Some(&shader_source_factory))
+        }
 
         // Create a vertex shader
-        let vertex_shader = render_device.create_shader(&shader_ci).unwrap();
+        let vertex_shader = {
+            let shader_ci = common_shader_ci(
+                "Cube VS",
+                ShaderSource::FilePath("cube_texture.vsh"),
+                ShaderType::Vertex,
+                convert_ps_output_to_gamma,
+                &shader_source_factory,
+            );
+
+            render_device.create_shader(&shader_ci).unwrap()
+        };
 
         // Create dynamic uniform buffer that will store our transformation matrix
         // Dynamic buffers can be frequently updated by the CPU
         let vertex_shader_constant_buffer = render_device
             .create_buffer(
                 &BufferDesc::new(
-                    c"VS constants CB",
-                    (std::mem::size_of::<f32>() * 4 * 4) as u64,
+                    "VS constants CB",
+                    (std::mem::size_of::<glam::Mat4>()) as u64,
                 )
                 .usage(Usage::Dynamic)
                 .bind_flags(BindFlags::UniformBuffer)
@@ -143,17 +154,20 @@ impl SampleBase for Texturing {
             .unwrap();
 
         // Create a pixel shader
-        let pixel_shader = render_device
-            .create_shader(
-                &shader_ci
-                    .name(c"Cube PS")
-                    .source(ShaderSource::FilePath(c"cube_texture.psh"))
-                    .shader_type(ShaderType::Pixel),
-            )
-            .unwrap();
+        let pixel_shader = {
+            let shader_ci = common_shader_ci(
+                "Cube PS",
+                ShaderSource::FilePath("cube_texture.psh"),
+                ShaderType::Pixel,
+                convert_ps_output_to_gamma,
+                &shader_source_factory,
+            );
+
+            render_device.create_shader(&shader_ci).unwrap()
+        };
 
         // Define immutable sampler for g_Texture. Immutable samplers should be used whenever possible
-        let sampler_desc = SamplerDesc::new(c"Cube texture sampler")
+        let sampler_desc = SamplerDesc::new("Cube texture sampler")
             .min_filter(FilterType::Linear)
             .mag_filter(FilterType::Linear)
             .mip_filter(FilterType::Linear)
@@ -164,7 +178,7 @@ impl SampleBase for Texturing {
         // Pipeline state object encompasses configuration of all GPU stages
         let pso_create_info = GraphicsPipelineStateCreateInfo::new(
             // Pipeline state name is used by the engine to report issues.
-            c"Cube PSO",
+            "Cube PSO",
             GraphicsPipelineDesc::new(
                 BlendStateDesc::default(),
                 RasterizerStateDesc::default()
@@ -193,14 +207,14 @@ impl SampleBase for Texturing {
         // Shader variables should typically be mutable, which means they are expected
         // to change on a per-instance basis
         .add_shader_resource_variable(ShaderResourceVariableDesc::new(
-            c"g_Texture",
+            "g_Texture",
             ShaderResourceVariableType::Mutable,
             ShaderTypes::Pixel,
         ))
         // Define immutable sampler for g_Texture. Immutable samplers should be used whenever possible
         .add_immutable_sampler_desc(ImmutableSamplerDesc::new(
             ShaderTypes::Pixel,
-            c"g_Texture",
+            "g_Texture",
             &sampler_desc,
         ))
         .vertex_shader(&vertex_shader)
@@ -214,7 +228,7 @@ impl SampleBase for Texturing {
         // type (SHADER_RESOURCE_VARIABLE_TYPE_STATIC) will be used. Static variables never
         // change and are bound directly through the pipeline state object.
         pipeline_state
-            .get_static_variable_by_name(ShaderType::Vertex, c"Constants")
+            .get_static_variable_by_name(ShaderType::Vertex, "Constants")
             .unwrap()
             .set(&vertex_shader_constant_buffer, SetShaderResourceFlags::None);
 
@@ -228,59 +242,57 @@ impl SampleBase for Texturing {
             uv: [f32; 2],
         }
 
-        // Cube vertices
-
-        //      (-1,+1,+1)________________(+1,+1,+1)
-        //               /|              /|
-        //              / |             / |
-        //             /  |            /  |
-        //            /   |           /   |
-        //(-1,-1,+1) /____|__________/(+1,-1,+1)
-        //           |    |__________|____|
-        //           |   /(-1,+1,-1) |    /(+1,+1,-1)
-        //           |  /            |   /
-        //           | /             |  /
-        //           |/              | /
-        //           /_______________|/
-        //        (-1,-1,-1)       (+1,-1,-1)
-
-        #[rustfmt::skip]
-        const CUBE_VERTS : [Vertex; 24] = [
-            Vertex{pos : [-1.0, -1.0, -1.0], uv: [0.0, 1.0]},
-            Vertex{pos : [-1.0,  1.0, -1.0], uv: [0.0, 0.0]},
-            Vertex{pos : [ 1.0,  1.0, -1.0], uv: [1.0, 0.0]},
-            Vertex{pos : [ 1.0, -1.0, -1.0], uv: [1.0, 1.0]},
-
-            Vertex{pos : [-1.0, -1.0, -1.0], uv: [0.0, 1.0]},
-            Vertex{pos : [-1.0, -1.0,  1.0], uv: [0.0, 0.0]},
-            Vertex{pos : [ 1.0, -1.0,  1.0], uv: [1.0, 0.0]},
-            Vertex{pos : [ 1.0, -1.0, -1.0], uv: [1.0, 1.0]},
-
-            Vertex{pos : [ 1.0, -1.0, -1.0], uv: [0.0, 1.0]},
-            Vertex{pos : [ 1.0, -1.0,  1.0], uv: [1.0, 1.0]},
-            Vertex{pos : [ 1.0,  1.0,  1.0], uv: [1.0, 0.0]},
-            Vertex{pos : [ 1.0,  1.0, -1.0], uv: [0.0, 0.0]},
-
-            Vertex{pos : [ 1.0,  1.0, -1.0], uv: [0.0, 1.0]},
-            Vertex{pos : [ 1.0,  1.0,  1.0], uv: [0.0, 0.0]},
-            Vertex{pos : [-1.0,  1.0,  1.0], uv: [1.0, 0.0]},
-            Vertex{pos : [-1.0,  1.0, -1.0], uv: [1.0, 1.0]},
-
-            Vertex{pos : [-1.0,  1.0, -1.0], uv: [1.0, 0.0]},
-            Vertex{pos : [-1.0,  1.0,  1.0], uv: [0.0, 0.0]},
-            Vertex{pos : [-1.0, -1.0,  1.0], uv: [0.0, 1.0]},
-            Vertex{pos : [-1.0, -1.0, -1.0], uv: [1.0, 1.0]},
-
-            Vertex{pos : [-1.0, -1.0,  1.0], uv: [1.0, 1.0]},
-            Vertex{pos : [ 1.0, -1.0,  1.0], uv: [0.0, 1.0]},
-            Vertex{pos : [ 1.0,  1.0,  1.0], uv: [0.0, 0.0]},
-            Vertex{pos : [-1.0,  1.0,  1.0], uv: [1.0, 0.0]},
-        ];
-
         // Create a vertex buffer that stores cube vertices
         let cube_vertex_buffer = {
+            // Cube vertices
+
+            //      (-1,+1,+1)________________(+1,+1,+1)
+            //               /|              /|
+            //              / |             / |
+            //             /  |            /  |
+            //            /   |           /   |
+            //(-1,-1,+1) /____|__________/(+1,-1,+1)
+            //           |    |__________|____|
+            //           |   /(-1,+1,-1) |    /(+1,+1,-1)
+            //           |  /            |   /
+            //           | /             |  /
+            //           |/              | /
+            //           /_______________|/
+            //        (-1,-1,-1)       (+1,-1,-1)
+            #[rustfmt::skip]
+            const CUBE_VERTS : [Vertex; 24] = [
+                Vertex{pos : [-1.0, -1.0, -1.0], uv: [0.0, 1.0]},
+                Vertex{pos : [-1.0,  1.0, -1.0], uv: [0.0, 0.0]},
+                Vertex{pos : [ 1.0,  1.0, -1.0], uv: [1.0, 0.0]},
+                Vertex{pos : [ 1.0, -1.0, -1.0], uv: [1.0, 1.0]},
+
+                Vertex{pos : [-1.0, -1.0, -1.0], uv: [0.0, 1.0]},
+                Vertex{pos : [-1.0, -1.0,  1.0], uv: [0.0, 0.0]},
+                Vertex{pos : [ 1.0, -1.0,  1.0], uv: [1.0, 0.0]},
+                Vertex{pos : [ 1.0, -1.0, -1.0], uv: [1.0, 1.0]},
+
+                Vertex{pos : [ 1.0, -1.0, -1.0], uv: [0.0, 1.0]},
+                Vertex{pos : [ 1.0, -1.0,  1.0], uv: [1.0, 1.0]},
+                Vertex{pos : [ 1.0,  1.0,  1.0], uv: [1.0, 0.0]},
+                Vertex{pos : [ 1.0,  1.0, -1.0], uv: [0.0, 0.0]},
+
+                Vertex{pos : [ 1.0,  1.0, -1.0], uv: [0.0, 1.0]},
+                Vertex{pos : [ 1.0,  1.0,  1.0], uv: [0.0, 0.0]},
+                Vertex{pos : [-1.0,  1.0,  1.0], uv: [1.0, 0.0]},
+                Vertex{pos : [-1.0,  1.0, -1.0], uv: [1.0, 1.0]},
+
+                Vertex{pos : [-1.0,  1.0, -1.0], uv: [1.0, 0.0]},
+                Vertex{pos : [-1.0,  1.0,  1.0], uv: [0.0, 0.0]},
+                Vertex{pos : [-1.0, -1.0,  1.0], uv: [0.0, 1.0]},
+                Vertex{pos : [-1.0, -1.0, -1.0], uv: [1.0, 1.0]},
+
+                Vertex{pos : [-1.0, -1.0,  1.0], uv: [1.0, 1.0]},
+                Vertex{pos : [ 1.0, -1.0,  1.0], uv: [0.0, 1.0]},
+                Vertex{pos : [ 1.0,  1.0,  1.0], uv: [0.0, 0.0]},
+                Vertex{pos : [-1.0,  1.0,  1.0], uv: [1.0, 0.0]},
+            ];
             let vertex_buffer_desc = BufferDesc::new(
-                c"Cube vertex buffer",
+                "Cube vertex buffer",
                 std::mem::size_of_val(&CUBE_VERTS) as u64,
             )
             .usage(Usage::Immutable)
@@ -294,20 +306,20 @@ impl SampleBase for Texturing {
                 .unwrap()
         };
 
-        #[rustfmt::skip]
-        const INDICES : [u32; 36] =
-        [
-            2,0,1,    2,3,0,
-            4,6,5,    4,7,6,
-            8,10,9,   8,11,10,
-            12,14,13, 12,15,14,
-            16,18,17, 16,19,18,
-            20,21,22, 20,22,23
-        ];
-
         let cube_index_buffer = {
+            #[rustfmt::skip]
+            const INDICES : [u32; 36] =
+            [
+                2,0,1,    2,3,0,
+                4,6,5,    4,7,6,
+                8,10,9,   8,11,10,
+                12,14,13, 12,15,14,
+                16,18,17, 16,19,18,
+                20,21,22, 20,22,23
+            ];
+
             let vertex_buffer_desc =
-                BufferDesc::new(c"Cube index buffer", std::mem::size_of_val(&INDICES) as u64)
+                BufferDesc::new("Cube index buffer", std::mem::size_of_val(&INDICES) as u64)
                     .usage(Usage::Immutable)
                     .bind_flags(BindFlags::IndexBuffer);
 
@@ -329,7 +341,7 @@ impl SampleBase for Texturing {
             let texture = render_device
                 .create_texture(
                     &TextureDesc::new(
-                        c"DGLogo",
+                        "DGLogo",
                         TextureDimension::Texture2D,
                         image.width(),
                         image.height(),
@@ -339,7 +351,7 @@ impl SampleBase for Texturing {
                     .usage(Usage::Immutable),
                     &[&TextureSubResource::new_cpu(
                         image.as_bytes(),
-                        image.width() as u64 * std::mem::size_of::<u8>() as u64 * 4,
+                        image.width() as u64 * std::mem::size_of::<[u8; 4]>() as u64,
                     )],
                     None::<&ImmediateDeviceContext>,
                 )
@@ -352,7 +364,7 @@ impl SampleBase for Texturing {
         };
 
         // Set texture SRV in the SRB
-        srb.get_variable_by_name(c"g_Texture", ShaderTypes::Pixel)
+        srb.get_variable_by_name("g_Texture", ShaderTypes::Pixel)
             .unwrap()
             .set(&texture_srv, SetShaderResourceFlags::None);
 

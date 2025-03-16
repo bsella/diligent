@@ -1,3 +1,5 @@
+use std::ffi::CString;
+
 use bitflags::bitflags;
 use static_assertions::const_assert;
 
@@ -106,8 +108,8 @@ impl From<&TextureSubResource<'_>> for diligent_sys::TextureSubResData {
     }
 }
 
-pub struct TextureDesc<'a> {
-    name: &'a std::ffi::CStr,
+pub struct TextureDesc {
+    name: CString,
 
     dimension: TextureDimension,
     width: u32,
@@ -126,8 +128,8 @@ pub struct TextureDesc<'a> {
     immediate_context_mask: u64,
 }
 
-impl From<&TextureDesc<'_>> for diligent_sys::TextureDesc {
-    fn from(value: &TextureDesc<'_>) -> Self {
+impl From<&TextureDesc> for diligent_sys::TextureDesc {
+    fn from(value: &TextureDesc) -> Self {
         let anon = match value.dimension {
             TextureDimension::Texture1DArray { array_size }
             | TextureDimension::Texture2DArray { array_size }
@@ -154,8 +156,8 @@ impl From<&TextureDesc<'_>> for diligent_sys::TextureDesc {
             SampleCount: value.sample_count,
             BindFlags: value.bind_flags.bits(),
             Usage: diligent_sys::USAGE::from(&value.usage),
-            CPUAccessFlags: value.cpu_access_flags.bits() as u8,
-            MiscFlags: value.misc_flags.bits() as u8,
+            CPUAccessFlags: value.cpu_access_flags.bits(),
+            MiscFlags: value.misc_flags.bits(),
             ClearValue: diligent_sys::OptimizedClearValue {
                 Color: value.clear_color,
                 DepthStencil: diligent_sys::DepthStencilClearValue {
@@ -170,16 +172,16 @@ impl From<&TextureDesc<'_>> for diligent_sys::TextureDesc {
     }
 }
 
-impl<'a> TextureDesc<'a> {
+impl TextureDesc {
     pub fn new(
-        name: &'a std::ffi::CStr,
+        name: &str,
         dimension: TextureDimension,
         width: u32,
         height: u32,
         format: diligent_sys::_TEXTURE_FORMAT,
     ) -> Self {
         TextureDesc {
-            name,
+            name: CString::new(name).unwrap(),
 
             dimension,
             width,

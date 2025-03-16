@@ -1,3 +1,5 @@
+use std::{ffi::CString, str::FromStr};
+
 use super::{
     graphics_types::ShaderTypes,
     object::{AsObject, Object},
@@ -76,9 +78,11 @@ impl ShaderResourceBinding {
 
     pub fn get_variable_by_name(
         &self,
-        name: &std::ffi::CStr,
+        name: &str,
         shader_stages: ShaderTypes,
     ) -> Option<ShaderResourceVariable> {
+        let name = CString::from_str(name).unwrap();
+
         let variable = unsafe {
             (*self.virtual_functions)
                 .ShaderResourceBinding

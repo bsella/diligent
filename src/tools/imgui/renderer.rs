@@ -37,9 +37,9 @@ use crate::core::{
     texture_view::{TextureView, TextureViewType},
 };
 
-const GAMMA_TO_LINEAR: &std::ffi::CStr =
-    c"((Gamma) < 0.04045 ? (Gamma) / 12.92 : pow(max((Gamma) + 0.055, 0.0) / 1.055, 2.4))";
-const SRGBA_TO_LINEAR: &std::ffi::CStr = cr#"\
+const GAMMA_TO_LINEAR: &str =
+    "((Gamma) < 0.04045 ? (Gamma) / 12.92 : pow(max((Gamma) + 0.055, 0.0) / 1.055, 2.4))";
+const SRGBA_TO_LINEAR: &str = r#"\
 col.r = GAMMA_TO_LINEAR(col.r);\
 col.g = GAMMA_TO_LINEAR(col.g);\
 col.b = GAMMA_TO_LINEAR(col.b);\
@@ -467,10 +467,14 @@ impl ImguiRenderer {
     pub fn new(create_info: ImguiRendererCreateInfo) -> Self {
         let mut imgui_context = imgui::Context::create();
 
-        let srgb_framebuffer = true;
-        //let srgb_framebuffer = GetTextureFormatAttribs(create_info.back_buffer_format)
-        //    .ComponentType
-        //    == diligent_sys::COMPONENT_TYPE_UNORM_SRGB;
+        let srgb_framebuffer = {
+            // TODO
+            true
+            //let srgb_framebuffer = GetTextureFormatAttribs(create_info.back_buffer_format)
+            //    .ComponentType
+            //    == diligent_sys::COMPONENT_TYPE_UNORM_SRGB;
+        };
+
         let manual_srgb = (create_info.color_conversion == ColorConversionMode::Auto
             && srgb_framebuffer)
             || (create_info.color_conversion == ColorConversionMode::SrgbToLinear);
@@ -478,7 +482,24 @@ impl ImguiRenderer {
         let device_info = create_info.device.get_device_info();
         let device_type = device_info.device_type();
 
-        let shader_ci = {
+        fn common_shader_ci<'a>(
+            name: &'a str,
+            source: ShaderSource<'a>,
+            shader_type: ShaderType,
+            manual_srgb: bool,
+        ) -> ShaderCreateInfo<'a> {
+            let shader_ci = ShaderCreateInfo::new(name, source, shader_type);
+
+            if manual_srgb {
+                shader_ci
+                    .add_macro("GAMMA_TO_LINEAR(Gamma)", GAMMA_TO_LINEAR)
+                    .add_macro("SRGBA_TO_LINEAR(col)", SRGBA_TO_LINEAR)
+            } else {
+                shader_ci.add_macro("SRGBA_TO_LINEAR(col)", "")
+            }
+        }
+
+        let vertex_shader = {
             let shader_source = match device_type {
                 #[cfg(feature = "vulkan")]
                 RenderDeviceType::VULKAN => ShaderSource::ByteCode(
@@ -500,23 +521,14 @@ impl ImguiRenderer {
                 }
             };
 
-            let shader_ci = ShaderCreateInfo::new(c"Imgui VS", shader_source, ShaderType::Vertex);
+            let shader_ci =
+                common_shader_ci("Imgui VS", shader_source, ShaderType::Vertex, manual_srgb);
 
-            if manual_srgb {
-                shader_ci
-                    .add_macro(c"GAMMA_TO_LINEAR(Gamma)", GAMMA_TO_LINEAR)
-                    .add_macro(c"SRGBA_TO_LINEAR(col)", SRGBA_TO_LINEAR)
-            } else {
-                shader_ci.add_macro(c"SRGBA_TO_LINEAR(col)", c"")
-            }
+            create_info.device.create_shader(&shader_ci).unwrap()
         };
 
-        let vertex_shader = create_info.device.create_shader(&shader_ci).unwrap();
-
-        let shader_ci = shader_ci
-            .name(c"Imgui PS")
-            .shader_type(ShaderType::Pixel)
-            .source(match device_type {
+        let pixel_shader = {
+            let shader_source = match device_type {
                 #[cfg(feature = "vulkan")]
                 RenderDeviceType::VULKAN => {
                     if manual_srgb {
@@ -550,17 +562,21 @@ impl ImguiRenderer {
                 RenderDeviceType::METAL => {
                     todo!()
                 }
-            });
+            };
 
-        let pixel_shader = create_info.device.create_shader(&shader_ci).unwrap();
+            let shader_ci =
+                common_shader_ci("Imgui PS", shader_source, ShaderType::Pixel, manual_srgb);
 
-        let sampler_desc = SamplerDesc::new(c"Texture Sampler")
+            create_info.device.create_shader(&shader_ci).unwrap()
+        };
+
+        let sampler_desc = SamplerDesc::new("Texture Sampler")
             .address_u(TextureAddressMode::Wrap)
             .address_v(TextureAddressMode::Wrap)
             .address_w(TextureAddressMode::Wrap);
 
         let pipeline_state_ci = GraphicsPipelineStateCreateInfo::new(
-            c"ImGUI PSO",
+            "ImGUI PSO",
             GraphicsPipelineDesc::new(
                 BlendStateDesc::default().render_target_blend_desc::<0>(
                     RenderTargetBlendDesc::default()
@@ -589,13 +605,13 @@ impl ImguiRenderer {
         .vertex_shader(&vertex_shader)
         .pixel_shader(&pixel_shader)
         .add_shader_resource_variable(ShaderResourceVariableDesc::new(
-            c"Texture",
+            "Texture",
             ShaderResourceVariableType::Dynamic,
             ShaderTypes::Pixel,
         ))
         .add_immutable_sampler_desc(ImmutableSamplerDesc::new(
             ShaderTypes::Pixel,
-            c"Texture",
+            "Texture",
             &sampler_desc,
         ));
 
@@ -606,7 +622,7 @@ impl ImguiRenderer {
 
         let vertex_constant_buffer = {
             let buffer_desc = BufferDesc::new(
-                c"Imgui Vertex Constant Buffer",
+                "Imgui Vertex Constant Buffer",
                 (std::mem::size_of::<f32>() * 4 * 4) as u64,
             )
             .usage(Usage::Dynamic)
@@ -616,7 +632,7 @@ impl ImguiRenderer {
         };
 
         pipeline_state
-            .get_static_variable_by_name(ShaderType::Vertex, c"Constants")
+            .get_static_variable_by_name(ShaderType::Vertex, "Constants")
             .unwrap()
             .set(&vertex_constant_buffer, SetShaderResourceFlags::None);
 
@@ -625,7 +641,7 @@ impl ImguiRenderer {
         let font_atlas_texture = font_atlas.build_rgba32_texture();
 
         let font_texture_desc = TextureDesc::new(
-            c"Imgui font texture",
+            "Imgui font texture",
             TextureDimension::Texture2D,
             font_atlas_texture.width,
             font_atlas_texture.height,
@@ -653,7 +669,7 @@ impl ImguiRenderer {
         let shader_resource_binding = pipeline_state.create_shader_resource_binding(true).unwrap();
 
         let texture_var = shader_resource_binding
-            .get_variable_by_name(c"Texture", ShaderTypes::Pixel)
+            .get_variable_by_name("Texture", ShaderTypes::Pixel)
             .unwrap();
 
         // Store our identifier
@@ -719,7 +735,7 @@ impl ImguiRenderer {
             }
 
             let buffer_desc = BufferDesc::new(
-                c"Imgui vertex buffer",
+                "Imgui vertex buffer",
                 (self.vertex_buffer_size as usize * std::mem::size_of::<imgui::DrawVert>()) as u64,
             )
             .usage(Usage::Dynamic)
@@ -741,7 +757,7 @@ impl ImguiRenderer {
             }
 
             let buffer_desc = BufferDesc::new(
-                c"Imgui index buffer",
+                "Imgui index buffer",
                 (self.index_buffer_size as usize * std::mem::size_of::<imgui::DrawIdx>()) as u64,
             )
             .usage(Usage::Dynamic)

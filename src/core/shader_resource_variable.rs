@@ -1,4 +1,7 @@
-use std::mem::MaybeUninit;
+use std::{
+    ffi::{CStr, CString},
+    mem::MaybeUninit,
+};
 
 use static_assertions::const_assert;
 
@@ -50,21 +53,21 @@ impl Into<ShaderResourceVariableType> for diligent_sys::SHADER_RESOURCE_VARIABLE
     }
 }
 
-pub struct ShaderResourceVariableDesc<'a> {
-    name: &'a std::ffi::CStr,
+pub struct ShaderResourceVariableDesc {
+    name: CString,
     variable_type: ShaderResourceVariableType,
     shader_stages: ShaderTypes,
     flags: ShaderVariableFlags,
 }
 
-impl<'a> ShaderResourceVariableDesc<'a> {
+impl ShaderResourceVariableDesc {
     pub fn new(
-        name: &'a std::ffi::CStr,
+        name: &str,
         variable_type: ShaderResourceVariableType,
         shader_stages: ShaderTypes,
     ) -> Self {
         ShaderResourceVariableDesc {
-            name,
+            name: CString::new(name).unwrap(),
             variable_type,
             shader_stages,
             flags: ShaderVariableFlags::None,
@@ -77,13 +80,13 @@ impl<'a> ShaderResourceVariableDesc<'a> {
     }
 }
 
-impl From<&ShaderResourceVariableDesc<'_>> for diligent_sys::ShaderResourceVariableDesc {
-    fn from(value: &ShaderResourceVariableDesc<'_>) -> Self {
+impl From<&ShaderResourceVariableDesc> for diligent_sys::ShaderResourceVariableDesc {
+    fn from(value: &ShaderResourceVariableDesc) -> Self {
         diligent_sys::ShaderResourceVariableDesc {
             Name: value.name.as_ptr(),
-            ShaderStages: value.shader_stages.bits() as diligent_sys::SHADER_TYPE,
+            ShaderStages: value.shader_stages.bits(),
             Type: diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE::from(&value.variable_type),
-            Flags: value.flags.bits() as diligent_sys::SHADER_VARIABLE_FLAGS,
+            Flags: value.flags.bits(),
         }
     }
 }
@@ -210,7 +213,7 @@ impl ShaderResourceVariable {
         };
 
         ShaderResourceDesc {
-            name: unsafe { std::ffi::CStr::from_ptr(shader_resource_desc.Name) },
+            name: unsafe { CStr::from_ptr(shader_resource_desc.Name) },
             array_size: shader_resource_desc.ArraySize as usize,
             resource_type: shader_resource_desc.Type.into(),
         }

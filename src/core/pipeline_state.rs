@@ -1,3 +1,6 @@
+use std::ffi::CString;
+use std::str::FromStr;
+
 use bitflags::bitflags;
 use static_assertions::const_assert;
 
@@ -252,7 +255,7 @@ const_assert!(diligent_sys::PIPELINE_SHADING_RATE_FLAG_LAST == 2);
 pub struct PipelineResourceLayoutDesc<'a> {
     default_variable_type: ShaderResourceVariableType,
     default_variable_merge_stages: ShaderTypes,
-    variables: Vec<ShaderResourceVariableDesc<'a>>,
+    variables: Vec<ShaderResourceVariableDesc>,
     immutable_samplers: Vec<ImmutableSamplerDesc<'a>>,
 }
 
@@ -328,16 +331,16 @@ impl From<&PipelineResourceLayoutDesc<'_>> for PipelineResourceLayoutDescWrapper
 }
 
 struct PipelineStateDesc<'a, const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE> {
-    name: &'a std::ffi::CStr,
+    name: CString,
     srb_allocation_granularity: u32,
     immediate_context_mask: u64,
     resource_layout: PipelineResourceLayoutDesc<'a>,
 }
 
 impl<'a, const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE> PipelineStateDesc<'a, PIPELINE_TYPE> {
-    fn new(name: &'a std::ffi::CStr) -> Self {
+    fn new(name: &'a str) -> Self {
         PipelineStateDesc {
-            name: name,
+            name: CString::from_str(name).unwrap(),
             srb_allocation_granularity: 1,
             immediate_context_mask: 1,
             resource_layout: PipelineResourceLayoutDesc::new::<PIPELINE_TYPE>(),
@@ -432,7 +435,7 @@ impl<const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE>
 impl<'a, const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE>
     PipelineStateCreateInfo<'a, PIPELINE_TYPE>
 {
-    fn new(name: &'a std::ffi::CStr) -> Self {
+    fn new(name: &'a str) -> Self {
         PipelineStateCreateInfo {
             pso_desc: PipelineStateDesc::new(name),
             flags: PipelineStateObjectCreateFlags::None,
@@ -535,7 +538,7 @@ impl Default for RenderTargetBlendDesc {
 pub struct BlendStateDesc {
     alpha_to_coverage_enable: bool,
     independent_blend_enable: bool,
-    render_targets: [RenderTargetBlendDesc; 8usize],
+    render_targets: [RenderTargetBlendDesc; diligent_sys::DILIGENT_MAX_RENDER_TARGETS as usize],
 }
 
 impl BlendStateDesc {
@@ -806,7 +809,8 @@ pub struct GraphicsPipelineDesc<'a> {
     num_render_targets: u8,
     subpass_index: u8,
     shading_rate_flags: PipelineShadingRateFlags,
-    rtv_formats: [diligent_sys::_TEXTURE_FORMAT; 8usize],
+    rtv_formats:
+        [diligent_sys::_TEXTURE_FORMAT; diligent_sys::DILIGENT_MAX_RENDER_TARGETS as usize],
     dsv_format: diligent_sys::_TEXTURE_FORMAT,
     read_only_dsv: bool,
     sample_desc: diligent_sys::SampleDesc,
@@ -977,7 +981,7 @@ pub struct GraphicsPipelineStateCreateInfo<'a> {
 }
 
 impl<'a> GraphicsPipelineStateCreateInfo<'a> {
-    pub fn new(name: &'a std::ffi::CStr, graphics_pipeline_desc: GraphicsPipelineDesc<'a>) -> Self {
+    pub fn new(name: &'a str, graphics_pipeline_desc: GraphicsPipelineDesc<'a>) -> Self {
         GraphicsPipelineStateCreateInfo {
             pipeline_state_create_info: PipelineStateCreateInfo::new(name),
             graphics_pipeline_desc,
@@ -1020,10 +1024,7 @@ impl<'a> GraphicsPipelineStateCreateInfo<'a> {
         self
     }
 
-    pub fn add_shader_resource_variable(
-        mut self,
-        variable: ShaderResourceVariableDesc<'a>,
-    ) -> Self {
+    pub fn add_shader_resource_variable(mut self, variable: ShaderResourceVariableDesc) -> Self {
         self.pipeline_state_create_info
             .pso_desc
             .resource_layout
@@ -1226,8 +1227,10 @@ impl PipelineState {
     pub fn get_static_variable_by_name(
         &self,
         shader_type: ShaderType,
-        name: &std::ffi::CStr,
+        name: &str,
     ) -> Option<ShaderResourceVariable> {
+        let name = CString::from_str(name).unwrap();
+
         let shader_resource_variable = unsafe {
             (*self.virtual_functions)
                 .PipelineState

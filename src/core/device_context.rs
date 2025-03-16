@@ -1,3 +1,5 @@
+use std::ffi::CString;
+
 use bitflags::bitflags;
 
 use super::{
@@ -1098,7 +1100,7 @@ where
     // fn get_user_data(&self);
 
     fn begin_debug_group(&self, name: &str, color: [f32; 4]) {
-        let name = std::ffi::CString::new(name).unwrap();
+        let name = CString::new(name).unwrap();
         unsafe {
             (*self.as_device_context().virtual_functions)
                 .DeviceContext
@@ -1121,7 +1123,7 @@ where
     }
 
     fn insert_debug_label(&self, name: &str, color: [f32; 4]) {
-        let name = std::ffi::CString::new(name).unwrap();
+        let name = CString::new(name).unwrap();
         unsafe {
             (*self.as_device_context().virtual_functions)
                 .DeviceContext

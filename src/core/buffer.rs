@@ -1,3 +1,5 @@
+use std::ffi::CString;
+
 use bitflags::bitflags;
 use static_assertions::const_assert;
 
@@ -36,8 +38,8 @@ bitflags! {
     }
 }
 
-pub struct BufferDesc<'a> {
-    name: &'a std::ffi::CStr,
+pub struct BufferDesc {
+    name: CString,
 
     size: u64,
 
@@ -50,7 +52,7 @@ pub struct BufferDesc<'a> {
     immediate_context_mask: u64,
 }
 
-impl From<&BufferDesc<'_>> for diligent_sys::BufferDesc {
+impl From<&BufferDesc> for diligent_sys::BufferDesc {
     fn from(value: &BufferDesc) -> Self {
         diligent_sys::BufferDesc {
             _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
@@ -59,20 +61,20 @@ impl From<&BufferDesc<'_>> for diligent_sys::BufferDesc {
             Size: value.size,
             BindFlags: value.bind_flags.bits(),
             Usage: diligent_sys::USAGE::from(&value.usage),
-            CPUAccessFlags: value.cpu_access_flags.bits() as u8,
+            CPUAccessFlags: value.cpu_access_flags.bits(),
             Mode: diligent_sys::BUFFER_MODE::from(&value.mode),
-            MiscFlags: value.misc_flags.bits() as u8,
+            MiscFlags: value.misc_flags.bits(),
             ElementByteStride: value.element_byte_stride,
             ImmediateContextMask: value.immediate_context_mask,
         }
     }
 }
 
-impl<'a> BufferDesc<'a> {
-    pub fn new(name: &'a std::ffi::CStr, size: u64) -> Self {
+impl<'a> BufferDesc {
+    pub fn new(name: &'a str, size: u64) -> Self {
         BufferDesc {
             size,
-            name,
+            name: CString::new(name).unwrap(),
             bind_flags: BindFlags::None,
             usage: Usage::Default,
             cpu_access_flags: CpuAccessFlags::None,

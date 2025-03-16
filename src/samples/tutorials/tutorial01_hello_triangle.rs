@@ -72,7 +72,7 @@ void main(in uint VertId : SV_VertexID, out PSInput PSIn)
 }
 "#;
             let shader_create_info = ShaderCreateInfo::new(
-                c"Triangle vertex shader",
+                "Triangle vertex shader",
                 ShaderSource::SourceCode(&shader_source_code),
                 ShaderType::Vertex,
             )
@@ -104,7 +104,7 @@ void main(in PSInput PSIn, out PSOutput PSOut)
 }
 "#;
             let shader_create_info = ShaderCreateInfo::new(
-                c"Triangle pixel shader",
+                "Triangle pixel shader",
                 ShaderSource::SourceCode(shader_source_code),
                 ShaderType::Pixel,
             )
@@ -136,7 +136,7 @@ void main(in PSInput PSIn, out PSOutput PSOut)
         .primitive_topology(PrimitiveTopology::TriangleList);
 
         let pso_create_info =
-            GraphicsPipelineStateCreateInfo::new(c"Simple triangle PSO", graphics_pipeline_desc)
+            GraphicsPipelineStateCreateInfo::new("Simple triangle PSO", graphics_pipeline_desc)
                 .vertex_shader(&vertex_shader)
                 .pixel_shader(&pixel_shader);
 

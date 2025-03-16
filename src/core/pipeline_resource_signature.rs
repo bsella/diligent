@@ -1,3 +1,5 @@
+use std::ffi::CString;
+
 use super::graphics_types::ShaderType;
 use super::sampler::SamplerDesc;
 use super::shader_resource_variable::ShaderResourceVariable;
@@ -11,19 +13,19 @@ use super::{
 
 pub struct ImmutableSamplerDesc<'a> {
     shader_stages: ShaderTypes,
-    sampler_or_texture_name: &'a std::ffi::CStr,
-    sampler_desc: &'a SamplerDesc<'a>,
+    sampler_or_texture_name: CString,
+    sampler_desc: &'a SamplerDesc,
 }
 
 impl<'a> ImmutableSamplerDesc<'a> {
     pub fn new(
         shader_stages: ShaderTypes,
-        sampler_or_texture_name: &'a std::ffi::CStr,
-        sampler_desc: &'a SamplerDesc<'a>,
+        sampler_or_texture_name: &str,
+        sampler_desc: &'a SamplerDesc,
     ) -> Self {
         ImmutableSamplerDesc {
             shader_stages,
-            sampler_or_texture_name,
+            sampler_or_texture_name: CString::new(sampler_or_texture_name).unwrap(),
             sampler_desc,
         }
     }
