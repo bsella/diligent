@@ -2,7 +2,7 @@ use bitflags::bitflags;
 use static_assertions::const_assert;
 
 use super::{
-    graphics_types::SurfaceTransform,
+    graphics_types::{SurfaceTransform, TextureFormat},
     object::{AsObject, Object},
     texture_view::TextureView,
 };
@@ -21,8 +21,8 @@ const_assert!(diligent_sys::SWAP_CHAIN_USAGE_LAST == 8);
 pub struct SwapChainDesc {
     pub width: u32,
     pub height: u32,
-    pub color_buffer_format: diligent_sys::TEXTURE_FORMAT,
-    pub depth_buffer_format: diligent_sys::TEXTURE_FORMAT,
+    pub color_buffer_format: TextureFormat,
+    pub depth_buffer_format: TextureFormat,
     pub usage: SwapChainUsageFlags,
     pub pre_transform: SurfaceTransform,
     pub buffer_count: u32,
@@ -40,17 +40,11 @@ impl SwapChainDesc {
         self.height = height;
         self
     }
-    pub fn color_buffer_format(
-        mut self,
-        color_buffer_format: diligent_sys::TEXTURE_FORMAT,
-    ) -> Self {
+    pub fn color_buffer_format(mut self, color_buffer_format: TextureFormat) -> Self {
         self.color_buffer_format = color_buffer_format;
         self
     }
-    pub fn depth_buffer_format(
-        mut self,
-        depth_buffer_format: diligent_sys::TEXTURE_FORMAT,
-    ) -> Self {
+    pub fn depth_buffer_format(mut self, depth_buffer_format: TextureFormat) -> Self {
         self.depth_buffer_format = depth_buffer_format;
         self
     }
@@ -85,8 +79,8 @@ impl Default for SwapChainDesc {
         SwapChainDesc {
             width: 0,
             height: 0,
-            color_buffer_format: diligent_sys::TEX_FORMAT_RGBA8_UNORM_SRGB as u16,
-            depth_buffer_format: diligent_sys::TEX_FORMAT_D32_FLOAT as u16,
+            color_buffer_format: TextureFormat::RGBA8_UNORM_SRGB,
+            depth_buffer_format: TextureFormat::D32_FLOAT,
             usage: SwapChainUsageFlags::RenderTarget,
             pre_transform: SurfaceTransform::Optimal,
             buffer_count: 2,
@@ -102,8 +96,8 @@ impl From<&SwapChainDesc> for diligent_sys::SwapChainDesc {
         diligent_sys::SwapChainDesc {
             Width: value.width,
             Height: value.height,
-            ColorBufferFormat: value.color_buffer_format,
-            DepthBufferFormat: value.depth_buffer_format,
+            ColorBufferFormat: diligent_sys::TEXTURE_FORMAT::from(&value.color_buffer_format),
+            DepthBufferFormat: diligent_sys::TEXTURE_FORMAT::from(&value.depth_buffer_format),
             Usage: value.usage.bits(),
             PreTransform: diligent_sys::SURFACE_TRANSFORM::from(&value.pre_transform),
             BufferCount: value.buffer_count,
@@ -119,8 +113,8 @@ impl From<&diligent_sys::SwapChainDesc> for SwapChainDesc {
         SwapChainDesc {
             width: value.Width,
             height: value.Height,
-            color_buffer_format: value.ColorBufferFormat,
-            depth_buffer_format: value.DepthBufferFormat,
+            color_buffer_format: TextureFormat::from(&value.ColorBufferFormat),
+            depth_buffer_format: TextureFormat::from(&value.DepthBufferFormat),
             usage: SwapChainUsageFlags::from_bits_retain(value.Usage),
             pre_transform: SurfaceTransform::from(&value.PreTransform),
             buffer_count: value.BufferCount,

@@ -49,10 +49,10 @@ impl SampleBase for Cube {
 
         // If the swap chain color buffer format is a non-sRGB UNORM format,
         // we need to manually convert pixel shader output to gamma space.
-        let convert_ps_output_to_gamma = swap_chain_desc.color_buffer_format
-            == diligent_sys::TEX_FORMAT_RGBA8_UNORM as diligent_sys::TEXTURE_FORMAT
-            || swap_chain_desc.color_buffer_format
-                == diligent_sys::TEX_FORMAT_BGRA8_UNORM as diligent_sys::TEXTURE_FORMAT;
+        let convert_ps_output_to_gamma = match swap_chain_desc.color_buffer_format {
+            TextureFormat::RGBA8_UNORM | TextureFormat::BGRA8_UNORM => true,
+            _ => false,
+        };
 
         // In this tutorial, we will load shaders from file. To be able to do that,
         // we need to create a shader source stream factory
@@ -143,9 +143,9 @@ impl SampleBase for Cube {
             // This tutorial will render to a single render target
             .num_render_targets(1)
             // Set render target format which is the format of the swap chain's color buffer
-            .rtv_format::<0>(swap_chain_desc.color_buffer_format as diligent_sys::_TEXTURE_FORMAT)
+            .rtv_format::<0>(swap_chain_desc.color_buffer_format)
             // Set depth buffer format which is the format of the swap chain's back buffer
-            .dsv_format(swap_chain_desc.depth_buffer_format as diligent_sys::_TEXTURE_FORMAT)
+            .dsv_format(swap_chain_desc.depth_buffer_format)
             // Primitive topology defines what kind of primitives will be rendered by this pipeline state
             .primitive_topology(PrimitiveTopology::TriangleList)
             // Define vertex shader input layout

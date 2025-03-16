@@ -17,7 +17,8 @@ use crate::core::{
     },
     graphics_types::{
         BindFlags, CpuAccessFlags, MapFlags, PrimitiveTopology, RenderDeviceType,
-        SetShaderResourceFlags, ShaderType, ShaderTypes, TextureAddressMode, Usage, ValueType,
+        SetShaderResourceFlags, ShaderType, ShaderTypes, TextureAddressMode, TextureFormat, Usage,
+        ValueType,
     },
     input_layout::LayoutElement,
     pipeline_resource_signature::ImmutableSamplerDesc,
@@ -430,8 +431,8 @@ pub enum ColorConversionMode {
 pub struct ImguiRendererCreateInfo<'a> {
     device: &'a RenderDevice,
 
-    back_buffer_format: diligent_sys::TEXTURE_FORMAT,
-    depth_buffer_format: diligent_sys::TEXTURE_FORMAT,
+    back_buffer_format: TextureFormat,
+    depth_buffer_format: TextureFormat,
 
     color_conversion: ColorConversionMode,
 
@@ -442,8 +443,8 @@ pub struct ImguiRendererCreateInfo<'a> {
 impl<'a> ImguiRendererCreateInfo<'a> {
     pub fn new(
         device: &'a RenderDevice,
-        back_buffer_format: diligent_sys::TEXTURE_FORMAT,
-        depth_buffer_format: diligent_sys::TEXTURE_FORMAT,
+        back_buffer_format: TextureFormat,
+        depth_buffer_format: TextureFormat,
         initial_width: u16,
         initial_height: u16,
     ) -> Self {
@@ -595,8 +596,8 @@ impl ImguiRenderer {
                 DepthStencilStateDesc::default().depth_enable(false),
             )
             .num_render_targets(1)
-            .rtv_format::<0>(create_info.back_buffer_format as diligent_sys::_TEXTURE_FORMAT)
-            .dsv_format(create_info.depth_buffer_format as diligent_sys::_TEXTURE_FORMAT)
+            .rtv_format::<0>(create_info.back_buffer_format)
+            .dsv_format(create_info.depth_buffer_format)
             .primitive_topology(PrimitiveTopology::TriangleList)
             .add_input_layout(LayoutElement::new(0, 0, 2, ValueType::Float32))
             .add_input_layout(LayoutElement::new(1, 0, 2, ValueType::Float32))
@@ -645,7 +646,7 @@ impl ImguiRenderer {
             TextureDimension::Texture2D,
             font_atlas_texture.width,
             font_atlas_texture.height,
-            diligent_sys::TEX_FORMAT_RGBA8_UNORM,
+            TextureFormat::RGBA8_UNORM,
         )
         .bind_flags(BindFlags::ShaderResource)
         .usage(Usage::Immutable);

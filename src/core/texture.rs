@@ -4,7 +4,7 @@ use bitflags::bitflags;
 use static_assertions::const_assert;
 
 use super::buffer::Buffer;
-use super::graphics_types::{BindFlags, CpuAccessFlags, Usage};
+use super::graphics_types::{BindFlags, CpuAccessFlags, TextureFormat, Usage};
 use super::texture_view::{TextureView, TextureViewType};
 
 use super::device_object::{AsDeviceObject, DeviceObject};
@@ -114,7 +114,7 @@ pub struct TextureDesc {
     dimension: TextureDimension,
     width: u32,
     height: u32,
-    format: diligent_sys::_TEXTURE_FORMAT,
+    format: TextureFormat,
 
     mip_levels: u32,
     sample_count: u32,
@@ -151,7 +151,7 @@ impl From<&TextureDesc> for diligent_sys::TextureDesc {
             Type: diligent_sys::RESOURCE_DIMENSION::from(&value.dimension),
             Width: value.width,
             Height: value.height,
-            Format: value.format as diligent_sys::TEXTURE_FORMAT,
+            Format: diligent_sys::TEXTURE_FORMAT::from(&value.format),
             MipLevels: value.mip_levels,
             SampleCount: value.sample_count,
             BindFlags: value.bind_flags.bits(),
@@ -164,7 +164,7 @@ impl From<&TextureDesc> for diligent_sys::TextureDesc {
                     Depth: value.clear_depth,
                     Stencil: value.clear_stencil,
                 },
-                Format: value.format as diligent_sys::TEXTURE_FORMAT,
+                Format: diligent_sys::TEXTURE_FORMAT::from(&value.format),
             },
             ImmediateContextMask: value.immediate_context_mask,
             __bindgen_anon_1: anon,
@@ -178,7 +178,7 @@ impl TextureDesc {
         dimension: TextureDimension,
         width: u32,
         height: u32,
-        format: diligent_sys::_TEXTURE_FORMAT,
+        format: TextureFormat,
     ) -> Self {
         TextureDesc {
             name: CString::new(name).unwrap(),

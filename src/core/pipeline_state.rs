@@ -5,7 +5,7 @@ use bitflags::bitflags;
 use static_assertions::const_assert;
 
 use super::device_object::{AsDeviceObject, DeviceObject};
-use super::graphics_types::{PrimitiveTopology, ShaderType, ShaderTypes};
+use super::graphics_types::{PrimitiveTopology, ShaderType, ShaderTypes, TextureFormat};
 use super::input_layout::LayoutElement;
 use super::object::AsObject;
 use super::pipeline_resource_signature::{ImmutableSamplerDesc, PipelineResourceSignature};
@@ -512,8 +512,7 @@ impl From<&RenderTargetBlendDesc> for diligent_sys::RenderTargetBlendDesc {
             DestBlendAlpha: diligent_sys::BLEND_FACTOR::from(&value.dest_blend_alpha),
             BlendOpAlpha: diligent_sys::BLEND_OPERATION::from(&value.blend_op_alpha),
             LogicOp: diligent_sys::LOGIC_OPERATION::from(&value.logic_op),
-            RenderTargetWriteMask: value.render_target_write_mask.bits()
-                as diligent_sys::COLOR_MASK,
+            RenderTargetWriteMask: value.render_target_write_mask.bits(),
         }
     }
 }
@@ -809,9 +808,8 @@ pub struct GraphicsPipelineDesc<'a> {
     num_render_targets: u8,
     subpass_index: u8,
     shading_rate_flags: PipelineShadingRateFlags,
-    rtv_formats:
-        [diligent_sys::_TEXTURE_FORMAT; diligent_sys::DILIGENT_MAX_RENDER_TARGETS as usize],
-    dsv_format: diligent_sys::_TEXTURE_FORMAT,
+    rtv_formats: [Option<TextureFormat>; diligent_sys::DILIGENT_MAX_RENDER_TARGETS as usize],
+    dsv_format: Option<TextureFormat>,
     read_only_dsv: bool,
     sample_desc: diligent_sys::SampleDesc,
     // TODO
@@ -846,17 +844,8 @@ impl<'a> GraphicsPipelineDesc<'a> {
             num_render_targets: 0,
             subpass_index: 0,
             shading_rate_flags: PipelineShadingRateFlags::None,
-            rtv_formats: [
-                diligent_sys::TEX_FORMAT_UNKNOWN,
-                diligent_sys::TEX_FORMAT_UNKNOWN,
-                diligent_sys::TEX_FORMAT_UNKNOWN,
-                diligent_sys::TEX_FORMAT_UNKNOWN,
-                diligent_sys::TEX_FORMAT_UNKNOWN,
-                diligent_sys::TEX_FORMAT_UNKNOWN,
-                diligent_sys::TEX_FORMAT_UNKNOWN,
-                diligent_sys::TEX_FORMAT_UNKNOWN,
-            ],
-            dsv_format: diligent_sys::TEX_FORMAT_UNKNOWN,
+            rtv_formats: [(); diligent_sys::DILIGENT_MAX_RENDER_TARGETS as usize].map(|_| None),
+            dsv_format: None,
             read_only_dsv: false,
             node_mask: 0,
             sample_desc: diligent_sys::SampleDesc {
@@ -890,12 +879,12 @@ impl<'a> GraphicsPipelineDesc<'a> {
         self.shading_rate_flags = shading_rate_flags;
         self
     }
-    pub fn rtv_format<const INDEX: usize>(mut self, value: diligent_sys::_TEXTURE_FORMAT) -> Self {
-        self.rtv_formats[INDEX] = value;
+    pub fn rtv_format<const INDEX: usize>(mut self, value: TextureFormat) -> Self {
+        self.rtv_formats[INDEX] = Some(value);
         self
     }
-    pub fn dsv_format(mut self, dsv_format: diligent_sys::_TEXTURE_FORMAT) -> Self {
-        self.dsv_format = dsv_format;
+    pub fn dsv_format(mut self, dsv_format: TextureFormat) -> Self {
+        self.dsv_format = Some(dsv_format);
         self
     }
     pub fn read_only_dsv(mut self, read_only_dsv: bool) -> Self {
@@ -944,12 +933,17 @@ impl From<&GraphicsPipelineDesc<'_>> for GraphicsPipelineDescWrapper {
             NumViewports: value.num_viewports,
             NumRenderTargets: value.num_render_targets,
             SubpassIndex: value.subpass_index,
-            ShadingRateFlags: value.shading_rate_flags.bits()
-                as diligent_sys::PIPELINE_SHADING_RATE_FLAGS,
-            RTVFormats: value
-                .rtv_formats
-                .map(|format| format as diligent_sys::TEXTURE_FORMAT),
-            DSVFormat: value.dsv_format as diligent_sys::TEXTURE_FORMAT,
+            ShadingRateFlags: value.shading_rate_flags.bits(),
+            RTVFormats: value.rtv_formats.each_ref().map(|format| {
+                format.as_ref().map_or(
+                    diligent_sys::TEX_FORMAT_UNKNOWN as diligent_sys::TEXTURE_FORMAT,
+                    |format| diligent_sys::TEXTURE_FORMAT::from(format),
+                )
+            }),
+            DSVFormat: value.dsv_format.as_ref().map_or(
+                diligent_sys::TEX_FORMAT_UNKNOWN as diligent_sys::TEXTURE_FORMAT,
+                |format| diligent_sys::TEXTURE_FORMAT::from(format),
+            ),
             ReadOnlyDSV: value.read_only_dsv,
             SmplDesc: value.sample_desc.into(),
             pRenderPass: std::ptr::null_mut(),
