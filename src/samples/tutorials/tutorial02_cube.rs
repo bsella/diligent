@@ -1,36 +1,18 @@
-use diligent::{
-    core::{
-        accessories::linear_to_srgba,
-        buffer::{Buffer, BufferDesc},
-        device_context::{
-            DeferredDeviceContext, DeviceContext, DrawFlags, DrawIndexedAttribs,
-            ImmediateDeviceContext, ResourceStateTransitionMode, SetVertexBufferFlags,
-        },
-        engine_factory::EngineFactory,
-        graphics_types::{
-            BindFlags, CpuAccessFlags, MapFlags, PrimitiveTopology, SetShaderResourceFlags,
-            ShaderType, Usage, ValueType,
-        },
-        input_layout::LayoutElement,
-        pipeline_state::{
-            BlendStateDesc, DepthStencilStateDesc, GraphicsPipelineDesc,
-            GraphicsPipelineStateCreateInfo, PipelineState, RasterizerStateDesc,
-        },
-        render_device::RenderDevice,
-        shader::{
-            ShaderCompileFlags, ShaderCreateInfo, ShaderLanguage, ShaderSource,
-            ShaderSourceInputStreamFactory,
-        },
-        shader_resource_binding::ShaderResourceBinding,
-        shader_resource_variable::ShaderResourceVariableType,
-        swap_chain::SwapChain,
-    },
-    samples::{
-        sample::{get_adjusted_projection_matrix, get_surface_pretransform_matrix, SampleBase},
-        sample_app::SampleApp,
-    },
-    tools::native_app,
-};
+use diligent::core::accessories::linear_to_srgba;
+use diligent::core::buffer::*;
+use diligent::core::device_context::*;
+use diligent::core::engine_factory::EngineFactory;
+use diligent::core::graphics_types::*;
+use diligent::core::input_layout::LayoutElement;
+use diligent::core::pipeline_state::*;
+use diligent::core::render_device::RenderDevice;
+use diligent::core::shader::*;
+use diligent::core::shader_resource_binding::ShaderResourceBinding;
+use diligent::core::shader_resource_variable::*;
+use diligent::core::swap_chain::SwapChain;
+use diligent::samples::sample::*;
+use diligent::samples::sample_app::SampleApp;
+use diligent::tools::native_app;
 
 struct Cube {
     render_device: RenderDevice,
