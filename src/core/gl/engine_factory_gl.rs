@@ -1,6 +1,6 @@
 use crate::{
     core::{
-        device_context::DeviceContext,
+        device_context::ImmediateDeviceContext,
         engine_factory::{AsEngineFactory, EngineCreateInfo, EngineFactory},
         graphics_types::AdapterType,
         render_device::RenderDevice,
@@ -58,7 +58,7 @@ impl EngineFactoryOpenGL {
         &self,
         engine_ci: &EngineGLCreateInfo,
         sc_desc: &SwapChainDesc,
-    ) -> Option<(RenderDevice, DeviceContext, SwapChain)> {
+    ) -> Option<(RenderDevice, ImmediateDeviceContext, SwapChain)> {
         let engine_ci = diligent_sys::EngineGLCreateInfo::from(engine_ci);
 
         let mut render_device_ptr = std::ptr::null_mut();
@@ -86,7 +86,7 @@ impl EngineFactoryOpenGL {
         } else {
             Some((
                 RenderDevice::new(render_device_ptr),
-                DeviceContext::new(device_context_ptr),
+                ImmediateDeviceContext::new(device_context_ptr),
                 SwapChain::new(swap_chain_ptr),
             ))
         }
@@ -97,7 +97,7 @@ impl EngineFactoryOpenGL {
     pub fn attach_to_active_gl_context(
         &self,
         engine_ci: &EngineGLCreateInfo,
-    ) -> Option<(RenderDevice, DeviceContext)> {
+    ) -> Option<(RenderDevice, ImmediateDeviceContext)> {
         let engine_ci = diligent_sys::EngineGLCreateInfo::from(engine_ci);
 
         let mut render_device_ptr = std::ptr::null_mut();
@@ -120,7 +120,7 @@ impl EngineFactoryOpenGL {
         } else {
             Some((
                 RenderDevice::new(render_device_ptr),
-                DeviceContext::new(device_context_ptr),
+                ImmediateDeviceContext::new(device_context_ptr),
             ))
         }
     }
@@ -133,6 +133,6 @@ pub fn get_engine_factory_gl() -> EngineFactoryOpenGL {
         engine_factory_gl,
         virtual_functions: unsafe { (*engine_factory_gl).pVtbl },
 
-        engine_factory: EngineFactory::new(engine_factory_gl as *mut diligent_sys::IEngineFactory),
+        engine_factory: EngineFactory::new(engine_factory_gl as _),
     }
 }
