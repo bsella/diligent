@@ -12,7 +12,7 @@ mod linux_x11;
 
 mod native_window;
 
-pub type NativeWindow<'a> = native_window::NativeWindow;
+pub type NativeWindow = native_window::NativeWindow;
 
 pub fn main<Application>(settings: Application::AppSettings) -> Result<(), std::io::Error>
 where
