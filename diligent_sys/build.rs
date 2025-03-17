@@ -128,9 +128,18 @@ fn generate_diligent_c_bindings(diligent_install_dir: &PathBuf, out_dir: &PathBu
         #[cfg(feature = "opengl_interop")]
         let builder = builder.clang_arg("-DOPENGL_INTEROP=1");
 
-        println!("cargo::rustc-link-lib=GL");
-        println!("cargo::rustc-link-lib=X11");
-        println!("cargo::rustc-link-lib=GLEW");
+        #[cfg(target_os = "linux")]
+        {
+            println!("cargo::rustc-link-lib=GL");
+            println!("cargo::rustc-link-lib=X11");
+            println!("cargo::rustc-link-lib=GLEW");
+        }
+
+        #[cfg(target_os = "windows")]
+        {
+            println!("cargo::rustc-link-lib=opengl32");
+            println!("cargo::rustc-link-lib=glew-static");
+        }
 
         builder
     }
