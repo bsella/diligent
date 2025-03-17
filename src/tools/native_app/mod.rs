@@ -12,7 +12,7 @@ mod platform;
 #[path = "windows/mod.rs"]
 mod platform;
 
-pub type NativeWindow<'a> = platform::NativeWindow<'a>;
+pub type NativeWindow = platform::NativeWindow;
 
 pub fn main<Application>() -> Result<(), std::io::Error>
 where

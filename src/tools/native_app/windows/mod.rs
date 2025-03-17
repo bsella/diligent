@@ -10,12 +10,12 @@ use windows::{
 };
 
 pub struct NativeWindow {
-    hwnd: *mut std::ffi::c_void,
+    hwnd: HWND,
 }
 
 impl From<&NativeWindow> for diligent_sys::NativeWindow {
     fn from(value: &NativeWindow) -> Self {
-        diligent_sys::NativeWindow { hWnd: value.hwnd }
+        diligent_sys::NativeWindow { hWnd: value.hwnd.0 }
     }
 }
 
@@ -150,7 +150,7 @@ where
     Application::new(
         settings,
         EngineCreateInfo::default(),
-        Some(&NativeWindow { hwnd: hwnd.0 }),
+        Some(&NativeWindow { hwnd }),
     )
     .run(Win32EventHandler, &|title: &str| unsafe {
         let _ = SetWindowTextW(hwnd, &HSTRING::from(title));
