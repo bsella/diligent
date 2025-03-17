@@ -122,6 +122,9 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
                     }
                 }
 
+                // If you're noticing any difference in frame rate when you enable vsync,
+                // this is because of the window title update. This also happens on the
+                // main DiligentSamples repository.
                 ui.checkbox("VSync", &mut self.app_settings.vsync);
             }
         }
@@ -353,15 +356,16 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
 
         let mut last_time = start_time;
 
-        {
-            let app_title = String::from(GenericSample::get_name())
-                + " ("
-                + get_render_device_type_string(&self.app_settings.device_type, false)
-                + ", API "
-                + format!("{API_VERSION}").as_str()
-                + ")";
-            update_window_title_cb(app_title.as_str());
-        }
+        let app_title = String::from(GenericSample::get_name())
+            + " ("
+            + get_render_device_type_string(&self.app_settings.device_type, false)
+            + ", API "
+            + format!("{API_VERSION}").as_str()
+            + ")";
+
+        update_window_title_cb(app_title.as_str());
+
+        let mut filtered_frame_time = 0.0;
 
         'main: loop {
             while let Some(event) = event_handler.poll_event() {
@@ -380,16 +384,18 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
                 self.sample.handle_event(event);
             }
 
-            {
+            let elapsed_time = {
                 let now = std::time::Instant::now();
 
-                self.update(
-                    now.duration_since(start_time).as_secs_f64(),
-                    now.duration_since(last_time).as_secs_f64(),
-                );
+                let current_time = now.duration_since(start_time).as_secs_f64();
+                let elapsed_time = now.duration_since(last_time).as_secs_f64();
+
+                self.update(current_time, elapsed_time);
 
                 last_time = now;
-            }
+
+                elapsed_time
+            };
 
             self.render();
 
@@ -402,6 +408,21 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             }
 
             self.present();
+
+            {
+                let filter_scale = 0.2;
+                filtered_frame_time =
+                    filtered_frame_time * (1.0 - filter_scale) + filter_scale * elapsed_time;
+
+                update_window_title_cb(
+                    format!(
+                        "{app_title} - {:.1} ms ({:.1} fps)",
+                        filtered_frame_time * 1000.0,
+                        1.0 / filtered_frame_time
+                    )
+                    .as_str(),
+                );
+            }
         }
 
         Ok(())
