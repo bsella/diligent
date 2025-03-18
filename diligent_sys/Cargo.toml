@@ -1,6 +1,6 @@
 [package]
 name = "diligent_sys"
-version = "0.1.0"
+version = "0.1.0" # TODO : update to the version from the C++ diligent repo
 edition = "2021"
 build = "build.rs"
 exclude = ["/DiligentEngine", "**/assets"]

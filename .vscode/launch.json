@@ -14,8 +14,9 @@
                     "--example",
                     "Tutorial01_HelloTriangle"
                 ],
+                "cwd": "${workspaceFolder}/samples",
             },
-            "cwd": "${workspaceFolder}/src/samples/tutorials/assets",
+            "cwd": "${workspaceFolder}/samples/src/tutorials/assets",
         },
         {
             "type": "lldb",
@@ -27,8 +28,9 @@
                     "--example",
                     "Tutorial02_Cube"
                 ],
+                "cwd": "${workspaceFolder}/samples",
             },
-            "cwd": "${workspaceFolder}/src/samples/tutorials/assets",
+            "cwd": "${workspaceFolder}/samples/src/tutorials/assets",
         },
         {
             "type": "lldb",
@@ -40,8 +42,9 @@
                     "--example",
                     "Tutorial03_Texturing"
                 ],
+                "cwd": "${workspaceFolder}/samples",
             },
-            "cwd": "${workspaceFolder}/src/samples/tutorials/assets",
+            "cwd": "${workspaceFolder}/samples/src/tutorials/assets",
         }
     ]
 }

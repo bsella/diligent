@@ -1,0 +1,44 @@
+[package]
+name = "diligent_samples"
+version = "0.1.0"
+edition = "2021"
+exclude = ["**/assets"]
+
+[dependencies]
+imgui = "0.12.0"
+image = "0.25.5"
+glam  = "0.30.0"
+clap  = { version = "4.5.30", features = ["cargo"] }
+
+[dependencies.diligent]
+path = ".."
+
+[dependencies.diligent_tools]
+path = "../tools"
+
+[features]
+# Vulkan is present on all platforms, so let's set it as the default backend for now.
+default = ["vulkan"]
+
+vulkan = ["diligent_tools/vulkan"]
+opengl = ["diligent_tools/opengl"]
+d3d11  = ["diligent_tools/d3d11"]
+d3d12  = ["diligent_tools/d3d12"]
+metal  = ["diligent_tools/metal"]
+gles   = ["diligent_tools/gles"]
+webgpu = ["diligent_tools/webgpu"]
+
+[lib]
+name = "diligent_samples"
+
+[[example]]
+name = "Tutorial01_HelloTriangle"
+path = "src/tutorials/tutorial01_hello_triangle.rs"
+
+[[example]]
+name = "Tutorial02_Cube"
+path = "src/tutorials/tutorial02_cube.rs"
+
+[[example]]
+name = "Tutorial03_Texturing"
+path = "src/tutorials/tutorial03_texturing.rs"
