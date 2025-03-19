@@ -162,8 +162,8 @@ impl<'a> ShaderCreateInfo<'a> {
         self
     }
 
-    pub fn add_macro(mut self, name: &'a str, definition: &'a str) -> Self {
-        self.macros.push((name, definition));
+    pub fn set_macros(mut self, macros: Vec<(&'a str, &'a str)>) -> Self {
+        self.macros = macros;
         self
     }
 

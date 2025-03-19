@@ -98,10 +98,10 @@ impl SampleBase for Cube {
                 // converted from linear to gamma space by the GPU. However, some platforms (e.g. Android in GLES mode,
                 // or Emscripten in WebGL mode) do not support gamma-correction. In this case the application
                 // has to do the conversion manually.
-                .add_macro(
+                .set_macros(vec![(
                     "CONVERT_PS_OUTPUT_TO_GAMMA",
                     if convert_ps_output_to_gamma { "1" } else { "0" },
-                )
+                )])
                 .shader_source_input_stream_factory(Some(&shader_source_factory))
         }
 

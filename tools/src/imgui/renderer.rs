@@ -490,11 +490,12 @@ impl ImguiRenderer {
             let shader_ci = ShaderCreateInfo::new(name, source, shader_type);
 
             if manual_srgb {
-                shader_ci
-                    .add_macro("GAMMA_TO_LINEAR(Gamma)", GAMMA_TO_LINEAR)
-                    .add_macro("SRGBA_TO_LINEAR(col)", SRGBA_TO_LINEAR)
+                shader_ci.set_macros(vec![
+                    ("GAMMA_TO_LINEAR(Gamma)", GAMMA_TO_LINEAR),
+                    ("SRGBA_TO_LINEAR(col)", SRGBA_TO_LINEAR),
+                ])
             } else {
-                shader_ci.add_macro("SRGBA_TO_LINEAR(col)", "")
+                shader_ci.set_macros(vec![("SRGBA_TO_LINEAR(col)", "")])
             }
         }
 
