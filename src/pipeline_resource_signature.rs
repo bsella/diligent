@@ -1,5 +1,7 @@
 use std::ffi::CString;
 
+use static_assertions::const_assert;
+
 use super::graphics_types::ShaderType;
 use super::sampler::SamplerDesc;
 use super::shader_resource_variable::ShaderResourceVariable;
@@ -42,7 +44,7 @@ impl From<&ImmutableSamplerDesc<'_>> for diligent_sys::ImmutableSamplerDesc {
 }
 
 pub struct PipelineResourceSignature {
-    pub(crate) pipeline_resource_signature: *mut diligent_sys::IPipelineResourceSignature,
+    pub(crate) sys_ptr: *mut diligent_sys::IPipelineResourceSignature,
     virtual_functions: *mut diligent_sys::IPipelineResourceSignatureVtbl,
 
     vertex_static_variables: Vec<ShaderResourceVariable>,
@@ -72,7 +74,9 @@ impl AsDeviceObject for PipelineResourceSignature {
 
 impl PipelineResourceSignature {
     #[allow(dead_code)]
-    pub(crate) fn new(pipeline_rs_ptr: *mut diligent_sys::IPipelineResourceSignature) -> Self {
+    pub(crate) fn new(
+        pipeline_resource_signature_ptr: *mut diligent_sys::IPipelineResourceSignature,
+    ) -> Self {
         fn create_shader_resource_variables(
             pipeline_rs_ptr: *mut diligent_sys::IPipelineResourceSignature,
             shader_type: ShaderType,
@@ -112,11 +116,20 @@ impl PipelineResourceSignature {
             )
         }
 
-        PipelineResourceSignature {
-            pipeline_resource_signature: pipeline_rs_ptr,
-            virtual_functions: unsafe { (*pipeline_rs_ptr).pVtbl },
+        // Both base and derived classes have exactly the same size.
+        // This means that we can up-cast to the base class without worrying about layout offset between both classes
+        const_assert!(
+            std::mem::size_of::<diligent_sys::IDeviceObject>()
+                == std::mem::size_of::<diligent_sys::IPipelineResourceSignature>()
+        );
 
-            device_object: DeviceObject::new(pipeline_rs_ptr as *mut diligent_sys::IDeviceObject),
+        PipelineResourceSignature {
+            sys_ptr: pipeline_resource_signature_ptr,
+            virtual_functions: unsafe { (*pipeline_resource_signature_ptr).pVtbl },
+
+            device_object: DeviceObject::new(
+                pipeline_resource_signature_ptr as *mut diligent_sys::IDeviceObject,
+            ),
 
             vertex_static_variables: Vec::new(),
             pixel_static_variables: Vec::new(),
@@ -141,9 +154,8 @@ impl PipelineResourceSignature {
             ((*self.virtual_functions)
                 .DeviceObject
                 .GetDesc
-                .unwrap_unchecked()(
-                self.pipeline_resource_signature as *mut diligent_sys::IDeviceObject,
-            ) as *const diligent_sys::PipelineResourceSignatureDesc)
+                .unwrap_unchecked()(self.device_object.sys_ptr)
+                as *const diligent_sys::PipelineResourceSignatureDesc)
                 .as_ref()
                 .unwrap_unchecked()
         }
@@ -159,7 +171,7 @@ impl PipelineResourceSignature {
                 .PipelineResourceSignature
                 .CreateShaderResourceBinding
                 .unwrap_unchecked()(
-                self.pipeline_resource_signature,
+                self.sys_ptr,
                 std::ptr::addr_of_mut!(shader_resource_binding_ptr),
                 init_static_resources.unwrap_or(false),
             );
@@ -183,9 +195,9 @@ impl PipelineResourceSignature {
                 .PipelineResourceSignature
                 .BindStaticResources
                 .unwrap_unchecked()(
-                self.pipeline_resource_signature,
+                self.sys_ptr,
                 shader_stages.bits(),
-                resource_mapping.resource_mapping,
+                resource_mapping.sys_ptr,
                 flags,
             );
         }
@@ -217,10 +229,7 @@ impl PipelineResourceSignature {
             (*self.virtual_functions)
                 .PipelineResourceSignature
                 .InitializeStaticSRBResources
-                .unwrap_unchecked()(
-                self.pipeline_resource_signature,
-                shader_resource_binding.shader_resource_binding,
-            );
+                .unwrap_unchecked()(self.sys_ptr, shader_resource_binding.sys_ptr);
         }
     }
 
@@ -229,10 +238,7 @@ impl PipelineResourceSignature {
             (*self.virtual_functions)
                 .PipelineResourceSignature
                 .CopyStaticResources
-                .unwrap_unchecked()(
-                self.pipeline_resource_signature,
-                signature.pipeline_resource_signature,
-            );
+                .unwrap_unchecked()(self.sys_ptr, signature.sys_ptr);
         }
     }
 
@@ -241,10 +247,7 @@ impl PipelineResourceSignature {
             (*self.virtual_functions)
                 .PipelineResourceSignature
                 .IsCompatibleWith
-                .unwrap_unchecked()(
-                self.pipeline_resource_signature,
-                signature.pipeline_resource_signature,
-            )
+                .unwrap_unchecked()(self.sys_ptr, signature.sys_ptr)
         }
     }
 }

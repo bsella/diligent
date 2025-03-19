@@ -329,7 +329,7 @@ impl ShaderDesc {
 }
 
 pub struct Shader {
-    pub(crate) shader: *mut diligent_sys::IShader,
+    pub(crate) sys_ptr: *mut diligent_sys::IShader,
     virtual_functions: *mut diligent_sys::IShaderVtbl,
 
     device_object: DeviceObject,
@@ -343,8 +343,15 @@ impl AsDeviceObject for Shader {
 
 impl Shader {
     pub(crate) fn new(shader_ptr: *mut diligent_sys::IShader) -> Self {
+        // Both base and derived classes have exactly the same size.
+        // This means that we can up-cast to the base class without worrying about layout offset between both classes
+        const_assert!(
+            std::mem::size_of::<diligent_sys::IDeviceObject>()
+                == std::mem::size_of::<diligent_sys::IShader>()
+        );
+
         Shader {
-            shader: shader_ptr,
+            sys_ptr: shader_ptr,
             virtual_functions: unsafe { (*shader_ptr).pVtbl },
             device_object: DeviceObject::new(shader_ptr as *mut diligent_sys::IDeviceObject),
         }
@@ -355,7 +362,7 @@ impl Shader {
             *((*self.virtual_functions)
                 .DeviceObject
                 .GetDesc
-                .unwrap_unchecked()(self.shader as *mut diligent_sys::IDeviceObject)
+                .unwrap_unchecked()(self.device_object.sys_ptr)
                 as *const diligent_sys::ShaderDesc)
         }
     }
@@ -365,7 +372,7 @@ impl Shader {
             let num_resources = (*self.virtual_functions)
                 .Shader
                 .GetResourceCount
-                .unwrap_unchecked()(self.shader);
+                .unwrap_unchecked()(self.sys_ptr);
 
             let mut resources = Vec::with_capacity(num_resources as usize);
 
@@ -374,7 +381,7 @@ impl Shader {
                 (*self.virtual_functions)
                     .Shader
                     .GetResourceDesc
-                    .unwrap_unchecked()(self.shader, index, resources_ptr);
+                    .unwrap_unchecked()(self.sys_ptr, index, resources_ptr);
                 resources.push(ShaderResourceDesc::from(*resources_ptr));
             }
             resources
@@ -389,7 +396,7 @@ impl Shader {
             (*self.virtual_functions)
                 .Shader
                 .GetConstantBufferDesc
-                .unwrap_unchecked()(self.shader, index)
+                .unwrap_unchecked()(self.sys_ptr, index)
             .as_ref()
         }
     }
@@ -401,7 +408,7 @@ impl Shader {
                 .Shader
                 .GetBytecode
                 .unwrap_unchecked()(
-                self.shader,
+                self.sys_ptr,
                 bytecode as *mut *const c_void,
                 std::ptr::addr_of_mut!(size),
             );
@@ -414,7 +421,7 @@ impl Shader {
             (*self.virtual_functions)
                 .Shader
                 .GetStatus
-                .unwrap_unchecked()(self.shader, wait_for_completion)
+                .unwrap_unchecked()(self.sys_ptr, wait_for_completion)
         }
     }
 }

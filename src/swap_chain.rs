@@ -126,7 +126,7 @@ impl From<&diligent_sys::SwapChainDesc> for SwapChainDesc {
 }
 
 pub struct SwapChain {
-    pub(crate) swap_chain: *mut diligent_sys::ISwapChain,
+    pub(crate) sys_ptr: *mut diligent_sys::ISwapChain,
     virtual_functions: *mut diligent_sys::ISwapChainVtbl,
 
     object: Object,
@@ -140,8 +140,15 @@ impl AsObject for SwapChain {
 
 impl SwapChain {
     pub(crate) fn new(swap_chain_ptr: *mut diligent_sys::ISwapChain) -> Self {
+        // Both base and derived classes have exactly the same size.
+        // This means that we can up-cast to the base class without worrying about layout offset between both classes
+        const_assert!(
+            std::mem::size_of::<diligent_sys::IObject>()
+                == std::mem::size_of::<diligent_sys::ISwapChain>()
+        );
+
         SwapChain {
-            swap_chain: swap_chain_ptr,
+            sys_ptr: swap_chain_ptr,
             virtual_functions: unsafe { (*swap_chain_ptr).pVtbl },
             object: Object::new(swap_chain_ptr as *mut diligent_sys::IObject),
         }
@@ -152,7 +159,7 @@ impl SwapChain {
             (*self.virtual_functions)
                 .SwapChain
                 .Present
-                .unwrap_unchecked()(self.swap_chain, sync_interval)
+                .unwrap_unchecked()(self.sys_ptr, sync_interval)
         }
     }
 
@@ -161,7 +168,7 @@ impl SwapChain {
             (*self.virtual_functions)
                 .SwapChain
                 .GetDesc
-                .unwrap_unchecked()(self.swap_chain)
+                .unwrap_unchecked()(self.sys_ptr)
             .as_ref()
             .unwrap_unchecked()
         };
@@ -175,7 +182,7 @@ impl SwapChain {
                 .SwapChain
                 .Resize
                 .unwrap_unchecked()(
-                self.swap_chain,
+                self.sys_ptr,
                 new_width,
                 new_height,
                 diligent_sys::SURFACE_TRANSFORM::from(&new_transform),
@@ -188,7 +195,7 @@ impl SwapChain {
             (*self.virtual_functions)
                 .SwapChain
                 .SetFullscreenMode
-                .unwrap_unchecked()(self.swap_chain, std::ptr::from_ref(display_mode))
+                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(display_mode))
         }
     }
 
@@ -197,7 +204,7 @@ impl SwapChain {
             (*self.virtual_functions)
                 .SwapChain
                 .SetWindowedMode
-                .unwrap_unchecked()(self.swap_chain)
+                .unwrap_unchecked()(self.sys_ptr)
         }
     }
 
@@ -206,7 +213,7 @@ impl SwapChain {
             (*self.virtual_functions)
                 .SwapChain
                 .SetMaximumFrameLatency
-                .unwrap_unchecked()(self.swap_chain, max_latency)
+                .unwrap_unchecked()(self.sys_ptr, max_latency)
         }
     }
 
@@ -216,7 +223,7 @@ impl SwapChain {
                 (*self.virtual_functions)
                     .SwapChain
                     .GetCurrentBackBufferRTV
-                    .unwrap_unchecked()(self.swap_chain)
+                    .unwrap_unchecked()(self.sys_ptr)
             },
             std::ptr::null_mut(),
         );
@@ -232,7 +239,7 @@ impl SwapChain {
                 (*self.virtual_functions)
                     .SwapChain
                     .GetDepthBufferDSV
-                    .unwrap_unchecked()(self.swap_chain)
+                    .unwrap_unchecked()(self.sys_ptr)
             },
             std::ptr::null_mut(),
         );

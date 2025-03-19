@@ -1,5 +1,7 @@
 use std::os::raw::c_void;
 
+use static_assertions::const_assert;
+
 use super::buffer::{Buffer, BufferDesc};
 use super::data_blob::DataBlob;
 use super::device_context::DeviceContext;
@@ -30,7 +32,7 @@ impl RenderDeviceInfo {
 }
 
 pub struct RenderDevice {
-    pub(crate) render_device: *mut diligent_sys::IRenderDevice,
+    pub(crate) sys_ptr: *mut diligent_sys::IRenderDevice,
     virtual_functions: *mut diligent_sys::IRenderDeviceVtbl,
 
     object: Object,
@@ -44,8 +46,15 @@ impl AsObject for RenderDevice {
 
 impl RenderDevice {
     pub(crate) fn new(render_device_ptr: *mut diligent_sys::IRenderDevice) -> Self {
+        // Both base and derived classes have exactly the same size.
+        // This means that we can up-cast to the base class without worrying about layout offset between both classes
+        const_assert!(
+            std::mem::size_of::<diligent_sys::IObject>()
+                == std::mem::size_of::<diligent_sys::IRenderDevice>()
+        );
+
         RenderDevice {
-            render_device: render_device_ptr,
+            sys_ptr: render_device_ptr,
             virtual_functions: unsafe { (*render_device_ptr).pVtbl },
             object: Object::new(render_device_ptr as *mut diligent_sys::IObject),
         }
@@ -60,7 +69,7 @@ impl RenderDevice {
                 .RenderDevice
                 .CreateBuffer
                 .unwrap_unchecked()(
-                self.render_device,
+                self.sys_ptr,
                 std::ptr::addr_of!(buffer_desc),
                 std::ptr::null(),
                 std::ptr::addr_of_mut!(buffer_ptr),
@@ -86,7 +95,7 @@ impl RenderDevice {
             pData: std::ptr::from_ref(buffer_data) as *const c_void,
             DataSize: std::mem::size_of_val(buffer_data) as u64,
             pContext: device_context.map_or(std::ptr::null_mut(), |context| {
-                context.as_device_context().device_context_ptr
+                context.as_device_context().sys_ptr
             }),
         };
 
@@ -96,7 +105,7 @@ impl RenderDevice {
                 .RenderDevice
                 .CreateBuffer
                 .unwrap_unchecked()(
-                self.render_device,
+                self.sys_ptr,
                 std::ptr::from_ref(&buffer_desc),
                 std::ptr::from_ref(&buffer_data),
                 std::ptr::addr_of_mut!(buffer_ptr),
@@ -122,7 +131,7 @@ impl RenderDevice {
                 .RenderDevice
                 .CreateShader
                 .unwrap_unchecked()(
-                self.render_device,
+                self.sys_ptr,
                 std::ptr::from_ref(shader_ci),
                 std::ptr::addr_of_mut!(shader_ptr),
                 std::ptr::addr_of_mut!(data_blob_ptr),
@@ -153,9 +162,8 @@ impl RenderDevice {
         let texture_data = diligent_sys::TextureData {
             NumSubresources: subresources.len() as u32,
             pSubResources: subresources.as_mut_ptr(),
-            pContext: device_context.map_or(std::ptr::null_mut(), |c| {
-                c.as_device_context().device_context_ptr
-            }),
+            pContext: device_context
+                .map_or(std::ptr::null_mut(), |c| c.as_device_context().sys_ptr),
         };
 
         unsafe {
@@ -163,7 +171,7 @@ impl RenderDevice {
                 .RenderDevice
                 .CreateTexture
                 .unwrap_unchecked()(
-                self.render_device,
+                self.sys_ptr,
                 std::ptr::addr_of!(texture_desc),
                 if device_context.is_none() && subresources.is_empty() {
                     std::ptr::null()
@@ -190,7 +198,7 @@ impl RenderDevice {
                 .RenderDevice
                 .CreateSampler
                 .unwrap_unchecked()(
-                self.render_device,
+                self.sys_ptr,
                 std::ptr::addr_of!(sampler_desc),
                 std::ptr::addr_of_mut!(sampler_ptr),
             );
@@ -213,7 +221,7 @@ impl RenderDevice {
                 .RenderDevice
                 .CreateResourceMapping
                 .unwrap_unchecked()(
-                self.render_device,
+                self.sys_ptr,
                 resource_mapping_ci,
                 std::ptr::addr_of_mut!(resource_mapping_ptr),
             );
@@ -240,7 +248,7 @@ impl RenderDevice {
                 .RenderDevice
                 .CreateGraphicsPipelineState
                 .unwrap_unchecked()(
-                self.render_device,
+                self.sys_ptr,
                 std::ptr::addr_of!(pipeline_ci),
                 std::ptr::addr_of_mut!(pipeline_state_ptr),
             );
@@ -262,7 +270,7 @@ impl RenderDevice {
                 .RenderDevice
                 .CreateComputePipelineState
                 .unwrap_unchecked()(
-                self.render_device,
+                self.sys_ptr,
                 pipeline_ci,
                 std::ptr::addr_of_mut!(pipeline_state_ptr),
             );
@@ -285,7 +293,7 @@ impl RenderDevice {
                 .RenderDevice
                 .CreateRayTracingPipelineState
                 .unwrap_unchecked()(
-                self.render_device,
+                self.sys_ptr,
                 pipeline_ci,
                 std::ptr::addr_of_mut!(pipeline_state_ptr),
             );
@@ -307,7 +315,7 @@ impl RenderDevice {
                 .RenderDevice
                 .CreateTilePipelineState
                 .unwrap_unchecked()(
-                self.render_device,
+                self.sys_ptr,
                 pipeline_ci,
                 std::ptr::addr_of_mut!(pipeline_state_ptr),
             );
@@ -326,9 +334,7 @@ impl RenderDevice {
                 .RenderDevice
                 .CreateFence
                 .unwrap_unchecked()(
-                self.render_device,
-                fence_desc,
-                std::ptr::addr_of_mut!(fence_ptr),
+                self.sys_ptr, fence_desc, std::ptr::addr_of_mut!(fence_ptr)
             );
         }
         if fence_ptr.is_null() {
@@ -352,7 +358,7 @@ impl RenderDevice {
             (*self.virtual_functions)
                 .RenderDevice
                 .GetAdapterInfo
-                .unwrap_unchecked()(self.render_device)
+                .unwrap_unchecked()(self.sys_ptr)
             .as_ref()
             .unwrap_unchecked()
         }
@@ -363,7 +369,7 @@ impl RenderDevice {
             (*self.virtual_functions)
                 .RenderDevice
                 .GetDeviceInfo
-                .unwrap_unchecked()(self.render_device)
+                .unwrap_unchecked()(self.sys_ptr)
             .as_ref()
             .unwrap_unchecked()
         };
@@ -396,7 +402,7 @@ impl RenderDevice {
             (*self.virtual_functions)
                 .RenderDevice
                 .GetTextureFormatInfo
-                .unwrap_unchecked()(self.render_device, format)
+                .unwrap_unchecked()(self.sys_ptr, format)
             .as_ref()
             .unwrap_unchecked()
         }
@@ -410,7 +416,7 @@ impl RenderDevice {
             (*self.virtual_functions)
                 .RenderDevice
                 .GetTextureFormatInfoExt
-                .unwrap_unchecked()(self.render_device, format)
+                .unwrap_unchecked()(self.sys_ptr, format)
             .as_ref()
             .unwrap_unchecked()
         }
@@ -426,7 +432,7 @@ impl RenderDevice {
             (*self.virtual_functions)
                 .RenderDevice
                 .GetSparseTextureFormatInfo
-                .unwrap_unchecked()(self.render_device, format, dimension, sample_count)
+                .unwrap_unchecked()(self.sys_ptr, format, dimension, sample_count)
         }
     }
 
@@ -435,7 +441,7 @@ impl RenderDevice {
             (*self.virtual_functions)
                 .RenderDevice
                 .ReleaseStaleResources
-                .unwrap_unchecked()(self.render_device, force_release)
+                .unwrap_unchecked()(self.sys_ptr, force_release)
         }
     }
 
@@ -444,7 +450,7 @@ impl RenderDevice {
             (*self.virtual_functions)
                 .RenderDevice
                 .IdleGPU
-                .unwrap_unchecked()(self.render_device)
+                .unwrap_unchecked()(self.sys_ptr)
         }
     }
 

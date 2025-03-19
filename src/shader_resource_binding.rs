@@ -1,5 +1,7 @@
 use std::{ffi::CString, str::FromStr};
 
+use static_assertions::const_assert;
+
 use super::{
     graphics_types::ShaderTypes,
     object::{AsObject, Object},
@@ -9,7 +11,7 @@ use super::{
 };
 
 pub struct ShaderResourceBinding {
-    pub(crate) shader_resource_binding: *mut diligent_sys::IShaderResourceBinding,
+    pub(crate) sys_ptr: *mut diligent_sys::IShaderResourceBinding,
     virtual_functions: *mut diligent_sys::IShaderResourceBindingVtbl,
 
     object: Object,
@@ -23,8 +25,15 @@ impl AsObject for ShaderResourceBinding {
 
 impl ShaderResourceBinding {
     pub(crate) fn new(srb_ptr: *mut diligent_sys::IShaderResourceBinding) -> Self {
+        // Both base and derived classes have exactly the same size.
+        // This means that we can up-cast to the base class without worrying about layout offset between both classes
+        const_assert!(
+            std::mem::size_of::<diligent_sys::IObject>()
+                == std::mem::size_of::<diligent_sys::IShaderResourceBinding>()
+        );
+
         ShaderResourceBinding {
-            shader_resource_binding: srb_ptr,
+            sys_ptr: srb_ptr,
             virtual_functions: unsafe { (*srb_ptr).pVtbl },
             object: Object::new(srb_ptr as *mut diligent_sys::IObject),
         }
@@ -45,9 +54,9 @@ impl ShaderResourceBinding {
                 .ShaderResourceBinding
                 .BindResources
                 .unwrap_unchecked()(
-                self.shader_resource_binding,
+                self.sys_ptr,
                 shader_stages.bits(),
-                resource_mapping.resource_mapping,
+                resource_mapping.sys_ptr,
                 flags,
             )
         }
@@ -64,9 +73,9 @@ impl ShaderResourceBinding {
                 .ShaderResourceBinding
                 .CheckResources
                 .unwrap_unchecked()(
-                self.shader_resource_binding,
+                self.sys_ptr,
                 shader_stages.bits(),
-                resource_mapping.resource_mapping,
+                resource_mapping.sys_ptr,
                 flags,
             )
         }
@@ -87,11 +96,7 @@ impl ShaderResourceBinding {
             (*self.virtual_functions)
                 .ShaderResourceBinding
                 .GetVariableByName
-                .unwrap_unchecked()(
-                self.shader_resource_binding,
-                shader_stages.bits(),
-                name.as_ptr(),
-            )
+                .unwrap_unchecked()(self.sys_ptr, shader_stages.bits(), name.as_ptr())
         };
         if variable.is_null() {
             None
@@ -107,7 +112,7 @@ impl ShaderResourceBinding {
             (*self.virtual_functions)
                 .ShaderResourceBinding
                 .StaticResourcesInitialized
-                .unwrap_unchecked()(self.shader_resource_binding)
+                .unwrap_unchecked()(self.sys_ptr)
         }
     }
 }

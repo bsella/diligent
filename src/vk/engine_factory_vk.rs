@@ -2,6 +2,8 @@ use std::ffi::c_void;
 
 use std::path::PathBuf;
 
+use static_assertions::const_assert;
+
 use crate::device_context::AsDeviceContextCommon;
 use crate::device_context::DeferredDeviceContext;
 use crate::device_context::ImmediateDeviceContext;
@@ -108,7 +110,7 @@ impl Default for EngineVkCreateInfo {
 }
 
 pub struct EngineFactoryVk {
-    engine_factory_vk: *mut diligent_sys::IEngineFactoryVk,
+    sys_ptr: *mut diligent_sys::IEngineFactoryVk,
     virtual_functions: *mut diligent_sys::IEngineFactoryVkVtbl,
 
     engine_factory: EngineFactory,
@@ -124,8 +126,15 @@ impl AsEngineFactory for EngineFactoryVk {
 pub fn get_engine_factory_vk() -> EngineFactoryVk {
     let engine_factory_vk = unsafe { diligent_sys::Diligent_GetEngineFactoryVk() };
 
+    // Both base and derived classes have exactly the same size.
+    // This means that we can up-cast to the base class without worrying about layout offset between both classes
+    const_assert!(
+        std::mem::size_of::<diligent_sys::IEngineFactory>()
+            == std::mem::size_of::<diligent_sys::IEngineFactoryVk>()
+    );
+
     EngineFactoryVk {
-        engine_factory_vk,
+        sys_ptr: engine_factory_vk,
         virtual_functions: unsafe { (*engine_factory_vk).pVtbl },
 
         engine_factory: EngineFactory::new(engine_factory_vk as *mut diligent_sys::IEngineFactory),
@@ -238,7 +247,7 @@ impl EngineFactoryVk {
                     .EngineFactoryVk
                     .CreateDeviceAndContextsVk
                     .unwrap_unchecked()(
-                    self.engine_factory_vk,
+                    self.sys_ptr,
                     std::ptr::addr_of!(create_info),
                     std::ptr::addr_of_mut!(render_device_ptr),
                     device_context_ptrs.as_mut_ptr(),
@@ -285,9 +294,9 @@ impl EngineFactoryVk {
                 .EngineFactoryVk
                 .CreateSwapChainVk
                 .unwrap_unchecked()(
-                self.engine_factory_vk,
-                device.render_device,
-                immediate_context.as_device_context().device_context_ptr,
+                self.sys_ptr,
+                device.sys_ptr,
+                immediate_context.as_device_context().sys_ptr,
                 std::ptr::addr_of!(swapchain_desc),
                 window
                     .as_ref()
@@ -307,7 +316,7 @@ impl EngineFactoryVk {
             (*self.virtual_functions)
                 .EngineFactoryVk
                 .EnableDeviceSimulation
-                .unwrap_unchecked()(self.engine_factory_vk);
+                .unwrap_unchecked()(self.sys_ptr);
         }
     }
 }

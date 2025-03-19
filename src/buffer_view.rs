@@ -1,9 +1,11 @@
+use static_assertions::const_assert;
+
 use super::buffer::Buffer;
 
 use super::device_object::{AsDeviceObject, DeviceObject};
 
 pub struct BufferView {
-    pub(crate) buffer_view: *mut diligent_sys::IBufferView,
+    _sys_ptr: *mut diligent_sys::IBufferView,
     virtual_functions: *mut diligent_sys::IBufferViewVtbl,
     buffer: *const Buffer,
 
@@ -17,12 +19,22 @@ impl AsDeviceObject for BufferView {
 }
 
 impl BufferView {
-    pub(crate) fn new(buffer_view: *mut diligent_sys::IBufferView, buffer: *const Buffer) -> Self {
+    pub(crate) fn new(
+        buffer_view_ptr: *mut diligent_sys::IBufferView,
+        buffer: *const Buffer,
+    ) -> Self {
+        // Both base and derived classes have exactly the same size.
+        // This means that we can up-cast to the base class without worrying about layout offset between both classes
+        const_assert!(
+            std::mem::size_of::<diligent_sys::IDeviceObject>()
+                == std::mem::size_of::<diligent_sys::IBufferView>()
+        );
+
         BufferView {
-            virtual_functions: unsafe { (*buffer_view).pVtbl },
-            buffer_view: buffer_view,
-            buffer: buffer,
-            device_object: DeviceObject::new(buffer_view as *mut diligent_sys::IDeviceObject),
+            virtual_functions: unsafe { (*buffer_view_ptr).pVtbl },
+            _sys_ptr: buffer_view_ptr,
+            buffer,
+            device_object: DeviceObject::new(buffer_view_ptr as *mut diligent_sys::IDeviceObject),
         }
     }
 
@@ -31,9 +43,8 @@ impl BufferView {
             ((*self.virtual_functions)
                 .DeviceObject
                 .GetDesc
-                .unwrap_unchecked()(
-                self.buffer_view as *mut diligent_sys::IDeviceObject
-            ) as *const diligent_sys::BufferViewDesc)
+                .unwrap_unchecked()(self.device_object.sys_ptr)
+                as *const diligent_sys::BufferViewDesc)
                 .as_ref()
                 .unwrap_unchecked()
         }

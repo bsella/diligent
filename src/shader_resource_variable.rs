@@ -92,7 +92,7 @@ impl From<&ShaderResourceVariableDesc> for diligent_sys::ShaderResourceVariableD
 }
 
 pub struct ShaderResourceVariable {
-    pub(crate) shader_resource_variable: *mut diligent_sys::IShaderResourceVariable,
+    pub(crate) sys_ptr: *mut diligent_sys::IShaderResourceVariable,
     virtual_functions: *mut diligent_sys::IShaderResourceVariableVtbl,
     object: Object,
 }
@@ -105,12 +105,19 @@ impl AsObject for ShaderResourceVariable {
 
 impl ShaderResourceVariable {
     pub(crate) fn new(
-        shader_resource_variable: *mut diligent_sys::IShaderResourceVariable,
+        shader_resource_variable_ptr: *mut diligent_sys::IShaderResourceVariable,
     ) -> Self {
+        // Both base and derived classes have exactly the same size.
+        // This means that we can up-cast to the base class without worrying about layout offset between both classes
+        const_assert!(
+            std::mem::size_of::<diligent_sys::IObject>()
+                == std::mem::size_of::<diligent_sys::IShaderResourceVariable>()
+        );
+
         ShaderResourceVariable {
-            virtual_functions: unsafe { (*shader_resource_variable).pVtbl },
-            shader_resource_variable,
-            object: Object::new(shader_resource_variable as *mut diligent_sys::IObject),
+            sys_ptr: shader_resource_variable_ptr,
+            virtual_functions: unsafe { (*shader_resource_variable_ptr).pVtbl },
+            object: Object::new(shader_resource_variable_ptr as *mut diligent_sys::IObject),
         }
     }
 
@@ -120,8 +127,8 @@ impl ShaderResourceVariable {
                 .ShaderResourceVariable
                 .Set
                 .unwrap_unchecked()(
-                self.shader_resource_variable,
-                device_object.as_device_object().device_object,
+                self.sys_ptr,
+                device_object.as_device_object().sys_ptr,
                 flags.bits(),
             )
         }
@@ -135,14 +142,14 @@ impl ShaderResourceVariable {
         let object_ptrs = Vec::from_iter(
             device_objects
                 .iter()
-                .map(|object| object.as_device_object().device_object),
+                .map(|object| object.as_device_object().sys_ptr),
         );
         unsafe {
             (*self.virtual_functions)
                 .ShaderResourceVariable
                 .SetArray
                 .unwrap_unchecked()(
-                self.shader_resource_variable,
+                self.sys_ptr,
                 object_ptrs.as_ptr(),
                 0,
                 object_ptrs.len() as u32,
@@ -164,8 +171,8 @@ impl ShaderResourceVariable {
                 .ShaderResourceVariable
                 .SetBufferRange
                 .unwrap_unchecked()(
-                self.shader_resource_variable,
-                device_object.as_device_object().device_object,
+                self.sys_ptr,
+                device_object.as_device_object().sys_ptr,
                 offset,
                 size,
                 array_index.unwrap_or(0),
@@ -179,11 +186,7 @@ impl ShaderResourceVariable {
             (*self.virtual_functions)
                 .ShaderResourceVariable
                 .SetBufferOffset
-                .unwrap_unchecked()(
-                self.shader_resource_variable,
-                offset,
-                array_index.unwrap_or(0),
-            )
+                .unwrap_unchecked()(self.sys_ptr, offset, array_index.unwrap_or(0))
         }
     }
 
@@ -192,7 +195,7 @@ impl ShaderResourceVariable {
             (*self.virtual_functions)
                 .ShaderResourceVariable
                 .GetType
-                .unwrap_unchecked()(self.shader_resource_variable)
+                .unwrap_unchecked()(self.sys_ptr)
         }
         .into()
     }
@@ -205,10 +208,7 @@ impl ShaderResourceVariable {
             (*self.virtual_functions)
                 .ShaderResourceVariable
                 .GetResourceDesc
-                .unwrap_unchecked()(
-                self.shader_resource_variable,
-                shader_resource_desc.as_mut_ptr(),
-            );
+                .unwrap_unchecked()(self.sys_ptr, shader_resource_desc.as_mut_ptr());
             shader_resource_desc.assume_init()
         };
 
@@ -224,7 +224,7 @@ impl ShaderResourceVariable {
             (*self.virtual_functions)
                 .ShaderResourceVariable
                 .GetIndex
-                .unwrap_unchecked()(self.shader_resource_variable)
+                .unwrap_unchecked()(self.sys_ptr)
         }
     }
 }

@@ -117,7 +117,7 @@ impl<'a> BufferDesc {
 }
 
 pub struct Buffer {
-    pub(crate) buffer: *mut diligent_sys::IBuffer,
+    pub(crate) sys_ptr: *mut diligent_sys::IBuffer,
     virtual_functions: *mut diligent_sys::IBufferVtbl,
 
     default_view: Option<BufferView>,
@@ -133,9 +133,16 @@ impl AsDeviceObject for Buffer {
 
 impl Buffer {
     pub(crate) fn new(buffer_ptr: *mut diligent_sys::IBuffer) -> Self {
+        // Both base and derived classes have exactly the same size.
+        // This means that we can up-cast to the base class without worrying about layout offset between both classes
+        const_assert!(
+            std::mem::size_of::<diligent_sys::IDeviceObject>()
+                == std::mem::size_of::<diligent_sys::IBuffer>()
+        );
+
         let mut buffer = Buffer {
             device_object: DeviceObject::new(buffer_ptr as *mut diligent_sys::IDeviceObject),
-            buffer: buffer_ptr,
+            sys_ptr: buffer_ptr,
             virtual_functions: unsafe { (*buffer_ptr).pVtbl },
             default_view: None,
         };
@@ -186,7 +193,7 @@ impl Buffer {
             ((*self.virtual_functions)
                 .DeviceObject
                 .GetDesc
-                .unwrap_unchecked()(self.buffer as *mut diligent_sys::IDeviceObject)
+                .unwrap_unchecked()(self.device_object.sys_ptr)
                 as *const diligent_sys::BufferDesc)
                 .as_ref()
                 .unwrap_unchecked()
@@ -200,7 +207,7 @@ impl Buffer {
                 .Buffer
                 .CreateView
                 .unwrap_unchecked()(
-                self.buffer,
+                self.sys_ptr,
                 view_desc,
                 std::ptr::addr_of_mut!(buffer_view_ptr),
             );
@@ -220,7 +227,7 @@ impl Buffer {
             (*self.virtual_functions)
                 .Buffer
                 .GetDefaultView
-                .unwrap_unchecked()(self.buffer, view_type)
+                .unwrap_unchecked()(self.sys_ptr, view_type)
         }
         .is_null()
         {
@@ -235,16 +242,16 @@ impl Buffer {
             (*self.virtual_functions)
                 .Buffer
                 .GetNativeHandle
-                .unwrap_unchecked()(self.buffer)
+                .unwrap_unchecked()(self.sys_ptr)
         }
     }
 
     pub fn set_state(&mut self, state: diligent_sys::RESOURCE_STATE) {
-        unsafe { (*self.virtual_functions).Buffer.SetState.unwrap_unchecked()(self.buffer, state) }
+        unsafe { (*self.virtual_functions).Buffer.SetState.unwrap_unchecked()(self.sys_ptr, state) }
     }
 
     pub fn get_state(&self) -> diligent_sys::RESOURCE_STATE {
-        unsafe { (*self.virtual_functions).Buffer.GetState.unwrap_unchecked()(self.buffer) }
+        unsafe { (*self.virtual_functions).Buffer.GetState.unwrap_unchecked()(self.sys_ptr) }
     }
 
     pub fn get_memory_properties(&self) -> diligent_sys::MEMORY_PROPERTIES {
@@ -252,7 +259,7 @@ impl Buffer {
             (*self.virtual_functions)
                 .Buffer
                 .GetMemoryProperties
-                .unwrap_unchecked()(self.buffer)
+                .unwrap_unchecked()(self.sys_ptr)
         }
     }
 
@@ -261,7 +268,7 @@ impl Buffer {
             (*self.virtual_functions)
                 .Buffer
                 .FlushMappedRange
-                .unwrap_unchecked()(self.buffer, start_offset, size)
+                .unwrap_unchecked()(self.sys_ptr, start_offset, size)
         }
     }
 
@@ -270,7 +277,7 @@ impl Buffer {
             (*self.virtual_functions)
                 .Buffer
                 .InvalidateMappedRange
-                .unwrap_unchecked()(self.buffer, start_offset, size)
+                .unwrap_unchecked()(self.sys_ptr, start_offset, size)
         }
     }
 
@@ -279,7 +286,7 @@ impl Buffer {
             (*self.virtual_functions)
                 .Buffer
                 .GetSparseProperties
-                .unwrap_unchecked()(self.buffer)
+                .unwrap_unchecked()(self.sys_ptr)
         }
     }
 }
@@ -305,8 +312,8 @@ where
                 .DeviceContext
                 .MapBuffer
                 .unwrap_unchecked()(
-                device_context.as_device_context().device_context_ptr,
-                buffer.buffer,
+                device_context.as_device_context().sys_ptr,
+                buffer.sys_ptr,
                 diligent_sys::MAP_READ as diligent_sys::MAP_TYPE,
                 map_flags,
                 std::ptr::addr_of_mut!(ptr),
@@ -339,8 +346,8 @@ where
                 .DeviceContext
                 .UnmapBuffer
                 .unwrap_unchecked()(
-                self.device_context.as_device_context().device_context_ptr,
-                self.buffer.buffer,
+                self.device_context.as_device_context().sys_ptr,
+                self.buffer.sys_ptr,
                 diligent_sys::MAP_READ as diligent_sys::MAP_TYPE,
             )
         }
@@ -368,8 +375,8 @@ where
                 .DeviceContext
                 .MapBuffer
                 .unwrap_unchecked()(
-                device_context.as_device_context().device_context_ptr,
-                buffer.buffer,
+                device_context.as_device_context().sys_ptr,
+                buffer.sys_ptr,
                 diligent_sys::MAP_WRITE as diligent_sys::MAP_TYPE,
                 map_flags,
                 std::ptr::addr_of_mut!(ptr),
@@ -402,8 +409,8 @@ where
                 .DeviceContext
                 .UnmapBuffer
                 .unwrap_unchecked()(
-                self.device_context.as_device_context().device_context_ptr,
-                self.buffer.buffer,
+                self.device_context.as_device_context().sys_ptr,
+                self.buffer.sys_ptr,
                 diligent_sys::MAP_WRITE as diligent_sys::MAP_TYPE,
             )
         }
@@ -429,8 +436,8 @@ where
                 .DeviceContext
                 .MapBuffer
                 .unwrap_unchecked()(
-                device_context.as_device_context().device_context_ptr,
-                buffer.buffer,
+                device_context.as_device_context().sys_ptr,
+                buffer.sys_ptr,
                 diligent_sys::MAP_READ_WRITE as diligent_sys::MAP_TYPE,
                 map_flags,
                 std::ptr::addr_of_mut!(ptr),
@@ -470,8 +477,8 @@ where
                 .DeviceContext
                 .UnmapBuffer
                 .unwrap_unchecked()(
-                self.device_context.as_device_context().device_context_ptr,
-                self.buffer.buffer,
+                self.device_context.as_device_context().sys_ptr,
+                self.buffer.sys_ptr,
                 diligent_sys::MAP_READ_WRITE as diligent_sys::MAP_TYPE,
             )
         }

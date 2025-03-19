@@ -1,6 +1,7 @@
 use std::ffi::CString;
 
 use bitflags::bitflags;
+use static_assertions::const_assert;
 
 use super::{
     buffer::{Buffer, BufferMapReadToken, BufferMapReadWriteToken, BufferMapWriteToken},
@@ -239,15 +240,21 @@ impl From<&Rect> for diligent_sys::Rect {
 }
 
 pub(crate) struct DeviceContextCommon {
-    pub(crate) device_context_ptr: *mut diligent_sys::IDeviceContext,
+    pub(crate) sys_ptr: *mut diligent_sys::IDeviceContext,
     pub(crate) virtual_functions: *mut diligent_sys::IDeviceContextVtbl,
 
     object: Object,
 }
 impl DeviceContextCommon {
     fn new(device_context_ptr: *mut diligent_sys::IDeviceContext) -> Self {
+        // Both base and derived classes have exactly the same size.
+        // This means that we can up-cast to the base class without worrying about layout offset between both classes
+        const_assert!(
+            std::mem::size_of::<diligent_sys::IObject>()
+                == std::mem::size_of::<diligent_sys::IDeviceContext>()
+        );
         DeviceContextCommon {
-            device_context_ptr,
+            sys_ptr: device_context_ptr,
             virtual_functions: unsafe { (*device_context_ptr).pVtbl },
             object: Object::new(device_context_ptr as *mut diligent_sys::IObject),
         }
@@ -279,7 +286,7 @@ where
             (*self.as_device_context().virtual_functions)
                 .DeviceContext
                 .GetDesc
-                .unwrap_unchecked()(self.as_device_context().device_context_ptr)
+                .unwrap_unchecked()(self.as_device_context().sys_ptr)
             .as_ref()
             .unwrap_unchecked()
         }
@@ -291,8 +298,7 @@ where
                 .DeviceContext
                 .SetPipelineState
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
-                pipeline_state.pipeline_state,
+                self.as_device_context().sys_ptr, pipeline_state.sys_ptr
             )
         }
     }
@@ -303,8 +309,8 @@ where
                 .DeviceContext
                 .TransitionShaderResources
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
-                shader_resource_binding.shader_resource_binding,
+                self.as_device_context().sys_ptr,
+                shader_resource_binding.sys_ptr,
             )
         }
     }
@@ -319,8 +325,8 @@ where
                 .DeviceContext
                 .CommitShaderResources
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
-                shader_resource_binding.shader_resource_binding,
+                self.as_device_context().sys_ptr,
+                shader_resource_binding.sys_ptr,
                 diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
             )
         }
@@ -331,9 +337,7 @@ where
             (*self.as_device_context().virtual_functions)
                 .DeviceContext
                 .SetStencilRef
-                .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr, stencil_ref
-            )
+                .unwrap_unchecked()(self.as_device_context().sys_ptr, stencil_ref)
         }
     }
 
@@ -343,8 +347,7 @@ where
                 .DeviceContext
                 .SetBlendFactors
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
-                blend_factors.as_ptr(),
+                self.as_device_context().sys_ptr, blend_factors.as_ptr()
             )
         }
     }
@@ -357,13 +360,13 @@ where
         flags: SetVertexBufferFlags,
     ) {
         let num_buffers = buffers.len();
-        let buffer_pointers = Vec::from_iter(buffers.iter().map(|buffer| buffer.buffer));
+        let buffer_pointers = Vec::from_iter(buffers.iter().map(|buffer| buffer.sys_ptr));
         unsafe {
             (*self.as_device_context().virtual_functions)
                 .DeviceContext
                 .SetVertexBuffers
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
+                self.as_device_context().sys_ptr,
                 0,
                 num_buffers as u32,
                 buffer_pointers.as_ptr(),
@@ -379,7 +382,7 @@ where
             (*self.as_device_context().virtual_functions)
                 .DeviceContext
                 .InvalidateState
-                .unwrap_unchecked()(self.as_device_context().device_context_ptr)
+                .unwrap_unchecked()(self.as_device_context().sys_ptr)
         }
     }
 
@@ -394,8 +397,8 @@ where
                 .DeviceContext
                 .SetIndexBuffer
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
-                index_buffer.buffer,
+                self.as_device_context().sys_ptr,
+                index_buffer.sys_ptr,
                 offset,
                 diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
             )
@@ -417,7 +420,7 @@ where
                 .DeviceContext
                 .SetViewports
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
+                self.as_device_context().sys_ptr,
                 viewports.len() as u32,
                 viewports.as_ptr(),
                 render_target_width,
@@ -442,7 +445,7 @@ where
                 .DeviceContext
                 .SetScissorRects
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
+                self.as_device_context().sys_ptr,
                 rects.len() as u32,
                 rects.as_ptr(),
                 render_target_width,
@@ -461,7 +464,7 @@ where
         let mut render_target_pointers = Vec::from_iter(
             render_targets
                 .iter()
-                .map(|render_targets| render_targets.texture_view),
+                .map(|render_targets| render_targets.sys_ptr),
         );
 
         unsafe {
@@ -469,10 +472,10 @@ where
                 .DeviceContext
                 .SetRenderTargets
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
+                self.as_device_context().sys_ptr,
                 num_render_targets as u32,
                 render_target_pointers.as_mut_ptr(),
-                depth_stencil.map_or(std::ptr::null_mut(), |v| v.texture_view),
+                depth_stencil.map_or(std::ptr::null_mut(), |v| v.sys_ptr),
                 diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
             )
         }
@@ -484,7 +487,7 @@ where
                 .DeviceContext
                 .BeginRenderPass
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
+                self.as_device_context().sys_ptr,
                 std::ptr::from_ref(attribs),
             )
         }
@@ -495,7 +498,7 @@ where
             (*self.as_device_context().virtual_functions)
                 .DeviceContext
                 .NextSubpass
-                .unwrap_unchecked()(self.as_device_context().device_context_ptr)
+                .unwrap_unchecked()(self.as_device_context().sys_ptr)
         }
     }
 
@@ -504,7 +507,7 @@ where
             (*self.as_device_context().virtual_functions)
                 .DeviceContext
                 .EndRenderPass
-                .unwrap_unchecked()(self.as_device_context().device_context_ptr)
+                .unwrap_unchecked()(self.as_device_context().sys_ptr)
         }
     }
 
@@ -515,7 +518,7 @@ where
                 .DeviceContext
                 .Draw
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
+                self.as_device_context().sys_ptr,
                 std::ptr::addr_of!(attribs),
             )
         }
@@ -528,7 +531,7 @@ where
                 .DeviceContext
                 .DrawIndexed
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
+                self.as_device_context().sys_ptr,
                 std::ptr::addr_of!(attribs),
             )
         }
@@ -540,7 +543,7 @@ where
                 .DeviceContext
                 .DrawIndirect
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
+                self.as_device_context().sys_ptr,
                 std::ptr::from_ref(attribs),
             )
         }
@@ -552,7 +555,7 @@ where
                 .DeviceContext
                 .DrawIndexedIndirect
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
+                self.as_device_context().sys_ptr,
                 std::ptr::from_ref(attribs),
             )
         }
@@ -564,7 +567,7 @@ where
                 .DeviceContext
                 .DrawMesh
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
+                self.as_device_context().sys_ptr,
                 std::ptr::from_ref(attribs),
             )
         }
@@ -576,7 +579,7 @@ where
                 .DeviceContext
                 .DrawMeshIndirect
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
+                self.as_device_context().sys_ptr,
                 std::ptr::from_ref(attribs),
             )
         }
@@ -588,7 +591,7 @@ where
                 .DeviceContext
                 .MultiDraw
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
+                self.as_device_context().sys_ptr,
                 std::ptr::from_ref(attribs),
             )
         }
@@ -600,7 +603,7 @@ where
                 .DeviceContext
                 .MultiDrawIndexed
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
+                self.as_device_context().sys_ptr,
                 std::ptr::from_ref(attribs),
             )
         }
@@ -612,7 +615,7 @@ where
                 .DeviceContext
                 .DispatchCompute
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
+                self.as_device_context().sys_ptr,
                 std::ptr::from_ref(attribs),
             )
         }
@@ -624,7 +627,7 @@ where
                 .DeviceContext
                 .DispatchComputeIndirect
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
+                self.as_device_context().sys_ptr,
                 std::ptr::from_ref(attribs),
             )
         }
@@ -636,7 +639,7 @@ where
                 .DeviceContext
                 .DispatchTile
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
+                self.as_device_context().sys_ptr,
                 std::ptr::from_ref(attribs),
             )
         }
@@ -650,7 +653,7 @@ where
                 .DeviceContext
                 .GetTileSize
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
+                self.as_device_context().sys_ptr,
                 std::ptr::addr_of_mut!(tile_size_x),
                 std::ptr::addr_of_mut!(tile_size_y),
             )
@@ -669,8 +672,8 @@ where
                 .DeviceContext
                 .ClearDepthStencil
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
-                view.texture_view,
+                self.as_device_context().sys_ptr,
+                view.sys_ptr,
                 diligent_sys::CLEAR_DEPTH_FLAG as diligent_sys::CLEAR_DEPTH_STENCIL_FLAGS,
                 depth,
                 0,
@@ -690,8 +693,8 @@ where
                 .DeviceContext
                 .ClearDepthStencil
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
-                view.texture_view,
+                self.as_device_context().sys_ptr,
+                view.sys_ptr,
                 diligent_sys::CLEAR_STENCIL_FLAG as diligent_sys::CLEAR_DEPTH_STENCIL_FLAGS,
                 0.0,
                 stencil,
@@ -712,8 +715,8 @@ where
                 .DeviceContext
                 .ClearDepthStencil
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
-                view.texture_view,
+                self.as_device_context().sys_ptr,
+                view.sys_ptr,
                 diligent_sys::CLEAR_STENCIL_FLAG as diligent_sys::CLEAR_DEPTH_STENCIL_FLAGS
                     | diligent_sys::CLEAR_DEPTH_FLAG as diligent_sys::CLEAR_DEPTH_STENCIL_FLAGS,
                 depth,
@@ -734,8 +737,8 @@ where
                 .DeviceContext
                 .ClearRenderTarget
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
-                view.texture_view,
+                self.as_device_context().sys_ptr,
+                view.sys_ptr,
                 (*rgba).as_ptr() as *const std::os::raw::c_void,
                 diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
             )
@@ -748,9 +751,7 @@ where
                 .DeviceContext
                 .EnqueueSignal
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
-                fence.fence,
-                value,
+                self.as_device_context().sys_ptr, fence.sys_ptr, value
             )
         }
     }
@@ -761,9 +762,7 @@ where
                 .DeviceContext
                 .DeviceWaitForFence
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
-                fence.fence,
-                value,
+                self.as_device_context().sys_ptr, fence.sys_ptr, value
             )
         }
     }
@@ -788,8 +787,8 @@ where
                 .DeviceContext
                 .UpdateBuffer
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
-                buffer.buffer,
+                self.as_device_context().sys_ptr,
+                buffer.sys_ptr,
                 offset,
                 size,
                 std::ptr::from_ref(data) as *const std::os::raw::c_void,
@@ -813,11 +812,11 @@ where
                 .DeviceContext
                 .CopyBuffer
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
-                src_buffer.buffer,
+                self.as_device_context().sys_ptr,
+                src_buffer.sys_ptr,
                 src_offset,
                 diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&src_buffer_transition_mode),
-                dst_buffer.buffer,
+                dst_buffer.sys_ptr,
                 dst_offset,
                 size,
                 diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&dst_buffer_transition_mode),
@@ -875,8 +874,8 @@ where
                 .DeviceContext
                 .UpdateTexture
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
-                texture.texture,
+                self.as_device_context().sys_ptr,
+                texture.sys_ptr,
                 mip_level,
                 slice,
                 std::ptr::from_ref(dst_box),
@@ -893,7 +892,7 @@ where
                 .DeviceContext
                 .CopyTexture
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
+                self.as_device_context().sys_ptr,
                 std::ptr::from_ref(copy_attribs),
             )
         }
@@ -911,8 +910,8 @@ where
                 .DeviceContext
                 .UnmapTextureSubresource
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
-                texture.texture,
+                self.as_device_context().sys_ptr,
+                texture.sys_ptr,
                 mip_level,
                 array_slice,
             )
@@ -925,8 +924,7 @@ where
                 .DeviceContext
                 .GenerateMips
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
-                texture_view.texture_view,
+                self.as_device_context().sys_ptr, texture_view.sys_ptr
             )
         }
     }
@@ -936,7 +934,7 @@ where
             (*self.as_device_context().virtual_functions)
                 .DeviceContext
                 .FinishFrame
-                .unwrap_unchecked()(self.as_device_context().device_context_ptr)
+                .unwrap_unchecked()(self.as_device_context().sys_ptr)
         }
     }
 
@@ -945,7 +943,7 @@ where
             (*self.as_device_context().virtual_functions)
                 .DeviceContext
                 .GetFrameNumber
-                .unwrap_unchecked()(self.as_device_context().device_context_ptr)
+                .unwrap_unchecked()(self.as_device_context().sys_ptr)
         }
     }
 
@@ -955,7 +953,7 @@ where
                 .DeviceContext
                 .TransitionResourceStates
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
+                self.as_device_context().sys_ptr,
                 barriers.len() as u32,
                 barriers.as_ptr(),
             )
@@ -973,9 +971,9 @@ where
                 .DeviceContext
                 .ResolveTextureSubresource
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
-                src_texture.texture,
-                dst_texture.texture,
+                self.as_device_context().sys_ptr,
+                src_texture.sys_ptr,
+                dst_texture.sys_ptr,
                 std::ptr::from_ref(resolve_attribs),
             )
         }
@@ -987,7 +985,7 @@ where
                 .DeviceContext
                 .BuildBLAS
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
+                self.as_device_context().sys_ptr,
                 std::ptr::from_ref(attribs),
             )
         }
@@ -999,7 +997,7 @@ where
                 .DeviceContext
                 .BuildTLAS
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
+                self.as_device_context().sys_ptr,
                 std::ptr::from_ref(attribs),
             )
         }
@@ -1011,7 +1009,7 @@ where
                 .DeviceContext
                 .CopyBLAS
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
+                self.as_device_context().sys_ptr,
                 std::ptr::from_ref(attribs),
             )
         }
@@ -1023,7 +1021,7 @@ where
                 .DeviceContext
                 .CopyTLAS
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
+                self.as_device_context().sys_ptr,
                 std::ptr::from_ref(attribs),
             )
         }
@@ -1035,7 +1033,7 @@ where
                 .DeviceContext
                 .WriteBLASCompactedSize
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
+                self.as_device_context().sys_ptr,
                 std::ptr::from_ref(attribs),
             )
         }
@@ -1047,7 +1045,7 @@ where
                 .DeviceContext
                 .WriteTLASCompactedSize
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
+                self.as_device_context().sys_ptr,
                 std::ptr::from_ref(attribs),
             )
         }
@@ -1059,7 +1057,7 @@ where
                 .DeviceContext
                 .TraceRays
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
+                self.as_device_context().sys_ptr,
                 std::ptr::from_ref(attribs),
             )
         }
@@ -1071,7 +1069,7 @@ where
                 .DeviceContext
                 .TraceRaysIndirect
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
+                self.as_device_context().sys_ptr,
                 std::ptr::from_ref(attribs),
             )
         }
@@ -1090,7 +1088,7 @@ where
                 .DeviceContext
                 .SetUserData
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
+                self.as_device_context().sys_ptr,
                 user_data.as_object().object,
             )
         }
@@ -1106,7 +1104,7 @@ where
                 .DeviceContext
                 .BeginDebugGroup
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
+                self.as_device_context().sys_ptr,
                 name.as_ptr(),
                 color.as_ptr(),
             )
@@ -1118,7 +1116,7 @@ where
             (*self.as_device_context().virtual_functions)
                 .DeviceContext
                 .EndDebugGroup
-                .unwrap_unchecked()(self.as_device_context().device_context_ptr)
+                .unwrap_unchecked()(self.as_device_context().sys_ptr)
         }
     }
 
@@ -1129,7 +1127,7 @@ where
                 .DeviceContext
                 .InsertDebugLabel
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
+                self.as_device_context().sys_ptr,
                 name.as_ptr(),
                 color.as_ptr(),
             )
@@ -1145,7 +1143,7 @@ where
             (*self.as_device_context().virtual_functions)
                 .DeviceContext
                 .UnlockCommandQueue
-                .unwrap_unchecked()(self.as_device_context().device_context_ptr)
+                .unwrap_unchecked()(self.as_device_context().sys_ptr)
         }
     }
 
@@ -1160,7 +1158,7 @@ where
                 .DeviceContext
                 .SetShadingRate
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
+                self.as_device_context().sys_ptr,
                 diligent_sys::SHADING_RATE::from(base_rate),
                 primitive_combiner.bits(),
                 texture_combiner.bits(),
@@ -1174,7 +1172,7 @@ where
                 .DeviceContext
                 .BindSparseResourceMemory
                 .unwrap_unchecked()(
-                self.as_device_context().device_context_ptr,
+                self.as_device_context().sys_ptr,
                 std::ptr::from_ref(attribs),
             )
         }
@@ -1185,7 +1183,7 @@ where
             (*self.as_device_context().virtual_functions)
                 .DeviceContext
                 .ClearStats
-                .unwrap_unchecked()(self.as_device_context().device_context_ptr)
+                .unwrap_unchecked()(self.as_device_context().sys_ptr)
         }
     }
 
@@ -1194,7 +1192,7 @@ where
             (*self.as_device_context().virtual_functions)
                 .DeviceContext
                 .GetStats
-                .unwrap_unchecked()(self.as_device_context().device_context_ptr)
+                .unwrap_unchecked()(self.as_device_context().sys_ptr)
             .as_ref()
             .unwrap_unchecked()
         }
@@ -1225,7 +1223,7 @@ impl ImmediateDeviceContext {
             (*self.device_context.virtual_functions)
                 .DeviceContext
                 .Flush
-                .unwrap_unchecked()(self.device_context.device_context_ptr)
+                .unwrap_unchecked()(self.device_context.sys_ptr)
         }
     }
 
@@ -1238,7 +1236,7 @@ impl ImmediateDeviceContext {
             (*self.device_context.virtual_functions)
                 .DeviceContext
                 .WaitForIdle
-                .unwrap_unchecked()(self.device_context.device_context_ptr)
+                .unwrap_unchecked()(self.device_context.sys_ptr)
         }
     }
 }
@@ -1267,9 +1265,7 @@ impl DeferredDeviceContext {
             (*self.device_context.virtual_functions)
                 .DeviceContext
                 .Begin
-                .unwrap_unchecked()(
-                self.device_context.device_context_ptr, immediate_context_id
-            )
+                .unwrap_unchecked()(self.device_context.sys_ptr, immediate_context_id)
         }
     }
 

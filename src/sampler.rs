@@ -141,7 +141,7 @@ impl From<&SamplerDesc> for diligent_sys::SamplerDesc {
 }
 
 pub struct Sampler {
-    pub(crate) sampler: *mut diligent_sys::ISampler,
+    pub(crate) sampler_ptr: *mut diligent_sys::ISampler,
     virtual_functions: *mut diligent_sys::ISamplerVtbl,
 
     device_object: DeviceObject,
@@ -155,8 +155,15 @@ impl AsDeviceObject for Sampler {
 
 impl Sampler {
     pub(crate) fn new(sampler_ptr: *mut diligent_sys::ISampler) -> Self {
+        // Both base and derived classes have exactly the same size.
+        // This means that we can up-cast to the base class without worrying about layout offset between both classes
+        const_assert!(
+            std::mem::size_of::<diligent_sys::IDeviceObject>()
+                == std::mem::size_of::<diligent_sys::ISampler>()
+        );
+
         Sampler {
-            sampler: sampler_ptr,
+            sampler_ptr,
             virtual_functions: unsafe { (*sampler_ptr).pVtbl },
             device_object: DeviceObject::new(sampler_ptr as *mut diligent_sys::IDeviceObject),
         }
@@ -167,7 +174,7 @@ impl Sampler {
             ((*self.virtual_functions)
                 .DeviceObject
                 .GetDesc
-                .unwrap_unchecked()(self.sampler as *mut diligent_sys::IDeviceObject)
+                .unwrap_unchecked()(self.device_object.sys_ptr)
                 as *const diligent_sys::SamplerDesc)
                 .as_ref()
                 .unwrap_unchecked()

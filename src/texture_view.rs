@@ -1,3 +1,5 @@
+use static_assertions::const_assert;
+
 use super::sampler::Sampler;
 use super::texture::Texture;
 
@@ -28,7 +30,7 @@ impl From<&TextureViewType> for diligent_sys::TEXTURE_VIEW_TYPE {
 }
 
 pub struct TextureView {
-    pub(crate) texture_view: *mut diligent_sys::ITextureView,
+    pub(crate) sys_ptr: *mut diligent_sys::ITextureView,
     virtual_functions: *mut diligent_sys::ITextureViewVtbl,
     texture: *const Texture,
 
@@ -43,14 +45,21 @@ impl AsDeviceObject for TextureView {
 
 impl TextureView {
     pub(crate) fn new(
-        texture_view: *mut diligent_sys::ITextureView,
+        texture_view_ptr: *mut diligent_sys::ITextureView,
         texture: *const Texture,
     ) -> Self {
+        // Both base and derived classes have exactly the same size.
+        // This means that we can up-cast to the base class without worrying about layout offset between both classes
+        const_assert!(
+            std::mem::size_of::<diligent_sys::IDeviceObject>()
+                == std::mem::size_of::<diligent_sys::ITextureView>()
+        );
+
         TextureView {
-            virtual_functions: unsafe { (*texture_view).pVtbl },
-            texture_view,
+            virtual_functions: unsafe { (*texture_view_ptr).pVtbl },
+            sys_ptr: texture_view_ptr,
             texture,
-            device_object: DeviceObject::new(texture_view as *mut diligent_sys::IDeviceObject),
+            device_object: DeviceObject::new(texture_view_ptr as *mut diligent_sys::IDeviceObject),
         }
     }
 
@@ -59,9 +68,8 @@ impl TextureView {
             *((*self.virtual_functions)
                 .DeviceObject
                 .GetDesc
-                .unwrap_unchecked()(
-                self.texture_view as *mut diligent_sys::IDeviceObject
-            ) as *const diligent_sys::TextureViewDesc)
+                .unwrap_unchecked()(self.device_object.sys_ptr)
+                as *const diligent_sys::TextureViewDesc)
         }
     }
 
@@ -70,7 +78,7 @@ impl TextureView {
             (*self.virtual_functions)
                 .TextureView
                 .SetSampler
-                .unwrap_unchecked()(self.texture_view, sampler.sampler);
+                .unwrap_unchecked()(self.sys_ptr, sampler.sampler_ptr);
         }
     }
 

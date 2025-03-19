@@ -3,7 +3,7 @@ use static_assertions::const_assert;
 use super::device_object::{AsDeviceObject, DeviceObject};
 
 pub struct Fence {
-    pub(crate) fence: *mut diligent_sys::IFence,
+    pub(crate) sys_ptr: *mut diligent_sys::IFence,
     virtual_functions: *mut diligent_sys::IFenceVtbl,
 
     device_object: DeviceObject,
@@ -50,8 +50,14 @@ impl FenceDesc<'_> {
 
 impl Fence {
     pub(crate) fn new(fence_ptr: *mut diligent_sys::IFence) -> Self {
+        // Both base and derived classes have exactly the same size.
+        // This means that we can up-cast to the base class without worrying about layout offset between both classes
+        const_assert!(
+            std::mem::size_of::<diligent_sys::IObject>()
+                == std::mem::size_of::<diligent_sys::IFence>()
+        );
         Fence {
-            fence: fence_ptr,
+            sys_ptr: fence_ptr,
             virtual_functions: unsafe { (*fence_ptr).pVtbl },
             device_object: DeviceObject::new(fence_ptr as *mut diligent_sys::IDeviceObject),
         }
@@ -62,7 +68,7 @@ impl Fence {
             ((*self.virtual_functions)
                 .DeviceObject
                 .GetDesc
-                .unwrap_unchecked()(self.fence as *mut diligent_sys::IDeviceObject)
+                .unwrap_unchecked()(self.sys_ptr as *mut diligent_sys::IDeviceObject)
                 as *const diligent_sys::FenceDesc)
                 .as_ref()
                 .unwrap_unchecked()
@@ -74,15 +80,15 @@ impl Fence {
             (*self.virtual_functions)
                 .Fence
                 .GetCompletedValue
-                .unwrap_unchecked()(self.fence)
+                .unwrap_unchecked()(self.sys_ptr)
         }
     }
 
     pub fn signal(&self, value: u64) {
-        unsafe { (*self.virtual_functions).Fence.Signal.unwrap_unchecked()(self.fence, value) }
+        unsafe { (*self.virtual_functions).Fence.Signal.unwrap_unchecked()(self.sys_ptr, value) }
     }
 
     pub fn wait(&self, value: u64) {
-        unsafe { (*self.virtual_functions).Fence.Wait.unwrap_unchecked()(self.fence, value) }
+        unsafe { (*self.virtual_functions).Fence.Wait.unwrap_unchecked()(self.sys_ptr, value) }
     }
 }

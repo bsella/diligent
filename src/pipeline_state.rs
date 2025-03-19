@@ -408,7 +408,7 @@ impl<const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE>
         let mut resource_signatures = value
             .resource_signatures
             .iter()
-            .map(|&rs| rs.pipeline_resource_signature)
+            .map(|&rs| rs.sys_ptr)
             .collect::<Vec<*mut diligent_sys::IPipelineResourceSignature>>();
 
         let ci = diligent_sys::PipelineStateCreateInfo {
@@ -1093,25 +1093,25 @@ impl From<&GraphicsPipelineStateCreateInfo<'_>> for GraphicsPipelineStateCreateI
             GraphicsPipeline: gpd.get(),
             pVS: value
                 .vertex_shader
-                .map_or(std::ptr::null_mut(), |shader| shader.shader),
+                .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr),
             pPS: value
                 .pixel_shader
-                .map_or(std::ptr::null_mut(), |shader| shader.shader),
+                .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr),
             pDS: value
                 .domain_shader
-                .map_or(std::ptr::null_mut(), |shader| shader.shader),
+                .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr),
             pHS: value
                 .hull_shader
-                .map_or(std::ptr::null_mut(), |shader| shader.shader),
+                .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr),
             pGS: value
                 .geometry_shader
-                .map_or(std::ptr::null_mut(), |shader| shader.shader),
+                .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr),
             pAS: value
                 .amplification_shader
-                .map_or(std::ptr::null_mut(), |shader| shader.shader),
+                .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr),
             pMS: value
                 .mesh_shader
-                .map_or(std::ptr::null_mut(), |shader| shader.shader),
+                .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr),
         };
 
         GraphicsPipelineStateCreateInfoWrapper {
@@ -1123,7 +1123,7 @@ impl From<&GraphicsPipelineStateCreateInfo<'_>> for GraphicsPipelineStateCreateI
 }
 
 pub struct PipelineState {
-    pub(crate) pipeline_state: *mut diligent_sys::IPipelineState,
+    pub(crate) sys_ptr: *mut diligent_sys::IPipelineState,
     virtual_functions: *mut diligent_sys::IPipelineStateVtbl,
 
     device_object: DeviceObject,
@@ -1137,8 +1137,15 @@ impl AsDeviceObject for PipelineState {
 
 impl PipelineState {
     pub(crate) fn new(pipeline_state_ptr: *mut diligent_sys::IPipelineState) -> Self {
+        // Both base and derived classes have exactly the same size.
+        // This means that we can up-cast to the base class without worrying about layout offset between both classes
+        const_assert!(
+            std::mem::size_of::<diligent_sys::IDeviceObject>()
+                == std::mem::size_of::<diligent_sys::IPipelineState>()
+        );
+
         PipelineState {
-            pipeline_state: pipeline_state_ptr,
+            sys_ptr: pipeline_state_ptr,
             virtual_functions: unsafe { (*pipeline_state_ptr).pVtbl },
             device_object: DeviceObject::new(
                 pipeline_state_ptr as *mut diligent_sys::IDeviceObject,
@@ -1151,9 +1158,8 @@ impl PipelineState {
             ((*self.virtual_functions)
                 .DeviceObject
                 .GetDesc
-                .unwrap_unchecked()(
-                self.pipeline_state as *mut diligent_sys::IDeviceObject
-            ) as *const diligent_sys::PipelineStateDesc)
+                .unwrap_unchecked()(self.device_object.sys_ptr)
+                as *const diligent_sys::PipelineStateDesc)
                 .as_ref()
                 .unwrap_unchecked()
         }
@@ -1164,7 +1170,7 @@ impl PipelineState {
             (*self.virtual_functions)
                 .PipelineState
                 .GetGraphicsPipelineDesc
-                .unwrap_unchecked()(self.pipeline_state)
+                .unwrap_unchecked()(self.sys_ptr)
             .as_ref()
             .unwrap_unchecked()
         }
@@ -1175,7 +1181,7 @@ impl PipelineState {
             (*self.virtual_functions)
                 .PipelineState
                 .GetRayTracingPipelineDesc
-                .unwrap_unchecked()(self.pipeline_state)
+                .unwrap_unchecked()(self.sys_ptr)
             .as_ref()
             .unwrap_unchecked()
         }
@@ -1186,7 +1192,7 @@ impl PipelineState {
             (*self.virtual_functions)
                 .PipelineState
                 .GetTilePipelineDesc
-                .unwrap_unchecked()(self.pipeline_state)
+                .unwrap_unchecked()(self.sys_ptr)
             .as_ref()
             .unwrap_unchecked()
         }
@@ -1203,9 +1209,9 @@ impl PipelineState {
                 .PipelineState
                 .BindStaticResources
                 .unwrap_unchecked()(
-                self.pipeline_state,
+                self.sys_ptr,
                 diligent_sys::SHADER_TYPE::from(&shader_type),
-                resource_mapping.resource_mapping,
+                resource_mapping.sys_ptr,
                 flags,
             )
         }
@@ -1230,7 +1236,7 @@ impl PipelineState {
                 .PipelineState
                 .GetStaticVariableByName
                 .unwrap_unchecked()(
-                self.pipeline_state,
+                self.sys_ptr,
                 diligent_sys::SHADER_TYPE::from(&shader_type),
                 name.as_ptr(),
             )
@@ -1256,7 +1262,7 @@ impl PipelineState {
                 .PipelineState
                 .CreateShaderResourceBinding
                 .unwrap_unchecked()(
-                self.pipeline_state,
+                self.sys_ptr,
                 std::ptr::addr_of_mut!(shader_resource_binding_ptr),
                 init_static_resources,
             );
@@ -1278,10 +1284,7 @@ impl PipelineState {
             (*self.virtual_functions)
                 .PipelineState
                 .InitializeStaticSRBResources
-                .unwrap_unchecked()(
-                self.pipeline_state,
-                shader_resource_binding.shader_resource_binding,
-            )
+                .unwrap_unchecked()(self.sys_ptr, shader_resource_binding.sys_ptr)
         }
     }
 
@@ -1290,7 +1293,7 @@ impl PipelineState {
             (*self.virtual_functions)
                 .PipelineState
                 .CopyStaticResources
-                .unwrap_unchecked()(self.pipeline_state, pipeline_state.pipeline_state)
+                .unwrap_unchecked()(self.sys_ptr, pipeline_state.sys_ptr)
         }
     }
 
@@ -1299,7 +1302,7 @@ impl PipelineState {
             (*self.virtual_functions)
                 .PipelineState
                 .IsCompatibleWith
-                .unwrap_unchecked()(self.pipeline_state, pipeline_state.pipeline_state)
+                .unwrap_unchecked()(self.sys_ptr, pipeline_state.sys_ptr)
         }
     }
 
@@ -1315,9 +1318,7 @@ impl PipelineState {
             (*self.virtual_functions)
                 .PipelineState
                 .GetStatus
-                .unwrap_unchecked()(
-                self.pipeline_state, wait_for_completion.unwrap_or(false)
-            )
+                .unwrap_unchecked()(self.sys_ptr, wait_for_completion.unwrap_or(false))
         }
     }
 }

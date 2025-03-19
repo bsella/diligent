@@ -1,5 +1,7 @@
 use std::{os::raw::c_void, path::PathBuf};
 
+use static_assertions::const_assert;
+
 use super::{
     data_blob::DataBlob,
     graphics_types::{DeviceFeatures, GraphicsAdapterInfo, Version},
@@ -83,7 +85,7 @@ impl From<&EngineCreateInfo> for diligent_sys::EngineCreateInfo {
 }
 
 pub struct EngineFactory {
-    pub(crate) engine_factory: *mut diligent_sys::IEngineFactory,
+    pub(crate) sys_ptr: *mut diligent_sys::IEngineFactory,
     virtual_functions: *mut diligent_sys::IEngineFactoryVtbl,
 
     _object: Object,
@@ -94,12 +96,19 @@ pub trait AsEngineFactory {
 }
 
 impl EngineFactory {
-    pub(crate) fn new(engine_factory: *mut diligent_sys::IEngineFactory) -> Self {
-        EngineFactory {
-            engine_factory,
-            virtual_functions: unsafe { (*engine_factory).pVtbl },
+    pub(crate) fn new(engine_factory_ptr: *mut diligent_sys::IEngineFactory) -> Self {
+        // Both base and derived classes have exactly the same size.
+        // This means that we can up-cast to the base class without worrying about layout offset between both classes
+        const_assert!(
+            std::mem::size_of::<diligent_sys::IObject>()
+                == std::mem::size_of::<diligent_sys::IEngineFactory>()
+        );
 
-            _object: Object::new(engine_factory as *mut diligent_sys::IObject),
+        EngineFactory {
+            sys_ptr: engine_factory_ptr,
+            virtual_functions: unsafe { (*engine_factory_ptr).pVtbl },
+
+            _object: Object::new(engine_factory_ptr as *mut diligent_sys::IObject),
         }
     }
 
@@ -108,7 +117,7 @@ impl EngineFactory {
             (*self.virtual_functions)
                 .EngineFactory
                 .GetAPIInfo
-                .unwrap_unchecked()(self.engine_factory)
+                .unwrap_unchecked()(self.sys_ptr)
             .as_ref()
             .unwrap_unchecked()
         }
@@ -133,7 +142,7 @@ impl EngineFactory {
                 .EngineFactory
                 .CreateDefaultShaderSourceStreamFactory
                 .unwrap_unchecked()(
-                self.engine_factory,
+                self.sys_ptr,
                 search.as_ptr(),
                 std::ptr::addr_of_mut!(stream_factory_ptr),
             );
@@ -152,7 +161,7 @@ impl EngineFactory {
                 .EngineFactory
                 .CreateDataBlob
                 .unwrap_unchecked()(
-                self.engine_factory,
+                self.sys_ptr,
                 initial_size,
                 data as *const c_void,
                 std::ptr::addr_of_mut!(data_blob_ptr),
@@ -179,7 +188,7 @@ impl EngineFactory {
                 .EngineFactory
                 .EnumerateAdapters
                 .unwrap_unchecked()(
-                self.engine_factory,
+                self.sys_ptr,
                 version,
                 std::ptr::addr_of_mut!(num_adapters),
                 std::ptr::null_mut(),
@@ -194,7 +203,7 @@ impl EngineFactory {
                     .EngineFactory
                     .EnumerateAdapters
                     .unwrap_unchecked()(
-                    self.engine_factory,
+                    self.sys_ptr,
                     version,
                     std::ptr::addr_of_mut!(num_adapters),
                     adapters.as_mut_ptr(),
@@ -219,7 +228,7 @@ impl EngineFactory {
             (*self.virtual_functions)
                 .EngineFactory
                 .SetMessageCallback
-                .unwrap_unchecked()(self.engine_factory, callback)
+                .unwrap_unchecked()(self.sys_ptr, callback)
         }
     }
 
@@ -228,7 +237,7 @@ impl EngineFactory {
             (*self.virtual_functions)
                 .EngineFactory
                 .SetBreakOnError
-                .unwrap_unchecked()(self.engine_factory, break_on_error)
+                .unwrap_unchecked()(self.sys_ptr, break_on_error)
         }
     }
 }

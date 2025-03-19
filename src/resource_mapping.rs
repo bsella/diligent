@@ -1,12 +1,14 @@
 use std::collections::BTreeMap;
 
+use static_assertions::const_assert;
+
 use super::{
     device_object::{AsDeviceObject, DeviceObject},
     object::{AsObject, Object},
 };
 
 pub struct ResourceMapping {
-    pub(crate) resource_mapping: *mut diligent_sys::IResourceMapping,
+    pub(crate) sys_ptr: *mut diligent_sys::IResourceMapping,
     virtual_functions: *mut diligent_sys::IResourceMappingVtbl,
 
     resources: BTreeMap<String, Vec<*const DeviceObject>>,
@@ -22,8 +24,15 @@ impl AsObject for ResourceMapping {
 
 impl ResourceMapping {
     pub(crate) fn new(resource_mapping_ptr: *mut diligent_sys::IResourceMapping) -> Self {
+        // Both base and derived classes have exactly the same size.
+        // This means that we can up-cast to the base class without worrying about layout offset between both classes
+        const_assert!(
+            std::mem::size_of::<diligent_sys::IObject>()
+                == std::mem::size_of::<diligent_sys::IResourceMapping>()
+        );
+
         ResourceMapping {
-            resource_mapping: resource_mapping_ptr,
+            sys_ptr: resource_mapping_ptr,
             virtual_functions: unsafe { (*resource_mapping_ptr).pVtbl },
             object: Object::new(resource_mapping_ptr as *mut diligent_sys::IObject),
 
@@ -41,9 +50,9 @@ impl ResourceMapping {
                     .ResourceMapping
                     .AddResource
                     .unwrap_unchecked()(
-                    self.resource_mapping,
+                    self.sys_ptr,
                     name.as_ptr(),
-                    object.as_device_object().device_object,
+                    object.as_device_object().sys_ptr,
                     is_unique,
                 );
             }
@@ -63,7 +72,7 @@ impl ResourceMapping {
         let object_ptrs = Vec::from_iter(
             device_objects
                 .iter()
-                .map(|object| object.as_device_object().device_object),
+                .map(|object| object.as_device_object().sys_ptr),
         );
 
         {
@@ -74,7 +83,7 @@ impl ResourceMapping {
                     .ResourceMapping
                     .AddResourceArray
                     .unwrap_unchecked()(
-                    self.resource_mapping,
+                    self.sys_ptr,
                     name.as_ptr(),
                     0,
                     object_ptrs.as_ptr(),
@@ -107,7 +116,7 @@ impl ResourceMapping {
             (*self.virtual_functions)
                 .ResourceMapping
                 .RemoveResourceByName
-                .unwrap_unchecked()(self.resource_mapping, name.as_ptr(), array_index);
+                .unwrap_unchecked()(self.sys_ptr, name.as_ptr(), array_index);
         }
     }
 
@@ -124,7 +133,7 @@ impl ResourceMapping {
             (*self.virtual_functions)
                 .ResourceMapping
                 .GetSize
-                .unwrap_unchecked()(self.resource_mapping)
+                .unwrap_unchecked()(self.sys_ptr)
         }
     }
 }

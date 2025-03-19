@@ -97,7 +97,7 @@ impl From<&TextureSubResource<'_>> for diligent_sys::TextureSubResData {
                 std::ptr::null()
             },
             pSrcBuffer: if let TextureSubResData::GPU(buffer) = value.source {
-                buffer.buffer
+                buffer.sys_ptr
             } else {
                 std::ptr::null_mut()
             },
@@ -244,7 +244,7 @@ impl TextureDesc {
 }
 
 pub struct Texture {
-    pub(crate) texture: *mut diligent_sys::ITexture,
+    pub(crate) sys_ptr: *mut diligent_sys::ITexture,
     virtual_functions: *mut diligent_sys::ITextureVtbl,
 
     device_object: DeviceObject,
@@ -258,10 +258,17 @@ impl AsDeviceObject for Texture {
 
 impl Texture {
     pub(crate) fn new(texture_ptr: *mut diligent_sys::ITexture) -> Self {
+        // Both base and derived classes have exactly the same size.
+        // This means that we can up-cast to the base class without worrying about layout offset between both classes
+        const_assert!(
+            std::mem::size_of::<diligent_sys::IDeviceObject>()
+                == std::mem::size_of::<diligent_sys::ITexture>()
+        );
+
         Texture {
-            device_object: DeviceObject::new(texture_ptr as *mut diligent_sys::IDeviceObject),
-            texture: texture_ptr,
+            sys_ptr: texture_ptr,
             virtual_functions: unsafe { (*texture_ptr).pVtbl },
+            device_object: DeviceObject::new(texture_ptr as *mut diligent_sys::IDeviceObject),
         }
     }
 
@@ -270,7 +277,7 @@ impl Texture {
             ((*self.virtual_functions)
                 .DeviceObject
                 .GetDesc
-                .unwrap_unchecked()(self.texture as *mut diligent_sys::IDeviceObject)
+                .unwrap_unchecked()(self.device_object.sys_ptr)
                 as *const diligent_sys::TextureDesc)
                 .as_ref()
                 .unwrap_unchecked()
@@ -287,7 +294,7 @@ impl Texture {
                 .Texture
                 .CreateView
                 .unwrap_unchecked()(
-                self.texture,
+                self.sys_ptr,
                 std::ptr::addr_of!(texture_view_desc) as *const diligent_sys::TextureViewDesc,
                 std::ptr::addr_of_mut!(texture_view_ptr),
             );
@@ -306,7 +313,7 @@ impl Texture {
                 .Texture
                 .GetDefaultView
                 .unwrap_unchecked()(
-                self.texture,
+                self.sys_ptr,
                 diligent_sys::TEXTURE_VIEW_TYPE::from(&texture_view_type),
             )
         };
@@ -325,7 +332,7 @@ impl Texture {
             (*self.virtual_functions)
                 .Texture
                 .GetNativeHandle
-                .unwrap_unchecked()(self.texture)
+                .unwrap_unchecked()(self.sys_ptr)
         }
     }
 
@@ -334,7 +341,7 @@ impl Texture {
             (*self.virtual_functions)
                 .Texture
                 .SetState
-                .unwrap_unchecked()(self.texture, state);
+                .unwrap_unchecked()(self.sys_ptr, state);
         }
     }
 
@@ -343,7 +350,7 @@ impl Texture {
             (*self.virtual_functions)
                 .Texture
                 .GetState
-                .unwrap_unchecked()(self.texture)
+                .unwrap_unchecked()(self.sys_ptr)
         }
     }
 
@@ -352,7 +359,7 @@ impl Texture {
             (*self.virtual_functions)
                 .Texture
                 .GetSparseProperties
-                .unwrap_unchecked()(self.texture)
+                .unwrap_unchecked()(self.sys_ptr)
             .as_ref()
             .unwrap_unchecked()
         }

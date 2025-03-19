@@ -8,7 +8,8 @@ use crate::native_app::{
     app_settings::AppSettings,
     events::{EventHandler, EventResult, MouseButton},
 };
-use core::{engine_factory::EngineCreateInfo, platforms::native_window::NativeWindow};
+
+use diligent::{engine_factory::EngineCreateInfo, platforms::native_window::NativeWindow};
 
 struct X11EventHandler {
     display: *mut x11::xlib::Display,

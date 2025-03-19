@@ -1,3 +1,5 @@
+use static_assertions::const_assert;
+
 use crate::{
     device_context::ImmediateDeviceContext,
     engine_factory::{AsEngineFactory, EngineCreateInfo, EngineFactory},
@@ -38,7 +40,7 @@ impl From<&EngineGLCreateInfo<'_>> for diligent_sys::EngineGLCreateInfo {
 }
 
 pub struct EngineFactoryOpenGL {
-    engine_factory_gl: *mut diligent_sys::IEngineFactoryOpenGL,
+    sys_ptr: *mut diligent_sys::IEngineFactoryOpenGL,
     virtual_functions: *mut diligent_sys::IEngineFactoryOpenGLVtbl,
 
     engine_factory: EngineFactory,
@@ -70,7 +72,7 @@ impl EngineFactoryOpenGL {
                 .EngineFactoryOpenGL
                 .CreateDeviceAndSwapChainGL
                 .unwrap_unchecked()(
-                self.engine_factory_gl,
+                self.sys_ptr,
                 std::ptr::from_ref(&engine_ci),
                 std::ptr::addr_of_mut!(render_device_ptr),
                 std::ptr::addr_of_mut!(device_context_ptr),
@@ -106,7 +108,7 @@ impl EngineFactoryOpenGL {
                 .EngineFactoryOpenGL
                 .AttachToActiveGLContext
                 .unwrap_unchecked()(
-                self.engine_factory_gl,
+                self.sys_ptr,
                 std::ptr::from_ref(&engine_ci),
                 std::ptr::addr_of_mut!(render_device_ptr),
                 std::ptr::addr_of_mut!(device_context_ptr),
@@ -127,8 +129,15 @@ impl EngineFactoryOpenGL {
 pub fn get_engine_factory_gl() -> EngineFactoryOpenGL {
     let engine_factory_gl = unsafe { diligent_sys::Diligent_GetEngineFactoryOpenGL() };
 
+    // Both base and derived classes have exactly the same size.
+    // This means that we can up-cast to the base class without worrying about layout offset between both classes
+    const_assert!(
+        std::mem::size_of::<diligent_sys::IEngineFactory>()
+            == std::mem::size_of::<diligent_sys::IEngineFactoryOpenGL>()
+    );
+
     EngineFactoryOpenGL {
-        engine_factory_gl,
+        sys_ptr: engine_factory_gl,
         virtual_functions: unsafe { (*engine_factory_gl).pVtbl },
 
         engine_factory: EngineFactory::new(engine_factory_gl as _),

@@ -1,7 +1,9 @@
+use static_assertions::const_assert;
+
 use super::object::{AsObject, Object};
 
 pub struct DeviceObject {
-    pub(crate) device_object: *mut diligent_sys::IDeviceObject,
+    pub(crate) sys_ptr: *mut diligent_sys::IDeviceObject,
     virtual_functions: *mut diligent_sys::IDeviceObjectVtbl,
     object: Object,
 }
@@ -17,11 +19,17 @@ pub trait AsDeviceObject {
 }
 
 impl DeviceObject {
-    pub(crate) fn new(device_object: *mut diligent_sys::IDeviceObject) -> Self {
+    pub(crate) fn new(device_object_ptr: *mut diligent_sys::IDeviceObject) -> Self {
+        // Both base and derived classes have exactly the same size.
+        // This means that we can up-cast to the base class without worrying about layout offset between both classes
+        const_assert!(
+            std::mem::size_of::<diligent_sys::IObject>()
+                == std::mem::size_of::<diligent_sys::IDeviceObject>()
+        );
         DeviceObject {
-            virtual_functions: unsafe { (*device_object).pVtbl },
-            device_object: device_object,
-            object: Object::new(device_object as *mut diligent_sys::IObject),
+            virtual_functions: unsafe { (*device_object_ptr).pVtbl },
+            sys_ptr: device_object_ptr,
+            object: Object::new(device_object_ptr as *mut diligent_sys::IObject),
         }
     }
 
@@ -30,7 +38,7 @@ impl DeviceObject {
             (*self.virtual_functions)
                 .DeviceObject
                 .GetDesc
-                .unwrap_unchecked()(self.device_object)
+                .unwrap_unchecked()(self.sys_ptr)
             .as_ref()
             .unwrap_unchecked()
         }
@@ -41,7 +49,7 @@ impl DeviceObject {
             (*self.virtual_functions)
                 .DeviceObject
                 .GetUniqueID
-                .unwrap_unchecked()(self.device_object)
+                .unwrap_unchecked()(self.sys_ptr)
         }
     }
 }
