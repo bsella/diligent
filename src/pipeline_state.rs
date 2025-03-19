@@ -797,12 +797,14 @@ impl Default for DepthStencilStateDesc {
     }
 }
 
+pub struct InputLayoutDesc<'a>(pub Vec<LayoutElement<'a>>);
+
 pub struct GraphicsPipelineDesc<'a> {
     blend_desc: BlendStateDesc,
     sample_mask: u32,
     rasterizer_desc: RasterizerStateDesc,
     depth_stencil_desc: DepthStencilStateDesc,
-    input_layouts: Vec<LayoutElement<'a>>,
+    input_layouts: InputLayoutDesc<'a>,
     primitive_topology: PrimitiveTopology,
     num_viewports: u8,
     num_render_targets: u8,
@@ -838,7 +840,7 @@ impl<'a> GraphicsPipelineDesc<'a> {
             sample_mask: 0xFFFFFFFF,
             rasterizer_desc,
             depth_stencil_desc: depth_stencil_desc,
-            input_layouts: Vec::new(),
+            input_layouts: InputLayoutDesc(Vec::new()),
             primitive_topology: PrimitiveTopology::TriangleList,
             num_viewports: 1,
             num_render_targets: 0,
@@ -891,8 +893,8 @@ impl<'a> GraphicsPipelineDesc<'a> {
         self.read_only_dsv = read_only_dsv;
         self
     }
-    pub fn add_input_layout(mut self, input_layout: LayoutElement<'a>) -> Self {
-        self.input_layouts.push(input_layout);
+    pub fn set_input_layouts(mut self, input_layout: InputLayoutDesc<'a>) -> Self {
+        self.input_layouts = input_layout;
         self
     }
 }
@@ -912,6 +914,7 @@ impl From<&GraphicsPipelineDesc<'_>> for GraphicsPipelineDescWrapper {
     fn from(value: &GraphicsPipelineDesc<'_>) -> Self {
         let aux_input_layouts: Vec<diligent_sys::LayoutElement> = value
             .input_layouts
+            .0
             .iter()
             .map(|layout| diligent_sys::LayoutElement::from(layout))
             .collect();

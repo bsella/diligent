@@ -13,8 +13,8 @@ use diligent::{
     pipeline_resource_signature::ImmutableSamplerDesc,
     pipeline_state::{
         BlendFactor, BlendOperation, BlendStateDesc, ColorMask, CullMode, DepthStencilStateDesc,
-        GraphicsPipelineDesc, GraphicsPipelineStateCreateInfo, PipelineState, RasterizerStateDesc,
-        RenderTargetBlendDesc,
+        GraphicsPipelineDesc, GraphicsPipelineStateCreateInfo, InputLayoutDesc, PipelineState,
+        RasterizerStateDesc, RenderTargetBlendDesc,
     },
     render_device::RenderDevice,
     sampler::SamplerDesc,
@@ -597,9 +597,11 @@ impl ImguiRenderer {
             .rtv_format::<0>(create_info.back_buffer_format)
             .dsv_format(create_info.depth_buffer_format)
             .primitive_topology(PrimitiveTopology::TriangleList)
-            .add_input_layout(LayoutElement::new(0, 0, 2, ValueType::Float32))
-            .add_input_layout(LayoutElement::new(1, 0, 2, ValueType::Float32))
-            .add_input_layout(LayoutElement::new(2, 0, 4, ValueType::Uint8).is_normalized(true)),
+            .set_input_layouts(InputLayoutDesc(vec![
+                LayoutElement::new(0, 0, 2, ValueType::Float32),
+                LayoutElement::new(1, 0, 2, ValueType::Float32),
+                LayoutElement::new(2, 0, 4, ValueType::Uint8).is_normalized(true),
+            ])),
         )
         .vertex_shader(&vertex_shader)
         .pixel_shader(&pixel_shader)

@@ -13,7 +13,7 @@ use diligent::{
     input_layout::LayoutElement,
     pipeline_state::{
         BlendStateDesc, CullMode, DepthStencilStateDesc, GraphicsPipelineDesc,
-        GraphicsPipelineStateCreateInfo, PipelineState, RasterizerStateDesc,
+        GraphicsPipelineStateCreateInfo, InputLayoutDesc, PipelineState, RasterizerStateDesc,
     },
     render_device::RenderDevice,
     shader::{
@@ -167,10 +167,12 @@ impl SampleBase for Cube {
             // Primitive topology defines what kind of primitives will be rendered by this pipeline state
             .primitive_topology(PrimitiveTopology::TriangleList)
             // Define vertex shader input layout
-            // Attribute 0 - vertex position
-            .add_input_layout(LayoutElement::new(0, 0, 3, ValueType::Float32).is_normalized(false))
-            // Attribute 1 - vertex color
-            .add_input_layout(LayoutElement::new(1, 0, 4, ValueType::Float32).is_normalized(false)),
+            .set_input_layouts(InputLayoutDesc(vec![
+                // Attribute 0 - vertex position
+                LayoutElement::new(0, 0, 3, ValueType::Float32).is_normalized(false),
+                // Attribute 1 - vertex color
+                LayoutElement::new(1, 0, 4, ValueType::Float32).is_normalized(false),
+            ])),
         )
         // Define variable type that will be used by default
         .default_variable_type(ShaderResourceVariableType::Static)
