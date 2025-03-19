@@ -1,15 +1,10 @@
 #[cfg(target_os = "windows")]
-use windows::core::HWND;
-
-#[cfg(target_os = "windows")]
-pub struct NativeWindow {
-    hwnd: windows::core::HWND,
-}
+pub struct NativeWindow(pub *mut std::os::raw::c_void);
 
 #[cfg(target_os = "windows")]
 impl From<&NativeWindow> for diligent_sys::NativeWindow {
     fn from(value: &NativeWindow) -> Self {
-        diligent_sys::NativeWindow { hWnd: value.hwnd.0 }
+        diligent_sys::NativeWindow { hWnd: value.0 }
     }
 }
 

@@ -1,12 +1,10 @@
-use crate::tools::native_app::app_settings::AppSettings;
-use crate::{core::engine_factory::EngineCreateInfo, tools::native_app::events::EventResult};
+use super::{app::App, app_settings::AppSettings, events::EventHandler, events::EventResult};
 
-use super::{app::App, events::EventHandler};
+use diligent::{engine_factory::EngineCreateInfo, platforms::native_window::NativeWindow};
 
-use windows::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows::{
     core::*, Win32::Foundation::*, Win32::Graphics::Gdi::ValidateRect,
-    Win32::UI::WindowsAndMessaging::*,
+    Win32::System::LibraryLoader::GetModuleHandleW, Win32::UI::WindowsAndMessaging::*,
 };
 
 struct Win32EventHandler;
@@ -140,7 +138,7 @@ where
     Application::new(
         settings,
         EngineCreateInfo::default(),
-        Some(&NativeWindow { hwnd }),
+        Some(&NativeWindow(hwnd.0)),
     )
     .run(Win32EventHandler, &|title: &str| unsafe {
         let _ = SetWindowTextW(hwnd, &HSTRING::from(title));
