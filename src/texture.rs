@@ -174,14 +174,14 @@ impl From<&TextureDesc> for diligent_sys::TextureDesc {
 
 impl TextureDesc {
     pub fn new(
-        name: &str,
+        name: impl AsRef<str>,
         dimension: TextureDimension,
         width: u32,
         height: u32,
         format: TextureFormat,
     ) -> Self {
         TextureDesc {
-            name: CString::new(name).unwrap(),
+            name: CString::new(name.as_ref()).unwrap(),
 
             dimension,
             width,

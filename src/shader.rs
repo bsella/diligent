@@ -1,7 +1,4 @@
-use std::{
-    ffi::{CStr, CString},
-    os::raw::c_void,
-};
+use std::{ffi::CString, os::raw::c_void, str::FromStr};
 
 use bitflags::bitflags;
 use static_assertions::const_assert;
@@ -96,16 +93,16 @@ impl Into<ShaderResourceType> for diligent_sys::SHADER_RESOURCE_TYPE {
     }
 }
 
-pub struct ShaderResourceDesc<'a> {
-    pub name: &'a CStr,
+pub struct ShaderResourceDesc {
+    pub name: CString,
     pub resource_type: ShaderResourceType,
     pub array_size: usize,
 }
 
-impl From<diligent_sys::ShaderResourceDesc> for ShaderResourceDesc<'_> {
+impl From<diligent_sys::ShaderResourceDesc> for ShaderResourceDesc {
     fn from(value: diligent_sys::ShaderResourceDesc) -> Self {
         ShaderResourceDesc {
-            name: unsafe { CStr::from_ptr(value.Name) },
+            name: unsafe { CString::from_raw(value.Name as _) },
             array_size: value.ArraySize as usize,
             resource_type: value.Type.into(),
         }
@@ -133,8 +130,8 @@ pub struct ShaderDesc {
 pub struct ShaderCreateInfo<'a> {
     source: ShaderSource<'a>,
     shader_source_input_stream_factory: Option<&'a ShaderSourceInputStreamFactory>,
-    entry_point: &'a str,
-    macros: Vec<(&'a str, &'a str)>,
+    entry_point: String,
+    macros: Vec<(String, String)>,
     desc: ShaderDesc,
     source_language: ShaderLanguage,
     compiler: ShaderCompiler,
@@ -143,11 +140,11 @@ pub struct ShaderCreateInfo<'a> {
 }
 
 impl<'a> ShaderCreateInfo<'a> {
-    pub fn new(name: &'a str, source: ShaderSource<'a>, shader_type: ShaderType) -> Self {
+    pub fn new(name: impl AsRef<str>, source: ShaderSource<'a>, shader_type: ShaderType) -> Self {
         ShaderCreateInfo {
             source,
             shader_source_input_stream_factory: None,
-            entry_point: "main",
+            entry_point: "main".to_owned(),
             macros: Vec::new(),
             desc: ShaderDesc::new(name, shader_type),
             source_language: ShaderLanguage::Default,
@@ -157,13 +154,16 @@ impl<'a> ShaderCreateInfo<'a> {
         }
     }
 
-    pub fn entry_point(mut self, entry_point: &'a str) -> Self {
-        self.entry_point = entry_point;
+    pub fn entry_point(mut self, entry_point: impl Into<String>) -> Self {
+        self.entry_point = entry_point.into();
         self
     }
 
-    pub fn set_macros(mut self, macros: Vec<(&'a str, &'a str)>) -> Self {
-        self.macros = macros;
+    pub fn set_macros(mut self, macros: Vec<(impl Into<String>, impl Into<String>)>) -> Self {
+        self.macros = macros
+            .into_iter()
+            .map(|(name, def)| (name.into(), def.into()))
+            .collect();
         self
     }
 
@@ -216,12 +216,12 @@ impl ShaderCreateInfoWrapper {
 
 impl From<&ShaderCreateInfo<'_>> for ShaderCreateInfoWrapper {
     fn from(value: &ShaderCreateInfo<'_>) -> Self {
-        let macro_strings = Vec::from_iter(
-            value
-                .macros
-                .iter()
-                .map(|&(name, def)| (CString::new(name).unwrap(), CString::new(def).unwrap())),
-        );
+        let macro_strings = Vec::from_iter(value.macros.iter().map(|(name, def)| {
+            (
+                CString::new(name.as_str()).unwrap(),
+                CString::new(def.as_str()).unwrap(),
+            )
+        }));
 
         let macros =
             Vec::from_iter(
@@ -233,7 +233,7 @@ impl From<&ShaderCreateInfo<'_>> for ShaderCreateInfoWrapper {
                     }),
             );
 
-        let entry_point = CString::new(value.entry_point).unwrap();
+        let entry_point = CString::from_str(value.entry_point.as_str()).unwrap();
 
         let mut shader_source_path = None;
 
@@ -318,9 +318,9 @@ impl From<&ShaderCreateInfo<'_>> for ShaderCreateInfoWrapper {
 }
 
 impl ShaderDesc {
-    fn new(name: &str, shader_type: ShaderType) -> Self {
+    fn new(name: impl AsRef<str>, shader_type: ShaderType) -> Self {
         ShaderDesc {
-            name: CString::new(name).unwrap(),
+            name: CString::new(name.as_ref()).unwrap(),
             shader_type,
             use_combined_texture_samplers: false,
             combined_sampler_suffix: std::ffi::CString::new("_sampler").unwrap(),
@@ -449,7 +449,7 @@ impl ShaderSourceInputStreamFactory {
         }
     }
 
-    //pub fn create_input_stream(&self, name : &str, IFileStream** ppStream);
+    //pub fn create_input_stream(&self, name : impl AsRef<str>, IFileStream** ppStream);
 
-    //pub fn create_input_stream2(&self, name : &str, CREATE_SHADER_SOURCE_INPUT_STREAM_FLAGS Flags, IFileStream** ppStream);
+    //pub fn create_input_stream2(&self, name : impl AsRef<str>, CREATE_SHADER_SOURCE_INPUT_STREAM_FLAGS Flags, IFileStream** ppStream);
 }

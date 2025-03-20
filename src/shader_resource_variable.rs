@@ -1,7 +1,4 @@
-use std::{
-    ffi::{CStr, CString},
-    mem::MaybeUninit,
-};
+use std::{ffi::CString, mem::MaybeUninit};
 
 use static_assertions::const_assert;
 
@@ -62,12 +59,12 @@ pub struct ShaderResourceVariableDesc {
 
 impl ShaderResourceVariableDesc {
     pub fn new(
-        name: &str,
+        name: impl AsRef<str>,
         variable_type: ShaderResourceVariableType,
         shader_stages: ShaderTypes,
     ) -> Self {
         ShaderResourceVariableDesc {
-            name: CString::new(name).unwrap(),
+            name: CString::new(name.as_ref()).unwrap(),
             variable_type,
             shader_stages,
             flags: ShaderVariableFlags::None,
@@ -213,7 +210,7 @@ impl ShaderResourceVariable {
         };
 
         ShaderResourceDesc {
-            name: unsafe { CStr::from_ptr(shader_resource_desc.Name) },
+            name: unsafe { CString::from_raw(shader_resource_desc.Name as _) },
             array_size: shader_resource_desc.ArraySize as usize,
             resource_type: shader_resource_desc.Type.into(),
         }

@@ -338,9 +338,9 @@ struct PipelineStateDesc<'a, const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE> {
 }
 
 impl<'a, const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE> PipelineStateDesc<'a, PIPELINE_TYPE> {
-    fn new(name: &'a str) -> Self {
+    fn new(name: impl AsRef<str>) -> Self {
         PipelineStateDesc {
-            name: CString::from_str(name).unwrap(),
+            name: CString::from_str(name.as_ref()).unwrap(),
             srb_allocation_granularity: 1,
             immediate_context_mask: 1,
             resource_layout: PipelineResourceLayoutDesc::new::<PIPELINE_TYPE>(),
@@ -435,7 +435,7 @@ impl<const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE>
 impl<'a, const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE>
     PipelineStateCreateInfo<'a, PIPELINE_TYPE>
 {
-    fn new(name: &'a str) -> Self {
+    fn new(name: impl AsRef<str>) -> Self {
         PipelineStateCreateInfo {
             pso_desc: PipelineStateDesc::new(name),
             flags: PipelineStateObjectCreateFlags::None,
@@ -576,16 +576,8 @@ impl Default for BlendStateDesc {
         BlendStateDesc {
             alpha_to_coverage_enable: false,
             independent_blend_enable: false,
-            render_targets: [
-                RenderTargetBlendDesc::default(),
-                RenderTargetBlendDesc::default(),
-                RenderTargetBlendDesc::default(),
-                RenderTargetBlendDesc::default(),
-                RenderTargetBlendDesc::default(),
-                RenderTargetBlendDesc::default(),
-                RenderTargetBlendDesc::default(),
-                RenderTargetBlendDesc::default(),
-            ],
+            render_targets: [(); diligent_sys::DILIGENT_MAX_RENDER_TARGETS as usize]
+                .map(|_| RenderTargetBlendDesc::default()),
         }
     }
 }
@@ -797,14 +789,14 @@ impl Default for DepthStencilStateDesc {
     }
 }
 
-pub struct InputLayoutDesc<'a>(pub Vec<LayoutElement<'a>>);
+pub struct InputLayoutDesc(pub Vec<LayoutElement>);
 
-pub struct GraphicsPipelineDesc<'a> {
+pub struct GraphicsPipelineDesc {
     blend_desc: BlendStateDesc,
     sample_mask: u32,
     rasterizer_desc: RasterizerStateDesc,
     depth_stencil_desc: DepthStencilStateDesc,
-    input_layouts: InputLayoutDesc<'a>,
+    input_layouts: InputLayoutDesc,
     primitive_topology: PrimitiveTopology,
     num_viewports: u8,
     num_render_targets: u8,
@@ -819,7 +811,7 @@ pub struct GraphicsPipelineDesc<'a> {
     node_mask: u32,
 }
 
-impl<'a> Default for GraphicsPipelineDesc<'a> {
+impl Default for GraphicsPipelineDesc {
     fn default() -> Self {
         GraphicsPipelineDesc::new(
             BlendStateDesc::default(),
@@ -829,17 +821,17 @@ impl<'a> Default for GraphicsPipelineDesc<'a> {
     }
 }
 
-impl<'a> GraphicsPipelineDesc<'a> {
+impl GraphicsPipelineDesc {
     pub fn new(
         blend_desc: BlendStateDesc,
         rasterizer_desc: RasterizerStateDesc,
         depth_stencil_desc: DepthStencilStateDesc,
     ) -> Self {
         GraphicsPipelineDesc {
-            blend_desc: blend_desc,
+            blend_desc,
             sample_mask: 0xFFFFFFFF,
             rasterizer_desc,
-            depth_stencil_desc: depth_stencil_desc,
+            depth_stencil_desc,
             input_layouts: InputLayoutDesc(Vec::new()),
             primitive_topology: PrimitiveTopology::TriangleList,
             num_viewports: 1,
@@ -893,7 +885,7 @@ impl<'a> GraphicsPipelineDesc<'a> {
         self.read_only_dsv = read_only_dsv;
         self
     }
-    pub fn set_input_layouts(mut self, input_layout: InputLayoutDesc<'a>) -> Self {
+    pub fn set_input_layouts(mut self, input_layout: InputLayoutDesc) -> Self {
         self.input_layouts = input_layout;
         self
     }
@@ -910,8 +902,8 @@ impl GraphicsPipelineDescWrapper {
     }
 }
 
-impl From<&GraphicsPipelineDesc<'_>> for GraphicsPipelineDescWrapper {
-    fn from(value: &GraphicsPipelineDesc<'_>) -> Self {
+impl From<&GraphicsPipelineDesc> for GraphicsPipelineDescWrapper {
+    fn from(value: &GraphicsPipelineDesc) -> Self {
         let aux_input_layouts: Vec<diligent_sys::LayoutElement> = value
             .input_layouts
             .0
@@ -967,7 +959,7 @@ impl From<&GraphicsPipelineDesc<'_>> for GraphicsPipelineDescWrapper {
 const_assert!(diligent_sys::PIPELINE_TYPE_GRAPHICS == 0);
 pub struct GraphicsPipelineStateCreateInfo<'a> {
     pipeline_state_create_info: PipelineStateCreateInfo<'a, 0>,
-    graphics_pipeline_desc: GraphicsPipelineDesc<'a>,
+    graphics_pipeline_desc: GraphicsPipelineDesc,
     vertex_shader: Option<&'a Shader>,
     pixel_shader: Option<&'a Shader>,
     domain_shader: Option<&'a Shader>,
@@ -978,7 +970,7 @@ pub struct GraphicsPipelineStateCreateInfo<'a> {
 }
 
 impl<'a> GraphicsPipelineStateCreateInfo<'a> {
-    pub fn new(name: &'a str, graphics_pipeline_desc: GraphicsPipelineDesc<'a>) -> Self {
+    pub fn new(name: impl AsRef<str>, graphics_pipeline_desc: GraphicsPipelineDesc) -> Self {
         GraphicsPipelineStateCreateInfo {
             pipeline_state_create_info: PipelineStateCreateInfo::new(name),
             graphics_pipeline_desc,
@@ -1230,9 +1222,9 @@ impl PipelineState {
     pub fn get_static_variable_by_name(
         &self,
         shader_type: ShaderType,
-        name: &str,
+        name: impl AsRef<str>,
     ) -> Option<ShaderResourceVariable> {
-        let name = CString::from_str(name).unwrap();
+        let name = CString::from_str(name.as_ref()).unwrap();
 
         let shader_resource_variable = unsafe {
             (*self.virtual_functions)

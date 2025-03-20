@@ -87,10 +87,10 @@ impl ShaderResourceBinding {
 
     pub fn get_variable_by_name(
         &self,
-        name: &str,
+        name: impl AsRef<str>,
         shader_stages: ShaderTypes,
     ) -> Option<ShaderResourceVariable> {
-        let name = CString::from_str(name).unwrap();
+        let name = CString::from_str(name.as_ref()).unwrap();
 
         let variable = unsafe {
             (*self.virtual_functions)

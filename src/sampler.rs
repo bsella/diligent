@@ -37,9 +37,9 @@ pub struct SamplerDesc {
 }
 
 impl SamplerDesc {
-    pub fn new(name: &str) -> Self {
+    pub fn new(name: impl AsRef<str>) -> Self {
         SamplerDesc {
-            name: CString::from_str(name).unwrap(),
+            name: CString::from_str(name.as_ref()).unwrap(),
             min_filter: FilterType::Linear,
             mag_filter: FilterType::Linear,
             mip_filter: FilterType::Linear,

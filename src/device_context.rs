@@ -1097,8 +1097,8 @@ where
     // TODO
     // fn get_user_data(&self);
 
-    fn begin_debug_group(&self, name: &str, color: [f32; 4]) {
-        let name = CString::new(name).unwrap();
+    fn begin_debug_group(&self, name: impl AsRef<str>, color: [f32; 4]) {
+        let name = CString::new(name.as_ref()).unwrap();
         unsafe {
             (*self.as_device_context().virtual_functions)
                 .DeviceContext
@@ -1120,8 +1120,8 @@ where
         }
     }
 
-    fn insert_debug_label(&self, name: &str, color: [f32; 4]) {
-        let name = CString::new(name).unwrap();
+    fn insert_debug_label(&self, name: impl AsRef<str>, color: [f32; 4]) {
+        let name = CString::new(name.as_ref()).unwrap();
         unsafe {
             (*self.as_device_context().virtual_functions)
                 .DeviceContext

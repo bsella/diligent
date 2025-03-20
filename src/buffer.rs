@@ -71,10 +71,10 @@ impl From<&BufferDesc> for diligent_sys::BufferDesc {
 }
 
 impl<'a> BufferDesc {
-    pub fn new(name: &'a str, size: u64) -> Self {
+    pub fn new(name: impl AsRef<str>, size: u64) -> Self {
         BufferDesc {
             size,
-            name: CString::new(name).unwrap(),
+            name: CString::new(name.as_ref()).unwrap(),
             bind_flags: BindFlags::None,
             usage: Usage::Default,
             cpu_access_flags: CpuAccessFlags::None,

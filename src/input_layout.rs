@@ -1,3 +1,5 @@
+use std::{ffi::CString, str::FromStr};
+
 use static_assertions::const_assert;
 
 use super::graphics_types::ValueType;
@@ -19,13 +21,13 @@ impl From<&InputElementFrequency> for diligent_sys::INPUT_ELEMENT_FREQUENCY {
     }
 }
 
-pub struct LayoutElement<'a> {
+pub struct LayoutElement {
     input_index: u32,
     buffer_slot: u32,
     num_components: u32,
     value_type: ValueType,
 
-    hlsl_semantic: &'a std::ffi::CStr,
+    hlsl_semantic: CString,
     is_normalized: bool,
     relative_offset: u32,
     stride: u32,
@@ -33,7 +35,7 @@ pub struct LayoutElement<'a> {
     instance_data_step_rate: u32,
 }
 
-impl<'a> LayoutElement<'a> {
+impl LayoutElement {
     pub fn new(
         input_index: u32,
         buffer_slot: u32,
@@ -46,7 +48,7 @@ impl<'a> LayoutElement<'a> {
             num_components,
             value_type,
 
-            hlsl_semantic: &c"ATTRIB",
+            hlsl_semantic: c"ATTRIB".to_owned(),
             is_normalized: true,
             relative_offset: diligent_sys::LAYOUT_ELEMENT_AUTO_OFFSET,
             stride: diligent_sys::LAYOUT_ELEMENT_AUTO_STRIDE,
@@ -55,8 +57,8 @@ impl<'a> LayoutElement<'a> {
         }
     }
 
-    pub fn hlsl_semantic(mut self, hlsl_semantic: &'a std::ffi::CStr) -> Self {
-        self.hlsl_semantic = hlsl_semantic;
+    pub fn hlsl_semantic(mut self, hlsl_semantic: impl AsRef<str>) -> Self {
+        self.hlsl_semantic = CString::from_str(hlsl_semantic.as_ref()).unwrap();
         self
     }
     pub fn is_normalized(mut self, is_normalized: bool) -> Self {
@@ -81,7 +83,7 @@ impl<'a> LayoutElement<'a> {
     }
 }
 
-impl From<&LayoutElement<'_>> for diligent_sys::LayoutElement {
+impl From<&LayoutElement> for diligent_sys::LayoutElement {
     fn from(value: &LayoutElement) -> Self {
         diligent_sys::LayoutElement {
             HLSLSemantic: value.hlsl_semantic.as_ptr(),

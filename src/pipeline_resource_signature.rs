@@ -22,12 +22,12 @@ pub struct ImmutableSamplerDesc<'a> {
 impl<'a> ImmutableSamplerDesc<'a> {
     pub fn new(
         shader_stages: ShaderTypes,
-        sampler_or_texture_name: &str,
+        sampler_or_texture_name: impl AsRef<str>,
         sampler_desc: &'a SamplerDesc,
     ) -> Self {
         ImmutableSamplerDesc {
             shader_stages,
-            sampler_or_texture_name: CString::new(sampler_or_texture_name).unwrap(),
+            sampler_or_texture_name: CString::new(sampler_or_texture_name.as_ref()).unwrap(),
             sampler_desc,
         }
     }

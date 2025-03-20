@@ -1,3 +1,5 @@
+use std::ffi::CString;
+
 use static_assertions::const_assert;
 
 use super::device_object::{AsDeviceObject, DeviceObject};
@@ -22,12 +24,12 @@ pub enum FenceType {
 
 const_assert!(diligent_sys::FENCE_TYPE_LAST == 1);
 
-pub struct FenceDesc<'a> {
-    name: &'a std::ffi::CStr,
+pub struct FenceDesc {
+    name: CString,
     fence_type: FenceType,
 }
 
-impl From<&FenceDesc<'_>> for diligent_sys::FenceDesc {
+impl From<&FenceDesc> for diligent_sys::FenceDesc {
     fn from(value: &FenceDesc) -> Self {
         diligent_sys::FenceDesc {
             _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
@@ -41,7 +43,7 @@ impl From<&FenceDesc<'_>> for diligent_sys::FenceDesc {
     }
 }
 
-impl FenceDesc<'_> {
+impl FenceDesc {
     pub fn fence_desc(mut self, fence_type: FenceType) -> Self {
         self.fence_type = fence_type;
         self

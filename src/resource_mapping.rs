@@ -42,9 +42,14 @@ impl ResourceMapping {
         }
     }
 
-    pub fn add_resource(&mut self, name: &str, object: &impl AsDeviceObject, is_unique: bool) {
+    pub fn add_resource(
+        &mut self,
+        name: impl AsRef<str>,
+        object: &impl AsDeviceObject,
+        is_unique: bool,
+    ) {
         {
-            let name = std::ffi::CString::new(name).unwrap();
+            let name = std::ffi::CString::new(name.as_ref()).unwrap();
             unsafe {
                 (*self.virtual_functions)
                     .ResourceMapping
@@ -58,14 +63,14 @@ impl ResourceMapping {
             }
         }
         self.resources
-            .entry(name.to_owned())
+            .entry(name.as_ref().to_owned())
             .or_insert(Vec::new())
             .push(std::ptr::addr_of!(*object.as_device_object()));
     }
 
     pub fn add_resource_array(
         &mut self,
-        name: &str,
+        name: impl AsRef<str>,
         device_objects: &[impl AsDeviceObject],
         is_unique: bool,
     ) {
@@ -76,7 +81,7 @@ impl ResourceMapping {
         );
 
         {
-            let name = std::ffi::CString::new(name).unwrap();
+            let name = std::ffi::CString::new(name.as_ref()).unwrap();
 
             unsafe {
                 (*self.virtual_functions)
@@ -94,7 +99,7 @@ impl ResourceMapping {
         }
 
         self.resources
-            .entry(name.to_owned())
+            .entry(name.as_ref().to_owned())
             .or_insert(Vec::new())
             .extend(
                 device_objects
@@ -103,14 +108,16 @@ impl ResourceMapping {
             );
     }
 
-    pub fn remove_resource_by_name(&mut self, name: &str, array_index: Option<u32>) {
+    pub fn remove_resource_by_name(&mut self, name: impl AsRef<str>, array_index: Option<u32>) {
         let array_index = array_index.unwrap_or(0);
 
-        self.resources.entry(name.to_owned()).and_modify(|objects| {
-            objects.remove(array_index as usize);
-        });
+        self.resources
+            .entry(name.as_ref().to_owned())
+            .and_modify(|objects| {
+                objects.remove(array_index as usize);
+            });
 
-        let name = std::ffi::CString::new(name).unwrap();
+        let name = std::ffi::CString::new(name.as_ref()).unwrap();
 
         unsafe {
             (*self.virtual_functions)
@@ -120,7 +127,7 @@ impl ResourceMapping {
         }
     }
 
-    pub fn get_resources_by_name(&self, _name: &str) -> Option<&[DeviceObject]> {
+    pub fn get_resources_by_name(&self, _name: impl AsRef<str>) -> Option<&[DeviceObject]> {
         //self.resources
         //    .get(name)
         //    .map(|resources| resources.as_slice())
