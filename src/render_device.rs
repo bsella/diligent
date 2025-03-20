@@ -2,9 +2,10 @@ use std::os::raw::c_void;
 
 use static_assertions::const_assert;
 
+use crate::device_context::DeviceContext;
+
 use super::buffer::{Buffer, BufferDesc};
 use super::data_blob::DataBlob;
-use super::device_context::DeviceContext;
 use super::fence::Fence;
 use super::graphics_types::RenderDeviceType;
 use super::object::Object;
@@ -87,16 +88,14 @@ impl RenderDevice {
         &self,
         buffer_desc: &BufferDesc,
         buffer_data: &T,
-        device_context: Option<&impl DeviceContext>,
+        device_context: Option<&DeviceContext>,
     ) -> Option<Buffer> {
         let mut buffer_ptr = std::ptr::null_mut();
 
         let buffer_data = diligent_sys::BufferData {
             pData: std::ptr::from_ref(buffer_data) as *const c_void,
             DataSize: std::mem::size_of_val(buffer_data) as u64,
-            pContext: device_context.map_or(std::ptr::null_mut(), |context| {
-                context.as_device_context().sys_ptr
-            }),
+            pContext: device_context.map_or(std::ptr::null_mut(), |context| context.sys_ptr),
         };
 
         let buffer_desc = diligent_sys::BufferDesc::from(buffer_desc);
@@ -149,7 +148,7 @@ impl RenderDevice {
         &self,
         texture_desc: &TextureDesc,
         subresources: &[&TextureSubResource],
-        device_context: Option<&impl DeviceContext>,
+        device_context: Option<&DeviceContext>,
     ) -> Option<Texture> {
         let mut texture_ptr = std::ptr::null_mut();
         let texture_desc = diligent_sys::TextureDesc::from(texture_desc);
@@ -162,8 +161,7 @@ impl RenderDevice {
         let texture_data = diligent_sys::TextureData {
             NumSubresources: subresources.len() as u32,
             pSubResources: subresources.as_mut_ptr(),
-            pContext: device_context
-                .map_or(std::ptr::null_mut(), |c| c.as_device_context().sys_ptr),
+            pContext: device_context.map_or(std::ptr::null_mut(), |c| c.sys_ptr),
         };
 
         unsafe {

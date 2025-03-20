@@ -1,8 +1,8 @@
 use diligent::{
     buffer::{Buffer, BufferDesc},
     device_context::{
-        DeviceContext, DrawFlags, DrawIndexedAttribs, ImmediateDeviceContext, Rect,
-        ResourceStateTransitionMode, SetVertexBufferFlags, Viewport,
+        DrawFlags, DrawIndexedAttribs, ImmediateDeviceContext, Rect, ResourceStateTransitionMode,
+        SetVertexBufferFlags, Viewport,
     },
     graphics_types::{
         BindFlags, CpuAccessFlags, DrawCommandCapFlags, GraphicsAdapterInfo, MapFlags,
@@ -660,7 +660,7 @@ impl ImguiRenderer {
                     font_atlas_texture.data,
                     4 * font_atlas_texture.width as u64,
                 )],
-                None::<&ImmediateDeviceContext>,
+                None,
             )
             .unwrap();
 
@@ -859,15 +859,12 @@ impl ImguiRenderer {
                         }
 
                         // Apply scissor/clipping rectangle
+                        #[rustfmt::skip]
                         let clip_rect = [
-                            (cmd_params.clip_rect[0] - draw_data.display_pos[0])
-                                * draw_data.framebuffer_scale[0],
-                            (cmd_params.clip_rect[1] - draw_data.display_pos[1])
-                                * draw_data.framebuffer_scale[1],
-                            (cmd_params.clip_rect[2] - draw_data.display_pos[0])
-                                * draw_data.framebuffer_scale[0],
-                            (cmd_params.clip_rect[3] - draw_data.display_pos[1])
-                                * draw_data.framebuffer_scale[1],
+                            (cmd_params.clip_rect[0] - draw_data.display_pos[0]) * draw_data.framebuffer_scale[0],
+                            (cmd_params.clip_rect[1] - draw_data.display_pos[1]) * draw_data.framebuffer_scale[1],
+                            (cmd_params.clip_rect[2] - draw_data.display_pos[0]) * draw_data.framebuffer_scale[0],
+                            (cmd_params.clip_rect[3] - draw_data.display_pos[1]) * draw_data.framebuffer_scale[1],
                         ];
 
                         // Apply pretransform

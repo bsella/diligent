@@ -1,7 +1,6 @@
 use diligent::{
     device_context::{
-        DeferredDeviceContext, DeviceContext, DrawAttribs, ImmediateDeviceContext,
-        ResourceStateTransitionMode,
+        DeferredDeviceContext, DrawAttribs, ImmediateDeviceContext, ResourceStateTransitionMode,
     },
     engine_factory::EngineFactory,
     graphics_types::{PrimitiveTopology, ShaderType},

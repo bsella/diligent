@@ -1,7 +1,7 @@
 use diligent::{
     accessories::get_render_device_type_string,
     api_info::API_VERSION,
-    device_context::{DeviceContext, ResourceStateTransitionMode},
+    device_context::ResourceStateTransitionMode,
     engine_factory::{AsEngineFactory, EngineCreateInfo},
     graphics_types::{AdapterType, GraphicsAdapterInfo, RenderDeviceType, SurfaceTransform},
     platforms::native_window::NativeWindow,

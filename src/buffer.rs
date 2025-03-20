@@ -3,11 +3,11 @@ use std::ffi::CString;
 use bitflags::bitflags;
 use static_assertions::const_assert;
 
+use crate::device_context::DeviceContext;
 use crate::graphics_types::ResourceState;
 
 use super::buffer_view::BufferView;
 
-use super::device_context::DeviceContext;
 use super::device_object::DeviceObject;
 use super::graphics_types::{BindFlags, CpuAccessFlags, Usage};
 
@@ -294,28 +294,25 @@ impl Buffer {
     }
 }
 
-pub struct BufferMapReadToken<'a, T, Context: DeviceContext> {
-    device_context: &'a Context,
+pub struct BufferMapReadToken<'a, T> {
+    device_context: &'a DeviceContext,
     buffer: &'a Buffer,
     data_ptr: *const T,
 }
 
-impl<'a, T, Context> BufferMapReadToken<'a, T, Context>
-where
-    Context: DeviceContext,
-{
+impl<'a, T> BufferMapReadToken<'a, T> {
     pub(super) fn new(
-        device_context: &'a Context,
+        device_context: &'a DeviceContext,
         buffer: &'a Buffer,
         map_flags: diligent_sys::MAP_FLAGS,
-    ) -> BufferMapReadToken<'a, T, Context> {
+    ) -> BufferMapReadToken<'a, T> {
         let mut ptr = std::ptr::null_mut();
         unsafe {
-            (*device_context.as_device_context().virtual_functions)
+            (*device_context.virtual_functions)
                 .DeviceContext
                 .MapBuffer
                 .unwrap_unchecked()(
-                device_context.as_device_context().sys_ptr,
+                device_context.sys_ptr,
                 buffer.sys_ptr,
                 diligent_sys::MAP_READ as diligent_sys::MAP_TYPE,
                 map_flags,
@@ -339,17 +336,14 @@ where
     }
 }
 
-impl<T, Context> Drop for BufferMapReadToken<'_, T, Context>
-where
-    Context: DeviceContext,
-{
+impl<T> Drop for BufferMapReadToken<'_, T> {
     fn drop(&mut self) {
         unsafe {
-            (*self.device_context.as_device_context().virtual_functions)
+            (*self.device_context.virtual_functions)
                 .DeviceContext
                 .UnmapBuffer
                 .unwrap_unchecked()(
-                self.device_context.as_device_context().sys_ptr,
+                self.device_context.sys_ptr,
                 self.buffer.sys_ptr,
                 diligent_sys::MAP_READ as diligent_sys::MAP_TYPE,
             )
@@ -357,28 +351,25 @@ where
     }
 }
 
-pub struct BufferMapWriteToken<'a, T, Context: DeviceContext> {
-    device_context: &'a Context,
+pub struct BufferMapWriteToken<'a, T> {
+    device_context: &'a DeviceContext,
     buffer: &'a Buffer,
     data_ptr: *mut T,
 }
 
-impl<'a, T, Context> BufferMapWriteToken<'a, T, Context>
-where
-    Context: DeviceContext,
-{
+impl<'a, T> BufferMapWriteToken<'a, T> {
     pub(super) fn new(
-        device_context: &'a Context,
+        device_context: &'a DeviceContext,
         buffer: &'a Buffer,
         map_flags: diligent_sys::MAP_FLAGS,
-    ) -> BufferMapWriteToken<'a, T, Context> {
+    ) -> BufferMapWriteToken<'a, T> {
         let mut ptr = std::ptr::null_mut();
         unsafe {
-            (*device_context.as_device_context().virtual_functions)
+            (*device_context.virtual_functions)
                 .DeviceContext
                 .MapBuffer
                 .unwrap_unchecked()(
-                device_context.as_device_context().sys_ptr,
+                device_context.sys_ptr,
                 buffer.sys_ptr,
                 diligent_sys::MAP_WRITE as diligent_sys::MAP_TYPE,
                 map_flags,
@@ -402,44 +393,38 @@ where
     }
 }
 
-impl<T, Context> Drop for BufferMapWriteToken<'_, T, Context>
-where
-    Context: DeviceContext,
-{
+impl<T> Drop for BufferMapWriteToken<'_, T> {
     fn drop(&mut self) {
         unsafe {
-            (*self.device_context.as_device_context().virtual_functions)
+            (*self.device_context.virtual_functions)
                 .DeviceContext
                 .UnmapBuffer
                 .unwrap_unchecked()(
-                self.device_context.as_device_context().sys_ptr,
+                self.device_context.sys_ptr,
                 self.buffer.sys_ptr,
                 diligent_sys::MAP_WRITE as diligent_sys::MAP_TYPE,
             )
         }
     }
 }
-pub struct BufferMapReadWriteToken<'a, T, Context: DeviceContext> {
-    device_context: &'a Context,
+pub struct BufferMapReadWriteToken<'a, T> {
+    device_context: &'a DeviceContext,
     buffer: &'a Buffer,
     data_ptr: *mut T,
 }
-impl<'a, T, Context> BufferMapReadWriteToken<'a, T, Context>
-where
-    Context: DeviceContext,
-{
+impl<'a, T> BufferMapReadWriteToken<'a, T> {
     pub(super) fn new(
-        device_context: &'a Context,
+        device_context: &'a DeviceContext,
         buffer: &'a Buffer,
         map_flags: diligent_sys::MAP_FLAGS,
-    ) -> BufferMapReadWriteToken<'a, T, Context> {
+    ) -> BufferMapReadWriteToken<'a, T> {
         let mut ptr = std::ptr::null_mut();
         unsafe {
-            (*device_context.as_device_context().virtual_functions)
+            (*device_context.virtual_functions)
                 .DeviceContext
                 .MapBuffer
                 .unwrap_unchecked()(
-                device_context.as_device_context().sys_ptr,
+                device_context.sys_ptr,
                 buffer.sys_ptr,
                 diligent_sys::MAP_READ_WRITE as diligent_sys::MAP_TYPE,
                 map_flags,
@@ -470,17 +455,14 @@ where
         unsafe { std::slice::from_raw_parts_mut(self.data_ptr.offset(offset), len) }
     }
 }
-impl<T, Context> Drop for BufferMapReadWriteToken<'_, T, Context>
-where
-    Context: DeviceContext,
-{
+impl<T> Drop for BufferMapReadWriteToken<'_, T> {
     fn drop(&mut self) {
         unsafe {
-            (*self.device_context.as_device_context().virtual_functions)
+            (*self.device_context.virtual_functions)
                 .DeviceContext
                 .UnmapBuffer
                 .unwrap_unchecked()(
-                self.device_context.as_device_context().sys_ptr,
+                self.device_context.sys_ptr,
                 self.buffer.sys_ptr,
                 diligent_sys::MAP_READ_WRITE as diligent_sys::MAP_TYPE,
             )

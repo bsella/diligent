@@ -2,8 +2,8 @@ use diligent::{
     accessories::linear_to_srgba,
     buffer::{Buffer, BufferDesc},
     device_context::{
-        DeferredDeviceContext, DeviceContext, DrawFlags, DrawIndexedAttribs,
-        ImmediateDeviceContext, ResourceStateTransitionMode, SetVertexBufferFlags,
+        DeferredDeviceContext, DrawFlags, DrawIndexedAttribs, ImmediateDeviceContext,
+        ResourceStateTransitionMode, SetVertexBufferFlags,
     },
     engine_factory::EngineFactory,
     graphics_types::{
@@ -238,11 +238,7 @@ impl SampleBase for Cube {
             .usage(Usage::Immutable)
             .bind_flags(BindFlags::VertexBuffer);
             render_device
-                .create_buffer_with_data(
-                    &vertex_buffer_desc,
-                    &CUBE_VERTS,
-                    None::<&ImmediateDeviceContext>,
-                )
+                .create_buffer_with_data(&vertex_buffer_desc, &CUBE_VERTS, None)
                 .unwrap()
         };
 
@@ -263,11 +259,7 @@ impl SampleBase for Cube {
                     .usage(Usage::Immutable)
                     .bind_flags(BindFlags::IndexBuffer);
             render_device
-                .create_buffer_with_data(
-                    &vertex_buffer_desc,
-                    &INDICES,
-                    None::<&ImmediateDeviceContext>,
-                )
+                .create_buffer_with_data(&vertex_buffer_desc, &INDICES, None)
                 .unwrap()
         };
 

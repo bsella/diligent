@@ -4,7 +4,6 @@ use std::path::PathBuf;
 
 use static_assertions::const_assert;
 
-use crate::device_context::AsDeviceContextCommon;
 use crate::device_context::DeferredDeviceContext;
 use crate::device_context::ImmediateDeviceContext;
 use crate::engine_factory::EngineCreateInfo;
@@ -19,7 +18,6 @@ use crate::swap_chain::SwapChainDesc;
 pub struct EngineVkCreateInfo {
     engine_create_info: EngineCreateInfo,
 
-    // TODO : find a way to replace all of the following Vec<String> with Vec<&str>
     instance_layer_names: Vec<String>,
     instance_extension_names: Vec<String>,
     device_extension_names: Vec<String>,
@@ -166,7 +164,7 @@ impl EngineFactoryVk {
 
         {
             fn vec_string_to_vec_cstring_ptr(
-                strings: &Vec<String>,
+                strings: &[String],
             ) -> (Vec<std::ffi::CString>, Vec<*const i8>) {
                 let cstrings = strings
                     .iter()
@@ -296,7 +294,7 @@ impl EngineFactoryVk {
                 .unwrap_unchecked()(
                 self.sys_ptr,
                 device.sys_ptr,
-                immediate_context.as_device_context().sys_ptr,
+                immediate_context.sys_ptr,
                 std::ptr::addr_of!(swapchain_desc),
                 window
                     .as_ref()
