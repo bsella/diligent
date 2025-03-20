@@ -1,8 +1,8 @@
-use crate::core::{
+use crate::{
     buffer::{Buffer, BufferDesc},
     fence::{Fence, FenceDesc},
     graphics_types::ResourceState,
-    object::AsObject,
+    object::Object,
     render_device::RenderDevice,
     texture::{Texture, TextureDesc},
 };
@@ -14,9 +14,9 @@ pub struct RenderDeviceVk<'a> {
     render_device: &'a RenderDevice,
 }
 
-impl AsObject for RenderDeviceVk<'_> {
-    fn as_object(&self) -> &crate::core::object::Object {
-        self.render_device.as_object()
+impl AsRef<Object> for RenderDeviceVk<'_> {
+    fn as_ref(&self) -> &Object {
+        self.render_device.as_ref()
     }
 }
 
@@ -24,9 +24,9 @@ impl<'a> From<&'a RenderDevice> for RenderDeviceVk<'a> {
     fn from(value: &'a RenderDevice) -> Self {
         RenderDeviceVk {
             render_device: value,
-            render_device_ptr: value.render_device as *mut diligent_sys::IRenderDeviceVk,
+            render_device_ptr: value.sys_ptr as *mut diligent_sys::IRenderDeviceVk,
             virtual_functions: unsafe {
-                (*(value.render_device as *mut diligent_sys::IRenderDeviceVk)).pVtbl
+                (*(value.sys_ptr as *mut diligent_sys::IRenderDeviceVk)).pVtbl
             },
         }
     }

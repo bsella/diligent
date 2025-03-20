@@ -1,7 +1,4 @@
-use crate::core::{
-    device_object::{AsDeviceObject, DeviceObject},
-    pipeline_state::PipelineState,
-};
+use crate::{device_object::DeviceObject, pipeline_state::PipelineState};
 
 pub struct PipelineStateVk<'a> {
     pipeline_state_ptr: *mut diligent_sys::IPipelineStateVk,
@@ -10,9 +7,9 @@ pub struct PipelineStateVk<'a> {
     pipeline_state: &'a PipelineState,
 }
 
-impl AsDeviceObject for PipelineStateVk<'_> {
-    fn as_device_object(&self) -> &DeviceObject {
-        &self.pipeline_state.as_device_object()
+impl AsRef<DeviceObject> for PipelineStateVk<'_> {
+    fn as_ref(&self) -> &DeviceObject {
+        self.pipeline_state.as_ref()
     }
 }
 
@@ -20,9 +17,9 @@ impl<'a> From<&'a PipelineState> for PipelineStateVk<'a> {
     fn from(value: &'a PipelineState) -> Self {
         PipelineStateVk {
             pipeline_state: value,
-            pipeline_state_ptr: value.pipeline_state as *mut diligent_sys::IPipelineStateVk,
+            pipeline_state_ptr: value.sys_ptr as *mut diligent_sys::IPipelineStateVk,
             virtual_functions: unsafe {
-                (*(value.pipeline_state as *mut diligent_sys::IPipelineStateVk)).pVtbl
+                (*(value.sys_ptr as *mut diligent_sys::IPipelineStateVk)).pVtbl
             },
         }
     }

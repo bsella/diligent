@@ -243,7 +243,7 @@ pub struct DeviceContext {
     pub(crate) sys_ptr: *mut diligent_sys::IDeviceContext,
     pub(crate) virtual_functions: *mut diligent_sys::IDeviceContextVtbl,
 
-    _object: Object,
+    object: Object,
 }
 
 impl DeviceContext {
@@ -257,7 +257,7 @@ impl DeviceContext {
         DeviceContext {
             sys_ptr: device_context_ptr,
             virtual_functions: unsafe { (*device_context_ptr).pVtbl },
-            _object: Object::new(device_context_ptr as *mut diligent_sys::IObject),
+            object: Object::new(device_context_ptr as *mut diligent_sys::IObject),
         }
     }
 
@@ -1089,6 +1089,12 @@ impl DeviceContext {
             .as_ref()
             .unwrap_unchecked()
         }
+    }
+}
+
+impl AsRef<Object> for DeviceContext {
+    fn as_ref(&self) -> &Object {
+        &self.object
     }
 }
 

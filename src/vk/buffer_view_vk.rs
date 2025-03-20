@@ -1,7 +1,4 @@
-use crate::core::{
-    buffer_view::BufferView,
-    device_object::{AsDeviceObject, DeviceObject},
-};
+use crate::{buffer_view::BufferView, device_object::DeviceObject};
 
 pub struct BufferViewVk<'a> {
     buffer_view_ptr: *mut diligent_sys::IBufferViewVk,
@@ -10,9 +7,9 @@ pub struct BufferViewVk<'a> {
     buffer_view: &'a BufferView,
 }
 
-impl AsDeviceObject for BufferViewVk<'_> {
-    fn as_device_object(&self) -> &DeviceObject {
-        &self.buffer_view.as_device_object()
+impl AsRef<DeviceObject> for BufferViewVk<'_> {
+    fn as_ref(&self) -> &DeviceObject {
+        self.buffer_view.as_ref()
     }
 }
 
@@ -20,9 +17,9 @@ impl<'a> From<&'a BufferView> for BufferViewVk<'a> {
     fn from(value: &'a BufferView) -> Self {
         BufferViewVk {
             buffer_view: value,
-            buffer_view_ptr: value.buffer_view as *mut diligent_sys::IBufferViewVk,
+            buffer_view_ptr: value.sys_ptr as *mut diligent_sys::IBufferViewVk,
             virtual_functions: unsafe {
-                (*(value.buffer_view as *mut diligent_sys::IBufferViewVk)).pVtbl
+                (*(value.sys_ptr as *mut diligent_sys::IBufferViewVk)).pVtbl
             },
         }
     }

@@ -1,7 +1,4 @@
-use crate::core::{
-    device_object::{AsDeviceObject, DeviceObject},
-    fence::Fence,
-};
+use crate::{device_object::DeviceObject, fence::Fence};
 
 pub struct FenceVk<'a> {
     fence_ptr: *mut diligent_sys::IFenceVk,
@@ -10,9 +7,9 @@ pub struct FenceVk<'a> {
     fence: &'a Fence,
 }
 
-impl AsDeviceObject for FenceVk<'_> {
-    fn as_device_object(&self) -> &DeviceObject {
-        &self.fence.as_device_object()
+impl AsRef<DeviceObject> for FenceVk<'_> {
+    fn as_ref(&self) -> &DeviceObject {
+        self.fence.as_ref()
     }
 }
 
@@ -20,8 +17,8 @@ impl<'a> From<&'a Fence> for FenceVk<'a> {
     fn from(value: &'a Fence) -> Self {
         FenceVk {
             fence: value,
-            fence_ptr: value.fence as *mut diligent_sys::IFenceVk,
-            virtual_functions: unsafe { (*(value.fence as *mut diligent_sys::IFenceVk)).pVtbl },
+            fence_ptr: value.sys_ptr as *mut diligent_sys::IFenceVk,
+            virtual_functions: unsafe { (*(value.sys_ptr as *mut diligent_sys::IFenceVk)).pVtbl },
         }
     }
 }

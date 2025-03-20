@@ -1,7 +1,4 @@
-use crate::core::{
-    device_object::{AsDeviceObject, DeviceObject},
-    texture::Texture,
-};
+use crate::{device_object::DeviceObject, texture::Texture};
 
 pub struct TextureVk<'a> {
     texture_ptr: *mut diligent_sys::ITextureVk,
@@ -10,9 +7,9 @@ pub struct TextureVk<'a> {
     texture: &'a Texture,
 }
 
-impl AsDeviceObject for TextureVk<'_> {
-    fn as_device_object(&self) -> &DeviceObject {
-        &self.texture.as_device_object()
+impl AsRef<DeviceObject> for TextureVk<'_> {
+    fn as_ref(&self) -> &DeviceObject {
+        self.texture.as_ref()
     }
 }
 
@@ -20,8 +17,8 @@ impl<'a> From<&'a Texture> for TextureVk<'a> {
     fn from(value: &'a Texture) -> Self {
         TextureVk {
             texture: value,
-            texture_ptr: value.texture as *mut diligent_sys::ITextureVk,
-            virtual_functions: unsafe { (*(value.texture as *mut diligent_sys::ITextureVk)).pVtbl },
+            texture_ptr: value.sys_ptr as *mut diligent_sys::ITextureVk,
+            virtual_functions: unsafe { (*(value.sys_ptr as *mut diligent_sys::ITextureVk)).pVtbl },
         }
     }
 }

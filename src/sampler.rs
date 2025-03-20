@@ -141,7 +141,7 @@ impl From<&SamplerDesc> for diligent_sys::SamplerDesc {
 }
 
 pub struct Sampler {
-    pub(crate) sampler_ptr: *mut diligent_sys::ISampler,
+    pub(crate) sys_ptr: *mut diligent_sys::ISampler,
     virtual_functions: *mut diligent_sys::ISamplerVtbl,
 
     device_object: DeviceObject,
@@ -163,7 +163,7 @@ impl Sampler {
         );
 
         Sampler {
-            sampler_ptr,
+            sys_ptr: sampler_ptr,
             virtual_functions: unsafe { (*sampler_ptr).pVtbl },
             device_object: DeviceObject::new(sampler_ptr as *mut diligent_sys::IDeviceObject),
         }

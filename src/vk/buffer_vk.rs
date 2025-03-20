@@ -1,7 +1,4 @@
-use crate::core::{
-    buffer::Buffer,
-    device_object::{AsDeviceObject, DeviceObject},
-};
+use crate::{buffer::Buffer, device_object::DeviceObject};
 
 pub struct BufferVk<'a> {
     buffer_ptr: *mut diligent_sys::IBufferVk,
@@ -10,9 +7,9 @@ pub struct BufferVk<'a> {
     buffer: &'a Buffer,
 }
 
-impl AsDeviceObject for BufferVk<'_> {
-    fn as_device_object(&self) -> &DeviceObject {
-        &self.buffer.as_device_object()
+impl AsRef<DeviceObject> for BufferVk<'_> {
+    fn as_ref(&self) -> &DeviceObject {
+        self.buffer.as_ref()
     }
 }
 
@@ -20,8 +17,8 @@ impl<'a> From<&'a Buffer> for BufferVk<'a> {
     fn from(value: &'a Buffer) -> Self {
         BufferVk {
             buffer: value,
-            buffer_ptr: value.buffer as *mut diligent_sys::IBufferVk,
-            virtual_functions: unsafe { (*(value.buffer as *mut diligent_sys::IBufferVk)).pVtbl },
+            buffer_ptr: value.sys_ptr as *mut diligent_sys::IBufferVk,
+            virtual_functions: unsafe { (*(value.sys_ptr as *mut diligent_sys::IBufferVk)).pVtbl },
         }
     }
 }

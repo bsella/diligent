@@ -5,7 +5,7 @@ use super::buffer::Buffer;
 use super::device_object::DeviceObject;
 
 pub struct BufferView {
-    _sys_ptr: *mut diligent_sys::IBufferView,
+    pub(crate) sys_ptr: *mut diligent_sys::IBufferView,
     virtual_functions: *mut diligent_sys::IBufferViewVtbl,
     buffer: *const Buffer,
 
@@ -31,8 +31,8 @@ impl BufferView {
         );
 
         BufferView {
+            sys_ptr: buffer_view_ptr,
             virtual_functions: unsafe { (*buffer_view_ptr).pVtbl },
-            _sys_ptr: buffer_view_ptr,
             buffer,
             device_object: DeviceObject::new(buffer_view_ptr as *mut diligent_sys::IDeviceObject),
         }

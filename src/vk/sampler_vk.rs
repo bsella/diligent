@@ -1,7 +1,4 @@
-use crate::core::{
-    device_object::{AsDeviceObject, DeviceObject},
-    sampler::Sampler,
-};
+use crate::{device_object::DeviceObject, sampler::Sampler};
 
 pub struct SamplerVk<'a> {
     sampler_ptr: *mut diligent_sys::ISamplerVk,
@@ -10,9 +7,9 @@ pub struct SamplerVk<'a> {
     sampler: &'a Sampler,
 }
 
-impl AsDeviceObject for SamplerVk<'_> {
-    fn as_device_object(&self) -> &DeviceObject {
-        &self.sampler.as_device_object()
+impl AsRef<DeviceObject> for SamplerVk<'_> {
+    fn as_ref(&self) -> &DeviceObject {
+        self.sampler.as_ref()
     }
 }
 
@@ -20,8 +17,8 @@ impl<'a> From<&'a Sampler> for SamplerVk<'a> {
     fn from(value: &'a Sampler) -> Self {
         SamplerVk {
             sampler: value,
-            sampler_ptr: value.sampler as *mut diligent_sys::ISamplerVk,
-            virtual_functions: unsafe { (*(value.sampler as *mut diligent_sys::ISamplerVk)).pVtbl },
+            sampler_ptr: value.sys_ptr as *mut diligent_sys::ISamplerVk,
+            virtual_functions: unsafe { (*(value.sys_ptr as *mut diligent_sys::ISamplerVk)).pVtbl },
         }
     }
 }

@@ -78,7 +78,7 @@ impl TextureView {
             (*self.virtual_functions)
                 .TextureView
                 .SetSampler
-                .unwrap_unchecked()(self.sys_ptr, sampler.sampler_ptr);
+                .unwrap_unchecked()(self.sys_ptr, sampler.sys_ptr);
         }
     }
 
