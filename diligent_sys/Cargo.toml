@@ -1,9 +1,12 @@
 [package]
 name = "diligent_sys"
-version = "0.1.0" # TODO : update to the version from the C++ diligent repo
-edition = "2021"
+version = "2.5.5" # TODO : update to the version from the C++ diligent repo
+edition = "2024"
+description  = "Raw FFI bindings of the Diligent Engine"
+categories   = ["graphics", "rendering"]
+license = "MIT"
 build = "build.rs"
-exclude = ["/DiligentEngine", "**/assets"]
+exclude = ["/DiligentEngine"]
 
 [build-dependencies]
 bindgen = "0.71.1"
