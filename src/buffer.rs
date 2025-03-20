@@ -119,8 +119,6 @@ pub struct Buffer {
     pub(crate) sys_ptr: *mut diligent_sys::IBuffer,
     virtual_functions: *mut diligent_sys::IBufferVtbl,
 
-    default_view: Option<BufferView>,
-
     device_object: DeviceObject,
 }
 
@@ -139,11 +137,10 @@ impl Buffer {
                 == std::mem::size_of::<diligent_sys::IBuffer>()
         );
 
-        let mut buffer = Buffer {
+        let buffer = Buffer {
             device_object: DeviceObject::new(buffer_ptr as *mut diligent_sys::IDeviceObject),
             sys_ptr: buffer_ptr,
             virtual_functions: unsafe { (*buffer_ptr).pVtbl },
-            default_view: None,
         };
 
         fn bind_flags_to_buffer_view_type(
@@ -178,10 +175,9 @@ impl Buffer {
                         .GetDefaultView
                         .unwrap_unchecked()(buffer_ptr, buffer_view_type)
                 },
-                std::ptr::addr_of!(buffer),
+                &buffer,
             );
             buffer_view.as_ref().as_ref().add_ref();
-            buffer.default_view = Some(buffer_view);
         }
 
         buffer
@@ -214,25 +210,25 @@ impl Buffer {
         if buffer_view_ptr.is_null() {
             None
         } else {
-            Some(BufferView::new(buffer_view_ptr, self as *mut Self))
+            Some(BufferView::new(buffer_view_ptr, self))
         }
     }
 
     pub fn get_default_view(
         &self,
         view_type: diligent_sys::BUFFER_VIEW_TYPE,
-    ) -> Option<&BufferView> {
-        if unsafe {
+    ) -> Option<BufferView> {
+        let buffer_view_ptr = unsafe {
             (*self.virtual_functions)
                 .Buffer
                 .GetDefaultView
                 .unwrap_unchecked()(self.sys_ptr, view_type)
-        }
-        .is_null()
-        {
+        };
+
+        if buffer_view_ptr.is_null() {
             None
         } else {
-            self.default_view.as_ref()
+            Some(BufferView::new(buffer_view_ptr, self))
         }
     }
 

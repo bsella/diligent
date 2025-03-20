@@ -4,25 +4,24 @@ use super::buffer::Buffer;
 
 use super::device_object::DeviceObject;
 
-pub struct BufferView {
+pub struct BufferView<'a> {
+    // sys_ptr is used in the interop feature but we get a warning when the interop feature is not exabled
+    #[allow(dead_code)]
     pub(crate) sys_ptr: *mut diligent_sys::IBufferView,
     virtual_functions: *mut diligent_sys::IBufferViewVtbl,
-    buffer: *const Buffer,
+    buffer: &'a Buffer,
 
     device_object: DeviceObject,
 }
 
-impl AsRef<DeviceObject> for BufferView {
+impl AsRef<DeviceObject> for BufferView<'_> {
     fn as_ref(&self) -> &DeviceObject {
         &self.device_object
     }
 }
 
-impl BufferView {
-    pub(crate) fn new(
-        buffer_view_ptr: *mut diligent_sys::IBufferView,
-        buffer: *const Buffer,
-    ) -> Self {
+impl<'a> BufferView<'a> {
+    pub(crate) fn new(buffer_view_ptr: *mut diligent_sys::IBufferView, buffer: &'a Buffer) -> Self {
         // Both base and derived classes have exactly the same size.
         // This means that we can up-cast to the base class without worrying about layout offset between both classes
         const_assert!(
@@ -52,6 +51,6 @@ impl BufferView {
 
     #[inline]
     pub fn get_buffer(&self) -> &Buffer {
-        unsafe { self.buffer.as_ref().unwrap_unchecked() }
+        self.buffer
     }
 }
