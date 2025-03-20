@@ -2,10 +2,11 @@ use std::{ffi::CString, mem::MaybeUninit};
 
 use static_assertions::const_assert;
 
+use crate::device_object::DeviceObject;
+
 use super::{
-    device_object::AsDeviceObject,
     graphics_types::{SetShaderResourceFlags, ShaderTypes},
-    object::{AsObject, Object},
+    object::Object,
     pipeline_state::ShaderVariableFlags,
     shader::ShaderResourceDesc,
 };
@@ -94,8 +95,8 @@ pub struct ShaderResourceVariable {
     object: Object,
 }
 
-impl AsObject for ShaderResourceVariable {
-    fn as_object(&self) -> &Object {
+impl AsRef<Object> for ShaderResourceVariable {
+    fn as_ref(&self) -> &Object {
         &self.object
     }
 }
@@ -118,29 +119,24 @@ impl ShaderResourceVariable {
         }
     }
 
-    pub fn set(&self, device_object: &impl AsDeviceObject, flags: SetShaderResourceFlags) {
+    pub fn set(&self, device_object: &impl AsRef<DeviceObject>, flags: SetShaderResourceFlags) {
         unsafe {
             (*self.virtual_functions)
                 .ShaderResourceVariable
                 .Set
                 .unwrap_unchecked()(
-                self.sys_ptr,
-                device_object.as_device_object().sys_ptr,
-                flags.bits(),
+                self.sys_ptr, device_object.as_ref().sys_ptr, flags.bits()
             )
         }
     }
 
     pub fn set_array(
         &mut self,
-        device_objects: &[impl AsDeviceObject],
+        device_objects: &[impl AsRef<DeviceObject>],
         flags: SetShaderResourceFlags,
     ) {
-        let object_ptrs = Vec::from_iter(
-            device_objects
-                .iter()
-                .map(|object| object.as_device_object().sys_ptr),
-        );
+        let object_ptrs =
+            Vec::from_iter(device_objects.iter().map(|object| object.as_ref().sys_ptr));
         unsafe {
             (*self.virtual_functions)
                 .ShaderResourceVariable
@@ -157,7 +153,7 @@ impl ShaderResourceVariable {
 
     pub fn set_buffer_range(
         &mut self,
-        device_object: &impl AsDeviceObject,
+        device_object: &impl AsRef<DeviceObject>,
         offset: u64,
         size: u64,
         array_index: Option<u32>,
@@ -169,7 +165,7 @@ impl ShaderResourceVariable {
                 .SetBufferRange
                 .unwrap_unchecked()(
                 self.sys_ptr,
-                device_object.as_device_object().sys_ptr,
+                device_object.as_ref().sys_ptr,
                 offset,
                 size,
                 array_index.unwrap_or(0),

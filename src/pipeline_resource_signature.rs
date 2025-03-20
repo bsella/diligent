@@ -3,13 +3,12 @@ use std::ffi::CString;
 use static_assertions::const_assert;
 
 use super::graphics_types::ShaderType;
+use super::graphics_types::ShaderTypes;
 use super::sampler::SamplerDesc;
 use super::shader_resource_variable::ShaderResourceVariable;
-use super::{graphics_types::ShaderTypes, object::AsObject};
 
 use super::{
-    device_object::{AsDeviceObject, DeviceObject},
-    resource_mapping::ResourceMapping,
+    device_object::DeviceObject, resource_mapping::ResourceMapping,
     shader_resource_binding::ShaderResourceBinding,
 };
 
@@ -66,8 +65,8 @@ pub struct PipelineResourceSignature {
     device_object: DeviceObject,
 }
 
-impl AsDeviceObject for PipelineResourceSignature {
-    fn as_device_object(&self) -> &DeviceObject {
+impl AsRef<DeviceObject> for PipelineResourceSignature {
+    fn as_ref(&self) -> &DeviceObject {
         &self.device_object
     }
 }
@@ -103,7 +102,7 @@ impl PipelineResourceSignature {
                 srv_ptr: *mut diligent_sys::IShaderResourceVariable,
             ) -> ShaderResourceVariable {
                 let srv = ShaderResourceVariable::new(srv_ptr);
-                srv.as_object().add_ref();
+                srv.as_ref().add_ref();
                 srv
             }
 

@@ -7,8 +7,7 @@ use super::buffer::Buffer;
 use super::graphics_types::{BindFlags, CpuAccessFlags, TextureFormat, Usage};
 use super::texture_view::{TextureView, TextureViewType};
 
-use super::device_object::{AsDeviceObject, DeviceObject};
-use super::object::AsObject;
+use super::device_object::DeviceObject;
 
 pub enum TextureDimension {
     Texture1D,
@@ -250,8 +249,8 @@ pub struct Texture {
     device_object: DeviceObject,
 }
 
-impl AsDeviceObject for Texture {
-    fn as_device_object(&self) -> &DeviceObject {
+impl AsRef<DeviceObject> for Texture {
+    fn as_ref(&self) -> &DeviceObject {
         &self.device_object
     }
 }
@@ -321,7 +320,7 @@ impl Texture {
             None
         } else {
             let texture_view = TextureView::new(texture_view_ptr, std::ptr::addr_of!(*self));
-            texture_view.as_device_object().as_object().add_ref();
+            texture_view.as_ref().as_ref().add_ref();
 
             Some(texture_view)
         }

@@ -606,16 +606,16 @@ impl ImguiRenderer {
         )
         .vertex_shader(&vertex_shader)
         .pixel_shader(&pixel_shader)
-        .add_shader_resource_variable(ShaderResourceVariableDesc::new(
+        .set_shader_resource_variables([ShaderResourceVariableDesc::new(
             "Texture",
             ShaderResourceVariableType::Dynamic,
             ShaderTypes::Pixel,
-        ))
-        .add_immutable_sampler_desc(ImmutableSamplerDesc::new(
+        )])
+        .set_immutable_samplers([ImmutableSamplerDesc::new(
             ShaderTypes::Pixel,
             "Texture",
             &sampler_desc,
-        ));
+        )]);
 
         let pipeline_state = create_info
             .device

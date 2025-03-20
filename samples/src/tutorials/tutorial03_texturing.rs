@@ -193,17 +193,17 @@ impl SampleBase for Texturing {
         .default_variable_type(ShaderResourceVariableType::Static)
         // Shader variables should typically be mutable, which means they are expected
         // to change on a per-instance basis
-        .add_shader_resource_variable(ShaderResourceVariableDesc::new(
+        .set_shader_resource_variables([ShaderResourceVariableDesc::new(
             "g_Texture",
             ShaderResourceVariableType::Mutable,
             ShaderTypes::Pixel,
-        ))
+        )])
         // Define immutable sampler for g_Texture. Immutable samplers should be used whenever possible
-        .add_immutable_sampler_desc(ImmutableSamplerDesc::new(
+        .set_immutable_samplers([ImmutableSamplerDesc::new(
             ShaderTypes::Pixel,
             "g_Texture",
             &sampler_desc,
-        ))
+        )])
         .vertex_shader(&vertex_shader)
         .pixel_shader(&pixel_shader);
 

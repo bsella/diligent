@@ -3,7 +3,7 @@ use static_assertions::const_assert;
 use super::sampler::Sampler;
 use super::texture::Texture;
 
-use super::device_object::{AsDeviceObject, DeviceObject};
+use super::device_object::DeviceObject;
 
 pub enum TextureViewType {
     ShaderResource,
@@ -37,8 +37,8 @@ pub struct TextureView {
     pub(crate) device_object: DeviceObject,
 }
 
-impl AsDeviceObject for TextureView {
-    fn as_device_object(&self) -> &DeviceObject {
+impl AsRef<DeviceObject> for TextureView {
+    fn as_ref(&self) -> &DeviceObject {
         &self.device_object
     }
 }

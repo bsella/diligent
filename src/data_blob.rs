@@ -2,7 +2,7 @@ use core::fmt;
 
 use static_assertions::const_assert;
 
-use super::object::{AsObject, Object};
+use super::object::Object;
 
 pub struct DataBlob {
     sys_ptr: *mut diligent_sys::IDataBlob,
@@ -11,8 +11,8 @@ pub struct DataBlob {
     object: Object,
 }
 
-impl AsObject for DataBlob {
-    fn as_object(&self) -> &Object {
+impl AsRef<Object> for DataBlob {
+    fn as_ref(&self) -> &Object {
         &self.object
     }
 }

@@ -18,10 +18,6 @@ impl Object {
     }
 }
 
-pub(crate) trait AsObject {
-    fn as_object(&self) -> &Object;
-}
-
 impl Drop for Object {
     fn drop(&mut self) {
         unsafe {

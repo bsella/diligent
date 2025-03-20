@@ -6,11 +6,8 @@ use static_assertions::const_assert;
 use super::buffer_view::BufferView;
 
 use super::device_context::DeviceContext;
+use super::device_object::DeviceObject;
 use super::graphics_types::{BindFlags, CpuAccessFlags, Usage};
-use super::{
-    device_object::{AsDeviceObject, DeviceObject},
-    object::AsObject,
-};
 
 pub enum BufferMode {
     Undefined,
@@ -125,8 +122,8 @@ pub struct Buffer {
     device_object: DeviceObject,
 }
 
-impl AsDeviceObject for Buffer {
-    fn as_device_object(&self) -> &DeviceObject {
+impl AsRef<DeviceObject> for Buffer {
+    fn as_ref(&self) -> &DeviceObject {
         &self.device_object
     }
 }
@@ -181,7 +178,7 @@ impl Buffer {
                 },
                 std::ptr::addr_of!(buffer),
             );
-            buffer_view.as_device_object().as_object().add_ref();
+            buffer_view.as_ref().as_ref().add_ref();
             buffer.default_view = Some(buffer_view);
         }
 

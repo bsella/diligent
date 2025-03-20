@@ -4,9 +4,9 @@ use bitflags::bitflags;
 use static_assertions::const_assert;
 
 use super::{
-    device_object::{AsDeviceObject, DeviceObject},
+    device_object::DeviceObject,
     graphics_types::{ShaderType, Version},
-    object::{AsObject, Object},
+    object::Object,
 };
 
 pub enum ShaderSource<'a> {
@@ -335,8 +335,8 @@ pub struct Shader {
     device_object: DeviceObject,
 }
 
-impl AsDeviceObject for Shader {
-    fn as_device_object(&self) -> &DeviceObject {
+impl AsRef<DeviceObject> for Shader {
+    fn as_ref(&self) -> &DeviceObject {
         &self.device_object
     }
 }
@@ -434,8 +434,8 @@ pub struct ShaderSourceInputStreamFactory {
     object: Object,
 }
 
-impl AsObject for ShaderSourceInputStreamFactory {
-    fn as_object(&self) -> &Object {
+impl AsRef<Object> for ShaderSourceInputStreamFactory {
+    fn as_ref(&self) -> &Object {
         &self.object
     }
 }

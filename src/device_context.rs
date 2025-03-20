@@ -7,7 +7,7 @@ use super::{
     buffer::{Buffer, BufferMapReadToken, BufferMapReadWriteToken, BufferMapWriteToken},
     fence::Fence,
     graphics_types::{MapFlags, ShadingRate, ShadingRateCombiner, ValueType},
-    object::{AsObject, Object},
+    object::Object,
     pipeline_state::PipelineState,
     shader_resource_binding::ShaderResourceBinding,
     texture::{Texture, TextureSubResource},
@@ -1079,17 +1079,13 @@ where
     // fn update_sbt(&self, sbt : &mut ShaderBindingTable) {}
 
     #[allow(private_bounds)]
-    fn set_user_data<Data>(&self, user_data: &Data)
-    where
-        Data: AsObject,
-    {
+    fn set_user_data(&self, user_data: &impl AsRef<Object>) {
         unsafe {
             (*self.as_device_context().virtual_functions)
                 .DeviceContext
                 .SetUserData
                 .unwrap_unchecked()(
-                self.as_device_context().sys_ptr,
-                user_data.as_object().object,
+                self.as_device_context().sys_ptr, user_data.as_ref().object
             )
         }
     }
@@ -1203,8 +1199,8 @@ pub struct ImmediateDeviceContext {
     device_context: DeviceContextCommon,
 }
 
-impl AsObject for ImmediateDeviceContext {
-    fn as_object(&self) -> &Object {
+impl AsRef<Object> for ImmediateDeviceContext {
+    fn as_ref(&self) -> &Object {
         &self.device_context.object
     }
 }
@@ -1245,8 +1241,8 @@ pub struct DeferredDeviceContext {
     device_context: DeviceContextCommon,
 }
 
-impl AsObject for DeferredDeviceContext {
-    fn as_object(&self) -> &Object {
+impl AsRef<Object> for DeferredDeviceContext {
+    fn as_ref(&self) -> &Object {
         &self.device_context.object
     }
 }

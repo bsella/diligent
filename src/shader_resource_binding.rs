@@ -3,10 +3,8 @@ use std::{ffi::CString, str::FromStr};
 use static_assertions::const_assert;
 
 use super::{
-    graphics_types::ShaderTypes,
-    object::{AsObject, Object},
-    pipeline_resource_signature::PipelineResourceSignature,
-    resource_mapping::ResourceMapping,
+    graphics_types::ShaderTypes, object::Object,
+    pipeline_resource_signature::PipelineResourceSignature, resource_mapping::ResourceMapping,
     shader_resource_variable::ShaderResourceVariable,
 };
 
@@ -17,8 +15,8 @@ pub struct ShaderResourceBinding {
     object: Object,
 }
 
-impl AsObject for ShaderResourceBinding {
-    fn as_object(&self) -> &Object {
+impl AsRef<Object> for ShaderResourceBinding {
+    fn as_ref(&self) -> &Object {
         &self.object
     }
 }
@@ -102,7 +100,7 @@ impl ShaderResourceBinding {
             None
         } else {
             let srv = ShaderResourceVariable::new(variable);
-            srv.as_object().add_ref();
+            srv.as_ref().add_ref();
             Some(srv)
         }
     }

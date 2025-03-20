@@ -7,7 +7,7 @@ use super::data_blob::DataBlob;
 use super::device_context::DeviceContext;
 use super::fence::Fence;
 use super::graphics_types::RenderDeviceType;
-use super::object::{AsObject, Object};
+use super::object::Object;
 use super::pipeline_state::{
     GraphicsPipelineStateCreateInfo, GraphicsPipelineStateCreateInfoWrapper, PipelineState,
 };
@@ -38,8 +38,8 @@ pub struct RenderDevice {
     object: Object,
 }
 
-impl AsObject for RenderDevice {
-    fn as_object(&self) -> &Object {
+impl AsRef<Object> for RenderDevice {
+    fn as_ref(&self) -> &Object {
         &self.object
     }
 }

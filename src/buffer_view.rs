@@ -2,7 +2,7 @@ use static_assertions::const_assert;
 
 use super::buffer::Buffer;
 
-use super::device_object::{AsDeviceObject, DeviceObject};
+use super::device_object::DeviceObject;
 
 pub struct BufferView {
     _sys_ptr: *mut diligent_sys::IBufferView,
@@ -12,8 +12,8 @@ pub struct BufferView {
     device_object: DeviceObject,
 }
 
-impl AsDeviceObject for BufferView {
-    fn as_device_object(&self) -> &DeviceObject {
+impl AsRef<DeviceObject> for BufferView {
+    fn as_ref(&self) -> &DeviceObject {
         &self.device_object
     }
 }

@@ -2,10 +2,7 @@ use std::collections::BTreeMap;
 
 use static_assertions::const_assert;
 
-use super::{
-    device_object::{AsDeviceObject, DeviceObject},
-    object::{AsObject, Object},
-};
+use super::{device_object::DeviceObject, object::Object};
 
 pub struct ResourceMapping {
     pub(crate) sys_ptr: *mut diligent_sys::IResourceMapping,
@@ -16,8 +13,8 @@ pub struct ResourceMapping {
     object: Object,
 }
 
-impl AsObject for ResourceMapping {
-    fn as_object(&self) -> &Object {
+impl AsRef<Object> for ResourceMapping {
+    fn as_ref(&self) -> &Object {
         &self.object
     }
 }
@@ -45,7 +42,7 @@ impl ResourceMapping {
     pub fn add_resource(
         &mut self,
         name: impl AsRef<str>,
-        object: &impl AsDeviceObject,
+        object: &impl AsRef<DeviceObject>,
         is_unique: bool,
     ) {
         {
@@ -57,7 +54,7 @@ impl ResourceMapping {
                     .unwrap_unchecked()(
                     self.sys_ptr,
                     name.as_ptr(),
-                    object.as_device_object().sys_ptr,
+                    object.as_ref().sys_ptr,
                     is_unique,
                 );
             }
@@ -65,20 +62,17 @@ impl ResourceMapping {
         self.resources
             .entry(name.as_ref().to_owned())
             .or_insert(Vec::new())
-            .push(std::ptr::addr_of!(*object.as_device_object()));
+            .push(std::ptr::addr_of!(*object.as_ref()));
     }
 
     pub fn add_resource_array(
         &mut self,
         name: impl AsRef<str>,
-        device_objects: &[impl AsDeviceObject],
+        device_objects: &[impl AsRef<DeviceObject>],
         is_unique: bool,
     ) {
-        let object_ptrs = Vec::from_iter(
-            device_objects
-                .iter()
-                .map(|object| object.as_device_object().sys_ptr),
-        );
+        let object_ptrs =
+            Vec::from_iter(device_objects.iter().map(|object| object.as_ref().sys_ptr));
 
         {
             let name = std::ffi::CString::new(name.as_ref()).unwrap();
@@ -104,7 +98,7 @@ impl ResourceMapping {
             .extend(
                 device_objects
                     .iter()
-                    .map(|object| std::ptr::addr_of!(*object.as_device_object())),
+                    .map(|object| std::ptr::addr_of!(*object.as_ref())),
             );
     }
 

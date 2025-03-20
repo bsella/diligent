@@ -4,7 +4,7 @@ use bitflags::bitflags;
 use static_assertions::const_assert;
 
 use super::{
-    device_object::{AsDeviceObject, DeviceObject},
+    device_object::DeviceObject,
     graphics_types::{FilterType, TextureAddressMode},
     pipeline_state::ComparisonFunction,
 };
@@ -147,8 +147,8 @@ pub struct Sampler {
     device_object: DeviceObject,
 }
 
-impl AsDeviceObject for Sampler {
-    fn as_device_object(&self) -> &DeviceObject {
+impl AsRef<DeviceObject> for Sampler {
+    fn as_ref(&self) -> &DeviceObject {
         &self.device_object
     }
 }

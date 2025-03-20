@@ -1,6 +1,6 @@
 use static_assertions::const_assert;
 
-use super::object::{AsObject, Object};
+use super::object::Object;
 
 pub struct DeviceObject {
     pub(crate) sys_ptr: *mut diligent_sys::IDeviceObject,
@@ -8,14 +8,10 @@ pub struct DeviceObject {
     object: Object,
 }
 
-impl AsObject for DeviceObject {
-    fn as_object(&self) -> &Object {
+impl AsRef<Object> for DeviceObject {
+    fn as_ref(&self) -> &Object {
         &self.object
     }
-}
-
-pub trait AsDeviceObject {
-    fn as_device_object(&self) -> &DeviceObject;
 }
 
 impl DeviceObject {

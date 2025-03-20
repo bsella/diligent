@@ -3,7 +3,7 @@ use static_assertions::const_assert;
 
 use super::{
     graphics_types::{SurfaceTransform, TextureFormat},
-    object::{AsObject, Object},
+    object::Object,
     texture_view::TextureView,
 };
 
@@ -132,8 +132,8 @@ pub struct SwapChain {
     object: Object,
 }
 
-impl AsObject for SwapChain {
-    fn as_object(&self) -> &Object {
+impl AsRef<Object> for SwapChain {
+    fn as_ref(&self) -> &Object {
         &self.object
     }
 }
@@ -228,7 +228,7 @@ impl SwapChain {
             std::ptr::null_mut(),
         );
 
-        view.device_object.as_object().add_ref();
+        view.device_object.as_ref().add_ref();
 
         view
     }
@@ -244,7 +244,7 @@ impl SwapChain {
             std::ptr::null_mut(),
         );
 
-        view.device_object.as_object().add_ref();
+        view.device_object.as_ref().add_ref();
 
         view
     }

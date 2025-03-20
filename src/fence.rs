@@ -2,7 +2,7 @@ use std::ffi::CString;
 
 use static_assertions::const_assert;
 
-use super::device_object::{AsDeviceObject, DeviceObject};
+use super::device_object::DeviceObject;
 
 pub struct Fence {
     pub(crate) sys_ptr: *mut diligent_sys::IFence,
@@ -11,8 +11,8 @@ pub struct Fence {
     device_object: DeviceObject,
 }
 
-impl AsDeviceObject for Fence {
-    fn as_device_object(&self) -> &DeviceObject {
+impl AsRef<DeviceObject> for Fence {
+    fn as_ref(&self) -> &DeviceObject {
         &self.device_object
     }
 }

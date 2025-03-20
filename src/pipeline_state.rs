@@ -4,10 +4,9 @@ use std::str::FromStr;
 use bitflags::bitflags;
 use static_assertions::const_assert;
 
-use super::device_object::{AsDeviceObject, DeviceObject};
+use super::device_object::DeviceObject;
 use super::graphics_types::{PrimitiveTopology, ShaderType, ShaderTypes, TextureFormat};
 use super::input_layout::LayoutElement;
-use super::object::AsObject;
 use super::pipeline_resource_signature::{ImmutableSamplerDesc, PipelineResourceSignature};
 use super::resource_mapping::ResourceMapping;
 use super::shader::Shader;
@@ -1006,28 +1005,33 @@ impl<'a> GraphicsPipelineStateCreateInfo<'a> {
         self
     }
 
-    pub fn add_resource_signature(mut self, signature: &'a PipelineResourceSignature) -> Self {
-        self.pipeline_state_create_info
-            .resource_signatures
-            .push(&signature);
+    pub fn set_resource_signatures(
+        mut self,
+        signatures: &'a [&'a PipelineResourceSignature],
+    ) -> Self {
+        self.pipeline_state_create_info.resource_signatures = Vec::from(signatures);
         self
     }
 
-    pub fn add_shader_resource_variable(mut self, variable: ShaderResourceVariableDesc) -> Self {
+    pub fn set_shader_resource_variables<T>(mut self, variables: T) -> Self
+    where
+        Vec<ShaderResourceVariableDesc>: From<T>,
+    {
         self.pipeline_state_create_info
             .pso_desc
             .resource_layout
-            .variables
-            .push(variable);
+            .variables = Vec::from(variables);
         self
     }
 
-    pub fn add_immutable_sampler_desc(mut self, sampler: ImmutableSamplerDesc<'a>) -> Self {
+    pub fn set_immutable_samplers<T>(mut self, sampler_descs: T) -> Self
+    where
+        Vec<ImmutableSamplerDesc<'a>>: From<T>,
+    {
         self.pipeline_state_create_info
             .pso_desc
             .resource_layout
-            .immutable_samplers
-            .push(sampler);
+            .immutable_samplers = Vec::from(sampler_descs);
         self
     }
 
@@ -1124,8 +1128,8 @@ pub struct PipelineState {
     device_object: DeviceObject,
 }
 
-impl AsDeviceObject for PipelineState {
-    fn as_device_object(&self) -> &DeviceObject {
+impl AsRef<DeviceObject> for PipelineState {
+    fn as_ref(&self) -> &DeviceObject {
         &self.device_object
     }
 }
@@ -1241,7 +1245,7 @@ impl PipelineState {
             None
         } else {
             let srv = ShaderResourceVariable::new(shader_resource_variable);
-            srv.as_object().add_ref();
+            srv.as_ref().add_ref();
             Some(srv)
         }
     }
@@ -1266,7 +1270,7 @@ impl PipelineState {
             None
         } else {
             let srb = ShaderResourceBinding::new(shader_resource_binding_ptr);
-            srb.as_object().add_ref();
+            srb.as_ref().add_ref();
             Some(srb)
         }
     }
