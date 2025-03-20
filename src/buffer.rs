@@ -3,6 +3,8 @@ use std::ffi::CString;
 use bitflags::bitflags;
 use static_assertions::const_assert;
 
+use crate::graphics_types::ResourceState;
+
 use super::buffer_view::BufferView;
 
 use super::device_context::DeviceContext;
@@ -243,12 +245,16 @@ impl Buffer {
         }
     }
 
-    pub fn set_state(&mut self, state: diligent_sys::RESOURCE_STATE) {
-        unsafe { (*self.virtual_functions).Buffer.SetState.unwrap_unchecked()(self.sys_ptr, state) }
+    pub fn set_state(&mut self, state: ResourceState) {
+        unsafe {
+            (*self.virtual_functions).Buffer.SetState.unwrap_unchecked()(self.sys_ptr, state.bits())
+        };
     }
 
-    pub fn get_state(&self) -> diligent_sys::RESOURCE_STATE {
-        unsafe { (*self.virtual_functions).Buffer.GetState.unwrap_unchecked()(self.sys_ptr) }
+    pub fn get_state(&self) -> ResourceState {
+        let state =
+            unsafe { (*self.virtual_functions).Buffer.GetState.unwrap_unchecked()(self.sys_ptr) };
+        ResourceState::from_bits_retain(state)
     }
 
     pub fn get_memory_properties(&self) -> diligent_sys::MEMORY_PROPERTIES {
@@ -303,7 +309,7 @@ where
         buffer: &'a Buffer,
         map_flags: diligent_sys::MAP_FLAGS,
     ) -> BufferMapReadToken<'a, T, Context> {
-        let mut ptr = std::ptr::null_mut() as *mut std::os::raw::c_void;
+        let mut ptr = std::ptr::null_mut();
         unsafe {
             (*device_context.as_device_context().virtual_functions)
                 .DeviceContext
@@ -366,7 +372,7 @@ where
         buffer: &'a Buffer,
         map_flags: diligent_sys::MAP_FLAGS,
     ) -> BufferMapWriteToken<'a, T, Context> {
-        let mut ptr = std::ptr::null_mut() as *mut std::os::raw::c_void;
+        let mut ptr = std::ptr::null_mut();
         unsafe {
             (*device_context.as_device_context().virtual_functions)
                 .DeviceContext
@@ -427,7 +433,7 @@ where
         buffer: &'a Buffer,
         map_flags: diligent_sys::MAP_FLAGS,
     ) -> BufferMapReadWriteToken<'a, T, Context> {
-        let mut ptr = std::ptr::null_mut() as *mut std::os::raw::c_void;
+        let mut ptr = std::ptr::null_mut();
         unsafe {
             (*device_context.as_device_context().virtual_functions)
                 .DeviceContext

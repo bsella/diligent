@@ -3,6 +3,8 @@ use std::ffi::CString;
 use bitflags::bitflags;
 use static_assertions::const_assert;
 
+use crate::graphics_types::ResourceState;
+
 use super::buffer::Buffer;
 use super::graphics_types::{BindFlags, CpuAccessFlags, TextureFormat, Usage};
 use super::texture_view::{TextureView, TextureViewType};
@@ -335,22 +337,23 @@ impl Texture {
         }
     }
 
-    pub fn set_state(&mut self, state: diligent_sys::RESOURCE_STATE) {
+    pub fn set_state(&mut self, state: ResourceState) {
         unsafe {
             (*self.virtual_functions)
                 .Texture
                 .SetState
-                .unwrap_unchecked()(self.sys_ptr, state);
+                .unwrap_unchecked()(self.sys_ptr, state.bits());
         }
     }
 
-    pub fn get_state(&self) -> diligent_sys::RESOURCE_STATE {
-        unsafe {
+    pub fn get_state(&self) -> ResourceState {
+        let state = unsafe {
             (*self.virtual_functions)
                 .Texture
                 .GetState
                 .unwrap_unchecked()(self.sys_ptr)
-        }
+        };
+        ResourceState::from_bits_retain(state)
     }
 
     pub fn get_sparse_properties(&self) -> &diligent_sys::SparseTextureProperties {
