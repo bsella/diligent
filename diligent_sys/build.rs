@@ -16,21 +16,18 @@ fn configure_cmake_windows_debug(cmake_config: &mut cmake::Config) {
     println!("cargo::rustc-link-lib=ucrtd");
 }
 
-fn build_diligent_engine(build_path: &PathBuf, install_prefix: &str) -> PathBuf {
-    let mut cmake_config = cmake::Config::new("DiligentEngine");
+fn build_diligent_engine(build_path: &PathBuf) -> PathBuf {
+    let mut cmake_config = cmake::Config::new("DiligentCore");
 
     #[cfg(all(debug_assertions, target_os = "windows"))]
     configure_cmake_windows_debug(&mut cmake_config);
 
     cmake_config
         .out_dir(build_path)
-        .define("CMAKE_INSTALL_PREFIX", install_prefix)
         .define("OpenGL_GL_PREFERENCE", "GLVND")
-        .define("DILIGENT_BUILD_SAMPLES", "OFF")
-        .define("DILIGENT_BUILD_FX", "OFF")
-        .define("DILIGENT_BUILD_TOOLS", "OFF")
         .define("DILIGENT_BUILD_TESTS", "FALSE")
-        .define("DILIGENT_NO_ARCHIVER", "ON");
+        .define("DILIGENT_NO_ARCHIVER", "ON")
+        .define("DILIGENT_USE_SPIRV_TOOLCHAIN", "ON");
 
     {
         #[cfg(not(feature = "vulkan"))]
@@ -52,17 +49,17 @@ fn build_diligent_engine(build_path: &PathBuf, install_prefix: &str) -> PathBuf 
         cmake_config.define("DILIGENT_NO_WEBGPU", "ON");
     }
 
-    let dst = cmake_config.build().join("build/install");
+    let dst = cmake_config.build();
 
     #[cfg(debug_assertions)]
     println!(
-        "cargo::rustc-link-search=native={}/lib/DiligentCore/Debug",
+        "cargo::rustc-link-search=native={}/lib/Debug",
         dst.display()
     );
 
     #[cfg(not(debug_assertions))]
     println!(
-        "cargo::rustc-link-search=native={}/lib/DiligentCore/Release",
+        "cargo::rustc-link-search=native={}/lib/Release",
         dst.display()
     );
 
@@ -116,7 +113,7 @@ fn generate_diligent_c_bindings(diligent_install_dir: &PathBuf, out_dir: &PathBu
         #[cfg(feature = "vulkan_interop")]
         let builder = builder
             .clang_arg("-DVULKAN_INTEROP=1")
-            .clang_arg("-IDiligentEngine/DiligentCore/ThirdParty/Vulkan-Headers/include");
+            .clang_arg("-IDiligentCore/ThirdParty/Vulkan-Headers/include");
 
         builder
     }
@@ -169,10 +166,9 @@ fn main() {
     let out_dir = env::var_os("OUT_DIR").unwrap();
     let out_dir_path = Path::new(&out_dir);
 
-    let diligent_build_dir = out_dir_path.join("DiligentEngine");
-    let diligent_install_prefix = "install";
+    let diligent_build_dir = out_dir_path.join("DiligentCore");
 
-    let diligent_install_path = build_diligent_engine(&diligent_build_dir, diligent_install_prefix);
+    let diligent_install_path = build_diligent_engine(&diligent_build_dir);
 
     generate_diligent_c_bindings(&diligent_install_path, &out_dir_path.to_path_buf());
 }

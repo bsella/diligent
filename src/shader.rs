@@ -116,9 +116,10 @@ bitflags! {
         const SkipReflection        = diligent_sys::SHADER_COMPILE_FLAG_SKIP_REFLECTION as diligent_sys::SHADER_COMPILE_FLAGS;
         const Asynchronous          = diligent_sys::SHADER_COMPILE_FLAG_ASYNCHRONOUS as diligent_sys::SHADER_COMPILE_FLAGS;
         const PackMatrixRowMajor    = diligent_sys::SHADER_COMPILE_FLAG_PACK_MATRIX_ROW_MAJOR as diligent_sys::SHADER_COMPILE_FLAGS;
+        const HlslToSpirvViaGlsl    = diligent_sys::SHADER_COMPILE_FLAG_HLSL_TO_SPIRV_VIA_GLSL as diligent_sys::SHADER_COMPILE_FLAGS;
     }
 }
-const_assert!(diligent_sys::SHADER_COMPILE_FLAG_LAST == 8);
+const_assert!(diligent_sys::SHADER_COMPILE_FLAG_LAST == 16);
 
 pub struct ShaderDesc {
     name: CString,

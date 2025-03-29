@@ -10,13 +10,21 @@ use crate::engine_factory::EngineCreateInfo;
 use crate::engine_factory::EngineFactory;
 
 use crate::engine_factory::AsEngineFactory;
+use crate::graphics_types::DeviceFeatureState;
 use crate::platforms::native_window::NativeWindow;
 use crate::render_device::RenderDevice;
 use crate::swap_chain::SwapChain;
 use crate::swap_chain::SwapChainDesc;
 
+pub struct DeviceFeaturesVk {
+    dynamic_rendering: DeviceFeatureState,
+    host_image_copy: DeviceFeatureState,
+}
+
 pub struct EngineVkCreateInfo {
     engine_create_info: EngineCreateInfo,
+
+    features_vk: DeviceFeaturesVk,
 
     instance_layer_names: Vec<String>,
     instance_extension_names: Vec<String>,
@@ -44,6 +52,11 @@ impl EngineVkCreateInfo {
     pub fn new(engine_create_info: EngineCreateInfo) -> Self {
         EngineVkCreateInfo {
             engine_create_info,
+
+            features_vk: DeviceFeaturesVk {
+                dynamic_rendering: DeviceFeatureState::Disabled,
+                host_image_copy: DeviceFeatureState::Disabled,
+            },
 
             instance_layer_names: Vec::new(),
             instance_extension_names: Vec::new(),
@@ -190,6 +203,14 @@ impl EngineFactoryVk {
                 _EngineCreateInfo: diligent_sys::EngineCreateInfo::from(
                     &create_info.engine_create_info,
                 ),
+                FeaturesVk: diligent_sys::DeviceFeaturesVk {
+                    DynamicRendering: diligent_sys::DEVICE_FEATURE_STATE::from(
+                        &create_info.features_vk.dynamic_rendering,
+                    ),
+                    HostImageCopy: diligent_sys::DEVICE_FEATURE_STATE::from(
+                        &create_info.features_vk.host_image_copy,
+                    ),
+                },
                 InstanceLayerCount: create_info.instance_layer_names.len() as u32,
                 ppInstanceLayerNames: if instance_layer_names.is_empty() {
                     std::ptr::null()
