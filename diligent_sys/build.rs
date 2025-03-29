@@ -17,7 +17,13 @@ fn configure_cmake_windows_debug(cmake_config: &mut cmake::Config) {
 }
 
 fn build_diligent_engine(build_path: &PathBuf) -> PathBuf {
-    let mut cmake_config = cmake::Config::new("DiligentCore");
+    let diligent_tar = std::fs::File::open("DiligentCore.tar.gz").unwrap();
+    let decoder = flate2::read::GzDecoder::new(diligent_tar);
+    let mut archive = tar::Archive::new(decoder);
+
+    archive.unpack(build_path).unwrap();
+
+    let mut cmake_config = cmake::Config::new(build_path.join("DiligentCore"));
 
     #[cfg(all(debug_assertions, target_os = "windows"))]
     configure_cmake_windows_debug(&mut cmake_config);
