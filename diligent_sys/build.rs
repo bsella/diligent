@@ -32,8 +32,7 @@ fn build_diligent_engine(build_path: &PathBuf) -> PathBuf {
         .out_dir(build_path)
         .define("OpenGL_GL_PREFERENCE", "GLVND")
         .define("DILIGENT_BUILD_TESTS", "FALSE")
-        .define("DILIGENT_NO_ARCHIVER", "ON")
-        .define("DILIGENT_USE_SPIRV_TOOLCHAIN", "ON");
+        .define("DILIGENT_NO_ARCHIVER", "ON");
 
     {
         #[cfg(not(feature = "vulkan"))]
