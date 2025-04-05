@@ -69,7 +69,8 @@ impl DataBlob {
             ((*self.virtual_functions)
                 .DataBlob
                 .GetConstDataPtr
-                .unwrap_unchecked()(self.sys_ptr, offset) as *const T)
+                .unwrap_unchecked()(self.sys_ptr, offset * std::mem::size_of::<T>())
+                as *const T)
                 .as_ref()
         }
         .unwrap()
@@ -80,9 +81,34 @@ impl DataBlob {
             ((*self.virtual_functions)
                 .DataBlob
                 .GetDataPtr
-                .unwrap_unchecked()(self.sys_ptr, offset) as *mut T)
+                .unwrap_unchecked()(self.sys_ptr, offset * std::mem::size_of::<T>())
+                as *mut T)
                 .as_mut()
         }
         .unwrap()
+    }
+
+    pub fn get_data_slice<T>(&self, size: usize, offset: usize) -> &[T] {
+        unsafe {
+            let ptr = (*self.virtual_functions)
+                .DataBlob
+                .GetConstDataPtr
+                .unwrap_unchecked()(
+                self.sys_ptr, offset * std::mem::size_of::<T>()
+            ) as *const T;
+            std::slice::from_raw_parts(ptr, size)
+        }
+    }
+
+    pub fn get_data_mut_slice<T>(&self, size: usize, offset: usize) -> &mut [T] {
+        unsafe {
+            let ptr = (*self.virtual_functions)
+                .DataBlob
+                .GetDataPtr
+                .unwrap_unchecked()(
+                self.sys_ptr, offset * std::mem::size_of::<T>()
+            ) as *mut T;
+            std::slice::from_raw_parts_mut(ptr, size)
+        }
     }
 }

@@ -11,6 +11,7 @@ use super::buffer_view::BufferView;
 use super::device_object::DeviceObject;
 use super::graphics_types::{BindFlags, CpuAccessFlags, Usage};
 
+#[derive(Clone, Copy)]
 pub enum BufferMode {
     Undefined,
     Formatted,

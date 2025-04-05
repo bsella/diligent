@@ -324,15 +324,15 @@ impl DeviceContext {
         }
     }
 
-    pub fn set_vertex_buffers(
+    pub fn set_vertex_buffers<'a>(
         &self,
-        buffers: &[&Buffer],
+        buffers: &impl AsRef<[&'a Buffer]>,
         offsets: &[u64],
         state_transition_mode: ResourceStateTransitionMode,
         flags: SetVertexBufferFlags,
     ) {
-        let num_buffers = buffers.len();
-        let buffer_pointers = Vec::from_iter(buffers.iter().map(|buffer| buffer.sys_ptr));
+        let num_buffers = buffers.as_ref().len();
+        let buffer_pointers = Vec::from_iter(buffers.as_ref().iter().map(|buffer| buffer.sys_ptr));
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -727,6 +727,27 @@ impl DeviceContext {
                 offset,
                 size,
                 std::ptr::from_ref(data) as *const std::os::raw::c_void,
+                diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
+            )
+        }
+    }
+
+    pub fn update_buffer_from_slice<T>(
+        &self,
+        buffer: &mut Buffer,
+        data: &[T],
+        state_transition_mode: ResourceStateTransitionMode,
+    ) {
+        unsafe {
+            (*self.virtual_functions)
+                .DeviceContext
+                .UpdateBuffer
+                .unwrap_unchecked()(
+                self.sys_ptr,
+                buffer.sys_ptr,
+                0,
+                data.len() as u64 * std::mem::size_of::<T>() as u64,
+                data.as_ptr() as *const std::os::raw::c_void,
                 diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
             )
         }

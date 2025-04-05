@@ -4,6 +4,9 @@ mod object;
 pub mod accessories;
 
 pub mod api_info;
+pub mod geometry_primitives;
+
+pub mod graphics_utilities;
 
 pub mod platforms;
 

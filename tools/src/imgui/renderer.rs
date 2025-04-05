@@ -13,8 +13,8 @@ use diligent::{
     pipeline_resource_signature::ImmutableSamplerDesc,
     pipeline_state::{
         BlendFactor, BlendOperation, BlendStateDesc, ColorMask, CullMode, DepthStencilStateDesc,
-        GraphicsPipelineDesc, GraphicsPipelineStateCreateInfo, InputLayoutDesc, PipelineState,
-        RasterizerStateDesc, RenderTargetBlendDesc,
+        GraphicsPipelineDesc, GraphicsPipelineStateCreateInfo, PipelineState, RasterizerStateDesc,
+        RenderTargetBlendDesc,
     },
     render_device::RenderDevice,
     sampler::SamplerDesc,
@@ -598,11 +598,11 @@ impl ImguiRenderer {
             .rtv_format::<0>(create_info.back_buffer_format)
             .dsv_format(create_info.depth_buffer_format)
             .primitive_topology(PrimitiveTopology::TriangleList)
-            .set_input_layouts(InputLayoutDesc(vec![
-                LayoutElement::new(0, 0, 2, ValueType::Float32),
-                LayoutElement::new(1, 0, 2, ValueType::Float32),
-                LayoutElement::new(2, 0, 4, ValueType::Uint8).is_normalized(true),
-            ])),
+            .set_input_layouts(vec![
+                LayoutElement::new(0, 2, ValueType::Float32),
+                LayoutElement::new(0, 2, ValueType::Float32),
+                LayoutElement::new(0, 4, ValueType::Uint8).is_normalized(true),
+            ]),
         )
         .vertex_shader(&vertex_shader)
         .pixel_shader(&pixel_shader)
@@ -741,7 +741,7 @@ impl ImguiRenderer {
             self.vertex_buffer
                 .insert(render_device.create_buffer(&buffer_desc).unwrap())
         } else {
-            self.vertex_buffer.as_mut().unwrap()
+            self.vertex_buffer.as_ref().unwrap()
         };
 
         // Resize the index buffer if needed

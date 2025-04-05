@@ -4,6 +4,8 @@ use std::str::FromStr;
 use bitflags::bitflags;
 use static_assertions::const_assert;
 
+use crate::input_layout::InputLayoutDescWrapper;
+
 use super::device_object::DeviceObject;
 use super::graphics_types::{PrimitiveTopology, ShaderType, ShaderTypes, TextureFormat};
 use super::input_layout::LayoutElement;
@@ -788,14 +790,12 @@ impl Default for DepthStencilStateDesc {
     }
 }
 
-pub struct InputLayoutDesc(pub Vec<LayoutElement>);
-
 pub struct GraphicsPipelineDesc {
     blend_desc: BlendStateDesc,
     sample_mask: u32,
     rasterizer_desc: RasterizerStateDesc,
     depth_stencil_desc: DepthStencilStateDesc,
-    input_layouts: InputLayoutDesc,
+    input_layouts: Vec<LayoutElement>,
     primitive_topology: PrimitiveTopology,
     num_viewports: u8,
     num_render_targets: u8,
@@ -804,7 +804,8 @@ pub struct GraphicsPipelineDesc {
     rtv_formats: [Option<TextureFormat>; diligent_sys::DILIGENT_MAX_RENDER_TARGETS as usize],
     dsv_format: Option<TextureFormat>,
     read_only_dsv: bool,
-    sample_desc: diligent_sys::SampleDesc,
+    sample_count: u8,
+    sample_quality: u8,
     // TODO
     // pub render_pass: Option<&RenderPass>,
     node_mask: u32,
@@ -831,7 +832,7 @@ impl GraphicsPipelineDesc {
             sample_mask: 0xFFFFFFFF,
             rasterizer_desc,
             depth_stencil_desc,
-            input_layouts: InputLayoutDesc(Vec::new()),
+            input_layouts: Vec::new(),
             primitive_topology: PrimitiveTopology::TriangleList,
             num_viewports: 1,
             num_render_targets: 0,
@@ -841,10 +842,8 @@ impl GraphicsPipelineDesc {
             dsv_format: None,
             read_only_dsv: false,
             node_mask: 0,
-            sample_desc: diligent_sys::SampleDesc {
-                Count: 1,
-                Quality: 0,
-            },
+            sample_count: 1,
+            sample_quality: 0,
         }
     }
 
@@ -884,14 +883,18 @@ impl GraphicsPipelineDesc {
         self.read_only_dsv = read_only_dsv;
         self
     }
-    pub fn set_input_layouts(mut self, input_layout: InputLayoutDesc) -> Self {
-        self.input_layouts = input_layout;
+    pub fn set_input_layouts(mut self, input_layout: impl Into<Vec<LayoutElement>>) -> Self {
+        self.input_layouts = input_layout.into();
+        self
+    }
+    pub fn sample_count(mut self, sample_count: u8) -> Self {
+        self.sample_count = sample_count;
         self
     }
 }
 
 pub(crate) struct GraphicsPipelineDescWrapper {
-    _aux_input_layouts: Vec<diligent_sys::LayoutElement>,
+    _input_layouts: InputLayoutDescWrapper,
     desc: diligent_sys::GraphicsPipelineDesc,
 }
 
@@ -903,12 +906,7 @@ impl GraphicsPipelineDescWrapper {
 
 impl From<&GraphicsPipelineDesc> for GraphicsPipelineDescWrapper {
     fn from(value: &GraphicsPipelineDesc) -> Self {
-        let aux_input_layouts: Vec<diligent_sys::LayoutElement> = value
-            .input_layouts
-            .0
-            .iter()
-            .map(|layout| diligent_sys::LayoutElement::from(layout))
-            .collect();
+        let input_layouts = InputLayoutDescWrapper::from(&value.input_layouts);
 
         let desc = diligent_sys::GraphicsPipelineDesc {
             BlendDesc: diligent_sys::BlendStateDesc::from(&value.blend_desc),
@@ -916,12 +914,12 @@ impl From<&GraphicsPipelineDesc> for GraphicsPipelineDescWrapper {
             RasterizerDesc: diligent_sys::RasterizerStateDesc::from(&value.rasterizer_desc),
             DepthStencilDesc: diligent_sys::DepthStencilStateDesc::from(&value.depth_stencil_desc),
             InputLayout: diligent_sys::InputLayoutDesc {
-                LayoutElements: if aux_input_layouts.is_empty() {
+                LayoutElements: if input_layouts.is_empty() {
                     std::ptr::null()
                 } else {
-                    aux_input_layouts.as_ptr()
+                    input_layouts.as_ptr()
                 },
-                NumElements: aux_input_layouts.len() as u32,
+                NumElements: input_layouts.len() as u32,
             },
             PrimitiveTopology: diligent_sys::PRIMITIVE_TOPOLOGY::from(&value.primitive_topology),
             NumViewports: value.num_viewports,
@@ -939,13 +937,16 @@ impl From<&GraphicsPipelineDesc> for GraphicsPipelineDescWrapper {
                 |format| diligent_sys::TEXTURE_FORMAT::from(format),
             ),
             ReadOnlyDSV: value.read_only_dsv,
-            SmplDesc: value.sample_desc.into(),
+            SmplDesc: diligent_sys::SampleDesc {
+                Count: value.sample_count,
+                Quality: value.sample_quality,
+            },
             pRenderPass: std::ptr::null_mut(),
             NodeMask: value.node_mask,
         };
 
         GraphicsPipelineDescWrapper {
-            _aux_input_layouts: aux_input_layouts,
+            _input_layouts: input_layouts,
             desc,
         }
     }

@@ -9,6 +9,7 @@ imgui = "0.12.0"
 image = "0.25.5"
 glam  = "0.30.0"
 clap  = { version = "4.5.30", features = ["cargo"] }
+rand  = "0.9.0"
 
 [dependencies.diligent]
 path = ".."

@@ -82,7 +82,7 @@ pub trait SampleBase {
 
     fn update(&mut self, _current_time: f64, _elapsed_time: f64) {}
 
-    fn update_ui(&self, _ui: &mut Ui) {}
+    fn update_ui(&mut self, _ui: &mut Ui) {}
 
     fn get_name() -> &'static str;
 

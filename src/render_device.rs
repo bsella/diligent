@@ -84,7 +84,7 @@ impl RenderDevice {
         }
     }
 
-    pub fn create_buffer_with_data<T>(
+    pub fn create_buffer_with_data<T: ?Sized>(
         &self,
         buffer_desc: &BufferDesc,
         buffer_data: &T,
@@ -137,6 +137,7 @@ impl RenderDevice {
             );
         }
 
+        // TODO : better error handling
         if shader_ptr.is_null() {
             Err(DataBlob::new(data_blob_ptr))
         } else {

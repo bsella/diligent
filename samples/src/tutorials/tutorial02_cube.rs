@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use diligent::{
     accessories::linear_to_srgba,
     buffer::{Buffer, BufferDesc},
@@ -13,7 +15,7 @@ use diligent::{
     input_layout::LayoutElement,
     pipeline_state::{
         BlendStateDesc, CullMode, DepthStencilStateDesc, GraphicsPipelineDesc,
-        GraphicsPipelineStateCreateInfo, InputLayoutDesc, PipelineState, RasterizerStateDesc,
+        GraphicsPipelineStateCreateInfo, PipelineState, RasterizerStateDesc,
     },
     render_device::RenderDevice,
     shader::{
@@ -109,7 +111,7 @@ impl SampleBase for Cube {
         let vertex_shader = {
             let shader_ci = common_shader_ci(
                 "Cube VS",
-                ShaderSource::FilePath("cube.vsh"),
+                ShaderSource::FilePath(Path::new("cube.vsh")),
                 ShaderType::Vertex,
                 convert_ps_output_to_gamma,
                 &shader_source_factory,
@@ -136,7 +138,7 @@ impl SampleBase for Cube {
         let pixel_shader = {
             let shader_ci = common_shader_ci(
                 "Cube PS",
-                ShaderSource::FilePath("cube.psh"),
+                ShaderSource::FilePath(Path::new("cube.psh")),
                 ShaderType::Pixel,
                 convert_ps_output_to_gamma,
                 &shader_source_factory,
@@ -167,12 +169,12 @@ impl SampleBase for Cube {
             // Primitive topology defines what kind of primitives will be rendered by this pipeline state
             .primitive_topology(PrimitiveTopology::TriangleList)
             // Define vertex shader input layout
-            .set_input_layouts(InputLayoutDesc(vec![
+            .set_input_layouts(vec![
                 // Attribute 0 - vertex position
-                LayoutElement::new(0, 0, 3, ValueType::Float32).is_normalized(false),
+                LayoutElement::new(0, 3, ValueType::Float32).is_normalized(false),
                 // Attribute 1 - vertex color
-                LayoutElement::new(1, 0, 4, ValueType::Float32).is_normalized(false),
-            ])),
+                LayoutElement::new(0, 4, ValueType::Float32).is_normalized(false),
+            ]),
         )
         // Define variable type that will be used by default
         .default_variable_type(ShaderResourceVariableType::Static)

@@ -1,4 +1,9 @@
-use std::{ffi::CString, os::raw::c_void, str::FromStr};
+use std::{
+    ffi::CString,
+    os::{raw::c_void, unix::ffi::OsStrExt},
+    path::Path,
+    str::FromStr,
+};
 
 use bitflags::bitflags;
 use static_assertions::const_assert;
@@ -10,7 +15,7 @@ use super::{
 };
 
 pub enum ShaderSource<'a> {
-    FilePath(&'a str),
+    FilePath(&'a Path),
     SourceCode(&'a str),
     ByteCode(*const c_void, usize),
 }
@@ -241,7 +246,26 @@ impl From<&ShaderCreateInfo<'_>> for ShaderCreateInfoWrapper {
         let sci = diligent_sys::ShaderCreateInfo {
             FilePath: match &value.source {
                 &ShaderSource::FilePath(path) => {
-                    shader_source_path = Some(CString::new(path).unwrap());
+                    #[cfg(unix)]
+                    {
+                        shader_source_path =
+                            Some(CString::new(path.as_os_str().as_bytes()).unwrap());
+                    };
+
+                    #[cfg(windows)]
+                    {
+                        use std::os::windows::ffi::OsStrExt;
+                        shader_source_path = Some(CString::new(
+                            path.as_os_str()
+                                .encode_wide()
+                                .chain(Some(0))
+                                .map(|b| {
+                                    let b = b.to_ne_bytes();
+                                    b.get(0).map(|s| *s).into_iter().chain(b.get(1).map(|s| *s))
+                                })
+                                .flatten(),
+                        ));
+                    };
                     shader_source_path
                         .as_ref()
                         .map_or(std::ptr::null(), |path| path.as_ptr())

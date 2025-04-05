@@ -288,6 +288,7 @@ impl From<&PrimitiveTopology> for diligent_sys::PRIMITIVE_TOPOLOGY {
 }
 
 bitflags! {
+    #[derive(Clone, Copy)]
     pub struct BindFlags: diligent_sys::BIND_FLAGS {
         const None             = diligent_sys::BIND_NONE as diligent_sys::BIND_FLAGS;
         const VertexBuffer     = diligent_sys::BIND_VERTEX_BUFFER as diligent_sys::BIND_FLAGS;
@@ -306,6 +307,7 @@ bitflags! {
 }
 const_assert!(diligent_sys::BIND_FLAG_LAST == 2048);
 
+#[derive(Clone, Copy)]
 pub enum Usage {
     Immutable,
     Default,
@@ -330,6 +332,7 @@ impl From<&Usage> for diligent_sys::USAGE {
 }
 
 bitflags! {
+    #[derive(Clone, Copy)]
     pub struct CpuAccessFlags: diligent_sys::CPU_ACCESS_FLAGS {
         const None  = diligent_sys::CPU_ACCESS_NONE as diligent_sys::CPU_ACCESS_FLAGS;
         const Read  = diligent_sys::CPU_ACCESS_READ as diligent_sys::CPU_ACCESS_FLAGS;
@@ -388,6 +391,7 @@ pub const fn get_prefered_device_type() -> RenderDeviceType {
     return RenderDeviceType::WEBGPU;
 }
 
+#[derive(Clone, Copy)]
 pub enum ValueType {
     Int8,
     Int16,
@@ -1372,6 +1376,7 @@ pub enum QueuePriority {
 }
 const_assert!(diligent_sys::QUEUE_PRIORITY_LAST == 4);
 
+#[derive(Clone, Copy)]
 #[allow(non_camel_case_types)]
 pub enum TextureFormat {
     RGBA32_TYPELESS,
