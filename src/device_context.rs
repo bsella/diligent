@@ -238,6 +238,37 @@ impl From<&Rect> for diligent_sys::Rect {
     }
 }
 
+pub struct ScopedDebugGroup<'a> {
+    device_context: &'a DeviceContext,
+}
+
+impl<'a> ScopedDebugGroup<'a> {
+    fn new(device_context: &'a DeviceContext, name: &CString, color: Option<[f32; 4]>) -> Self {
+        unsafe {
+            (*device_context.virtual_functions)
+                .DeviceContext
+                .BeginDebugGroup
+                .unwrap_unchecked()(
+                device_context.sys_ptr,
+                name.as_ptr(),
+                color.map_or(std::ptr::null(), |color| color.as_ptr()),
+            )
+        }
+        ScopedDebugGroup { device_context }
+    }
+}
+
+impl<'a> Drop for ScopedDebugGroup<'a> {
+    fn drop(&mut self) {
+        unsafe {
+            (*self.device_context.virtual_functions)
+                .DeviceContext
+                .EndDebugGroup
+                .unwrap_unchecked()(self.device_context.sys_ptr)
+        }
+    }
+}
+
 pub struct DeviceContext {
     pub(crate) sys_ptr: *mut diligent_sys::IDeviceContext,
     pub(crate) virtual_functions: *mut diligent_sys::IDeviceContextVtbl,
@@ -1018,32 +1049,22 @@ impl DeviceContext {
     // TODO
     // pub fn get_user_data(&self);
 
-    pub fn begin_debug_group(&self, name: impl AsRef<str>, color: [f32; 4]) {
+    pub fn debug_group(&self, name: impl AsRef<str>, color: Option<[f32; 4]>) -> ScopedDebugGroup {
         let name = CString::new(name.as_ref()).unwrap();
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .BeginDebugGroup
-                .unwrap_unchecked()(self.sys_ptr, name.as_ptr(), color.as_ptr())
-        }
+        ScopedDebugGroup::new(self, &name, color)
     }
 
-    pub fn end_debug_group(&self) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .EndDebugGroup
-                .unwrap_unchecked()(self.sys_ptr)
-        }
-    }
-
-    pub fn insert_debug_label(&self, name: impl AsRef<str>, color: [f32; 4]) {
+    pub fn insert_debug_label(&self, name: impl AsRef<str>, color: Option<[f32; 4]>) {
         let name = CString::new(name.as_ref()).unwrap();
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
                 .InsertDebugLabel
-                .unwrap_unchecked()(self.sys_ptr, name.as_ptr(), color.as_ptr())
+                .unwrap_unchecked()(
+                self.sys_ptr,
+                name.as_ptr(),
+                color.map_or(std::ptr::null(), |color| color.as_ptr()),
+            )
         }
     }
 
