@@ -27,9 +27,6 @@ use diligent::{
     texture_view::{TextureView, TextureViewType},
 };
 
-#[cfg(feature = "vulkan")]
-use std::os::raw::c_void;
-
 use imgui::{
     internal::RawWrapper,
     sys::{ImDrawIdx, ImDrawVert},
@@ -502,10 +499,12 @@ impl ImguiRenderer {
         let vertex_shader = {
             let shader_source = match device_type {
                 #[cfg(feature = "vulkan")]
-                RenderDeviceType::VULKAN => ShaderSource::ByteCode(
-                    VERTEX_SHADER_SPIRV.as_ptr() as *const c_void,
-                    std::mem::size_of_val(VERTEX_SHADER_SPIRV),
-                ),
+                RenderDeviceType::VULKAN => ShaderSource::ByteCode(unsafe {
+                    std::slice::from_raw_parts(
+                        VERTEX_SHADER_SPIRV.as_ptr() as *const u8,
+                        VERTEX_SHADER_SPIRV.len() * 4,
+                    )
+                }),
                 #[cfg(feature = "d3d11")]
                 RenderDeviceType::D3D11 => ShaderSource::SourceCode(VERTEX_SHADER_HLSL),
                 #[cfg(feature = "d3d12")]
@@ -532,15 +531,19 @@ impl ImguiRenderer {
                 #[cfg(feature = "vulkan")]
                 RenderDeviceType::VULKAN => {
                     if manual_srgb {
-                        ShaderSource::ByteCode(
-                            PIXEL_SHADER_GAMMA_SPIRV.as_ptr() as *const c_void,
-                            std::mem::size_of_val(PIXEL_SHADER_GAMMA_SPIRV),
-                        )
+                        ShaderSource::ByteCode(unsafe {
+                            std::slice::from_raw_parts(
+                                PIXEL_SHADER_GAMMA_SPIRV.as_ptr() as *const u8,
+                                PIXEL_SHADER_GAMMA_SPIRV.len() * 4,
+                            )
+                        })
                     } else {
-                        ShaderSource::ByteCode(
-                            PIXEL_SHADER_SPIRV.as_ptr() as *const c_void,
-                            std::mem::size_of_val(PIXEL_SHADER_SPIRV),
-                        )
+                        ShaderSource::ByteCode(unsafe {
+                            std::slice::from_raw_parts(
+                                PIXEL_SHADER_SPIRV.as_ptr() as *const u8,
+                                PIXEL_SHADER_SPIRV.len() * 4,
+                            )
+                        })
                     }
                 }
                 #[cfg(feature = "d3d11")]

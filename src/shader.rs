@@ -1,9 +1,4 @@
-use std::{
-    ffi::CString,
-    os::{raw::c_void, unix::ffi::OsStrExt},
-    path::Path,
-    str::FromStr,
-};
+use std::{ffi::CString, os::unix::ffi::OsStrExt, path::Path, str::FromStr};
 
 use bitflags::bitflags;
 use static_assertions::const_assert;
@@ -17,7 +12,7 @@ use super::{
 pub enum ShaderSource<'a> {
     FilePath(&'a Path),
     SourceCode(&'a str),
-    ByteCode(*const c_void, usize),
+    ByteCode(&'a [u8]),
 }
 
 pub enum ShaderLanguage {
@@ -282,12 +277,12 @@ impl From<&ShaderCreateInfo<'_>> for ShaderCreateInfoWrapper {
                 _ => std::ptr::null(),
             },
             ByteCode: match value.source {
-                ShaderSource::ByteCode(code, _) => code,
+                ShaderSource::ByteCode(code) => code.as_ptr() as _,
                 _ => std::ptr::null(),
             },
             __bindgen_anon_1: diligent_sys::ShaderCreateInfo__bindgen_ty_1 {
                 ByteCodeSize: match value.source {
-                    ShaderSource::ByteCode(_, size) => size,
+                    ShaderSource::ByteCode(code) => code.len(),
                     ShaderSource::SourceCode(code) => code.len(),
                     _ => 0,
                 },
@@ -434,7 +429,7 @@ impl Shader {
                 .GetBytecode
                 .unwrap_unchecked()(
                 self.sys_ptr,
-                bytecode as *mut *const c_void,
+                bytecode as *mut *const _,
                 std::ptr::addr_of_mut!(size),
             );
         }
