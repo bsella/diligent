@@ -29,9 +29,8 @@ use diligent::vk::engine_factory_vk::{
 };
 
 #[cfg(feature = "opengl")]
-use diligent::{
-    gl::engine_factory_gl::{get_engine_factory_gl, EngineFactoryOpenGL, EngineGLCreateInfo},
-    graphics_types::DeviceFeatureState,
+use diligent::gl::engine_factory_gl::{
+    get_engine_factory_gl, EngineFactoryOpenGL, EngineGLCreateInfo,
 };
 
 use crate::sample_app_settings::SampleAppSettings;

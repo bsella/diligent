@@ -1,12 +1,12 @@
 #define DILIGENT_C_INTERFACE 1
 
-#ifdef VULKAN_SUPPORTED
-
 #include <Common/interface/GeometryPrimitives.h>
 
 extern unsigned int Diligent_GetGeometryPrimitiveVertexSize(GEOMETRY_PRIMITIVE_VERTEX_FLAGS VertexFlags);
 
 extern void Diligent_CreateGeometryPrimitive(const GeometryPrimitiveAttributes* Attribs, IDataBlob** ppVertices, IDataBlob** ppIndices, GeometryPrimitiveInfo* pInfo);
+
+#ifdef VULKAN_SUPPORTED
 
 #include <Graphics/GraphicsEngineVulkan/interface/EngineFactoryVk.h>
 

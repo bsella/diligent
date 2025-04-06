@@ -1,4 +1,7 @@
-use std::{ffi::CString, os::unix::ffi::OsStrExt, path::Path, str::FromStr};
+#[cfg(unix)]
+use os::unix::ffi::OsStrExt;
+
+use std::{ffi::CString, path::Path, str::FromStr};
 
 use bitflags::bitflags;
 use static_assertions::const_assert;
@@ -249,17 +252,8 @@ impl From<&ShaderCreateInfo<'_>> for ShaderCreateInfoWrapper {
 
                     #[cfg(windows)]
                     {
-                        use std::os::windows::ffi::OsStrExt;
-                        shader_source_path = Some(CString::new(
-                            path.as_os_str()
-                                .encode_wide()
-                                .chain(Some(0))
-                                .map(|b| {
-                                    let b = b.to_ne_bytes();
-                                    b.get(0).map(|s| *s).into_iter().chain(b.get(1).map(|s| *s))
-                                })
-                                .flatten(),
-                        ));
+                        shader_source_path =
+                            Some(CString::new(path.to_string_lossy().as_bytes()).unwrap());
                     };
                     shader_source_path
                         .as_ref()

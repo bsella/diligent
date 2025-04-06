@@ -4,16 +4,16 @@ use static_assertions::const_assert;
 use crate::data_blob::DataBlob;
 
 bitflags! {
-    pub struct GeometryPrimitiveVertexFlags: u32 {
-        const None     = diligent_sys::GEOMETRY_PRIMITIVE_VERTEX_FLAG_NONE;
-        const Position = diligent_sys::GEOMETRY_PRIMITIVE_VERTEX_FLAG_POSITION;
-        const Normal   = diligent_sys::GEOMETRY_PRIMITIVE_VERTEX_FLAG_NORMAL;
-        const TexCoord = diligent_sys::GEOMETRY_PRIMITIVE_VERTEX_FLAG_TEXCOORD;
+    pub struct GeometryPrimitiveVertexFlags: diligent_sys::GEOMETRY_PRIMITIVE_VERTEX_FLAGS {
+        const None     = diligent_sys::GEOMETRY_PRIMITIVE_VERTEX_FLAG_NONE as _;
+        const Position = diligent_sys::GEOMETRY_PRIMITIVE_VERTEX_FLAG_POSITION as _;
+        const Normal   = diligent_sys::GEOMETRY_PRIMITIVE_VERTEX_FLAG_NORMAL as _;
+        const TexCoord = diligent_sys::GEOMETRY_PRIMITIVE_VERTEX_FLAG_TEXCOORD as _;
 
-        const All = diligent_sys::GEOMETRY_PRIMITIVE_VERTEX_FLAG_ALL;
+        const All = diligent_sys::GEOMETRY_PRIMITIVE_VERTEX_FLAG_ALL as _;
 
-        const PosNorm = diligent_sys::GEOMETRY_PRIMITIVE_VERTEX_FLAG_POS_NORM;
-        const PosTex  = diligent_sys::GEOMETRY_PRIMITIVE_VERTEX_FLAG_POS_TEX;
+        const PosNorm = diligent_sys::GEOMETRY_PRIMITIVE_VERTEX_FLAG_POS_NORM as _;
+        const PosTex  = diligent_sys::GEOMETRY_PRIMITIVE_VERTEX_FLAG_POS_TEX as _;
     }
 }
 const_assert!(diligent_sys::GEOMETRY_PRIMITIVE_VERTEX_FLAG_LAST == 4);
@@ -68,7 +68,7 @@ pub fn create_geometry_primitive(
             GeometryPrimitiveType::Cube(diligent_sys::CubeGeometryPrimitiveAttributes {
                 Size: size,
                 _GeometryPrimitiveAttributes: diligent_sys::GeometryPrimitiveAttributes {
-                    Type: diligent_sys::GEOMETRY_PRIMITIVE_TYPE_CUBE,
+                    Type: diligent_sys::GEOMETRY_PRIMITIVE_TYPE_CUBE as _,
                     VertexFlags: attribs.vertex_flags.bits(),
                     NumSubdivisions: attribs.num_subdivisions,
                 },
@@ -78,7 +78,7 @@ pub fn create_geometry_primitive(
             GeometryPrimitiveType::Sphere(diligent_sys::SphereGeometryPrimitiveAttributes {
                 Radius: radius,
                 _GeometryPrimitiveAttributes: diligent_sys::GeometryPrimitiveAttributes {
-                    Type: diligent_sys::GEOMETRY_PRIMITIVE_TYPE_SPHERE,
+                    Type: diligent_sys::GEOMETRY_PRIMITIVE_TYPE_SPHERE as _,
                     VertexFlags: attribs.vertex_flags.bits(),
                     NumSubdivisions: attribs.num_subdivisions,
                 },
