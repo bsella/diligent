@@ -21,6 +21,15 @@ pub struct DeviceFeaturesVk {
     host_image_copy: DeviceFeatureState,
 }
 
+impl DeviceFeaturesVk {
+    pub fn new(dynamic_rendering: DeviceFeatureState, host_image_copy: DeviceFeatureState) -> Self {
+        DeviceFeaturesVk {
+            dynamic_rendering,
+            host_image_copy,
+        }
+    }
+}
+
 pub struct EngineVkCreateInfo {
     engine_create_info: EngineCreateInfo,
 
@@ -54,8 +63,8 @@ impl EngineVkCreateInfo {
             engine_create_info,
 
             features_vk: DeviceFeaturesVk {
-                dynamic_rendering: DeviceFeatureState::Disabled,
-                host_image_copy: DeviceFeatureState::Disabled,
+                dynamic_rendering: DeviceFeatureState::Optional,
+                host_image_copy: DeviceFeatureState::Optional,
             },
 
             instance_layer_names: Vec::new(),
@@ -111,6 +120,11 @@ impl EngineVkCreateInfo {
 
             dx_compiler_path: None,
         }
+    }
+
+    pub fn features_vk(mut self, features_vk: DeviceFeaturesVk) -> Self {
+        self.features_vk = features_vk;
+        self
     }
 }
 

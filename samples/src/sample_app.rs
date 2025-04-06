@@ -3,7 +3,9 @@ use diligent::{
     api_info::API_VERSION,
     device_context::ResourceStateTransitionMode,
     engine_factory::{AsEngineFactory, EngineCreateInfo},
-    graphics_types::{AdapterType, GraphicsAdapterInfo, RenderDeviceType, SurfaceTransform},
+    graphics_types::{
+        AdapterType, DeviceFeatureState, GraphicsAdapterInfo, RenderDeviceType, SurfaceTransform,
+    },
     platforms::native_window::NativeWindow,
     swap_chain::{SwapChain, SwapChainDesc},
 };
@@ -22,7 +24,9 @@ use diligent_tools::{
 use imgui::WindowFlags;
 
 #[cfg(feature = "vulkan")]
-use diligent::vk::engine_factory_vk::{get_engine_factory_vk, EngineFactoryVk, EngineVkCreateInfo};
+use diligent::vk::engine_factory_vk::{
+    get_engine_factory_vk, DeviceFeaturesVk, EngineFactoryVk, EngineVkCreateInfo,
+};
 
 #[cfg(feature = "opengl")]
 use diligent::{
@@ -265,7 +269,15 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             match &engine_factory {
                 #[cfg(feature = "vulkan")]
                 EngineFactory::VULKAN(engine_factory) => {
-                    let engine_vk_create_info = EngineVkCreateInfo::new(engine_create_info);
+                    let mut engine_vk_create_info = EngineVkCreateInfo::new(engine_create_info);
+
+                    if app_settings.vk_compatibility {
+                        engine_vk_create_info =
+                            engine_vk_create_info.features_vk(DeviceFeaturesVk::new(
+                                DeviceFeatureState::Disabled,
+                                DeviceFeatureState::Disabled,
+                            ));
+                    }
 
                     let (render_device, immediate_contexts, deferred_contexts) = engine_factory
                         .create_device_and_contexts(&engine_vk_create_info)

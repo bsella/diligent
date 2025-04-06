@@ -23,6 +23,9 @@ pub struct SampleAppSettings {
     pub vsync: bool,
 
     pub non_separable_progs: bool,
+
+    #[cfg(feature = "vulkan")]
+    pub vk_compatibility: bool,
 }
 
 impl AppSettings for SampleAppSettings {
@@ -35,7 +38,7 @@ impl AppSettings for SampleAppSettings {
 }
 
 pub fn parse_sample_app_settings() -> SampleAppSettings {
-    let matches = command!()
+    let args = command!()
         .arg(Arg::new("mode").long("mode").short('m').value_parser([
             #[cfg(feature = "d3d11")]
             "d3d11_sw",
@@ -95,8 +98,17 @@ pub fn parse_sample_app_settings() -> SampleAppSettings {
                 .default_value("false"),
         )
         // TODO : add a help subcommand for the `--help` flag
-        .disable_help_flag(true)
-        .get_matches();
+        .disable_help_flag(true);
+
+    #[cfg(feature = "vulkan")]
+    let args = args.arg(
+        Arg::new("vk_compatibility")
+            .long("vk_compatibility")
+            .value_parser(value_parser!(bool))
+            .default_value("false"),
+    );
+
+    let matches = args.get_matches();
 
     let mut settings = SampleAppSettings {
         device_type: get_prefered_device_type(),
@@ -110,6 +122,8 @@ pub fn parse_sample_app_settings() -> SampleAppSettings {
         validation: true,
         vsync: *matches.get_one::<bool>("vsync").unwrap(),
         non_separable_progs: *matches.get_one::<bool>("non_separable_progs").unwrap(),
+        #[cfg(feature = "vulkan")]
+        vk_compatibility: *matches.get_one::<bool>("vk_compatibility").unwrap(),
     };
 
     if let Some(mode) = matches.get_one::<String>("mode") {
