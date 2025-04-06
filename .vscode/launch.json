@@ -45,6 +45,20 @@
                 "cwd": "${workspaceFolder}/samples",
             },
             "cwd": "${workspaceFolder}/samples/src/tutorials/assets",
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Tutorial04 : Instancing",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example",
+                    "Tutorial04_Instancing"
+                ],
+                "cwd": "${workspaceFolder}/samples",
+            },
+            "cwd": "${workspaceFolder}/samples/src/tutorials/assets",
         }
     ]
 }

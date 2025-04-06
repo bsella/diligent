@@ -18,8 +18,10 @@ use diligent::{
     },
     render_device::RenderDevice,
     sampler::SamplerDesc,
-    //shader::ShaderCompileFlags,
-    shader::{ShaderCreateInfo, ShaderLanguage, ShaderSource, ShaderSourceInputStreamFactory},
+    shader::{
+        ShaderCompileFlags, ShaderCreateInfo, ShaderLanguage, ShaderSource,
+        ShaderSourceInputStreamFactory,
+    },
     shader_resource_variable::{ShaderResourceVariableDesc, ShaderResourceVariableType},
 };
 
@@ -160,7 +162,7 @@ impl TexturedCube {
                 // OpenGL backend requires emulated combined HLSL texture samplers (g_Texture + g_Texture_sampler combination)
                 .use_combined_texture_samplers(true)
                 // Pack matrices in row-major order
-                //.compile_flags(ShaderCompileFlags::PackMatrixRowMajor)
+                .compile_flags(ShaderCompileFlags::PackMatrixRowMajor)
                 // Presentation engine always expects input in gamma space. Normally, pixel shader output is
                 // converted from linear to gamma space by the GPU. However, some platforms (e.g. Android in GLES mode,
                 // or Emscripten in WebGL mode) do not support gamma-correction. In this case the application

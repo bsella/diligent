@@ -43,3 +43,7 @@ path = "src/tutorials/tutorial02_cube.rs"
 [[example]]
 name = "Tutorial03_Texturing"
 path = "src/tutorials/tutorial03_texturing.rs"
+
+[[example]]
+name = "Tutorial04_Instancing"
+path = "src/tutorials/tutorial04_instancing.rs"
