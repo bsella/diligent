@@ -776,15 +776,22 @@ impl ImguiRenderer {
             let mut vb_access = device_context.map_buffer_write(vertex_buffer, MapFlags::Discard);
             let mut ib_access = device_context.map_buffer_write(index_buffer, MapFlags::Discard);
 
-            for (index, draw_list) in draw_data.draw_lists().enumerate() {
+            let mut vtx_offset = 0;
+            let mut idx_offset = 0;
+
+            for draw_list in draw_data.draw_lists() {
                 let vtx_buffer = draw_list.vtx_buffer();
                 let idx_buffer = draw_list.idx_buffer();
 
-                unsafe { vb_access.as_mut_slice(vtx_buffer.len(), index as isize) }
+                unsafe { vb_access.as_mut_slice(vtx_buffer.len(), vtx_offset as isize) }
                     .copy_from_slice(vtx_buffer);
 
-                unsafe { ib_access.as_mut_slice(idx_buffer.len(), index as isize) }
+                vtx_offset += vtx_buffer.len();
+
+                unsafe { ib_access.as_mut_slice(idx_buffer.len(), idx_offset as isize) }
                     .copy_from_slice(idx_buffer);
+
+                idx_offset += idx_buffer.len();
             }
         }
 
