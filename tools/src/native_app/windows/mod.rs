@@ -3,16 +3,31 @@ use super::{app::App, app_settings::AppSettings, events::EventHandler, events::E
 use diligent::{engine_factory::EngineCreateInfo, platforms::native_window::NativeWindow};
 
 use windows::{
-    core::*, Win32::Foundation::*, Win32::Graphics::Gdi::ValidateRect,
-    Win32::System::LibraryLoader::GetModuleHandleW, Win32::UI::WindowsAndMessaging::*,
+    core::*,
+    Win32::{
+        Foundation::*, Graphics::Gdi::ValidateRect, System::LibraryLoader::GetModuleHandleW,
+        UI::WindowsAndMessaging::*,
+    },
 };
 
-struct Win32EventHandler;
+struct Win32EventHandler {
+    _hwnd: HWND,
+    resize_param: LPARAM,
+    resized: bool,
+}
 
 impl<'a> EventHandler for Win32EventHandler {
     type EventType = MSG;
 
     fn poll_event(&self) -> Option<Self::EventType> {
+        if self.resized {
+            return Some(MSG {
+                message: WM_SIZE,
+                lParam: self.resize_param,
+                ..Default::default()
+            });
+        }
+
         let mut msg = std::mem::MaybeUninit::<MSG>::uninit();
 
         if unsafe { PeekMessageW(msg.as_mut_ptr(), None, 0, 0, PM_REMOVE).as_bool() } {
@@ -31,11 +46,6 @@ impl<'a> EventHandler for Win32EventHandler {
     fn handle_event(&mut self, event: &Self::EventType) -> EventResult {
         match event.message {
             WM_QUIT => EventResult::Quit,
-            // TODO : The resize event is not handled properly for now
-            WM_SIZE | WM_SIZING => EventResult::Resize {
-                width: (event.lParam.0 & 0xffff) as u16,
-                height: ((event.lParam.0 >> 16) & 0xffff) as u16,
-            },
             WM_MOUSEMOVE => EventResult::MouseMove {
                 x: (event.lParam.0 & 0xffff) as i16,
                 y: ((event.lParam.0 >> 16) & 0xffff) as i16,
@@ -58,6 +68,20 @@ impl<'a> EventHandler for Win32EventHandler {
             WM_MBUTTONUP => EventResult::MouseUp {
                 button: super::events::MouseButton::Middle,
             },
+            WM_SIZE => {
+                self.resized = false;
+
+                EventResult::Resize {
+                    width: (event.lParam.0 & 0xffff) as _,
+                    height: ((event.lParam.0 >> 16) & 0xffff) as _,
+                }
+            }
+            WM_NCMOUSEMOVE => {
+                unsafe {
+                    SetWindowLongPtrA(event.hwnd, GWL_USERDATA, std::ptr::from_ref(self) as _);
+                }
+                EventResult::Continue
+            }
             _ => {
                 //println!("{}", event.message);
                 EventResult::Continue
@@ -72,7 +96,6 @@ extern "system" fn handle_message(
     wparam: WPARAM,
     lparam: LPARAM,
 ) -> LRESULT {
-    //println!("{}", message);
     match message {
         WM_PAINT => {
             unsafe {
@@ -80,7 +103,19 @@ extern "system" fn handle_message(
             }
             LRESULT(0)
         }
-        WM_SIZE => LRESULT(0),
+        WM_SIZE => {
+            let event_handler_ptr =
+                unsafe { GetWindowLongPtrA(hwnd, GWL_USERDATA) } as *mut Win32EventHandler;
+
+            if !event_handler_ptr.is_null() {
+                unsafe {
+                    (*event_handler_ptr).resized = true;
+                    (*event_handler_ptr).resize_param = lparam;
+                }
+            }
+
+            LRESULT(0)
+        }
         WM_DESTROY => {
             unsafe { PostQuitMessage(0) };
             LRESULT(0)
@@ -140,7 +175,14 @@ where
         EngineCreateInfo::default(),
         Some(&NativeWindow(hwnd.0)),
     )
-    .run(Win32EventHandler, &|title: &str| unsafe {
-        let _ = SetWindowTextW(hwnd, &HSTRING::from(title));
-    })
+    .run(
+        Win32EventHandler {
+            _hwnd: hwnd,
+            resize_param: LPARAM::default(),
+            resized: false,
+        },
+        &|title: &str| unsafe {
+            let _ = SetWindowTextW(hwnd, &HSTRING::from(title));
+        },
+    )
 }
