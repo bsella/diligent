@@ -35,3 +35,6 @@ pub mod vk;
 
 #[cfg(feature = "opengl")]
 pub mod gl;
+
+#[cfg(feature = "d3d11")]
+pub mod d3d11;

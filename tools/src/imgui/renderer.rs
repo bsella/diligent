@@ -402,7 +402,7 @@ const PIXEL_SHADER_GAMMA_SPIRV: &[u32] = &[
 pub struct ImguiRenderer {
     context: imgui::Context,
     pipeline_state: PipelineState,
-    _font_texture_view: TextureView,
+    _font_texture_view: Box<TextureView>,
     texture_var: ShaderResourceVariable,
     shader_resource_binding: ShaderResourceBinding,
 
@@ -484,7 +484,8 @@ impl ImguiRenderer {
             shader_type: ShaderType,
             manual_srgb: bool,
         ) -> ShaderCreateInfo<'a> {
-            let shader_ci = ShaderCreateInfo::new(name, source, shader_type);
+            let shader_ci = ShaderCreateInfo::new(name, source, shader_type)
+                .use_combined_texture_samplers(true);
 
             if manual_srgb {
                 shader_ci.set_macros(vec![
@@ -667,9 +668,11 @@ impl ImguiRenderer {
             )
             .unwrap();
 
-        let font_texture_view = font_texture
-            .get_default_view(TextureViewType::ShaderResource)
-            .unwrap();
+        let font_texture_view = Box::new(
+            font_texture
+                .get_default_view(TextureViewType::ShaderResource)
+                .unwrap(),
+        );
 
         let shader_resource_binding = pipeline_state.create_shader_resource_binding(true).unwrap();
 
@@ -679,7 +682,7 @@ impl ImguiRenderer {
 
         // Store our identifier
         imgui_context.fonts().tex_id =
-            TextureId::new(std::ptr::addr_of!(font_texture_view) as usize);
+            TextureId::new(&*font_texture_view as *const TextureView as usize);
 
         imgui_context.io_mut().display_size =
             [create_info.initial_width, create_info.initial_height];
@@ -905,10 +908,8 @@ impl ImguiRenderer {
                         if texture_view != last_texture_view {
                             last_texture_view = texture_view;
 
-                            //self.texture_var
-                            //    .set(unsafe { &*texture_view }, SetShaderResourceFlags::None);
                             self.texture_var
-                                .set(&self._font_texture_view, SetShaderResourceFlags::None);
+                                .set(unsafe { &*texture_view }, SetShaderResourceFlags::None);
 
                             device_context.commit_shader_resources(
                                 &self.shader_resource_binding,

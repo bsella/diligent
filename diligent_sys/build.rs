@@ -146,11 +146,37 @@ fn generate_diligent_c_bindings(diligent_install_dir: &PathBuf, out_dir: &PathBu
         builder
     }
 
+    #[cfg(feature = "d3d11")]
+    fn configure_d3d11(builder: bindgen::Builder) -> bindgen::Builder {
+        let builder = builder.clang_arg("-DD3D11_SUPPORTED=1");
+
+        #[cfg(feature = "d3d11_interop")]
+        let builder = builder.clang_arg("-DD3D11_INTEROP=1");
+
+        builder
+    }
+
+    #[cfg(feature = "d3d12")]
+    fn configure_d3d12(builder: bindgen::Builder) -> bindgen::Builder {
+        let builder = builder.clang_arg("-DD3D12_SUPPORTED=1");
+
+        #[cfg(feature = "d3d12_interop")]
+        let builder = builder.clang_arg("-DD3D12_INTEROP=1");
+
+        builder
+    }
+
     #[cfg(feature = "vulkan")]
     let builder = configure_vulkan(builder);
 
     #[cfg(feature = "opengl")]
     let builder = configure_opengl(builder);
+
+    #[cfg(feature = "d3d11")]
+    let builder = configure_d3d11(builder);
+
+    #[cfg(feature = "d3d12")]
+    let builder = configure_d3d12(builder);
 
     let bindings = builder.generate().expect("Unable to generate bindings");
 

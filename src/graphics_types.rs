@@ -430,6 +430,7 @@ bitflags! {
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct Version {
     pub major: u32,
     pub minor: u32,
@@ -1725,6 +1726,166 @@ impl From<&diligent_sys::TEXTURE_FORMAT> for TextureFormat {
             diligent_sys::TEX_FORMAT_ETC2_RGBA8_UNORM_SRGB => TextureFormat::ETC2_RGBA8_UNORM_SRGB,
             _ => panic!("Unknown texture format"),
         }
+    }
+}
+
+pub enum ScalingMode {
+    Unspecified,
+    Centered,
+    Stretched,
+}
+
+impl From<&diligent_sys::SCALING_MODE> for ScalingMode {
+    fn from(value: &diligent_sys::SCALING_MODE) -> Self {
+        match *value {
+            diligent_sys::SCALING_MODE_UNSPECIFIED => ScalingMode::Unspecified,
+            diligent_sys::SCALING_MODE_CENTERED => ScalingMode::Centered,
+            diligent_sys::SCALING_MODE_STRETCHED => ScalingMode::Stretched,
+            _ => panic!("Unknown scaling mode"),
+        }
+    }
+}
+
+impl From<&ScalingMode> for diligent_sys::SCALING_MODE {
+    fn from(value: &ScalingMode) -> Self {
+        match *value {
+            ScalingMode::Unspecified => diligent_sys::SCALING_MODE_UNSPECIFIED,
+            ScalingMode::Centered => diligent_sys::SCALING_MODE_CENTERED,
+            ScalingMode::Stretched => diligent_sys::SCALING_MODE_STRETCHED,
+        }
+    }
+}
+
+pub enum ScanlineOrder {
+    Unspecified,
+    Progressive,
+    UpperFieldFirst,
+    LowerFieldFirst,
+}
+
+impl From<&diligent_sys::SCANLINE_ORDER> for ScanlineOrder {
+    fn from(value: &diligent_sys::SCANLINE_ORDER) -> Self {
+        match *value {
+            diligent_sys::SCANLINE_ORDER_UNSPECIFIED => ScanlineOrder::Unspecified,
+            diligent_sys::SCANLINE_ORDER_PROGRESSIVE => ScanlineOrder::Progressive,
+            diligent_sys::SCANLINE_ORDER_UPPER_FIELD_FIRST => ScanlineOrder::UpperFieldFirst,
+            diligent_sys::SCANLINE_ORDER_LOWER_FIELD_FIRST => ScanlineOrder::LowerFieldFirst,
+            _ => panic!("Unknown scanline order"),
+        }
+    }
+}
+
+impl From<&ScanlineOrder> for diligent_sys::SCANLINE_ORDER {
+    fn from(value: &ScanlineOrder) -> Self {
+        match *value {
+            ScanlineOrder::Unspecified => diligent_sys::SCANLINE_ORDER_UNSPECIFIED,
+            ScanlineOrder::Progressive => diligent_sys::SCANLINE_ORDER_PROGRESSIVE,
+            ScanlineOrder::UpperFieldFirst => diligent_sys::SCANLINE_ORDER_UPPER_FIELD_FIRST,
+            ScanlineOrder::LowerFieldFirst => diligent_sys::SCANLINE_ORDER_LOWER_FIELD_FIRST,
+        }
+    }
+}
+
+pub struct DisplayModeAttribs {
+    width: u32,
+    height: u32,
+    format: TextureFormat,
+    refresh_rate_numerator: u32,
+    refresh_rate_denominator: u32,
+    scaling_mode: ScalingMode,
+    scanline_order: ScanlineOrder,
+}
+
+impl DisplayModeAttribs {
+    pub fn width(&self) -> &u32 {
+        &self.width
+    }
+    pub fn height(&self) -> &u32 {
+        &self.height
+    }
+    pub fn format(&self) -> &TextureFormat {
+        &self.format
+    }
+    pub fn refresh_rate_numerator(&self) -> &u32 {
+        &self.refresh_rate_numerator
+    }
+    pub fn refresh_rate_denominator(&self) -> &u32 {
+        &self.refresh_rate_denominator
+    }
+    pub fn scaling_mode(&self) -> &ScalingMode {
+        &self.scaling_mode
+    }
+    pub fn scanline_order(&self) -> &ScanlineOrder {
+        &self.scanline_order
+    }
+}
+
+impl From<&diligent_sys::DisplayModeAttribs> for DisplayModeAttribs {
+    fn from(value: &diligent_sys::DisplayModeAttribs) -> Self {
+        DisplayModeAttribs {
+            width: value.Width,
+            height: value.Height,
+            format: (&value.Format).into(),
+            refresh_rate_numerator: value.RefreshRateNumerator,
+            refresh_rate_denominator: value.RefreshRateDenominator,
+            scaling_mode: (&value.Scaling).into(),
+            scanline_order: (&value.ScanlineOrder).into(),
+        }
+    }
+}
+
+pub struct FullScreenModeDesc {
+    fullscreen: bool,
+    refresh_rate_numerator: u32,
+    refresh_rate_denominator: u32,
+    scaling: ScalingMode,
+    scanline_order: ScanlineOrder,
+}
+
+impl From<&FullScreenModeDesc> for diligent_sys::FullScreenModeDesc {
+    fn from(value: &FullScreenModeDesc) -> Self {
+        diligent_sys::FullScreenModeDesc {
+            Fullscreen: value.fullscreen,
+            RefreshRateDenominator: value.refresh_rate_denominator,
+            RefreshRateNumerator: value.refresh_rate_numerator,
+            Scaling: (&value.scaling).into(),
+            ScanlineOrder: (&value.scanline_order).into(),
+        }
+    }
+}
+
+impl Default for FullScreenModeDesc {
+    fn default() -> Self {
+        FullScreenModeDesc {
+            fullscreen: false,
+            refresh_rate_numerator: 0,
+            refresh_rate_denominator: 0,
+            scaling: ScalingMode::Unspecified,
+            scanline_order: ScanlineOrder::Unspecified,
+        }
+    }
+}
+
+impl FullScreenModeDesc {
+    pub fn fullscreen(mut self, fullscreen: bool) -> Self {
+        self.fullscreen = fullscreen;
+        self
+    }
+    pub fn refresh_rate_numerator(mut self, refresh_rate_numerator: u32) -> Self {
+        self.refresh_rate_numerator = refresh_rate_numerator;
+        self
+    }
+    pub fn refresh_rate_denominator(mut self, refresh_rate_denominator: u32) -> Self {
+        self.refresh_rate_denominator = refresh_rate_denominator;
+        self
+    }
+    pub fn scaling(mut self, scaling: ScalingMode) -> Self {
+        self.scaling = scaling;
+        self
+    }
+    pub fn scanline_order(mut self, scanline_order: ScanlineOrder) -> Self {
+        self.scanline_order = scanline_order;
+        self
     }
 }
 

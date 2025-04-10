@@ -40,11 +40,23 @@ extern void Diligent_CreateGeometryPrimitive(const GeometryPrimitiveAttributes* 
 #endif
 
 #ifdef OPENGL_SUPPORTED
-
 #include <Graphics/GraphicsEngineOpenGL/interface/EngineFactoryOpenGL.h>
-
 #ifdef OPENGL_INTEROP
     // TODO
 #endif
 
+#endif
+
+#ifdef D3D11_SUPPORTED
+#include <Graphics/GraphicsEngineD3D11/interface/EngineFactoryD3D11.h>
+#ifdef D3D11_INTEROP
+    // TODO
+#endif
+#endif
+
+#ifdef D3D12_SUPPORTED
+#include <Graphics/GraphicsEngineD3D12/interface/EngineFactoryD3D12.h>
+#ifdef D3D12_INTEROP
+    // TODO
+#endif
 #endif

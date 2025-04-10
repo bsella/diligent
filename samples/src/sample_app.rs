@@ -4,7 +4,9 @@ use diligent::{
     device_context::ResourceStateTransitionMode,
     engine_factory::{AsEngineFactory, EngineCreateInfo},
     graphics_types::{
-        AdapterType, DeviceFeatureState, GraphicsAdapterInfo, RenderDeviceType, SurfaceTransform,
+        AdapterType, DeviceFeatureState, DisplayModeAttribs, FullScreenModeDesc,
+        GraphicsAdapterInfo, RenderDeviceType, ScalingMode, SurfaceTransform, TextureFormat,
+        Version,
     },
     platforms::native_window::NativeWindow,
     swap_chain::{SwapChain, SwapChainDesc},
@@ -33,6 +35,11 @@ use diligent::gl::engine_factory_gl::{
     get_engine_factory_gl, EngineFactoryOpenGL, EngineGLCreateInfo,
 };
 
+#[cfg(feature = "d3d11")]
+use diligent::d3d11::engine_factory_d3d11::{
+    get_engine_factory_d3d11, D3D11ValidationFlags, EngineD3D11CreateInfo, EngineFactoryD3D11,
+};
+
 use crate::sample_app_settings::SampleAppSettings;
 
 use super::{sample::SampleBase, sample_app_settings::parse_sample_app_settings};
@@ -52,6 +59,10 @@ pub struct SampleApp<Sample: SampleBase> {
     app_settings: SampleAppSettings,
 
     graphics_adapter: Option<GraphicsAdapterInfo>,
+
+    display_modes: Vec<DisplayModeAttribs>,
+    display_modes_strings: Vec<String>,
+    selected_display_mode: usize,
 }
 
 enum EngineFactory {
@@ -59,6 +70,8 @@ enum EngineFactory {
     VULKAN(EngineFactoryVk),
     #[cfg(feature = "opengl")]
     OPENGL(EngineFactoryOpenGL),
+    #[cfg(feature = "d3d11")]
+    D3D11(EngineFactoryD3D11),
 }
 
 impl AsEngineFactory for EngineFactory {
@@ -68,6 +81,8 @@ impl AsEngineFactory for EngineFactory {
             Self::VULKAN(factory) => factory.as_engine_factory(),
             #[cfg(feature = "opengl")]
             Self::OPENGL(factory) => factory.as_engine_factory(),
+            #[cfg(feature = "d3d11")]
+            Self::D3D11(factory) => factory.as_engine_factory(),
         }
     }
 }
@@ -121,6 +136,16 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
                             adapter.memory.local_memory >> 20
                         ));
                     }
+                }
+
+                if !self.display_modes.is_empty() {
+                    ui.set_next_item_width(220.0);
+                    ui.combo(
+                        "Display Modes",
+                        &mut self.selected_display_mode,
+                        self.display_modes_strings.as_slice(),
+                        |label| label.into(),
+                    );
                 }
 
                 // If you're noticing any difference in frame rate when you enable vsync,
@@ -235,7 +260,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
 
         let engine_factory = match app_settings.device_type {
             #[cfg(feature = "d3d11")]
-            RenderDeviceType::D3D11 => panic!(),
+            RenderDeviceType::D3D11 => EngineFactory::D3D11(get_engine_factory_d3d11()),
             #[cfg(feature = "d3d12")]
             RenderDeviceType::D3D12 => panic!(),
             #[cfg(feature = "opengl")]
@@ -248,6 +273,11 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             #[cfg(feature = "webgpu")]
             RenderDeviceType::WEBGPU => panic!(),
         };
+
+        #[cfg(feature = "d3d11")]
+        {
+            engine_create_info.graphics_api_version = Version::new(11, 0);
+        }
 
         let adapters = engine_factory
             .as_engine_factory()
@@ -264,7 +294,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             None
         };
 
-        let (render_device, immediate_contexts, deferred_contexts, swap_chain) =
+        let (render_device, immediate_contexts, deferred_contexts, swap_chain, display_modes) =
             match &engine_factory {
                 #[cfg(feature = "vulkan")]
                 EngineFactory::VULKAN(engine_factory) => {
@@ -296,6 +326,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
                         immediate_contexts,
                         deferred_contexts,
                         swap_chain,
+                        Vec::new(),
                     )
                 }
                 #[cfg(feature = "opengl")]
@@ -316,7 +347,53 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
                         .create_device_and_swap_chain_gl(&engine_gl_create_info, &swap_chain_desc)
                         .unwrap();
 
-                    (device, vec![immediate_context], Vec::new(), swap_chain)
+                    (
+                        device,
+                        vec![immediate_context],
+                        Vec::new(),
+                        swap_chain,
+                        Vec::new(),
+                    )
+                }
+                #[cfg(feature = "d3d11")]
+                EngineFactory::D3D11(engine_factory) => {
+                    let graphics_api_version = engine_create_info.graphics_api_version;
+
+                    let engine_d3d11_create_info =
+                        EngineD3D11CreateInfo::new(D3D11ValidationFlags::None, engine_create_info);
+
+                    let (render_device, immediate_contexts, deferred_contexts) = engine_factory
+                        .create_device_and_contexts(&engine_d3d11_create_info)
+                        .unwrap();
+
+                    let display_modes =
+                        match (&app_settings.adapter_type, app_settings.adapter_index) {
+                            (AdapterType::Software, _) | (_, None) => Vec::new(),
+                            (_, Some(adapter_index)) => engine_factory.enumerate_display_modes(
+                                graphics_api_version,
+                                adapter_index as u32,
+                                0,
+                                TextureFormat::RGBA8_UNORM_SRGB,
+                            ),
+                        };
+
+                    let swap_chain = engine_factory
+                        .create_swap_chain(
+                            &render_device,
+                            immediate_contexts.first().unwrap(),
+                            &swap_chain_desc,
+                            &FullScreenModeDesc::default(),
+                            window,
+                        )
+                        .unwrap();
+
+                    (
+                        render_device,
+                        immediate_contexts,
+                        deferred_contexts,
+                        swap_chain,
+                        display_modes,
+                    )
                 }
             };
 
@@ -338,6 +415,25 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             app_settings.height,
         ));
 
+        let display_modes_strings = display_modes
+            .iter()
+            .map(|display_mode: &DisplayModeAttribs| {
+                let refresh_rate = *display_mode.refresh_rate_numerator() as f32
+                    / *display_mode.refresh_rate_denominator() as f32;
+
+                format!(
+                    "{}x{}@{refresh_rate} Hz{}",
+                    display_mode.width(),
+                    display_mode.height(),
+                    match display_mode.scaling_mode() {
+                        ScalingMode::Unspecified => "",
+                        ScalingMode::Centered => " Centered",
+                        ScalingMode::Stretched => " Stretched",
+                    }
+                )
+            })
+            .collect();
+
         SampleApp::<GenericSample> {
             swap_chain,
 
@@ -353,6 +449,10 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             imgui_renderer,
 
             graphics_adapter: adapter,
+
+            display_modes,
+            display_modes_strings,
+            selected_display_mode: 0,
         }
     }
 
