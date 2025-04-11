@@ -40,6 +40,11 @@ use diligent::d3d11::engine_factory_d3d11::{
     get_engine_factory_d3d11, D3D11ValidationFlags, EngineD3D11CreateInfo, EngineFactoryD3D11,
 };
 
+#[cfg(feature = "d3d12")]
+use diligent::d3d12::engine_factory_d3d12::{
+    get_engine_factory_d3d12, EngineD3D12CreateInfo, EngineFactoryD3D12,
+};
+
 use crate::sample_app_settings::SampleAppSettings;
 
 use super::{sample::SampleBase, sample_app_settings::parse_sample_app_settings};
@@ -72,6 +77,8 @@ enum EngineFactory {
     OPENGL(EngineFactoryOpenGL),
     #[cfg(feature = "d3d11")]
     D3D11(EngineFactoryD3D11),
+    #[cfg(feature = "d3d12")]
+    D3D12(EngineFactoryD3D12),
 }
 
 impl AsEngineFactory for EngineFactory {
@@ -83,6 +90,8 @@ impl AsEngineFactory for EngineFactory {
             Self::OPENGL(factory) => factory.as_engine_factory(),
             #[cfg(feature = "d3d11")]
             Self::D3D11(factory) => factory.as_engine_factory(),
+            #[cfg(feature = "d3d12")]
+            Self::D3D12(factory) => factory.as_engine_factory(),
         }
     }
 }
@@ -262,7 +271,13 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             #[cfg(feature = "d3d11")]
             RenderDeviceType::D3D11 => EngineFactory::D3D11(get_engine_factory_d3d11()),
             #[cfg(feature = "d3d12")]
-            RenderDeviceType::D3D12 => panic!(),
+            RenderDeviceType::D3D12 => {
+                let engine_factory = get_engine_factory_d3d12();
+                if !engine_factory.load_d3d12() {
+                    panic!("Failed to load Direct3D12");
+                }
+                EngineFactory::D3D12(engine_factory)
+            }
             #[cfg(feature = "opengl")]
             RenderDeviceType::GL => EngineFactory::OPENGL(get_engine_factory_gl()),
             //RenderDeviceType::GLES => panic!(),
@@ -275,6 +290,11 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
         };
 
         #[cfg(feature = "d3d11")]
+        {
+            engine_create_info.graphics_api_version = Version::new(11, 0);
+        }
+
+        #[cfg(feature = "d3d12")]
         {
             engine_create_info.graphics_api_version = Version::new(11, 0);
         }
@@ -364,6 +384,45 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
 
                     let (render_device, immediate_contexts, deferred_contexts) = engine_factory
                         .create_device_and_contexts(&engine_d3d11_create_info)
+                        .unwrap();
+
+                    let display_modes =
+                        match (&app_settings.adapter_type, app_settings.adapter_index) {
+                            (AdapterType::Software, _) | (_, None) => Vec::new(),
+                            (_, Some(adapter_index)) => engine_factory.enumerate_display_modes(
+                                graphics_api_version,
+                                adapter_index as u32,
+                                0,
+                                TextureFormat::RGBA8_UNORM_SRGB,
+                            ),
+                        };
+
+                    let swap_chain = engine_factory
+                        .create_swap_chain(
+                            &render_device,
+                            immediate_contexts.first().unwrap(),
+                            &swap_chain_desc,
+                            &FullScreenModeDesc::default(),
+                            window,
+                        )
+                        .unwrap();
+
+                    (
+                        render_device,
+                        immediate_contexts,
+                        deferred_contexts,
+                        swap_chain,
+                        display_modes,
+                    )
+                }
+                #[cfg(feature = "d3d12")]
+                EngineFactory::D3D12(engine_factory) => {
+                    let graphics_api_version = engine_create_info.graphics_api_version;
+
+                    let engine_d3d12_create_info = EngineD3D12CreateInfo::new(engine_create_info);
+
+                    let (render_device, immediate_contexts, deferred_contexts) = engine_factory
+                        .create_device_and_contexts(&engine_d3d12_create_info)
                         .unwrap();
 
                     let display_modes =

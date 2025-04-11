@@ -38,3 +38,6 @@ pub mod gl;
 
 #[cfg(feature = "d3d11")]
 pub mod d3d11;
+
+#[cfg(feature = "d3d12")]
+pub mod d3d12;
