@@ -1,5 +1,5 @@
 #[cfg(unix)]
-use os::unix::ffi::OsStrExt;
+use std::os::unix::ffi::OsStrExt;
 
 use std::{ffi::CString, path::Path, str::FromStr};
 
