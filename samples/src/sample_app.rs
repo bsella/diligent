@@ -4,13 +4,15 @@ use diligent::{
     device_context::ResourceStateTransitionMode,
     engine_factory::{AsEngineFactory, EngineCreateInfo},
     graphics_types::{
-        AdapterType, DeviceFeatureState, DisplayModeAttribs, FullScreenModeDesc,
-        GraphicsAdapterInfo, RenderDeviceType, ScalingMode, SurfaceTransform, TextureFormat,
-        Version,
+        AdapterType, DisplayModeAttribs, GraphicsAdapterInfo, RenderDeviceType, ScalingMode,
+        SurfaceTransform,
     },
     platforms::native_window::NativeWindow,
     swap_chain::{SwapChain, SwapChainDesc},
 };
+
+#[allow(unused_imports)]
+use diligent::graphics_types::{DeviceFeatureState, FullScreenModeDesc, TextureFormat, Version};
 
 use diligent_tools::{
     imgui::{

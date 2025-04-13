@@ -37,7 +37,7 @@ impl From<&ImmutableSamplerDesc<'_>> for diligent_sys::ImmutableSamplerDesc {
         diligent_sys::ImmutableSamplerDesc {
             ShaderStages: value.shader_stages.bits(),
             SamplerOrTextureName: value.sampler_or_texture_name.as_ptr(),
-            Desc: diligent_sys::SamplerDesc::from(value.sampler_desc),
+            Desc: (value.sampler_desc).into(),
         }
     }
 }
@@ -83,7 +83,7 @@ impl PipelineResourceSignature {
             let virtual_functions =
                 unsafe { (*(*pipeline_rs_ptr).pVtbl).PipelineResourceSignature };
 
-            let shader_type = diligent_sys::SHADER_TYPE::from(&shader_type);
+            let shader_type = (&shader_type).into();
 
             let num_variables = unsafe {
                 virtual_functions.GetStaticVariableCount.unwrap_unchecked()(

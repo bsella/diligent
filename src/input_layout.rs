@@ -100,11 +100,11 @@ impl From<&Vec<LayoutElement>> for InputLayoutDescWrapper {
                     HLSLSemantic: element.hlsl_semantic.as_ptr(),
                     BufferSlot: element.buffer_slot,
                     NumComponents: element.num_components,
-                    ValueType: diligent_sys::VALUE_TYPE::from(&element.value_type),
+                    ValueType: (&element.value_type).into(),
                     IsNormalized: element.is_normalized,
                     RelativeOffset: element.relative_offset,
                     Stride: element.stride,
-                    Frequency: diligent_sys::INPUT_ELEMENT_FREQUENCY::from(&element.frequency),
+                    Frequency: (&element.frequency).into(),
                     InstanceDataStepRate: element.instance_data_step_rate,
                 })
                 .collect(),

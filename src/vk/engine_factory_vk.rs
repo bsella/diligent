@@ -214,16 +214,10 @@ impl EngineFactoryVk {
                 vec_string_to_vec_cstring_ptr(&create_info.ignore_debug_message_names);
 
             let create_info = diligent_sys::EngineVkCreateInfo {
-                _EngineCreateInfo: diligent_sys::EngineCreateInfo::from(
-                    &create_info.engine_create_info,
-                ),
+                _EngineCreateInfo: (&create_info.engine_create_info).into(),
                 FeaturesVk: diligent_sys::DeviceFeaturesVk {
-                    DynamicRendering: diligent_sys::DEVICE_FEATURE_STATE::from(
-                        &create_info.features_vk.dynamic_rendering,
-                    ),
-                    HostImageCopy: diligent_sys::DEVICE_FEATURE_STATE::from(
-                        &create_info.features_vk.host_image_copy,
-                    ),
+                    DynamicRendering: (&create_info.features_vk.dynamic_rendering).into(),
+                    HostImageCopy: (&create_info.features_vk.host_image_copy).into(),
                 },
                 InstanceLayerCount: create_info.instance_layer_names.len() as u32,
                 ppInstanceLayerNames: if instance_layer_names.is_empty() {
@@ -317,10 +311,10 @@ impl EngineFactoryVk {
         swapchain_desc: &SwapChainDesc,
         window: Option<&NativeWindow>,
     ) -> Option<SwapChain> {
-        let swapchain_desc = diligent_sys::SwapChainDesc::from(swapchain_desc);
+        let swapchain_desc = swapchain_desc.into();
         let mut swap_chain_ptr = std::ptr::null_mut();
 
-        let window = window.map(|window| diligent_sys::NativeWindow::from(window));
+        let window = window.map(|window| window.into());
 
         unsafe {
             (*self.virtual_functions)

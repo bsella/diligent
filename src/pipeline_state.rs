@@ -292,22 +292,16 @@ impl PipelineResourceLayoutDescWrapper {
 
 impl From<&PipelineResourceLayoutDesc<'_>> for PipelineResourceLayoutDescWrapper {
     fn from(value: &PipelineResourceLayoutDesc<'_>) -> Self {
-        let variables: Vec<_> = value
-            .variables
-            .iter()
-            .map(|var| diligent_sys::ShaderResourceVariableDesc::from(var))
-            .collect();
+        let variables: Vec<_> = value.variables.iter().map(|var| var.into()).collect();
 
         let immutable_samplers: Vec<_> = value
             .immutable_samplers
             .iter()
-            .map(|var| diligent_sys::ImmutableSamplerDesc::from(var))
+            .map(|var| var.into())
             .collect();
 
         let prld = diligent_sys::PipelineResourceLayoutDesc {
-            DefaultVariableType: diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE::from(
-                &value.default_variable_type,
-            ),
+            DefaultVariableType: (&value.default_variable_type).into(),
             DefaultVariableMergeStages: value.default_variable_merge_stages.bits(),
             NumVariables: variables.len() as u32,
             Variables: if variables.is_empty() {
@@ -506,13 +500,13 @@ impl From<&RenderTargetBlendDesc> for diligent_sys::RenderTargetBlendDesc {
         diligent_sys::RenderTargetBlendDesc {
             BlendEnable: value.blend_enable,
             LogicOperationEnable: value.logic_operation_enable,
-            SrcBlend: diligent_sys::BLEND_FACTOR::from(&value.src_blend),
-            DestBlend: diligent_sys::BLEND_FACTOR::from(&value.dest_blend),
-            BlendOp: diligent_sys::BLEND_OPERATION::from(&value.blend_op),
-            SrcBlendAlpha: diligent_sys::BLEND_FACTOR::from(&value.src_blend_alpha),
-            DestBlendAlpha: diligent_sys::BLEND_FACTOR::from(&value.dest_blend_alpha),
-            BlendOpAlpha: diligent_sys::BLEND_OPERATION::from(&value.blend_op_alpha),
-            LogicOp: diligent_sys::LOGIC_OPERATION::from(&value.logic_op),
+            SrcBlend: (&value.src_blend).into(),
+            DestBlend: (&value.dest_blend).into(),
+            BlendOp: (&value.blend_op).into(),
+            SrcBlendAlpha: (&value.src_blend_alpha).into(),
+            DestBlendAlpha: (&value.dest_blend_alpha).into(),
+            BlendOpAlpha: (&value.blend_op_alpha).into(),
+            LogicOp: (&value.logic_op).into(),
             RenderTargetWriteMask: value.render_target_write_mask.bits(),
         }
     }
@@ -564,10 +558,7 @@ impl From<&BlendStateDesc> for diligent_sys::BlendStateDesc {
         diligent_sys::BlendStateDesc {
             AlphaToCoverageEnable: value.alpha_to_coverage_enable,
             IndependentBlendEnable: value.independent_blend_enable,
-            RenderTargets: value
-                .render_targets
-                .each_ref()
-                .map(|rt| diligent_sys::RenderTargetBlendDesc::from(rt)),
+            RenderTargets: value.render_targets.each_ref().map(|rt| rt.into()),
         }
     }
 }
@@ -637,8 +628,8 @@ impl RasterizerStateDesc {
 impl From<&RasterizerStateDesc> for diligent_sys::RasterizerStateDesc {
     fn from(value: &RasterizerStateDesc) -> Self {
         diligent_sys::RasterizerStateDesc {
-            FillMode: diligent_sys::FILL_MODE::from(&value.fill_mode),
-            CullMode: diligent_sys::CULL_MODE::from(&value.cull_mode),
+            FillMode: (&value.fill_mode).into(),
+            CullMode: (&value.cull_mode).into(),
             FrontCounterClockwise: value.front_counter_clockwise,
             DepthClipEnable: value.depth_clip_enable,
             ScissorEnable: value.scissor_enable,
@@ -695,10 +686,10 @@ impl StencilOperationsDesc {
 impl From<&StencilOperationsDesc> for diligent_sys::StencilOpDesc {
     fn from(value: &StencilOperationsDesc) -> Self {
         diligent_sys::StencilOpDesc {
-            StencilFailOp: diligent_sys::STENCIL_OP::from(&value.stencil_fail_op),
-            StencilDepthFailOp: diligent_sys::STENCIL_OP::from(&value.stencil_depth_fail_op),
-            StencilPassOp: diligent_sys::STENCIL_OP::from(&value.stencil_pass_op),
-            StencilFunc: diligent_sys::COMPARISON_FUNCTION::from(&value.stencil_func),
+            StencilFailOp: (&value.stencil_fail_op).into(),
+            StencilDepthFailOp: (&value.stencil_depth_fail_op).into(),
+            StencilPassOp: (&value.stencil_pass_op).into(),
+            StencilFunc: (&value.stencil_func).into(),
         }
     }
 }
@@ -765,12 +756,12 @@ impl From<&DepthStencilStateDesc> for diligent_sys::DepthStencilStateDesc {
         diligent_sys::DepthStencilStateDesc {
             DepthEnable: value.depth_enable,
             DepthWriteEnable: value.depth_write_enable,
-            DepthFunc: diligent_sys::COMPARISON_FUNCTION::from(&value.depth_func),
+            DepthFunc: (&value.depth_func).into(),
             StencilEnable: value.stencil_enable,
             StencilReadMask: value.stencil_read_mask,
             StencilWriteMask: value.stencil_write_mask,
-            FrontFace: diligent_sys::StencilOpDesc::from(&value.front_face),
-            BackFace: diligent_sys::StencilOpDesc::from(&value.back_face),
+            FrontFace: (&value.front_face).into(),
+            BackFace: (&value.back_face).into(),
         }
     }
 }
@@ -909,10 +900,10 @@ impl From<&GraphicsPipelineDesc> for GraphicsPipelineDescWrapper {
         let input_layouts = InputLayoutDescWrapper::from(&value.input_layouts);
 
         let desc = diligent_sys::GraphicsPipelineDesc {
-            BlendDesc: diligent_sys::BlendStateDesc::from(&value.blend_desc),
+            BlendDesc: (&value.blend_desc).into(),
             SampleMask: value.sample_mask,
-            RasterizerDesc: diligent_sys::RasterizerStateDesc::from(&value.rasterizer_desc),
-            DepthStencilDesc: diligent_sys::DepthStencilStateDesc::from(&value.depth_stencil_desc),
+            RasterizerDesc: (&value.rasterizer_desc).into(),
+            DepthStencilDesc: (&value.depth_stencil_desc).into(),
             InputLayout: diligent_sys::InputLayoutDesc {
                 LayoutElements: if input_layouts.is_empty() {
                     std::ptr::null()
@@ -921,7 +912,7 @@ impl From<&GraphicsPipelineDesc> for GraphicsPipelineDescWrapper {
                 },
                 NumElements: input_layouts.len() as u32,
             },
-            PrimitiveTopology: diligent_sys::PRIMITIVE_TOPOLOGY::from(&value.primitive_topology),
+            PrimitiveTopology: (&value.primitive_topology).into(),
             NumViewports: value.num_viewports,
             NumRenderTargets: value.num_render_targets,
             SubpassIndex: value.subpass_index,
@@ -929,12 +920,12 @@ impl From<&GraphicsPipelineDesc> for GraphicsPipelineDescWrapper {
             RTVFormats: value.rtv_formats.each_ref().map(|format| {
                 format.as_ref().map_or(
                     diligent_sys::TEX_FORMAT_UNKNOWN as diligent_sys::TEXTURE_FORMAT,
-                    |format| diligent_sys::TEXTURE_FORMAT::from(format),
+                    |format| format.into(),
                 )
             }),
             DSVFormat: value.dsv_format.as_ref().map_or(
                 diligent_sys::TEX_FORMAT_UNKNOWN as diligent_sys::TEXTURE_FORMAT,
-                |format| diligent_sys::TEXTURE_FORMAT::from(format),
+                |format| format.into(),
             ),
             ReadOnlyDSV: value.read_only_dsv,
             SmplDesc: diligent_sys::SampleDesc {
@@ -1010,7 +1001,7 @@ impl<'a> GraphicsPipelineStateCreateInfo<'a> {
         mut self,
         signatures: &'a [&'a PipelineResourceSignature],
     ) -> Self {
-        self.pipeline_state_create_info.resource_signatures = Vec::from(signatures);
+        self.pipeline_state_create_info.resource_signatures = signatures.into();
         self
     }
 
@@ -1021,7 +1012,7 @@ impl<'a> GraphicsPipelineStateCreateInfo<'a> {
         self.pipeline_state_create_info
             .pso_desc
             .resource_layout
-            .variables = Vec::from(variables);
+            .variables = variables.into();
         self
     }
 
@@ -1032,7 +1023,7 @@ impl<'a> GraphicsPipelineStateCreateInfo<'a> {
         self.pipeline_state_create_info
             .pso_desc
             .resource_layout
-            .immutable_samplers = Vec::from(sampler_descs);
+            .immutable_samplers = sampler_descs.into();
         self
     }
 
@@ -1210,7 +1201,7 @@ impl PipelineState {
                 .BindStaticResources
                 .unwrap_unchecked()(
                 self.sys_ptr,
-                diligent_sys::SHADER_TYPE::from(&shader_type),
+                (&shader_type).into(),
                 resource_mapping.sys_ptr,
                 flags,
             )
@@ -1235,11 +1226,7 @@ impl PipelineState {
             (*self.virtual_functions)
                 .PipelineState
                 .GetStaticVariableByName
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                diligent_sys::SHADER_TYPE::from(&shader_type),
-                name.as_ptr(),
-            )
+                .unwrap_unchecked()(self.sys_ptr, (&shader_type).into(), name.as_ptr())
         };
 
         if shader_resource_variable.is_null() {
