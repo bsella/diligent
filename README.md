@@ -6,7 +6,7 @@ This port consists of a wrapper around Diligent Engine that follows the Rust par
 
 
 > [!WARNING]  
-> This crate is in its very early stages and everything in it is prone to change.
+> This crate is in its early stages and everything in it is prone to change. Please keep your expectations low.
 
 ## The Rust paradigm
 
@@ -50,22 +50,18 @@ The rust solution provides an enum that can only be one value at any given time.
 pub enum ShaderSource<'a> {
     FilePath(PathBuf),
     SourceCode(&'a str),
-    ByteCode(*const c_void, usize),
+    ByteCode(&'a [u8]),
 }
 ```
 
 This greatly clarifies what parameters need to be set in the struct and ensures their integrity and validity.
 
-### Default parameters
-
-Unlike C++, rust does not have default constructors or default parameter values.
-
 ## Features
 
-> TODO
+Each of the supported graphics backends is a feature of this crate.
+For now, the supported backends are `vulkan`, `opengl`, `d3d11` and `d3d12`.
 
-> [!WARNING]  
-> For now, this port is only supported on Linux. But it will be supported on all other platforms.
+For now, this port is only supported on Linux and Window. But it will be supported on all other platforms.
 
 ## Samples
 All of the samples present in the [DiligentSamples repo](https://github.com/DiligentGraphics/DiligentSamples) will be ported (rewritten) in rust as examples in this crate.
