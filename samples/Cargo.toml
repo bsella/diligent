@@ -47,3 +47,7 @@ path = "src/tutorials/tutorial03_texturing.rs"
 [[example]]
 name = "Tutorial04_Instancing"
 path = "src/tutorials/tutorial04_instancing.rs"
+
+[[example]]
+name = "Tutorial05_TextureArray"
+path = "src/tutorials/tutorial05_texture_array.rs"

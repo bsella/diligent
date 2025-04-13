@@ -59,6 +59,20 @@
                 "cwd": "${workspaceFolder}/samples",
             },
             "cwd": "${workspaceFolder}/samples/src/tutorials/assets",
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Tutorial05 : TextureArray",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example",
+                    "Tutorial05_TextureArray"
+                ],
+                "cwd": "${workspaceFolder}/samples",
+            },
+            "cwd": "${workspaceFolder}/samples/src/tutorials/assets",
         }
     ]
 }
