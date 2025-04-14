@@ -175,8 +175,8 @@ impl SampleBase for Instancing {
             swap_chain_desc.color_buffer_format,
             swap_chain_desc.depth_buffer_format,
             &shader_source_factory,
-            "cube_inst.vsh",
-            "cube_inst.psh",
+            "assets/cube_inst.vsh",
+            "assets/cube_inst.psh",
             GeometryPrimitiveVertexFlags::None,
             layout_elements,
             1,
@@ -220,7 +220,7 @@ impl SampleBase for Instancing {
         .unwrap();
 
         let texture_srv = {
-            let image = image::ImageReader::open("DGLogo.png")
+            let image = image::ImageReader::open("assets/DGLogo.png")
                 .unwrap()
                 .decode()
                 .unwrap();

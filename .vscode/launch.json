@@ -16,7 +16,7 @@
                 ],
                 "cwd": "${workspaceFolder}/samples",
             },
-            "cwd": "${workspaceFolder}/samples/src/tutorials/assets",
+            "cwd": "${workspaceFolder}/samples",
         },
         {
             "type": "lldb",
@@ -30,7 +30,7 @@
                 ],
                 "cwd": "${workspaceFolder}/samples",
             },
-            "cwd": "${workspaceFolder}/samples/src/tutorials/assets",
+            "cwd": "${workspaceFolder}/samples",
         },
         {
             "type": "lldb",
@@ -44,7 +44,7 @@
                 ],
                 "cwd": "${workspaceFolder}/samples",
             },
-            "cwd": "${workspaceFolder}/samples/src/tutorials/assets",
+            "cwd": "${workspaceFolder}/samples",
         },
         {
             "type": "lldb",
@@ -58,7 +58,7 @@
                 ],
                 "cwd": "${workspaceFolder}/samples",
             },
-            "cwd": "${workspaceFolder}/samples/src/tutorials/assets",
+            "cwd": "${workspaceFolder}/samples",
         },
         {
             "type": "lldb",
@@ -72,7 +72,7 @@
                 ],
                 "cwd": "${workspaceFolder}/samples",
             },
-            "cwd": "${workspaceFolder}/samples/src/tutorials/assets",
+            "cwd": "${workspaceFolder}/samples",
         }
     ]
 }

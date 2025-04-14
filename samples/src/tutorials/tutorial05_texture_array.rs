@@ -193,8 +193,8 @@ impl SampleBase for TextureArray {
             swap_chain_desc.color_buffer_format,
             swap_chain_desc.depth_buffer_format,
             &shader_source_factory,
-            "cube_inst_tex_array.vsh",
-            "cube_inst_tex_array.psh",
+            "assets/cube_inst_tex_array.vsh",
+            "assets/cube_inst_tex_array.psh",
             GeometryPrimitiveVertexFlags::None,
             layout_elements,
             1,
@@ -239,7 +239,7 @@ impl SampleBase for TextureArray {
 
         let texture_srv = {
             let images: [DynamicImage; NUM_TEXTURES] = std::array::from_fn(|i| i).map(|tex_id| {
-                image::ImageReader::open(format!("DGLogo{}.png", tex_id))
+                image::ImageReader::open(format!("assets/DGLogo{}.png", tex_id))
                     .unwrap()
                     .decode()
                     .unwrap()

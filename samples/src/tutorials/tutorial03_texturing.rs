@@ -117,7 +117,7 @@ impl SampleBase for Texturing {
         let vertex_shader = {
             let shader_ci = common_shader_ci(
                 "Cube VS",
-                ShaderSource::FilePath(Path::new("cube_texture.vsh")),
+                ShaderSource::FilePath(Path::new("assets/cube_texture.vsh")),
                 ShaderType::Vertex,
                 convert_ps_output_to_gamma,
                 &shader_source_factory,
@@ -144,7 +144,7 @@ impl SampleBase for Texturing {
         let pixel_shader = {
             let shader_ci = common_shader_ci(
                 "Cube PS",
-                ShaderSource::FilePath(Path::new("cube_texture.psh")),
+                ShaderSource::FilePath(Path::new("assets/cube_texture.psh")),
                 ShaderType::Pixel,
                 convert_ps_output_to_gamma,
                 &shader_source_factory,
@@ -314,7 +314,7 @@ impl SampleBase for Texturing {
         };
 
         let texture_srv = {
-            let image = image::ImageReader::open("DGLogo.png")
+            let image = image::ImageReader::open("assets/DGLogo.png")
                 .unwrap()
                 .decode()
                 .unwrap();

@@ -111,7 +111,7 @@ impl SampleBase for Cube {
         let vertex_shader = {
             let shader_ci = common_shader_ci(
                 "Cube VS",
-                ShaderSource::FilePath(Path::new("cube.vsh")),
+                ShaderSource::FilePath(Path::new("assets/cube.vsh")),
                 ShaderType::Vertex,
                 convert_ps_output_to_gamma,
                 &shader_source_factory,
@@ -138,7 +138,7 @@ impl SampleBase for Cube {
         let pixel_shader = {
             let shader_ci = common_shader_ci(
                 "Cube PS",
-                ShaderSource::FilePath(Path::new("cube.psh")),
+                ShaderSource::FilePath(Path::new("assets/cube.psh")),
                 ShaderType::Pixel,
                 convert_ps_output_to_gamma,
                 &shader_source_factory,
