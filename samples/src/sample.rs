@@ -91,4 +91,6 @@ pub trait SampleBase {
     fn window_resize(&mut self, _width: u32, _height: u32) {}
 
     fn handle_event(&mut self, _event: EventResult) {}
+
+    fn release_swap_chain_buffers(&mut self) {}
 }

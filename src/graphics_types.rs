@@ -1834,6 +1834,20 @@ impl From<&diligent_sys::DisplayModeAttribs> for DisplayModeAttribs {
     }
 }
 
+impl From<&DisplayModeAttribs> for diligent_sys::DisplayModeAttribs {
+    fn from(value: &DisplayModeAttribs) -> Self {
+        diligent_sys::DisplayModeAttribs {
+            Width: value.width,
+            Height: value.height,
+            Format: (&value.format).into(),
+            RefreshRateNumerator: value.refresh_rate_numerator,
+            RefreshRateDenominator: value.refresh_rate_denominator,
+            Scaling: (&value.scaling_mode).into(),
+            ScanlineOrder: (&value.scanline_order).into(),
+        }
+    }
+}
+
 pub struct FullScreenModeDesc {
     fullscreen: bool,
     refresh_rate_numerator: u32,

@@ -25,8 +25,6 @@ use diligent_tools::{
     },
 };
 
-use imgui::WindowFlags;
-
 #[cfg(feature = "vulkan")]
 use diligent::vk::engine_factory_vk::{
     get_engine_factory_vk, DeviceFeaturesVk, EngineFactoryVk, EngineVkCreateInfo,
@@ -70,6 +68,8 @@ pub struct SampleApp<Sample: SampleBase> {
     display_modes: Vec<DisplayModeAttribs>,
     display_modes_strings: Vec<String>,
     selected_display_mode: usize,
+
+    fullscreen_mode: bool,
 }
 
 enum EngineFactory {
@@ -135,7 +135,7 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
                     ],
                     imgui::Condition::Always,
                 )
-                .flags(WindowFlags::NO_RESIZE)
+                .flags(imgui::WindowFlags::NO_RESIZE)
                 .collapsed(true, imgui::Condition::FirstUseEver)
                 .begin()
             {
@@ -157,6 +157,25 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
                         self.display_modes_strings.as_slice(),
                         |label| label.into(),
                     );
+                }
+
+                if self.fullscreen_mode {
+                    if ui.button("Go Windowed") {
+                        self.sample.release_swap_chain_buffers();
+                        self.fullscreen_mode = false;
+                        self.swap_chain.set_windowed_mode();
+                    }
+                } else {
+                    if !self.display_modes.is_empty() {
+                        if ui.button("Go Full Screen") {
+                            self.sample.release_swap_chain_buffers();
+
+                            let display_mode =
+                                self.display_modes.get(self.selected_display_mode).unwrap();
+                            self.fullscreen_mode = true;
+                            self.swap_chain.set_fullscreen_mode(display_mode);
+                        }
+                    }
                 }
 
                 // If you're noticing any difference in frame rate when you enable vsync,
@@ -514,6 +533,8 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             display_modes,
             display_modes_strings,
             selected_display_mode: 0,
+
+            fullscreen_mode: false,
         }
     }
 

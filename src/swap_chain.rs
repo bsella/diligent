@@ -1,6 +1,8 @@
 use bitflags::bitflags;
 use static_assertions::const_assert;
 
+use crate::graphics_types::DisplayModeAttribs;
+
 use super::{
     graphics_types::{SurfaceTransform, TextureFormat},
     object::Object,
@@ -190,12 +192,13 @@ impl SwapChain {
         }
     }
 
-    pub fn set_fullscreen_mode(&self, display_mode: &diligent_sys::DisplayModeAttribs) {
+    pub fn set_fullscreen_mode(&self, display_mode: &DisplayModeAttribs) {
+        let display_mode = display_mode.into();
         unsafe {
             (*self.virtual_functions)
                 .SwapChain
                 .SetFullscreenMode
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(display_mode))
+                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(&display_mode))
         }
     }
 
