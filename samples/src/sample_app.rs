@@ -1,6 +1,5 @@
 use diligent::{
     accessories::get_render_device_type_string,
-    api_info::API_VERSION,
     device_context::ResourceStateTransitionMode,
     engine_factory::{AsEngineFactory, EngineCreateInfo},
     graphics_types::{
@@ -9,6 +8,7 @@ use diligent::{
     },
     platforms::native_window::NativeWindow,
     swap_chain::{SwapChain, SwapChainDesc},
+    API_VERSION,
 };
 
 #[allow(unused_imports)]

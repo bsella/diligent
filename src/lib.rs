@@ -1,9 +1,10 @@
+pub const API_VERSION: u32 = diligent_sys::DILIGENT_API_VERSION;
+
 mod device_object;
 mod object;
 
 pub mod accessories;
 
-pub mod api_info;
 pub mod geometry_primitives;
 
 pub mod graphics_utilities;
