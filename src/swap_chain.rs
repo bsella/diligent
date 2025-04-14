@@ -98,10 +98,10 @@ impl From<&SwapChainDesc> for diligent_sys::SwapChainDesc {
         diligent_sys::SwapChainDesc {
             Width: value.width,
             Height: value.height,
-            ColorBufferFormat: diligent_sys::TEXTURE_FORMAT::from(&value.color_buffer_format),
-            DepthBufferFormat: diligent_sys::TEXTURE_FORMAT::from(&value.depth_buffer_format),
+            ColorBufferFormat: (&value.color_buffer_format).into(),
+            DepthBufferFormat: (&value.depth_buffer_format).into(),
             Usage: value.usage.bits(),
-            PreTransform: diligent_sys::SURFACE_TRANSFORM::from(&value.pre_transform),
+            PreTransform: (&value.pre_transform).into(),
             BufferCount: value.buffer_count,
             DefaultDepthValue: value.default_depth_value,
             DefaultStencilValue: value.default_stencil_value,
@@ -115,10 +115,10 @@ impl From<&diligent_sys::SwapChainDesc> for SwapChainDesc {
         SwapChainDesc {
             width: value.Width,
             height: value.Height,
-            color_buffer_format: TextureFormat::from(&value.ColorBufferFormat),
-            depth_buffer_format: TextureFormat::from(&value.DepthBufferFormat),
+            color_buffer_format: (&value.ColorBufferFormat).into(),
+            depth_buffer_format: (&value.DepthBufferFormat).into(),
             usage: SwapChainUsageFlags::from_bits_retain(value.Usage),
-            pre_transform: SurfaceTransform::from(&value.PreTransform),
+            pre_transform: (&value.PreTransform).into(),
             buffer_count: value.BufferCount,
             default_depth_value: value.DefaultDepthValue,
             default_stencil_value: value.DefaultStencilValue,
@@ -184,10 +184,7 @@ impl SwapChain {
                 .SwapChain
                 .Resize
                 .unwrap_unchecked()(
-                self.sys_ptr,
-                new_width,
-                new_height,
-                diligent_sys::SURFACE_TRANSFORM::from(&new_transform),
+                self.sys_ptr, new_width, new_height, (&new_transform).into()
             )
         }
     }
