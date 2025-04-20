@@ -1903,6 +1903,70 @@ impl FullScreenModeDesc {
     }
 }
 
+pub enum StateTransitionType {
+    Immediate,
+    Begin,
+    End,
+}
+
+bitflags! {
+    pub struct AccessFlags : diligent_sys::ACCESS_FLAGS {
+        const None                       = diligent_sys::ACCESS_FLAG_NONE as diligent_sys::ACCESS_FLAGS;
+        const IndirectCommandRead        = diligent_sys::ACCESS_FLAG_INDIRECT_COMMAND_READ as diligent_sys::ACCESS_FLAGS;
+        const IndexRead                  = diligent_sys::ACCESS_FLAG_INDEX_READ as diligent_sys::ACCESS_FLAGS;
+        const VertexRead                 = diligent_sys::ACCESS_FLAG_VERTEX_READ as diligent_sys::ACCESS_FLAGS;
+        const UniformRead                = diligent_sys::ACCESS_FLAG_UNIFORM_READ as diligent_sys::ACCESS_FLAGS;
+        const InputAttachmentRead        = diligent_sys::ACCESS_FLAG_INPUT_ATTACHMENT_READ as diligent_sys::ACCESS_FLAGS;
+        const ShaderRead                 = diligent_sys::ACCESS_FLAG_SHADER_READ as diligent_sys::ACCESS_FLAGS;
+        const ShaderWrite                = diligent_sys::ACCESS_FLAG_SHADER_WRITE as diligent_sys::ACCESS_FLAGS;
+        const RenderTargetRead           = diligent_sys::ACCESS_FLAG_RENDER_TARGET_READ as diligent_sys::ACCESS_FLAGS;
+        const RenderTargetWrite          = diligent_sys::ACCESS_FLAG_RENDER_TARGET_WRITE as diligent_sys::ACCESS_FLAGS;
+        const Depth_stencilRead          = diligent_sys::ACCESS_FLAG_DEPTH_STENCIL_READ as diligent_sys::ACCESS_FLAGS;
+        const Depth_stencilWrite         = diligent_sys::ACCESS_FLAG_DEPTH_STENCIL_WRITE as diligent_sys::ACCESS_FLAGS;
+        const CopySrc                    = diligent_sys::ACCESS_FLAG_COPY_SRC as diligent_sys::ACCESS_FLAGS;
+        const CopyDst                    = diligent_sys::ACCESS_FLAG_COPY_DST as diligent_sys::ACCESS_FLAGS;
+        const HostRead                   = diligent_sys::ACCESS_FLAG_HOST_READ as diligent_sys::ACCESS_FLAGS;
+        const HostWrite                  = diligent_sys::ACCESS_FLAG_HOST_WRITE as diligent_sys::ACCESS_FLAGS;
+        const MemoryRead                 = diligent_sys::ACCESS_FLAG_MEMORY_READ as diligent_sys::ACCESS_FLAGS;
+        const MemoryWrite                = diligent_sys::ACCESS_FLAG_MEMORY_WRITE as diligent_sys::ACCESS_FLAGS;
+        const ConditionalRenderingRead   = diligent_sys::ACCESS_FLAG_CONDITIONAL_RENDERING_READ as diligent_sys::ACCESS_FLAGS;
+        const ShadingRateTextureRead     = diligent_sys::ACCESS_FLAG_SHADING_RATE_TEXTURE_READ as diligent_sys::ACCESS_FLAGS;
+        const AccelerationStructureRead  = diligent_sys::ACCESS_FLAG_ACCELERATION_STRUCTURE_READ as diligent_sys::ACCESS_FLAGS;
+        const AccelerationStructureWrite = diligent_sys::ACCESS_FLAG_ACCELERATION_STRUCTURE_WRITE as diligent_sys::ACCESS_FLAGS;
+        const FragmentDensityMapRead     = diligent_sys::ACCESS_FLAG_FRAGMENT_DENSITY_MAP_READ as diligent_sys::ACCESS_FLAGS;
+        const Default                    = diligent_sys::ACCESS_FLAG_DEFAULT as diligent_sys::ACCESS_FLAGS;
+    }
+}
+
+bitflags! {
+    pub struct PipelineStageFlags : diligent_sys::PIPELINE_STAGE_FLAGS {
+        const Undefined                  = diligent_sys::PIPELINE_STAGE_FLAG_UNDEFINED                    as diligent_sys::PIPELINE_STAGE_FLAGS;
+        const TopOfPipe                  = diligent_sys::PIPELINE_STAGE_FLAG_TOP_OF_PIPE                  as diligent_sys::PIPELINE_STAGE_FLAGS;
+        const DrawIndirect               = diligent_sys::PIPELINE_STAGE_FLAG_DRAW_INDIRECT                as diligent_sys::PIPELINE_STAGE_FLAGS;
+        const VertexInput                = diligent_sys::PIPELINE_STAGE_FLAG_VERTEX_INPUT                 as diligent_sys::PIPELINE_STAGE_FLAGS;
+        const VertexShader               = diligent_sys::PIPELINE_STAGE_FLAG_VERTEX_SHADER                as diligent_sys::PIPELINE_STAGE_FLAGS;
+        const HullShader                 = diligent_sys::PIPELINE_STAGE_FLAG_HULL_SHADER                  as diligent_sys::PIPELINE_STAGE_FLAGS;
+        const DomainShader               = diligent_sys::PIPELINE_STAGE_FLAG_DOMAIN_SHADER                as diligent_sys::PIPELINE_STAGE_FLAGS;
+        const GeometryShader             = diligent_sys::PIPELINE_STAGE_FLAG_GEOMETRY_SHADER              as diligent_sys::PIPELINE_STAGE_FLAGS;
+        const PixelShader                = diligent_sys::PIPELINE_STAGE_FLAG_PIXEL_SHADER                 as diligent_sys::PIPELINE_STAGE_FLAGS;
+        const EarlyFragmentTests         = diligent_sys::PIPELINE_STAGE_FLAG_EARLY_FRAGMENT_TESTS         as diligent_sys::PIPELINE_STAGE_FLAGS;
+        const Late_fragmentTests         = diligent_sys::PIPELINE_STAGE_FLAG_LATE_FRAGMENT_TESTS          as diligent_sys::PIPELINE_STAGE_FLAGS;
+        const RenderTarget               = diligent_sys::PIPELINE_STAGE_FLAG_RENDER_TARGET                as diligent_sys::PIPELINE_STAGE_FLAGS;
+        const ComputeShader              = diligent_sys::PIPELINE_STAGE_FLAG_COMPUTE_SHADER               as diligent_sys::PIPELINE_STAGE_FLAGS;
+        const Transfer                   = diligent_sys::PIPELINE_STAGE_FLAG_TRANSFER                     as diligent_sys::PIPELINE_STAGE_FLAGS;
+        const BottomOfPipe               = diligent_sys::PIPELINE_STAGE_FLAG_BOTTOM_OF_PIPE               as diligent_sys::PIPELINE_STAGE_FLAGS;
+        const Host                       = diligent_sys::PIPELINE_STAGE_FLAG_HOST                         as diligent_sys::PIPELINE_STAGE_FLAGS;
+        const ConditionalRendering       = diligent_sys::PIPELINE_STAGE_FLAG_CONDITIONAL_RENDERING        as diligent_sys::PIPELINE_STAGE_FLAGS;
+        const ShadingRateTexture         = diligent_sys::PIPELINE_STAGE_FLAG_SHADING_RATE_TEXTURE         as diligent_sys::PIPELINE_STAGE_FLAGS;
+        const RayTracingShader           = diligent_sys::PIPELINE_STAGE_FLAG_RAY_TRACING_SHADER           as diligent_sys::PIPELINE_STAGE_FLAGS;
+        const AccelerationStructureBuild = diligent_sys::PIPELINE_STAGE_FLAG_ACCELERATION_STRUCTURE_BUILD as diligent_sys::PIPELINE_STAGE_FLAGS;
+        const TaskShader                 = diligent_sys::PIPELINE_STAGE_FLAG_TASK_SHADER                  as diligent_sys::PIPELINE_STAGE_FLAGS;
+        const MeshShader                 = diligent_sys::PIPELINE_STAGE_FLAG_MESH_SHADER                  as diligent_sys::PIPELINE_STAGE_FLAGS;
+        const FragmentDensityProcess     = diligent_sys::PIPELINE_STAGE_FLAG_FRAGMENT_DENSITY_PROCESS     as diligent_sys::PIPELINE_STAGE_FLAGS;
+        const Default                    = diligent_sys::PIPELINE_STAGE_FLAG_DEFAULT                      as diligent_sys::PIPELINE_STAGE_FLAGS;
+    }
+}
+
 //pub struct ImmediateContextCreateInfo<'a> {
 //    name: &'a CStr,
 //    queue_id: u8,

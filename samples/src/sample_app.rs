@@ -45,6 +45,9 @@ use diligent::d3d12::engine_factory_d3d12::{
     get_engine_factory_d3d12, EngineD3D12CreateInfo, EngineFactoryD3D12,
 };
 
+#[allow(unused_imports)]
+use crate::sample;
+
 use crate::sample_app_settings::SampleAppSettings;
 
 use super::{sample::SampleBase, sample_app_settings::parse_sample_app_settings};
@@ -342,12 +345,17 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
                     let mut engine_vk_create_info = EngineVkCreateInfo::new(engine_create_info);
 
                     if app_settings.vk_compatibility {
-                        engine_vk_create_info =
-                            engine_vk_create_info.features_vk(DeviceFeaturesVk::new(
-                                DeviceFeatureState::Disabled,
-                                DeviceFeatureState::Disabled,
-                            ));
-                    }
+                        engine_vk_create_info.features_vk = DeviceFeaturesVk::new(
+                            DeviceFeatureState::Disabled,
+                            DeviceFeatureState::Disabled,
+                        );
+                    };
+
+                    GenericSample::modify_engine_init_info(
+                        &mut sample::EngineCreateInfo::EngineVkCreateInfo(
+                            &mut engine_vk_create_info,
+                        ),
+                    );
 
                     let (render_device, immediate_contexts, deferred_contexts) = engine_factory
                         .create_device_and_contexts(&engine_vk_create_info)

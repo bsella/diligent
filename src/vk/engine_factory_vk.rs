@@ -1,5 +1,6 @@
-use std::ffi::c_void;
-
+use std::ffi::CString;
+use std::ops::Deref;
+use std::ops::DerefMut;
 use std::path::PathBuf;
 
 use static_assertions::const_assert;
@@ -33,28 +34,42 @@ impl DeviceFeaturesVk {
 pub struct EngineVkCreateInfo {
     engine_create_info: EngineCreateInfo,
 
-    features_vk: DeviceFeaturesVk,
+    pub features_vk: DeviceFeaturesVk,
 
-    instance_layer_names: Vec<String>,
-    instance_extension_names: Vec<String>,
-    device_extension_names: Vec<String>,
-    device_extension_features: *mut c_void,
-    vk_allocator: *mut c_void,
-    ignore_debug_message_names: Vec<String>,
+    pub instance_layer_names: Vec<CString>,
+    pub instance_extension_names: Vec<CString>,
+    pub device_extension_names: Vec<CString>,
+    pub ignore_debug_message_names: Vec<CString>,
+    // TODO
+    //pub device_extension_features: *mut c_void,
+    //pub vk_allocator: *mut c_void,
+    pub main_descriptor_pool_size: diligent_sys::VulkanDescriptorPoolSize,
+    pub dynamic_descriptor_pool_size: diligent_sys::VulkanDescriptorPoolSize,
 
-    main_descriptor_pool_size: diligent_sys::VulkanDescriptorPoolSize,
-    dynamic_descriptor_pool_size: diligent_sys::VulkanDescriptorPoolSize,
+    pub device_local_memory_page_size: u32,
+    pub host_visible_memory_page_size: u32,
+    pub device_local_memory_reserve_size: u32,
+    pub host_visible_memory_reserve_size: u32,
+    pub upload_heap_page_size: u32,
+    pub dynamic_heap_size: u32,
+    pub dynamic_heap_page_size: u32,
 
-    device_local_memory_page_size: u32,
-    host_visible_memory_page_size: u32,
-    device_local_memory_reserve_size: u32,
-    host_visible_memory_reserve_size: u32,
-    upload_heap_page_size: u32,
-    dynamic_heap_size: u32,
-    dynamic_heap_page_size: u32,
+    pub query_pool_sizes: [u32; 6],
+    pub dx_compiler_path: Option<PathBuf>,
+}
 
-    query_pool_sizes: [u32; 6],
-    dx_compiler_path: Option<PathBuf>,
+impl Deref for EngineVkCreateInfo {
+    type Target = EngineCreateInfo;
+
+    fn deref(&self) -> &Self::Target {
+        &self.engine_create_info
+    }
+}
+
+impl DerefMut for EngineVkCreateInfo {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.engine_create_info
+    }
 }
 
 impl EngineVkCreateInfo {
@@ -70,8 +85,6 @@ impl EngineVkCreateInfo {
             instance_layer_names: Vec::new(),
             instance_extension_names: Vec::new(),
             device_extension_names: Vec::new(),
-            device_extension_features: std::ptr::null_mut(),
-            vk_allocator: std::ptr::null_mut(),
             ignore_debug_message_names: Vec::new(),
             main_descriptor_pool_size: diligent_sys::VulkanDescriptorPoolSize {
                 MaxDescriptorSets: 8192,
@@ -120,11 +133,6 @@ impl EngineVkCreateInfo {
 
             dx_compiler_path: None,
         }
-    }
-
-    pub fn features_vk(mut self, features_vk: DeviceFeaturesVk) -> Self {
-        self.features_vk = features_vk;
-        self
     }
 }
 
@@ -190,28 +198,29 @@ impl EngineFactoryVk {
         );
 
         {
-            fn vec_string_to_vec_cstring_ptr(
-                strings: &[String],
-            ) -> (Vec<std::ffi::CString>, Vec<*const i8>) {
-                let cstrings = strings
-                    .iter()
-                    .map(|s| std::ffi::CString::new(s.as_str()).unwrap())
-                    .collect::<Vec<std::ffi::CString>>();
-                let ptrs = cstrings
-                    .iter()
-                    .map(|s| s.as_ptr())
-                    .collect::<Vec<*const i8>>();
-                (cstrings, ptrs)
-            }
+            let instance_layer_names = create_info
+                .instance_layer_names
+                .iter()
+                .map(|s| s.as_ptr())
+                .collect::<Vec<*const i8>>();
 
-            let (_a, instance_layer_names) =
-                vec_string_to_vec_cstring_ptr(&create_info.instance_layer_names);
-            let (_a, instance_extension_names) =
-                vec_string_to_vec_cstring_ptr(&create_info.instance_extension_names);
-            let (_a, device_extension_names) =
-                vec_string_to_vec_cstring_ptr(&create_info.device_extension_names);
-            let (_a, ignore_debug_message_names) =
-                vec_string_to_vec_cstring_ptr(&create_info.ignore_debug_message_names);
+            let instance_extension_names = create_info
+                .instance_extension_names
+                .iter()
+                .map(|s| s.as_ptr())
+                .collect::<Vec<*const i8>>();
+
+            let device_extension_names = create_info
+                .device_extension_names
+                .iter()
+                .map(|s| s.as_ptr())
+                .collect::<Vec<*const i8>>();
+
+            let ignore_debug_message_names = create_info
+                .ignore_debug_message_names
+                .iter()
+                .map(|s| s.as_ptr())
+                .collect::<Vec<*const i8>>();
 
             let create_info = diligent_sys::EngineVkCreateInfo {
                 _EngineCreateInfo: (&create_info.engine_create_info).into(),
@@ -238,9 +247,9 @@ impl EngineFactoryVk {
                 } else {
                     device_extension_names.as_ptr()
                 },
-                pDeviceExtensionFeatures: create_info.device_extension_features,
+                pDeviceExtensionFeatures: std::ptr::null_mut(),
 
-                pVkAllocator: create_info.vk_allocator,
+                pVkAllocator: std::ptr::null_mut(),
 
                 IgnoreDebugMessageCount: create_info.ignore_debug_message_names.len() as u32,
                 ppIgnoreDebugMessageNames: if ignore_debug_message_names.is_empty() {

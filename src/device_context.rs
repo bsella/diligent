@@ -3,6 +3,13 @@ use std::{ffi::CString, ops::Deref};
 use bitflags::bitflags;
 use static_assertions::const_assert;
 
+use crate::{
+    device_object::DeviceObject,
+    frame_buffer::Framebuffer,
+    graphics_types::{ResourceState, StateTransitionType, TextureFormat},
+    render_pass::RenderPass,
+};
+
 use super::{
     buffer::{Buffer, BufferMapReadToken, BufferMapReadWriteToken, BufferMapWriteToken},
     fence::Fence,
@@ -269,6 +276,201 @@ impl<'a> Drop for ScopedDebugGroup<'a> {
     }
 }
 
+bitflags! {
+    pub struct StateTransitionFlags: diligent_sys::STATE_TRANSITION_FLAGS {
+        const None           = diligent_sys::STATE_TRANSITION_FLAG_NONE as diligent_sys::STATE_TRANSITION_FLAGS;
+        const UpdateState    = diligent_sys::STATE_TRANSITION_FLAG_UPDATE_STATE as diligent_sys::STATE_TRANSITION_FLAGS;
+        const DiscardContent = diligent_sys::STATE_TRANSITION_FLAG_DISCARD_CONTENT as diligent_sys::STATE_TRANSITION_FLAGS;
+        const Aliasing       = diligent_sys::STATE_TRANSITION_FLAG_ALIASING as diligent_sys::STATE_TRANSITION_FLAGS;
+    }
+}
+
+pub struct StateTransitionDesc<'a> {
+    resource: &'a DeviceObject,
+    new_state: ResourceState,
+    first_mip_level: u32,
+    mip_levels_count: u32,
+    first_array_slice: u32,
+    array_slice_count: u32,
+    old_state: Option<ResourceState>,
+    transition_type: StateTransitionType,
+    flags: StateTransitionFlags,
+}
+
+impl<'a> StateTransitionDesc<'a> {
+    pub fn new(resource: &'a impl AsRef<DeviceObject>, new_state: ResourceState) -> Self {
+        StateTransitionDesc {
+            resource: resource.as_ref(),
+            new_state,
+            first_array_slice: 0,
+            array_slice_count: diligent_sys::REMAINING_ARRAY_SLICES,
+            first_mip_level: 0,
+            mip_levels_count: diligent_sys::REMAINING_MIP_LEVELS,
+            old_state: None,
+            transition_type: StateTransitionType::Immediate,
+            flags: StateTransitionFlags::None,
+        }
+    }
+
+    pub fn old_state(mut self, old_state: ResourceState) -> Self {
+        self.old_state = Some(old_state);
+        self
+    }
+
+    pub fn first_mip_level(mut self, first_mip_level: u32) -> Self {
+        self.first_mip_level = first_mip_level;
+        self
+    }
+    pub fn mip_levels_count(mut self, mip_levels_count: u32) -> Self {
+        self.mip_levels_count = mip_levels_count;
+        self
+    }
+    pub fn first_array_slice(mut self, first_array_slice: u32) -> Self {
+        self.first_array_slice = first_array_slice;
+        self
+    }
+    pub fn array_slice_count(mut self, array_slice_count: u32) -> Self {
+        self.array_slice_count = array_slice_count;
+        self
+    }
+    pub fn transition_type(mut self, transition_type: StateTransitionType) -> Self {
+        self.transition_type = transition_type;
+        self
+    }
+    pub fn flags(mut self, flags: StateTransitionFlags) -> Self {
+        self.flags = flags;
+        self
+    }
+}
+
+impl<'a> From<&StateTransitionDesc<'a>> for diligent_sys::StateTransitionDesc {
+    fn from(value: &StateTransitionDesc) -> Self {
+        diligent_sys::StateTransitionDesc {
+            pResource: value.resource.sys_ptr,
+            NewState: value.new_state.bits(),
+            OldState: value
+                .old_state
+                .as_ref()
+                .map_or(diligent_sys::RESOURCE_STATE_UNKNOWN, |state| state.bits()),
+            FirstArraySlice: value.first_array_slice,
+            ArraySliceCount: value.array_slice_count,
+            FirstMipLevel: value.first_mip_level,
+            MipLevelsCount: value.mip_levels_count,
+            TransitionType: match value.transition_type {
+                StateTransitionType::Immediate => diligent_sys::STATE_TRANSITION_TYPE_IMMEDIATE,
+                StateTransitionType::Begin => diligent_sys::STATE_TRANSITION_TYPE_BEGIN,
+                StateTransitionType::End => diligent_sys::STATE_TRANSITION_TYPE_END,
+            } as diligent_sys::STATE_TRANSITION_TYPE,
+            Flags: value.flags.bits(),
+            // TODO
+            pResourceBefore: std::ptr::null_mut(),
+        }
+    }
+}
+
+pub struct CommandList {
+    pub(crate) sys_ptr: *mut diligent_sys::ICommandList,
+
+    device_object: DeviceObject,
+}
+
+impl AsRef<DeviceObject> for CommandList {
+    fn as_ref(&self) -> &DeviceObject {
+        &self.device_object
+    }
+}
+
+impl CommandList {
+    fn new(sys_ptr: *mut diligent_sys::ICommandList) -> Self {
+        // Both base and derived classes have exactly the same size.
+        // This means that we can up-cast to the base class without worrying about layout offset between both classes
+        const_assert!(
+            std::mem::size_of::<diligent_sys::IDeviceObject>()
+                == std::mem::size_of::<diligent_sys::ICommandList>()
+        );
+
+        CommandList {
+            sys_ptr,
+            device_object: DeviceObject::new(sys_ptr as *mut diligent_sys::IDeviceObject),
+        }
+    }
+}
+
+pub struct DepthStencilClearValue {
+    pub depth: f32,
+    pub stencil: u8,
+}
+
+pub struct OptimizedClearValue {
+    pub format: TextureFormat,
+    pub color: [f32; 4usize],
+    pub depth_stencil: DepthStencilClearValue,
+}
+
+pub struct BeginRenderPassAttribs<'a> {
+    pub render_pass: &'a RenderPass,
+    pub frame_buffer: &'a Framebuffer,
+    pub clear_values: Vec<OptimizedClearValue>,
+    pub state_transition_mode: ResourceStateTransitionMode,
+}
+
+pub struct RenderPassToken<'a> {
+    context: &'a DeviceContext,
+}
+
+impl<'a> RenderPassToken<'a> {
+    pub fn new(context: &'a DeviceContext, attribs: &BeginRenderPassAttribs) -> Self {
+        let clear_values = attribs
+            .clear_values
+            .iter()
+            .map(|clear_value| diligent_sys::OptimizedClearValue {
+                Color: clear_value.color,
+                DepthStencil: diligent_sys::DepthStencilClearValue {
+                    Depth: clear_value.depth_stencil.depth,
+                    Stencil: clear_value.depth_stencil.stencil,
+                },
+                Format: (&clear_value.format).into(),
+            })
+            .collect::<Vec<_>>();
+
+        let attribs = diligent_sys::BeginRenderPassAttribs {
+            pRenderPass: attribs.render_pass.sys_ptr,
+            ClearValueCount: attribs.clear_values.len() as u32,
+            pClearValues: clear_values.as_ptr() as *mut diligent_sys::OptimizedClearValue,
+            StateTransitionMode: (&attribs.state_transition_mode).into(),
+            pFramebuffer: attribs.frame_buffer.sys_ptr,
+        };
+
+        unsafe {
+            (*context.virtual_functions)
+                .DeviceContext
+                .BeginRenderPass
+                .unwrap_unchecked()(context.sys_ptr, std::ptr::from_ref(&attribs))
+        }
+        RenderPassToken { context }
+    }
+
+    pub fn next_subpass(&self) {
+        unsafe {
+            (*self.context.virtual_functions)
+                .DeviceContext
+                .NextSubpass
+                .unwrap_unchecked()(self.context.sys_ptr)
+        }
+    }
+}
+
+impl Drop for RenderPassToken<'_> {
+    fn drop(&mut self) {
+        unsafe {
+            (*self.context.virtual_functions)
+                .DeviceContext
+                .EndRenderPass
+                .unwrap_unchecked()(self.context.sys_ptr)
+        }
+    }
+}
+
 pub struct DeviceContext {
     pub(crate) sys_ptr: *mut diligent_sys::IDeviceContext,
     pub(crate) virtual_functions: *mut diligent_sys::IDeviceContextVtbl,
@@ -484,31 +686,8 @@ impl DeviceContext {
         }
     }
 
-    pub fn begin_render_pass(&self, attribs: &diligent_sys::BeginRenderPassAttribs) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .BeginRenderPass
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(attribs))
-        }
-    }
-
-    pub fn next_subpass(&self) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .NextSubpass
-                .unwrap_unchecked()(self.sys_ptr)
-        }
-    }
-
-    pub fn end_render_pass(&self) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .EndRenderPass
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+    pub fn new_render_pass(&self, attribs: &BeginRenderPassAttribs) -> RenderPassToken {
+        RenderPassToken::new(self, attribs)
     }
 
     pub fn draw(&self, attribs: &DrawAttribs) {
@@ -931,7 +1110,13 @@ impl DeviceContext {
         }
     }
 
-    pub fn transition_resource_states(&self, barriers: &[diligent_sys::StateTransitionDesc]) {
+    pub fn transition_resource_states<'a>(&self, barriers: &impl AsRef<[StateTransitionDesc<'a>]>) {
+        let barriers = barriers
+            .as_ref()
+            .iter()
+            .map(|state_transition_desc| state_transition_desc.into())
+            .collect::<Vec<diligent_sys::StateTransitionDesc>>();
+
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -1165,9 +1350,24 @@ impl ImmediateDeviceContext {
         }
     }
 
-    //pub fn execute_command_lists(&self, command_lists: &[&CommandList]) {
-    //    todo!()
-    //}
+    pub fn execute_command_lists<'a>(&self, command_lists: &impl AsRef<[&'a CommandList]>) {
+        let command_lists = command_lists
+            .as_ref()
+            .iter()
+            .map(|&command_list| command_list.sys_ptr)
+            .collect::<Vec<_>>();
+
+        unsafe {
+            (*self.device_context.virtual_functions)
+                .DeviceContext
+                .ExecuteCommandLists
+                .unwrap_unchecked()(
+                self.device_context.sys_ptr,
+                command_lists.len() as u32,
+                command_lists.as_ptr(),
+            )
+        }
+    }
 
     pub fn wait_for_idle(&self) {
         unsafe {
@@ -1207,7 +1407,21 @@ impl DeferredDeviceContext {
         }
     }
 
-    //pub fn finish_command_list(&self) -> CommandList {
-    //    todo!()
-    //}
+    pub fn finish_command_list(&self) -> Option<CommandList> {
+        let mut command_list_ptr = std::ptr::null_mut();
+        unsafe {
+            (*self.device_context.virtual_functions)
+                .DeviceContext
+                .FinishCommandList
+                .unwrap_unchecked()(
+                self.device_context.sys_ptr,
+                std::ptr::addr_of_mut!(command_list_ptr),
+            );
+        }
+        if command_list_ptr.is_null() {
+            None
+        } else {
+            Some(CommandList::new(command_list_ptr))
+        }
+    }
 }

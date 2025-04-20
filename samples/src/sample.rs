@@ -6,6 +6,12 @@ use diligent::{
     swap_chain::{SwapChain, SwapChainDesc},
 };
 
+#[cfg(feature = "vulkan")]
+use diligent::vk::engine_factory_vk::EngineVkCreateInfo;
+
+#[cfg(feature = "opengl")]
+use diligent::gl::engine_factory_gl::EngineGLCreateInfo;
+
 use diligent_tools::native_app::events::EventResult;
 use imgui::Ui;
 
@@ -65,6 +71,17 @@ pub fn get_surface_pretransform_matrix(
     }
 }
 
+pub enum EngineCreateInfo<'a> {
+    #[cfg(feature = "vulkan")]
+    EngineVkCreateInfo(&'a mut EngineVkCreateInfo),
+    #[cfg(feature = "opengl")]
+    EngineGLCreateInfo(&'a mut EngineGLCreateInfo<'a>),
+    #[cfg(feature = "d3d11")]
+    EngineD3D11CreateInfo(&'a mut EngineD3D11CreateInfo),
+    #[cfg(feature = "d3d12")]
+    EngineD3D12CreateInfo(&'a mut EngineD3D12CreateInfo),
+}
+
 pub trait SampleBase {
     fn new(
         engine_factory: &EngineFactory,
@@ -93,4 +110,6 @@ pub trait SampleBase {
     fn handle_event(&mut self, _event: EventResult) {}
 
     fn release_swap_chain_buffers(&mut self) {}
+
+    fn modify_engine_init_info(_engine_ci: &mut EngineCreateInfo) {}
 }

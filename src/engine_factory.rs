@@ -17,7 +17,7 @@ pub struct EngineCreateInfo {
 
     pub immediate_context_info: Vec<diligent_sys::ImmediateContextCreateInfo>,
 
-    pub num_deferred_contexts: u32,
+    pub num_deferred_contexts: usize,
 
     pub features: DeviceFeatures,
 
@@ -70,7 +70,7 @@ impl From<&EngineCreateInfo> for diligent_sys::EngineCreateInfo {
             },
             pImmediateContextInfo: std::ptr::null(),
             NumImmediateContexts: value.immediate_context_info.len() as u32,
-            NumDeferredContexts: value.num_deferred_contexts,
+            NumDeferredContexts: value.num_deferred_contexts as u32,
             Features: diligent_sys::DeviceFeatures::from(&value.features),
             EnableValidation: value.enable_validation,
             ValidationFlags: value.validation_flags,
