@@ -80,8 +80,8 @@ impl TexturedCube {
         vtx_buffer_mode: BufferMode,
         idx_buffer_bind_flags: BindFlags,
         idx_buffer_mode: BufferMode,
-    ) -> Option<Self> {
-        if let Some((vertex_buffer, index_buffer, info)) = create_geometry_primitive_buffers(
+    ) -> Result<Self, ()> {
+        let (vertex_buffer, index_buffer, info) = create_geometry_primitive_buffers(
             device,
             &GeometryPrimitiveAttributes::new(GeometryPrimitive::Cube { size: 2.0 })
                 .vertex_flags(components),
@@ -90,22 +90,19 @@ impl TexturedCube {
                 .vertex_buffer_mode(vtx_buffer_mode)
                 .index_buffer_bind_flags(idx_buffer_bind_flags)
                 .index_buffer_mode(idx_buffer_mode),
-        ) {
-            assert_eq!(info.num_vertices, 24);
-            assert_eq!(info.num_indices, 36);
-            Some(TexturedCube {
-                vertex_buffer,
-                index_buffer,
-            })
-        } else {
-            None
-        }
+        )?;
+        assert_eq!(info.num_vertices, 24);
+        assert_eq!(info.num_indices, 36);
+        Ok(TexturedCube {
+            vertex_buffer,
+            index_buffer,
+        })
     }
 
     pub fn create_pipeline_state(
         create_info: &CreatePSOInfo,
         convert_output_to_gamma: bool,
-    ) -> Option<PipelineState> {
+    ) -> Result<PipelineState, ()> {
         let mut input_layouts = Vec::new();
 
         if create_info

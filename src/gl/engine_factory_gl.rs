@@ -58,7 +58,7 @@ impl EngineFactoryOpenGL {
         &self,
         engine_ci: &EngineGLCreateInfo,
         sc_desc: &SwapChainDesc,
-    ) -> Option<(RenderDevice, ImmediateDeviceContext, SwapChain)> {
+    ) -> Result<(RenderDevice, ImmediateDeviceContext, SwapChain), ()> {
         let engine_ci = diligent_sys::EngineGLCreateInfo::from(engine_ci);
 
         let mut render_device_ptr = std::ptr::null_mut();
@@ -82,9 +82,9 @@ impl EngineFactoryOpenGL {
         }
 
         if render_device_ptr.is_null() {
-            None
+            Err(())
         } else {
-            Some((
+            Ok((
                 RenderDevice::new(render_device_ptr),
                 ImmediateDeviceContext::new(device_context_ptr),
                 SwapChain::new(swap_chain_ptr),
@@ -92,12 +92,12 @@ impl EngineFactoryOpenGL {
         }
     }
 
-    //pub fn create_hlsl2glsl_converter(&self) -> Option<HLSL2GLSLConverter>{}
+    //pub fn create_hlsl2glsl_converter(&self) -> Result<HLSL2GLSLConverter, ()>{}
 
     pub fn attach_to_active_gl_context(
         &self,
         engine_ci: &EngineGLCreateInfo,
-    ) -> Option<(RenderDevice, ImmediateDeviceContext)> {
+    ) -> Result<(RenderDevice, ImmediateDeviceContext), ()> {
         let engine_ci = diligent_sys::EngineGLCreateInfo::from(engine_ci);
 
         let mut render_device_ptr = std::ptr::null_mut();
@@ -116,9 +116,9 @@ impl EngineFactoryOpenGL {
         }
 
         if render_device_ptr.is_null() {
-            None
+            Err(())
         } else {
-            Some((
+            Ok((
                 RenderDevice::new(render_device_ptr),
                 ImmediateDeviceContext::new(device_context_ptr),
             ))

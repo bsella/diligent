@@ -126,7 +126,7 @@ impl EngineFactory {
     pub fn create_default_shader_source_stream_factory(
         &self,
         search_directories: &[&PathBuf],
-    ) -> Option<ShaderSourceInputStreamFactory> {
+    ) -> Result<ShaderSourceInputStreamFactory, ()> {
         let mut search = String::new();
 
         search_directories.iter().for_each(|&dir| {
@@ -148,13 +148,13 @@ impl EngineFactory {
             );
         }
         if stream_factory_ptr.is_null() {
-            None
+            Err(())
         } else {
-            Some(ShaderSourceInputStreamFactory::new(stream_factory_ptr))
+            Ok(ShaderSourceInputStreamFactory::new(stream_factory_ptr))
         }
     }
 
-    pub fn create_data_blob<T>(&self, initial_size: usize, data: *const T) -> Option<DataBlob> {
+    pub fn create_data_blob<T>(&self, initial_size: usize, data: *const T) -> Result<DataBlob, ()> {
         let mut data_blob_ptr = std::ptr::null_mut();
         unsafe {
             (*self.virtual_functions)
@@ -168,9 +168,9 @@ impl EngineFactory {
             );
         }
         if data_blob_ptr.is_null() {
-            None
+            Err(())
         } else {
-            Some(DataBlob::new(data_blob_ptr))
+            Ok(DataBlob::new(data_blob_ptr))
         }
     }
 

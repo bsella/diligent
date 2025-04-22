@@ -82,7 +82,7 @@ impl TextureView {
         }
     }
 
-    pub fn get_sampler(&self) -> Option<&Sampler> {
+    pub fn get_sampler(&self) -> Result<&Sampler, ()> {
         todo!()
     }
 

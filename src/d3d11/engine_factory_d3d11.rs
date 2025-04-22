@@ -85,11 +85,14 @@ impl EngineFactoryD3D11 {
     pub fn create_device_and_contexts(
         &self,
         engine_ci: &EngineD3D11CreateInfo,
-    ) -> Option<(
-        RenderDevice,
-        Vec<ImmediateDeviceContext>,
-        Vec<DeferredDeviceContext>,
-    )> {
+    ) -> Result<
+        (
+            RenderDevice,
+            Vec<ImmediateDeviceContext>,
+            Vec<DeferredDeviceContext>,
+        ),
+        (),
+    > {
         let num_immediate_contexts = engine_ci
             .engine_create_info
             .immediate_context_info
@@ -119,9 +122,9 @@ impl EngineFactoryD3D11 {
         }
 
         if render_device_ptr.is_null() {
-            None
+            Err(())
         } else {
-            Some((
+            Ok((
                 RenderDevice::new(render_device_ptr),
                 Vec::from_iter(
                     device_context_ptrs
@@ -147,7 +150,7 @@ impl EngineFactoryD3D11 {
         swapchain_desc: &SwapChainDesc,
         fs_desc: &FullScreenModeDesc,
         window: Option<&NativeWindow>,
-    ) -> Option<SwapChain> {
+    ) -> Result<SwapChain, ()> {
         let swapchain_desc = swapchain_desc.into();
         let window = window.map(|window| diligent_sys::NativeWindow::from(window));
         let mut swap_chain_ptr = std::ptr::null_mut();
@@ -170,9 +173,9 @@ impl EngineFactoryD3D11 {
             )
         };
         if swap_chain_ptr.is_null() {
-            None
+            Err(())
         } else {
-            Some(SwapChain::new(swap_chain_ptr))
+            Ok(SwapChain::new(swap_chain_ptr))
         }
     }
 
@@ -181,11 +184,14 @@ impl EngineFactoryD3D11 {
         native_device: *mut c_void,
         immediate_context: *mut c_void,
         engine_ci: &EngineD3D11CreateInfo,
-    ) -> Option<(
-        RenderDevice,
-        Vec<ImmediateDeviceContext>,
-        Vec<DeferredDeviceContext>,
-    )> {
+    ) -> Result<
+        (
+            RenderDevice,
+            Vec<ImmediateDeviceContext>,
+            Vec<DeferredDeviceContext>,
+        ),
+        (),
+    > {
         let num_immediate_contexts = engine_ci
             .engine_create_info
             .immediate_context_info
@@ -218,9 +224,9 @@ impl EngineFactoryD3D11 {
         }
 
         if render_device_ptr.is_null() {
-            None
+            Err(())
         } else {
-            Some((
+            Ok((
                 RenderDevice::new(render_device_ptr),
                 Vec::from_iter(
                     device_context_ptrs

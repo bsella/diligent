@@ -404,15 +404,16 @@ impl Shader {
 
     pub fn get_constant_buffer_desc(
         &self,
-        index: u32,
-    ) -> Option<&diligent_sys::ShaderCodeBufferDesc> {
-        unsafe {
-            (*self.virtual_functions)
-                .Shader
-                .GetConstantBufferDesc
-                .unwrap_unchecked()(self.sys_ptr, index)
-            .as_ref()
-        }
+        _index: u32,
+    ) -> Result<diligent_sys::ShaderCodeBufferDesc, ()> {
+        //unsafe {
+        //    (*self.virtual_functions)
+        //        .Shader
+        //        .GetConstantBufferDesc
+        //        .unwrap_unchecked()(self.sys_ptr, index)
+        //    .as_ref()
+        //}
+        todo!()
     }
 
     pub fn get_bytecode(&self, bytecode: *mut *const u8) -> u64 {

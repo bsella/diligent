@@ -178,11 +178,14 @@ impl EngineFactoryVk {
     pub fn create_device_and_contexts(
         &self,
         create_info: &EngineVkCreateInfo,
-    ) -> Option<(
-        RenderDevice,
-        Vec<ImmediateDeviceContext>,
-        Vec<DeferredDeviceContext>,
-    )> {
+    ) -> Result<
+        (
+            RenderDevice,
+            Vec<ImmediateDeviceContext>,
+            Vec<DeferredDeviceContext>,
+        ),
+        (),
+    > {
         let num_immediate_contexts = create_info
             .engine_create_info
             .immediate_context_info
@@ -292,9 +295,9 @@ impl EngineFactoryVk {
         }
 
         if render_device_ptr.is_null() {
-            None
+            Err(())
         } else {
-            Some((
+            Ok((
                 RenderDevice::new(render_device_ptr),
                 Vec::from_iter(
                     device_context_ptrs
@@ -319,7 +322,7 @@ impl EngineFactoryVk {
         immediate_context: &ImmediateDeviceContext,
         swapchain_desc: &SwapChainDesc,
         window: Option<&NativeWindow>,
-    ) -> Option<SwapChain> {
+    ) -> Result<SwapChain, ()> {
         let swapchain_desc = swapchain_desc.into();
         let mut swap_chain_ptr = std::ptr::null_mut();
 
@@ -341,9 +344,9 @@ impl EngineFactoryVk {
             );
         }
         if swap_chain_ptr.is_null() {
-            None
+            Err(())
         } else {
-            Some(SwapChain::new(swap_chain_ptr))
+            Ok(SwapChain::new(swap_chain_ptr))
         }
     }
 

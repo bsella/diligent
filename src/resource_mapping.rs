@@ -121,7 +121,7 @@ impl ResourceMapping {
         }
     }
 
-    pub fn get_resources_by_name(&self, _name: impl AsRef<str>) -> Option<&[DeviceObject]> {
+    pub fn get_resources_by_name(&self, _name: impl AsRef<str>) -> Result<&[DeviceObject], ()> {
         //self.resources
         //    .get(name)
         //    .map(|resources| resources.as_slice())

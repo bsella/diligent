@@ -196,7 +196,10 @@ impl Buffer {
         }
     }
 
-    pub fn create_view(&mut self, view_desc: &diligent_sys::BufferViewDesc) -> Option<BufferView> {
+    pub fn create_view(
+        &mut self,
+        view_desc: &diligent_sys::BufferViewDesc,
+    ) -> Result<BufferView, ()> {
         let mut buffer_view_ptr: *mut diligent_sys::IBufferView = std::ptr::null_mut();
         unsafe {
             (*self.virtual_functions)
@@ -209,16 +212,16 @@ impl Buffer {
             );
         }
         if buffer_view_ptr.is_null() {
-            None
+            Err(())
         } else {
-            Some(BufferView::new(buffer_view_ptr, self))
+            Ok(BufferView::new(buffer_view_ptr, self))
         }
     }
 
     pub fn get_default_view(
         &self,
         view_type: diligent_sys::BUFFER_VIEW_TYPE,
-    ) -> Option<BufferView> {
+    ) -> Result<BufferView, ()> {
         let buffer_view_ptr = unsafe {
             (*self.virtual_functions)
                 .Buffer
@@ -227,9 +230,9 @@ impl Buffer {
         };
 
         if buffer_view_ptr.is_null() {
-            None
+            Err(())
         } else {
-            Some(BufferView::new(buffer_view_ptr, self))
+            Ok(BufferView::new(buffer_view_ptr, self))
         }
     }
 

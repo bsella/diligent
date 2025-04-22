@@ -1211,7 +1211,7 @@ impl PipelineState {
     pub fn get_static_variables(
         &self,
         _shader_type: ShaderType,
-    ) -> Option<&[ShaderResourceVariable]> {
+    ) -> Result<&[ShaderResourceVariable], ()> {
         todo!()
     }
 
@@ -1219,7 +1219,7 @@ impl PipelineState {
         &self,
         shader_type: ShaderType,
         name: impl AsRef<str>,
-    ) -> Option<ShaderResourceVariable> {
+    ) -> Result<ShaderResourceVariable, ()> {
         let name = CString::from_str(name.as_ref()).unwrap();
 
         let shader_resource_variable = unsafe {
@@ -1230,18 +1230,18 @@ impl PipelineState {
         };
 
         if shader_resource_variable.is_null() {
-            None
+            Err(())
         } else {
             let srv = ShaderResourceVariable::new(shader_resource_variable);
             srv.as_ref().add_ref();
-            Some(srv)
+            Ok(srv)
         }
     }
 
     pub fn create_shader_resource_binding(
         &self,
         init_static_resources: bool,
-    ) -> Option<ShaderResourceBinding> {
+    ) -> Result<ShaderResourceBinding, ()> {
         let mut shader_resource_binding_ptr: *mut diligent_sys::IShaderResourceBinding =
             std::ptr::null_mut();
         unsafe {
@@ -1255,11 +1255,11 @@ impl PipelineState {
             );
         }
         if shader_resource_binding_ptr.is_null() {
-            None
+            Err(())
         } else {
             let srb = ShaderResourceBinding::new(shader_resource_binding_ptr);
             srb.as_ref().add_ref();
-            Some(srb)
+            Ok(srb)
         }
     }
 
@@ -1297,15 +1297,12 @@ impl PipelineState {
         todo!()
     }
 
-    pub fn get_status(
-        &self,
-        wait_for_completion: Option<bool>,
-    ) -> diligent_sys::PIPELINE_STATE_STATUS {
+    pub fn get_status(&self, wait_for_completion: bool) -> diligent_sys::PIPELINE_STATE_STATUS {
         unsafe {
             (*self.virtual_functions)
                 .PipelineState
                 .GetStatus
-                .unwrap_unchecked()(self.sys_ptr, wait_for_completion.unwrap_or(false))
+                .unwrap_unchecked()(self.sys_ptr, wait_for_completion)
         }
     }
 }

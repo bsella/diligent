@@ -162,8 +162,8 @@ impl PipelineResourceSignature {
 
     pub fn create_shader_resource_binding(
         &self,
-        init_static_resources: Option<bool>,
-    ) -> Option<ShaderResourceBinding> {
+        init_static_resources: bool,
+    ) -> Result<ShaderResourceBinding, ()> {
         let mut shader_resource_binding_ptr = std::ptr::null_mut();
         unsafe {
             (*self.virtual_functions)
@@ -172,14 +172,14 @@ impl PipelineResourceSignature {
                 .unwrap_unchecked()(
                 self.sys_ptr,
                 std::ptr::addr_of_mut!(shader_resource_binding_ptr),
-                init_static_resources.unwrap_or(false),
+                init_static_resources,
             );
         }
 
         if shader_resource_binding_ptr.is_null() {
-            None
+            Err(())
         } else {
-            Some(ShaderResourceBinding::new(shader_resource_binding_ptr))
+            Ok(ShaderResourceBinding::new(shader_resource_binding_ptr))
         }
     }
 

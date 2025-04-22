@@ -57,7 +57,7 @@ pub struct GeometryPrimitiveInfo {
 
 pub fn create_geometry_primitive(
     attribs: &GeometryPrimitiveAttributes,
-) -> Option<(DataBlob, DataBlob, GeometryPrimitiveInfo)> {
+) -> Result<(DataBlob, DataBlob, GeometryPrimitiveInfo), ()> {
     enum GeometryPrimitiveType {
         Cube(diligent_sys::CubeGeometryPrimitiveAttributes),
         Sphere(diligent_sys::SphereGeometryPrimitiveAttributes),
@@ -110,9 +110,9 @@ pub fn create_geometry_primitive(
     let info = unsafe { info.assume_init() };
 
     if vertices.is_null() || indices.is_null() {
-        None
+        Err(())
     } else {
-        Some((
+        Ok((
             DataBlob::new(vertices),
             DataBlob::new(indices),
             GeometryPrimitiveInfo {

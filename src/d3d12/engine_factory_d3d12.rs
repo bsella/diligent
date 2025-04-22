@@ -151,11 +151,14 @@ impl EngineFactoryD3D12 {
     pub fn create_device_and_contexts(
         &self,
         engine_ci: &EngineD3D12CreateInfo,
-    ) -> Option<(
-        RenderDevice,
-        Vec<ImmediateDeviceContext>,
-        Vec<DeferredDeviceContext>,
-    )> {
+    ) -> Result<
+        (
+            RenderDevice,
+            Vec<ImmediateDeviceContext>,
+            Vec<DeferredDeviceContext>,
+        ),
+        (),
+    > {
         let num_immediate_contexts = engine_ci
             .engine_create_info
             .immediate_context_info
@@ -185,9 +188,9 @@ impl EngineFactoryD3D12 {
         }
 
         if render_device_ptr.is_null() {
-            None
+            Err(())
         } else {
-            Some((
+            Ok((
                 RenderDevice::new(render_device_ptr),
                 Vec::from_iter(
                     device_context_ptrs
@@ -209,7 +212,7 @@ impl EngineFactoryD3D12 {
     //pub fn create_command_queue_d3d12(&self,
     //    pd3d12NativeDevice : *mut c_void,
     //    pd3d12NativeCommandQueue : *mut c_void,
-    //    struct IMemoryAllocator*    pRawMemAllocator) -> Option<CommandQueueD3D12>
+    //    struct IMemoryAllocator*    pRawMemAllocator) -> Result<CommandQueueD3D12, ()>
     //    {
     //
     //    }
@@ -219,11 +222,11 @@ impl EngineFactoryD3D12 {
     //    native_device: *mut c_void,
     //    command_queues: impl AsRef<[CommandQueueD3D12]>,
     //    engine_ci: &EngineD3D12CreateInfo,
-    //) -> Option<(
+    //) -> Result<(
     //    RenderDevice,
     //    Vec<ImmediateDeviceContext>,
     //    Vec<DeferredDeviceContext>,
-    //)> {
+    //),()> {
     //
     //}
 
@@ -234,7 +237,7 @@ impl EngineFactoryD3D12 {
         swapchain_desc: &SwapChainDesc,
         fs_desc: &FullScreenModeDesc,
         window: Option<&NativeWindow>,
-    ) -> Option<SwapChain> {
+    ) -> Result<SwapChain, ()> {
         let swapchain_desc = swapchain_desc.into();
         let window = window.map(|window| diligent_sys::NativeWindow::from(window));
         let mut swap_chain_ptr = std::ptr::null_mut();
@@ -257,9 +260,9 @@ impl EngineFactoryD3D12 {
             )
         };
         if swap_chain_ptr.is_null() {
-            None
+            Err(())
         } else {
-            Some(SwapChain::new(swap_chain_ptr))
+            Ok(SwapChain::new(swap_chain_ptr))
         }
     }
 

@@ -61,7 +61,7 @@ impl RenderDevice {
         }
     }
 
-    pub fn create_buffer(&self, buffer_desc: &BufferDesc) -> Option<Buffer> {
+    pub fn create_buffer(&self, buffer_desc: &BufferDesc) -> Result<Buffer, ()> {
         let mut buffer_ptr = std::ptr::null_mut();
 
         let buffer_desc = diligent_sys::BufferDesc::from(buffer_desc);
@@ -78,9 +78,9 @@ impl RenderDevice {
         }
 
         if buffer_ptr.is_null() {
-            None
+            Err(())
         } else {
-            Some(Buffer::new(buffer_ptr))
+            Ok(Buffer::new(buffer_ptr))
         }
     }
 
@@ -89,7 +89,7 @@ impl RenderDevice {
         buffer_desc: &BufferDesc,
         buffer_data: &T,
         device_context: Option<&DeviceContext>,
-    ) -> Option<Buffer> {
+    ) -> Result<Buffer, ()> {
         let mut buffer_ptr = std::ptr::null_mut();
 
         let buffer_data = diligent_sys::BufferData {
@@ -112,13 +112,13 @@ impl RenderDevice {
         }
 
         if buffer_ptr.is_null() {
-            None
+            Err(())
         } else {
-            Some(Buffer::new(buffer_ptr))
+            Ok(Buffer::new(buffer_ptr))
         }
     }
 
-    pub fn create_shader(&self, shader_ci: &ShaderCreateInfo) -> Result<Shader, DataBlob> {
+    pub fn create_shader(&self, shader_ci: &ShaderCreateInfo) -> Result<Shader, Option<DataBlob>> {
         let mut shader_ptr: *mut diligent_sys::IShader = std::ptr::null_mut();
         let mut data_blob_ptr: *mut diligent_sys::IDataBlob = std::ptr::null_mut();
 
@@ -139,7 +139,11 @@ impl RenderDevice {
 
         // TODO : better error handling
         if shader_ptr.is_null() {
-            Err(DataBlob::new(data_blob_ptr))
+            if data_blob_ptr.is_null() {
+                Err(None)
+            } else {
+                Err(Some(DataBlob::new(data_blob_ptr)))
+            }
         } else {
             Ok(Shader::new(shader_ptr))
         }
@@ -150,7 +154,7 @@ impl RenderDevice {
         texture_desc: &TextureDesc,
         subresources: &[&TextureSubResource],
         device_context: Option<&DeviceContext>,
-    ) -> Option<Texture> {
+    ) -> Result<Texture, ()> {
         let mut texture_ptr = std::ptr::null_mut();
         let texture_desc = diligent_sys::TextureDesc::from(texture_desc);
 
@@ -182,13 +186,13 @@ impl RenderDevice {
         };
 
         if texture_ptr.is_null() {
-            None
+            Err(())
         } else {
-            Some(Texture::new(texture_ptr))
+            Ok(Texture::new(texture_ptr))
         }
     }
 
-    pub fn create_sampler(&self, sampler_desc: &SamplerDesc) -> Option<Sampler> {
+    pub fn create_sampler(&self, sampler_desc: &SamplerDesc) -> Result<Sampler, ()> {
         let sampler_desc = diligent_sys::SamplerDesc::from(sampler_desc);
 
         let mut sampler_ptr: *mut diligent_sys::ISampler = std::ptr::null_mut();
@@ -204,16 +208,16 @@ impl RenderDevice {
         }
 
         if sampler_ptr.is_null() {
-            None
+            Err(())
         } else {
-            Some(Sampler::new(sampler_ptr))
+            Ok(Sampler::new(sampler_ptr))
         }
     }
 
     pub fn create_resource_mapping(
         &self,
         resource_mapping_ci: &diligent_sys::ResourceMappingCreateInfo,
-    ) -> Option<ResourceMapping> {
+    ) -> Result<ResourceMapping, ()> {
         let mut resource_mapping_ptr = std::ptr::null_mut();
         unsafe {
             (*self.virtual_functions)
@@ -227,16 +231,16 @@ impl RenderDevice {
         }
 
         if resource_mapping_ptr.is_null() {
-            None
+            Err(())
         } else {
-            Some(ResourceMapping::new(resource_mapping_ptr))
+            Ok(ResourceMapping::new(resource_mapping_ptr))
         }
     }
 
     pub fn create_graphics_pipeline_state(
         &self,
         pipeline_ci: &GraphicsPipelineStateCreateInfo,
-    ) -> Option<PipelineState> {
+    ) -> Result<PipelineState, ()> {
         let mut pipeline_state_ptr = std::ptr::null_mut();
 
         let pipeline_ci_wrapper = GraphicsPipelineStateCreateInfoWrapper::from(pipeline_ci);
@@ -253,16 +257,16 @@ impl RenderDevice {
             );
         }
         if pipeline_state_ptr.is_null() {
-            None
+            Err(())
         } else {
-            Some(PipelineState::new(pipeline_state_ptr))
+            Ok(PipelineState::new(pipeline_state_ptr))
         }
     }
 
     pub fn create_compute_pipeline_state(
         &self,
         pipeline_ci: &diligent_sys::ComputePipelineStateCreateInfo,
-    ) -> Option<PipelineState> {
+    ) -> Result<PipelineState, ()> {
         let mut pipeline_state_ptr = std::ptr::null_mut();
         unsafe {
             (*self.virtual_functions)
@@ -276,16 +280,16 @@ impl RenderDevice {
         }
 
         if pipeline_state_ptr.is_null() {
-            None
+            Err(())
         } else {
-            Some(PipelineState::new(pipeline_state_ptr))
+            Ok(PipelineState::new(pipeline_state_ptr))
         }
     }
 
     pub fn create_ray_tracing_pipeline_state(
         &self,
         pipeline_ci: &diligent_sys::RayTracingPipelineStateCreateInfo,
-    ) -> Option<PipelineState> {
+    ) -> Result<PipelineState, ()> {
         let mut pipeline_state_ptr = std::ptr::null_mut();
         unsafe {
             (*self.virtual_functions)
@@ -298,16 +302,16 @@ impl RenderDevice {
             );
         }
         if pipeline_state_ptr.is_null() {
-            None
+            Err(())
         } else {
-            Some(PipelineState::new(pipeline_state_ptr))
+            Ok(PipelineState::new(pipeline_state_ptr))
         }
     }
 
     pub fn create_tile_pipeline_state(
         &self,
         pipeline_ci: &diligent_sys::TilePipelineStateCreateInfo,
-    ) -> Option<PipelineState> {
+    ) -> Result<PipelineState, ()> {
         let mut pipeline_state_ptr = std::ptr::null_mut();
         unsafe {
             (*self.virtual_functions)
@@ -320,13 +324,13 @@ impl RenderDevice {
             );
         }
         if pipeline_state_ptr.is_null() {
-            None
+            Err(())
         } else {
-            Some(PipelineState::new(pipeline_state_ptr))
+            Ok(PipelineState::new(pipeline_state_ptr))
         }
     }
 
-    pub fn create_fence(&self, fence_desc: &diligent_sys::FenceDesc) -> Option<Fence> {
+    pub fn create_fence(&self, fence_desc: &diligent_sys::FenceDesc) -> Result<Fence, ()> {
         let mut fence_ptr = std::ptr::null_mut();
         unsafe {
             (*self.virtual_functions)
@@ -337,9 +341,9 @@ impl RenderDevice {
             );
         }
         if fence_ptr.is_null() {
-            None
+            Err(())
         } else {
-            Some(Fence::new(fence_ptr))
+            Ok(Fence::new(fence_ptr))
         }
     }
 

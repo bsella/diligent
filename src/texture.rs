@@ -288,7 +288,7 @@ impl Texture {
     pub fn create_view(
         &mut self,
         texture_view_desc: &diligent_sys::TextureViewDesc,
-    ) -> Option<TextureView> {
+    ) -> Result<TextureView, ()> {
         let mut texture_view_ptr: *mut diligent_sys::ITextureView = std::ptr::null_mut();
         unsafe {
             (*self.virtual_functions)
@@ -302,13 +302,13 @@ impl Texture {
         }
 
         if texture_view_ptr.is_null() {
-            None
+            Err(())
         } else {
-            Some(TextureView::new(texture_view_ptr, self as *const Self))
+            Ok(TextureView::new(texture_view_ptr, self as *const Self))
         }
     }
 
-    pub fn get_default_view(&self, texture_view_type: TextureViewType) -> Option<TextureView> {
+    pub fn get_default_view(&self, texture_view_type: TextureViewType) -> Result<TextureView, ()> {
         let texture_view_ptr = unsafe {
             (*self.virtual_functions)
                 .Texture
@@ -319,12 +319,12 @@ impl Texture {
             )
         };
         if texture_view_ptr.is_null() {
-            None
+            Err(())
         } else {
             let texture_view = TextureView::new(texture_view_ptr, std::ptr::addr_of!(*self));
             texture_view.as_ref().as_ref().add_ref();
 
-            Some(texture_view)
+            Ok(texture_view)
         }
     }
 

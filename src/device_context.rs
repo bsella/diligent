@@ -1407,7 +1407,7 @@ impl DeferredDeviceContext {
         }
     }
 
-    pub fn finish_command_list(&self) -> Option<CommandList> {
+    pub fn finish_command_list(&self) -> Result<CommandList, ()> {
         let mut command_list_ptr = std::ptr::null_mut();
         unsafe {
             (*self.device_context.virtual_functions)
@@ -1419,9 +1419,9 @@ impl DeferredDeviceContext {
             );
         }
         if command_list_ptr.is_null() {
-            None
+            Err(())
         } else {
-            Some(CommandList::new(command_list_ptr))
+            Ok(CommandList::new(command_list_ptr))
         }
     }
 }
