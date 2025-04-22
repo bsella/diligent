@@ -73,6 +73,34 @@
                 "cwd": "${workspaceFolder}/samples",
             },
             "cwd": "${workspaceFolder}/samples",
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Tutorial06 : MultiThreading",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example",
+                    "Tutorial06_MultiThreading"
+                ],
+                "cwd": "${workspaceFolder}/samples",
+            },
+            "cwd": "${workspaceFolder}/samples",
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Tutorial07 : Geometry Shader",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example",
+                    "Tutorial07_GeometryShader"
+                ],
+                "cwd": "${workspaceFolder}/samples",
+            },
+            "cwd": "${workspaceFolder}/samples",
         }
     ]
 }

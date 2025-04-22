@@ -1,3 +1,5 @@
+use std::ops::{Deref, DerefMut};
+
 use diligent::{
     device_context::{DeferredDeviceContext, ImmediateDeviceContext},
     engine_factory::EngineFactory,
@@ -80,6 +82,25 @@ pub enum EngineCreateInfo<'a> {
     EngineD3D11CreateInfo(&'a mut EngineD3D11CreateInfo),
     #[cfg(feature = "d3d12")]
     EngineD3D12CreateInfo(&'a mut EngineD3D12CreateInfo),
+}
+
+impl Deref for EngineCreateInfo<'_> {
+    type Target = diligent::engine_factory::EngineCreateInfo;
+    fn deref(&self) -> &Self::Target {
+        match self {
+            #[cfg(feature = "vulkan")]
+            EngineCreateInfo::EngineVkCreateInfo(vk_create_info) => vk_create_info,
+        }
+    }
+}
+
+impl DerefMut for EngineCreateInfo<'_> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        match self {
+            #[cfg(feature = "vulkan")]
+            EngineCreateInfo::EngineVkCreateInfo(vk_create_info) => vk_create_info,
+        }
+    }
 }
 
 pub trait SampleBase {

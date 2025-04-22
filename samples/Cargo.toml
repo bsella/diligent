@@ -51,3 +51,11 @@ path = "src/tutorials/tutorial04_instancing.rs"
 [[example]]
 name = "Tutorial05_TextureArray"
 path = "src/tutorials/tutorial05_texture_array.rs"
+
+[[example]]
+name = "Tutorial06_MultiThreading"
+path = "src/tutorials/tutorial06_multithreading.rs"
+
+[[example]]
+name = "Tutorial07_GeometryShader"
+path = "src/tutorials/tutorial07_geometry_shader.rs"
