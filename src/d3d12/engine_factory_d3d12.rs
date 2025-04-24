@@ -1,4 +1,8 @@
-use std::{ffi::CString, path::Path};
+use std::{
+    ffi::CString,
+    ops::{Deref, DerefMut},
+    path::Path,
+};
 
 use bitflags::bitflags;
 use static_assertions::const_assert;
@@ -69,6 +73,20 @@ pub struct EngineD3D12CreateInfo {
     num_dynamic_heap_pages_to_reserve: u32,
     query_pool_sizes: [u32; 6usize],
     p_dx_compiler_path: CString,
+}
+
+impl Deref for EngineD3D12CreateInfo {
+    type Target = EngineCreateInfo;
+
+    fn deref(&self) -> &Self::Target {
+        &self.engine_create_info
+    }
+}
+
+impl DerefMut for EngineD3D12CreateInfo {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.engine_create_info
+    }
 }
 
 impl EngineD3D12CreateInfo {

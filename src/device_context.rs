@@ -348,10 +348,10 @@ impl<'a> From<&StateTransitionDesc<'a>> for diligent_sys::StateTransitionDesc {
         diligent_sys::StateTransitionDesc {
             pResource: value.resource.sys_ptr,
             NewState: value.new_state.bits(),
-            OldState: value
-                .old_state
-                .as_ref()
-                .map_or(diligent_sys::RESOURCE_STATE_UNKNOWN, |state| state.bits()),
+            OldState: value.old_state.as_ref().map_or(
+                diligent_sys::RESOURCE_STATE_UNKNOWN as diligent_sys::RESOURCE_STATE,
+                |state| state.bits(),
+            ),
             FirstArraySlice: value.first_array_slice,
             ArraySliceCount: value.array_slice_count,
             FirstMipLevel: value.first_mip_level,

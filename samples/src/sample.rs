@@ -14,6 +14,12 @@ use diligent::vk::engine_factory_vk::EngineVkCreateInfo;
 #[cfg(feature = "opengl")]
 use diligent::gl::engine_factory_gl::EngineGLCreateInfo;
 
+#[cfg(feature = "d3d11")]
+use diligent::d3d11::engine_factory_d3d11::EngineD3D11CreateInfo;
+
+#[cfg(feature = "d3d12")]
+use diligent::d3d12::engine_factory_d3d12::EngineD3D12CreateInfo;
+
 use diligent_tools::native_app::events::EventResult;
 use imgui::Ui;
 
@@ -90,6 +96,12 @@ impl Deref for EngineCreateInfo<'_> {
         match self {
             #[cfg(feature = "vulkan")]
             EngineCreateInfo::EngineVkCreateInfo(vk_create_info) => vk_create_info,
+            #[cfg(feature = "opengl")]
+            EngineCreateInfo::EngineGLCreateInfo(gl_create_info) => gl_create_info,
+            #[cfg(feature = "d3d11")]
+            EngineCreateInfo::EngineD3D11CreateInfo(d3d11_create_info) => d3d11_create_info,
+            #[cfg(feature = "d3d12")]
+            EngineCreateInfo::EngineD3D12CreateInfo(d3d12_create_info) => d3d12_create_info,
         }
     }
 }
@@ -99,6 +111,12 @@ impl DerefMut for EngineCreateInfo<'_> {
         match self {
             #[cfg(feature = "vulkan")]
             EngineCreateInfo::EngineVkCreateInfo(vk_create_info) => vk_create_info,
+            #[cfg(feature = "opengl")]
+            EngineCreateInfo::EngineGLCreateInfo(gl_create_info) => gl_create_info,
+            #[cfg(feature = "d3d11")]
+            EngineCreateInfo::EngineD3D11CreateInfo(d3d11_create_info) => d3d11_create_info,
+            #[cfg(feature = "d3d12")]
+            EngineCreateInfo::EngineD3D12CreateInfo(d3d12_create_info) => d3d12_create_info,
         }
     }
 }

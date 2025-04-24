@@ -1,4 +1,7 @@
-use std::os::raw::c_void;
+use std::{
+    ops::{Deref, DerefMut},
+    os::raw::c_void,
+};
 
 use bitflags::bitflags;
 use static_assertions::const_assert;
@@ -58,6 +61,20 @@ pub struct EngineD3D11CreateInfo {
     engine_create_info: EngineCreateInfo,
 
     d3d11_validation_flags: D3D11ValidationFlags,
+}
+
+impl Deref for EngineD3D11CreateInfo {
+    type Target = EngineCreateInfo;
+
+    fn deref(&self) -> &Self::Target {
+        &self.engine_create_info
+    }
+}
+
+impl DerefMut for EngineD3D11CreateInfo {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.engine_create_info
+    }
 }
 
 impl EngineD3D11CreateInfo {

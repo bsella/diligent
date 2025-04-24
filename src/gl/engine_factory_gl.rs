@@ -1,3 +1,5 @@
+use std::ops::{Deref, DerefMut};
+
 use static_assertions::const_assert;
 
 use crate::{
@@ -15,6 +17,20 @@ pub struct EngineGLCreateInfo<'a> {
     window: &'a NativeWindow,
     zero_to_one_ndz: bool,
     preferred_adapter_type: AdapterType,
+}
+
+impl Deref for EngineGLCreateInfo<'_> {
+    type Target = EngineCreateInfo;
+
+    fn deref(&self) -> &Self::Target {
+        &self.engine_create_info
+    }
+}
+
+impl DerefMut for EngineGLCreateInfo<'_> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.engine_create_info
+    }
 }
 
 impl<'a> EngineGLCreateInfo<'a> {
