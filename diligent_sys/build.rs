@@ -16,7 +16,7 @@ fn configure_cmake_windows_debug(cmake_config: &mut cmake::Config) {
     println!("cargo::rustc-link-lib=ucrtd");
 }
 
-fn build_diligent_engine(build_path: &PathBuf) -> PathBuf {
+fn build_diligent_engine(build_path: &Path) -> PathBuf {
     let diligent_tar = std::fs::File::open("DiligentCore.tar.gz").unwrap();
     let decoder = flate2::read::GzDecoder::new(diligent_tar);
     let mut archive = tar::Archive::new(decoder);
@@ -90,7 +90,11 @@ fn build_diligent_engine(build_path: &PathBuf) -> PathBuf {
     dst
 }
 
-fn generate_diligent_c_bindings(diligent_install_dir: &PathBuf, out_dir: &PathBuf) {
+fn generate_diligent_c_bindings(
+    #[allow(unused_variables)] diligent_build_dir: &Path,
+    diligent_install_dir: &Path,
+    out_dir: &Path,
+) {
     let diligent_include = [
         "-I",
         &diligent_install_dir.join("include").display().to_string(),
@@ -112,16 +116,17 @@ fn generate_diligent_c_bindings(diligent_install_dir: &PathBuf, out_dir: &PathBu
     };
 
     #[cfg(feature = "vulkan")]
-    fn configure_vulkan(builder: bindgen::Builder) -> bindgen::Builder {
+    let configure_vulkan = |builder: bindgen::Builder| -> bindgen::Builder {
         let builder = builder.clang_arg("-DVULKAN_SUPPORTED=1");
 
         #[cfg(feature = "vulkan_interop")]
-        let builder = builder
-            .clang_arg("-DVULKAN_INTEROP=1")
-            .clang_arg("-IDiligentCore/ThirdParty/Vulkan-Headers/include");
+        let builder = builder.clang_arg("-DVULKAN_INTEROP=1").clang_arg(format!(
+            "-I{}/DiligentCore/ThirdParty/Vulkan-Headers/include",
+            diligent_build_dir.display()
+        ));
 
         builder
-    }
+    };
 
     #[cfg(feature = "opengl")]
     fn configure_opengl(builder: bindgen::Builder) -> bindgen::Builder {
@@ -201,5 +206,9 @@ fn main() {
 
     let diligent_install_path = build_diligent_engine(&diligent_build_dir);
 
-    generate_diligent_c_bindings(&diligent_install_path, &out_dir_path.to_path_buf());
+    generate_diligent_c_bindings(
+        &diligent_build_dir,
+        &diligent_install_path,
+        &out_dir_path.to_path_buf(),
+    );
 }

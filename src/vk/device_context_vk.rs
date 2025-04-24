@@ -41,7 +41,7 @@ impl DeviceContextVk<'_> {
 
     pub fn buffer_memory_barrier(
         &self,
-        buffer: Buffer,
+        buffer: &Buffer,
         new_access_flags: diligent_sys::VkAccessFlags,
     ) {
         unsafe {

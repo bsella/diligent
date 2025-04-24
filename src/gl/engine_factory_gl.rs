@@ -4,7 +4,7 @@ use static_assertions::const_assert;
 
 use crate::{
     device_context::ImmediateDeviceContext,
-    engine_factory::{AsEngineFactory, EngineCreateInfo, EngineFactory},
+    engine_factory::{EngineCreateInfo, EngineFactory},
     graphics_types::AdapterType,
     platforms::native_window::NativeWindow,
     render_device::RenderDevice,
@@ -47,8 +47,8 @@ impl<'a> EngineGLCreateInfo<'a> {
 impl From<&EngineGLCreateInfo<'_>> for diligent_sys::EngineGLCreateInfo {
     fn from(value: &EngineGLCreateInfo) -> Self {
         diligent_sys::EngineGLCreateInfo {
-            _EngineCreateInfo: diligent_sys::EngineCreateInfo::from(&value.engine_create_info),
-            PreferredAdapterType: diligent_sys::ADAPTER_TYPE::from(&value.preferred_adapter_type),
+            _EngineCreateInfo: (&value.engine_create_info).into(),
+            PreferredAdapterType: (&value.preferred_adapter_type).into(),
             ZeroToOneNDZ: value.zero_to_one_ndz,
             Window: diligent_sys::NativeWindow::from(value.window),
         }
@@ -62,9 +62,9 @@ pub struct EngineFactoryOpenGL {
     engine_factory: EngineFactory,
 }
 
-impl AsEngineFactory for EngineFactoryOpenGL {
-    #[inline]
-    fn as_engine_factory(&self) -> &EngineFactory {
+impl Deref for EngineFactoryOpenGL {
+    type Target = EngineFactory;
+    fn deref(&self) -> &Self::Target {
         &self.engine_factory
     }
 }

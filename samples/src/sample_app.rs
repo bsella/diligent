@@ -1,7 +1,9 @@
+use std::ops::Deref;
+
 use diligent::{
     accessories::get_render_device_type_string,
     device_context::ResourceStateTransitionMode,
-    engine_factory::{AsEngineFactory, EngineCreateInfo},
+    engine_factory::EngineCreateInfo,
     graphics_types::{
         AdapterType, DisplayModeAttribs, GraphicsAdapterInfo, RenderDeviceType, ScalingMode,
         SurfaceTransform,
@@ -86,17 +88,18 @@ enum EngineFactory {
     D3D12(EngineFactoryD3D12),
 }
 
-impl AsEngineFactory for EngineFactory {
-    fn as_engine_factory(&self) -> &diligent::engine_factory::EngineFactory {
+impl Deref for EngineFactory {
+    type Target = diligent::engine_factory::EngineFactory;
+    fn deref(&self) -> &Self::Target {
         match self {
             #[cfg(feature = "vulkan")]
-            Self::VULKAN(factory) => factory.as_engine_factory(),
+            Self::VULKAN(factory) => factory,
             #[cfg(feature = "opengl")]
-            Self::OPENGL(factory) => factory.as_engine_factory(),
+            Self::OPENGL(factory) => factory,
             #[cfg(feature = "d3d11")]
-            Self::D3D11(factory) => factory.as_engine_factory(),
+            Self::D3D11(factory) => factory,
             #[cfg(feature = "d3d12")]
-            Self::D3D12(factory) => factory.as_engine_factory(),
+            Self::D3D12(factory) => factory,
         }
     }
 }
@@ -323,9 +326,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             engine_create_info.graphics_api_version = Version::new(11, 0);
         }
 
-        let adapters = engine_factory
-            .as_engine_factory()
-            .enumerate_adapters(&engine_create_info.graphics_api_version);
+        let adapters = engine_factory.enumerate_adapters(&engine_create_info.graphics_api_version);
 
         let adapter = if let Some(adapter_index) = find_adapter(
             app_settings.adapter_index,
@@ -486,7 +487,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             };
 
         let sample = GenericSample::new(
-            engine_factory.as_engine_factory(),
+            &engine_factory,
             render_device,
             immediate_contexts,
             deferred_contexts,

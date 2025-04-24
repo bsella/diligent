@@ -4,7 +4,7 @@ pub struct BufferViewVk<'a> {
     buffer_view_ptr: *mut diligent_sys::IBufferViewVk,
     virtual_functions: *mut diligent_sys::IBufferViewVkVtbl,
 
-    buffer_view: &'a BufferView,
+    buffer_view: &'a BufferView<'a>,
 }
 
 impl AsRef<DeviceObject> for BufferViewVk<'_> {
@@ -13,7 +13,7 @@ impl AsRef<DeviceObject> for BufferViewVk<'_> {
     }
 }
 
-impl<'a> From<&'a BufferView> for BufferViewVk<'a> {
+impl<'a> From<&'a BufferView<'a>> for BufferViewVk<'a> {
     fn from(value: &'a BufferView) -> Self {
         BufferViewVk {
             buffer_view: value,

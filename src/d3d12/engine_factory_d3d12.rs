@@ -9,7 +9,7 @@ use static_assertions::const_assert;
 
 use crate::{
     device_context::{DeferredDeviceContext, ImmediateDeviceContext},
-    engine_factory::{AsEngineFactory, EngineCreateInfo, EngineFactory},
+    engine_factory::{EngineCreateInfo, EngineFactory},
     graphics_types::{DisplayModeAttribs, FullScreenModeDesc, TextureFormat, Version},
     platforms::native_window::NativeWindow,
     render_device::RenderDevice,
@@ -23,13 +23,12 @@ pub struct EngineFactoryD3D12 {
     engine_factory: EngineFactory,
 }
 
-impl AsEngineFactory for EngineFactoryD3D12 {
-    #[inline]
-    fn as_engine_factory(&self) -> &EngineFactory {
+impl Deref for EngineFactoryD3D12 {
+    type Target = EngineFactory;
+    fn deref(&self) -> &Self::Target {
         &self.engine_factory
     }
 }
-
 pub fn get_engine_factory_d3d12() -> EngineFactoryD3D12 {
     let engine_factory_d3d12 = unsafe { diligent_sys::Diligent_GetEngineFactoryD3D12() };
 
@@ -131,7 +130,7 @@ impl EngineD3D12CreateInfo {
 impl From<&EngineD3D12CreateInfo> for diligent_sys::EngineD3D12CreateInfo {
     fn from(value: &EngineD3D12CreateInfo) -> Self {
         diligent_sys::EngineD3D12CreateInfo {
-            _EngineCreateInfo: diligent_sys::EngineCreateInfo::from(&value.engine_create_info),
+            _EngineCreateInfo: (&value.engine_create_info).into(),
             D3D12ValidationFlags: value.d3d12_validation_flags.bits(),
             CPUDescriptorHeapAllocationSize: value.cpu_descriptor_heap_allocation_size,
             D3D12DllName: value.d3d12_dll_name.as_ptr(),

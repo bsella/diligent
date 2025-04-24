@@ -8,7 +8,7 @@ use static_assertions::const_assert;
 
 use crate::{
     device_context::{DeferredDeviceContext, ImmediateDeviceContext},
-    engine_factory::{AsEngineFactory, EngineCreateInfo, EngineFactory},
+    engine_factory::{EngineCreateInfo, EngineFactory},
     graphics_types::{DisplayModeAttribs, FullScreenModeDesc, TextureFormat, Version},
     platforms::native_window::NativeWindow,
     render_device::RenderDevice,
@@ -22,9 +22,9 @@ pub struct EngineFactoryD3D11 {
     engine_factory: EngineFactory,
 }
 
-impl AsEngineFactory for EngineFactoryD3D11 {
-    #[inline]
-    fn as_engine_factory(&self) -> &EngineFactory {
+impl Deref for EngineFactoryD3D11 {
+    type Target = EngineFactory;
+    fn deref(&self) -> &Self::Target {
         &self.engine_factory
     }
 }
@@ -92,7 +92,7 @@ impl EngineD3D11CreateInfo {
 impl From<&EngineD3D11CreateInfo> for diligent_sys::EngineD3D11CreateInfo {
     fn from(value: &EngineD3D11CreateInfo) -> Self {
         diligent_sys::EngineD3D11CreateInfo {
-            _EngineCreateInfo: diligent_sys::EngineCreateInfo::from(&value.engine_create_info),
+            _EngineCreateInfo: (&value.engine_create_info).into(),
             D3D11ValidationFlags: value.d3d11_validation_flags.bits(),
         }
     }

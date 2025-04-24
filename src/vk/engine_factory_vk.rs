@@ -10,7 +10,6 @@ use crate::device_context::ImmediateDeviceContext;
 use crate::engine_factory::EngineCreateInfo;
 use crate::engine_factory::EngineFactory;
 
-use crate::engine_factory::AsEngineFactory;
 use crate::graphics_types::DeviceFeatureState;
 use crate::platforms::native_window::NativeWindow;
 use crate::render_device::RenderDevice;
@@ -149,9 +148,9 @@ pub struct EngineFactoryVk {
     engine_factory: EngineFactory,
 }
 
-impl AsEngineFactory for EngineFactoryVk {
-    #[inline]
-    fn as_engine_factory(&self) -> &EngineFactory {
+impl Deref for EngineFactoryVk {
+    type Target = EngineFactory;
+    fn deref(&self) -> &Self::Target {
         &self.engine_factory
     }
 }

@@ -91,10 +91,6 @@ pub struct EngineFactory {
     _object: Object,
 }
 
-pub trait AsEngineFactory {
-    fn as_engine_factory(&self) -> &EngineFactory;
-}
-
 impl EngineFactory {
     pub(crate) fn new(engine_factory_ptr: *mut diligent_sys::IEngineFactory) -> Self {
         // Both base and derived classes have exactly the same size.

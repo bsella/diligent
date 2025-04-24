@@ -1243,15 +1243,15 @@ impl DeviceContext {
         ScopedDebugGroup::new(self, &name, color)
     }
 
-    pub fn insert_debug_label(&self, name: impl AsRef<str>, color: Option<[f32; 4]>) {
-        let name = CString::new(name.as_ref()).unwrap();
+    pub fn insert_debug_label(&self, label: impl AsRef<str>, color: Option<[f32; 4]>) {
+        let label = CString::new(label.as_ref()).unwrap();
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
                 .InsertDebugLabel
                 .unwrap_unchecked()(
                 self.sys_ptr,
-                name.as_ptr(),
+                label.as_ptr(),
                 color.map_or(std::ptr::null(), |color| color.as_ptr()),
             )
         }
