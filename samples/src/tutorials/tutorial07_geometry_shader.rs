@@ -404,8 +404,7 @@ impl SampleBase for GeometryShader {
         {
             // Bind vertex and index buffers
             immediate_context.set_vertex_buffers(
-                &[self.textured_cube.get_vertex_buffer()],
-                &[0],
+                &[(self.textured_cube.get_vertex_buffer(), 0)],
                 ResourceStateTransitionMode::Transition,
                 SetVertexBufferFlags::Reset,
             );

@@ -559,13 +559,17 @@ impl DeviceContext {
 
     pub fn set_vertex_buffers<'a>(
         &self,
-        buffers: &impl AsRef<[&'a Buffer]>,
-        offsets: &[u64],
+        buffers: &impl AsRef<[(&'a Buffer, u64)]>,
         state_transition_mode: ResourceStateTransitionMode,
         flags: SetVertexBufferFlags,
     ) {
         let num_buffers = buffers.as_ref().len();
-        let buffer_pointers = Vec::from_iter(buffers.as_ref().iter().map(|buffer| buffer.sys_ptr));
+        let (buffer_pointers, offsets): (Vec<_>, Vec<_>) = buffers
+            .as_ref()
+            .iter()
+            .map(|&(buffer, offset)| (buffer.sys_ptr, offset))
+            .unzip();
+
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext

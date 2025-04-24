@@ -389,12 +389,11 @@ impl SampleBase for TextureArray {
         {
             // Bind vertex, instance and index buffers
             let buffers = [
-                self.textured_cube.get_vertex_buffer(),
-                &self.instance_buffer,
+                (self.textured_cube.get_vertex_buffer(), 0),
+                (&self.instance_buffer, 0),
             ];
             immediate_context.set_vertex_buffers(
                 &buffers,
-                &[0, 0],
                 ResourceStateTransitionMode::Transition,
                 SetVertexBufferFlags::Reset,
             );

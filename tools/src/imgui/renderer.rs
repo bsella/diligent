@@ -829,8 +829,7 @@ impl ImguiRenderer {
         {
             // Setup shader and vertex buffers
             device_context.set_vertex_buffers(
-                &[vertex_buffer],
-                &[0],
+                &[(vertex_buffer, 0)],
                 ResourceStateTransitionMode::Transition,
                 SetVertexBufferFlags::Reset,
             );
@@ -936,8 +935,7 @@ impl ImguiRenderer {
                                 let offset = std::mem::size_of::<ImDrawVert>()
                                     * (cmd_params.vtx_offset + global_vtx_offset as usize);
                                 device_context.set_vertex_buffers(
-                                    &[vertex_buffer],
-                                    &[offset as u64],
+                                    &[(vertex_buffer, offset as u64)],
                                     ResourceStateTransitionMode::Transition,
                                     SetVertexBufferFlags::None,
                                 );

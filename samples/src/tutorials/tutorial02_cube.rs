@@ -342,8 +342,7 @@ impl SampleBase for Cube {
 
         // Bind vertex and index buffers
         immediate_context.set_vertex_buffers(
-            &[&self.cube_vertex_buffer],
-            &[0],
+            &[(&self.cube_vertex_buffer, 0)],
             ResourceStateTransitionMode::Transition,
             SetVertexBufferFlags::Reset,
         );
