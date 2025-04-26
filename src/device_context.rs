@@ -8,13 +8,18 @@ use crate::{
     device_object::DeviceObject,
     fence::Fence,
     frame_buffer::Framebuffer,
-    graphics_types::{MapFlags, ShadingRate, ShadingRateCombiner, ValueType},
-    graphics_types::{ResourceState, StateTransitionType, TextureFormat},
+    graphics_types::{
+        MapFlags, ResourceState, ShadingRate, ShadingRateCombiner, StateTransitionType,
+        TextureFormat, ValueType,
+    },
     object::Object,
     pipeline_state::PipelineState,
     render_pass::RenderPass,
     shader_resource_binding::ShaderResourceBinding,
-    texture::{Texture, TextureSubResource},
+    texture::{
+        Texture, TextureSubResource, TextureSubresourceReadMapToken,
+        TextureSubresourceReadWriteMapToken, TextureSubresourceWriteMapToken,
+    },
     texture_view::TextureView,
 };
 
@@ -1056,26 +1061,58 @@ impl DeviceContext {
         }
     }
 
-    // TODO
-    //pub fn map_texture_subresource(&self, )
-    //{
-    //
-    //}
-
-    pub fn unmap_texture_subresource(
-        &self,
-        texture: &mut Texture,
+    pub fn map_texture_subresource_read<'a, T>(
+        &'a self,
+        texture: &'a Texture,
         mip_level: u32,
         array_slice: u32,
-    ) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .UnmapTextureSubresource
-                .unwrap_unchecked()(
-                self.sys_ptr, texture.sys_ptr, mip_level, array_slice
-            )
-        }
+        map_flags: MapFlags,
+        map_region: Option<diligent_sys::Box>,
+    ) -> TextureSubresourceReadMapToken<'a, T> {
+        TextureSubresourceReadMapToken::new(
+            self,
+            texture,
+            mip_level,
+            array_slice,
+            map_flags,
+            map_region,
+        )
+    }
+
+    pub fn map_texture_subresource_write<'a, T>(
+        &'a self,
+        texture: &'a Texture,
+        mip_level: u32,
+        array_slice: u32,
+        map_flags: MapFlags,
+        map_region: Option<diligent_sys::Box>,
+    ) -> TextureSubresourceWriteMapToken<'a, T> {
+        TextureSubresourceWriteMapToken::new(
+            self,
+            texture,
+            mip_level,
+            array_slice,
+            map_flags,
+            map_region,
+        )
+    }
+
+    pub fn map_texture_subresource_read_write<'a, T>(
+        &'a self,
+        texture: &'a Texture,
+        mip_level: u32,
+        array_slice: u32,
+        map_flags: MapFlags,
+        map_region: Option<diligent_sys::Box>,
+    ) -> TextureSubresourceReadWriteMapToken<'a, T> {
+        TextureSubresourceReadWriteMapToken::new(
+            self,
+            texture,
+            mip_level,
+            array_slice,
+            map_flags,
+            map_region,
+        )
     }
 
     pub fn generate_mips(&self, texture_view: &mut TextureView) {
@@ -1386,7 +1423,6 @@ impl Deref for DeferredDeviceContext {
 }
 
 impl DeferredDeviceContext {
-    #[allow(dead_code)]
     pub(crate) fn new(device_context_ptr: *mut diligent_sys::IDeviceContext) -> Self {
         DeferredDeviceContext {
             device_context: DeviceContext::new(device_context_ptr),

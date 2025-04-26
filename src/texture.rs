@@ -5,9 +5,9 @@ use static_assertions::const_assert;
 
 use crate::{
     buffer::Buffer,
+    device_context::DeviceContext,
     device_object::DeviceObject,
-    graphics_types::ResourceState,
-    graphics_types::{BindFlags, CpuAccessFlags, TextureFormat, Usage},
+    graphics_types::{BindFlags, CpuAccessFlags, MapFlags, ResourceState, TextureFormat, Usage},
     texture_view::{TextureView, TextureViewType},
 };
 
@@ -361,6 +361,224 @@ impl Texture {
                 .unwrap_unchecked()(self.sys_ptr)
             .as_ref()
             .unwrap_unchecked()
+        }
+    }
+}
+
+pub struct TextureSubresourceReadMapToken<'a, T> {
+    device_context: &'a DeviceContext,
+    texture: &'a Texture,
+    mip_level: u32,
+    array_slice: u32,
+    data_ptr: *const T,
+}
+
+impl<'a, T> TextureSubresourceReadMapToken<'a, T> {
+    pub(super) fn new(
+        device_context: &'a DeviceContext,
+        texture: &'a Texture,
+        mip_level: u32,
+        array_slice: u32,
+        map_flags: MapFlags,
+        map_region: Option<diligent_sys::Box>,
+    ) -> TextureSubresourceReadMapToken<'a, T> {
+        let ptr = std::ptr::null_mut();
+        unsafe {
+            (*device_context.virtual_functions)
+                .DeviceContext
+                .MapTextureSubresource
+                .unwrap_unchecked()(
+                device_context.sys_ptr,
+                texture.sys_ptr,
+                mip_level,
+                array_slice,
+                diligent_sys::MAP_READ as diligent_sys::MAP_TYPE,
+                map_flags.bits(),
+                map_region
+                    .as_ref()
+                    .map_or(std::ptr::null(), |bx| std::ptr::from_ref(bx)),
+                ptr,
+            )
+        };
+
+        TextureSubresourceReadMapToken {
+            device_context,
+            texture,
+            mip_level,
+            array_slice,
+            data_ptr: ptr as *mut T,
+        }
+    }
+
+    pub unsafe fn as_ref(&self) -> &T {
+        unsafe { self.data_ptr.as_ref().unwrap_unchecked() }
+    }
+
+    pub unsafe fn as_slice(&self, len: usize, offset: isize) -> &[T] {
+        unsafe { std::slice::from_raw_parts(self.data_ptr.offset(offset), len) }
+    }
+}
+
+impl<T> Drop for TextureSubresourceReadMapToken<'_, T> {
+    fn drop(&mut self) {
+        unsafe {
+            (*self.device_context.virtual_functions)
+                .DeviceContext
+                .UnmapTextureSubresource
+                .unwrap_unchecked()(
+                self.device_context.sys_ptr,
+                self.texture.sys_ptr,
+                self.mip_level,
+                self.array_slice,
+            )
+        }
+    }
+}
+
+pub struct TextureSubresourceWriteMapToken<'a, T> {
+    device_context: &'a DeviceContext,
+    texture: &'a Texture,
+    mip_level: u32,
+    array_slice: u32,
+    data_ptr: *mut T,
+}
+
+impl<'a, T> TextureSubresourceWriteMapToken<'a, T> {
+    pub(super) fn new(
+        device_context: &'a DeviceContext,
+        texture: &'a Texture,
+        mip_level: u32,
+        array_slice: u32,
+        map_flags: MapFlags,
+        map_region: Option<diligent_sys::Box>,
+    ) -> TextureSubresourceWriteMapToken<'a, T> {
+        let ptr = std::ptr::null_mut();
+        unsafe {
+            (*device_context.virtual_functions)
+                .DeviceContext
+                .MapTextureSubresource
+                .unwrap_unchecked()(
+                device_context.sys_ptr,
+                texture.sys_ptr,
+                mip_level,
+                array_slice,
+                diligent_sys::MAP_WRITE as diligent_sys::MAP_TYPE,
+                map_flags.bits(),
+                map_region
+                    .as_ref()
+                    .map_or(std::ptr::null(), |bx| std::ptr::from_ref(bx)),
+                ptr,
+            )
+        };
+
+        TextureSubresourceWriteMapToken {
+            device_context,
+            texture,
+            mip_level,
+            array_slice,
+            data_ptr: ptr as *mut T,
+        }
+    }
+
+    pub unsafe fn as_mut(&self) -> &mut T {
+        unsafe { self.data_ptr.as_mut().unwrap_unchecked() }
+    }
+
+    pub unsafe fn as_mut_slice(&mut self, len: usize, offset: isize) -> &mut [T] {
+        unsafe { std::slice::from_raw_parts_mut(self.data_ptr.offset(offset), len) }
+    }
+}
+
+impl<T> Drop for TextureSubresourceWriteMapToken<'_, T> {
+    fn drop(&mut self) {
+        unsafe {
+            (*self.device_context.virtual_functions)
+                .DeviceContext
+                .UnmapTextureSubresource
+                .unwrap_unchecked()(
+                self.device_context.sys_ptr,
+                self.texture.sys_ptr,
+                self.mip_level,
+                self.array_slice,
+            )
+        }
+    }
+}
+
+pub struct TextureSubresourceReadWriteMapToken<'a, T> {
+    device_context: &'a DeviceContext,
+    texture: &'a Texture,
+    mip_level: u32,
+    array_slice: u32,
+    data_ptr: *mut T,
+}
+
+impl<'a, T> TextureSubresourceReadWriteMapToken<'a, T> {
+    pub(super) fn new(
+        device_context: &'a DeviceContext,
+        texture: &'a Texture,
+        mip_level: u32,
+        array_slice: u32,
+        map_flags: MapFlags,
+        map_region: Option<diligent_sys::Box>,
+    ) -> TextureSubresourceReadWriteMapToken<'a, T> {
+        let ptr = std::ptr::null_mut();
+        unsafe {
+            (*device_context.virtual_functions)
+                .DeviceContext
+                .MapTextureSubresource
+                .unwrap_unchecked()(
+                device_context.sys_ptr,
+                texture.sys_ptr,
+                mip_level,
+                array_slice,
+                diligent_sys::MAP_READ_WRITE as diligent_sys::MAP_TYPE,
+                map_flags.bits(),
+                map_region
+                    .as_ref()
+                    .map_or(std::ptr::null(), |bx| std::ptr::from_ref(bx)),
+                ptr,
+            )
+        };
+
+        TextureSubresourceReadWriteMapToken {
+            device_context,
+            texture,
+            mip_level,
+            array_slice,
+            data_ptr: ptr as *mut T,
+        }
+    }
+
+    pub unsafe fn as_ref(&self) -> &T {
+        unsafe { self.data_ptr.as_ref().unwrap_unchecked() }
+    }
+
+    pub unsafe fn as_slice(&self, len: usize, offset: isize) -> &[T] {
+        unsafe { std::slice::from_raw_parts(self.data_ptr.offset(offset), len) }
+    }
+
+    pub unsafe fn as_mut(&self) -> &mut T {
+        unsafe { self.data_ptr.as_mut().unwrap_unchecked() }
+    }
+
+    pub unsafe fn as_mut_slice(&mut self, len: usize, offset: isize) -> &mut [T] {
+        unsafe { std::slice::from_raw_parts_mut(self.data_ptr.offset(offset), len) }
+    }
+}
+
+impl<T> Drop for TextureSubresourceReadWriteMapToken<'_, T> {
+    fn drop(&mut self) {
+        unsafe {
+            (*self.device_context.virtual_functions)
+                .DeviceContext
+                .UnmapTextureSubresource
+                .unwrap_unchecked()(
+                self.device_context.sys_ptr,
+                self.texture.sys_ptr,
+                self.mip_level,
+                self.array_slice,
+            )
         }
     }
 }

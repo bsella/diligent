@@ -74,12 +74,11 @@ impl From<&EngineCreateInfo> for diligent_sys::EngineCreateInfo {
             Features: (&value.features).into(),
             EnableValidation: value.enable_validation,
             ValidationFlags: value.validation_flags,
-            pRawMemAllocator: std::ptr::null_mut() as *mut diligent_sys::IMemoryAllocator,
-            pAsyncShaderCompilationThreadPool: std::ptr::null_mut()
-                as *mut diligent_sys::IThreadPool,
+            pRawMemAllocator: std::ptr::null_mut(),
+            pAsyncShaderCompilationThreadPool: std::ptr::null_mut(),
             NumAsyncShaderCompilationThreads: value.num_async_shader_compilation_threads,
             Padding: 0,
-            pXRAttribs: std::ptr::null() as *const diligent_sys::OpenXRAttribs,
+            pXRAttribs: std::ptr::null(),
         }
     }
 }
