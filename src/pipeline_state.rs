@@ -4,17 +4,17 @@ use std::str::FromStr;
 use bitflags::bitflags;
 use static_assertions::const_assert;
 
-use crate::input_layout::InputLayoutDescWrapper;
-
-use super::device_object::DeviceObject;
-use super::graphics_types::{PrimitiveTopology, ShaderType, ShaderTypes, TextureFormat};
-use super::input_layout::LayoutElement;
-use super::pipeline_resource_signature::{ImmutableSamplerDesc, PipelineResourceSignature};
-use super::resource_mapping::ResourceMapping;
-use super::shader::Shader;
-use super::shader_resource_binding::ShaderResourceBinding;
-use super::shader_resource_variable::{
-    ShaderResourceVariable, ShaderResourceVariableDesc, ShaderResourceVariableType,
+use crate::{
+    device_object::DeviceObject,
+    graphics_types::{PrimitiveTopology, ShaderType, ShaderTypes, TextureFormat},
+    input_layout::{InputLayoutDescWrapper, LayoutElement},
+    pipeline_resource_signature::{ImmutableSamplerDesc, PipelineResourceSignature},
+    resource_mapping::ResourceMapping,
+    shader::Shader,
+    shader_resource_binding::ShaderResourceBinding,
+    shader_resource_variable::{
+        ShaderResourceVariable, ShaderResourceVariableDesc, ShaderResourceVariableType,
+    },
 };
 
 pub enum BlendFactor {
@@ -58,7 +58,7 @@ impl From<&BlendFactor> for diligent_sys::BLEND_FACTOR {
             BlendFactor::InvSrc1Color => diligent_sys::BLEND_FACTOR_INV_SRC1_COLOR,
             BlendFactor::Src1Alpha => diligent_sys::BLEND_FACTOR_SRC1_ALPHA,
             BlendFactor::InvSrc1Alpha => diligent_sys::BLEND_FACTOR_INV_SRC1_ALPHA,
-        }) as diligent_sys::BLEND_FACTOR
+        }) as _
     }
 }
 
@@ -79,7 +79,7 @@ impl From<&BlendOperation> for diligent_sys::BLEND_OPERATION {
             BlendOperation::RevSubtract => diligent_sys::BLEND_OPERATION_REV_SUBTRACT,
             BlendOperation::Min => diligent_sys::BLEND_OPERATION_MIN,
             BlendOperation::Max => diligent_sys::BLEND_OPERATION_MAX,
-        }) as diligent_sys::BLEND_OPERATION
+        }) as _
     }
 }
 
@@ -122,7 +122,7 @@ impl From<&LogicOperation> for diligent_sys::LOGIC_OPERATION {
             LogicOperation::AndInverted => diligent_sys::LOGIC_OP_AND_INVERTED,
             LogicOperation::OrReverse => diligent_sys::LOGIC_OP_OR_REVERSE,
             LogicOperation::OrInverted => diligent_sys::LOGIC_OP_OR_INVERTED,
-        }) as diligent_sys::LOGIC_OPERATION
+        }) as _
     }
 }
 
@@ -136,7 +136,7 @@ impl From<&FillMode> for diligent_sys::FILL_MODE {
         (match value {
             FillMode::Wireframe => diligent_sys::FILL_MODE_WIREFRAME,
             FillMode::Solid => diligent_sys::FILL_MODE_SOLID,
-        }) as diligent_sys::FILL_MODE
+        }) as _
     }
 }
 
@@ -152,7 +152,7 @@ impl From<&CullMode> for diligent_sys::CULL_MODE {
             CullMode::None => diligent_sys::CULL_MODE_NONE,
             CullMode::Front => diligent_sys::CULL_MODE_FRONT,
             CullMode::Back => diligent_sys::CULL_MODE_BACK,
-        }) as diligent_sys::CULL_MODE
+        }) as _
     }
 }
 
@@ -179,7 +179,7 @@ impl From<&StencilOperation> for diligent_sys::STENCIL_OP {
             StencilOperation::Invert => diligent_sys::STENCIL_OP_INVERT,
             StencilOperation::IncrWrap => diligent_sys::STENCIL_OP_INCR_WRAP,
             StencilOperation::DecrWrap => diligent_sys::STENCIL_OP_DECR_WRAP,
-        }) as diligent_sys::STENCIL_OP
+        }) as _
     }
 }
 
@@ -206,7 +206,7 @@ impl From<&ComparisonFunction> for diligent_sys::COMPARISON_FUNCTION {
             ComparisonFunction::NotEqual => diligent_sys::COMPARISON_FUNC_NOT_EQUAL,
             ComparisonFunction::GreaterEqual => diligent_sys::COMPARISON_FUNC_GREATER_EQUAL,
             ComparisonFunction::Always => diligent_sys::COMPARISON_FUNC_ALWAYS,
-        }) as diligent_sys::COMPARISON_FUNCTION
+        }) as _
     }
 }
 

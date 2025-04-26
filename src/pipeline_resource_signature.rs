@@ -2,14 +2,13 @@ use std::ffi::CString;
 
 use static_assertions::const_assert;
 
-use super::graphics_types::ShaderType;
-use super::graphics_types::ShaderTypes;
-use super::sampler::SamplerDesc;
-use super::shader_resource_variable::ShaderResourceVariable;
-
-use super::{
-    device_object::DeviceObject, resource_mapping::ResourceMapping,
+use crate::{
+    device_object::DeviceObject,
+    graphics_types::{ShaderType, ShaderTypes},
+    resource_mapping::ResourceMapping,
+    sampler::SamplerDesc,
     shader_resource_binding::ShaderResourceBinding,
+    shader_resource_variable::ShaderResourceVariable,
 };
 
 pub struct ImmutableSamplerDesc<'a> {

@@ -4,18 +4,15 @@ use bitflags::bitflags;
 use static_assertions::const_assert;
 
 use crate::{
-    device_object::DeviceObject,
-    frame_buffer::Framebuffer,
-    graphics_types::{ResourceState, StateTransitionType, TextureFormat},
-    render_pass::RenderPass,
-};
-
-use super::{
     buffer::{Buffer, BufferMapReadToken, BufferMapReadWriteToken, BufferMapWriteToken},
+    device_object::DeviceObject,
     fence::Fence,
+    frame_buffer::Framebuffer,
     graphics_types::{MapFlags, ShadingRate, ShadingRateCombiner, ValueType},
+    graphics_types::{ResourceState, StateTransitionType, TextureFormat},
     object::Object,
     pipeline_state::PipelineState,
+    render_pass::RenderPass,
     shader_resource_binding::ShaderResourceBinding,
     texture::{Texture, TextureSubResource},
     texture_view::TextureView,
@@ -164,7 +161,7 @@ impl From<&ResourceStateTransitionMode> for diligent_sys::RESOURCE_STATE_TRANSIT
             ResourceStateTransitionMode::Verify => {
                 diligent_sys::RESOURCE_STATE_TRANSITION_MODE_VERIFY
             }
-        }) as diligent_sys::RESOURCE_STATE_TRANSITION_MODE
+        }) as _
     }
 }
 

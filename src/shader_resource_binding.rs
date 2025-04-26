@@ -2,7 +2,7 @@ use std::{ffi::CString, str::FromStr};
 
 use static_assertions::const_assert;
 
-use super::{
+use crate::{
     graphics_types::ShaderTypes, object::Object,
     pipeline_resource_signature::PipelineResourceSignature, resource_mapping::ResourceMapping,
     shader_resource_variable::ShaderResourceVariable,

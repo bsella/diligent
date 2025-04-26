@@ -2,7 +2,7 @@ use std::{ffi::CString, ops::Deref, str::FromStr};
 
 use static_assertions::const_assert;
 
-use super::graphics_types::ValueType;
+use crate::graphics_types::ValueType;
 
 #[derive(Clone, Copy)]
 pub enum InputElementFrequency {
@@ -18,7 +18,7 @@ impl From<&InputElementFrequency> for diligent_sys::INPUT_ELEMENT_FREQUENCY {
             InputElementFrequency::PerInstance => {
                 diligent_sys::INPUT_ELEMENT_FREQUENCY_PER_INSTANCE
             }
-        }) as diligent_sys::INPUT_ELEMENT_FREQUENCY
+        }) as _
     }
 }
 

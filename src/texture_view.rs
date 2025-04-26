@@ -1,9 +1,6 @@
 use static_assertions::const_assert;
 
-use super::sampler::Sampler;
-use super::texture::Texture;
-
-use super::device_object::DeviceObject;
+use crate::{device_object::DeviceObject, sampler::Sampler, texture::Texture};
 
 pub enum TextureViewType {
     ShaderResource,
@@ -25,7 +22,7 @@ impl From<&TextureViewType> for diligent_sys::TEXTURE_VIEW_TYPE {
             }
             TextureViewType::UnorderedAccess => diligent_sys::TEXTURE_VIEW_UNDEFINED,
             TextureViewType::ShadingRate => diligent_sys::TEXTURE_VIEW_SHADING_RATE,
-        }) as diligent_sys::TEXTURE_VIEW_TYPE
+        }) as _
     }
 }
 

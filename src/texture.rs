@@ -3,13 +3,13 @@ use std::ffi::CString;
 use bitflags::bitflags;
 use static_assertions::const_assert;
 
-use crate::graphics_types::ResourceState;
-
-use super::buffer::Buffer;
-use super::graphics_types::{BindFlags, CpuAccessFlags, TextureFormat, Usage};
-use super::texture_view::{TextureView, TextureViewType};
-
-use super::device_object::DeviceObject;
+use crate::{
+    buffer::Buffer,
+    device_object::DeviceObject,
+    graphics_types::ResourceState,
+    graphics_types::{BindFlags, CpuAccessFlags, TextureFormat, Usage},
+    texture_view::{TextureView, TextureViewType},
+};
 
 pub enum TextureDimension {
     Texture1D,
@@ -38,7 +38,7 @@ impl From<&TextureDimension> for diligent_sys::RESOURCE_DIMENSION {
             TextureDimension::TextureCubeArray { array_size: _ } => {
                 diligent_sys::RESOURCE_DIM_TEX_CUBE_ARRAY
             }
-        }) as diligent_sys::RESOURCE_DIMENSION
+        }) as _
     }
 }
 

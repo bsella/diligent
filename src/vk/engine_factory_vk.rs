@@ -5,16 +5,12 @@ use std::path::PathBuf;
 
 use static_assertions::const_assert;
 
-use crate::device_context::DeferredDeviceContext;
-use crate::device_context::ImmediateDeviceContext;
-use crate::engine_factory::EngineCreateInfo;
-use crate::engine_factory::EngineFactory;
-
-use crate::graphics_types::DeviceFeatureState;
-use crate::platforms::native_window::NativeWindow;
-use crate::render_device::RenderDevice;
-use crate::swap_chain::SwapChain;
-use crate::swap_chain::SwapChainDesc;
+use crate::{
+    device_context::DeferredDeviceContext, device_context::ImmediateDeviceContext,
+    engine_factory::EngineCreateInfo, engine_factory::EngineFactory,
+    graphics_types::DeviceFeatureState, platforms::native_window::NativeWindow,
+    render_device::RenderDevice, swap_chain::SwapChain, swap_chain::SwapChainDesc,
+};
 
 pub struct DeviceFeaturesVk {
     dynamic_rendering: DeviceFeatureState,

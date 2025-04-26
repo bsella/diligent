@@ -1,10 +1,8 @@
 use bitflags::bitflags;
 use static_assertions::const_assert;
 
-use crate::graphics_types::DisplayModeAttribs;
-
-use super::{
-    graphics_types::{SurfaceTransform, TextureFormat},
+use crate::{
+    graphics_types::{DisplayModeAttribs, SurfaceTransform, TextureFormat},
     object::Object,
     texture_view::TextureView,
 };

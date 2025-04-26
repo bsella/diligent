@@ -1,8 +1,6 @@
 use std::ffi::CString;
 
-use crate::{render_pass::RenderPass, texture_view::TextureView};
-
-use super::device_object::DeviceObject;
+use crate::{device_object::DeviceObject, render_pass::RenderPass, texture_view::TextureView};
 
 pub struct Framebuffer {
     pub(crate) sys_ptr: *mut diligent_sys::IFramebuffer,

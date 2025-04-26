@@ -2,7 +2,7 @@ use std::{os::raw::c_void, path::PathBuf};
 
 use static_assertions::const_assert;
 
-use super::{
+use crate::{
     data_blob::DataBlob,
     graphics_types::{DeviceFeatures, GraphicsAdapterInfo, Version},
     object::Object,

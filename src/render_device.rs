@@ -2,20 +2,21 @@ use std::os::raw::c_void;
 
 use static_assertions::const_assert;
 
-use crate::device_context::DeviceContext;
-
-use super::buffer::{Buffer, BufferDesc};
-use super::data_blob::DataBlob;
-use super::fence::Fence;
-use super::graphics_types::RenderDeviceType;
-use super::object::Object;
-use super::pipeline_state::{
-    GraphicsPipelineStateCreateInfo, GraphicsPipelineStateCreateInfoWrapper, PipelineState,
+use crate::{
+    buffer::{Buffer, BufferDesc},
+    data_blob::DataBlob,
+    device_context::DeviceContext,
+    fence::Fence,
+    graphics_types::RenderDeviceType,
+    object::Object,
+    pipeline_state::{
+        GraphicsPipelineStateCreateInfo, GraphicsPipelineStateCreateInfoWrapper, PipelineState,
+    },
+    resource_mapping::ResourceMapping,
+    sampler::{Sampler, SamplerDesc},
+    shader::{Shader, ShaderCreateInfo, ShaderCreateInfoWrapper},
+    texture::{Texture, TextureDesc, TextureSubResource},
 };
-use super::resource_mapping::ResourceMapping;
-use super::sampler::{Sampler, SamplerDesc};
-use super::shader::{Shader, ShaderCreateInfo, ShaderCreateInfoWrapper};
-use super::texture::{Texture, TextureDesc, TextureSubResource};
 
 pub struct RenderDeviceInfo {
     device_type: RenderDeviceType,

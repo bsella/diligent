@@ -3,13 +3,12 @@ use std::ffi::CString;
 use bitflags::bitflags;
 use static_assertions::const_assert;
 
-use crate::device_context::DeviceContext;
-use crate::graphics_types::ResourceState;
-
-use super::buffer_view::BufferView;
-
-use super::device_object::DeviceObject;
-use super::graphics_types::{BindFlags, CpuAccessFlags, Usage};
+use crate::{
+    buffer_view::{BufferView, BufferViewType},
+    device_context::DeviceContext,
+    device_object::DeviceObject,
+    graphics_types::{BindFlags, CpuAccessFlags, ResourceState, Usage},
+};
 
 #[derive(Clone, Copy)]
 pub enum BufferMode {
@@ -27,7 +26,7 @@ impl From<&BufferMode> for diligent_sys::BUFFER_MODE {
             BufferMode::Formatted => diligent_sys::BUFFER_MODE_FORMATTED,
             BufferMode::Structured => diligent_sys::BUFFER_MODE_STRUCTURED,
             BufferMode::Raw => diligent_sys::BUFFER_MODE_RAW,
-        }) as diligent_sys::BUFFER_MODE
+        }) as _
     }
 }
 
@@ -218,15 +217,12 @@ impl Buffer {
         }
     }
 
-    pub fn get_default_view(
-        &self,
-        view_type: diligent_sys::BUFFER_VIEW_TYPE,
-    ) -> Result<BufferView, ()> {
+    pub fn get_default_view(&self, view_type: BufferViewType) -> Result<BufferView, ()> {
         let buffer_view_ptr = unsafe {
             (*self.virtual_functions)
                 .Buffer
                 .GetDefaultView
-                .unwrap_unchecked()(self.sys_ptr, view_type)
+                .unwrap_unchecked()(self.sys_ptr, view_type.into())
         };
 
         if buffer_view_ptr.is_null() {

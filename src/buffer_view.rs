@@ -1,8 +1,21 @@
 use static_assertions::const_assert;
 
-use super::buffer::Buffer;
+use crate::{buffer::Buffer, device_object::DeviceObject};
 
-use super::device_object::DeviceObject;
+pub enum BufferViewType {
+    ShaderResource,
+    UnorderedAccess,
+}
+const_assert!(diligent_sys::BUFFER_VIEW_NUM_VIEWS == 3);
+
+impl Into<diligent_sys::BUFFER_VIEW_TYPE> for BufferViewType {
+    fn into(self) -> diligent_sys::BUFFER_VIEW_TYPE {
+        (match self {
+            BufferViewType::ShaderResource => diligent_sys::BUFFER_VIEW_SHADER_RESOURCE,
+            BufferViewType::UnorderedAccess => diligent_sys::BUFFER_VIEW_UNORDERED_ACCESS,
+        }) as _
+    }
+}
 
 pub struct BufferView<'a> {
     // sys_ptr is used in the interop feature but we get a warning when the interop feature is not exabled

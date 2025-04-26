@@ -2,7 +2,7 @@ use std::ffi::CString;
 
 use static_assertions::const_assert;
 
-use super::device_object::DeviceObject;
+use crate::device_object::DeviceObject;
 
 pub struct Fence {
     pub(crate) sys_ptr: *mut diligent_sys::IFence,

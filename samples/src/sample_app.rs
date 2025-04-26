@@ -50,9 +50,10 @@ use diligent::d3d12::engine_factory_d3d12::{
 #[allow(unused_imports)]
 use crate::sample;
 
-use crate::sample_app_settings::SampleAppSettings;
-
-use super::{sample::SampleBase, sample_app_settings::parse_sample_app_settings};
+use crate::{
+    sample::SampleBase, sample_app_settings::parse_sample_app_settings,
+    sample_app_settings::SampleAppSettings,
+};
 
 pub struct SampleApp<Sample: SampleBase> {
     swap_chain: SwapChain,

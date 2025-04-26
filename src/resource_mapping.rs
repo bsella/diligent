@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use static_assertions::const_assert;
 
-use super::{device_object::DeviceObject, object::Object};
+use crate::{device_object::DeviceObject, object::Object};
 
 pub struct ResourceMapping {
     pub(crate) sys_ptr: *mut diligent_sys::IResourceMapping,

@@ -6,7 +6,7 @@ use std::{ffi::CString, path::Path, str::FromStr};
 use bitflags::bitflags;
 use static_assertions::const_assert;
 
-use super::{
+use crate::{
     device_object::DeviceObject,
     graphics_types::{ShaderType, Version},
     object::Object,
@@ -40,7 +40,7 @@ impl From<&ShaderLanguage> for diligent_sys::SHADER_SOURCE_LANGUAGE {
             ShaderLanguage::MSLVerbatim => diligent_sys::SHADER_SOURCE_LANGUAGE_MSL_VERBATIM,
             ShaderLanguage::MTLB => diligent_sys::SHADER_SOURCE_LANGUAGE_MTLB,
             ShaderLanguage::WGSL => diligent_sys::SHADER_SOURCE_LANGUAGE_WGSL,
-        }) as diligent_sys::SHADER_SOURCE_LANGUAGE
+        }) as _
     }
 }
 
@@ -58,7 +58,7 @@ impl From<&ShaderCompiler> for diligent_sys::SHADER_COMPILER {
             ShaderCompiler::GLSLANG => diligent_sys::SHADER_COMPILER_GLSLANG,
             ShaderCompiler::DXC => diligent_sys::SHADER_COMPILER_DXC,
             ShaderCompiler::FXC => diligent_sys::SHADER_COMPILER_FXC,
-        }) as diligent_sys::SHADER_COMPILER
+        }) as _
     }
 }
 
