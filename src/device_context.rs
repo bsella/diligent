@@ -141,7 +141,7 @@ impl From<&DrawIndexedAttribs> for diligent_sys::DrawIndexedAttribs {
             FirstIndexLocation: value.first_index_location,
             FirstInstanceLocation: value.first_instance_location,
             Flags: value.flags.bits(),
-            IndexType: diligent_sys::VALUE_TYPE::from(&value.index_type),
+            IndexType: (&value.index_type).into(),
             NumIndices: value.num_indices,
             NumInstances: value.num_instances,
         }
@@ -534,7 +534,7 @@ impl DeviceContext {
                 .unwrap_unchecked()(
                 self.sys_ptr,
                 shader_resource_binding.sys_ptr,
-                diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
+                (&state_transition_mode).into(),
             )
         }
     }
@@ -580,7 +580,7 @@ impl DeviceContext {
                 num_buffers as u32,
                 buffer_pointers.as_ptr(),
                 offsets.as_ptr(),
-                diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
+                (&state_transition_mode).into(),
                 flags.bits(),
             )
         }
@@ -609,7 +609,7 @@ impl DeviceContext {
                 self.sys_ptr,
                 index_buffer.sys_ptr,
                 offset,
-                diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
+                (&state_transition_mode).into(),
             )
         }
     }
@@ -620,10 +620,7 @@ impl DeviceContext {
         render_target_width: u32,
         render_target_height: u32,
     ) {
-        let viewports: Vec<_> = viewports
-            .iter()
-            .map(|&viewport| diligent_sys::Viewport::from(viewport))
-            .collect();
+        let viewports: Vec<_> = viewports.iter().map(|&viewport| viewport.into()).collect();
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -644,10 +641,7 @@ impl DeviceContext {
         render_target_width: u32,
         render_target_height: u32,
     ) {
-        let rects: Vec<_> = rects
-            .iter()
-            .map(|&rect| diligent_sys::Rect::from(rect))
-            .collect();
+        let rects: Vec<_> = rects.iter().map(|&rect| rect.into()).collect();
 
         unsafe {
             (*self.virtual_functions)
@@ -685,7 +679,7 @@ impl DeviceContext {
                 num_render_targets as u32,
                 render_target_pointers.as_mut_ptr(),
                 depth_stencil.map_or(std::ptr::null_mut(), |v| v.sys_ptr),
-                diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
+                (&state_transition_mode).into(),
             )
         }
     }
@@ -695,7 +689,7 @@ impl DeviceContext {
     }
 
     pub fn draw(&self, attribs: &DrawAttribs) {
-        let attribs = diligent_sys::DrawAttribs::from(attribs);
+        let attribs = attribs.into();
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -705,7 +699,7 @@ impl DeviceContext {
     }
 
     pub fn draw_indexed(&self, attribs: &DrawIndexedAttribs) {
-        let attribs = diligent_sys::DrawIndexedAttribs::from(attribs);
+        let attribs = attribs.into();
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -830,7 +824,7 @@ impl DeviceContext {
                 diligent_sys::CLEAR_DEPTH_FLAG as diligent_sys::CLEAR_DEPTH_STENCIL_FLAGS,
                 depth,
                 0,
-                diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
+                (&state_transition_mode).into(),
             )
         }
     }
@@ -851,7 +845,7 @@ impl DeviceContext {
                 diligent_sys::CLEAR_STENCIL_FLAG as diligent_sys::CLEAR_DEPTH_STENCIL_FLAGS,
                 0.0,
                 stencil,
-                diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
+                (&state_transition_mode).into(),
             )
         }
     }
@@ -874,7 +868,7 @@ impl DeviceContext {
                     | diligent_sys::CLEAR_DEPTH_FLAG as diligent_sys::CLEAR_DEPTH_STENCIL_FLAGS,
                 depth,
                 stencil,
-                diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
+                (&state_transition_mode).into(),
             )
         }
     }
@@ -893,7 +887,7 @@ impl DeviceContext {
                 self.sys_ptr,
                 view.sys_ptr,
                 (*rgba).as_ptr() as *const std::os::raw::c_void,
-                diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
+                (&state_transition_mode).into(),
             )
         }
     }
@@ -941,7 +935,7 @@ impl DeviceContext {
                 offset,
                 size,
                 std::ptr::from_ref(data) as *const std::os::raw::c_void,
-                diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
+                (&state_transition_mode).into(),
             )
         }
     }
@@ -962,7 +956,7 @@ impl DeviceContext {
                 0,
                 data.len() as u64 * std::mem::size_of::<T>() as u64,
                 data.as_ptr() as *const std::os::raw::c_void,
-                diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&state_transition_mode),
+                (&state_transition_mode).into(),
             )
         }
     }
@@ -985,11 +979,11 @@ impl DeviceContext {
                 self.sys_ptr,
                 src_buffer.sys_ptr,
                 src_offset,
-                diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&src_buffer_transition_mode),
+                (&src_buffer_transition_mode).into(),
                 dst_buffer.sys_ptr,
                 dst_offset,
                 size,
-                diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&dst_buffer_transition_mode),
+                (&dst_buffer_transition_mode).into(),
             )
         }
     }
@@ -1037,7 +1031,7 @@ impl DeviceContext {
         src_buffer_transition_mode: ResourceStateTransitionMode,
         texture_transition_mode: ResourceStateTransitionMode,
     ) {
-        let subres_data = diligent_sys::TextureSubResData::from(subres_data);
+        let subres_data = subres_data.into();
 
         unsafe {
             (*self.virtual_functions)
@@ -1050,8 +1044,8 @@ impl DeviceContext {
                 slice,
                 std::ptr::from_ref(dst_box),
                 std::ptr::addr_of!(subres_data),
-                diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&src_buffer_transition_mode),
-                diligent_sys::RESOURCE_STATE_TRANSITION_MODE::from(&texture_transition_mode),
+                (&src_buffer_transition_mode).into(),
+                (&texture_transition_mode).into(),
             )
         }
     }
@@ -1119,7 +1113,7 @@ impl DeviceContext {
             .as_ref()
             .iter()
             .map(|state_transition_desc| state_transition_desc.into())
-            .collect::<Vec<diligent_sys::StateTransitionDesc>>();
+            .collect::<Vec<_>>();
 
         unsafe {
             (*self.virtual_functions)
@@ -1282,7 +1276,7 @@ impl DeviceContext {
                 .SetShadingRate
                 .unwrap_unchecked()(
                 self.sys_ptr,
-                diligent_sys::SHADING_RATE::from(base_rate),
+                base_rate.into(),
                 primitive_combiner.bits(),
                 texture_combiner.bits(),
             )

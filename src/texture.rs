@@ -149,14 +149,14 @@ impl From<&TextureDesc> for diligent_sys::TextureDesc {
             _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
                 Name: value.name.as_ptr(),
             },
-            Type: diligent_sys::RESOURCE_DIMENSION::from(&value.dimension),
+            Type: (&value.dimension).into(),
             Width: value.width,
             Height: value.height,
-            Format: diligent_sys::TEXTURE_FORMAT::from(&value.format),
+            Format: (&value.format).into(),
             MipLevels: value.mip_levels,
             SampleCount: value.sample_count,
             BindFlags: value.bind_flags.bits(),
-            Usage: diligent_sys::USAGE::from(&value.usage),
+            Usage: (&value.usage).into(),
             CPUAccessFlags: value.cpu_access_flags.bits(),
             MiscFlags: value.misc_flags.bits(),
             ClearValue: diligent_sys::OptimizedClearValue {
@@ -165,7 +165,7 @@ impl From<&TextureDesc> for diligent_sys::TextureDesc {
                     Depth: value.clear_depth,
                     Stencil: value.clear_stencil,
                 },
-                Format: diligent_sys::TEXTURE_FORMAT::from(&value.format),
+                Format: (&value.format).into(),
             },
             ImmediateContextMask: value.immediate_context_mask,
             __bindgen_anon_1: anon,
@@ -289,7 +289,7 @@ impl Texture {
         &mut self,
         texture_view_desc: &diligent_sys::TextureViewDesc,
     ) -> Result<TextureView, ()> {
-        let mut texture_view_ptr: *mut diligent_sys::ITextureView = std::ptr::null_mut();
+        let mut texture_view_ptr = std::ptr::null_mut();
         unsafe {
             (*self.virtual_functions)
                 .Texture
@@ -313,10 +313,7 @@ impl Texture {
             (*self.virtual_functions)
                 .Texture
                 .GetDefaultView
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                diligent_sys::TEXTURE_VIEW_TYPE::from(&texture_view_type),
-            )
+                .unwrap_unchecked()(self.sys_ptr, (&texture_view_type).into())
         };
         if texture_view_ptr.is_null() {
             Err(())

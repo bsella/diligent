@@ -68,7 +68,7 @@ impl TextureArray {
     fn populate_instance_buffer(&mut self) {
         let mut instance_data = Vec::from_iter(std::iter::repeat_n(
             InstanceData {
-                matrix: [(); 4 * 4].map(|_| 0.0),
+                matrix: std::array::from_fn(|_| 0.0),
                 texture_id: 0.0,
             },
             (self.grid_size * self.grid_size * self.grid_size) as usize,

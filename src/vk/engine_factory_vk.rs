@@ -204,25 +204,25 @@ impl EngineFactoryVk {
                 .instance_layer_names
                 .iter()
                 .map(|s| s.as_ptr())
-                .collect::<Vec<*const i8>>();
+                .collect::<Vec<_>>();
 
             let instance_extension_names = create_info
                 .instance_extension_names
                 .iter()
                 .map(|s| s.as_ptr())
-                .collect::<Vec<*const i8>>();
+                .collect::<Vec<_>>();
 
             let device_extension_names = create_info
                 .device_extension_names
                 .iter()
                 .map(|s| s.as_ptr())
-                .collect::<Vec<*const i8>>();
+                .collect::<Vec<_>>();
 
             let ignore_debug_message_names = create_info
                 .ignore_debug_message_names
                 .iter()
                 .map(|s| s.as_ptr())
-                .collect::<Vec<*const i8>>();
+                .collect::<Vec<_>>();
 
             let create_info = diligent_sys::EngineVkCreateInfo {
                 _EngineCreateInfo: (&create_info.engine_create_info).into(),

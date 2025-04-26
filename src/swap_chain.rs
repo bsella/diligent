@@ -175,7 +175,7 @@ impl SwapChain {
             .unwrap_unchecked()
         };
 
-        SwapChainDesc::from(swap_chain_desc)
+        swap_chain_desc.into()
     }
 
     pub fn resize(&self, new_width: u32, new_height: u32, new_transform: SurfaceTransform) {

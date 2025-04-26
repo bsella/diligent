@@ -404,7 +404,7 @@ impl<const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE>
             .resource_signatures
             .iter()
             .map(|&rs| rs.sys_ptr)
-            .collect::<Vec<*mut diligent_sys::IPipelineResourceSignature>>();
+            .collect::<Vec<_>>();
 
         let ci = diligent_sys::PipelineStateCreateInfo {
             PSODesc: psd.get(),
@@ -568,8 +568,7 @@ impl Default for BlendStateDesc {
         BlendStateDesc {
             alpha_to_coverage_enable: false,
             independent_blend_enable: false,
-            render_targets: [(); diligent_sys::DILIGENT_MAX_RENDER_TARGETS as usize]
-                .map(|_| RenderTargetBlendDesc::default()),
+            render_targets: std::array::from_fn(|_| RenderTargetBlendDesc::default()),
         }
     }
 }
@@ -829,7 +828,7 @@ impl GraphicsPipelineDesc {
             num_render_targets: 0,
             subpass_index: 0,
             shading_rate_flags: PipelineShadingRateFlags::None,
-            rtv_formats: [(); diligent_sys::DILIGENT_MAX_RENDER_TARGETS as usize].map(|_| None),
+            rtv_formats: std::array::from_fn(|_| None),
             dsv_format: None,
             read_only_dsv: false,
             node_mask: 0,
@@ -1242,8 +1241,7 @@ impl PipelineState {
         &self,
         init_static_resources: bool,
     ) -> Result<ShaderResourceBinding, ()> {
-        let mut shader_resource_binding_ptr: *mut diligent_sys::IShaderResourceBinding =
-            std::ptr::null_mut();
+        let mut shader_resource_binding_ptr = std::ptr::null_mut();
         unsafe {
             (*self.virtual_functions)
                 .PipelineState

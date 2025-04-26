@@ -71,7 +71,7 @@ impl From<&EngineCreateInfo> for diligent_sys::EngineCreateInfo {
             pImmediateContextInfo: std::ptr::null(),
             NumImmediateContexts: value.immediate_context_info.len() as u32,
             NumDeferredContexts: value.num_deferred_contexts as u32,
-            Features: diligent_sys::DeviceFeatures::from(&value.features),
+            Features: (&value.features).into(),
             EnableValidation: value.enable_validation,
             ValidationFlags: value.validation_flags,
             pRawMemAllocator: std::ptr::null_mut() as *mut diligent_sys::IMemoryAllocator,
@@ -208,10 +208,7 @@ impl EngineFactory {
                 adapters.set_len(num_adapters as usize);
             }
 
-            adapters
-                .iter()
-                .map(|adapter| GraphicsAdapterInfo::from(adapter))
-                .collect()
+            adapters.iter().map(|adapter| adapter.into()).collect()
         } else {
             Vec::new()
         }

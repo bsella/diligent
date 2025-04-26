@@ -64,7 +64,7 @@ impl RenderDevice {
     pub fn create_buffer(&self, buffer_desc: &BufferDesc) -> Result<Buffer, ()> {
         let mut buffer_ptr = std::ptr::null_mut();
 
-        let buffer_desc = diligent_sys::BufferDesc::from(buffer_desc);
+        let buffer_desc = buffer_desc.into();
         unsafe {
             (*self.virtual_functions)
                 .RenderDevice
@@ -98,7 +98,7 @@ impl RenderDevice {
             pContext: device_context.map_or(std::ptr::null_mut(), |context| context.sys_ptr),
         };
 
-        let buffer_desc = diligent_sys::BufferDesc::from(buffer_desc);
+        let buffer_desc = buffer_desc.into();
         unsafe {
             (*self.virtual_functions)
                 .RenderDevice
@@ -119,8 +119,8 @@ impl RenderDevice {
     }
 
     pub fn create_shader(&self, shader_ci: &ShaderCreateInfo) -> Result<Shader, Option<DataBlob>> {
-        let mut shader_ptr: *mut diligent_sys::IShader = std::ptr::null_mut();
-        let mut data_blob_ptr: *mut diligent_sys::IDataBlob = std::ptr::null_mut();
+        let mut shader_ptr = std::ptr::null_mut();
+        let mut data_blob_ptr = std::ptr::null_mut();
 
         let shader_ci_wrapper = ShaderCreateInfoWrapper::from(shader_ci);
         let shader_ci = shader_ci_wrapper.get();
@@ -156,12 +156,9 @@ impl RenderDevice {
         device_context: Option<&DeviceContext>,
     ) -> Result<Texture, ()> {
         let mut texture_ptr = std::ptr::null_mut();
-        let texture_desc = diligent_sys::TextureDesc::from(texture_desc);
+        let texture_desc = texture_desc.into();
 
-        let mut subresources: Vec<_> = subresources
-            .iter()
-            .map(|&subres| diligent_sys::TextureSubResData::from(subres))
-            .collect();
+        let mut subresources: Vec<_> = subresources.iter().map(|&subres| subres.into()).collect();
 
         let texture_data = diligent_sys::TextureData {
             NumSubresources: subresources.len() as u32,
@@ -193,9 +190,9 @@ impl RenderDevice {
     }
 
     pub fn create_sampler(&self, sampler_desc: &SamplerDesc) -> Result<Sampler, ()> {
-        let sampler_desc = diligent_sys::SamplerDesc::from(sampler_desc);
+        let sampler_desc = sampler_desc.into();
 
-        let mut sampler_ptr: *mut diligent_sys::ISampler = std::ptr::null_mut();
+        let mut sampler_ptr = std::ptr::null_mut();
         unsafe {
             (*self.virtual_functions)
                 .RenderDevice

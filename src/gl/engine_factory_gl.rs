@@ -50,7 +50,7 @@ impl From<&EngineGLCreateInfo<'_>> for diligent_sys::EngineGLCreateInfo {
             _EngineCreateInfo: (&value.engine_create_info).into(),
             PreferredAdapterType: (&value.preferred_adapter_type).into(),
             ZeroToOneNDZ: value.zero_to_one_ndz,
-            Window: diligent_sys::NativeWindow::from(value.window),
+            Window: value.window.into(),
         }
     }
 }
@@ -75,13 +75,13 @@ impl EngineFactoryOpenGL {
         engine_ci: &EngineGLCreateInfo,
         sc_desc: &SwapChainDesc,
     ) -> Result<(RenderDevice, ImmediateDeviceContext, SwapChain), ()> {
-        let engine_ci = diligent_sys::EngineGLCreateInfo::from(engine_ci);
+        let engine_ci = engine_ci.into();
 
         let mut render_device_ptr = std::ptr::null_mut();
         let mut device_context_ptr = std::ptr::null_mut();
         let mut swap_chain_ptr = std::ptr::null_mut();
 
-        let swap_chain_desc = diligent_sys::SwapChainDesc::from(sc_desc);
+        let swap_chain_desc = sc_desc.into();
 
         unsafe {
             (*self.virtual_functions)
@@ -114,7 +114,7 @@ impl EngineFactoryOpenGL {
         &self,
         engine_ci: &EngineGLCreateInfo,
     ) -> Result<(RenderDevice, ImmediateDeviceContext), ()> {
-        let engine_ci = diligent_sys::EngineGLCreateInfo::from(engine_ci);
+        let engine_ci = engine_ci.into();
 
         let mut render_device_ptr = std::ptr::null_mut();
         let mut device_context_ptr = std::ptr::null_mut();

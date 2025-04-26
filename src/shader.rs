@@ -102,8 +102,8 @@ pub struct ShaderResourceDesc {
     pub array_size: usize,
 }
 
-impl From<diligent_sys::ShaderResourceDesc> for ShaderResourceDesc {
-    fn from(value: diligent_sys::ShaderResourceDesc) -> Self {
+impl From<&diligent_sys::ShaderResourceDesc> for ShaderResourceDesc {
+    fn from(value: &diligent_sys::ShaderResourceDesc) -> Self {
         ShaderResourceDesc {
             name: unsafe { CString::from_raw(value.Name as _) },
             array_size: value.ArraySize as usize,
@@ -292,12 +292,12 @@ impl From<&ShaderCreateInfo<'_>> for ShaderCreateInfoWrapper {
                         Name: value.desc.name.as_ptr(),
                     }
                 },
-                ShaderType: diligent_sys::SHADER_TYPE::from(&value.desc.shader_type),
+                ShaderType: (&value.desc.shader_type).into(),
                 UseCombinedTextureSamplers: value.desc.use_combined_texture_samplers,
                 CombinedSamplerSuffix: value.desc.combined_sampler_suffix.as_ptr(),
             },
-            SourceLanguage: diligent_sys::SHADER_SOURCE_LANGUAGE::from(&value.source_language),
-            ShaderCompiler: diligent_sys::SHADER_COMPILER::from(&value.compiler),
+            SourceLanguage: (&value.source_language).into(),
+            ShaderCompiler: (&value.compiler).into(),
             HLSLVersion: diligent_sys::ShaderVersion {
                 Major: value.language_version.major,
                 Minor: value.language_version.minor,
@@ -396,7 +396,7 @@ impl Shader {
                     .Shader
                     .GetResourceDesc
                     .unwrap_unchecked()(self.sys_ptr, index, resources_ptr);
-                resources.push(ShaderResourceDesc::from(*resources_ptr));
+                resources.push((&*resources_ptr).into());
             }
             resources
         }

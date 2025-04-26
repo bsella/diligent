@@ -118,7 +118,7 @@ impl EngineFactoryD3D11 {
 
         let num_deferred_contexts = engine_ci.engine_create_info.num_deferred_contexts as usize;
 
-        let engine_ci = diligent_sys::EngineD3D11CreateInfo::from(engine_ci);
+        let engine_ci = engine_ci.into();
 
         let mut render_device_ptr = std::ptr::null_mut();
         let mut device_context_ptrs = Vec::from_iter(
@@ -169,7 +169,7 @@ impl EngineFactoryD3D11 {
         window: Option<&NativeWindow>,
     ) -> Result<SwapChain, ()> {
         let swapchain_desc = swapchain_desc.into();
-        let window = window.map(|window| diligent_sys::NativeWindow::from(window));
+        let window = window.map(|window| window.into());
         let mut swap_chain_ptr = std::ptr::null_mut();
 
         let fs_desc = fs_desc.into();
@@ -217,7 +217,7 @@ impl EngineFactoryD3D11 {
 
         let num_deferred_contexts = engine_ci.engine_create_info.num_deferred_contexts as usize;
 
-        let engine_ci = diligent_sys::EngineD3D11CreateInfo::from(engine_ci);
+        let engine_ci = engine_ci.into();
 
         let mut render_device_ptr = std::ptr::null_mut();
         let mut device_context_ptrs = Vec::from_iter(
@@ -313,10 +313,6 @@ impl EngineFactoryD3D11 {
             display_modes.set_len(num_display_modes as usize);
         }
 
-        Vec::from_iter(
-            display_modes
-                .iter()
-                .map(|display_mode| DisplayModeAttribs::from(display_mode)),
-        )
+        Vec::from_iter(display_modes.iter().map(|display_mode| display_mode.into()))
     }
 }

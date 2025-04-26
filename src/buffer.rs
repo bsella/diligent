@@ -200,7 +200,7 @@ impl Buffer {
         &mut self,
         view_desc: &diligent_sys::BufferViewDesc,
     ) -> Result<BufferView, ()> {
-        let mut buffer_view_ptr: *mut diligent_sys::IBufferView = std::ptr::null_mut();
+        let mut buffer_view_ptr = std::ptr::null_mut();
         unsafe {
             (*self.virtual_functions)
                 .Buffer
