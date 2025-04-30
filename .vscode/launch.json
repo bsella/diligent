@@ -7,6 +7,45 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "Asteroids",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example",
+                    "Asteroids"
+                ],
+                "cwd": "${workspaceFolder}/samples"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Atmosphere",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example",
+                    "Atmosphere"
+                ],
+                "cwd": "${workspaceFolder}/samples"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Shadows",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example",
+                    "Shadows"
+                ],
+                "cwd": "${workspaceFolder}/samples"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Tutorial01 : Hello Triangle",
             "cargo": {
                 "args": [
@@ -101,6 +140,292 @@
                 "cwd": "${workspaceFolder}/samples",
             },
             "cwd": "${workspaceFolder}/samples",
-        }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Tutorial08 : Tessellation",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example",
+                    "Tutorial08_Tessellation"
+                ],
+                "cwd": "${workspaceFolder}/samples"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Tutorial09 : Quads",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example",
+                    "Tutorial09_Quads"
+                ],
+                "cwd": "${workspaceFolder}/samples"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Tutorial10 : Data Streaming",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example",
+                    "Tutorial10_DataStreaming"
+                ],
+                "cwd": "${workspaceFolder}/samples"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Tutorial11 : Resource Updates",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example",
+                    "Tutorial11_ResourceUpdates"
+                ],
+                "cwd": "${workspaceFolder}/samples"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Tutorial12 : Render Target",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example",
+                    "Tutorial12_RenderTarget"
+                ],
+                "cwd": "${workspaceFolder}/samples"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Tutorial13 : Shadow Map",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example",
+                    "Tutorial13_ShadowMap"
+                ],
+                "cwd": "${workspaceFolder}/samples"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Tutorial14 : Compute Shader",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example",
+                    "Tutorial14_ComputeShader"
+                ],
+                "cwd": "${workspaceFolder}/samples"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Tutorial15 : Multiple Windows",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example",
+                    "Tutorial15_MultipleWindows"
+                ],
+                "cwd": "${workspaceFolder}/samples"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Tutorial16 : Bindless Resources",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example",
+                    "Tutorial16_BindlessResources"
+                ],
+                "cwd": "${workspaceFolder}/samples"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Tutorial17 : MSAA",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example",
+                    "Tutorial17_MSAA"
+                ],
+                "cwd": "${workspaceFolder}/samples"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Tutorial18 : Queries",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example",
+                    "Tutorial18_Queries"
+                ],
+                "cwd": "${workspaceFolder}/samples"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Tutorial19 : Render Passes",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example",
+                    "Tutorial19_RenderPasses"
+                ],
+                "cwd": "${workspaceFolder}/samples"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Tutorial20 : Mesh Shader",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example",
+                    "Tutorial20_MeshShader"
+                ],
+                "cwd": "${workspaceFolder}/samples"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Tutorial21 : Ray Tracing",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example",
+                    "Tutorial21_RayTracing"
+                ],
+                "cwd": "${workspaceFolder}/samples"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Tutorial22 : Hybrid Rendering",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example",
+                    "Tutorial22_HybridRendering"
+                ],
+                "cwd": "${workspaceFolder}/samples"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Tutorial23 : Command Queues",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example",
+                    "Tutorial23_CommandQueues"
+                ],
+                "cwd": "${workspaceFolder}/samples"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Tutorial24 : VRS",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example",
+                    "Tutorial24_VRS"
+                ],
+                "cwd": "${workspaceFolder}/samples"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Tutorial25 : State Packager",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example",
+                    "Tutorial25_StatePackager"
+                ],
+                "cwd": "${workspaceFolder}/samples"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Tutorial26 : State Cache",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example",
+                    "Tutorial26_StateCache"
+                ],
+                "cwd": "${workspaceFolder}/samples"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Tutorial27 : Post Processing",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example",
+                    "Tutorial27_PostProcessing"
+                ],
+                "cwd": "${workspaceFolder}/samples"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Tutorial28 : Hello OpenXR",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example",
+                    "Tutorial28_HelloOpenXR"
+                ],
+                "cwd": "${workspaceFolder}/samples"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Tutorial29 : OIT",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example",
+                    "Tutorial29_OIT"
+                ],
+                "cwd": "${workspaceFolder}/samples"
+            }
+        },
     ]
 }
