@@ -14,7 +14,8 @@ use diligent::{
     pipeline_resource_signature::ImmutableSamplerDesc,
     pipeline_state::{
         BlendStateDesc, CullMode, DepthStencilStateDesc, GraphicsPipelineDesc,
-        GraphicsPipelineStateCreateInfo, PipelineState, RasterizerStateDesc,
+        GraphicsPipelineRenderTargets, GraphicsPipelineStateCreateInfo, PipelineState,
+        RasterizerStateDesc,
     },
     render_device::RenderDevice,
     sampler::SamplerDesc,
@@ -132,13 +133,14 @@ impl TexturedCube {
             RasterizerStateDesc::default().cull_mode(CullMode::Back),
             // Enable depth testing
             DepthStencilStateDesc::default().depth_enable(true),
+            GraphicsPipelineRenderTargets::default()
+                // This tutorial will render to a single render target
+                .num_render_targets(1)
+                // Set render target format which is the format of the swap chain's color buffer
+                .rtv_format::<0>(create_info.rtv_format)
+                // Set depth buffer format which is the format of the swap chain's back buffer
+                .dsv_format(create_info.dsv_format),
         )
-        // This tutorial will render to a single render target
-        .num_render_targets(1)
-        // Set render target format which is the format of the swap chain's color buffer
-        .rtv_format::<0>(create_info.rtv_format)
-        // Set depth buffer format which is the format of the swap chain's back buffer
-        .dsv_format(create_info.dsv_format)
         // Set the desired number of samples
         .sample_count(create_info.sample_count)
         // Primitive topology defines what kind of primitives will be rendered by this pipeline state

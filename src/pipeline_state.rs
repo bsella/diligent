@@ -9,6 +9,7 @@ use crate::{
     graphics_types::{PrimitiveTopology, ShaderType, ShaderTypes, TextureFormat},
     input_layout::{InputLayoutDescWrapper, LayoutElement},
     pipeline_resource_signature::{ImmutableSamplerDesc, PipelineResourceSignature},
+    render_pass::RenderPass,
     resource_mapping::ResourceMapping,
     shader::Shader,
     shader_resource_binding::ShaderResourceBinding,
@@ -780,7 +781,81 @@ impl Default for DepthStencilStateDesc {
     }
 }
 
-pub struct GraphicsPipelineDesc {
+pub struct GraphicsPipelineRenderTargets {
+    num_render_targets: u8,
+    rtv_formats: [Option<TextureFormat>; diligent_sys::DILIGENT_MAX_RENDER_TARGETS as usize],
+    dsv_format: Option<TextureFormat>,
+    read_only_dsv: bool,
+}
+
+impl Default for GraphicsPipelineRenderTargets {
+    fn default() -> Self {
+        GraphicsPipelineRenderTargets {
+            num_render_targets: 0,
+            rtv_formats: std::array::from_fn(|_| None),
+            dsv_format: None,
+            read_only_dsv: false,
+        }
+    }
+}
+
+impl GraphicsPipelineRenderTargets {
+    pub fn num_render_targets(mut self, num_render_targets: u8) -> Self {
+        self.num_render_targets = num_render_targets;
+        self
+    }
+    pub fn rtv_format<const INDEX: usize>(mut self, value: TextureFormat) -> Self {
+        self.rtv_formats[INDEX] = Some(value);
+        self
+    }
+    pub fn dsv_format(mut self, dsv_format: TextureFormat) -> Self {
+        self.dsv_format = Some(dsv_format);
+        self
+    }
+    pub fn read_only_dsv(mut self, read_only_dsv: bool) -> Self {
+        self.read_only_dsv = read_only_dsv;
+        self
+    }
+}
+
+pub struct GraphicsPipelineRenderPass<'a> {
+    render_pass: &'a RenderPass,
+    subpass_index: u8,
+}
+
+impl<'a> GraphicsPipelineRenderPass<'a> {
+    pub fn new(render_pass: &'a RenderPass) -> Self {
+        GraphicsPipelineRenderPass {
+            render_pass,
+            subpass_index: 0,
+        }
+    }
+}
+
+pub enum GraphicsPipelineOutput<'a> {
+    RenderTargets(GraphicsPipelineRenderTargets),
+    RenderPass(GraphicsPipelineRenderPass<'a>),
+}
+
+impl<'a> Into<GraphicsPipelineOutput<'a>> for GraphicsPipelineRenderTargets {
+    fn into(self) -> GraphicsPipelineOutput<'a> {
+        GraphicsPipelineOutput::RenderTargets(self)
+    }
+}
+
+impl<'a> Into<GraphicsPipelineOutput<'a>> for GraphicsPipelineRenderPass<'a> {
+    fn into(self) -> GraphicsPipelineOutput<'a> {
+        GraphicsPipelineOutput::RenderPass(self)
+    }
+}
+
+impl Default for GraphicsPipelineOutput<'_> {
+    fn default() -> Self {
+        GraphicsPipelineOutput::RenderTargets(GraphicsPipelineRenderTargets::default())
+    }
+}
+
+pub struct GraphicsPipelineDesc<'a> {
     blend_desc: BlendStateDesc,
     sample_mask: u32,
     rasterizer_desc: RasterizerStateDesc,
@@ -788,34 +863,30 @@ pub struct GraphicsPipelineDesc {
     input_layouts: Vec<LayoutElement>,
     primitive_topology: PrimitiveTopology,
     num_viewports: u8,
-    num_render_targets: u8,
-    subpass_index: u8,
     shading_rate_flags: PipelineShadingRateFlags,
-    rtv_formats: [Option<TextureFormat>; diligent_sys::DILIGENT_MAX_RENDER_TARGETS as usize],
-    dsv_format: Option<TextureFormat>,
-    read_only_dsv: bool,
     sample_count: u8,
     sample_quality: u8,
-    // TODO
-    // pub render_pass: Option<&RenderPass>,
     node_mask: u32,
+    output: GraphicsPipelineOutput<'a>,
 }
 
-impl Default for GraphicsPipelineDesc {
+impl Default for GraphicsPipelineDesc<'_> {
     fn default() -> Self {
         GraphicsPipelineDesc::new(
             BlendStateDesc::default(),
             RasterizerStateDesc::default(),
             DepthStencilStateDesc::default(),
+            GraphicsPipelineOutput::default(),
         )
     }
 }
 
-impl GraphicsPipelineDesc {
+impl<'a> GraphicsPipelineDesc<'a> {
     pub fn new(
         blend_desc: BlendStateDesc,
         rasterizer_desc: RasterizerStateDesc,
         depth_stencil_desc: DepthStencilStateDesc,
+        output: impl Into<GraphicsPipelineOutput<'a>>,
     ) -> Self {
         GraphicsPipelineDesc {
             blend_desc,
@@ -825,15 +896,11 @@ impl GraphicsPipelineDesc {
             input_layouts: Vec::new(),
             primitive_topology: PrimitiveTopology::TriangleList,
             num_viewports: 1,
-            num_render_targets: 0,
-            subpass_index: 0,
             shading_rate_flags: PipelineShadingRateFlags::None,
-            rtv_formats: std::array::from_fn(|_| None),
-            dsv_format: None,
-            read_only_dsv: false,
             node_mask: 0,
             sample_count: 1,
             sample_quality: 0,
+            output: output.into(),
         }
     }
 
@@ -849,28 +916,8 @@ impl GraphicsPipelineDesc {
         self.num_viewports = num_viewports;
         self
     }
-    pub fn num_render_targets(mut self, num_render_targets: u8) -> Self {
-        self.num_render_targets = num_render_targets;
-        self
-    }
-    pub fn subpass_index(mut self, subpass_index: u8) -> Self {
-        self.subpass_index = subpass_index;
-        self
-    }
     pub fn shading_rate_flags(mut self, shading_rate_flags: PipelineShadingRateFlags) -> Self {
         self.shading_rate_flags = shading_rate_flags;
-        self
-    }
-    pub fn rtv_format<const INDEX: usize>(mut self, value: TextureFormat) -> Self {
-        self.rtv_formats[INDEX] = Some(value);
-        self
-    }
-    pub fn dsv_format(mut self, dsv_format: TextureFormat) -> Self {
-        self.dsv_format = Some(dsv_format);
-        self
-    }
-    pub fn read_only_dsv(mut self, read_only_dsv: bool) -> Self {
-        self.read_only_dsv = read_only_dsv;
         self
     }
     pub fn set_input_layouts(mut self, input_layout: impl Into<Vec<LayoutElement>>) -> Self {
@@ -894,7 +941,7 @@ impl GraphicsPipelineDescWrapper {
     }
 }
 
-impl From<&GraphicsPipelineDesc> for GraphicsPipelineDescWrapper {
+impl<'a> From<&GraphicsPipelineDesc<'a>> for GraphicsPipelineDescWrapper {
     fn from(value: &GraphicsPipelineDesc) -> Self {
         let input_layouts = InputLayoutDescWrapper::from(&value.input_layouts);
 
@@ -913,25 +960,55 @@ impl From<&GraphicsPipelineDesc> for GraphicsPipelineDescWrapper {
             },
             PrimitiveTopology: (&value.primitive_topology).into(),
             NumViewports: value.num_viewports,
-            NumRenderTargets: value.num_render_targets,
-            SubpassIndex: value.subpass_index,
+            NumRenderTargets: match &value.output {
+                GraphicsPipelineOutput::RenderPass(_) => 0,
+                GraphicsPipelineOutput::RenderTargets(render_targets) => {
+                    render_targets.num_render_targets
+                }
+            },
             ShadingRateFlags: value.shading_rate_flags.bits(),
-            RTVFormats: value.rtv_formats.each_ref().map(|format| {
-                format.as_ref().map_or(
-                    diligent_sys::TEX_FORMAT_UNKNOWN as diligent_sys::TEXTURE_FORMAT,
-                    |format| format.into(),
-                )
-            }),
-            DSVFormat: value.dsv_format.as_ref().map_or(
-                diligent_sys::TEX_FORMAT_UNKNOWN as diligent_sys::TEXTURE_FORMAT,
-                |format| format.into(),
-            ),
-            ReadOnlyDSV: value.read_only_dsv,
+            RTVFormats: match &value.output {
+                GraphicsPipelineOutput::RenderPass(_) => std::array::from_fn(|_| {
+                    diligent_sys::TEX_FORMAT_UNKNOWN as diligent_sys::TEXTURE_FORMAT
+                }),
+                GraphicsPipelineOutput::RenderTargets(render_targets) => {
+                    render_targets.rtv_formats.map(|format| {
+                        format.as_ref().map_or(
+                            diligent_sys::TEX_FORMAT_UNKNOWN as diligent_sys::TEXTURE_FORMAT,
+                            |format| format.into(),
+                        )
+                    })
+                }
+            },
+            DSVFormat: match &value.output {
+                GraphicsPipelineOutput::RenderPass(_) => {
+                    diligent_sys::TEX_FORMAT_UNKNOWN as diligent_sys::TEXTURE_FORMAT
+                }
+                GraphicsPipelineOutput::RenderTargets(render_targets) => {
+                    render_targets.dsv_format.as_ref().map_or(
+                        diligent_sys::TEX_FORMAT_UNKNOWN as diligent_sys::TEXTURE_FORMAT,
+                        |format| format.into(),
+                    )
+                }
+            },
+            ReadOnlyDSV: match &value.output {
+                GraphicsPipelineOutput::RenderPass(_) => false,
+                GraphicsPipelineOutput::RenderTargets(render_targets) => {
+                    render_targets.read_only_dsv
+                }
+            },
             SmplDesc: diligent_sys::SampleDesc {
                 Count: value.sample_count,
                 Quality: value.sample_quality,
             },
-            pRenderPass: std::ptr::null_mut(),
+            pRenderPass: match &value.output {
+                GraphicsPipelineOutput::RenderPass(render_pass) => render_pass.render_pass.sys_ptr,
+                GraphicsPipelineOutput::RenderTargets(_) => std::ptr::null_mut(),
+            },
+            SubpassIndex: match &value.output {
+                GraphicsPipelineOutput::RenderPass(render_pass) => render_pass.subpass_index,
+                GraphicsPipelineOutput::RenderTargets(_) => 0,
+            },
             NodeMask: value.node_mask,
         };
 
@@ -949,7 +1026,7 @@ impl From<&GraphicsPipelineDesc> for GraphicsPipelineDescWrapper {
 const_assert!(diligent_sys::PIPELINE_TYPE_GRAPHICS == 0);
 pub struct GraphicsPipelineStateCreateInfo<'a> {
     pipeline_state_create_info: PipelineStateCreateInfo<'a, 0>,
-    graphics_pipeline_desc: GraphicsPipelineDesc,
+    graphics_pipeline_desc: GraphicsPipelineDesc<'a>,
     vertex_shader: Option<&'a Shader>,
     pixel_shader: Option<&'a Shader>,
     domain_shader: Option<&'a Shader>,
@@ -960,7 +1037,7 @@ pub struct GraphicsPipelineStateCreateInfo<'a> {
 }
 
 impl<'a> GraphicsPipelineStateCreateInfo<'a> {
-    pub fn new(name: impl AsRef<str>, graphics_pipeline_desc: GraphicsPipelineDesc) -> Self {
+    pub fn new(name: impl AsRef<str>, graphics_pipeline_desc: GraphicsPipelineDesc<'a>) -> Self {
         GraphicsPipelineStateCreateInfo {
             pipeline_state_create_info: PipelineStateCreateInfo::new(name),
             graphics_pipeline_desc,
@@ -1207,18 +1284,11 @@ impl PipelineState {
         }
     }
 
-    pub fn get_static_variables(
-        &self,
-        _shader_type: ShaderType,
-    ) -> Result<&[ShaderResourceVariable], ()> {
-        todo!()
-    }
-
     pub fn get_static_variable_by_name(
         &self,
         shader_type: ShaderType,
         name: impl AsRef<str>,
-    ) -> Result<ShaderResourceVariable, ()> {
+    ) -> Option<ShaderResourceVariable> {
         let name = CString::from_str(name.as_ref()).unwrap();
 
         let shader_resource_variable = unsafe {
@@ -1229,11 +1299,11 @@ impl PipelineState {
         };
 
         if shader_resource_variable.is_null() {
-            Err(())
+            None
         } else {
             let srv = ShaderResourceVariable::new(shader_resource_variable);
             srv.as_ref().add_ref();
-            Ok(srv)
+            Some(srv)
         }
     }
 

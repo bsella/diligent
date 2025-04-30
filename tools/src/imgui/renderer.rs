@@ -13,8 +13,8 @@ use diligent::{
     pipeline_resource_signature::ImmutableSamplerDesc,
     pipeline_state::{
         BlendFactor, BlendOperation, BlendStateDesc, ColorMask, CullMode, DepthStencilStateDesc,
-        GraphicsPipelineDesc, GraphicsPipelineStateCreateInfo, PipelineState, RasterizerStateDesc,
-        RenderTargetBlendDesc,
+        GraphicsPipelineDesc, GraphicsPipelineRenderTargets, GraphicsPipelineStateCreateInfo,
+        PipelineState, RasterizerStateDesc, RenderTargetBlendDesc,
     },
     render_device::RenderDevice,
     sampler::SamplerDesc,
@@ -597,10 +597,11 @@ impl ImguiRenderer {
                     .cull_mode(CullMode::None)
                     .scissor_enable(false),
                 DepthStencilStateDesc::default().depth_enable(false),
+                GraphicsPipelineRenderTargets::default()
+                    .num_render_targets(1)
+                    .rtv_format::<0>(create_info.back_buffer_format)
+                    .dsv_format(create_info.depth_buffer_format),
             )
-            .num_render_targets(1)
-            .rtv_format::<0>(create_info.back_buffer_format)
-            .dsv_format(create_info.depth_buffer_format)
             .primitive_topology(PrimitiveTopology::TriangleList)
             .set_input_layouts(vec![
                 LayoutElement::new(0, 2, ValueType::Float32),
@@ -840,7 +841,7 @@ impl ImguiRenderer {
             );
             device_context.set_pipeline_state(&self.pipeline_state);
 
-            device_context.set_blend_factors(&[0.0, 0.0, 0.0, 0.0]);
+            device_context.set_blend_factors(Some(&[0.0, 0.0, 0.0, 0.0]));
 
             let viewport = Viewport::new(
                 0.0,

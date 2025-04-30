@@ -6,7 +6,8 @@ use diligent::{
     graphics_types::{PrimitiveTopology, ShaderType},
     pipeline_state::{
         BlendStateDesc, CullMode, DepthStencilStateDesc, GraphicsPipelineDesc,
-        GraphicsPipelineStateCreateInfo, PipelineState, RasterizerStateDesc,
+        GraphicsPipelineRenderTargets, GraphicsPipelineStateCreateInfo, PipelineState,
+        RasterizerStateDesc,
     },
     render_device::RenderDevice,
     shader::{ShaderCreateInfo, ShaderLanguage, ShaderSource},
@@ -119,13 +120,13 @@ void main(in PSInput PSIn, out PSOutput PSOut)
             DepthStencilStateDesc::default()
                 // Disable depth testing
                 .depth_enable(false),
+            GraphicsPipelineRenderTargets::default() // This tutorial will render to a single render target
+                .num_render_targets(1)
+                // Set render target format which is the format of the swap chain's color buffer
+                .rtv_format::<0>(swap_chain_desc.color_buffer_format)
+                // Use the depth buffer format from the swap chain
+                .dsv_format(swap_chain_desc.depth_buffer_format),
         )
-        // This tutorial will render to a single render target
-        .num_render_targets(1)
-        // Set render target format which is the format of the swap chain's color buffer
-        .rtv_format::<0>(swap_chain_desc.color_buffer_format)
-        // Use the depth buffer format from the swap chain
-        .dsv_format(swap_chain_desc.depth_buffer_format)
         // Primitive topology defines what kind of primitives will be rendered by this pipeline state
         .primitive_topology(PrimitiveTopology::TriangleList);
 

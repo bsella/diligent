@@ -1,4 +1,4 @@
-use std::ffi::CString;
+use std::{ffi::CString, str::FromStr};
 
 use static_assertions::const_assert;
 
@@ -44,22 +44,6 @@ impl From<&ImmutableSamplerDesc<'_>> for diligent_sys::ImmutableSamplerDesc {
 pub struct PipelineResourceSignature {
     pub(crate) sys_ptr: *mut diligent_sys::IPipelineResourceSignature,
     virtual_functions: *mut diligent_sys::IPipelineResourceSignatureVtbl,
-
-    vertex_static_variables: Vec<ShaderResourceVariable>,
-    pixel_static_variables: Vec<ShaderResourceVariable>,
-    geometry_static_variables: Vec<ShaderResourceVariable>,
-    hull_static_variables: Vec<ShaderResourceVariable>,
-    domain_static_variables: Vec<ShaderResourceVariable>,
-    compute_static_variables: Vec<ShaderResourceVariable>,
-    amplification_static_variables: Vec<ShaderResourceVariable>,
-    mesh_static_variables: Vec<ShaderResourceVariable>,
-    raygen_static_variables: Vec<ShaderResourceVariable>,
-    raymiss_static_variables: Vec<ShaderResourceVariable>,
-    rayclosesthit_static_variables: Vec<ShaderResourceVariable>,
-    rayanyhit_static_variables: Vec<ShaderResourceVariable>,
-    rayintersection_static_variables: Vec<ShaderResourceVariable>,
-    callable_static_variables: Vec<ShaderResourceVariable>,
-    tile_static_variables: Vec<ShaderResourceVariable>,
 
     device_object: DeviceObject,
 }
@@ -128,22 +112,6 @@ impl PipelineResourceSignature {
             device_object: DeviceObject::new(
                 pipeline_resource_signature_ptr as *mut diligent_sys::IDeviceObject,
             ),
-
-            vertex_static_variables: Vec::new(),
-            pixel_static_variables: Vec::new(),
-            geometry_static_variables: Vec::new(),
-            hull_static_variables: Vec::new(),
-            domain_static_variables: Vec::new(),
-            compute_static_variables: Vec::new(),
-            amplification_static_variables: Vec::new(),
-            mesh_static_variables: Vec::new(),
-            raygen_static_variables: Vec::new(),
-            raymiss_static_variables: Vec::new(),
-            rayclosesthit_static_variables: Vec::new(),
-            rayanyhit_static_variables: Vec::new(),
-            rayintersection_static_variables: Vec::new(),
-            callable_static_variables: Vec::new(),
-            tile_static_variables: Vec::new(),
         }
     }
 
@@ -201,25 +169,27 @@ impl PipelineResourceSignature {
         }
     }
 
-    pub fn get_static_variables(&self, shader_type: ShaderType) -> &[ShaderResourceVariable] {
-        match shader_type {
-            ShaderType::Vertex => &self.vertex_static_variables,
-            ShaderType::Pixel => &self.pixel_static_variables,
-            ShaderType::Geometry => &self.geometry_static_variables,
-            ShaderType::Hull => &self.hull_static_variables,
-            ShaderType::Domain => &self.domain_static_variables,
-            ShaderType::Compute => &self.compute_static_variables,
-            ShaderType::Amplification => &self.amplification_static_variables,
-            ShaderType::Mesh => &self.mesh_static_variables,
-            ShaderType::RayGen => &self.raygen_static_variables,
-            ShaderType::RayMiss => &self.raymiss_static_variables,
-            ShaderType::RayClosestHit => &self.rayclosesthit_static_variables,
-            ShaderType::RayAnyHit => &self.rayanyhit_static_variables,
-            ShaderType::RayIntersection => &self.rayintersection_static_variables,
-            ShaderType::Callable => &self.callable_static_variables,
-            ShaderType::Tile => &self.tile_static_variables,
+    pub fn get_static_variable_by_name(
+        &self,
+        shader_type: ShaderType,
+        name: impl AsRef<str>,
+    ) -> Option<ShaderResourceVariable> {
+        let name = CString::from_str(name.as_ref()).unwrap();
+
+        let shader_resource_variable = unsafe {
+            (*self.virtual_functions)
+                .PipelineResourceSignature
+                .GetStaticVariableByName
+                .unwrap_unchecked()(self.sys_ptr, (&shader_type).into(), name.as_ptr())
+        };
+
+        if shader_resource_variable.is_null() {
+            None
+        } else {
+            let srv = ShaderResourceVariable::new(shader_resource_variable);
+            srv.as_ref().add_ref();
+            Some(srv)
         }
-        .as_slice()
     }
 
     pub fn initialize_static_srb_resources(&self, shader_resource_binding: &ShaderResourceBinding) {

@@ -550,12 +550,15 @@ impl DeviceContext {
         }
     }
 
-    pub fn set_blend_factors(&self, blend_factors: &[f32; 4]) {
+    pub fn set_blend_factors(&self, blend_factors: Option<&[f32; 4]>) {
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
                 .SetBlendFactors
-                .unwrap_unchecked()(self.sys_ptr, blend_factors.as_ptr())
+                .unwrap_unchecked()(
+                self.sys_ptr,
+                blend_factors.map_or(std::ptr::null(), |factors| factors.as_ptr()),
+            )
         }
     }
 

@@ -149,7 +149,7 @@ impl EngineFactory {
         }
     }
 
-    pub fn create_data_blob<T>(&self, initial_size: usize, data: *const T) -> Result<DataBlob, ()> {
+    pub fn create_empty_data_blob(&self, initial_size: usize) -> Result<DataBlob, ()> {
         let mut data_blob_ptr = std::ptr::null_mut();
         unsafe {
             (*self.virtual_functions)
@@ -158,7 +158,27 @@ impl EngineFactory {
                 .unwrap_unchecked()(
                 self.sys_ptr,
                 initial_size,
-                data as *const c_void,
+                std::ptr::null(),
+                std::ptr::addr_of_mut!(data_blob_ptr),
+            );
+        }
+        if data_blob_ptr.is_null() {
+            Err(())
+        } else {
+            Ok(DataBlob::new(data_blob_ptr))
+        }
+    }
+
+    pub fn create_data_blob<T>(&self, initial_size: usize, data: &T) -> Result<DataBlob, ()> {
+        let mut data_blob_ptr = std::ptr::null_mut();
+        unsafe {
+            (*self.virtual_functions)
+                .EngineFactory
+                .CreateDataBlob
+                .unwrap_unchecked()(
+                self.sys_ptr,
+                initial_size,
+                std::ptr::from_ref(data) as *const c_void,
                 std::ptr::addr_of_mut!(data_blob_ptr),
             );
         }
