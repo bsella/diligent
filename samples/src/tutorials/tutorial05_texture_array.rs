@@ -43,7 +43,6 @@ struct InstanceData {
 }
 
 struct TextureArray {
-    render_device: RenderDevice,
     immediate_context: ImmediateDeviceContext,
 
     textured_cube: TexturedCube,
@@ -135,17 +134,13 @@ impl TextureArray {
 }
 
 impl SampleBase for TextureArray {
-    fn get_render_device(&self) -> &RenderDevice {
-        &self.render_device
-    }
-
     fn get_immediate_context(&self) -> &ImmediateDeviceContext {
         &self.immediate_context
     }
 
     fn new(
         engine_factory: &EngineFactory,
-        render_device: RenderDevice,
+        device: &RenderDevice,
         immediate_contexts: Vec<ImmediateDeviceContext>,
         _deferred_contexts: Vec<DeferredDeviceContext>,
         swap_chain: &SwapChain,
@@ -189,7 +184,7 @@ impl SampleBase for TextureArray {
         ];
 
         let cube_pso_ci = CreatePSOInfo::new(
-            &render_device,
+            &device,
             swap_chain_desc.color_buffer_format,
             swap_chain_desc.depth_buffer_format,
             &shader_source_factory,
@@ -206,7 +201,7 @@ impl SampleBase for TextureArray {
         // Create dynamic uniform buffer that will store our transformation matrix
         // Dynamic buffers can be frequently updated by the CPU
         let vs_constants = create_uniform_buffer(
-            &render_device,
+            &device,
             std::mem::size_of::<glam::Mat4>() as u64 * 2,
             "VS constants CB",
             Usage::Dynamic,
@@ -228,7 +223,7 @@ impl SampleBase for TextureArray {
         let srb = pipeline_state.create_shader_resource_binding(true).unwrap();
 
         let textured_cube = TexturedCube::new(
-            &render_device,
+            &device,
             GeometryPrimitiveVertexFlags::PosTex,
             BindFlags::VertexBuffer,
             BufferMode::Undefined,
@@ -264,7 +259,7 @@ impl SampleBase for TextureArray {
                 )
             });
 
-            let texture = render_device
+            let texture = device
                 .create_texture(&texture_desc, &texture_data.each_ref(), None)
                 .unwrap();
 
@@ -286,14 +281,13 @@ impl SampleBase for TextureArray {
         .usage(Usage::Default)
         .bind_flags(BindFlags::VertexBuffer);
 
-        let inst_buff = render_device.create_buffer(&inst_buff_desc).unwrap();
+        let inst_buff = device.create_buffer(&inst_buff_desc).unwrap();
 
         let mut sample = TextureArray {
             convert_ps_output_to_gamma,
             pipeline_state,
             immediate_context: immediate_contexts.into_iter().nth(0).unwrap(),
             textured_cube,
-            render_device,
             srb,
             vertex_shader_constants: vs_constants,
             rotation_matrix: glam::Mat4::IDENTITY,

@@ -40,7 +40,6 @@ use diligent_samples::{
 };
 
 struct Texturing {
-    render_device: RenderDevice,
     immediate_context: ImmediateDeviceContext,
 
     convert_ps_output_to_gamma: bool,
@@ -57,17 +56,13 @@ struct Texturing {
 }
 
 impl SampleBase for Texturing {
-    fn get_render_device(&self) -> &RenderDevice {
-        &self.render_device
-    }
-
     fn get_immediate_context(&self) -> &ImmediateDeviceContext {
         &self.immediate_context
     }
 
     fn new(
         engine_factory: &EngineFactory,
-        render_device: RenderDevice,
+        device: &RenderDevice,
         immediate_contexts: Vec<ImmediateDeviceContext>,
         _deferred_contexts: Vec<DeferredDeviceContext>,
         swap_chain: &SwapChain,
@@ -124,12 +119,12 @@ impl SampleBase for Texturing {
                 &shader_source_factory,
             );
 
-            render_device.create_shader(&shader_ci).unwrap()
+            device.create_shader(&shader_ci).unwrap()
         };
 
         // Create dynamic uniform buffer that will store our transformation matrix
         // Dynamic buffers can be frequently updated by the CPU
-        let vertex_shader_constant_buffer = render_device
+        let vertex_shader_constant_buffer = device
             .create_buffer(
                 &BufferDesc::new(
                     "VS constants CB",
@@ -151,7 +146,7 @@ impl SampleBase for Texturing {
                 &shader_source_factory,
             );
 
-            render_device.create_shader(&shader_ci).unwrap()
+            device.create_shader(&shader_ci).unwrap()
         };
 
         // Define immutable sampler for g_Texture. Immutable samplers should be used whenever possible
@@ -210,7 +205,7 @@ impl SampleBase for Texturing {
         .vertex_shader(&vertex_shader)
         .pixel_shader(&pixel_shader);
 
-        let pipeline_state = render_device
+        let pipeline_state = device
             .create_graphics_pipeline_state(&pso_create_info)
             .unwrap();
 
@@ -287,7 +282,7 @@ impl SampleBase for Texturing {
             )
             .usage(Usage::Immutable)
             .bind_flags(BindFlags::VertexBuffer);
-            render_device
+            device
                 .create_buffer_with_data(&vertex_buffer_desc, &CUBE_VERTS, None)
                 .unwrap()
         };
@@ -309,7 +304,7 @@ impl SampleBase for Texturing {
                     .usage(Usage::Immutable)
                     .bind_flags(BindFlags::IndexBuffer);
 
-            render_device
+            device
                 .create_buffer_with_data(&vertex_buffer_desc, &INDICES, None)
                 .unwrap()
         };
@@ -320,7 +315,7 @@ impl SampleBase for Texturing {
                 .decode()
                 .unwrap();
 
-            let texture = render_device
+            let texture = device
                 .create_texture(
                     &TextureDesc::new(
                         "DGLogo",
@@ -356,7 +351,6 @@ impl SampleBase for Texturing {
             cube_vertex_buffer,
             cube_index_buffer,
             immediate_context: immediate_contexts.into_iter().nth(0).unwrap(),
-            render_device,
             srb,
             _texture_srv: texture_srv,
             vertex_shader_constant_buffer,

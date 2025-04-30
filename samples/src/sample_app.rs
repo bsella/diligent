@@ -9,6 +9,7 @@ use diligent::{
         SurfaceTransform,
     },
     platforms::native_window::NativeWindow,
+    render_device::RenderDevice,
     swap_chain::{SwapChain, SwapChainDesc},
     API_VERSION,
 };
@@ -56,6 +57,8 @@ use crate::{
 };
 
 pub struct SampleApp<Sample: SampleBase> {
+    device: RenderDevice,
+
     swap_chain: SwapChain,
 
     _golden_image_mode: GoldenImageMode,
@@ -340,7 +343,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             None
         };
 
-        let (render_device, immediate_contexts, deferred_contexts, swap_chain, display_modes) =
+        let (device, immediate_contexts, deferred_contexts, swap_chain, display_modes) =
             match &engine_factory {
                 #[cfg(feature = "vulkan")]
                 EngineFactory::VULKAN(engine_factory) => {
@@ -359,13 +362,13 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
                         ),
                     );
 
-                    let (render_device, immediate_contexts, deferred_contexts) = engine_factory
+                    let (device, immediate_contexts, deferred_contexts) = engine_factory
                         .create_device_and_contexts(&engine_vk_create_info)
                         .unwrap();
 
                     let swap_chain = engine_factory
                         .create_swap_chain(
-                            &render_device,
+                            &device,
                             immediate_contexts.first().unwrap(),
                             &swap_chain_desc,
                             window,
@@ -373,7 +376,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
                         .unwrap();
 
                     (
-                        render_device,
+                        device,
                         immediate_contexts,
                         deferred_contexts,
                         swap_chain,
@@ -413,7 +416,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
                     let engine_d3d11_create_info =
                         EngineD3D11CreateInfo::new(D3D11ValidationFlags::None, engine_create_info);
 
-                    let (render_device, immediate_contexts, deferred_contexts) = engine_factory
+                    let (device, immediate_contexts, deferred_contexts) = engine_factory
                         .create_device_and_contexts(&engine_d3d11_create_info)
                         .unwrap();
 
@@ -430,7 +433,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
 
                     let swap_chain = engine_factory
                         .create_swap_chain(
-                            &render_device,
+                            &device,
                             immediate_contexts.first().unwrap(),
                             &swap_chain_desc,
                             &FullScreenModeDesc::default(),
@@ -439,7 +442,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
                         .unwrap();
 
                     (
-                        render_device,
+                        device,
                         immediate_contexts,
                         deferred_contexts,
                         swap_chain,
@@ -452,7 +455,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
 
                     let engine_d3d12_create_info = EngineD3D12CreateInfo::new(engine_create_info);
 
-                    let (render_device, immediate_contexts, deferred_contexts) = engine_factory
+                    let (device, immediate_contexts, deferred_contexts) = engine_factory
                         .create_device_and_contexts(&engine_d3d12_create_info)
                         .unwrap();
 
@@ -469,7 +472,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
 
                     let swap_chain = engine_factory
                         .create_swap_chain(
-                            &render_device,
+                            &device,
                             immediate_contexts.first().unwrap(),
                             &swap_chain_desc,
                             &FullScreenModeDesc::default(),
@@ -478,7 +481,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
                         .unwrap();
 
                     (
-                        render_device,
+                        device,
                         immediate_contexts,
                         deferred_contexts,
                         swap_chain,
@@ -489,7 +492,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
 
         let sample = GenericSample::new(
             &engine_factory,
-            render_device,
+            &device,
             immediate_contexts,
             deferred_contexts,
             &swap_chain,
@@ -498,7 +501,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
         let swap_chain_desc = swap_chain.get_desc();
 
         let imgui_renderer = ImguiRenderer::new(ImguiRendererCreateInfo::new(
-            sample.get_render_device(),
+            &device,
             swap_chain_desc.color_buffer_format,
             swap_chain_desc.depth_buffer_format,
             app_settings.width,
@@ -525,6 +528,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             .collect();
 
         SampleApp::<GenericSample> {
+            device,
             swap_chain,
 
             _golden_image_mode: GoldenImageMode::None,
@@ -602,10 +606,8 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
 
             if self.app_settings.show_ui {
                 self.update_ui();
-                self.imgui_renderer.render(
-                    self.sample.get_immediate_context(),
-                    self.sample.get_render_device(),
-                );
+                self.imgui_renderer
+                    .render(self.sample.get_immediate_context(), &self.device);
             }
 
             self.present();

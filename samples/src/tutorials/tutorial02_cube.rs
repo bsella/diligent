@@ -36,7 +36,6 @@ use diligent_samples::{
 };
 
 struct Cube {
-    render_device: RenderDevice,
     immediate_context: ImmediateDeviceContext,
 
     convert_ps_output_to_gamma: bool,
@@ -51,17 +50,13 @@ struct Cube {
 }
 
 impl SampleBase for Cube {
-    fn get_render_device(&self) -> &RenderDevice {
-        &self.render_device
-    }
-
     fn get_immediate_context(&self) -> &ImmediateDeviceContext {
         &self.immediate_context
     }
 
     fn new(
         engine_factory: &EngineFactory,
-        render_device: RenderDevice,
+        device: &RenderDevice,
         immediate_contexts: Vec<ImmediateDeviceContext>,
         _deferred_contexts: Vec<DeferredDeviceContext>,
         swap_chain: &SwapChain,
@@ -118,12 +113,12 @@ impl SampleBase for Cube {
                 &shader_source_factory,
             );
 
-            render_device.create_shader(&shader_ci).unwrap()
+            device.create_shader(&shader_ci).unwrap()
         };
 
         // Create dynamic uniform buffer that will store our transformation matrix
         // Dynamic buffers can be frequently updated by the CPU
-        let vertex_shader_constant_buffer = render_device
+        let vertex_shader_constant_buffer = device
             .create_buffer(
                 &BufferDesc::new(
                     "VS constants CB",
@@ -145,7 +140,7 @@ impl SampleBase for Cube {
                 &shader_source_factory,
             );
 
-            render_device.create_shader(&shader_ci).unwrap()
+            device.create_shader(&shader_ci).unwrap()
         };
 
         // Pipeline state object encompasses configuration of all GPU stages
@@ -183,7 +178,7 @@ impl SampleBase for Cube {
         .vertex_shader(&vertex_shader)
         .pixel_shader(&pixel_shader);
 
-        let pipeline_state = render_device
+        let pipeline_state = device
             .create_graphics_pipeline_state(&pso_create_info)
             .unwrap();
 
@@ -241,7 +236,7 @@ impl SampleBase for Cube {
             )
             .usage(Usage::Immutable)
             .bind_flags(BindFlags::VertexBuffer);
-            render_device
+            device
                 .create_buffer_with_data(&vertex_buffer_desc, &CUBE_VERTS, None)
                 .unwrap()
         };
@@ -262,7 +257,7 @@ impl SampleBase for Cube {
                 BufferDesc::new("Cube index buffer", std::mem::size_of_val(&INDICES) as u64)
                     .usage(Usage::Immutable)
                     .bind_flags(BindFlags::IndexBuffer);
-            render_device
+            device
                 .create_buffer_with_data(&vertex_buffer_desc, &INDICES, None)
                 .unwrap()
         };
@@ -273,7 +268,6 @@ impl SampleBase for Cube {
             cube_vertex_buffer,
             cube_index_buffer,
             immediate_context: immediate_contexts.into_iter().nth(0).unwrap(),
-            render_device,
             srb,
             vertex_shader_constant_buffer,
             world_view_matrix: glam::Mat4::IDENTITY,

@@ -51,7 +51,6 @@ struct Constants {
 }
 
 struct GeometryShader {
-    render_device: RenderDevice,
     immediate_context: ImmediateDeviceContext,
 
     textured_cube: TexturedCube,
@@ -71,10 +70,6 @@ struct GeometryShader {
 }
 
 impl SampleBase for GeometryShader {
-    fn get_render_device(&self) -> &RenderDevice {
-        &self.render_device
-    }
-
     fn get_immediate_context(&self) -> &ImmediateDeviceContext {
         &self.immediate_context
     }
@@ -85,7 +80,7 @@ impl SampleBase for GeometryShader {
 
     fn new(
         engine_factory: &EngineFactory,
-        render_device: RenderDevice,
+        device: &RenderDevice,
         immediate_contexts: Vec<ImmediateDeviceContext>,
         _deferred_contexts: Vec<DeferredDeviceContext>,
         swap_chain: &SwapChain,
@@ -141,7 +136,7 @@ impl SampleBase for GeometryShader {
                 &shader_source_factory,
             );
 
-            render_device.create_shader(&shader_ci).unwrap()
+            device.create_shader(&shader_ci).unwrap()
         };
 
         // Create a geometry shader
@@ -154,7 +149,7 @@ impl SampleBase for GeometryShader {
                 &shader_source_factory,
             );
 
-            render_device.create_shader(&shader_ci).unwrap()
+            device.create_shader(&shader_ci).unwrap()
         };
 
         // Create a pixel shader
@@ -167,7 +162,7 @@ impl SampleBase for GeometryShader {
                 &shader_source_factory,
             );
 
-            render_device.create_shader(&shader_ci).unwrap()
+            device.create_shader(&shader_ci).unwrap()
         };
 
         // Define immutable sampler for g_Texture. Immutable samplers should be used whenever possible
@@ -225,13 +220,13 @@ impl SampleBase for GeometryShader {
             &sampler_desc,
         )]);
 
-        let pso = render_device
+        let pso = device
             .create_graphics_pipeline_state(&pso_create_info)
             .unwrap();
 
         // Create dynamic uniform buffer that will store shader constants
         let shader_constants = create_uniform_buffer(
-            &render_device,
+            &device,
             std::mem::size_of::<Constants>() as u64,
             "Shader constants CB",
             Usage::Dynamic,
@@ -263,7 +258,7 @@ impl SampleBase for GeometryShader {
                 .decode()
                 .unwrap();
 
-            let texture = render_device
+            let texture = device
                 .create_texture(
                     &TextureDesc::new(
                         "DGLogo",
@@ -293,7 +288,7 @@ impl SampleBase for GeometryShader {
             .set(&texture_srv, SetShaderResourceFlags::None);
 
         let textured_cube = TexturedCube::new(
-            &render_device,
+            &device,
             GeometryPrimitiveVertexFlags::PosTex,
             BindFlags::VertexBuffer,
             BufferMode::Undefined,
@@ -306,7 +301,6 @@ impl SampleBase for GeometryShader {
             convert_ps_output_to_gamma,
             pipeline_state: pso,
             immediate_context: immediate_contexts.into_iter().nth(0).unwrap(),
-            render_device,
             srb,
             vertex_shader_constants: shader_constants,
             rotation_matrix: glam::Mat4::IDENTITY,

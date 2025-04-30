@@ -18,24 +18,19 @@ use diligent_samples::{sample::SampleBase, sample_app::SampleApp};
 use diligent_tools::native_app;
 
 struct HelloTriangle {
-    render_device: RenderDevice,
     immediate_context: ImmediateDeviceContext,
 
     pipeline_state: PipelineState,
 }
 
 impl SampleBase for HelloTriangle {
-    fn get_render_device(&self) -> &RenderDevice {
-        &self.render_device
-    }
-
     fn get_immediate_context(&self) -> &ImmediateDeviceContext {
         &self.immediate_context
     }
 
     fn new(
         _engine_factory: &EngineFactory,
-        render_device: RenderDevice,
+        device: &RenderDevice,
         immediate_contexts: Vec<ImmediateDeviceContext>,
         _deferred_contexts: Vec<DeferredDeviceContext>,
         swap_chain: &SwapChain,
@@ -77,7 +72,7 @@ void main(in uint VertId : SV_VertexID, out PSInput PSIn)
             // OpenGL backend requires emulated combined HLSL texture samplers (g_Texture + g_Texture_sampler combination)
             .use_combined_texture_samplers(true);
 
-            render_device.create_shader(&shader_create_info).unwrap()
+            device.create_shader(&shader_create_info).unwrap()
         };
 
         let pixel_shader = {
@@ -109,7 +104,7 @@ void main(in PSInput PSIn, out PSOutput PSOut)
             // OpenGL backend requires emulated combined HLSL texture samplers (g_Texture + g_Texture_sampler combination)
             .use_combined_texture_samplers(true);
 
-            render_device.create_shader(&shader_create_info).unwrap()
+            device.create_shader(&shader_create_info).unwrap()
         };
 
         let graphics_pipeline_desc = GraphicsPipelineDesc::new(
@@ -136,12 +131,11 @@ void main(in PSInput PSIn, out PSOutput PSOut)
                 .pixel_shader(&pixel_shader);
 
         // Finally, create the pipeline state
-        let pipeline_state = render_device
+        let pipeline_state = device
             .create_graphics_pipeline_state(&pso_create_info)
             .unwrap();
 
         HelloTriangle {
-            render_device,
             immediate_context: immediate_contexts.into_iter().nth(0).unwrap(),
             pipeline_state,
         }
