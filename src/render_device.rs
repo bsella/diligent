@@ -376,11 +376,15 @@ impl RenderDevice {
                 InitialState: att
                     .initial_state
                     .as_ref()
-                    .map_or(diligent_sys::RESOURCE_STATE_UNKNOWN, |state| state.bits()),
+                    .map_or(diligent_sys::RESOURCE_STATE_UNKNOWN as _, |state| {
+                        state.bits()
+                    }),
                 FinalState: att
                     .final_state
                     .as_ref()
-                    .map_or(diligent_sys::RESOURCE_STATE_UNKNOWN, |state| state.bits()),
+                    .map_or(diligent_sys::RESOURCE_STATE_UNKNOWN as _, |state| {
+                        state.bits()
+                    }),
             })
             .collect::<Vec<_>>();
 
