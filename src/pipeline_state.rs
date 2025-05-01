@@ -219,6 +219,22 @@ impl From<ComparisonFunction> for diligent_sys::COMPARISON_FUNCTION {
     }
 }
 
+impl From<diligent_sys::COMPARISON_FUNCTION> for ComparisonFunction {
+    fn from(value: diligent_sys::COMPARISON_FUNCTION) -> Self {
+        match value as _ {
+            diligent_sys::COMPARISON_FUNC_NEVER => ComparisonFunction::Never,
+            diligent_sys::COMPARISON_FUNC_LESS => ComparisonFunction::Less,
+            diligent_sys::COMPARISON_FUNC_EQUAL => ComparisonFunction::Equal,
+            diligent_sys::COMPARISON_FUNC_LESS_EQUAL => ComparisonFunction::LessEqual,
+            diligent_sys::COMPARISON_FUNC_GREATER => ComparisonFunction::Greater,
+            diligent_sys::COMPARISON_FUNC_NOT_EQUAL => ComparisonFunction::NotEqual,
+            diligent_sys::COMPARISON_FUNC_GREATER_EQUAL => ComparisonFunction::GreaterEqual,
+            diligent_sys::COMPARISON_FUNC_ALWAYS => ComparisonFunction::Always,
+            _ => panic!("Unknown comparison function"),
+        }
+    }
+}
+
 bitflags! {
     pub struct ShaderVariableFlags: diligent_sys::SHADER_VARIABLE_FLAGS {
         const None                           = diligent_sys::SHADER_VARIABLE_FLAG_NONE as diligent_sys::SHADER_VARIABLE_FLAGS;

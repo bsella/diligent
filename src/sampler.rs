@@ -1,4 +1,7 @@
-use std::{ffi::CString, str::FromStr};
+use std::{
+    ffi::{CStr, CString},
+    str::FromStr,
+};
 
 use bitflags::bitflags;
 use static_assertions::const_assert;
@@ -169,9 +172,8 @@ impl Sampler {
         }
     }
 
-    pub fn get_desc(&self) -> &diligent_sys::SamplerDesc {
-        // TODO
-        unsafe {
+    pub fn get_desc(&self) -> SamplerDesc {
+        let desc = unsafe {
             ((*self.virtual_functions)
                 .DeviceObject
                 .GetDesc
@@ -179,6 +181,24 @@ impl Sampler {
                 as *const diligent_sys::SamplerDesc)
                 .as_ref()
                 .unwrap_unchecked()
+        };
+
+        SamplerDesc {
+            name: CString::from(unsafe { CStr::from_ptr(desc._DeviceObjectAttribs.Name) }),
+            address_u: desc.AddressU.into(),
+            address_v: desc.AddressV.into(),
+            address_w: desc.AddressW.into(),
+            border_color: desc.BorderColor.into(),
+            comparison_func: desc.ComparisonFunc.into(),
+            flags: SamplerFlags::from_bits_retain(desc.Flags),
+            mag_filter: desc.MagFilter.into(),
+            max_anisotropy: desc.MaxAnisotropy.into(),
+            max_lod: desc.MaxLOD.into(),
+            min_filter: desc.MinFilter.into(),
+            min_lod: desc.MinLOD.into(),
+            mip_filter: desc.MipFilter.into(),
+            mip_lod_bias: desc.MipLODBias.into(),
+            unnormalized_coords: desc.UnnormalizedCoords,
         }
     }
 }

@@ -1,5 +1,7 @@
 use std::ffi::CString;
 
+use static_assertions::const_assert;
+
 use crate::{device_object::DeviceObject, render_pass::RenderPass, texture_view::TextureView};
 
 pub struct Framebuffer {
@@ -25,18 +27,18 @@ pub struct FramebufferDesc<'a> {
 }
 
 impl Framebuffer {
-    //pub(crate) fn new(sys_ptr: *mut diligent_sys::IFramebuffer) -> Self {
-    //    // Both base and derived classes have exactly the same size.
-    //    // This means that we can up-cast to the base class without worrying about layout offset between both classes
-    //    const_assert!(
-    //        std::mem::size_of::<diligent_sys::IDeviceObject>()
-    //            == std::mem::size_of::<diligent_sys::IFramebuffer>()
-    //    );
-    //    Framebuffer {
-    //        sys_ptr,
-    //        device_object: DeviceObject::new(sys_ptr as *mut diligent_sys::IDeviceObject),
-    //    }
-    //}
+    pub(crate) fn new(sys_ptr: *mut diligent_sys::IFramebuffer) -> Self {
+        // Both base and derived classes have exactly the same size.
+        // This means that we can up-cast to the base class without worrying about layout offset between both classes
+        const_assert!(
+            std::mem::size_of::<diligent_sys::IDeviceObject>()
+                == std::mem::size_of::<diligent_sys::IFramebuffer>()
+        );
+        Framebuffer {
+            sys_ptr,
+            device_object: DeviceObject::new(sys_ptr as *mut diligent_sys::IDeviceObject),
+        }
+    }
 
     pub fn get_desc(&self) -> FramebufferDesc {
         todo!()

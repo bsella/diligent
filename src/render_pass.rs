@@ -18,6 +18,7 @@ impl AsRef<DeviceObject> for RenderPass {
     }
 }
 
+#[derive(Clone, Copy)]
 pub enum AttachmentLoadOperation {
     Load,
     Clear,
@@ -25,11 +26,31 @@ pub enum AttachmentLoadOperation {
 }
 const_assert!(diligent_sys::ATTACHMENT_LOAD_OP_COUNT == 3);
 
+impl From<AttachmentLoadOperation> for diligent_sys::ATTACHMENT_LOAD_OP {
+    fn from(value: AttachmentLoadOperation) -> Self {
+        (match value {
+            AttachmentLoadOperation::Load => diligent_sys::ATTACHMENT_LOAD_OP_LOAD,
+            AttachmentLoadOperation::Clear => diligent_sys::ATTACHMENT_LOAD_OP_CLEAR,
+            AttachmentLoadOperation::Discard => diligent_sys::ATTACHMENT_LOAD_OP_DISCARD,
+        }) as _
+    }
+}
+
+#[derive(Clone, Copy)]
 pub enum AttachmentStoreOperation {
     Store,
     Discard,
 }
 const_assert!(diligent_sys::ATTACHMENT_STORE_OP_COUNT == 2);
+
+impl From<AttachmentStoreOperation> for diligent_sys::ATTACHMENT_STORE_OP {
+    fn from(value: AttachmentStoreOperation) -> Self {
+        (match value {
+            AttachmentStoreOperation::Store => diligent_sys::ATTACHMENT_STORE_OP_STORE,
+            AttachmentStoreOperation::Discard => diligent_sys::ATTACHMENT_STORE_OP_DISCARD,
+        }) as _
+    }
+}
 
 pub struct RenderPassAttachmentDesc {
     pub format: Option<TextureFormat>,
@@ -50,6 +71,20 @@ pub struct AttachmentReference {
     pub attachment_index: usize,
 
     pub state: Option<ResourceState>,
+}
+
+impl From<&AttachmentReference> for diligent_sys::AttachmentReference {
+    fn from(value: &AttachmentReference) -> Self {
+        diligent_sys::AttachmentReference {
+            AttachmentIndex: value.attachment_index as u32,
+            State: value
+                .state
+                .as_ref()
+                .map_or(diligent_sys::RESOURCE_STATE_UNKNOWN as _, |state| {
+                    state.bits()
+                }),
+        }
+    }
 }
 
 pub enum RenderTargetAttachments {
@@ -113,9 +148,9 @@ impl Default for SubpassDependencyDesc {
 
 pub struct RenderPassDesc {
     pub name: CString,
-    attachments: Vec<RenderPassAttachmentDesc>,
-    subpasses: Vec<SubpassDesc>,
-    dependencies: Vec<SubpassDependencyDesc>,
+    pub attachments: Vec<RenderPassAttachmentDesc>,
+    pub subpasses: Vec<SubpassDesc>,
+    pub dependencies: Vec<SubpassDependencyDesc>,
 }
 
 impl RenderPassDesc {
@@ -127,34 +162,21 @@ impl RenderPassDesc {
             dependencies: Vec::new(),
         }
     }
-
-    pub fn attachments(mut self, attachments: Vec<RenderPassAttachmentDesc>) -> Self {
-        self.attachments = attachments;
-        self
-    }
-    pub fn subpasses(mut self, subpasses: Vec<SubpassDesc>) -> Self {
-        self.subpasses = subpasses;
-        self
-    }
-    pub fn dependencies(mut self, dependencies: Vec<SubpassDependencyDesc>) -> Self {
-        self.dependencies = dependencies;
-        self
-    }
 }
 
 impl RenderPass {
-    //pub(crate) fn new(sys_ptr: *mut diligent_sys::IRenderPass) -> Self {
-    //    // Both base and derived classes have exactly the same size.
-    //    // This means that we can up-cast to the base class without worrying about layout offset between both classes
-    //    const_assert!(
-    //        std::mem::size_of::<diligent_sys::IObject>()
-    //            == std::mem::size_of::<diligent_sys::IRenderPass>()
-    //    );
-    //    RenderPass {
-    //        sys_ptr,
-    //        device_object: DeviceObject::new(sys_ptr as *mut diligent_sys::IDeviceObject),
-    //    }
-    //}
+    pub(crate) fn new(sys_ptr: *mut diligent_sys::IRenderPass) -> Self {
+        // Both base and derived classes have exactly the same size.
+        // This means that we can up-cast to the base class without worrying about layout offset between both classes
+        const_assert!(
+            std::mem::size_of::<diligent_sys::IObject>()
+                == std::mem::size_of::<diligent_sys::IRenderPass>()
+        );
+        RenderPass {
+            sys_ptr,
+            device_object: DeviceObject::new(sys_ptr as *mut diligent_sys::IDeviceObject),
+        }
+    }
 
     pub fn get_desc(&self) -> RenderPassDesc {
         todo!()

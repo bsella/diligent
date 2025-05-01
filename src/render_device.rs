@@ -6,12 +6,18 @@ use crate::{
     buffer::{Buffer, BufferDesc},
     data_blob::DataBlob,
     device_context::DeviceContext,
-    fence::Fence,
-    graphics_types::{GraphicsAdapterInfo, RenderDeviceType, TextureFormat},
+    fence::{Fence, FenceDesc},
+    frame_buffer::{Framebuffer, FramebufferDesc},
+    graphics_types::{GraphicsAdapterInfo, RenderDeviceType, TextureFormat, Version},
     object::Object,
+    pipeline_resource_signature::{
+        PipelineResourceSignature, PipelineResourceSignatureDesc,
+        PipelineResourceSignatureDescWrapper,
+    },
     pipeline_state::{
         GraphicsPipelineStateCreateInfo, GraphicsPipelineStateCreateInfoWrapper, PipelineState,
     },
+    render_pass::{RenderPass, RenderPassDesc, RenderTargetAttachments},
     resource_mapping::ResourceMapping,
     sampler::{Sampler, SamplerDesc},
     shader::{Shader, ShaderCreateInfo, ShaderCreateInfoWrapper},
@@ -20,9 +26,9 @@ use crate::{
 
 pub struct RenderDeviceInfo {
     device_type: RenderDeviceType,
+    api_version: Version,
     //TODO
-    //api_version: Version,
-    //DeviceFeatures Features;
+    //DeviceFeatures : Features;
     //NDCAttribs NDC DEFAULT_INITIALIZER({});
     //RenderDeviceShaderVersionInfo MaxShaderVersion DEFAULT_INITIALIZER({});
 }
@@ -30,6 +36,10 @@ pub struct RenderDeviceInfo {
 impl RenderDeviceInfo {
     pub fn device_type(&self) -> &RenderDeviceType {
         &self.device_type
+    }
+
+    pub fn api_version(&self) -> &Version {
+        &self.api_version
     }
 }
 
@@ -325,14 +335,18 @@ impl RenderDevice {
         }
     }
 
-    pub fn create_fence(&self, fence_desc: &diligent_sys::FenceDesc) -> Result<Fence, ()> {
+    pub fn create_fence(&self, fence_desc: &FenceDesc) -> Result<Fence, ()> {
+        let fence_desc = fence_desc.into();
+
         let mut fence_ptr = std::ptr::null_mut();
         unsafe {
             (*self.virtual_functions)
                 .RenderDevice
                 .CreateFence
                 .unwrap_unchecked()(
-                self.sys_ptr, fence_desc, std::ptr::addr_of_mut!(fence_ptr)
+                self.sys_ptr,
+                std::ptr::from_ref(&fence_desc),
+                std::ptr::addr_of_mut!(fence_ptr),
             );
         }
         if fence_ptr.is_null() {
@@ -342,13 +356,213 @@ impl RenderDevice {
         }
     }
 
-    // pub fn create_query();
-    // pub fn create_render_pass();
-    // pub fn create_framebuffer();
-    // pub fn create_blas();
-    // pub fn create_tlas();
-    // pub fn create_sbt();
-    // pub fn create_pipeline_resource_signature();
+    // pub fn create_query(&self);
+
+    pub fn create_render_pass(&self, desc: &RenderPassDesc) -> Result<RenderPass, ()> {
+        let attachments = desc
+            .attachments
+            .iter()
+            .map(|att| diligent_sys::RenderPassAttachmentDesc {
+                Format: att
+                    .format
+                    .map_or(diligent_sys::TEX_FORMAT_UNKNOWN as _, |format| {
+                        format.into()
+                    }),
+                SampleCount: att.sample_count,
+                LoadOp: att.load_op.into(),
+                StoreOp: att.store_op.into(),
+                StencilLoadOp: att.stencil_load_op.into(),
+                StencilStoreOp: att.stencil_store_op.into(),
+                InitialState: att
+                    .initial_state
+                    .as_ref()
+                    .map_or(diligent_sys::RESOURCE_STATE_UNKNOWN, |state| state.bits()),
+                FinalState: att
+                    .final_state
+                    .as_ref()
+                    .map_or(diligent_sys::RESOURCE_STATE_UNKNOWN, |state| state.bits()),
+            })
+            .collect::<Vec<_>>();
+
+        struct SubpassWrapper {
+            input_attachments: Vec<diligent_sys::AttachmentReference>,
+            preserve_attachments: Vec<u32>,
+            render_target_attachments: Vec<diligent_sys::AttachmentReference>,
+            resolve_attachments: Vec<diligent_sys::AttachmentReference>,
+            depth_stencil_attachments: Vec<diligent_sys::AttachmentReference>,
+            shading_rate_attachments: Vec<diligent_sys::ShadingRateAttachment>,
+        }
+
+        let subpasses = desc
+            .subpasses
+            .iter()
+            .map(|subpass| SubpassWrapper {
+                input_attachments: subpass
+                    .input_attachments
+                    .iter()
+                    .map(|att| att.into())
+                    .collect(),
+                preserve_attachments: subpass.preserve_attachments.clone(),
+                render_target_attachments: match &subpass.render_target_attachments {
+                    RenderTargetAttachments::RenderTargets(render_targets) => {
+                        render_targets.iter().map(|att| att.into()).collect()
+                    }
+                    RenderTargetAttachments::RenderTargetsAndResolve(
+                        render_targets_and_resolve,
+                    ) => render_targets_and_resolve
+                        .iter()
+                        .map(|(att, _resolve)| att.into())
+                        .collect(),
+                },
+                resolve_attachments: match &subpass.render_target_attachments {
+                    RenderTargetAttachments::RenderTargets(_) => Vec::new(),
+                    RenderTargetAttachments::RenderTargetsAndResolve(
+                        render_targets_and_resolve,
+                    ) => render_targets_and_resolve
+                        .iter()
+                        .map(|(_att, resolve)| resolve.into())
+                        .collect(),
+                },
+                depth_stencil_attachments: subpass
+                    .depth_stencil_attachment
+                    .iter()
+                    .map(|att| att.into())
+                    .collect(),
+
+                shading_rate_attachments: subpass
+                    .shading_rate_attachment
+                    .iter()
+                    .map(|att| diligent_sys::ShadingRateAttachment {
+                        Attachment: (&att.attachment).into(),
+                        TileSize: att.tile_size,
+                    })
+                    .collect(),
+            })
+            .collect::<Vec<_>>();
+
+        let subpasses = subpasses
+            .iter()
+            .map(|subpass| diligent_sys::SubpassDesc {
+                InputAttachmentCount: subpass.input_attachments.len() as u32,
+                pInputAttachments: subpass.input_attachments.as_ptr(),
+                PreserveAttachmentCount: subpass.preserve_attachments.len() as u32,
+                pPreserveAttachments: subpass.preserve_attachments.as_ptr(),
+                RenderTargetAttachmentCount: subpass.render_target_attachments.len() as u32,
+                pRenderTargetAttachments: subpass.render_target_attachments.as_ptr(),
+                pResolveAttachments: subpass.resolve_attachments.as_ptr(),
+                pDepthStencilAttachment: subpass.depth_stencil_attachments.as_ptr(),
+                pShadingRateAttachment: subpass.shading_rate_attachments.as_ptr(),
+            })
+            .collect::<Vec<_>>();
+
+        let dependencies = desc
+            .dependencies
+            .iter()
+            .map(|dep| diligent_sys::SubpassDependencyDesc {
+                SrcSubpass: dep.src_subpass_index as u32,
+                DstSubpass: dep.dst_subpass_index as u32,
+                SrcStageMask: dep.src_stage_mask.bits(),
+                DstStageMask: dep.dst_stage_mask.bits(),
+                SrcAccessMask: dep.src_access_mask.bits(),
+                DstAccessMask: dep.dst_access_mask.bits(),
+            })
+            .collect::<Vec<_>>();
+
+        let desc = diligent_sys::RenderPassDesc {
+            _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
+                Name: desc.name.as_ptr(),
+            },
+            AttachmentCount: attachments.len() as u32,
+            pAttachments: attachments.as_ptr(),
+            SubpassCount: subpasses.len() as u32,
+            pSubpasses: subpasses.as_ptr(),
+            DependencyCount: dependencies.len() as u32,
+            pDependencies: dependencies.as_ptr(),
+        };
+
+        let mut render_pass_ptr = std::ptr::null_mut();
+        unsafe {
+            (*self.virtual_functions)
+                .RenderDevice
+                .CreateRenderPass
+                .unwrap_unchecked()(
+                self.sys_ptr,
+                std::ptr::from_ref(&desc),
+                std::ptr::addr_of_mut!(render_pass_ptr),
+            );
+        }
+        if render_pass_ptr.is_null() {
+            Err(())
+        } else {
+            Ok(RenderPass::new(render_pass_ptr))
+        }
+    }
+
+    pub fn create_framebuffer(&self, desc: &FramebufferDesc) -> Result<Framebuffer, ()> {
+        let texture_views = desc
+            .attachments
+            .iter()
+            .map(|view| view.sys_ptr)
+            .collect::<Vec<_>>();
+
+        let desc = diligent_sys::FramebufferDesc {
+            _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
+                Name: desc.name.as_ptr(),
+            },
+            pRenderPass: desc.render_pass.sys_ptr,
+            AttachmentCount: texture_views.len() as u32,
+            ppAttachments: texture_views.as_ptr(),
+            Width: desc.width,
+            Height: desc.height,
+            NumArraySlices: desc.num_array_slices,
+        };
+
+        let mut frame_buffer_ptr = std::ptr::null_mut();
+        unsafe {
+            (*self.virtual_functions)
+                .RenderDevice
+                .CreateFramebuffer
+                .unwrap_unchecked()(
+                self.sys_ptr,
+                std::ptr::from_ref(&desc),
+                std::ptr::addr_of_mut!(frame_buffer_ptr),
+            );
+        }
+        if frame_buffer_ptr.is_null() {
+            Err(())
+        } else {
+            Ok(Framebuffer::new(frame_buffer_ptr))
+        }
+    }
+
+    // pub fn create_blas(&self);
+    // pub fn create_tlas(&self);
+    // pub fn create_sbt(&self);
+
+    pub fn create_pipeline_resource_signature(
+        &self,
+        desc: &PipelineResourceSignatureDesc,
+    ) -> Result<PipelineResourceSignature, ()> {
+        let desc = PipelineResourceSignatureDescWrapper::from(desc);
+
+        let mut prs_ptr = std::ptr::null_mut();
+        unsafe {
+            (*self.virtual_functions)
+                .RenderDevice
+                .CreatePipelineResourceSignature
+                .unwrap_unchecked()(
+                self.sys_ptr,
+                std::ptr::from_ref(&desc),
+                std::ptr::addr_of_mut!(prs_ptr),
+            );
+        }
+        if prs_ptr.is_null() {
+            Err(())
+        } else {
+            Ok(PipelineResourceSignature::new(prs_ptr))
+        }
+    }
+
     // pub fn create_device_memory();
 
     pub fn get_adapter_info(&self) -> GraphicsAdapterInfo {
@@ -389,6 +603,10 @@ impl RenderDevice {
                 #[cfg(feature = "webgpu")]
                 diligent_sys::RENDER_DEVICE_TYPE_WEBGPU => RenderDeviceType::WEBGPU,
                 _ => panic!(),
+            },
+            api_version: Version {
+                major: render_device_info.APIVersion.Major,
+                minor: render_device_info.APIVersion.Minor,
             },
         }
     }

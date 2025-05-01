@@ -66,7 +66,6 @@ impl From<ShaderCompiler> for diligent_sys::SHADER_COMPILER {
 
 #[derive(Clone, Copy)]
 pub enum ShaderResourceType {
-    Unknown,
     ConstantBuffer,
     TextureSRV,
     BufferSRV,
@@ -81,7 +80,6 @@ const_assert!(diligent_sys::SHADER_RESOURCE_TYPE_LAST == 8);
 impl Into<ShaderResourceType> for diligent_sys::SHADER_RESOURCE_TYPE {
     fn into(self) -> ShaderResourceType {
         match self as diligent_sys::_SHADER_RESOURCE_TYPE {
-            diligent_sys::SHADER_RESOURCE_TYPE_UNKNOWN => ShaderResourceType::Unknown,
             diligent_sys::SHADER_RESOURCE_TYPE_CONSTANT_BUFFER => {
                 ShaderResourceType::ConstantBuffer
             }
@@ -96,6 +94,25 @@ impl Into<ShaderResourceType> for diligent_sys::SHADER_RESOURCE_TYPE {
             diligent_sys::SHADER_RESOURCE_TYPE_ACCEL_STRUCT => ShaderResourceType::AccelStruct,
             _ => panic!(),
         }
+    }
+}
+
+impl From<ShaderResourceType> for diligent_sys::SHADER_RESOURCE_TYPE {
+    fn from(value: ShaderResourceType) -> Self {
+        (match value {
+            ShaderResourceType::AccelStruct => diligent_sys::SHADER_RESOURCE_TYPE_ACCEL_STRUCT,
+            ShaderResourceType::BufferSRV => diligent_sys::SHADER_RESOURCE_TYPE_BUFFER_SRV,
+            ShaderResourceType::BufferUAV => diligent_sys::SHADER_RESOURCE_TYPE_BUFFER_UAV,
+            ShaderResourceType::ConstantBuffer => {
+                diligent_sys::SHADER_RESOURCE_TYPE_CONSTANT_BUFFER
+            }
+            ShaderResourceType::InputAttachment => {
+                diligent_sys::SHADER_RESOURCE_TYPE_INPUT_ATTACHMENT
+            }
+            ShaderResourceType::Sampler => diligent_sys::SHADER_RESOURCE_TYPE_SAMPLER,
+            ShaderResourceType::TextureSRV => diligent_sys::SHADER_RESOURCE_TYPE_TEXTURE_SRV,
+            ShaderResourceType::TextureUAV => diligent_sys::SHADER_RESOURCE_TYPE_TEXTURE_UAV,
+        }) as _
     }
 }
 
