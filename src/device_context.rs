@@ -143,21 +143,22 @@ impl From<&DrawIndexedAttribs> for diligent_sys::DrawIndexedAttribs {
             FirstIndexLocation: value.first_index_location,
             FirstInstanceLocation: value.first_instance_location,
             Flags: value.flags.bits(),
-            IndexType: (&value.index_type).into(),
+            IndexType: value.index_type.into(),
             NumIndices: value.num_indices,
             NumInstances: value.num_instances,
         }
     }
 }
 
+#[derive(Clone, Copy)]
 pub enum ResourceStateTransitionMode {
     None,
     Transition,
     Verify,
 }
 
-impl From<&ResourceStateTransitionMode> for diligent_sys::RESOURCE_STATE_TRANSITION_MODE {
-    fn from(value: &ResourceStateTransitionMode) -> Self {
+impl From<ResourceStateTransitionMode> for diligent_sys::RESOURCE_STATE_TRANSITION_MODE {
+    fn from(value: ResourceStateTransitionMode) -> Self {
         (match value {
             ResourceStateTransitionMode::None => diligent_sys::RESOURCE_STATE_TRANSITION_MODE_NONE,
             ResourceStateTransitionMode::Transition => {
@@ -431,7 +432,7 @@ impl<'a> RenderPassToken<'a> {
                     Depth: clear_value.depth_stencil.depth,
                     Stencil: clear_value.depth_stencil.stencil,
                 },
-                Format: (&clear_value.format).into(),
+                Format: clear_value.format.into(),
             })
             .collect::<Vec<_>>();
 
@@ -439,7 +440,7 @@ impl<'a> RenderPassToken<'a> {
             pRenderPass: attribs.render_pass.sys_ptr,
             ClearValueCount: attribs.clear_values.len() as u32,
             pClearValues: clear_values.as_ptr() as *mut diligent_sys::OptimizedClearValue,
-            StateTransitionMode: (&attribs.state_transition_mode).into(),
+            StateTransitionMode: attribs.state_transition_mode.into(),
             pFramebuffer: attribs.frame_buffer.sys_ptr,
         };
 
@@ -536,7 +537,7 @@ impl DeviceContext {
                 .unwrap_unchecked()(
                 self.sys_ptr,
                 shader_resource_binding.sys_ptr,
-                (&state_transition_mode).into(),
+                state_transition_mode.into(),
             )
         }
     }
@@ -585,7 +586,7 @@ impl DeviceContext {
                 num_buffers as u32,
                 buffer_pointers.as_ptr(),
                 offsets.as_ptr(),
-                (&state_transition_mode).into(),
+                state_transition_mode.into(),
                 flags.bits(),
             )
         }
@@ -614,7 +615,7 @@ impl DeviceContext {
                 self.sys_ptr,
                 index_buffer.sys_ptr,
                 offset,
-                (&state_transition_mode).into(),
+                state_transition_mode.into(),
             )
         }
     }
@@ -684,7 +685,7 @@ impl DeviceContext {
                 num_render_targets as u32,
                 render_target_pointers.as_mut_ptr(),
                 depth_stencil.map_or(std::ptr::null_mut(), |v| v.sys_ptr),
-                (&state_transition_mode).into(),
+                state_transition_mode.into(),
             )
         }
     }
@@ -829,7 +830,7 @@ impl DeviceContext {
                 diligent_sys::CLEAR_DEPTH_FLAG as diligent_sys::CLEAR_DEPTH_STENCIL_FLAGS,
                 depth,
                 0,
-                (&state_transition_mode).into(),
+                state_transition_mode.into(),
             )
         }
     }
@@ -850,7 +851,7 @@ impl DeviceContext {
                 diligent_sys::CLEAR_STENCIL_FLAG as diligent_sys::CLEAR_DEPTH_STENCIL_FLAGS,
                 0.0,
                 stencil,
-                (&state_transition_mode).into(),
+                state_transition_mode.into(),
             )
         }
     }
@@ -873,7 +874,7 @@ impl DeviceContext {
                     | diligent_sys::CLEAR_DEPTH_FLAG as diligent_sys::CLEAR_DEPTH_STENCIL_FLAGS,
                 depth,
                 stencil,
-                (&state_transition_mode).into(),
+                state_transition_mode.into(),
             )
         }
     }
@@ -892,7 +893,7 @@ impl DeviceContext {
                 self.sys_ptr,
                 view.sys_ptr,
                 (*rgba).as_ptr() as *const std::os::raw::c_void,
-                (&state_transition_mode).into(),
+                state_transition_mode.into(),
             )
         }
     }
@@ -940,7 +941,7 @@ impl DeviceContext {
                 offset,
                 size,
                 std::ptr::from_ref(data) as *const std::os::raw::c_void,
-                (&state_transition_mode).into(),
+                state_transition_mode.into(),
             )
         }
     }
@@ -961,7 +962,7 @@ impl DeviceContext {
                 0,
                 data.len() as u64 * std::mem::size_of::<T>() as u64,
                 data.as_ptr() as *const std::os::raw::c_void,
-                (&state_transition_mode).into(),
+                state_transition_mode.into(),
             )
         }
     }
@@ -984,11 +985,11 @@ impl DeviceContext {
                 self.sys_ptr,
                 src_buffer.sys_ptr,
                 src_offset,
-                (&src_buffer_transition_mode).into(),
+                src_buffer_transition_mode.into(),
                 dst_buffer.sys_ptr,
                 dst_offset,
                 size,
-                (&dst_buffer_transition_mode).into(),
+                dst_buffer_transition_mode.into(),
             )
         }
     }
@@ -1049,8 +1050,8 @@ impl DeviceContext {
                 slice,
                 std::ptr::from_ref(dst_box),
                 std::ptr::addr_of!(subres_data),
-                (&src_buffer_transition_mode).into(),
-                (&texture_transition_mode).into(),
+                src_buffer_transition_mode.into(),
+                texture_transition_mode.into(),
             )
         }
     }
@@ -1303,7 +1304,7 @@ impl DeviceContext {
 
     pub fn set_shading_rate(
         &self,
-        base_rate: &ShadingRate,
+        base_rate: ShadingRate,
         primitive_combiner: &ShadingRateCombiner,
         texture_combiner: &ShadingRateCombiner,
     ) {

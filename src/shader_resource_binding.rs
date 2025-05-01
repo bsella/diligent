@@ -3,9 +3,13 @@ use std::{ffi::CString, str::FromStr};
 use static_assertions::const_assert;
 
 use crate::{
-    graphics_types::ShaderTypes, object::Object,
-    pipeline_resource_signature::PipelineResourceSignature, resource_mapping::ResourceMapping,
-    shader_resource_variable::ShaderResourceVariable,
+    graphics_types::ShaderTypes,
+    object::Object,
+    pipeline_resource_signature::PipelineResourceSignature,
+    resource_mapping::ResourceMapping,
+    shader_resource_variable::{
+        BindShaderResourcesFlags, ShaderResourceVariable, ShaderResourceVariableTypeFlags,
+    },
 };
 
 pub struct ShaderResourceBinding {
@@ -45,7 +49,7 @@ impl ShaderResourceBinding {
         &self,
         shader_stages: ShaderTypes,
         resource_mapping: &ResourceMapping,
-        flags: diligent_sys::BIND_SHADER_RESOURCES_FLAGS,
+        flags: BindShaderResourcesFlags,
     ) {
         unsafe {
             (*self.virtual_functions)
@@ -55,7 +59,7 @@ impl ShaderResourceBinding {
                 self.sys_ptr,
                 shader_stages.bits(),
                 resource_mapping.sys_ptr,
-                flags,
+                flags.bits(),
             )
         }
     }
@@ -64,9 +68,9 @@ impl ShaderResourceBinding {
         &self,
         shader_stages: ShaderTypes,
         resource_mapping: &ResourceMapping,
-        flags: diligent_sys::BIND_SHADER_RESOURCES_FLAGS,
-    ) -> diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_FLAGS {
-        unsafe {
+        flags: BindShaderResourcesFlags,
+    ) -> ShaderResourceVariableTypeFlags {
+        let flags = unsafe {
             (*self.virtual_functions)
                 .ShaderResourceBinding
                 .CheckResources
@@ -74,9 +78,11 @@ impl ShaderResourceBinding {
                 self.sys_ptr,
                 shader_stages.bits(),
                 resource_mapping.sys_ptr,
-                flags,
+                flags.bits(),
             )
-        }
+        };
+
+        ShaderResourceVariableTypeFlags::from_bits_retain(flags)
     }
 
     pub fn get_variables(

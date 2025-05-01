@@ -1,5 +1,5 @@
-use std::ffi::CString;
 use std::str::FromStr;
+use std::{ffi::CString, ops::Deref};
 
 use bitflags::bitflags;
 use static_assertions::const_assert;
@@ -14,10 +14,12 @@ use crate::{
     shader::Shader,
     shader_resource_binding::ShaderResourceBinding,
     shader_resource_variable::{
-        ShaderResourceVariable, ShaderResourceVariableDesc, ShaderResourceVariableType,
+        BindShaderResourcesFlags, ShaderResourceVariable, ShaderResourceVariableDesc,
+        ShaderResourceVariableType,
     },
 };
 
+#[derive(Clone, Copy)]
 pub enum BlendFactor {
     Zero,
     One,
@@ -39,8 +41,8 @@ pub enum BlendFactor {
 }
 const_assert!(diligent_sys::BLEND_OPERATION_NUM_OPERATIONS == 6);
 
-impl From<&BlendFactor> for diligent_sys::BLEND_FACTOR {
-    fn from(value: &BlendFactor) -> Self {
+impl From<BlendFactor> for diligent_sys::BLEND_FACTOR {
+    fn from(value: BlendFactor) -> Self {
         (match value {
             BlendFactor::Zero => diligent_sys::BLEND_FACTOR_ZERO,
             BlendFactor::One => diligent_sys::BLEND_FACTOR_ONE,
@@ -63,6 +65,7 @@ impl From<&BlendFactor> for diligent_sys::BLEND_FACTOR {
     }
 }
 
+#[derive(Clone, Copy)]
 pub enum BlendOperation {
     Add,
     Subtract,
@@ -72,8 +75,8 @@ pub enum BlendOperation {
 }
 const_assert!(diligent_sys::BLEND_OPERATION_NUM_OPERATIONS == 6);
 
-impl From<&BlendOperation> for diligent_sys::BLEND_OPERATION {
-    fn from(value: &BlendOperation) -> Self {
+impl From<BlendOperation> for diligent_sys::BLEND_OPERATION {
+    fn from(value: BlendOperation) -> Self {
         (match value {
             BlendOperation::Add => diligent_sys::BLEND_OPERATION_ADD,
             BlendOperation::Subtract => diligent_sys::BLEND_OPERATION_SUBTRACT,
@@ -84,6 +87,7 @@ impl From<&BlendOperation> for diligent_sys::BLEND_OPERATION {
     }
 }
 
+#[derive(Clone, Copy)]
 pub enum LogicOperation {
     Clear,
     Set,
@@ -104,8 +108,8 @@ pub enum LogicOperation {
 }
 const_assert!(diligent_sys::LOGIC_OP_NUM_OPERATIONS == 16);
 
-impl From<&LogicOperation> for diligent_sys::LOGIC_OPERATION {
-    fn from(value: &LogicOperation) -> Self {
+impl From<LogicOperation> for diligent_sys::LOGIC_OPERATION {
+    fn from(value: LogicOperation) -> Self {
         (match value {
             LogicOperation::Clear => diligent_sys::LOGIC_OP_CLEAR,
             LogicOperation::Set => diligent_sys::LOGIC_OP_SET,
@@ -127,13 +131,14 @@ impl From<&LogicOperation> for diligent_sys::LOGIC_OPERATION {
     }
 }
 
+#[derive(Clone, Copy)]
 pub enum FillMode {
     Wireframe,
     Solid,
 }
 
-impl From<&FillMode> for diligent_sys::FILL_MODE {
-    fn from(value: &FillMode) -> Self {
+impl From<FillMode> for diligent_sys::FILL_MODE {
+    fn from(value: FillMode) -> Self {
         (match value {
             FillMode::Wireframe => diligent_sys::FILL_MODE_WIREFRAME,
             FillMode::Solid => diligent_sys::FILL_MODE_SOLID,
@@ -141,14 +146,15 @@ impl From<&FillMode> for diligent_sys::FILL_MODE {
     }
 }
 
+#[derive(Clone, Copy)]
 pub enum CullMode {
     None,
     Front,
     Back,
 }
 
-impl From<&CullMode> for diligent_sys::CULL_MODE {
-    fn from(value: &CullMode) -> Self {
+impl From<CullMode> for diligent_sys::CULL_MODE {
+    fn from(value: CullMode) -> Self {
         (match value {
             CullMode::None => diligent_sys::CULL_MODE_NONE,
             CullMode::Front => diligent_sys::CULL_MODE_FRONT,
@@ -157,6 +163,7 @@ impl From<&CullMode> for diligent_sys::CULL_MODE {
     }
 }
 
+#[derive(Clone, Copy)]
 pub enum StencilOperation {
     Keep,
     Zero,
@@ -169,8 +176,8 @@ pub enum StencilOperation {
 }
 const_assert!(diligent_sys::STENCIL_OP_NUM_OPS == 9);
 
-impl From<&StencilOperation> for diligent_sys::STENCIL_OP {
-    fn from(value: &StencilOperation) -> Self {
+impl From<StencilOperation> for diligent_sys::STENCIL_OP {
+    fn from(value: StencilOperation) -> Self {
         (match value {
             StencilOperation::Keep => diligent_sys::STENCIL_OP_KEEP,
             StencilOperation::Zero => diligent_sys::STENCIL_OP_ZERO,
@@ -184,6 +191,7 @@ impl From<&StencilOperation> for diligent_sys::STENCIL_OP {
     }
 }
 
+#[derive(Clone, Copy)]
 pub enum ComparisonFunction {
     Never,
     Less,
@@ -196,8 +204,8 @@ pub enum ComparisonFunction {
 }
 const_assert!(diligent_sys::COMPARISON_FUNC_NUM_FUNCTIONS == 9);
 
-impl From<&ComparisonFunction> for diligent_sys::COMPARISON_FUNCTION {
-    fn from(value: &ComparisonFunction) -> Self {
+impl From<ComparisonFunction> for diligent_sys::COMPARISON_FUNCTION {
+    fn from(value: ComparisonFunction) -> Self {
         (match value {
             ComparisonFunction::Never => diligent_sys::COMPARISON_FUNC_NEVER,
             ComparisonFunction::Less => diligent_sys::COMPARISON_FUNC_LESS,
@@ -265,7 +273,7 @@ impl<'a> PipelineResourceLayoutDesc<'a> {
     fn new<const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE>() -> Self {
         PipelineResourceLayoutDesc {
             default_variable_type: ShaderResourceVariableType::Static,
-            default_variable_merge_stages: match PIPELINE_TYPE as diligent_sys::_PIPELINE_TYPE {
+            default_variable_merge_stages: match PIPELINE_TYPE as _ {
                 diligent_sys::PIPELINE_TYPE_GRAPHICS => ShaderTypes::AllGraphics,
                 diligent_sys::PIPELINE_TYPE_COMPUTE => ShaderTypes::Compute,
                 diligent_sys::PIPELINE_TYPE_MESH => ShaderTypes::AllMesh,
@@ -285,9 +293,10 @@ pub(crate) struct PipelineResourceLayoutDescWrapper {
     prld: diligent_sys::PipelineResourceLayoutDesc,
 }
 
-impl PipelineResourceLayoutDescWrapper {
-    pub(crate) fn get(&self) -> diligent_sys::PipelineResourceLayoutDesc {
-        self.prld
+impl Deref for PipelineResourceLayoutDescWrapper {
+    type Target = diligent_sys::PipelineResourceLayoutDesc;
+    fn deref(&self) -> &Self::Target {
+        &self.prld
     }
 }
 
@@ -302,7 +311,7 @@ impl From<&PipelineResourceLayoutDesc<'_>> for PipelineResourceLayoutDescWrapper
             .collect();
 
         let prld = diligent_sys::PipelineResourceLayoutDesc {
-            DefaultVariableType: (&value.default_variable_type).into(),
+            DefaultVariableType: value.default_variable_type.into(),
             DefaultVariableMergeStages: value.default_variable_merge_stages.bits(),
             NumVariables: variables.len() as u32,
             Variables: if variables.is_empty() {
@@ -349,9 +358,10 @@ pub(crate) struct PipelineStateDescWrapper {
     psd: diligent_sys::PipelineStateDesc,
 }
 
-impl PipelineStateDescWrapper {
-    pub(crate) fn get(&self) -> diligent_sys::PipelineStateDesc {
-        self.psd
+impl Deref for PipelineStateDescWrapper {
+    type Target = diligent_sys::PipelineStateDesc;
+    fn deref(&self) -> &Self::Target {
+        &self.psd
     }
 }
 
@@ -368,7 +378,7 @@ impl<const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE> From<&PipelineStateDesc<'
             PipelineType: PIPELINE_TYPE,
             SRBAllocationGranularity: value.srb_allocation_granularity,
             ImmediateContextMask: value.immediate_context_mask,
-            ResourceLayout: prld.get(),
+            ResourceLayout: *prld,
         };
 
         PipelineStateDescWrapper { _prld: prld, psd }
@@ -389,9 +399,10 @@ pub(crate) struct PipelineStateCreateInfoWrapper {
     ci: diligent_sys::PipelineStateCreateInfo,
 }
 
-impl PipelineStateCreateInfoWrapper {
-    pub(crate) fn get(&self) -> diligent_sys::PipelineStateCreateInfo {
-        self.ci
+impl Deref for PipelineStateCreateInfoWrapper {
+    type Target = diligent_sys::PipelineStateCreateInfo;
+    fn deref(&self) -> &Self::Target {
+        &self.ci
     }
 }
 
@@ -408,7 +419,7 @@ impl<const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE>
             .collect::<Vec<_>>();
 
         let ci = diligent_sys::PipelineStateCreateInfo {
-            PSODesc: psd.get(),
+            PSODesc: *psd,
             Flags: value.flags.bits(),
             ResourceSignaturesCount: value.resource_signatures.len() as u32,
             ppResourceSignatures: if value.resource_signatures.is_empty() {
@@ -501,13 +512,13 @@ impl From<&RenderTargetBlendDesc> for diligent_sys::RenderTargetBlendDesc {
         diligent_sys::RenderTargetBlendDesc {
             BlendEnable: value.blend_enable,
             LogicOperationEnable: value.logic_operation_enable,
-            SrcBlend: (&value.src_blend).into(),
-            DestBlend: (&value.dest_blend).into(),
-            BlendOp: (&value.blend_op).into(),
-            SrcBlendAlpha: (&value.src_blend_alpha).into(),
-            DestBlendAlpha: (&value.dest_blend_alpha).into(),
-            BlendOpAlpha: (&value.blend_op_alpha).into(),
-            LogicOp: (&value.logic_op).into(),
+            SrcBlend: value.src_blend.into(),
+            DestBlend: value.dest_blend.into(),
+            BlendOp: value.blend_op.into(),
+            SrcBlendAlpha: value.src_blend_alpha.into(),
+            DestBlendAlpha: value.dest_blend_alpha.into(),
+            BlendOpAlpha: value.blend_op_alpha.into(),
+            LogicOp: value.logic_op.into(),
             RenderTargetWriteMask: value.render_target_write_mask.bits(),
         }
     }
@@ -628,8 +639,8 @@ impl RasterizerStateDesc {
 impl From<&RasterizerStateDesc> for diligent_sys::RasterizerStateDesc {
     fn from(value: &RasterizerStateDesc) -> Self {
         diligent_sys::RasterizerStateDesc {
-            FillMode: (&value.fill_mode).into(),
-            CullMode: (&value.cull_mode).into(),
+            FillMode: value.fill_mode.into(),
+            CullMode: value.cull_mode.into(),
             FrontCounterClockwise: value.front_counter_clockwise,
             DepthClipEnable: value.depth_clip_enable,
             ScissorEnable: value.scissor_enable,
@@ -686,10 +697,10 @@ impl StencilOperationsDesc {
 impl From<&StencilOperationsDesc> for diligent_sys::StencilOpDesc {
     fn from(value: &StencilOperationsDesc) -> Self {
         diligent_sys::StencilOpDesc {
-            StencilFailOp: (&value.stencil_fail_op).into(),
-            StencilDepthFailOp: (&value.stencil_depth_fail_op).into(),
-            StencilPassOp: (&value.stencil_pass_op).into(),
-            StencilFunc: (&value.stencil_func).into(),
+            StencilFailOp: value.stencil_fail_op.into(),
+            StencilDepthFailOp: value.stencil_depth_fail_op.into(),
+            StencilPassOp: value.stencil_pass_op.into(),
+            StencilFunc: value.stencil_func.into(),
         }
     }
 }
@@ -756,7 +767,7 @@ impl From<&DepthStencilStateDesc> for diligent_sys::DepthStencilStateDesc {
         diligent_sys::DepthStencilStateDesc {
             DepthEnable: value.depth_enable,
             DepthWriteEnable: value.depth_write_enable,
-            DepthFunc: (&value.depth_func).into(),
+            DepthFunc: value.depth_func.into(),
             StencilEnable: value.stencil_enable,
             StencilReadMask: value.stencil_read_mask,
             StencilWriteMask: value.stencil_write_mask,
@@ -935,9 +946,10 @@ pub(crate) struct GraphicsPipelineDescWrapper {
     desc: diligent_sys::GraphicsPipelineDesc,
 }
 
-impl GraphicsPipelineDescWrapper {
-    pub(crate) fn get(&self) -> diligent_sys::GraphicsPipelineDesc {
-        self.desc
+impl Deref for GraphicsPipelineDescWrapper {
+    type Target = diligent_sys::GraphicsPipelineDesc;
+    fn deref(&self) -> &Self::Target {
+        &self.desc
     }
 }
 
@@ -958,7 +970,7 @@ impl<'a> From<&GraphicsPipelineDesc<'a>> for GraphicsPipelineDescWrapper {
                 },
                 NumElements: input_layouts.len() as u32,
             },
-            PrimitiveTopology: (&value.primitive_topology).into(),
+            PrimitiveTopology: value.primitive_topology.into(),
             NumViewports: value.num_viewports,
             NumRenderTargets: match &value.output {
                 GraphicsPipelineOutput::RenderPass(_) => 0,
@@ -973,7 +985,7 @@ impl<'a> From<&GraphicsPipelineDesc<'a>> for GraphicsPipelineDescWrapper {
                 }),
                 GraphicsPipelineOutput::RenderTargets(render_targets) => {
                     render_targets.rtv_formats.map(|format| {
-                        format.as_ref().map_or(
+                        format.map_or(
                             diligent_sys::TEX_FORMAT_UNKNOWN as diligent_sys::TEXTURE_FORMAT,
                             |format| format.into(),
                         )
@@ -985,7 +997,7 @@ impl<'a> From<&GraphicsPipelineDesc<'a>> for GraphicsPipelineDescWrapper {
                     diligent_sys::TEX_FORMAT_UNKNOWN as diligent_sys::TEXTURE_FORMAT
                 }
                 GraphicsPipelineOutput::RenderTargets(render_targets) => {
-                    render_targets.dsv_format.as_ref().map_or(
+                    render_targets.dsv_format.map_or(
                         diligent_sys::TEX_FORMAT_UNKNOWN as diligent_sys::TEXTURE_FORMAT,
                         |format| format.into(),
                     )
@@ -1145,9 +1157,10 @@ pub(crate) struct GraphicsPipelineStateCreateInfoWrapper {
     ci: diligent_sys::GraphicsPipelineStateCreateInfo,
 }
 
-impl GraphicsPipelineStateCreateInfoWrapper {
-    pub(crate) fn get(&self) -> diligent_sys::GraphicsPipelineStateCreateInfo {
-        self.ci
+impl Deref for GraphicsPipelineStateCreateInfoWrapper {
+    type Target = diligent_sys::GraphicsPipelineStateCreateInfo;
+    fn deref(&self) -> &Self::Target {
+        &self.ci
     }
 }
 
@@ -1156,8 +1169,8 @@ impl From<&GraphicsPipelineStateCreateInfo<'_>> for GraphicsPipelineStateCreateI
         let pci = PipelineStateCreateInfoWrapper::from(&value.pipeline_state_create_info);
         let gpd = GraphicsPipelineDescWrapper::from(&value.graphics_pipeline_desc);
         let ci = diligent_sys::GraphicsPipelineStateCreateInfo {
-            _PipelineStateCreateInfo: pci.get(),
-            GraphicsPipeline: gpd.get(),
+            _PipelineStateCreateInfo: *pci,
+            GraphicsPipeline: *gpd,
             pVS: value
                 .vertex_shader
                 .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr),
@@ -1221,6 +1234,7 @@ impl PipelineState {
     }
 
     pub fn get_desc(&self) -> &diligent_sys::PipelineStateDesc {
+        // TODO
         unsafe {
             ((*self.virtual_functions)
                 .DeviceObject
@@ -1233,6 +1247,7 @@ impl PipelineState {
     }
 
     pub fn get_graphics_pipeline_desc(&self) -> &diligent_sys::GraphicsPipelineDesc {
+        // TODO
         unsafe {
             (*self.virtual_functions)
                 .PipelineState
@@ -1244,6 +1259,7 @@ impl PipelineState {
     }
 
     pub fn get_ray_tracing_pipeline_desc(&self) -> &diligent_sys::RayTracingPipelineDesc {
+        // TODO
         unsafe {
             (*self.virtual_functions)
                 .PipelineState
@@ -1255,6 +1271,7 @@ impl PipelineState {
     }
 
     pub fn get_tile_pipeline_desc(&self) -> &diligent_sys::TilePipelineDesc {
+        // TODO
         unsafe {
             (*self.virtual_functions)
                 .PipelineState
@@ -1269,7 +1286,7 @@ impl PipelineState {
         &mut self,
         shader_type: ShaderType,
         resource_mapping: &ResourceMapping,
-        flags: diligent_sys::BIND_SHADER_RESOURCES_FLAGS,
+        flags: BindShaderResourcesFlags,
     ) {
         unsafe {
             (*self.virtual_functions)
@@ -1277,9 +1294,9 @@ impl PipelineState {
                 .BindStaticResources
                 .unwrap_unchecked()(
                 self.sys_ptr,
-                (&shader_type).into(),
+                shader_type.into(),
                 resource_mapping.sys_ptr,
-                flags,
+                flags.bits(),
             )
         }
     }
@@ -1295,7 +1312,7 @@ impl PipelineState {
             (*self.virtual_functions)
                 .PipelineState
                 .GetStaticVariableByName
-                .unwrap_unchecked()(self.sys_ptr, (&shader_type).into(), name.as_ptr())
+                .unwrap_unchecked()(self.sys_ptr, shader_type.into(), name.as_ptr())
         };
 
         if shader_resource_variable.is_null() {

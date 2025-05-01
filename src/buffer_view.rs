@@ -2,6 +2,7 @@ use static_assertions::const_assert;
 
 use crate::{buffer::Buffer, device_object::DeviceObject};
 
+#[derive(Clone, Copy)]
 pub enum BufferViewType {
     ShaderResource,
     UnorderedAccess,
@@ -51,6 +52,7 @@ impl<'a> BufferView<'a> {
     }
 
     pub fn get_desc(&self) -> &diligent_sys::BufferViewDesc {
+        // TODO
         unsafe {
             ((*self.virtual_functions)
                 .DeviceObject

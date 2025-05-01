@@ -122,17 +122,17 @@ impl From<&SamplerDesc> for diligent_sys::SamplerDesc {
             _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
                 Name: value.name.as_ptr(),
             },
-            MinFilter: (&value.min_filter).into(),
-            MagFilter: (&value.mag_filter).into(),
-            MipFilter: (&value.mip_filter).into(),
-            AddressU: (&value.address_u).into(),
-            AddressV: (&value.address_v).into(),
-            AddressW: (&value.address_w).into(),
-            Flags: value.flags.bits() as diligent_sys::SAMPLER_FLAGS,
+            MinFilter: value.min_filter.into(),
+            MagFilter: value.mag_filter.into(),
+            MipFilter: value.mip_filter.into(),
+            AddressU: value.address_u.into(),
+            AddressV: value.address_v.into(),
+            AddressW: value.address_w.into(),
+            Flags: value.flags.bits() as _,
             UnnormalizedCoords: value.unnormalized_coords,
             MipLODBias: value.mip_lod_bias,
             MaxAnisotropy: value.max_anisotropy,
-            ComparisonFunc: (&value.comparison_func).into(),
+            ComparisonFunc: value.comparison_func.into(),
             BorderColor: value.border_color,
             MinLOD: value.min_lod,
             MaxLOD: value.max_lod,
@@ -170,6 +170,7 @@ impl Sampler {
     }
 
     pub fn get_desc(&self) -> &diligent_sys::SamplerDesc {
+        // TODO
         unsafe {
             ((*self.virtual_functions)
                 .DeviceObject

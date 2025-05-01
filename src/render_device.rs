@@ -7,7 +7,7 @@ use crate::{
     data_blob::DataBlob,
     device_context::DeviceContext,
     fence::Fence,
-    graphics_types::RenderDeviceType,
+    graphics_types::{GraphicsAdapterInfo, RenderDeviceType, TextureFormat},
     object::Object,
     pipeline_state::{
         GraphicsPipelineStateCreateInfo, GraphicsPipelineStateCreateInfoWrapper, PipelineState,
@@ -124,7 +124,6 @@ impl RenderDevice {
         let mut data_blob_ptr = std::ptr::null_mut();
 
         let shader_ci_wrapper = ShaderCreateInfoWrapper::from(shader_ci);
-        let shader_ci = shader_ci_wrapper.get();
 
         unsafe {
             (*self.virtual_functions)
@@ -132,13 +131,12 @@ impl RenderDevice {
                 .CreateShader
                 .unwrap_unchecked()(
                 self.sys_ptr,
-                std::ptr::from_ref(shader_ci),
+                std::ptr::from_ref(&shader_ci_wrapper),
                 std::ptr::addr_of_mut!(shader_ptr),
                 std::ptr::addr_of_mut!(data_blob_ptr),
             );
         }
 
-        // TODO : better error handling
         if shader_ptr.is_null() {
             if data_blob_ptr.is_null() {
                 Err(None)
@@ -242,7 +240,6 @@ impl RenderDevice {
         let mut pipeline_state_ptr = std::ptr::null_mut();
 
         let pipeline_ci_wrapper = GraphicsPipelineStateCreateInfoWrapper::from(pipeline_ci);
-        let pipeline_ci = pipeline_ci_wrapper.get();
 
         unsafe {
             (*self.virtual_functions)
@@ -250,7 +247,7 @@ impl RenderDevice {
                 .CreateGraphicsPipelineState
                 .unwrap_unchecked()(
                 self.sys_ptr,
-                std::ptr::addr_of!(pipeline_ci),
+                std::ptr::from_ref(&pipeline_ci_wrapper),
                 std::ptr::addr_of_mut!(pipeline_state_ptr),
             );
         }
@@ -354,7 +351,7 @@ impl RenderDevice {
     // pub fn create_pipeline_resource_signature();
     // pub fn create_device_memory();
 
-    pub fn get_adapter_info(&self) -> &diligent_sys::GraphicsAdapterInfo {
+    pub fn get_adapter_info(&self) -> GraphicsAdapterInfo {
         unsafe {
             (*self.virtual_functions)
                 .RenderDevice
@@ -363,6 +360,7 @@ impl RenderDevice {
             .as_ref()
             .unwrap_unchecked()
         }
+        .into()
     }
 
     pub fn get_device_info(&self) -> RenderDeviceInfo {
@@ -397,13 +395,14 @@ impl RenderDevice {
 
     pub fn get_texture_format_info(
         &self,
-        format: diligent_sys::TEXTURE_FORMAT,
+        format: TextureFormat,
     ) -> &diligent_sys::TextureFormatInfo {
+        // TODO
         unsafe {
             (*self.virtual_functions)
                 .RenderDevice
                 .GetTextureFormatInfo
-                .unwrap_unchecked()(self.sys_ptr, format)
+                .unwrap_unchecked()(self.sys_ptr, format.into())
             .as_ref()
             .unwrap_unchecked()
         }
@@ -411,13 +410,14 @@ impl RenderDevice {
 
     pub fn get_texture_format_info_ext(
         &self,
-        format: diligent_sys::TEXTURE_FORMAT,
+        format: TextureFormat,
     ) -> &diligent_sys::TextureFormatInfoExt {
+        // TODO
         unsafe {
             (*self.virtual_functions)
                 .RenderDevice
                 .GetTextureFormatInfoExt
-                .unwrap_unchecked()(self.sys_ptr, format)
+                .unwrap_unchecked()(self.sys_ptr, format.into())
             .as_ref()
             .unwrap_unchecked()
         }
@@ -425,7 +425,7 @@ impl RenderDevice {
 
     pub fn get_sparse_texture_format_info(
         &self,
-        format: diligent_sys::TEXTURE_FORMAT,
+        format: TextureFormat,
         dimension: diligent_sys::RESOURCE_DIMENSION,
         sample_count: u32,
     ) -> diligent_sys::SparseTextureFormatInfo {
@@ -433,7 +433,7 @@ impl RenderDevice {
             (*self.virtual_functions)
                 .RenderDevice
                 .GetSparseTextureFormatInfo
-                .unwrap_unchecked()(self.sys_ptr, format, dimension, sample_count)
+                .unwrap_unchecked()(self.sys_ptr, format.into(), dimension, sample_count)
         }
     }
 

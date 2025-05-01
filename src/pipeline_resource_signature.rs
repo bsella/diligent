@@ -8,7 +8,7 @@ use crate::{
     resource_mapping::ResourceMapping,
     sampler::SamplerDesc,
     shader_resource_binding::ShaderResourceBinding,
-    shader_resource_variable::ShaderResourceVariable,
+    shader_resource_variable::{BindShaderResourcesFlags, ShaderResourceVariable},
 };
 
 pub struct ImmutableSamplerDesc<'a> {
@@ -66,7 +66,7 @@ impl PipelineResourceSignature {
             let virtual_functions =
                 unsafe { (*(*pipeline_rs_ptr).pVtbl).PipelineResourceSignature };
 
-            let shader_type = (&shader_type).into();
+            let shader_type = shader_type.into();
 
             let num_variables = unsafe {
                 virtual_functions.GetStaticVariableCount.unwrap_unchecked()(
@@ -116,6 +116,7 @@ impl PipelineResourceSignature {
     }
 
     pub fn get_desc(&self) -> &diligent_sys::PipelineResourceSignatureDesc {
+        // TODO
         unsafe {
             ((*self.virtual_functions)
                 .DeviceObject
@@ -154,7 +155,7 @@ impl PipelineResourceSignature {
         &self,
         shader_stages: ShaderTypes,
         resource_mapping: &ResourceMapping,
-        flags: diligent_sys::BIND_SHADER_RESOURCES_FLAGS,
+        flags: BindShaderResourcesFlags,
     ) {
         unsafe {
             (*self.virtual_functions)
@@ -164,7 +165,7 @@ impl PipelineResourceSignature {
                 self.sys_ptr,
                 shader_stages.bits(),
                 resource_mapping.sys_ptr,
-                flags,
+                flags.bits(),
             );
         }
     }
@@ -180,7 +181,7 @@ impl PipelineResourceSignature {
             (*self.virtual_functions)
                 .PipelineResourceSignature
                 .GetStaticVariableByName
-                .unwrap_unchecked()(self.sys_ptr, (&shader_type).into(), name.as_ptr())
+                .unwrap_unchecked()(self.sys_ptr, shader_type.into(), name.as_ptr())
         };
 
         if shader_resource_variable.is_null() {

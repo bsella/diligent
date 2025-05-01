@@ -416,7 +416,7 @@ pub struct ImguiRenderer {
     index_buffer_size: u32,
 }
 
-#[derive(Eq, PartialEq)]
+#[derive(Clone, Copy, Eq, PartialEq)]
 pub enum ColorConversionMode {
     Auto,
     SrgbToLinear,

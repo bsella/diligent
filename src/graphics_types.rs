@@ -30,6 +30,7 @@ bitflags! {
 }
 const_assert!(diligent_sys::SHADER_TYPE_LAST == 16384);
 
+#[derive(Clone, Copy)]
 pub enum ShaderType {
     Vertex,
     Pixel,
@@ -48,8 +49,8 @@ pub enum ShaderType {
     Tile,
 }
 
-impl From<&ShaderType> for diligent_sys::SHADER_TYPE {
-    fn from(value: &ShaderType) -> Self {
+impl From<ShaderType> for diligent_sys::SHADER_TYPE {
+    fn from(value: ShaderType) -> Self {
         (match value {
             ShaderType::Vertex => diligent_sys::SHADER_TYPE_VERTEX,
             ShaderType::Pixel => diligent_sys::SHADER_TYPE_PIXEL,
@@ -66,10 +67,11 @@ impl From<&ShaderType> for diligent_sys::SHADER_TYPE {
             ShaderType::RayIntersection => diligent_sys::SHADER_TYPE_RAY_INTERSECTION,
             ShaderType::Callable => diligent_sys::SHADER_TYPE_CALLABLE,
             ShaderType::Tile => diligent_sys::SHADER_TYPE_TILE,
-        }) as diligent_sys::SHADER_TYPE
+        }) as _
     }
 }
 
+#[derive(Clone, Copy)]
 pub enum FilterType {
     Point,
     Linear,
@@ -86,8 +88,8 @@ pub enum FilterType {
 }
 const_assert!(diligent_sys::FILTER_TYPE_NUM_FILTERS == 13);
 
-impl From<&FilterType> for diligent_sys::FILTER_TYPE {
-    fn from(value: &FilterType) -> Self {
+impl From<FilterType> for diligent_sys::FILTER_TYPE {
+    fn from(value: FilterType) -> Self {
         (match value {
             FilterType::Point => diligent_sys::FILTER_TYPE_POINT,
             FilterType::Linear => diligent_sys::FILTER_TYPE_LINEAR,
@@ -101,10 +103,11 @@ impl From<&FilterType> for diligent_sys::FILTER_TYPE {
             FilterType::MaximumPoint => diligent_sys::FILTER_TYPE_MAXIMUM_POINT,
             FilterType::MaximumLinear => diligent_sys::FILTER_TYPE_MAXIMUM_LINEAR,
             FilterType::MaximumAnisotropic => diligent_sys::FILTER_TYPE_MAXIMUM_ANISOTROPIC,
-        }) as diligent_sys::FILTER_TYPE
+        }) as _
     }
 }
 
+#[derive(Clone, Copy)]
 pub enum TextureAddressMode {
     Wrap,
     Mirror,
@@ -114,18 +117,19 @@ pub enum TextureAddressMode {
 }
 const_assert!(diligent_sys::TEXTURE_ADDRESS_NUM_MODES == 6);
 
-impl From<&TextureAddressMode> for diligent_sys::TEXTURE_ADDRESS_MODE {
-    fn from(value: &TextureAddressMode) -> Self {
+impl From<TextureAddressMode> for diligent_sys::TEXTURE_ADDRESS_MODE {
+    fn from(value: TextureAddressMode) -> Self {
         (match value {
             TextureAddressMode::Wrap => diligent_sys::TEXTURE_ADDRESS_WRAP,
             TextureAddressMode::Mirror => diligent_sys::TEXTURE_ADDRESS_MIRROR,
             TextureAddressMode::Clamp => diligent_sys::TEXTURE_ADDRESS_CLAMP,
             TextureAddressMode::Border => diligent_sys::TEXTURE_ADDRESS_BORDER,
             TextureAddressMode::MirrorOnce => diligent_sys::TEXTURE_ADDRESS_MIRROR_ONCE,
-        }) as diligent_sys::TEXTURE_ADDRESS_MODE
+        }) as _
     }
 }
 
+#[derive(Clone, Copy)]
 pub enum PrimitiveTopology {
     TriangleList,
     TriangleStrip,
@@ -171,8 +175,8 @@ pub enum PrimitiveTopology {
 }
 const_assert!(diligent_sys::PRIMITIVE_TOPOLOGY_NUM_TOPOLOGIES == 42);
 
-impl From<&PrimitiveTopology> for diligent_sys::PRIMITIVE_TOPOLOGY {
-    fn from(value: &PrimitiveTopology) -> Self {
+impl From<PrimitiveTopology> for diligent_sys::PRIMITIVE_TOPOLOGY {
+    fn from(value: PrimitiveTopology) -> Self {
         (match value {
             PrimitiveTopology::TriangleList => diligent_sys::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
             PrimitiveTopology::TriangleStrip => diligent_sys::PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
@@ -283,7 +287,7 @@ impl From<&PrimitiveTopology> for diligent_sys::PRIMITIVE_TOPOLOGY {
             PrimitiveTopology::ControlPointPatchList32 => {
                 diligent_sys::PRIMITIVE_TOPOLOGY_32_CONTROL_POINT_PATCHLIST
             }
-        }) as diligent_sys::PRIMITIVE_TOPOLOGY
+        }) as _
     }
 }
 
@@ -318,8 +322,8 @@ pub enum Usage {
 }
 const_assert!(diligent_sys::USAGE_NUM_USAGES == 6);
 
-impl From<&Usage> for diligent_sys::USAGE {
-    fn from(value: &Usage) -> Self {
+impl From<Usage> for diligent_sys::USAGE {
+    fn from(value: Usage) -> Self {
         (match value {
             Usage::Immutable => diligent_sys::USAGE_IMMUTABLE,
             Usage::Default => diligent_sys::USAGE_DEFAULT,
@@ -327,7 +331,7 @@ impl From<&Usage> for diligent_sys::USAGE {
             Usage::Staging => diligent_sys::USAGE_STAGING,
             Usage::Unified => diligent_sys::USAGE_UNIFIED,
             Usage::Sparse => diligent_sys::USAGE_SPARSE,
-        }) as diligent_sys::USAGE
+        }) as _
     }
 }
 
@@ -348,6 +352,7 @@ bitflags! {
     }
 }
 
+#[derive(Clone, Copy)]
 pub enum RenderDeviceType {
     #[cfg(feature = "d3d11")]
     D3D11,
@@ -405,8 +410,8 @@ pub enum ValueType {
 }
 const_assert!(diligent_sys::VT_NUM_TYPES == 10);
 
-impl From<&ValueType> for diligent_sys::VALUE_TYPE {
-    fn from(value: &ValueType) -> Self {
+impl From<ValueType> for diligent_sys::VALUE_TYPE {
+    fn from(value: ValueType) -> Self {
         (match value {
             ValueType::Int8 => diligent_sys::VT_INT8,
             ValueType::Int16 => diligent_sys::VT_INT16,
@@ -417,7 +422,7 @@ impl From<&ValueType> for diligent_sys::VALUE_TYPE {
             ValueType::Float16 => diligent_sys::VT_FLOAT16,
             ValueType::Float32 => diligent_sys::VT_FLOAT32,
             ValueType::Float64 => diligent_sys::VT_FLOAT64,
-        }) as diligent_sys::VALUE_TYPE
+        }) as _
     }
 }
 
@@ -480,8 +485,8 @@ impl PartialOrd for AdapterType {
     }
 }
 
-impl From<&AdapterType> for diligent_sys::ADAPTER_TYPE {
-    fn from(value: &AdapterType) -> Self {
+impl From<AdapterType> for diligent_sys::ADAPTER_TYPE {
+    fn from(value: AdapterType) -> Self {
         match value {
             AdapterType::Unknown => {
                 diligent_sys::ADAPTER_TYPE_UNKNOWN as diligent_sys::ADAPTER_TYPE
@@ -501,6 +506,7 @@ impl From<&AdapterType> for diligent_sys::ADAPTER_TYPE {
 
 const_assert!(diligent_sys::ADAPTER_TYPE_COUNT == 4);
 
+#[derive(Clone, Copy)]
 pub enum AdapterVendor {
     Unknown,
     Nvidia,
@@ -606,6 +612,7 @@ pub struct MeshShaderProperties {
     pub max_thread_group_total_count: u32,
 }
 
+#[derive(Clone, Copy)]
 pub enum ShadingRate {
     _1X1,
     _1X2,
@@ -619,8 +626,8 @@ pub enum ShadingRate {
 }
 const_assert!(diligent_sys::SHADING_RATE_MAX == 10);
 
-impl From<&ShadingRate> for diligent_sys::SHADING_RATE {
-    fn from(value: &ShadingRate) -> Self {
+impl From<ShadingRate> for diligent_sys::SHADING_RATE {
+    fn from(value: ShadingRate) -> Self {
         (match value {
             ShadingRate::_1X1 => diligent_sys::SHADING_RATE_1X1,
             ShadingRate::_1X2 => diligent_sys::SHADING_RATE_1X2,
@@ -631,7 +638,7 @@ impl From<&ShadingRate> for diligent_sys::SHADING_RATE {
             ShadingRate::_4X1 => diligent_sys::SHADING_RATE_4X1,
             ShadingRate::_4X2 => diligent_sys::SHADING_RATE_4X2,
             ShadingRate::_4X4 => diligent_sys::SHADING_RATE_4X4,
-        }) as diligent_sys::SHADING_RATE
+        }) as _
     }
 }
 
@@ -775,6 +782,7 @@ pub struct SparseResourceProperties {
     pub buffer_bind_flags: BindFlags,
 }
 
+#[derive(Clone, Copy)]
 pub enum DeviceFeatureState {
     Disabled,
     Enabled,
@@ -783,7 +791,7 @@ pub enum DeviceFeatureState {
 
 impl Into<DeviceFeatureState> for diligent_sys::DEVICE_FEATURE_STATE {
     fn into(self) -> DeviceFeatureState {
-        match self as diligent_sys::_DEVICE_FEATURE_STATE {
+        match self as _ {
             diligent_sys::DEVICE_FEATURE_STATE_DISABLED => DeviceFeatureState::Disabled,
             diligent_sys::DEVICE_FEATURE_STATE_ENABLED => DeviceFeatureState::Enabled,
             diligent_sys::DEVICE_FEATURE_STATE_OPTIONAL => DeviceFeatureState::Optional,
@@ -792,13 +800,13 @@ impl Into<DeviceFeatureState> for diligent_sys::DEVICE_FEATURE_STATE {
     }
 }
 
-impl From<&DeviceFeatureState> for diligent_sys::DEVICE_FEATURE_STATE {
-    fn from(value: &DeviceFeatureState) -> Self {
+impl From<DeviceFeatureState> for diligent_sys::DEVICE_FEATURE_STATE {
+    fn from(value: DeviceFeatureState) -> Self {
         (match value {
             DeviceFeatureState::Disabled => diligent_sys::DEVICE_FEATURE_STATE_DISABLED,
             DeviceFeatureState::Enabled => diligent_sys::DEVICE_FEATURE_STATE_ENABLED,
             DeviceFeatureState::Optional => diligent_sys::DEVICE_FEATURE_STATE_OPTIONAL,
-        }) as diligent_sys::DEVICE_FEATURE_STATE
+        }) as _
     }
 }
 
@@ -909,99 +917,53 @@ impl Default for DeviceFeatures {
 impl From<&DeviceFeatures> for diligent_sys::DeviceFeatures {
     fn from(value: &DeviceFeatures) -> Self {
         diligent_sys::DeviceFeatures {
-            SeparablePrograms: diligent_sys::DEVICE_FEATURE_STATE::from(&value.separable_programs),
-            ShaderResourceQueries: diligent_sys::DEVICE_FEATURE_STATE::from(
-                &value.shader_resource_queries,
-            ),
-            WireframeFill: diligent_sys::DEVICE_FEATURE_STATE::from(&value.wireframe_fill),
-            MultithreadedResourceCreation: diligent_sys::DEVICE_FEATURE_STATE::from(
-                &value.multithreaded_resource_creation,
-            ),
-            ComputeShaders: diligent_sys::DEVICE_FEATURE_STATE::from(&value.compute_shaders),
-            GeometryShaders: diligent_sys::DEVICE_FEATURE_STATE::from(&value.geometry_shaders),
-            Tessellation: diligent_sys::DEVICE_FEATURE_STATE::from(&value.tessellation),
-            MeshShaders: diligent_sys::DEVICE_FEATURE_STATE::from(&value.mesh_shaders),
-            RayTracing: diligent_sys::DEVICE_FEATURE_STATE::from(&value.ray_tracing),
-            BindlessResources: diligent_sys::DEVICE_FEATURE_STATE::from(&value.bindless_resources),
-            OcclusionQueries: diligent_sys::DEVICE_FEATURE_STATE::from(&value.occlusion_queries),
-            BinaryOcclusionQueries: diligent_sys::DEVICE_FEATURE_STATE::from(
-                &value.binary_occlusion_queries,
-            ),
-            TimestampQueries: diligent_sys::DEVICE_FEATURE_STATE::from(&value.timestamp_queries),
-            PipelineStatisticsQueries: diligent_sys::DEVICE_FEATURE_STATE::from(
-                &value.pipeline_statistics_queries,
-            ),
-            DurationQueries: diligent_sys::DEVICE_FEATURE_STATE::from(&value.duration_queries),
-            DepthBiasClamp: diligent_sys::DEVICE_FEATURE_STATE::from(&value.depth_bias_clamp),
-            DepthClamp: diligent_sys::DEVICE_FEATURE_STATE::from(&value.depth_clamp),
-            IndependentBlend: diligent_sys::DEVICE_FEATURE_STATE::from(&value.independent_blend),
-            DualSourceBlend: diligent_sys::DEVICE_FEATURE_STATE::from(&value.dual_source_blend),
-            MultiViewport: diligent_sys::DEVICE_FEATURE_STATE::from(&value.multi_viewport),
-            TextureCompressionBC: diligent_sys::DEVICE_FEATURE_STATE::from(
-                &value.texture_compression_bc,
-            ),
-            TextureCompressionETC2: diligent_sys::DEVICE_FEATURE_STATE::from(
-                &value.texture_compression_etc2,
-            ),
-            VertexPipelineUAVWritesAndAtomics: diligent_sys::DEVICE_FEATURE_STATE::from(
-                &value.vertex_pipeline_uav_writes_and_atomics,
-            ),
-            PixelUAVWritesAndAtomics: diligent_sys::DEVICE_FEATURE_STATE::from(
-                &value.pixel_uav_writes_and_atomics,
-            ),
-            TextureUAVExtendedFormats: diligent_sys::DEVICE_FEATURE_STATE::from(
-                &value.texture_uav_extended_formats,
-            ),
-            ShaderFloat16: diligent_sys::DEVICE_FEATURE_STATE::from(&value.shader_float16),
-            ResourceBuffer16BitAccess: diligent_sys::DEVICE_FEATURE_STATE::from(
-                &value.resource_buffer16_bit_access,
-            ),
-            UniformBuffer16BitAccess: diligent_sys::DEVICE_FEATURE_STATE::from(
-                &value.uniform_buffer16_bit_access,
-            ),
-            ShaderInputOutput16: diligent_sys::DEVICE_FEATURE_STATE::from(
-                &value.shader_input_output16,
-            ),
-            ShaderInt8: diligent_sys::DEVICE_FEATURE_STATE::from(&value.shader_int8),
-            ResourceBuffer8BitAccess: diligent_sys::DEVICE_FEATURE_STATE::from(
-                &value.resource_buffer8_bit_access,
-            ),
-            UniformBuffer8BitAccess: diligent_sys::DEVICE_FEATURE_STATE::from(
-                &value.uniform_buffer8_bit_access,
-            ),
-            ShaderResourceStaticArrays: diligent_sys::DEVICE_FEATURE_STATE::from(
-                &value.shader_resource_static_arrays,
-            ),
-            ShaderResourceRuntimeArrays: diligent_sys::DEVICE_FEATURE_STATE::from(
-                &value.shader_resource_runtime_arrays,
-            ),
-            WaveOp: diligent_sys::DEVICE_FEATURE_STATE::from(&value.wave_op),
-            InstanceDataStepRate: diligent_sys::DEVICE_FEATURE_STATE::from(
-                &value.instance_data_step_rate,
-            ),
-            NativeFence: diligent_sys::DEVICE_FEATURE_STATE::from(&value.native_fence),
-            TileShaders: diligent_sys::DEVICE_FEATURE_STATE::from(&value.tile_shaders),
-            TransferQueueTimestampQueries: diligent_sys::DEVICE_FEATURE_STATE::from(
-                &value.transfer_queue_timestamp_queries,
-            ),
-            VariableRateShading: diligent_sys::DEVICE_FEATURE_STATE::from(
-                &value.variable_rate_shading,
-            ),
-            SparseResources: diligent_sys::DEVICE_FEATURE_STATE::from(&value.sparse_resources),
-            SubpassFramebufferFetch: diligent_sys::DEVICE_FEATURE_STATE::from(
-                &value.subpass_framebuffer_fetch,
-            ),
-            TextureComponentSwizzle: diligent_sys::DEVICE_FEATURE_STATE::from(
-                &value.texture_component_swizzle,
-            ),
-            TextureSubresourceViews: diligent_sys::DEVICE_FEATURE_STATE::from(
-                &value.texture_subresource_views,
-            ),
-            NativeMultiDraw: diligent_sys::DEVICE_FEATURE_STATE::from(&value.native_multi_draw),
-            AsyncShaderCompilation: diligent_sys::DEVICE_FEATURE_STATE::from(
-                &value.async_shader_compilation,
-            ),
-            FormattedBuffers: diligent_sys::DEVICE_FEATURE_STATE::from(&value.formatted_buffers),
+            SeparablePrograms: value.separable_programs.into(),
+            ShaderResourceQueries: value.shader_resource_queries.into(),
+            WireframeFill: value.wireframe_fill.into(),
+            MultithreadedResourceCreation: value.multithreaded_resource_creation.into(),
+            ComputeShaders: value.compute_shaders.into(),
+            GeometryShaders: value.geometry_shaders.into(),
+            Tessellation: value.tessellation.into(),
+            MeshShaders: value.mesh_shaders.into(),
+            RayTracing: value.ray_tracing.into(),
+            BindlessResources: value.bindless_resources.into(),
+            OcclusionQueries: value.occlusion_queries.into(),
+            BinaryOcclusionQueries: value.binary_occlusion_queries.into(),
+            TimestampQueries: value.timestamp_queries.into(),
+            PipelineStatisticsQueries: value.pipeline_statistics_queries.into(),
+            DurationQueries: value.duration_queries.into(),
+            DepthBiasClamp: value.depth_bias_clamp.into(),
+            DepthClamp: value.depth_clamp.into(),
+            IndependentBlend: value.independent_blend.into(),
+            DualSourceBlend: value.dual_source_blend.into(),
+            MultiViewport: value.multi_viewport.into(),
+            TextureCompressionBC: value.texture_compression_bc.into(),
+            TextureCompressionETC2: value.texture_compression_etc2.into(),
+            VertexPipelineUAVWritesAndAtomics: value.vertex_pipeline_uav_writes_and_atomics.into(),
+            PixelUAVWritesAndAtomics: value.pixel_uav_writes_and_atomics.into(),
+            TextureUAVExtendedFormats: value.texture_uav_extended_formats.into(),
+            ShaderFloat16: value.shader_float16.into(),
+            ResourceBuffer16BitAccess: value.resource_buffer16_bit_access.into(),
+            UniformBuffer16BitAccess: value.uniform_buffer16_bit_access.into(),
+            ShaderInputOutput16: value.shader_input_output16.into(),
+            ShaderInt8: value.shader_int8.into(),
+            ResourceBuffer8BitAccess: value.resource_buffer8_bit_access.into(),
+            UniformBuffer8BitAccess: value.uniform_buffer8_bit_access.into(),
+            ShaderResourceStaticArrays: value.shader_resource_static_arrays.into(),
+            ShaderResourceRuntimeArrays: value.shader_resource_runtime_arrays.into(),
+            WaveOp: value.wave_op.into(),
+            InstanceDataStepRate: value.instance_data_step_rate.into(),
+            NativeFence: value.native_fence.into(),
+            TileShaders: value.tile_shaders.into(),
+            TransferQueueTimestampQueries: value.transfer_queue_timestamp_queries.into(),
+            VariableRateShading: value.variable_rate_shading.into(),
+            SparseResources: value.sparse_resources.into(),
+            SubpassFramebufferFetch: value.subpass_framebuffer_fetch.into(),
+            TextureComponentSwizzle: value.texture_component_swizzle.into(),
+            TextureSubresourceViews: value.texture_subresource_views.into(),
+            NativeMultiDraw: value.native_multi_draw.into(),
+            AsyncShaderCompilation: value.async_shader_compilation.into(),
+            FormattedBuffers: value.formatted_buffers.into(),
         }
     }
 }
@@ -1072,14 +1034,14 @@ impl From<&diligent_sys::GraphicsAdapterInfo> for GraphicsAdapterInfo {
 
         GraphicsAdapterInfo {
             description: desc_cstring.into_string().unwrap(), //desc.to_str().unwrap().to_owned(),
-            adapter_type: match value.Type as diligent_sys::_ADAPTER_TYPE {
+            adapter_type: match value.Type as _ {
                 diligent_sys::ADAPTER_TYPE_UNKNOWN => AdapterType::Unknown,
                 diligent_sys::ADAPTER_TYPE_SOFTWARE => AdapterType::Software,
                 diligent_sys::ADAPTER_TYPE_INTEGRATED => AdapterType::Integrated,
                 diligent_sys::ADAPTER_TYPE_DISCRETE => AdapterType::Discrete,
                 _ => panic!(),
             },
-            vendor: match value.Vendor as diligent_sys::_ADAPTER_VENDOR {
+            vendor: match value.Vendor as _ {
                 diligent_sys::ADAPTER_VENDOR_UNKNOWN => AdapterVendor::Unknown,
                 diligent_sys::ADAPTER_VENDOR_NVIDIA => AdapterVendor::Nvidia,
                 diligent_sys::ADAPTER_VENDOR_AMD => AdapterVendor::AMD,
@@ -1166,7 +1128,7 @@ impl From<&diligent_sys::GraphicsAdapterInfo> for GraphicsAdapterInfo {
                         .ShadingRates
                         .into_iter()
                         .map(|sr| ShadingRateMode {
-                            rate: match sr.Rate as diligent_sys::_SHADING_RATE {
+                            rate: match sr.Rate as _ {
                                 diligent_sys::SHADING_RATE_1X1 => ShadingRate::_1X1,
                                 diligent_sys::SHADING_RATE_1X2 => ShadingRate::_1X2,
                                 diligent_sys::SHADING_RATE_1X4 => ShadingRate::_1X4,
@@ -1282,6 +1244,7 @@ impl From<&diligent_sys::GraphicsAdapterInfo> for GraphicsAdapterInfo {
     }
 }
 
+#[derive(Clone, Copy)]
 pub enum SurfaceTransform {
     Optimal,
     Identity,
@@ -1294,8 +1257,8 @@ pub enum SurfaceTransform {
     HorizontalMirrorRotate270,
 }
 
-impl From<&SurfaceTransform> for diligent_sys::SURFACE_TRANSFORM {
-    fn from(value: &SurfaceTransform) -> Self {
+impl From<SurfaceTransform> for diligent_sys::SURFACE_TRANSFORM {
+    fn from(value: SurfaceTransform) -> Self {
         (match value {
             SurfaceTransform::Optimal => diligent_sys::SURFACE_TRANSFORM_OPTIMAL,
             SurfaceTransform::Identity => diligent_sys::SURFACE_TRANSFORM_IDENTITY,
@@ -1312,13 +1275,13 @@ impl From<&SurfaceTransform> for diligent_sys::SURFACE_TRANSFORM {
             SurfaceTransform::HorizontalMirrorRotate270 => {
                 diligent_sys::SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270
             }
-        }) as diligent_sys::SURFACE_TRANSFORM
+        }) as _
     }
 }
 
-impl From<&diligent_sys::SURFACE_TRANSFORM> for SurfaceTransform {
-    fn from(value: &diligent_sys::SURFACE_TRANSFORM) -> Self {
-        match *value as diligent_sys::_SURFACE_TRANSFORM {
+impl From<diligent_sys::SURFACE_TRANSFORM> for SurfaceTransform {
+    fn from(value: diligent_sys::SURFACE_TRANSFORM) -> Self {
+        match value as _ {
             diligent_sys::SURFACE_TRANSFORM_OPTIMAL => SurfaceTransform::Optimal,
             diligent_sys::SURFACE_TRANSFORM_IDENTITY => SurfaceTransform::Identity,
             diligent_sys::SURFACE_TRANSFORM_ROTATE_90 => SurfaceTransform::Rotate90,
@@ -1369,6 +1332,7 @@ bitflags! {
 
 const_assert!(diligent_sys::RESOURCE_STATE_MAX_BIT == 2097152);
 
+#[derive(Clone, Copy)]
 pub enum QueuePriority {
     Low,
     Medium,
@@ -1488,8 +1452,8 @@ pub enum TextureFormat {
 }
 const_assert!(diligent_sys::TEX_FORMAT_NUM_FORMATS == 106);
 
-impl From<&TextureFormat> for diligent_sys::TEXTURE_FORMAT {
-    fn from(value: &TextureFormat) -> Self {
+impl From<TextureFormat> for diligent_sys::TEXTURE_FORMAT {
+    fn from(value: TextureFormat) -> Self {
         (match value {
             TextureFormat::RGBA32_TYPELESS => diligent_sys::TEX_FORMAT_RGBA32_TYPELESS,
             TextureFormat::RGBA32_FLOAT => diligent_sys::TEX_FORMAT_RGBA32_FLOAT,
@@ -1604,13 +1568,13 @@ impl From<&TextureFormat> for diligent_sys::TEXTURE_FORMAT {
             }
             TextureFormat::ETC2_RGBA8_UNORM => diligent_sys::TEX_FORMAT_ETC2_RGBA8_UNORM,
             TextureFormat::ETC2_RGBA8_UNORM_SRGB => diligent_sys::TEX_FORMAT_ETC2_RGBA8_UNORM_SRGB,
-        }) as diligent_sys::TEXTURE_FORMAT
+        }) as _
     }
 }
 
-impl From<&diligent_sys::TEXTURE_FORMAT> for TextureFormat {
-    fn from(value: &diligent_sys::TEXTURE_FORMAT) -> Self {
-        match *value as diligent_sys::_TEXTURE_FORMAT {
+impl From<diligent_sys::TEXTURE_FORMAT> for TextureFormat {
+    fn from(value: diligent_sys::TEXTURE_FORMAT) -> Self {
+        match value as _ {
             diligent_sys::TEX_FORMAT_RGBA32_TYPELESS => TextureFormat::RGBA32_TYPELESS,
             diligent_sys::TEX_FORMAT_RGBA32_FLOAT => TextureFormat::RGBA32_FLOAT,
             diligent_sys::TEX_FORMAT_RGBA32_UINT => TextureFormat::RGBA32_UINT,
@@ -1729,15 +1693,16 @@ impl From<&diligent_sys::TEXTURE_FORMAT> for TextureFormat {
     }
 }
 
+#[derive(Clone, Copy)]
 pub enum ScalingMode {
     Unspecified,
     Centered,
     Stretched,
 }
 
-impl From<&diligent_sys::SCALING_MODE> for ScalingMode {
-    fn from(value: &diligent_sys::SCALING_MODE) -> Self {
-        match *value {
+impl From<diligent_sys::SCALING_MODE> for ScalingMode {
+    fn from(value: diligent_sys::SCALING_MODE) -> Self {
+        match value {
             diligent_sys::SCALING_MODE_UNSPECIFIED => ScalingMode::Unspecified,
             diligent_sys::SCALING_MODE_CENTERED => ScalingMode::Centered,
             diligent_sys::SCALING_MODE_STRETCHED => ScalingMode::Stretched,
@@ -1746,9 +1711,9 @@ impl From<&diligent_sys::SCALING_MODE> for ScalingMode {
     }
 }
 
-impl From<&ScalingMode> for diligent_sys::SCALING_MODE {
-    fn from(value: &ScalingMode) -> Self {
-        match *value {
+impl From<ScalingMode> for diligent_sys::SCALING_MODE {
+    fn from(value: ScalingMode) -> Self {
+        match value {
             ScalingMode::Unspecified => diligent_sys::SCALING_MODE_UNSPECIFIED,
             ScalingMode::Centered => diligent_sys::SCALING_MODE_CENTERED,
             ScalingMode::Stretched => diligent_sys::SCALING_MODE_STRETCHED,
@@ -1756,6 +1721,7 @@ impl From<&ScalingMode> for diligent_sys::SCALING_MODE {
     }
 }
 
+#[derive(Clone, Copy)]
 pub enum ScanlineOrder {
     Unspecified,
     Progressive,
@@ -1763,9 +1729,9 @@ pub enum ScanlineOrder {
     LowerFieldFirst,
 }
 
-impl From<&diligent_sys::SCANLINE_ORDER> for ScanlineOrder {
-    fn from(value: &diligent_sys::SCANLINE_ORDER) -> Self {
-        match *value {
+impl From<diligent_sys::SCANLINE_ORDER> for ScanlineOrder {
+    fn from(value: diligent_sys::SCANLINE_ORDER) -> Self {
+        match value {
             diligent_sys::SCANLINE_ORDER_UNSPECIFIED => ScanlineOrder::Unspecified,
             diligent_sys::SCANLINE_ORDER_PROGRESSIVE => ScanlineOrder::Progressive,
             diligent_sys::SCANLINE_ORDER_UPPER_FIELD_FIRST => ScanlineOrder::UpperFieldFirst,
@@ -1775,9 +1741,9 @@ impl From<&diligent_sys::SCANLINE_ORDER> for ScanlineOrder {
     }
 }
 
-impl From<&ScanlineOrder> for diligent_sys::SCANLINE_ORDER {
-    fn from(value: &ScanlineOrder) -> Self {
-        match *value {
+impl From<ScanlineOrder> for diligent_sys::SCANLINE_ORDER {
+    fn from(value: ScanlineOrder) -> Self {
+        match value {
             ScanlineOrder::Unspecified => diligent_sys::SCANLINE_ORDER_UNSPECIFIED,
             ScanlineOrder::Progressive => diligent_sys::SCANLINE_ORDER_PROGRESSIVE,
             ScanlineOrder::UpperFieldFirst => diligent_sys::SCANLINE_ORDER_UPPER_FIELD_FIRST,
@@ -1825,11 +1791,11 @@ impl From<&diligent_sys::DisplayModeAttribs> for DisplayModeAttribs {
         DisplayModeAttribs {
             width: value.Width,
             height: value.Height,
-            format: (&value.Format).into(),
+            format: value.Format.into(),
             refresh_rate_numerator: value.RefreshRateNumerator,
             refresh_rate_denominator: value.RefreshRateDenominator,
-            scaling_mode: (&value.Scaling).into(),
-            scanline_order: (&value.ScanlineOrder).into(),
+            scaling_mode: value.Scaling.into(),
+            scanline_order: value.ScanlineOrder.into(),
         }
     }
 }
@@ -1839,11 +1805,11 @@ impl From<&DisplayModeAttribs> for diligent_sys::DisplayModeAttribs {
         diligent_sys::DisplayModeAttribs {
             Width: value.width,
             Height: value.height,
-            Format: (&value.format).into(),
+            Format: value.format.into(),
             RefreshRateNumerator: value.refresh_rate_numerator,
             RefreshRateDenominator: value.refresh_rate_denominator,
-            Scaling: (&value.scaling_mode).into(),
-            ScanlineOrder: (&value.scanline_order).into(),
+            Scaling: value.scaling_mode.into(),
+            ScanlineOrder: value.scanline_order.into(),
         }
     }
 }
@@ -1862,8 +1828,8 @@ impl From<&FullScreenModeDesc> for diligent_sys::FullScreenModeDesc {
             Fullscreen: value.fullscreen,
             RefreshRateDenominator: value.refresh_rate_denominator,
             RefreshRateNumerator: value.refresh_rate_numerator,
-            Scaling: (&value.scaling).into(),
-            ScanlineOrder: (&value.scanline_order).into(),
+            Scaling: value.scaling.into(),
+            ScanlineOrder: value.scanline_order.into(),
         }
     }
 }
@@ -1903,6 +1869,7 @@ impl FullScreenModeDesc {
     }
 }
 
+#[derive(Clone, Copy)]
 pub enum StateTransitionType {
     Immediate,
     Begin,

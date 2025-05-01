@@ -2,6 +2,7 @@ use static_assertions::const_assert;
 
 use crate::{device_object::DeviceObject, sampler::Sampler, texture::Texture};
 
+#[derive(Clone, Copy)]
 pub enum TextureViewType {
     ShaderResource,
     RenderTarget,
@@ -11,8 +12,8 @@ pub enum TextureViewType {
     ShadingRate,
 }
 
-impl From<&TextureViewType> for diligent_sys::TEXTURE_VIEW_TYPE {
-    fn from(value: &TextureViewType) -> Self {
+impl From<TextureViewType> for diligent_sys::TEXTURE_VIEW_TYPE {
+    fn from(value: TextureViewType) -> Self {
         (match value {
             TextureViewType::ShaderResource => diligent_sys::TEXTURE_VIEW_SHADER_RESOURCE,
             TextureViewType::RenderTarget => diligent_sys::TEXTURE_VIEW_RENDER_TARGET,

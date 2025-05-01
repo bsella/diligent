@@ -19,8 +19,8 @@ pub enum BufferMode {
 }
 const_assert!(diligent_sys::BUFFER_MODE_NUM_MODES == 4);
 
-impl From<&BufferMode> for diligent_sys::BUFFER_MODE {
-    fn from(value: &BufferMode) -> Self {
+impl From<BufferMode> for diligent_sys::BUFFER_MODE {
+    fn from(value: BufferMode) -> Self {
         (match value {
             BufferMode::Undefined => diligent_sys::BUFFER_MODE_UNDEFINED,
             BufferMode::Formatted => diligent_sys::BUFFER_MODE_FORMATTED,
@@ -59,9 +59,9 @@ impl From<&BufferDesc> for diligent_sys::BufferDesc {
             },
             Size: value.size,
             BindFlags: value.bind_flags.bits(),
-            Usage: (&value.usage).into(),
+            Usage: value.usage.into(),
             CPUAccessFlags: value.cpu_access_flags.bits(),
-            Mode: (&value.mode).into(),
+            Mode: value.mode.into(),
             MiscFlags: value.misc_flags.bits(),
             ElementByteStride: value.element_byte_stride,
             ImmediateContextMask: value.immediate_context_mask,
@@ -69,7 +69,7 @@ impl From<&BufferDesc> for diligent_sys::BufferDesc {
     }
 }
 
-impl<'a> BufferDesc {
+impl BufferDesc {
     pub fn new(name: impl AsRef<str>, size: u64) -> Self {
         BufferDesc {
             size,
@@ -184,6 +184,7 @@ impl Buffer {
     }
 
     pub fn get_desc(&self) -> &diligent_sys::BufferDesc {
+        // TODO
         unsafe {
             ((*self.virtual_functions)
                 .DeviceObject

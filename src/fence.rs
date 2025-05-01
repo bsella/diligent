@@ -1,4 +1,4 @@
-use std::ffi::CString;
+use std::ffi::{CStr, CString};
 
 use static_assertions::const_assert;
 
@@ -17,6 +17,7 @@ impl AsRef<DeviceObject> for Fence {
     }
 }
 
+#[derive(Clone, Copy)]
 pub enum FenceType {
     CpuWaitOnly,
     General,
@@ -44,7 +45,7 @@ impl From<&FenceDesc> for diligent_sys::FenceDesc {
 }
 
 impl FenceDesc {
-    pub fn fence_desc(mut self, fence_type: FenceType) -> Self {
+    pub fn fence_type(mut self, fence_type: FenceType) -> Self {
         self.fence_type = fence_type;
         self
     }
@@ -65,8 +66,8 @@ impl Fence {
         }
     }
 
-    pub fn get_desc(&self) -> &diligent_sys::FenceDesc {
-        unsafe {
+    pub fn get_desc(&self) -> FenceDesc {
+        let desc = unsafe {
             ((*self.virtual_functions)
                 .DeviceObject
                 .GetDesc
@@ -74,6 +75,15 @@ impl Fence {
                 as *const diligent_sys::FenceDesc)
                 .as_ref()
                 .unwrap_unchecked()
+        };
+
+        FenceDesc {
+            name: CString::from(unsafe { CStr::from_ptr(desc._DeviceObjectAttribs.Name) }),
+            fence_type: match desc.Type as _ {
+                diligent_sys::FENCE_TYPE_CPU_WAIT_ONLY => FenceType::CpuWaitOnly,
+                diligent_sys::FENCE_TYPE_GENERAL => FenceType::General,
+                _ => panic!("Unknown fence type"),
+            },
         }
     }
 

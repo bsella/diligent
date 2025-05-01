@@ -108,6 +108,7 @@ impl EngineFactory {
     }
 
     pub fn get_api_info(&self) -> &diligent_sys::APIInfo {
+        // TODO
         unsafe {
             (*self.virtual_functions)
                 .EngineFactory
@@ -169,7 +170,7 @@ impl EngineFactory {
         }
     }
 
-    pub fn create_data_blob<T>(&self, initial_size: usize, data: &T) -> Result<DataBlob, ()> {
+    pub fn create_data_blob<T>(&self, data: &T) -> Result<DataBlob, ()> {
         let mut data_blob_ptr = std::ptr::null_mut();
         unsafe {
             (*self.virtual_functions)
@@ -177,7 +178,7 @@ impl EngineFactory {
                 .CreateDataBlob
                 .unwrap_unchecked()(
                 self.sys_ptr,
-                initial_size,
+                std::mem::size_of_val(data),
                 std::ptr::from_ref(data) as *const c_void,
                 std::ptr::addr_of_mut!(data_blob_ptr),
             );

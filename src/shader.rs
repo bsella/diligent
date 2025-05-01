@@ -1,7 +1,7 @@
 #[cfg(unix)]
 use std::os::unix::ffi::OsStrExt;
 
-use std::{ffi::CString, path::Path, str::FromStr};
+use std::{ffi::CString, ops::Deref, path::Path, str::FromStr};
 
 use bitflags::bitflags;
 use static_assertions::const_assert;
@@ -18,6 +18,7 @@ pub enum ShaderSource<'a> {
     ByteCode(&'a [u8]),
 }
 
+#[derive(Clone, Copy)]
 pub enum ShaderLanguage {
     Default,
     HLSL,
@@ -29,8 +30,8 @@ pub enum ShaderLanguage {
     WGSL,
 }
 
-impl From<&ShaderLanguage> for diligent_sys::SHADER_SOURCE_LANGUAGE {
-    fn from(value: &ShaderLanguage) -> Self {
+impl From<ShaderLanguage> for diligent_sys::SHADER_SOURCE_LANGUAGE {
+    fn from(value: ShaderLanguage) -> Self {
         (match value {
             ShaderLanguage::Default => diligent_sys::SHADER_SOURCE_LANGUAGE_DEFAULT,
             ShaderLanguage::HLSL => diligent_sys::SHADER_SOURCE_LANGUAGE_HLSL,
@@ -44,6 +45,7 @@ impl From<&ShaderLanguage> for diligent_sys::SHADER_SOURCE_LANGUAGE {
     }
 }
 
+#[derive(Clone, Copy)]
 pub enum ShaderCompiler {
     Default,
     GLSLANG,
@@ -51,8 +53,8 @@ pub enum ShaderCompiler {
     FXC,
 }
 
-impl From<&ShaderCompiler> for diligent_sys::SHADER_COMPILER {
-    fn from(value: &ShaderCompiler) -> Self {
+impl From<ShaderCompiler> for diligent_sys::SHADER_COMPILER {
+    fn from(value: ShaderCompiler) -> Self {
         (match value {
             ShaderCompiler::Default => diligent_sys::SHADER_COMPILER_DEFAULT,
             ShaderCompiler::GLSLANG => diligent_sys::SHADER_COMPILER_GLSLANG,
@@ -62,6 +64,7 @@ impl From<&ShaderCompiler> for diligent_sys::SHADER_COMPILER {
     }
 }
 
+#[derive(Clone, Copy)]
 pub enum ShaderResourceType {
     Unknown,
     ConstantBuffer,
@@ -212,8 +215,10 @@ pub(crate) struct ShaderCreateInfoWrapper {
     _shader_source_path: Option<CString>,
     sci: diligent_sys::ShaderCreateInfo,
 }
-impl ShaderCreateInfoWrapper {
-    pub fn get(&self) -> &diligent_sys::ShaderCreateInfo {
+
+impl Deref for ShaderCreateInfoWrapper {
+    type Target = diligent_sys::ShaderCreateInfo;
+    fn deref(&self) -> &Self::Target {
         &self.sci
     }
 }
@@ -292,12 +297,12 @@ impl From<&ShaderCreateInfo<'_>> for ShaderCreateInfoWrapper {
                         Name: value.desc.name.as_ptr(),
                     }
                 },
-                ShaderType: (&value.desc.shader_type).into(),
+                ShaderType: value.desc.shader_type.into(),
                 UseCombinedTextureSamplers: value.desc.use_combined_texture_samplers,
                 CombinedSamplerSuffix: value.desc.combined_sampler_suffix.as_ptr(),
             },
-            SourceLanguage: (&value.source_language).into(),
-            ShaderCompiler: (&value.compiler).into(),
+            SourceLanguage: value.source_language.into(),
+            ShaderCompiler: value.compiler.into(),
             HLSLVersion: diligent_sys::ShaderVersion {
                 Major: value.language_version.major,
                 Minor: value.language_version.minor,

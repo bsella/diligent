@@ -1,5 +1,9 @@
-use std::{ffi::CString, mem::MaybeUninit};
+use std::{
+    ffi::{CStr, CString},
+    mem::MaybeUninit,
+};
 
+use bitflags::bitflags;
 use static_assertions::const_assert;
 
 use crate::device_object::DeviceObject;
@@ -11,6 +15,7 @@ use super::{
     shader::ShaderResourceDesc,
 };
 
+#[derive(Clone, Copy)]
 pub enum ShaderResourceVariableType {
     Static,
     Mutable,
@@ -18,8 +23,8 @@ pub enum ShaderResourceVariableType {
 }
 const_assert!(diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_NUM_TYPES == 3);
 
-impl From<&ShaderResourceVariableType> for diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE {
-    fn from(value: &ShaderResourceVariableType) -> Self {
+impl From<ShaderResourceVariableType> for diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE {
+    fn from(value: ShaderResourceVariableType) -> Self {
         (match value {
             ShaderResourceVariableType::Static => {
                 diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_STATIC
@@ -30,13 +35,13 @@ impl From<&ShaderResourceVariableType> for diligent_sys::SHADER_RESOURCE_VARIABL
             ShaderResourceVariableType::Dynamic => {
                 diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_DYNAMIC
             }
-        }) as diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE
+        }) as _
     }
 }
 
 impl Into<ShaderResourceVariableType> for diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE {
     fn into(self) -> ShaderResourceVariableType {
-        match self as diligent_sys::_SHADER_RESOURCE_VARIABLE_TYPE {
+        match self as _ {
             diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_STATIC => {
                 ShaderResourceVariableType::Static
             }
@@ -48,6 +53,29 @@ impl Into<ShaderResourceVariableType> for diligent_sys::SHADER_RESOURCE_VARIABLE
             }
             _ => panic!(),
         }
+    }
+}
+
+bitflags! {
+    pub struct BindShaderResourcesFlags : diligent_sys::BIND_SHADER_RESOURCES_FLAGS {
+        const UpdateStatic      = diligent_sys::BIND_SHADER_RESOURCES_UPDATE_STATIC as diligent_sys::BIND_SHADER_RESOURCES_FLAGS;
+        const UpdateMutable     = diligent_sys::BIND_SHADER_RESOURCES_UPDATE_MUTABLE as diligent_sys::BIND_SHADER_RESOURCES_FLAGS;
+        const UpdateDynamic     = diligent_sys::BIND_SHADER_RESOURCES_UPDATE_DYNAMIC as diligent_sys::BIND_SHADER_RESOURCES_FLAGS;
+        const UpdateAll         = diligent_sys::BIND_SHADER_RESOURCES_UPDATE_ALL as diligent_sys::BIND_SHADER_RESOURCES_FLAGS;
+        const KeepExisting      = diligent_sys::BIND_SHADER_RESOURCES_KEEP_EXISTING as diligent_sys::BIND_SHADER_RESOURCES_FLAGS;
+        const VerifyAllResolved = diligent_sys::BIND_SHADER_RESOURCES_VERIFY_ALL_RESOLVED as diligent_sys::BIND_SHADER_RESOURCES_FLAGS;
+        const AllowOverwrite    = diligent_sys::BIND_SHADER_RESOURCES_ALLOW_OVERWRITE as diligent_sys::BIND_SHADER_RESOURCES_FLAGS;
+    }
+}
+
+bitflags! {
+    pub struct ShaderResourceVariableTypeFlags : diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_FLAGS {
+        const None    = diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_FLAG_NONE as diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_FLAGS;
+        const Static  = diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_FLAG_STATIC as diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_FLAGS;
+        const Mutable = diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_FLAG_MUTABLE as diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_FLAGS;
+        const Dynamic = diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_FLAG_DYNAMIC as diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_FLAGS;
+        const MutDyn  = diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_FLAG_MUT_DYN as diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_FLAGS;
+        const All     = diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_FLAG_ALL as diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_FLAGS;
     }
 }
 
@@ -83,7 +111,7 @@ impl From<&ShaderResourceVariableDesc> for diligent_sys::ShaderResourceVariableD
         diligent_sys::ShaderResourceVariableDesc {
             Name: value.name.as_ptr(),
             ShaderStages: value.shader_stages.bits(),
-            Type: diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE::from(&value.variable_type),
+            Type: value.variable_type.into(),
             Flags: value.flags.bits(),
         }
     }
@@ -206,7 +234,7 @@ impl ShaderResourceVariable {
         };
 
         ShaderResourceDesc {
-            name: unsafe { CString::from_raw(shader_resource_desc.Name as _) },
+            name: CString::from(unsafe { CStr::from_ptr(shader_resource_desc.Name) }),
             array_size: shader_resource_desc.ArraySize as usize,
             resource_type: shader_resource_desc.Type.into(),
         }

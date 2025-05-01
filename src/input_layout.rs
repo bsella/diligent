@@ -11,8 +11,8 @@ pub enum InputElementFrequency {
 }
 const_assert!(diligent_sys::INPUT_ELEMENT_FREQUENCY_NUM_FREQUENCIES == 3);
 
-impl From<&InputElementFrequency> for diligent_sys::INPUT_ELEMENT_FREQUENCY {
-    fn from(value: &InputElementFrequency) -> Self {
+impl From<InputElementFrequency> for diligent_sys::INPUT_ELEMENT_FREQUENCY {
+    fn from(value: InputElementFrequency) -> Self {
         (match value {
             InputElementFrequency::PerVertex => diligent_sys::INPUT_ELEMENT_FREQUENCY_PER_VERTEX,
             InputElementFrequency::PerInstance => {
@@ -100,11 +100,11 @@ impl From<&Vec<LayoutElement>> for InputLayoutDescWrapper {
                     HLSLSemantic: element.hlsl_semantic.as_ptr(),
                     BufferSlot: element.buffer_slot,
                     NumComponents: element.num_components,
-                    ValueType: (&element.value_type).into(),
+                    ValueType: element.value_type.into(),
                     IsNormalized: element.is_normalized,
                     RelativeOffset: element.relative_offset,
                     Stride: element.stride,
-                    Frequency: (&element.frequency).into(),
+                    Frequency: element.frequency.into(),
                     InstanceDataStepRate: element.instance_data_step_rate,
                 })
                 .collect(),

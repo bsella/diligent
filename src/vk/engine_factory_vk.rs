@@ -223,8 +223,8 @@ impl EngineFactoryVk {
             let create_info = diligent_sys::EngineVkCreateInfo {
                 _EngineCreateInfo: (&create_info.engine_create_info).into(),
                 FeaturesVk: diligent_sys::DeviceFeaturesVk {
-                    DynamicRendering: (&create_info.features_vk.dynamic_rendering).into(),
-                    HostImageCopy: (&create_info.features_vk.host_image_copy).into(),
+                    DynamicRendering: create_info.features_vk.dynamic_rendering.into(),
+                    HostImageCopy: create_info.features_vk.host_image_copy.into(),
                 },
                 InstanceLayerCount: create_info.instance_layer_names.len() as u32,
                 ppInstanceLayerNames: if instance_layer_names.is_empty() {

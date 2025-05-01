@@ -11,6 +11,7 @@ use crate::{
     texture_view::{TextureView, TextureViewType},
 };
 
+#[derive(Clone, Copy)]
 pub enum TextureDimension {
     Texture1D,
     Texture1DArray { array_size: u32 },
@@ -22,8 +23,8 @@ pub enum TextureDimension {
 }
 const_assert!(diligent_sys::RESOURCE_DIM_NUM_DIMENSIONS == 9);
 
-impl From<&TextureDimension> for diligent_sys::RESOURCE_DIMENSION {
-    fn from(value: &TextureDimension) -> Self {
+impl From<TextureDimension> for diligent_sys::RESOURCE_DIMENSION {
+    fn from(value: TextureDimension) -> Self {
         (match value {
             TextureDimension::Texture1D => diligent_sys::RESOURCE_DIM_TEX_1D,
             TextureDimension::Texture1DArray { array_size: _ } => {
@@ -149,14 +150,14 @@ impl From<&TextureDesc> for diligent_sys::TextureDesc {
             _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
                 Name: value.name.as_ptr(),
             },
-            Type: (&value.dimension).into(),
+            Type: value.dimension.into(),
             Width: value.width,
             Height: value.height,
-            Format: (&value.format).into(),
+            Format: value.format.into(),
             MipLevels: value.mip_levels,
             SampleCount: value.sample_count,
             BindFlags: value.bind_flags.bits(),
-            Usage: (&value.usage).into(),
+            Usage: value.usage.into(),
             CPUAccessFlags: value.cpu_access_flags.bits(),
             MiscFlags: value.misc_flags.bits(),
             ClearValue: diligent_sys::OptimizedClearValue {
@@ -165,7 +166,7 @@ impl From<&TextureDesc> for diligent_sys::TextureDesc {
                     Depth: value.clear_depth,
                     Stencil: value.clear_stencil,
                 },
-                Format: (&value.format).into(),
+                Format: value.format.into(),
             },
             ImmediateContextMask: value.immediate_context_mask,
             __bindgen_anon_1: anon,
@@ -274,6 +275,7 @@ impl Texture {
     }
 
     pub fn get_desc(&self) -> &diligent_sys::TextureDesc {
+        // TODO
         unsafe {
             ((*self.virtual_functions)
                 .DeviceObject
@@ -313,7 +315,7 @@ impl Texture {
             (*self.virtual_functions)
                 .Texture
                 .GetDefaultView
-                .unwrap_unchecked()(self.sys_ptr, (&texture_view_type).into())
+                .unwrap_unchecked()(self.sys_ptr, texture_view_type.into())
         };
         if texture_view_ptr.is_null() {
             Err(())
@@ -354,6 +356,7 @@ impl Texture {
     }
 
     pub fn get_sparse_properties(&self) -> &diligent_sys::SparseTextureProperties {
+        // TODO
         unsafe {
             (*self.virtual_functions)
                 .Texture
