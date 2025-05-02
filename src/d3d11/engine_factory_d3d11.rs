@@ -217,8 +217,6 @@ impl EngineFactoryD3D11 {
 
         let num_deferred_contexts = engine_ci.engine_create_info.num_deferred_contexts as usize;
 
-        let engine_ci = engine_ci.into();
-
         let mut render_device_ptr = std::ptr::null_mut();
         let mut device_context_ptrs = Vec::from_iter(
             std::iter::repeat(std::ptr::null_mut())
@@ -283,7 +281,7 @@ impl EngineFactoryD3D11 {
                 },
                 adapter_id,
                 output_id,
-                (&format).into(),
+                format.into(),
                 std::ptr::from_mut(&mut num_display_modes),
                 std::ptr::null_mut(),
             )
@@ -303,7 +301,7 @@ impl EngineFactoryD3D11 {
                 },
                 adapter_id,
                 output_id,
-                (&format).into(),
+                format.into(),
                 std::ptr::from_mut(&mut num_display_modes),
                 display_modes.as_mut_ptr(),
             )

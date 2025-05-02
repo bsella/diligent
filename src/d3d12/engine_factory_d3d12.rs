@@ -304,7 +304,7 @@ impl EngineFactoryD3D12 {
                 },
                 adapter_id,
                 output_id,
-                (&format).into(),
+                format.into(),
                 std::ptr::from_mut(&mut num_display_modes),
                 std::ptr::null_mut(),
             )
@@ -324,7 +324,7 @@ impl EngineFactoryD3D12 {
                 },
                 adapter_id,
                 output_id,
-                (&format).into(),
+                format.into(),
                 std::ptr::from_mut(&mut num_display_modes),
                 display_modes.as_mut_ptr(),
             )
