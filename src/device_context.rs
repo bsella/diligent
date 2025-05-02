@@ -1427,6 +1427,7 @@ impl Deref for DeferredDeviceContext {
 }
 
 impl DeferredDeviceContext {
+    #[allow(dead_code)] // In case backends that doesn't support deffered contexts like OpenGL are used
     pub(crate) fn new(device_context_ptr: *mut diligent_sys::IDeviceContext) -> Self {
         DeferredDeviceContext {
             device_context: DeviceContext::new(device_context_ptr),

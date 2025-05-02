@@ -8,6 +8,7 @@ impl From<&NativeWindow> for diligent_sys::NativeWindow {
     }
 }
 
+#[derive(Clone, Copy)]
 #[cfg(target_os = "linux")]
 pub enum NativeWindow {
     #[cfg(feature = "vulkan")]

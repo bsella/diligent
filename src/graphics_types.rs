@@ -480,7 +480,7 @@ impl Version {
     }
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum AdapterType {
     Unknown,
     Software,
@@ -891,6 +891,58 @@ pub struct DeviceFeatures {
     pub native_multi_draw: DeviceFeatureState,
     pub async_shader_compilation: DeviceFeatureState,
     pub formatted_buffers: DeviceFeatureState,
+}
+
+impl DeviceFeatures {
+    pub fn set_all(&mut self, state: DeviceFeatureState) {
+        self.separable_programs = state;
+        self.shader_resource_queries = state;
+        self.wireframe_fill = state;
+        self.multithreaded_resource_creation = state;
+        self.compute_shaders = state;
+        self.geometry_shaders = state;
+        self.tessellation = state;
+        self.mesh_shaders = state;
+        self.ray_tracing = state;
+        self.bindless_resources = state;
+        self.occlusion_queries = state;
+        self.binary_occlusion_queries = state;
+        self.timestamp_queries = state;
+        self.pipeline_statistics_queries = state;
+        self.duration_queries = state;
+        self.depth_bias_clamp = state;
+        self.depth_clamp = state;
+        self.independent_blend = state;
+        self.dual_source_blend = state;
+        self.multi_viewport = state;
+        self.texture_compression_bc = state;
+        self.texture_compression_etc2 = state;
+        self.vertex_pipeline_uav_writes_and_atomics = state;
+        self.pixel_uav_writes_and_atomics = state;
+        self.texture_uav_extended_formats = state;
+        self.shader_float16 = state;
+        self.resource_buffer16_bit_access = state;
+        self.uniform_buffer16_bit_access = state;
+        self.shader_input_output16 = state;
+        self.shader_int8 = state;
+        self.resource_buffer8_bit_access = state;
+        self.uniform_buffer8_bit_access = state;
+        self.shader_resource_static_arrays = state;
+        self.shader_resource_runtime_arrays = state;
+        self.wave_op = state;
+        self.instance_data_step_rate = state;
+        self.native_fence = state;
+        self.tile_shaders = state;
+        self.transfer_queue_timestamp_queries = state;
+        self.variable_rate_shading = state;
+        self.sparse_resources = state;
+        self.subpass_framebuffer_fetch = state;
+        self.texture_component_swizzle = state;
+        self.texture_subresource_views = state;
+        self.native_multi_draw = state;
+        self.async_shader_compilation = state;
+        self.formatted_buffers = state;
+    }
 }
 
 impl Default for DeviceFeatures {

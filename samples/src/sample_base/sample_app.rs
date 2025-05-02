@@ -343,6 +343,10 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             None
         };
 
+        engine_create_info
+            .features
+            .set_all(DeviceFeatureState::Optional);
+
         let (device, immediate_contexts, deferred_contexts, swap_chain, display_modes) =
             match &engine_factory {
                 #[cfg(feature = "vulkan")]
@@ -394,8 +398,14 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
                         panic!("Deferred contexts are not supported in OpenGL mode");
                     }
 
-                    let engine_gl_create_info =
-                        EngineGLCreateInfo::new(window.unwrap(), engine_create_info);
+                    let mut engine_gl_create_info =
+                        EngineGLCreateInfo::new(*window.unwrap(), engine_create_info);
+
+                    GenericSample::modify_engine_init_info(
+                        &mut sample::EngineCreateInfo::EngineGLCreateInfo(
+                            &mut engine_gl_create_info,
+                        ),
+                    );
 
                     let (device, immediate_context, swap_chain) = engine_factory
                         .create_device_and_swap_chain_gl(&engine_gl_create_info, &swap_chain_desc)
@@ -413,8 +423,14 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
                 EngineFactory::D3D11(engine_factory) => {
                     let graphics_api_version = engine_create_info.graphics_api_version;
 
-                    let engine_d3d11_create_info =
+                    let mut engine_d3d11_create_info =
                         EngineD3D11CreateInfo::new(D3D11ValidationFlags::None, engine_create_info);
+
+                    GenericSample::modify_engine_init_info(
+                        &mut sample::EngineCreateInfo::EngineD3D11CreateInfo(
+                            &mut engine_d3d11_create_info,
+                        ),
+                    );
 
                     let (device, immediate_contexts, deferred_contexts) = engine_factory
                         .create_device_and_contexts(&engine_d3d11_create_info)
@@ -453,7 +469,14 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
                 EngineFactory::D3D12(engine_factory) => {
                     let graphics_api_version = engine_create_info.graphics_api_version;
 
-                    let engine_d3d12_create_info = EngineD3D12CreateInfo::new(engine_create_info);
+                    let mut engine_d3d12_create_info =
+                        EngineD3D12CreateInfo::new(engine_create_info);
+
+                    GenericSample::modify_engine_init_info(
+                        &mut sample::EngineCreateInfo::EngineD3D12CreateInfo(
+                            &mut engine_d3d12_create_info,
+                        ),
+                    );
 
                     let (device, immediate_contexts, deferred_contexts) = engine_factory
                         .create_device_and_contexts(&engine_d3d12_create_info)

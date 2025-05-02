@@ -83,7 +83,7 @@ pub enum EngineCreateInfo<'a> {
     #[cfg(feature = "vulkan")]
     EngineVkCreateInfo(&'a mut EngineVkCreateInfo),
     #[cfg(feature = "opengl")]
-    EngineGLCreateInfo(&'a mut EngineGLCreateInfo<'a>),
+    EngineGLCreateInfo(&'a mut EngineGLCreateInfo),
     #[cfg(feature = "d3d11")]
     EngineD3D11CreateInfo(&'a mut EngineD3D11CreateInfo),
     #[cfg(feature = "d3d12")]
