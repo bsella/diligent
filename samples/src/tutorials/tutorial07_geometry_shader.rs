@@ -38,8 +38,10 @@ use diligent::{
 use diligent_tools::native_app;
 
 use diligent_samples::{
-    sample::{get_adjusted_projection_matrix, get_surface_pretransform_matrix, SampleBase},
-    sample_app::SampleApp,
+    sample_base::{
+        sample::{get_adjusted_projection_matrix, get_surface_pretransform_matrix, SampleBase},
+        sample_app::SampleApp,
+    },
     textured_cube::TexturedCube,
 };
 
@@ -74,7 +76,9 @@ impl SampleBase for GeometryShader {
         &self.immediate_context
     }
 
-    fn modify_engine_init_info(engine_ci: &mut diligent_samples::sample::EngineCreateInfo) {
+    fn modify_engine_init_info(
+        engine_ci: &mut diligent_samples::sample_base::sample::EngineCreateInfo,
+    ) {
         engine_ci.features.geometry_shaders = DeviceFeatureState::Enabled;
     }
 

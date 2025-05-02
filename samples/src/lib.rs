@@ -1,4 +1,2 @@
-pub mod sample;
-pub mod sample_app;
-pub mod sample_app_settings;
+pub mod sample_base;
 pub mod textured_cube;

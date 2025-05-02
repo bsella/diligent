@@ -14,7 +14,7 @@ use diligent::{
     swap_chain::SwapChain,
 };
 
-use diligent_samples::{sample::SampleBase, sample_app::SampleApp};
+use diligent_samples::sample_base::{sample::SampleBase, sample_app::SampleApp};
 use diligent_tools::native_app;
 
 struct HelloTriangle {

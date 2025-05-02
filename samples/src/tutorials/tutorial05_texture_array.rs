@@ -24,8 +24,10 @@ use diligent::{
 use diligent_tools::native_app;
 
 use diligent_samples::{
-    sample::{get_adjusted_projection_matrix, get_surface_pretransform_matrix, SampleBase},
-    sample_app::SampleApp,
+    sample_base::{
+        sample::{get_adjusted_projection_matrix, get_surface_pretransform_matrix, SampleBase},
+        sample_app::SampleApp,
+    },
     textured_cube::{CreatePSOInfo, TexturedCube},
 };
 use image::DynamicImage;

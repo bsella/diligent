@@ -6,7 +6,7 @@ use std::{
 use crate::native_app::{
     app::App,
     app_settings::AppSettings,
-    events::{EventHandler, EventResult, MouseButton},
+    events::{Event, EventHandler, MouseButton},
 };
 
 use diligent::{engine_factory::EngineCreateInfo, platforms::native_window::NativeWindow};
@@ -27,7 +27,7 @@ impl EventHandler for X11EventHandler {
         }
     }
 
-    fn handle_event(&mut self, event: &x11::xlib::XEvent) -> EventResult {
+    fn handle_event(&mut self, event: &x11::xlib::XEvent) -> Event {
         unsafe {
             match event.type_ {
                 x11::xlib::ConfigureNotify => {
@@ -35,12 +35,12 @@ impl EventHandler for X11EventHandler {
                         &*(event as *const x11::xlib::XEvent as *const x11::xlib::XConfigureEvent);
 
                     if xce.width != 0 && xce.height != 0 {
-                        EventResult::Resize {
+                        Event::Resize {
                             width: xce.width as u16,
                             height: xce.height as u16,
                         }
                     } else {
-                        EventResult::Continue
+                        Event::Continue
                     }
                 }
 
@@ -49,24 +49,24 @@ impl EventHandler for X11EventHandler {
                         &*(event as *const x11::xlib::XEvent as *const x11::xlib::XButtonEvent);
 
                     match xbe.button {
-                        x11::xlib::Button1 => EventResult::MouseDown {
+                        x11::xlib::Button1 => Event::MouseDown {
                             button: MouseButton::Left,
                         },
 
-                        x11::xlib::Button2 => EventResult::MouseDown {
+                        x11::xlib::Button2 => Event::MouseDown {
                             button: MouseButton::Middle,
                         },
 
-                        x11::xlib::Button3 => EventResult::MouseDown {
+                        x11::xlib::Button3 => Event::MouseDown {
                             button: MouseButton::Right,
                         },
 
-                        x11::xlib::Button4 => EventResult::MouseWheel { up: true },
+                        x11::xlib::Button4 => Event::MouseWheel { up: true },
 
-                        x11::xlib::Button5 => EventResult::MouseWheel { up: false },
+                        x11::xlib::Button5 => Event::MouseWheel { up: false },
 
                         // Unknown mouse button ?
-                        _ => EventResult::MouseDown {
+                        _ => Event::MouseDown {
                             button: MouseButton::Left,
                         },
                     }
@@ -77,24 +77,24 @@ impl EventHandler for X11EventHandler {
                         &*(event as *const x11::xlib::XEvent as *const x11::xlib::XButtonEvent);
 
                     match xbe.button {
-                        x11::xlib::Button1 => EventResult::MouseUp {
+                        x11::xlib::Button1 => Event::MouseUp {
                             button: MouseButton::Left,
                         },
 
-                        x11::xlib::Button2 => EventResult::MouseUp {
+                        x11::xlib::Button2 => Event::MouseUp {
                             button: MouseButton::Middle,
                         },
 
-                        x11::xlib::Button3 => EventResult::MouseUp {
+                        x11::xlib::Button3 => Event::MouseUp {
                             button: MouseButton::Right,
                         },
 
-                        x11::xlib::Button4 => EventResult::MouseWheel { up: true },
+                        x11::xlib::Button4 => Event::MouseWheel { up: true },
 
-                        x11::xlib::Button5 => EventResult::MouseWheel { up: false },
+                        x11::xlib::Button5 => Event::MouseWheel { up: false },
 
                         // Unknown mouse button ?
-                        _ => EventResult::MouseUp {
+                        _ => Event::MouseUp {
                             button: MouseButton::Left,
                         },
                     }
@@ -104,17 +104,17 @@ impl EventHandler for X11EventHandler {
                     let xme =
                         &*(event as *const x11::xlib::XEvent as *const x11::xlib::XMotionEvent);
 
-                    EventResult::MouseMove {
+                    Event::MouseMove {
                         x: xme.x as i16,
                         y: xme.y as i16,
                     }
                 }
 
                 // TODO : key event
-                x11::xlib::KeyPress => EventResult::Continue,
-                x11::xlib::KeyRelease => EventResult::Continue,
+                x11::xlib::KeyPress => Event::Continue,
+                x11::xlib::KeyRelease => Event::Continue,
 
-                _ => EventResult::Continue,
+                _ => Event::Continue,
             }
         }
     }

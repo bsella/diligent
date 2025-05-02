@@ -34,7 +34,7 @@ use diligent::{
 
 use diligent_tools::native_app;
 
-use diligent_samples::{
+use diligent_samples::sample_base::{
     sample::{get_adjusted_projection_matrix, get_surface_pretransform_matrix, SampleBase},
     sample_app::SampleApp,
 };

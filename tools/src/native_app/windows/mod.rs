@@ -1,4 +1,4 @@
-use super::{app::App, app_settings::AppSettings, events::EventHandler, events::EventResult};
+use super::{app::App, app_settings::AppSettings, events::Event, events::EventHandler};
 
 use diligent::{engine_factory::EngineCreateInfo, platforms::native_window::NativeWindow};
 
@@ -43,35 +43,35 @@ impl<'a> EventHandler for Win32EventHandler {
         }
     }
 
-    fn handle_event(&mut self, event: &Self::EventType) -> EventResult {
+    fn handle_event(&mut self, event: &Self::EventType) -> Event {
         match event.message {
-            WM_QUIT => EventResult::Quit,
-            WM_MOUSEMOVE => EventResult::MouseMove {
+            WM_QUIT => Event::Quit,
+            WM_MOUSEMOVE => Event::MouseMove {
                 x: (event.lParam.0 & 0xffff) as i16,
                 y: ((event.lParam.0 >> 16) & 0xffff) as i16,
             },
-            WM_LBUTTONDOWN => EventResult::MouseDown {
+            WM_LBUTTONDOWN => Event::MouseDown {
                 button: super::events::MouseButton::Left,
             },
-            WM_LBUTTONUP => EventResult::MouseUp {
+            WM_LBUTTONUP => Event::MouseUp {
                 button: super::events::MouseButton::Left,
             },
-            WM_RBUTTONDOWN => EventResult::MouseDown {
+            WM_RBUTTONDOWN => Event::MouseDown {
                 button: super::events::MouseButton::Right,
             },
-            WM_RBUTTONUP => EventResult::MouseUp {
+            WM_RBUTTONUP => Event::MouseUp {
                 button: super::events::MouseButton::Right,
             },
-            WM_MBUTTONDOWN => EventResult::MouseDown {
+            WM_MBUTTONDOWN => Event::MouseDown {
                 button: super::events::MouseButton::Middle,
             },
-            WM_MBUTTONUP => EventResult::MouseUp {
+            WM_MBUTTONUP => Event::MouseUp {
                 button: super::events::MouseButton::Middle,
             },
             WM_SIZE => {
                 self.resized = false;
 
-                EventResult::Resize {
+                Event::Resize {
                     width: (event.lParam.0 & 0xffff) as _,
                     height: ((event.lParam.0 >> 16) & 0xffff) as _,
                 }
@@ -80,11 +80,11 @@ impl<'a> EventHandler for Win32EventHandler {
                 unsafe {
                     SetWindowLongPtrA(event.hwnd, GWL_USERDATA, std::ptr::from_ref(self) as _);
                 }
-                EventResult::Continue
+                Event::Continue
             }
             _ => {
                 //println!("{}", event.message);
-                EventResult::Continue
+                Event::Continue
             }
         }
     }
