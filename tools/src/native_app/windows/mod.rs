@@ -194,6 +194,7 @@ impl<'a> EventHandler for Win32EventHandler {
                 VK_F12 => Event::KeyPress(Key::F12),
                 VK_ESCAPE => Event::KeyPress(Key::Esc),
                 VK_TAB => Event::KeyPress(Key::Tab),
+                VK_SPACE => Event::KeyPress(Key::Space),
                 _ => {
                     println!("{}", event.wParam.0);
                     Event::KeyPress(Key::Unknown)
@@ -304,6 +305,7 @@ impl<'a> EventHandler for Win32EventHandler {
                 VK_F12 => Event::KeyRelease(Key::F12),
                 VK_ESCAPE => Event::KeyRelease(Key::Esc),
                 VK_TAB => Event::KeyRelease(Key::Tab),
+                VK_SPACE => Event::KeyRelease(Key::Space),
                 _ => Event::KeyRelease(Key::Unknown),
             },
             _ => {

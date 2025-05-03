@@ -96,8 +96,8 @@ pub enum Key {
     F12,
 
     Esc,
-
     Tab,
+    Space,
 
     Unknown,
 }

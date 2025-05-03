@@ -163,7 +163,6 @@ impl<'a> EventHandler for XcbEventHandler<'a> {
                     xkb::keysyms::KEY_x => Event::KeyPress(Key::X),
                     xkb::keysyms::KEY_y => Event::KeyPress(Key::Y),
                     xkb::keysyms::KEY_z => Event::KeyPress(Key::Z),
-
                     xkb::keysyms::KEY_1 => Event::KeyPress(Key::_1),
                     xkb::keysyms::KEY_2 => Event::KeyPress(Key::_2),
                     xkb::keysyms::KEY_3 => Event::KeyPress(Key::_3),
@@ -176,7 +175,6 @@ impl<'a> EventHandler for XcbEventHandler<'a> {
                     xkb::keysyms::KEY_0 => Event::KeyPress(Key::_0),
                     xkb::keysyms::KEY_minus => Event::KeyPress(Key::Minus),
                     xkb::keysyms::KEY_equal => Event::KeyPress(Key::Equals),
-
                     xkb::keysyms::KEY_braceleft => Event::KeyPress(Key::LeftBrace),
                     xkb::keysyms::KEY_braceright => Event::KeyPress(Key::RightBrace),
                     xkb::keysyms::KEY_comma => Event::KeyPress(Key::Comma),
@@ -220,6 +218,7 @@ impl<'a> EventHandler for XcbEventHandler<'a> {
                     xkb::keysyms::KEY_F12 => Event::KeyPress(Key::F12),
                     xkb::keysyms::KEY_Escape => Event::KeyPress(Key::Esc),
                     xkb::keysyms::KEY_Tab => Event::KeyPress(Key::Tab),
+                    xkb::keysyms::KEY_space => Event::KeyPress(Key::Space),
 
                     _ => Event::KeyPress(Key::Unknown),
                 }
@@ -257,7 +256,6 @@ impl<'a> EventHandler for XcbEventHandler<'a> {
                     xkb::keysyms::KEY_x => Event::KeyRelease(Key::X),
                     xkb::keysyms::KEY_y => Event::KeyRelease(Key::Y),
                     xkb::keysyms::KEY_z => Event::KeyRelease(Key::Z),
-
                     xkb::keysyms::KEY_1 => Event::KeyRelease(Key::_1),
                     xkb::keysyms::KEY_2 => Event::KeyRelease(Key::_2),
                     xkb::keysyms::KEY_3 => Event::KeyRelease(Key::_3),
@@ -268,17 +266,14 @@ impl<'a> EventHandler for XcbEventHandler<'a> {
                     xkb::keysyms::KEY_8 => Event::KeyRelease(Key::_8),
                     xkb::keysyms::KEY_9 => Event::KeyRelease(Key::_9),
                     xkb::keysyms::KEY_0 => Event::KeyRelease(Key::_0),
-
                     xkb::keysyms::KEY_minus => Event::KeyRelease(Key::Minus),
                     xkb::keysyms::KEY_equal => Event::KeyRelease(Key::Equals),
-
                     xkb::keysyms::KEY_comma => Event::KeyRelease(Key::Comma),
                     xkb::keysyms::KEY_period => Event::KeyRelease(Key::Period),
                     xkb::keysyms::KEY_slash => Event::KeyRelease(Key::Slash),
                     xkb::keysyms::KEY_semicolon => Event::KeyRelease(Key::Semicolon),
                     xkb::keysyms::KEY_quotedbl => Event::KeyRelease(Key::Quote),
                     xkb::keysyms::KEY_asterisk => Event::KeyRelease(Key::Asterisk),
-
                     xkb::keysyms::KEY_backslash => Event::KeyRelease(Key::Backslash),
                     xkb::keysyms::KEY_Return => Event::KeyRelease(Key::Enter),
                     xkb::keysyms::KEY_BackSpace => Event::KeyRelease(Key::Backspace),
@@ -286,7 +281,6 @@ impl<'a> EventHandler for XcbEventHandler<'a> {
                     xkb::keysyms::KEY_downarrow => Event::KeyRelease(Key::Down),
                     xkb::keysyms::KEY_leftarrow => Event::KeyRelease(Key::Left),
                     xkb::keysyms::KEY_rightarrow => Event::KeyRelease(Key::Right),
-
                     xkb::keysyms::KEY_Control_L => Event::KeyRelease(Key::LeftCtrl),
                     xkb::keysyms::KEY_Alt_L => Event::KeyRelease(Key::LeftAlt),
                     xkb::keysyms::KEY_Shift_L => Event::KeyRelease(Key::LeftShift),
@@ -315,6 +309,7 @@ impl<'a> EventHandler for XcbEventHandler<'a> {
                     xkb::keysyms::KEY_F12 => Event::KeyRelease(Key::F12),
                     xkb::keysyms::KEY_Escape => Event::KeyRelease(Key::Esc),
                     xkb::keysyms::KEY_Tab => Event::KeyRelease(Key::Tab),
+                    xkb::keysyms::KEY_space => Event::KeyRelease(Key::Space),
 
                     _ => Event::KeyRelease(Key::Unknown),
                 }

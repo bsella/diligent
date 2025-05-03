@@ -195,6 +195,7 @@ impl EventHandler for X11EventHandler {
                     XK_F12 => Event::KeyPress(Key::F12),
                     XK_Escape => Event::KeyPress(Key::Esc),
                     XK_Tab => Event::KeyPress(Key::Tab),
+                    XK_space => Event::KeyPress(Key::Space),
 
                     _ => Event::KeyPress(Key::Unknown),
                 }
@@ -285,6 +286,7 @@ impl EventHandler for X11EventHandler {
                     XK_F12 => Event::KeyRelease(Key::F12),
                     XK_Escape => Event::KeyRelease(Key::Esc),
                     XK_Tab => Event::KeyRelease(Key::Tab),
+                    XK_space => Event::KeyRelease(Key::Space),
 
                     _ => Event::KeyRelease(Key::Unknown),
                 }
