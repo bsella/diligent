@@ -19,18 +19,23 @@ fn configure_diligent_libs(diligent_install_dir: &Path) {
 
     println!("cargo::rustc-link-lib=static=DiligentCore");
 
+    #[cfg(all(debug_assertions, target_os = "windows"))]
+    let library_suffix = "d";
+    #[cfg(any(not(debug_assertions), not(target_os = "windows")))]
+    let library_suffix = "";
+
     #[cfg(feature = "vulkan")]
     {
-        #[cfg(all(debug_assertions, target_os = "windows"))]
-        let library_suffix = "d";
-        #[cfg(any(not(debug_assertions), not(target_os = "windows")))]
-        let library_suffix = "";
-
         println!("cargo::rustc-link-lib=static=glslang{library_suffix}");
         println!("cargo::rustc-link-lib=static=SPIRV{library_suffix}");
         println!("cargo::rustc-link-lib=static=SPIRV-Tools");
         println!("cargo::rustc-link-lib=static=SPIRV-Tools-opt");
         println!("cargo::rustc-link-lib=static=spirv-cross-core{library_suffix}");
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        println!("cargo::rustc-link-lib=ucrt{library_suffix}");
     }
 
     #[cfg(target_os = "linux")]
