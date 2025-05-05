@@ -5,6 +5,7 @@ use static_assertions::const_assert;
 
 use crate::{
     buffer::{Buffer, BufferMapReadToken, BufferMapReadWriteToken, BufferMapWriteToken},
+    command_queue::CommandQueue,
     device_object::DeviceObject,
     fence::Fence,
     frame_buffer::Framebuffer,
@@ -907,22 +908,6 @@ impl DeviceContext {
         }
     }
 
-    pub fn device_wait_for_fence(&self, fence: &Fence, value: u64) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .DeviceWaitForFence
-                .unwrap_unchecked()(self.sys_ptr, fence.sys_ptr, value)
-        }
-    }
-
-    //pub fn begin_query(&self, query: &mut Query) {
-    //    todo!()
-    //}
-    //pub fn end_query(&self, query: &mut Query) {
-    //    todo!()
-    //}
-
     pub fn update_buffer<T>(
         &self,
         buffer: &mut Buffer,
@@ -1289,19 +1274,6 @@ impl DeviceContext {
         }
     }
 
-    //pub fn lock_command_queue(&self) -> CommandQueue
-    //{
-    //}
-
-    pub fn unlock_command_queue(&self) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .UnlockCommandQueue
-                .unwrap_unchecked()(self.sys_ptr)
-        }
-    }
-
     pub fn set_shading_rate(
         &self,
         base_rate: ShadingRate,
@@ -1321,18 +1293,6 @@ impl DeviceContext {
         }
     }
 
-    pub fn bind_sparse_resource_memory(
-        &self,
-        attribs: &diligent_sys::BindSparseResourceMemoryAttribs,
-    ) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .BindSparseResourceMemory
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(attribs))
-        }
-    }
-
     pub fn clear_stats(&self) {
         unsafe {
             (*self.virtual_functions)
@@ -1343,6 +1303,7 @@ impl DeviceContext {
     }
 
     pub fn get_stats(&self) -> &diligent_sys::DeviceContextStats {
+        // TODO
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
@@ -1411,6 +1372,35 @@ impl ImmediateDeviceContext {
                 .DeviceContext
                 .WaitForIdle
                 .unwrap_unchecked()(self.device_context.sys_ptr)
+        }
+    }
+
+    pub fn lock_command_queue(&self) -> Result<CommandQueue, ()> {
+        CommandQueue::new(self)
+    }
+
+    //pub fn begin_query(&self, query: &Query) {
+    //    todo!()
+    //}
+
+    pub fn bind_sparse_resource_memory(
+        &self,
+        attribs: &diligent_sys::BindSparseResourceMemoryAttribs,
+    ) {
+        unsafe {
+            (*self.virtual_functions)
+                .DeviceContext
+                .BindSparseResourceMemory
+                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(attribs))
+        }
+    }
+
+    pub fn device_wait_for_fence(&self, fence: &Fence, value: u64) {
+        unsafe {
+            (*self.virtual_functions)
+                .DeviceContext
+                .DeviceWaitForFence
+                .unwrap_unchecked()(self.sys_ptr, fence.sys_ptr, value)
         }
     }
 }
