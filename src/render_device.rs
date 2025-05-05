@@ -1,4 +1,4 @@
-use std::os::raw::c_void;
+use std::{ffi::CString, os::raw::c_void, str::FromStr};
 
 use static_assertions::const_assert;
 
@@ -16,6 +16,10 @@ use crate::{
     },
     pipeline_state::{
         GraphicsPipelineStateCreateInfo, GraphicsPipelineStateCreateInfoWrapper, PipelineState,
+    },
+    query::{
+        GetSysQueryType, Query, QueryDataBinaryOcclusion, QueryDataDuration, QueryDataOcclusion,
+        QueryDataPipelineStatistics, QueryDataTimestamp,
     },
     render_pass::{RenderPass, RenderPassDesc, RenderTargetAttachments},
     resource_mapping::ResourceMapping,
@@ -356,7 +360,72 @@ impl RenderDevice {
         }
     }
 
-    // pub fn create_query(&self);
+    fn create_query<QueryDataType: GetSysQueryType + Default>(
+        &self,
+        name: impl AsRef<str>,
+    ) -> Result<Query<QueryDataType>, ()> {
+        let name = CString::from_str(name.as_ref()).unwrap();
+        let query_desc = diligent_sys::QueryDesc {
+            _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
+                Name: name.as_ptr(),
+            },
+            Type: QueryDataType::QUERY_TYPE,
+        };
+
+        let mut query_ptr = std::ptr::null_mut();
+
+        unsafe {
+            (*self.virtual_functions)
+                .RenderDevice
+                .CreateQuery
+                .unwrap_unchecked()(
+                self.sys_ptr,
+                std::ptr::from_ref(&query_desc),
+                std::ptr::addr_of_mut!(query_ptr),
+            );
+        }
+
+        if query_ptr.is_null() {
+            Err(())
+        } else {
+            Ok(Query::<QueryDataType>::new(query_ptr))
+        }
+    }
+
+    pub fn create_query_occlusion(
+        &self,
+        name: impl AsRef<str>,
+    ) -> Result<Query<QueryDataOcclusion>, ()> {
+        self.create_query(name)
+    }
+
+    pub fn create_query_binary_occlusion(
+        &self,
+        name: impl AsRef<str>,
+    ) -> Result<Query<QueryDataBinaryOcclusion>, ()> {
+        self.create_query(name)
+    }
+
+    pub fn create_query_timestamp(
+        &self,
+        name: impl AsRef<str>,
+    ) -> Result<Query<QueryDataTimestamp>, ()> {
+        self.create_query(name)
+    }
+
+    pub fn create_query_pipeline_statistics(
+        &self,
+        name: impl AsRef<str>,
+    ) -> Result<Query<QueryDataPipelineStatistics>, ()> {
+        self.create_query(name)
+    }
+
+    pub fn create_query_duration(
+        &self,
+        name: impl AsRef<str>,
+    ) -> Result<Query<QueryDataDuration>, ()> {
+        self.create_query(name)
+    }
 
     pub fn create_render_pass(&self, desc: &RenderPassDesc) -> Result<RenderPass, ()> {
         let attachments = desc

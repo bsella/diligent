@@ -15,6 +15,7 @@ use crate::{
     },
     object::Object,
     pipeline_state::PipelineState,
+    query::{GetSysQueryType, Query},
     render_pass::RenderPass,
     shader_resource_binding::ShaderResourceBinding,
     texture::{
@@ -471,6 +472,35 @@ impl Drop for RenderPassToken<'_> {
                 .DeviceContext
                 .EndRenderPass
                 .unwrap_unchecked()(self.context.sys_ptr)
+        }
+    }
+}
+
+pub struct ScopedQueryToken<'a, QueryDataType: GetSysQueryType + Default> {
+    query: &'a Query<QueryDataType>,
+    context: &'a DeviceContext,
+}
+
+impl<'a, QueryDataType: GetSysQueryType + Default> ScopedQueryToken<'a, QueryDataType> {
+    pub fn new(context: &'a DeviceContext, query: &'a Query<QueryDataType>) -> Self {
+        unsafe {
+            (*context.virtual_functions)
+                .DeviceContext
+                .BeginQuery
+                .unwrap_unchecked()(context.sys_ptr, query.sys_ptr);
+        }
+
+        Self { query, context }
+    }
+}
+
+impl<'a, QueryDataType: GetSysQueryType + Default> Drop for ScopedQueryToken<'a, QueryDataType> {
+    fn drop(&mut self) {
+        unsafe {
+            (*self.context.virtual_functions)
+                .DeviceContext
+                .EndQuery
+                .unwrap_unchecked()(self.context.sys_ptr, self.query.sys_ptr);
         }
     }
 }
@@ -1379,9 +1409,12 @@ impl ImmediateDeviceContext {
         CommandQueue::new(self)
     }
 
-    //pub fn begin_query(&self, query: &Query) {
-    //    todo!()
-    //}
+    pub fn begin_query<'a, QueryDataType: GetSysQueryType + Default>(
+        &'a self,
+        query: &'a Query<QueryDataType>,
+    ) -> ScopedQueryToken<'a, QueryDataType> {
+        ScopedQueryToken::<QueryDataType>::new(&self, query)
+    }
 
     pub fn bind_sparse_resource_memory(
         &self,
