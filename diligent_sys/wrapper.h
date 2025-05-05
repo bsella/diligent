@@ -1,6 +1,6 @@
 #define DILIGENT_C_INTERFACE 1
 
-#include <Common/interface/GeometryPrimitives.h>
+#include <DiligentCore/Common/interface/GeometryPrimitives.h>
 
 extern unsigned int Diligent_GetGeometryPrimitiveVertexSize(GEOMETRY_PRIMITIVE_VERTEX_FLAGS VertexFlags);
 
@@ -8,39 +8,39 @@ extern void Diligent_CreateGeometryPrimitive(const GeometryPrimitiveAttributes* 
 
 #ifdef VULKAN_SUPPORTED
 
-#include <Graphics/GraphicsEngineVulkan/interface/EngineFactoryVk.h>
+#include <DiligentCore/Graphics/GraphicsEngineVulkan/interface/EngineFactoryVk.h>
 
 #ifdef VULKAN_INTEROP
 #   define VK_NO_PROTOTYPES
 #   include <vulkan/vulkan.h>
 
-#   include <Graphics/GraphicsEngineVulkan/interface/BottomLevelASVk.h>
-#   include <Graphics/GraphicsEngineVulkan/interface/BufferViewVk.h>
-#   include <Graphics/GraphicsEngineVulkan/interface/BufferVk.h>
-#   include <Graphics/GraphicsEngineVulkan/interface/CommandQueueVk.h>
-#   include <Graphics/GraphicsEngineVulkan/interface/DeviceContextVk.h>
-#   include <Graphics/GraphicsEngineVulkan/interface/DeviceMemoryVk.h>
-#   include <Graphics/GraphicsEngineVulkan/interface/FenceVk.h>
-#   include <Graphics/GraphicsEngineVulkan/interface/FramebufferVk.h>
-#   include <Graphics/GraphicsEngineVulkan/interface/PipelineStateCacheVk.h>
-#   include <Graphics/GraphicsEngineVulkan/interface/PipelineStateVk.h>
-#   include <Graphics/GraphicsEngineVulkan/interface/QueryVk.h>
-#   include <Graphics/GraphicsEngineVulkan/interface/RenderDeviceVk.h>
-#   include <Graphics/GraphicsEngineVulkan/interface/RenderPassVk.h>
-#   include <Graphics/GraphicsEngineVulkan/interface/SamplerVk.h>
-#   include <Graphics/GraphicsEngineVulkan/interface/ShaderBindingTableVk.h>
-#   include <Graphics/GraphicsEngineVulkan/interface/ShaderResourceBindingVk.h>
-#   include <Graphics/GraphicsEngineVulkan/interface/ShaderVk.h>
-#   include <Graphics/GraphicsEngineVulkan/interface/SwapChainVk.h>
-#   include <Graphics/GraphicsEngineVulkan/interface/TextureViewVk.h>
-#   include <Graphics/GraphicsEngineVulkan/interface/TextureVk.h>
-#   include <Graphics/GraphicsEngineVulkan/interface/TopLevelASVk.h>
+#   include <DiligentCore/Graphics/GraphicsEngineVulkan/interface/BottomLevelASVk.h>
+#   include <DiligentCore/Graphics/GraphicsEngineVulkan/interface/BufferViewVk.h>
+#   include <DiligentCore/Graphics/GraphicsEngineVulkan/interface/BufferVk.h>
+#   include <DiligentCore/Graphics/GraphicsEngineVulkan/interface/CommandQueueVk.h>
+#   include <DiligentCore/Graphics/GraphicsEngineVulkan/interface/DeviceContextVk.h>
+#   include <DiligentCore/Graphics/GraphicsEngineVulkan/interface/DeviceMemoryVk.h>
+#   include <DiligentCore/Graphics/GraphicsEngineVulkan/interface/FenceVk.h>
+#   include <DiligentCore/Graphics/GraphicsEngineVulkan/interface/FramebufferVk.h>
+#   include <DiligentCore/Graphics/GraphicsEngineVulkan/interface/PipelineStateCacheVk.h>
+#   include <DiligentCore/Graphics/GraphicsEngineVulkan/interface/PipelineStateVk.h>
+#   include <DiligentCore/Graphics/GraphicsEngineVulkan/interface/QueryVk.h>
+#   include <DiligentCore/Graphics/GraphicsEngineVulkan/interface/RenderDeviceVk.h>
+#   include <DiligentCore/Graphics/GraphicsEngineVulkan/interface/RenderPassVk.h>
+#   include <DiligentCore/Graphics/GraphicsEngineVulkan/interface/SamplerVk.h>
+#   include <DiligentCore/Graphics/GraphicsEngineVulkan/interface/ShaderBindingTableVk.h>
+#   include <DiligentCore/Graphics/GraphicsEngineVulkan/interface/ShaderResourceBindingVk.h>
+#   include <DiligentCore/Graphics/GraphicsEngineVulkan/interface/ShaderVk.h>
+#   include <DiligentCore/Graphics/GraphicsEngineVulkan/interface/SwapChainVk.h>
+#   include <DiligentCore/Graphics/GraphicsEngineVulkan/interface/TextureViewVk.h>
+#   include <DiligentCore/Graphics/GraphicsEngineVulkan/interface/TextureVk.h>
+#   include <DiligentCore/Graphics/GraphicsEngineVulkan/interface/TopLevelASVk.h>
 #endif
 
 #endif
 
 #ifdef OPENGL_SUPPORTED
-#include <Graphics/GraphicsEngineOpenGL/interface/EngineFactoryOpenGL.h>
+#include <DiligentCore/Graphics/GraphicsEngineOpenGL/interface/EngineFactoryOpenGL.h>
 #ifdef OPENGL_INTEROP
     // TODO
 #endif
@@ -48,14 +48,14 @@ extern void Diligent_CreateGeometryPrimitive(const GeometryPrimitiveAttributes* 
 #endif
 
 #ifdef D3D11_SUPPORTED
-#include <Graphics/GraphicsEngineD3D11/interface/EngineFactoryD3D11.h>
+#include <DiligentCore/Graphics/GraphicsEngineD3D11/interface/EngineFactoryD3D11.h>
 #ifdef D3D11_INTEROP
     // TODO
 #endif
 #endif
 
 #ifdef D3D12_SUPPORTED
-#include <Graphics/GraphicsEngineD3D12/interface/EngineFactoryD3D12.h>
+#include <DiligentCore/Graphics/GraphicsEngineD3D12/interface/EngineFactoryD3D12.h>
 #ifdef D3D12_INTEROP
     // TODO
 #endif

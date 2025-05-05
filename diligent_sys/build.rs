@@ -1,70 +1,19 @@
 use std::env;
+use std::ffi::{OsStr, OsString};
 use std::path::Path;
-use std::path::PathBuf;
 
 extern crate bindgen;
-extern crate cmake;
 
-#[cfg(all(debug_assertions, target_os = "windows"))]
-fn configure_cmake_windows_debug(cmake_config: &mut cmake::Config) {
-    //cmake_config.profile("Debug");
-    //cmake_config.static_crt(true);
-    cmake_config.no_default_flags(true);
-    cmake_config.cflag("/MDd /Zi /Ob0 /Od /RTC1");
-    cmake_config.cxxflag("/MDd /Zi /Ob0 /Od /RTC1");
-
-    println!("cargo::rustc-link-lib=ucrtd");
-}
-
-fn build_diligent_engine(build_path: &Path) -> PathBuf {
-    let diligent_tar = std::fs::File::open("DiligentCore.tar.gz").unwrap();
-    let decoder = flate2::read::GzDecoder::new(diligent_tar);
-    let mut archive = tar::Archive::new(decoder);
-
-    archive.unpack(build_path).unwrap();
-
-    let mut cmake_config = cmake::Config::new(build_path.join("DiligentCore"));
-
-    #[cfg(all(debug_assertions, target_os = "windows"))]
-    configure_cmake_windows_debug(&mut cmake_config);
-
-    cmake_config
-        .out_dir(build_path)
-        .define("OpenGL_GL_PREFERENCE", "GLVND")
-        .define("DILIGENT_BUILD_TESTS", "FALSE")
-        .define("DILIGENT_NO_ARCHIVER", "ON");
-
-    {
-        #[cfg(not(feature = "vulkan"))]
-        cmake_config.define("DILIGENT_NO_VULKAN", "ON");
-
-        #[cfg(not(feature = "opengl"))]
-        cmake_config.define("DILIGENT_NO_OPENGL", "ON");
-
-        #[cfg(not(feature = "d3d11"))]
-        cmake_config.define("DILIGENT_NO_DIRECT3D11", "ON");
-
-        #[cfg(not(feature = "d3d12"))]
-        cmake_config.define("DILIGENT_NO_DIRECT3D12", "ON");
-
-        #[cfg(not(feature = "metal"))]
-        cmake_config.define("DILIGENT_NO_METAL", "ON");
-
-        #[cfg(not(feature = "webgpu"))]
-        cmake_config.define("DILIGENT_NO_WEBGPU", "ON");
-    }
-
-    let dst = cmake_config.build();
-
+fn configure_diligent_libs(diligent_install_dir: &Path) {
     #[cfg(debug_assertions)]
     println!(
-        "cargo::rustc-link-search=native={}/lib/Debug",
-        dst.display()
+        "cargo::rustc-link-search={}/lib/DiligentCore/Debug",
+        diligent_install_dir.display(),
     );
 
     #[cfg(not(debug_assertions))]
     println!(
-        "cargo::rustc-link-search=native={}/lib/Release",
+        "cargo::rustc-link-search={}/lib/DiligentCore/Release",
         dst.display()
     );
 
@@ -86,12 +35,10 @@ fn build_diligent_engine(build_path: &Path) -> PathBuf {
 
     #[cfg(target_os = "linux")]
     println!("cargo:rustc-link-lib=dylib=stdc++");
-
-    dst
 }
 
 fn generate_diligent_c_bindings(
-    #[allow(unused_variables)] diligent_build_dir: &Path,
+    #[allow(unused_variables)] diligent_source_dir: &Path,
     diligent_install_dir: &Path,
     out_dir: &Path,
 ) {
@@ -122,7 +69,7 @@ fn generate_diligent_c_bindings(
         #[cfg(feature = "vulkan_interop")]
         let builder = builder.clang_arg("-DVULKAN_INTEROP=1").clang_arg(format!(
             "-I{}/DiligentCore/ThirdParty/Vulkan-Headers/include",
-            diligent_build_dir.display()
+            diligent_source_dir.display()
         ));
 
         builder
@@ -198,17 +145,31 @@ fn generate_diligent_c_bindings(
         );
 }
 
+fn get_env_os(env_name: impl AsRef<OsStr>) -> OsString {
+    env::var_os(&env_name).expect(
+        format!(
+            "Could not find \"{}\" environment variable. Please add it your cargo config",
+            env_name.as_ref().to_str().unwrap()
+        )
+        .as_str(),
+    )
+}
+
 fn main() {
     let out_dir = env::var_os("OUT_DIR").unwrap();
     let out_dir_path = Path::new(&out_dir);
 
-    let diligent_build_dir = out_dir_path.join("DiligentCore");
+    let diligent_source_dir = get_env_os("DILIGENT_SOURCE_DIR");
+    let diligent_install_dir = get_env_os("DILIGENT_INSTALL_DIR");
 
-    let diligent_install_path = build_diligent_engine(&diligent_build_dir);
+    let diligent_source_dir = Path::new(&diligent_source_dir);
+    let diligent_install_dir = Path::new(&diligent_install_dir);
+
+    configure_diligent_libs(Path::new(&diligent_install_dir));
 
     generate_diligent_c_bindings(
-        &diligent_build_dir,
-        &diligent_install_path,
+        &diligent_source_dir,
+        &diligent_install_dir,
         &out_dir_path.to_path_buf(),
     );
 }

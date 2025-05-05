@@ -1,6 +1,6 @@
 [package]
 name = "diligent_sys"
-version = "2.5.5" # TODO : update to the version from the C++ diligent repo
+version = "2.5.6"
 edition = "2024"
 description  = "Raw FFI bindings of the Diligent Engine"
 categories   = ["graphics", "rendering"]
@@ -10,9 +10,6 @@ exclude = ["/DiligentEngine"]
 
 [build-dependencies]
 bindgen = "0.71.1"
-cmake   = "0.1.54"
-flate2  = "1.1.0"
-tar     = "0.4.44"
 
 [features]
 vulkan = []
