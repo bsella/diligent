@@ -1,7 +1,6 @@
 use std::ops::Deref;
 
 use diligent::{
-    accessories::get_render_device_type_string,
     device_context::ResourceStateTransitionMode,
     engine_factory::EngineCreateInfo,
     graphics_types::{
@@ -586,7 +585,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
 
         let app_title = String::from(GenericSample::get_name())
             + " ("
-            + get_render_device_type_string(&self.app_settings.device_type, false)
+            + self.app_settings.device_type.to_string().as_str()
             + ", API "
             + format!("{API_VERSION}").as_str()
             + ")";

@@ -385,7 +385,7 @@ bitflags! {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub enum RenderDeviceType {
     #[cfg(feature = "d3d11")]
     D3D11,
@@ -401,6 +401,27 @@ pub enum RenderDeviceType {
     WEBGPU,
 }
 const_assert!(diligent_sys::RENDER_DEVICE_TYPE_COUNT == 8);
+
+impl ToString for RenderDeviceType {
+    fn to_string(&self) -> String {
+        match self {
+            #[cfg(feature = "d3d11")]
+            RenderDeviceType::D3D11 => "Direct3D11",
+            #[cfg(feature = "d3d12")]
+            RenderDeviceType::D3D12 => "Direct3D12",
+            #[cfg(feature = "opengl")]
+            RenderDeviceType::GL => "OpenGL",
+            //RenderDeviceType::GLES => "OpenGLES",
+            #[cfg(feature = "vulkan")]
+            RenderDeviceType::VULKAN => "Vulkan",
+            #[cfg(feature = "metal")]
+            RenderDeviceType::METAL => "Metal",
+            #[cfg(feature = "webgpu")]
+            RenderDeviceType::WEBGPU => "WebGPU",
+        }
+        .to_owned()
+    }
+}
 
 pub const fn get_prefered_device_type() -> RenderDeviceType {
     // Prefer metal, if it's supported. In other words, prefer Metal if you're on Mac.
@@ -1426,6 +1447,21 @@ pub enum QueuePriority {
 }
 const_assert!(diligent_sys::QUEUE_PRIORITY_LAST == 4);
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum ComponentType {
+    Undefined,
+    Float,
+    Snorm,
+    Unorm,
+    UnormSRGB,
+    Sint,
+    Uint,
+    Depth,
+    DepthStencil,
+    Compound,
+    Compressed,
+}
+
 #[derive(Clone, Copy)]
 #[allow(non_camel_case_types)]
 pub enum TextureFormat {
@@ -1778,6 +1814,686 @@ impl From<diligent_sys::TEXTURE_FORMAT> for TextureFormat {
     }
 }
 
+impl TextureFormat {
+    pub const fn component_size(self) -> u8 {
+        match self {
+            TextureFormat::RGBA32_TYPELESS
+            | TextureFormat::RGBA32_FLOAT
+            | TextureFormat::RGBA32_UINT
+            | TextureFormat::RGBA32_SINT
+            | TextureFormat::RGB32_TYPELESS
+            | TextureFormat::RGB32_FLOAT
+            | TextureFormat::RGB32_UINT
+            | TextureFormat::RGB32_SINT
+            | TextureFormat::RG32_TYPELESS
+            | TextureFormat::RG32_FLOAT
+            | TextureFormat::RG32_UINT
+            | TextureFormat::RG32_SINT
+            | TextureFormat::R32G8X24_TYPELESS
+            | TextureFormat::D32_FLOAT_S8X24_UINT
+            | TextureFormat::R32_FLOAT_X8X24_TYPELESS
+            | TextureFormat::X32_TYPELESS_G8X24_UINT
+            | TextureFormat::RGB10A2_TYPELESS
+            | TextureFormat::RGB10A2_UNORM
+            | TextureFormat::RGB10A2_UINT
+            | TextureFormat::R11G11B10_FLOAT
+            | TextureFormat::R32_TYPELESS
+            | TextureFormat::D32_FLOAT
+            | TextureFormat::R32_FLOAT
+            | TextureFormat::R32_UINT
+            | TextureFormat::R32_SINT
+            | TextureFormat::R24G8_TYPELESS
+            | TextureFormat::D24_UNORM_S8_UINT
+            | TextureFormat::R24_UNORM_X8_TYPELESS
+            | TextureFormat::X24_TYPELESS_G8_UINT
+            | TextureFormat::RGB9E5_SHAREDEXP
+            | TextureFormat::R10G10B10_XR_BIAS_A2_UNORM => 4,
+
+            TextureFormat::RGBA16_TYPELESS
+            | TextureFormat::RGBA16_FLOAT
+            | TextureFormat::RGBA16_UNORM
+            | TextureFormat::RGBA16_UINT
+            | TextureFormat::RGBA16_SNORM
+            | TextureFormat::RGBA16_SINT
+            | TextureFormat::RG16_TYPELESS
+            | TextureFormat::RG16_FLOAT
+            | TextureFormat::RG16_UNORM
+            | TextureFormat::RG16_UINT
+            | TextureFormat::RG16_SNORM
+            | TextureFormat::RG16_SINT
+            | TextureFormat::R16_TYPELESS
+            | TextureFormat::R16_FLOAT
+            | TextureFormat::D16_UNORM
+            | TextureFormat::R16_UNORM
+            | TextureFormat::R16_UINT
+            | TextureFormat::R16_SNORM
+            | TextureFormat::R16_SINT
+            | TextureFormat::B5G6R5_UNORM
+            | TextureFormat::B5G5R5A1_UNORM => 2,
+
+            TextureFormat::RGBA8_TYPELESS
+            | TextureFormat::RGBA8_UNORM
+            | TextureFormat::RGBA8_UNORM_SRGB
+            | TextureFormat::RGBA8_UINT
+            | TextureFormat::RGBA8_SNORM
+            | TextureFormat::RGBA8_SINT
+            | TextureFormat::RG8_TYPELESS
+            | TextureFormat::RG8_UNORM
+            | TextureFormat::RG8_UINT
+            | TextureFormat::RG8_SNORM
+            | TextureFormat::RG8_SINT
+            | TextureFormat::R8_TYPELESS
+            | TextureFormat::R8_UNORM
+            | TextureFormat::R8_UINT
+            | TextureFormat::R8_SNORM
+            | TextureFormat::R8_SINT
+            | TextureFormat::A8_UNORM
+            | TextureFormat::R1_UNORM
+            | TextureFormat::RG8_B8G8_UNORM
+            | TextureFormat::G8R8_G8B8_UNORM
+            | TextureFormat::BGRA8_UNORM
+            | TextureFormat::BGRX8_UNORM
+            | TextureFormat::BGRA8_TYPELESS
+            | TextureFormat::BGRA8_UNORM_SRGB
+            | TextureFormat::BGRX8_TYPELESS
+            | TextureFormat::BGRX8_UNORM_SRGB => 1,
+
+            TextureFormat::BC1_TYPELESS
+            | TextureFormat::BC1_UNORM
+            | TextureFormat::BC1_UNORM_SRGB
+            | TextureFormat::BC4_TYPELESS
+            | TextureFormat::BC4_UNORM
+            | TextureFormat::BC4_SNORM
+            | TextureFormat::ETC2_RGB8_UNORM
+            | TextureFormat::ETC2_RGB8_UNORM_SRGB
+            | TextureFormat::ETC2_RGB8A1_UNORM
+            | TextureFormat::ETC2_RGB8A1_UNORM_SRGB => 8,
+
+            TextureFormat::BC2_TYPELESS
+            | TextureFormat::BC2_UNORM
+            | TextureFormat::BC2_UNORM_SRGB
+            | TextureFormat::BC3_TYPELESS
+            | TextureFormat::BC3_UNORM
+            | TextureFormat::BC3_UNORM_SRGB
+            | TextureFormat::BC5_TYPELESS
+            | TextureFormat::BC5_UNORM
+            | TextureFormat::BC5_SNORM
+            | TextureFormat::BC6H_TYPELESS
+            | TextureFormat::BC6H_UF16
+            | TextureFormat::BC6H_SF16
+            | TextureFormat::BC7_TYPELESS
+            | TextureFormat::BC7_UNORM
+            | TextureFormat::BC7_UNORM_SRGB
+            | TextureFormat::ETC2_RGBA8_UNORM
+            | TextureFormat::ETC2_RGBA8_UNORM_SRGB => 16,
+        }
+    }
+
+    pub const fn num_components(self) -> u8 {
+        match self {
+            TextureFormat::RGBA32_TYPELESS
+            | TextureFormat::RGBA32_FLOAT
+            | TextureFormat::RGBA32_UINT
+            | TextureFormat::RGBA32_SINT
+            | TextureFormat::RGBA16_TYPELESS
+            | TextureFormat::RGBA16_FLOAT
+            | TextureFormat::RGBA16_UNORM
+            | TextureFormat::RGBA16_UINT
+            | TextureFormat::RGBA16_SNORM
+            | TextureFormat::RGBA16_SINT
+            | TextureFormat::RGBA8_TYPELESS
+            | TextureFormat::RGBA8_UNORM
+            | TextureFormat::RGBA8_UNORM_SRGB
+            | TextureFormat::RGBA8_UINT
+            | TextureFormat::RGBA8_SNORM
+            | TextureFormat::RGBA8_SINT
+            | TextureFormat::RG8_B8G8_UNORM
+            | TextureFormat::G8R8_G8B8_UNORM
+            | TextureFormat::BC2_TYPELESS
+            | TextureFormat::BC2_UNORM
+            | TextureFormat::BC2_UNORM_SRGB
+            | TextureFormat::BC3_TYPELESS
+            | TextureFormat::BC3_UNORM
+            | TextureFormat::BC3_UNORM_SRGB
+            | TextureFormat::BGRA8_UNORM
+            | TextureFormat::BGRX8_UNORM
+            | TextureFormat::BGRA8_TYPELESS
+            | TextureFormat::BGRA8_UNORM_SRGB
+            | TextureFormat::BGRX8_TYPELESS
+            | TextureFormat::BGRX8_UNORM_SRGB
+            | TextureFormat::BC7_TYPELESS
+            | TextureFormat::BC7_UNORM
+            | TextureFormat::BC7_UNORM_SRGB
+            | TextureFormat::ETC2_RGB8A1_UNORM
+            | TextureFormat::ETC2_RGB8A1_UNORM_SRGB
+            | TextureFormat::ETC2_RGBA8_UNORM
+            | TextureFormat::ETC2_RGBA8_UNORM_SRGB => 4,
+
+            TextureFormat::RGB32_TYPELESS
+            | TextureFormat::RGB32_FLOAT
+            | TextureFormat::RGB32_UINT
+            | TextureFormat::RGB32_SINT
+            | TextureFormat::BC1_TYPELESS
+            | TextureFormat::BC1_UNORM
+            | TextureFormat::BC1_UNORM_SRGB
+            | TextureFormat::BC6H_TYPELESS
+            | TextureFormat::BC6H_UF16
+            | TextureFormat::BC6H_SF16
+            | TextureFormat::ETC2_RGB8_UNORM
+            | TextureFormat::ETC2_RGB8_UNORM_SRGB => 3,
+
+            TextureFormat::RG32_TYPELESS
+            | TextureFormat::RG32_FLOAT
+            | TextureFormat::RG32_UINT
+            | TextureFormat::RG32_SINT
+            | TextureFormat::R32G8X24_TYPELESS
+            | TextureFormat::D32_FLOAT_S8X24_UINT
+            | TextureFormat::R32_FLOAT_X8X24_TYPELESS
+            | TextureFormat::X32_TYPELESS_G8X24_UINT
+            | TextureFormat::RG16_TYPELESS
+            | TextureFormat::RG16_FLOAT
+            | TextureFormat::RG16_UNORM
+            | TextureFormat::RG16_UINT
+            | TextureFormat::RG16_SNORM
+            | TextureFormat::RG16_SINT
+            | TextureFormat::RG8_TYPELESS
+            | TextureFormat::RG8_UNORM
+            | TextureFormat::RG8_UINT
+            | TextureFormat::RG8_SNORM
+            | TextureFormat::RG8_SINT
+            | TextureFormat::BC5_TYPELESS
+            | TextureFormat::BC5_UNORM
+            | TextureFormat::BC5_SNORM => 2,
+
+            TextureFormat::RGB10A2_TYPELESS
+            | TextureFormat::RGB10A2_UNORM
+            | TextureFormat::RGB10A2_UINT
+            | TextureFormat::R11G11B10_FLOAT
+            | TextureFormat::R32_TYPELESS
+            | TextureFormat::D32_FLOAT
+            | TextureFormat::R32_FLOAT
+            | TextureFormat::R32_UINT
+            | TextureFormat::R32_SINT
+            | TextureFormat::R24G8_TYPELESS
+            | TextureFormat::D24_UNORM_S8_UINT
+            | TextureFormat::R24_UNORM_X8_TYPELESS
+            | TextureFormat::X24_TYPELESS_G8_UINT
+            | TextureFormat::R16_TYPELESS
+            | TextureFormat::R16_FLOAT
+            | TextureFormat::D16_UNORM
+            | TextureFormat::R16_UNORM
+            | TextureFormat::R16_UINT
+            | TextureFormat::R16_SNORM
+            | TextureFormat::R16_SINT
+            | TextureFormat::R8_TYPELESS
+            | TextureFormat::R8_UNORM
+            | TextureFormat::R8_UINT
+            | TextureFormat::R8_SNORM
+            | TextureFormat::R8_SINT
+            | TextureFormat::A8_UNORM
+            | TextureFormat::R1_UNORM
+            | TextureFormat::RGB9E5_SHAREDEXP
+            | TextureFormat::BC4_TYPELESS
+            | TextureFormat::BC4_UNORM
+            | TextureFormat::BC4_SNORM
+            | TextureFormat::B5G6R5_UNORM
+            | TextureFormat::B5G5R5A1_UNORM
+            | TextureFormat::R10G10B10_XR_BIAS_A2_UNORM => 1,
+        }
+    }
+
+    pub const fn component_type(self) -> ComponentType {
+        match self {
+            TextureFormat::RGBA32_TYPELESS
+            | TextureFormat::RGB32_TYPELESS
+            | TextureFormat::RGBA16_TYPELESS
+            | TextureFormat::RG32_TYPELESS
+            | TextureFormat::RGBA8_TYPELESS
+            | TextureFormat::RG16_TYPELESS
+            | TextureFormat::R32_TYPELESS
+            | TextureFormat::RG8_TYPELESS
+            | TextureFormat::R16_TYPELESS
+            | TextureFormat::R8_TYPELESS
+            | TextureFormat::BGRA8_TYPELESS
+            | TextureFormat::BGRX8_TYPELESS => ComponentType::Undefined,
+
+            TextureFormat::RGBA32_FLOAT
+            | TextureFormat::RGB32_FLOAT
+            | TextureFormat::RGBA16_FLOAT
+            | TextureFormat::RG32_FLOAT
+            | TextureFormat::RG16_FLOAT
+            | TextureFormat::R32_FLOAT
+            | TextureFormat::R16_FLOAT => ComponentType::Float,
+
+            TextureFormat::RGBA32_UINT
+            | TextureFormat::RGB32_UINT
+            | TextureFormat::RGBA16_UINT
+            | TextureFormat::RG32_UINT
+            | TextureFormat::RGBA8_UINT
+            | TextureFormat::RG16_UINT
+            | TextureFormat::R32_UINT
+            | TextureFormat::RG8_UINT
+            | TextureFormat::R16_UINT
+            | TextureFormat::R8_UINT => ComponentType::Uint,
+
+            TextureFormat::RGBA32_SINT
+            | TextureFormat::RGB32_SINT
+            | TextureFormat::RGBA16_SINT
+            | TextureFormat::RG32_SINT
+            | TextureFormat::RGBA8_SINT
+            | TextureFormat::RG16_SINT
+            | TextureFormat::R32_SINT
+            | TextureFormat::RG8_SINT
+            | TextureFormat::R16_SINT
+            | TextureFormat::R8_SINT => ComponentType::Sint,
+
+            TextureFormat::RGBA16_UNORM
+            | TextureFormat::RGBA8_UNORM
+            | TextureFormat::RGBA8_UNORM_SRGB
+            | TextureFormat::RG16_UNORM
+            | TextureFormat::RG8_UNORM
+            | TextureFormat::R16_UNORM
+            | TextureFormat::R8_UNORM
+            | TextureFormat::A8_UNORM
+            | TextureFormat::R1_UNORM
+            | TextureFormat::RG8_B8G8_UNORM
+            | TextureFormat::G8R8_G8B8_UNORM
+            | TextureFormat::BGRA8_UNORM
+            | TextureFormat::BGRX8_UNORM
+            | TextureFormat::BGRA8_UNORM_SRGB
+            | TextureFormat::BGRX8_UNORM_SRGB => ComponentType::UnormSRGB,
+
+            TextureFormat::RGBA16_SNORM
+            | TextureFormat::RGBA8_SNORM
+            | TextureFormat::RG16_SNORM
+            | TextureFormat::RG8_SNORM
+            | TextureFormat::R16_SNORM
+            | TextureFormat::R8_SNORM => ComponentType::Snorm,
+
+            TextureFormat::R32G8X24_TYPELESS
+            | TextureFormat::D32_FLOAT_S8X24_UINT
+            | TextureFormat::R32_FLOAT_X8X24_TYPELESS
+            | TextureFormat::X32_TYPELESS_G8X24_UINT
+            | TextureFormat::R24G8_TYPELESS
+            | TextureFormat::D24_UNORM_S8_UINT
+            | TextureFormat::R24_UNORM_X8_TYPELESS
+            | TextureFormat::X24_TYPELESS_G8_UINT => ComponentType::DepthStencil,
+
+            TextureFormat::RGB10A2_TYPELESS
+            | TextureFormat::RGB10A2_UNORM
+            | TextureFormat::RGB10A2_UINT
+            | TextureFormat::R11G11B10_FLOAT
+            | TextureFormat::RGB9E5_SHAREDEXP
+            | TextureFormat::B5G6R5_UNORM
+            | TextureFormat::B5G5R5A1_UNORM
+            | TextureFormat::R10G10B10_XR_BIAS_A2_UNORM => ComponentType::Compound,
+
+            TextureFormat::D32_FLOAT | TextureFormat::D16_UNORM => ComponentType::Depth,
+
+            TextureFormat::BC1_TYPELESS
+            | TextureFormat::BC1_UNORM
+            | TextureFormat::BC1_UNORM_SRGB
+            | TextureFormat::BC2_TYPELESS
+            | TextureFormat::BC2_UNORM
+            | TextureFormat::BC2_UNORM_SRGB
+            | TextureFormat::BC3_TYPELESS
+            | TextureFormat::BC3_UNORM
+            | TextureFormat::BC3_UNORM_SRGB
+            | TextureFormat::BC4_TYPELESS
+            | TextureFormat::BC4_UNORM
+            | TextureFormat::BC4_SNORM
+            | TextureFormat::BC5_TYPELESS
+            | TextureFormat::BC5_UNORM
+            | TextureFormat::BC5_SNORM
+            | TextureFormat::BC6H_TYPELESS
+            | TextureFormat::BC6H_UF16
+            | TextureFormat::BC6H_SF16
+            | TextureFormat::BC7_TYPELESS
+            | TextureFormat::BC7_UNORM
+            | TextureFormat::BC7_UNORM_SRGB
+            | TextureFormat::ETC2_RGB8_UNORM
+            | TextureFormat::ETC2_RGB8_UNORM_SRGB
+            | TextureFormat::ETC2_RGB8A1_UNORM
+            | TextureFormat::ETC2_RGB8A1_UNORM_SRGB
+            | TextureFormat::ETC2_RGBA8_UNORM
+            | TextureFormat::ETC2_RGBA8_UNORM_SRGB => ComponentType::Compressed,
+        }
+    }
+
+    pub const fn is_typeless(self) -> bool {
+        match self {
+            TextureFormat::RGBA32_TYPELESS
+            | TextureFormat::RGB32_TYPELESS
+            | TextureFormat::RGBA16_TYPELESS
+            | TextureFormat::RG32_TYPELESS
+            | TextureFormat::R32G8X24_TYPELESS
+            | TextureFormat::RGB10A2_TYPELESS
+            | TextureFormat::RGBA8_TYPELESS
+            | TextureFormat::RG16_TYPELESS
+            | TextureFormat::R32_TYPELESS
+            | TextureFormat::R24G8_TYPELESS
+            | TextureFormat::RG8_TYPELESS
+            | TextureFormat::R16_TYPELESS
+            | TextureFormat::R8_TYPELESS
+            | TextureFormat::BC1_TYPELESS
+            | TextureFormat::BC2_TYPELESS
+            | TextureFormat::BC3_TYPELESS
+            | TextureFormat::BC4_TYPELESS
+            | TextureFormat::BC5_TYPELESS
+            | TextureFormat::BGRA8_TYPELESS
+            | TextureFormat::BGRX8_TYPELESS
+            | TextureFormat::BC6H_TYPELESS
+            | TextureFormat::BC7_TYPELESS => true,
+
+            TextureFormat::RGBA32_FLOAT
+            | TextureFormat::RGBA32_UINT
+            | TextureFormat::RGBA32_SINT
+            | TextureFormat::RGB32_FLOAT
+            | TextureFormat::RGB32_UINT
+            | TextureFormat::RGB32_SINT
+            | TextureFormat::RGBA16_FLOAT
+            | TextureFormat::RGBA16_UNORM
+            | TextureFormat::RGBA16_UINT
+            | TextureFormat::RGBA16_SNORM
+            | TextureFormat::RGBA16_SINT
+            | TextureFormat::RG32_FLOAT
+            | TextureFormat::RG32_UINT
+            | TextureFormat::RG32_SINT
+            | TextureFormat::D32_FLOAT_S8X24_UINT
+            | TextureFormat::R32_FLOAT_X8X24_TYPELESS
+            | TextureFormat::X32_TYPELESS_G8X24_UINT
+            | TextureFormat::RGB10A2_UNORM
+            | TextureFormat::RGB10A2_UINT
+            | TextureFormat::R11G11B10_FLOAT
+            | TextureFormat::RGBA8_UNORM
+            | TextureFormat::RGBA8_UNORM_SRGB
+            | TextureFormat::RGBA8_UINT
+            | TextureFormat::RGBA8_SNORM
+            | TextureFormat::RGBA8_SINT
+            | TextureFormat::RG16_FLOAT
+            | TextureFormat::RG16_UNORM
+            | TextureFormat::RG16_UINT
+            | TextureFormat::RG16_SNORM
+            | TextureFormat::RG16_SINT
+            | TextureFormat::D32_FLOAT
+            | TextureFormat::R32_FLOAT
+            | TextureFormat::R32_UINT
+            | TextureFormat::R32_SINT
+            | TextureFormat::D24_UNORM_S8_UINT
+            | TextureFormat::R24_UNORM_X8_TYPELESS
+            | TextureFormat::X24_TYPELESS_G8_UINT
+            | TextureFormat::RG8_UNORM
+            | TextureFormat::RG8_UINT
+            | TextureFormat::RG8_SNORM
+            | TextureFormat::RG8_SINT
+            | TextureFormat::R16_FLOAT
+            | TextureFormat::D16_UNORM
+            | TextureFormat::R16_UNORM
+            | TextureFormat::R16_UINT
+            | TextureFormat::R16_SNORM
+            | TextureFormat::R16_SINT
+            | TextureFormat::R8_UNORM
+            | TextureFormat::R8_UINT
+            | TextureFormat::R8_SNORM
+            | TextureFormat::R8_SINT
+            | TextureFormat::A8_UNORM
+            | TextureFormat::R1_UNORM
+            | TextureFormat::RGB9E5_SHAREDEXP
+            | TextureFormat::RG8_B8G8_UNORM
+            | TextureFormat::G8R8_G8B8_UNORM
+            | TextureFormat::BC1_UNORM
+            | TextureFormat::BC1_UNORM_SRGB
+            | TextureFormat::BC2_UNORM
+            | TextureFormat::BC2_UNORM_SRGB
+            | TextureFormat::BC3_UNORM
+            | TextureFormat::BC3_UNORM_SRGB
+            | TextureFormat::BC4_UNORM
+            | TextureFormat::BC4_SNORM
+            | TextureFormat::BC5_UNORM
+            | TextureFormat::BC5_SNORM
+            | TextureFormat::B5G6R5_UNORM
+            | TextureFormat::B5G5R5A1_UNORM
+            | TextureFormat::BGRA8_UNORM
+            | TextureFormat::BGRX8_UNORM
+            | TextureFormat::R10G10B10_XR_BIAS_A2_UNORM
+            | TextureFormat::BGRA8_UNORM_SRGB
+            | TextureFormat::BGRX8_UNORM_SRGB
+            | TextureFormat::BC6H_UF16
+            | TextureFormat::BC6H_SF16
+            | TextureFormat::BC7_UNORM
+            | TextureFormat::BC7_UNORM_SRGB
+            | TextureFormat::ETC2_RGB8_UNORM
+            | TextureFormat::ETC2_RGB8_UNORM_SRGB
+            | TextureFormat::ETC2_RGB8A1_UNORM
+            | TextureFormat::ETC2_RGB8A1_UNORM_SRGB
+            | TextureFormat::ETC2_RGBA8_UNORM
+            | TextureFormat::ETC2_RGBA8_UNORM_SRGB => false,
+        }
+    }
+
+    pub const fn block_width(self) -> u8 {
+        match self {
+            TextureFormat::RGBA32_TYPELESS
+            | TextureFormat::RGBA32_FLOAT
+            | TextureFormat::RGBA32_UINT
+            | TextureFormat::RGBA32_SINT
+            | TextureFormat::RGB32_TYPELESS
+            | TextureFormat::RGB32_FLOAT
+            | TextureFormat::RGB32_UINT
+            | TextureFormat::RGB32_SINT
+            | TextureFormat::RGBA16_TYPELESS
+            | TextureFormat::RGBA16_FLOAT
+            | TextureFormat::RGBA16_UNORM
+            | TextureFormat::RGBA16_UINT
+            | TextureFormat::RGBA16_SNORM
+            | TextureFormat::RGBA16_SINT
+            | TextureFormat::RG32_TYPELESS
+            | TextureFormat::RG32_FLOAT
+            | TextureFormat::RG32_UINT
+            | TextureFormat::RG32_SINT
+            | TextureFormat::R32G8X24_TYPELESS
+            | TextureFormat::D32_FLOAT_S8X24_UINT
+            | TextureFormat::R32_FLOAT_X8X24_TYPELESS
+            | TextureFormat::X32_TYPELESS_G8X24_UINT
+            | TextureFormat::RGB10A2_TYPELESS
+            | TextureFormat::RGB10A2_UNORM
+            | TextureFormat::RGB10A2_UINT
+            | TextureFormat::R11G11B10_FLOAT
+            | TextureFormat::RGBA8_TYPELESS
+            | TextureFormat::RGBA8_UNORM
+            | TextureFormat::RGBA8_UNORM_SRGB
+            | TextureFormat::RGBA8_UINT
+            | TextureFormat::RGBA8_SNORM
+            | TextureFormat::RGBA8_SINT
+            | TextureFormat::RG16_TYPELESS
+            | TextureFormat::RG16_FLOAT
+            | TextureFormat::RG16_UNORM
+            | TextureFormat::RG16_UINT
+            | TextureFormat::RG16_SNORM
+            | TextureFormat::RG16_SINT
+            | TextureFormat::R32_TYPELESS
+            | TextureFormat::D32_FLOAT
+            | TextureFormat::R32_FLOAT
+            | TextureFormat::R32_UINT
+            | TextureFormat::R32_SINT
+            | TextureFormat::R24G8_TYPELESS
+            | TextureFormat::D24_UNORM_S8_UINT
+            | TextureFormat::R24_UNORM_X8_TYPELESS
+            | TextureFormat::X24_TYPELESS_G8_UINT
+            | TextureFormat::RG8_TYPELESS
+            | TextureFormat::RG8_UNORM
+            | TextureFormat::RG8_UINT
+            | TextureFormat::RG8_SNORM
+            | TextureFormat::RG8_SINT
+            | TextureFormat::R16_TYPELESS
+            | TextureFormat::R16_FLOAT
+            | TextureFormat::D16_UNORM
+            | TextureFormat::R16_UNORM
+            | TextureFormat::R16_UINT
+            | TextureFormat::R16_SNORM
+            | TextureFormat::R16_SINT
+            | TextureFormat::R8_TYPELESS
+            | TextureFormat::R8_UNORM
+            | TextureFormat::R8_UINT
+            | TextureFormat::R8_SNORM
+            | TextureFormat::R8_SINT
+            | TextureFormat::A8_UNORM
+            | TextureFormat::R1_UNORM
+            | TextureFormat::RGB9E5_SHAREDEXP
+            | TextureFormat::RG8_B8G8_UNORM
+            | TextureFormat::G8R8_G8B8_UNORM
+            | TextureFormat::B5G6R5_UNORM
+            | TextureFormat::B5G5R5A1_UNORM
+            | TextureFormat::BGRA8_UNORM
+            | TextureFormat::BGRX8_UNORM
+            | TextureFormat::R10G10B10_XR_BIAS_A2_UNORM
+            | TextureFormat::BGRA8_TYPELESS
+            | TextureFormat::BGRA8_UNORM_SRGB
+            | TextureFormat::BGRX8_TYPELESS
+            | TextureFormat::BGRX8_UNORM_SRGB => 1,
+
+            TextureFormat::BC1_TYPELESS
+            | TextureFormat::BC1_UNORM
+            | TextureFormat::BC1_UNORM_SRGB
+            | TextureFormat::BC2_TYPELESS
+            | TextureFormat::BC2_UNORM
+            | TextureFormat::BC2_UNORM_SRGB
+            | TextureFormat::BC3_TYPELESS
+            | TextureFormat::BC3_UNORM
+            | TextureFormat::BC3_UNORM_SRGB
+            | TextureFormat::BC4_TYPELESS
+            | TextureFormat::BC4_UNORM
+            | TextureFormat::BC4_SNORM
+            | TextureFormat::BC5_TYPELESS
+            | TextureFormat::BC5_UNORM
+            | TextureFormat::BC5_SNORM
+            | TextureFormat::BC6H_TYPELESS
+            | TextureFormat::BC6H_UF16
+            | TextureFormat::BC6H_SF16
+            | TextureFormat::BC7_TYPELESS
+            | TextureFormat::BC7_UNORM
+            | TextureFormat::BC7_UNORM_SRGB
+            | TextureFormat::ETC2_RGB8_UNORM
+            | TextureFormat::ETC2_RGB8_UNORM_SRGB
+            | TextureFormat::ETC2_RGB8A1_UNORM
+            | TextureFormat::ETC2_RGB8A1_UNORM_SRGB
+            | TextureFormat::ETC2_RGBA8_UNORM
+            | TextureFormat::ETC2_RGBA8_UNORM_SRGB => 4,
+        }
+    }
+
+    pub const fn block_height(self) -> u8 {
+        match self {
+            TextureFormat::RGBA32_TYPELESS
+            | TextureFormat::RGBA32_FLOAT
+            | TextureFormat::RGBA32_UINT
+            | TextureFormat::RGBA32_SINT
+            | TextureFormat::RGB32_TYPELESS
+            | TextureFormat::RGB32_FLOAT
+            | TextureFormat::RGB32_UINT
+            | TextureFormat::RGB32_SINT
+            | TextureFormat::RGBA16_TYPELESS
+            | TextureFormat::RGBA16_FLOAT
+            | TextureFormat::RGBA16_UNORM
+            | TextureFormat::RGBA16_UINT
+            | TextureFormat::RGBA16_SNORM
+            | TextureFormat::RGBA16_SINT
+            | TextureFormat::RG32_TYPELESS
+            | TextureFormat::RG32_FLOAT
+            | TextureFormat::RG32_UINT
+            | TextureFormat::RG32_SINT
+            | TextureFormat::R32G8X24_TYPELESS
+            | TextureFormat::D32_FLOAT_S8X24_UINT
+            | TextureFormat::R32_FLOAT_X8X24_TYPELESS
+            | TextureFormat::X32_TYPELESS_G8X24_UINT
+            | TextureFormat::RGB10A2_TYPELESS
+            | TextureFormat::RGB10A2_UNORM
+            | TextureFormat::RGB10A2_UINT
+            | TextureFormat::R11G11B10_FLOAT
+            | TextureFormat::RGBA8_TYPELESS
+            | TextureFormat::RGBA8_UNORM
+            | TextureFormat::RGBA8_UNORM_SRGB
+            | TextureFormat::RGBA8_UINT
+            | TextureFormat::RGBA8_SNORM
+            | TextureFormat::RGBA8_SINT
+            | TextureFormat::RG16_TYPELESS
+            | TextureFormat::RG16_FLOAT
+            | TextureFormat::RG16_UNORM
+            | TextureFormat::RG16_UINT
+            | TextureFormat::RG16_SNORM
+            | TextureFormat::RG16_SINT
+            | TextureFormat::R32_TYPELESS
+            | TextureFormat::D32_FLOAT
+            | TextureFormat::R32_FLOAT
+            | TextureFormat::R32_UINT
+            | TextureFormat::R32_SINT
+            | TextureFormat::R24G8_TYPELESS
+            | TextureFormat::D24_UNORM_S8_UINT
+            | TextureFormat::R24_UNORM_X8_TYPELESS
+            | TextureFormat::X24_TYPELESS_G8_UINT
+            | TextureFormat::RG8_TYPELESS
+            | TextureFormat::RG8_UNORM
+            | TextureFormat::RG8_UINT
+            | TextureFormat::RG8_SNORM
+            | TextureFormat::RG8_SINT
+            | TextureFormat::R16_TYPELESS
+            | TextureFormat::R16_FLOAT
+            | TextureFormat::D16_UNORM
+            | TextureFormat::R16_UNORM
+            | TextureFormat::R16_UINT
+            | TextureFormat::R16_SNORM
+            | TextureFormat::R16_SINT
+            | TextureFormat::R8_TYPELESS
+            | TextureFormat::R8_UNORM
+            | TextureFormat::R8_UINT
+            | TextureFormat::R8_SNORM
+            | TextureFormat::R8_SINT
+            | TextureFormat::A8_UNORM
+            | TextureFormat::R1_UNORM
+            | TextureFormat::RGB9E5_SHAREDEXP
+            | TextureFormat::RG8_B8G8_UNORM
+            | TextureFormat::G8R8_G8B8_UNORM
+            | TextureFormat::B5G6R5_UNORM
+            | TextureFormat::B5G5R5A1_UNORM
+            | TextureFormat::BGRA8_UNORM
+            | TextureFormat::BGRX8_UNORM
+            | TextureFormat::R10G10B10_XR_BIAS_A2_UNORM
+            | TextureFormat::BGRA8_TYPELESS
+            | TextureFormat::BGRA8_UNORM_SRGB
+            | TextureFormat::BGRX8_TYPELESS
+            | TextureFormat::BGRX8_UNORM_SRGB => 1,
+
+            TextureFormat::BC1_TYPELESS
+            | TextureFormat::BC1_UNORM
+            | TextureFormat::BC1_UNORM_SRGB
+            | TextureFormat::BC2_TYPELESS
+            | TextureFormat::BC2_UNORM
+            | TextureFormat::BC2_UNORM_SRGB
+            | TextureFormat::BC3_TYPELESS
+            | TextureFormat::BC3_UNORM
+            | TextureFormat::BC3_UNORM_SRGB
+            | TextureFormat::BC4_TYPELESS
+            | TextureFormat::BC4_UNORM
+            | TextureFormat::BC4_SNORM
+            | TextureFormat::BC5_TYPELESS
+            | TextureFormat::BC5_UNORM
+            | TextureFormat::BC5_SNORM
+            | TextureFormat::BC6H_TYPELESS
+            | TextureFormat::BC6H_UF16
+            | TextureFormat::BC6H_SF16
+            | TextureFormat::BC7_TYPELESS
+            | TextureFormat::BC7_UNORM
+            | TextureFormat::BC7_UNORM_SRGB
+            | TextureFormat::ETC2_RGB8_UNORM
+            | TextureFormat::ETC2_RGB8_UNORM_SRGB
+            | TextureFormat::ETC2_RGB8A1_UNORM
+            | TextureFormat::ETC2_RGB8A1_UNORM_SRGB
+            | TextureFormat::ETC2_RGBA8_UNORM
+            | TextureFormat::ETC2_RGBA8_UNORM_SRGB => 4,
+        }
+    }
+}
+
 #[derive(Clone, Copy)]
 pub enum ScalingMode {
     Unspecified,
@@ -1973,8 +2689,8 @@ bitflags! {
         const ShaderWrite                = diligent_sys::ACCESS_FLAG_SHADER_WRITE as diligent_sys::ACCESS_FLAGS;
         const RenderTargetRead           = diligent_sys::ACCESS_FLAG_RENDER_TARGET_READ as diligent_sys::ACCESS_FLAGS;
         const RenderTargetWrite          = diligent_sys::ACCESS_FLAG_RENDER_TARGET_WRITE as diligent_sys::ACCESS_FLAGS;
-        const Depth_stencilRead          = diligent_sys::ACCESS_FLAG_DEPTH_STENCIL_READ as diligent_sys::ACCESS_FLAGS;
-        const Depth_stencilWrite         = diligent_sys::ACCESS_FLAG_DEPTH_STENCIL_WRITE as diligent_sys::ACCESS_FLAGS;
+        const DepthStencilRead           = diligent_sys::ACCESS_FLAG_DEPTH_STENCIL_READ as diligent_sys::ACCESS_FLAGS;
+        const DepthStencilWrite          = diligent_sys::ACCESS_FLAG_DEPTH_STENCIL_WRITE as diligent_sys::ACCESS_FLAGS;
         const CopySrc                    = diligent_sys::ACCESS_FLAG_COPY_SRC as diligent_sys::ACCESS_FLAGS;
         const CopyDst                    = diligent_sys::ACCESS_FLAG_COPY_DST as diligent_sys::ACCESS_FLAGS;
         const HostRead                   = diligent_sys::ACCESS_FLAG_HOST_READ as diligent_sys::ACCESS_FLAGS;

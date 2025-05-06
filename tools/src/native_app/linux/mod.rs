@@ -1,4 +1,4 @@
-use diligent::{accessories::get_render_device_type_string, graphics_types::RenderDeviceType};
+use diligent::graphics_types::RenderDeviceType;
 use std::io::{Error, ErrorKind};
 
 use super::{app::App, app_settings::AppSettings};
@@ -24,7 +24,7 @@ where
             ErrorKind::Other,
             format!(
                 "Render device type {} is not available on linux",
-                get_render_device_type_string(device_type, false)
+                device_type.to_string()
             ),
         )),
     }

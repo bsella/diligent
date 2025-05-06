@@ -4,6 +4,7 @@ use std::{ffi::CString, ops::Deref};
 use bitflags::bitflags;
 use static_assertions::const_assert;
 
+use crate::pipeline_state_cache::PipelineStateCache;
 use crate::{
     device_object::DeviceObject,
     graphics_types::{PrimitiveTopology, ShaderType, ShaderTypes, TextureFormat},
@@ -401,12 +402,11 @@ impl<const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE> From<&PipelineStateDesc<'
     }
 }
 
-struct PipelineStateCreateInfo<'a, const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE> {
+pub struct PipelineStateCreateInfo<'a, const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE> {
     pso_desc: PipelineStateDesc<'a, PIPELINE_TYPE>,
     flags: PipelineStateObjectCreateFlags,
     resource_signatures: Vec<&'a PipelineResourceSignature>,
-    //TODO
-    //pub pPSOCache: *mut IPipelineStateCache,
+    pso_cache: Option<PipelineStateCache>,
 }
 
 pub(crate) struct PipelineStateCreateInfoWrapper {
@@ -443,7 +443,11 @@ impl<const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE>
             } else {
                 resource_signatures.as_mut_ptr()
             },
-            pPSOCache: std::ptr::null_mut(), // TODO
+            pPSOCache: if let Some(pso_cache) = &value.pso_cache {
+                pso_cache.sys_ptr
+            } else {
+                std::ptr::null_mut()
+            },
             pInternalData: std::ptr::null_mut(),
         };
 
@@ -463,6 +467,7 @@ impl<'a, const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE>
             pso_desc: PipelineStateDesc::new(name),
             flags: PipelineStateObjectCreateFlags::None,
             resource_signatures: Vec::new(),
+            pso_cache: None,
         }
     }
 }
@@ -1128,6 +1133,11 @@ impl<'a> GraphicsPipelineStateCreateInfo<'a> {
             .pso_desc
             .resource_layout
             .immutable_samplers = sampler_descs.into();
+        self
+    }
+
+    pub fn set_pso_cache(mut self, pso_cache: PipelineStateCache) -> Self {
+        self.pipeline_state_create_info.pso_cache = Some(pso_cache);
         self
     }
 

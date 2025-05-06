@@ -1,5 +1,4 @@
 use diligent::{
-    accessories::linear_to_srgba,
     buffer::{Buffer, BufferDesc, BufferMode},
     device_context::{
         DeferredDeviceContext, DrawFlags, DrawIndexedAttribs, ImmediateDeviceContext,
@@ -11,7 +10,7 @@ use diligent::{
         BindFlags, CpuAccessFlags, MapFlags, SetShaderResourceFlags, ShaderType, ShaderTypes,
         TextureFormat, Usage, ValueType,
     },
-    graphics_utilities::create_uniform_buffer,
+    graphics_utilities::{create_uniform_buffer, linear_to_srgba},
     input_layout::{InputElementFrequency, LayoutElement},
     pipeline_state::PipelineState,
     render_device::RenderDevice,

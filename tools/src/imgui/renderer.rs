@@ -5,9 +5,9 @@ use diligent::{
         SetVertexBufferFlags, Viewport,
     },
     graphics_types::{
-        BindFlags, CpuAccessFlags, DrawCommandCapFlags, GraphicsAdapterInfo, MapFlags,
-        PrimitiveTopology, RenderDeviceType, SetShaderResourceFlags, ShaderType, ShaderTypes,
-        TextureAddressMode, TextureFormat, Usage, ValueType,
+        BindFlags, ComponentType, CpuAccessFlags, DrawCommandCapFlags, GraphicsAdapterInfo,
+        MapFlags, PrimitiveTopology, RenderDeviceType, SetShaderResourceFlags, ShaderType,
+        ShaderTypes, TextureAddressMode, TextureFormat, Usage, ValueType,
     },
     input_layout::LayoutElement,
     pipeline_resource_signature::ImmutableSamplerDesc,
@@ -463,13 +463,8 @@ impl ImguiRenderer {
     pub fn new(create_info: ImguiRendererCreateInfo) -> Self {
         let mut imgui_context = imgui::Context::create();
 
-        let srgb_framebuffer = {
-            // TODO
-            true
-            //let srgb_framebuffer = GetTextureFormatAttribs(create_info.back_buffer_format)
-            //    .ComponentType
-            //    == diligent_sys::COMPONENT_TYPE_UNORM_SRGB;
-        };
+        let srgb_framebuffer =
+            create_info.back_buffer_format.component_type() == ComponentType::UnormSRGB;
 
         let manual_srgb = (create_info.color_conversion == ColorConversionMode::Auto
             && srgb_framebuffer)
@@ -503,7 +498,7 @@ impl ImguiRenderer {
                 RenderDeviceType::VULKAN => ShaderSource::ByteCode(unsafe {
                     std::slice::from_raw_parts(
                         VERTEX_SHADER_SPIRV.as_ptr() as *const u8,
-                        VERTEX_SHADER_SPIRV.len() * 4,
+                        VERTEX_SHADER_SPIRV.len() * std::mem::size_of::<u32>(),
                     )
                 }),
                 #[cfg(feature = "d3d11")]
@@ -535,14 +530,14 @@ impl ImguiRenderer {
                         ShaderSource::ByteCode(unsafe {
                             std::slice::from_raw_parts(
                                 PIXEL_SHADER_GAMMA_SPIRV.as_ptr() as *const u8,
-                                PIXEL_SHADER_GAMMA_SPIRV.len() * 4,
+                                PIXEL_SHADER_GAMMA_SPIRV.len() * std::mem::size_of::<u32>(),
                             )
                         })
                     } else {
                         ShaderSource::ByteCode(unsafe {
                             std::slice::from_raw_parts(
                                 PIXEL_SHADER_SPIRV.as_ptr() as *const u8,
-                                PIXEL_SHADER_SPIRV.len() * 4,
+                                PIXEL_SHADER_SPIRV.len() * std::mem::size_of::<u32>(),
                             )
                         })
                     }

@@ -1,7 +1,6 @@
 use std::path::Path;
 
 use diligent::{
-    accessories::linear_to_srgba,
     buffer::{Buffer, BufferDesc},
     device_context::{
         DeferredDeviceContext, DrawFlags, DrawIndexedAttribs, ImmediateDeviceContext,
@@ -12,6 +11,7 @@ use diligent::{
         BindFlags, CpuAccessFlags, FilterType, MapFlags, PrimitiveTopology, SetShaderResourceFlags,
         ShaderType, ShaderTypes, TextureAddressMode, TextureFormat, Usage, ValueType,
     },
+    graphics_utilities::linear_to_srgba,
     input_layout::LayoutElement,
     pipeline_resource_signature::ImmutableSamplerDesc,
     pipeline_state::{
