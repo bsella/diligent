@@ -5,7 +5,7 @@ use static_assertions::const_assert;
 use crate::{
     buffer::{Buffer, BufferDesc},
     data_blob::DataBlob,
-    device_context::DeviceContext,
+    device_context::{DeferredDeviceContext, DeviceContext},
     fence::{Fence, FenceDesc},
     frame_buffer::{Framebuffer, FramebufferDesc},
     graphics_types::{GraphicsAdapterInfo, RenderDeviceType, TextureFormat, Version},
@@ -17,6 +17,7 @@ use crate::{
     pipeline_state::{
         GraphicsPipelineStateCreateInfo, GraphicsPipelineStateCreateInfoWrapper, PipelineState,
     },
+    pipeline_state_cache::{PipelineStateCache, PipelineStateCacheCreateInfo},
     query::{
         GetSysQueryType, Query, QueryDataBinaryOcclusion, QueryDataDuration, QueryDataOcclusion,
         QueryDataPipelineStatistics, QueryDataTimestamp,
@@ -608,9 +609,9 @@ impl RenderDevice {
         }
     }
 
-    // pub fn create_blas(&self);
-    // pub fn create_tlas(&self);
-    // pub fn create_sbt(&self);
+    //TODO pub fn create_blas(&self);
+    //TODO pub fn create_tlas(&self);
+    //TODO pub fn create_sbt(&self);
 
     pub fn create_pipeline_resource_signature(
         &self,
@@ -636,7 +637,47 @@ impl RenderDevice {
         }
     }
 
-    // pub fn create_device_memory();
+    //TODO pub fn create_device_memory();
+
+    pub fn create_pipeline_state_cache<T>(
+        &self,
+        create_info: &PipelineStateCacheCreateInfo<T>,
+    ) -> Result<PipelineStateCache, ()> {
+        let create_info = create_info.into();
+        let mut pso_cache_ptr = std::ptr::null_mut();
+        unsafe {
+            (*self.virtual_functions)
+                .RenderDevice
+                .CreatePipelineStateCache
+                .unwrap_unchecked()(
+                self.sys_ptr,
+                std::ptr::from_ref(&create_info),
+                std::ptr::addr_of_mut!(pso_cache_ptr),
+            )
+        }
+        if pso_cache_ptr.is_null() {
+            Err(())
+        } else {
+            Ok(PipelineStateCache::new(pso_cache_ptr))
+        }
+    }
+
+    pub fn create_deferred_context(&self) -> Result<DeferredDeviceContext, ()> {
+        let mut deferred_context_ptr = std::ptr::null_mut();
+        unsafe {
+            (*self.virtual_functions)
+                .RenderDevice
+                .CreateDeferredContext
+                .unwrap_unchecked()(
+                self.sys_ptr, std::ptr::addr_of_mut!(deferred_context_ptr)
+            )
+        }
+        if deferred_context_ptr.is_null() {
+            Err(())
+        } else {
+            Ok(DeferredDeviceContext::new(deferred_context_ptr))
+        }
+    }
 
     pub fn get_adapter_info(&self) -> GraphicsAdapterInfo {
         unsafe {
@@ -746,6 +787,6 @@ impl RenderDevice {
         }
     }
 
-    //pub fn get_engine_factory();
-    //pub fn get_shader_compilation_thread_pool();
+    //TODO pub fn get_engine_factory(&self) -> &EngineFactory {}
+    //TODO pub fn get_shader_compilation_thread_pool();
 }

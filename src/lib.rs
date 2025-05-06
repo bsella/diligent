@@ -23,6 +23,7 @@ pub mod graphics_types;
 pub mod input_layout;
 pub mod pipeline_resource_signature;
 pub mod pipeline_state;
+pub mod pipeline_state_cache;
 pub mod query;
 pub mod render_device;
 pub mod render_pass;
