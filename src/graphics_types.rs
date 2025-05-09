@@ -1,9 +1,11 @@
 //use std::ffi::CStr;
 
 use bitflags::bitflags;
+use bon::Builder;
 use static_assertions::const_assert;
 
 bitflags! {
+    #[derive(Clone, Copy)]
     pub struct ShaderTypes: diligent_sys::SHADER_TYPE {
         const Vertex          = diligent_sys::SHADER_TYPE_VERTEX as diligent_sys::SHADER_TYPE;
         const Pixel           = diligent_sys::SHADER_TYPE_PIXEL as diligent_sys::SHADER_TYPE;
@@ -344,6 +346,12 @@ bitflags! {
 }
 const_assert!(diligent_sys::BIND_FLAG_LAST == 2048);
 
+impl Default for BindFlags {
+    fn default() -> Self {
+        BindFlags::None
+    }
+}
+
 #[derive(Clone, Copy)]
 pub enum Usage {
     Immutable,
@@ -354,6 +362,12 @@ pub enum Usage {
     Sparse,
 }
 const_assert!(diligent_sys::USAGE_NUM_USAGES == 6);
+
+impl Default for Usage {
+    fn default() -> Self {
+        Usage::Default
+    }
+}
 
 impl From<Usage> for diligent_sys::USAGE {
     fn from(value: Usage) -> Self {
@@ -378,10 +392,23 @@ bitflags! {
 }
 const_assert!(diligent_sys::CPU_ACCESS_FLAG_LAST == 2);
 
+impl Default for CpuAccessFlags {
+    fn default() -> Self {
+        CpuAccessFlags::None
+    }
+}
+
 bitflags! {
+    #[derive(Clone, Copy)]
     pub struct SetShaderResourceFlags: diligent_sys::SET_SHADER_RESOURCE_FLAGS {
         const None          = diligent_sys::SET_SHADER_RESOURCE_FLAG_NONE as diligent_sys::SET_SHADER_RESOURCE_FLAGS;
         const AllowOverrite = diligent_sys::SET_SHADER_RESOURCE_FLAG_ALLOW_OVERWRITE as diligent_sys::SET_SHADER_RESOURCE_FLAGS;
+    }
+}
+
+impl Default for SetShaderResourceFlags {
+    fn default() -> Self {
+        SetShaderResourceFlags::None
     }
 }
 
@@ -481,6 +508,7 @@ impl From<ValueType> for diligent_sys::VALUE_TYPE {
 }
 
 bitflags! {
+    #[derive(Clone, Copy)]
     pub struct MapFlags: diligent_sys::MAP_FLAGS {
         const None        = diligent_sys::MAP_FLAG_NONE as diligent_sys::MAP_FLAGS;
         const DoNotWait   = diligent_sys::MAP_FLAG_DO_NOT_WAIT as diligent_sys::MAP_FLAGS;
@@ -586,6 +614,7 @@ pub struct AdapterMemoryInfo {
 }
 
 bitflags! {
+    #[derive(Clone, Copy)]
     pub struct RaytracingCapFlags : diligent_sys::RAY_TRACING_CAP_FLAGS {
         const None               = diligent_sys::RAY_TRACING_CAP_FLAG_NONE as diligent_sys::RAY_TRACING_CAP_FLAGS;
         const StandaloneShaders  = diligent_sys::RAY_TRACING_CAP_FLAG_STANDALONE_SHADERS as diligent_sys::RAY_TRACING_CAP_FLAGS;
@@ -613,6 +642,7 @@ pub struct RayTracingProperties {
 }
 
 bitflags! {
+    #[derive(Clone, Copy)]
     pub struct WaveFeature : diligent_sys::WAVE_FEATURE {
         const Unknown         = diligent_sys::WAVE_FEATURE_UNKNOWN as diligent_sys::WAVE_FEATURE;
         const Basic           = diligent_sys::WAVE_FEATURE_BASIC as diligent_sys::WAVE_FEATURE;
@@ -697,6 +727,7 @@ impl From<ShadingRate> for diligent_sys::SHADING_RATE {
 }
 
 bitflags! {
+    #[derive(Clone, Copy)]
     pub struct SampleCount : diligent_sys::SAMPLE_COUNT {
         const None = diligent_sys::SAMPLE_COUNT_NONE as diligent_sys::SAMPLE_COUNT;
         const _1   = diligent_sys::SAMPLE_COUNT_1 as diligent_sys::SAMPLE_COUNT;
@@ -716,6 +747,7 @@ pub struct ShadingRateMode {
 }
 
 bitflags! {
+    #[derive(Clone, Copy)]
     pub struct ShadingRateCapFlags : diligent_sys::SHADING_RATE_CAP_FLAGS {
         const None                              = diligent_sys::SHADING_RATE_CAP_FLAG_NONE as diligent_sys::SHADING_RATE_CAP_FLAGS;
         const PerDraw                           = diligent_sys::SHADING_RATE_CAP_FLAG_PER_DRAW as diligent_sys::SHADING_RATE_CAP_FLAGS;
@@ -735,6 +767,7 @@ bitflags! {
 }
 
 bitflags! {
+    #[derive(Clone, Copy)]
     pub struct ShadingRateCombiner : diligent_sys::SHADING_RATE_COMBINER {
         const Passthrough = diligent_sys::SHADING_RATE_COMBINER_PASSTHROUGH as diligent_sys::SHADING_RATE_COMBINER;
         const Override    = diligent_sys::SHADING_RATE_COMBINER_OVERRIDE as diligent_sys::SHADING_RATE_COMBINER;
@@ -747,6 +780,7 @@ bitflags! {
 const_assert!(diligent_sys::SAMPLE_COUNT_MAX == 64);
 
 bitflags! {
+    #[derive(Clone, Copy)]
     pub struct ShadingRateFormat : diligent_sys::SHADING_RATE_FORMAT {
         const Unknown    = diligent_sys::SHADING_RATE_FORMAT_UNKNOWN as diligent_sys::SHADING_RATE_FORMAT;
         const Palette    = diligent_sys::SHADING_RATE_FORMAT_PALETTE as diligent_sys::SHADING_RATE_FORMAT;
@@ -756,6 +790,7 @@ bitflags! {
 }
 
 bitflags! {
+    #[derive(Clone, Copy)]
     pub struct ShadingRateTextureAccess : diligent_sys::SHADING_RATE_TEXTURE_ACCESS {
         const Unknown  = diligent_sys::SHADING_RATE_TEXTURE_ACCESS_UNKNOWN as diligent_sys::SHADING_RATE_TEXTURE_ACCESS;
         const OnGpu    = diligent_sys::SHADING_RATE_TEXTURE_ACCESS_ON_GPU as diligent_sys::SHADING_RATE_TEXTURE_ACCESS;
@@ -788,6 +823,7 @@ pub struct ComputeShaderProperties {
 }
 
 bitflags! {
+    #[derive(Clone, Copy)]
     pub struct DrawCommandCapFlags : diligent_sys::DRAW_COMMAND_CAP_FLAGS {
         const None                      = diligent_sys::DRAW_COMMAND_CAP_FLAG_NONE as diligent_sys::DRAW_COMMAND_CAP_FLAGS;
         const BaseVertex                = diligent_sys::DRAW_COMMAND_CAP_FLAG_BASE_VERTEX as diligent_sys::DRAW_COMMAND_CAP_FLAGS;
@@ -805,6 +841,7 @@ pub struct DrawCommandProperties {
 }
 
 bitflags! {
+    #[derive(Clone, Copy)]
     pub struct SparseResourceCapFlags : diligent_sys::SPARSE_RESOURCE_CAP_FLAGS {
         const None                     = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_NONE as diligent_sys::SPARSE_RESOURCE_CAP_FLAGS;
         const ShaderResourceResidency  = diligent_sys::SPARSE_RESOURCE_CAP_FLAG_SHADER_RESOURCE_RESIDENCY as diligent_sys::SPARSE_RESOURCE_CAP_FLAGS;
@@ -1075,6 +1112,7 @@ impl From<&DeviceFeatures> for diligent_sys::DeviceFeatures {
 }
 
 bitflags! {
+    #[derive(Clone,Copy)]
     pub struct CommandQueueType : diligent_sys::COMMAND_QUEUE_TYPE {
         const Unknown       = diligent_sys::COMMAND_QUEUE_TYPE_UNKNOWN as diligent_sys::COMMAND_QUEUE_TYPE;
         const Transfer      = diligent_sys::COMMAND_QUEUE_TYPE_TRANSFER as diligent_sys::COMMAND_QUEUE_TYPE;
@@ -1409,6 +1447,7 @@ impl From<diligent_sys::SURFACE_TRANSFORM> for SurfaceTransform {
 }
 
 bitflags! {
+    #[derive(Clone,Copy)]
     pub struct ResourceState: diligent_sys::RESOURCE_STATE {
         const Undefined         = diligent_sys::RESOURCE_STATE_UNDEFINED as diligent_sys::RESOURCE_STATE;
         const VertexBuffer      = diligent_sys::RESOURCE_STATE_VERTEX_BUFFER as diligent_sys::RESOURCE_STATE;
@@ -2615,11 +2654,21 @@ impl From<&DisplayModeAttribs> for diligent_sys::DisplayModeAttribs {
     }
 }
 
+#[derive(Builder)]
 pub struct FullScreenModeDesc {
+    #[builder(default = false)]
     fullscreen: bool,
+
+    #[builder(default = 0)]
     refresh_rate_numerator: u32,
+
+    #[builder(default = 0)]
     refresh_rate_denominator: u32,
+
+    #[builder(default = ScalingMode::Unspecified)]
     scaling: ScalingMode,
+
+    #[builder(default = ScanlineOrder::Unspecified)]
     scanline_order: ScanlineOrder,
 }
 
@@ -2647,29 +2696,6 @@ impl Default for FullScreenModeDesc {
     }
 }
 
-impl FullScreenModeDesc {
-    pub fn fullscreen(mut self, fullscreen: bool) -> Self {
-        self.fullscreen = fullscreen;
-        self
-    }
-    pub fn refresh_rate_numerator(mut self, refresh_rate_numerator: u32) -> Self {
-        self.refresh_rate_numerator = refresh_rate_numerator;
-        self
-    }
-    pub fn refresh_rate_denominator(mut self, refresh_rate_denominator: u32) -> Self {
-        self.refresh_rate_denominator = refresh_rate_denominator;
-        self
-    }
-    pub fn scaling(mut self, scaling: ScalingMode) -> Self {
-        self.scaling = scaling;
-        self
-    }
-    pub fn scanline_order(mut self, scanline_order: ScanlineOrder) -> Self {
-        self.scanline_order = scanline_order;
-        self
-    }
-}
-
 #[derive(Clone, Copy)]
 pub enum StateTransitionType {
     Immediate,
@@ -2678,6 +2704,7 @@ pub enum StateTransitionType {
 }
 
 bitflags! {
+    #[derive(Clone,Copy)]
     pub struct AccessFlags : diligent_sys::ACCESS_FLAGS {
         const None                       = diligent_sys::ACCESS_FLAG_NONE as diligent_sys::ACCESS_FLAGS;
         const IndirectCommandRead        = diligent_sys::ACCESS_FLAG_INDIRECT_COMMAND_READ as diligent_sys::ACCESS_FLAGS;
@@ -2707,6 +2734,7 @@ bitflags! {
 }
 
 bitflags! {
+    #[derive(Clone,Copy)]
     pub struct PipelineStageFlags : diligent_sys::PIPELINE_STAGE_FLAGS {
         const Undefined                  = diligent_sys::PIPELINE_STAGE_FLAG_UNDEFINED                    as diligent_sys::PIPELINE_STAGE_FLAGS;
         const TopOfPipe                  = diligent_sys::PIPELINE_STAGE_FLAG_TOP_OF_PIPE                  as diligent_sys::PIPELINE_STAGE_FLAGS;

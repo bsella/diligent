@@ -59,6 +59,7 @@ impl AsRef<DeviceObject> for PipelineResourceSignature {
 }
 
 bitflags! {
+    #[derive(Clone,Copy)]
     pub struct PipelineResourceFlags: diligent_sys::PIPELINE_RESOURCE_FLAGS {
         const None                   = diligent_sys::PIPELINE_RESOURCE_FLAG_NONE as diligent_sys::PIPELINE_RESOURCE_FLAGS;
         const NoDynamicBuffers       = diligent_sys::PIPELINE_RESOURCE_FLAG_NO_DYNAMIC_BUFFERS as diligent_sys::PIPELINE_RESOURCE_FLAGS;

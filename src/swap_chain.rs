@@ -1,4 +1,5 @@
 use bitflags::bitflags;
+use bon::Builder;
 use static_assertions::const_assert;
 
 use crate::{
@@ -8,6 +9,7 @@ use crate::{
 };
 
 bitflags! {
+    #[derive(Clone,Copy)]
     pub struct SwapChainUsageFlags: diligent_sys::SWAP_CHAIN_USAGE_FLAGS {
         const None            = diligent_sys::SWAP_CHAIN_USAGE_NONE as diligent_sys::SWAP_CHAIN_USAGE_FLAGS;
         const RenderTarget    = diligent_sys::SWAP_CHAIN_USAGE_RENDER_TARGET as diligent_sys::SWAP_CHAIN_USAGE_FLAGS;
@@ -18,77 +20,41 @@ bitflags! {
 }
 const_assert!(diligent_sys::SWAP_CHAIN_USAGE_LAST == 8);
 
+impl Default for SwapChainUsageFlags {
+    fn default() -> Self {
+        SwapChainUsageFlags::None
+    }
+}
+
+#[derive(Builder)]
 pub struct SwapChainDesc {
     pub width: u32,
+
     pub height: u32,
+
+    #[builder(default = TextureFormat::RGBA8_UNORM_SRGB)]
     pub color_buffer_format: TextureFormat,
+
+    #[builder(default = TextureFormat::D32_FLOAT)]
     pub depth_buffer_format: TextureFormat,
+
+    #[builder(default = SwapChainUsageFlags::RenderTarget)]
     pub usage: SwapChainUsageFlags,
+
+    #[builder(default = SurfaceTransform::Optimal)]
     pub pre_transform: SurfaceTransform,
+
+    #[builder(default = 2)]
     pub buffer_count: u32,
+
+    #[builder(default = 1.0)]
     pub default_depth_value: f32,
+
+    #[builder(default = 0)]
     pub default_stencil_value: u8,
+
+    #[builder(default = true)]
     pub is_primary: bool,
-}
-
-impl SwapChainDesc {
-    pub fn width(mut self, width: u32) -> Self {
-        self.width = width;
-        self
-    }
-    pub fn height(mut self, height: u32) -> Self {
-        self.height = height;
-        self
-    }
-    pub fn color_buffer_format(mut self, color_buffer_format: TextureFormat) -> Self {
-        self.color_buffer_format = color_buffer_format;
-        self
-    }
-    pub fn depth_buffer_format(mut self, depth_buffer_format: TextureFormat) -> Self {
-        self.depth_buffer_format = depth_buffer_format;
-        self
-    }
-    pub fn usage(mut self, usage: SwapChainUsageFlags) -> Self {
-        self.usage = usage;
-        self
-    }
-    pub fn pre_transform(mut self, pre_transform: SurfaceTransform) -> Self {
-        self.pre_transform = pre_transform;
-        self
-    }
-    pub fn buffer_count(mut self, buffer_count: u32) -> Self {
-        self.buffer_count = buffer_count;
-        self
-    }
-    pub fn default_depth_value(mut self, default_depth_value: f32) -> Self {
-        self.default_depth_value = default_depth_value;
-        self
-    }
-    pub fn default_stencil_value(mut self, default_stencil_value: u8) -> Self {
-        self.default_stencil_value = default_stencil_value;
-        self
-    }
-    pub fn is_primary(mut self, is_primary: bool) -> Self {
-        self.is_primary = is_primary;
-        self
-    }
-}
-
-impl Default for SwapChainDesc {
-    fn default() -> Self {
-        SwapChainDesc {
-            width: 0,
-            height: 0,
-            color_buffer_format: TextureFormat::RGBA8_UNORM_SRGB,
-            depth_buffer_format: TextureFormat::D32_FLOAT,
-            usage: SwapChainUsageFlags::RenderTarget,
-            pre_transform: SurfaceTransform::Optimal,
-            buffer_count: 2,
-            default_depth_value: 1.0,
-            default_stencil_value: 0,
-            is_primary: true,
-        }
-    }
 }
 
 impl From<&SwapChainDesc> for diligent_sys::SwapChainDesc {

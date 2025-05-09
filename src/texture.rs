@@ -1,6 +1,7 @@
 use std::ffi::CString;
 
 use bitflags::bitflags;
+use bon::Builder;
 use static_assertions::const_assert;
 
 use crate::{
@@ -44,6 +45,7 @@ impl From<TextureDimension> for diligent_sys::RESOURCE_DIMENSION {
 }
 
 bitflags! {
+    #[derive(Clone,Copy)]
     pub struct MiscTextureFlags: diligent_sys::MISC_TEXTURE_FLAGS {
         const None           = diligent_sys::MISC_TEXTURE_FLAG_NONE as diligent_sys::MISC_TEXTURE_FLAGS;
         const GenerateMips   = diligent_sys::MISC_TEXTURE_FLAG_GENERATE_MIPS as diligent_sys::MISC_TEXTURE_FLAGS;
@@ -53,40 +55,65 @@ bitflags! {
     }
 }
 
+impl Default for MiscTextureFlags {
+    fn default() -> Self {
+        MiscTextureFlags::None
+    }
+}
+
 pub enum TextureSubResData<'a> {
     CPU(&'a [u8]),
     GPU(&'a Buffer),
 }
 
+#[derive(Builder)]
 pub struct TextureSubResource<'a> {
+    #[builder(setters(vis = ""))]
     source: TextureSubResData<'a>,
+
+    #[builder(setters(vis = ""))]
     source_offset: u64,
+
+    #[builder(setters(vis = ""))]
     stride: u64,
+
+    #[builder(default = 0)]
     depth_stride: u64,
 }
 
-impl<'a> TextureSubResource<'a> {
-    pub fn new_cpu(data: &'a [u8], stride: u64) -> Self {
-        TextureSubResource {
-            source: TextureSubResData::CPU(data),
-            stride,
-            source_offset: 0,
-            depth_stride: 0,
-        }
+use texture_sub_resource_builder::{IsUnset, SetSource, SetSourceOffset, SetStride, State};
+impl<'a, S: State> TextureSubResourceBuilder<'a, S> {
+    pub fn from_host(
+        self,
+        data: &'a [u8],
+        stride: u64,
+    ) -> TextureSubResourceBuilder<'a, SetSource<SetSourceOffset<SetStride<S>>>>
+    where
+        S::Source: IsUnset,
+        S::SourceOffset: IsUnset,
+        S::Stride: IsUnset,
+    {
+        self.stride(stride)
+            .source_offset(0)
+            .source(TextureSubResData::CPU(data))
     }
+}
 
-    pub fn new_gpu(data: &'a Buffer, source_offset: u64, stride: u64) -> Self {
-        TextureSubResource {
-            source: TextureSubResData::GPU(data),
-            stride,
-            source_offset,
-            depth_stride: 0,
-        }
-    }
-
-    pub fn depth_stride(mut self, depth_stride: u64) -> Self {
-        self.depth_stride = depth_stride;
-        self
+impl<'a, S: State> TextureSubResourceBuilder<'a, S> {
+    pub fn from_device(
+        self,
+        data: &'a Buffer,
+        source_offset: u64,
+        stride: u64,
+    ) -> TextureSubResourceBuilder<'a, SetSource<SetSourceOffset<SetStride<S>>>>
+    where
+        S::Source: IsUnset,
+        S::SourceOffset: IsUnset,
+        S::Stride: IsUnset,
+    {
+        self.stride(stride)
+            .source_offset(source_offset)
+            .source(TextureSubResData::GPU(data))
     }
 }
 
@@ -110,23 +137,47 @@ impl From<&TextureSubResource<'_>> for diligent_sys::TextureSubResData {
     }
 }
 
+#[derive(Builder)]
 pub struct TextureDesc {
+    #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
     name: CString,
 
     dimension: TextureDimension,
+
     width: u32,
+
     height: u32,
+
     format: TextureFormat,
 
+    #[builder(default = 1)]
     mip_levels: u32,
+
+    #[builder(default = 1)]
     sample_count: u32,
+
+    #[builder(default)]
     bind_flags: BindFlags,
+
+    #[builder(default)]
     usage: Usage,
+
+    #[builder(default)]
     cpu_access_flags: CpuAccessFlags,
+
+    #[builder(default)]
     misc_flags: MiscTextureFlags,
+
+    #[builder(default = [0.0, 0.0, 0.0, 0.0])]
     clear_color: [f32; 4],
+
+    #[builder(default = 1.0)]
     clear_depth: f32,
+
+    #[builder(default = 0)]
     clear_stencil: u8,
+
+    #[builder(default = 1)]
     immediate_context_mask: u64,
 }
 
@@ -171,77 +222,6 @@ impl From<&TextureDesc> for diligent_sys::TextureDesc {
             ImmediateContextMask: value.immediate_context_mask,
             __bindgen_anon_1: anon,
         }
-    }
-}
-
-impl TextureDesc {
-    pub fn new(
-        name: impl AsRef<str>,
-        dimension: TextureDimension,
-        width: u32,
-        height: u32,
-        format: TextureFormat,
-    ) -> Self {
-        TextureDesc {
-            name: CString::new(name.as_ref()).unwrap(),
-
-            dimension,
-            width,
-            height,
-            format,
-
-            mip_levels: 1,
-            sample_count: 1,
-            bind_flags: BindFlags::None,
-            usage: Usage::Default,
-            cpu_access_flags: CpuAccessFlags::None,
-            misc_flags: MiscTextureFlags::None,
-            clear_color: [0.0, 0.0, 0.0, 0.0],
-            clear_depth: 1.0,
-            clear_stencil: 0,
-            immediate_context_mask: 1,
-        }
-    }
-
-    pub fn mip_levels(mut self, mip_levels: u32) -> Self {
-        self.mip_levels = mip_levels;
-        self
-    }
-    pub fn sample_count(mut self, sample_count: u32) -> Self {
-        self.sample_count = sample_count;
-        self
-    }
-    pub fn bind_flags(mut self, bind_flags: BindFlags) -> Self {
-        self.bind_flags = bind_flags;
-        self
-    }
-    pub fn usage(mut self, usage: Usage) -> Self {
-        self.usage = usage;
-        self
-    }
-    pub fn cpu_access_flags(mut self, cpu_access_flags: CpuAccessFlags) -> Self {
-        self.cpu_access_flags = cpu_access_flags;
-        self
-    }
-    pub fn misc_flags(mut self, misc_flags: MiscTextureFlags) -> Self {
-        self.misc_flags = misc_flags;
-        self
-    }
-    pub fn clear_color(mut self, clear_color: [f32; 4]) -> Self {
-        self.clear_color = clear_color;
-        self
-    }
-    pub fn clear_depth(mut self, clear_depth: f32) -> Self {
-        self.clear_depth = clear_depth;
-        self
-    }
-    pub fn clear_stencil(mut self, clear_stencil: u8) -> Self {
-        self.clear_stencil = clear_stencil;
-        self
-    }
-    pub fn immediate_context_mask(mut self, immediate_context_mask: u64) -> Self {
-        self.immediate_context_mask = immediate_context_mask;
-        self
     }
 }
 

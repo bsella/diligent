@@ -4,6 +4,7 @@ use std::{
 };
 
 use bitflags::bitflags;
+use bon::Builder;
 use static_assertions::const_assert;
 
 use crate::device_object::DeviceObject;
@@ -57,6 +58,7 @@ impl Into<ShaderResourceVariableType> for diligent_sys::SHADER_RESOURCE_VARIABLE
 }
 
 bitflags! {
+    #[derive(Clone,Copy)]
     pub struct BindShaderResourcesFlags : diligent_sys::BIND_SHADER_RESOURCES_FLAGS {
         const UpdateStatic      = diligent_sys::BIND_SHADER_RESOURCES_UPDATE_STATIC as diligent_sys::BIND_SHADER_RESOURCES_FLAGS;
         const UpdateMutable     = diligent_sys::BIND_SHADER_RESOURCES_UPDATE_MUTABLE as diligent_sys::BIND_SHADER_RESOURCES_FLAGS;
@@ -69,6 +71,7 @@ bitflags! {
 }
 
 bitflags! {
+    #[derive(Clone,Copy)]
     pub struct ShaderResourceVariableTypeFlags : diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_FLAGS {
         const None    = diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_FLAG_NONE as diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_FLAGS;
         const Static  = diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_FLAG_STATIC as diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_FLAGS;
@@ -79,31 +82,17 @@ bitflags! {
     }
 }
 
+#[derive(Builder)]
 pub struct ShaderResourceVariableDesc {
+    #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
     name: CString,
+
     variable_type: ShaderResourceVariableType,
+
     shader_stages: ShaderTypes,
+
+    #[builder(default)]
     flags: ShaderVariableFlags,
-}
-
-impl ShaderResourceVariableDesc {
-    pub fn new(
-        name: impl AsRef<str>,
-        variable_type: ShaderResourceVariableType,
-        shader_stages: ShaderTypes,
-    ) -> Self {
-        ShaderResourceVariableDesc {
-            name: CString::new(name.as_ref()).unwrap(),
-            variable_type,
-            shader_stages,
-            flags: ShaderVariableFlags::None,
-        }
-    }
-
-    pub fn flags(mut self, flags: ShaderVariableFlags) -> Self {
-        self.flags = flags;
-        self
-    }
 }
 
 impl From<&ShaderResourceVariableDesc> for diligent_sys::ShaderResourceVariableDesc {

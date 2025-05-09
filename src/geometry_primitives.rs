@@ -1,9 +1,11 @@
 use bitflags::bitflags;
+use bon::Builder;
 use static_assertions::const_assert;
 
 use crate::data_blob::DataBlob;
 
 bitflags! {
+    #[derive(Clone, Copy)]
     pub struct GeometryPrimitiveVertexFlags: diligent_sys::GEOMETRY_PRIMITIVE_VERTEX_FLAGS {
         const None     = diligent_sys::GEOMETRY_PRIMITIVE_VERTEX_FLAG_NONE as _;
         const Position = diligent_sys::GEOMETRY_PRIMITIVE_VERTEX_FLAG_POSITION as _;
@@ -24,29 +26,15 @@ pub enum GeometryPrimitive {
 }
 const_assert!(diligent_sys::GEOMETRY_PRIMITIVE_TYPE_COUNT == 3);
 
+#[derive(Builder)]
 pub struct GeometryPrimitiveAttributes {
-    pub(crate) geometry_type: GeometryPrimitive,
-    pub(crate) vertex_flags: GeometryPrimitiveVertexFlags,
-    pub(crate) num_subdivisions: u32,
-}
+    pub geometry_type: GeometryPrimitive,
 
-impl GeometryPrimitiveAttributes {
-    pub fn new(geometry_type: GeometryPrimitive) -> Self {
-        GeometryPrimitiveAttributes {
-            geometry_type,
-            vertex_flags: GeometryPrimitiveVertexFlags::All,
-            num_subdivisions: 1,
-        }
-    }
-    pub fn vertex_flags(mut self, vertex_flags: GeometryPrimitiveVertexFlags) -> Self {
-        self.vertex_flags = vertex_flags;
-        self
-    }
+    #[builder(default = GeometryPrimitiveVertexFlags::All)]
+    pub vertex_flags: GeometryPrimitiveVertexFlags,
 
-    pub fn num_subdivisions(mut self, num_subdivisions: u32) -> Self {
-        self.num_subdivisions = num_subdivisions;
-        self
-    }
+    #[builder(default = 1)]
+    num_subdivisions: u32,
 }
 
 pub struct GeometryPrimitiveInfo {

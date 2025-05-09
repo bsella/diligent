@@ -5,9 +5,8 @@ use diligent::{
     engine_factory::EngineFactory,
     graphics_types::{PrimitiveTopology, ShaderType},
     pipeline_state::{
-        BlendStateDesc, CullMode, DepthStencilStateDesc, GraphicsPipelineDesc,
-        GraphicsPipelineRenderTargets, GraphicsPipelineStateCreateInfo, PipelineState,
-        RasterizerStateDesc,
+        CullMode, DepthStencilStateDesc, GraphicsPipelineDesc, GraphicsPipelineRenderTargets,
+        GraphicsPipelineStateCreateInfo, PipelineState, RasterizerStateDesc,
     },
     render_device::RenderDevice,
     shader::{ShaderCreateInfo, ShaderLanguage, ShaderSource},
@@ -37,6 +36,13 @@ impl SampleBase for HelloTriangle {
     ) -> Self {
         let swap_chain_desc = swap_chain.get_desc();
 
+        let shader_create_info = ShaderCreateInfo::builder()
+            // Tell the system that the shader source code is in HLSL.
+            // For OpenGL, the engine will convert this into GLSL under the hood.
+            .source_language(ShaderLanguage::HLSL)
+            // OpenGL backend requires emulated combined HLSL texture samplers (g_Texture + g_Texture_sampler combination)
+            .use_combined_texture_samplers(true);
+
         let vertex_shader = {
             let shader_source_code = r#"
 struct PSInput
@@ -61,18 +67,17 @@ void main(in uint VertId : SV_VertexID, out PSInput PSIn)
     PSIn.Color = Col[VertId];
 }
 "#;
-            let shader_create_info = ShaderCreateInfo::new(
-                "Triangle vertex shader",
-                ShaderSource::SourceCode(&shader_source_code),
-                ShaderType::Vertex,
-            )
-            // Tell the system that the shader source code is in HLSL.
-            // For OpenGL, the engine will convert this into GLSL under the hood.
-            .language(ShaderLanguage::HLSL)
-            // OpenGL backend requires emulated combined HLSL texture samplers (g_Texture + g_Texture_sampler combination)
-            .use_combined_texture_samplers(true);
 
-            device.create_shader(&shader_create_info).unwrap()
+            device
+                .create_shader(
+                    &shader_create_info
+                        .clone()
+                        .name("Triangle vertex shader")
+                        .source(ShaderSource::SourceCode(shader_source_code))
+                        .shader_type(ShaderType::Vertex)
+                        .build(),
+                )
+                .unwrap()
         };
 
         let pixel_shader = {
@@ -93,37 +98,47 @@ void main(in PSInput PSIn, out PSOutput PSOut)
     PSOut.Color = float4(PSIn.Color.rgb, 1.0);
 }
 "#;
-            let shader_create_info = ShaderCreateInfo::new(
-                "Triangle pixel shader",
-                ShaderSource::SourceCode(shader_source_code),
-                ShaderType::Pixel,
-            )
-            // Tell the system that the shader source code is in HLSL.
-            // For OpenGL, the engine will convert this into GLSL under the hood.
-            .language(ShaderLanguage::HLSL)
-            // OpenGL backend requires emulated combined HLSL texture samplers (g_Texture + g_Texture_sampler combination)
-            .use_combined_texture_samplers(true);
-
-            device.create_shader(&shader_create_info).unwrap()
+            device
+                .create_shader(
+                    &shader_create_info
+                        .clone()
+                        .name("Triangle pixel shader")
+                        .source(ShaderSource::SourceCode(shader_source_code))
+                        .shader_type(ShaderType::Pixel)
+                        .build(),
+                )
+                .unwrap()
         };
 
-        let graphics_pipeline_desc = GraphicsPipelineDesc::new(
-            BlendStateDesc::default(),
-            RasterizerStateDesc::default()
-                // No back face culling for this tutorial
-                .cull_mode(CullMode::None),
-            DepthStencilStateDesc::default()
-                // Disable depth testing
-                .depth_enable(false),
-            GraphicsPipelineRenderTargets::default() // This tutorial will render to a single render target
-                .num_render_targets(1)
-                // Set render target format which is the format of the swap chain's color buffer
-                .rtv_format::<0>(swap_chain_desc.color_buffer_format)
-                // Use the depth buffer format from the swap chain
-                .dsv_format(swap_chain_desc.depth_buffer_format),
-        )
-        // Primitive topology defines what kind of primitives will be rendered by this pipeline state
-        .primitive_topology(PrimitiveTopology::TriangleList);
+        let mut rtv_formats = std::array::from_fn(|_| None);
+        rtv_formats[0] = Some(swap_chain_desc.color_buffer_format);
+
+        let rasterizer_desc = RasterizerStateDesc::builder()
+            // No back face culling for this tutorial
+            .cull_mode(CullMode::None)
+            .build();
+
+        let depth_desc = DepthStencilStateDesc::builder()
+            // Disable depth testing
+            .depth_enable(false)
+            .build();
+
+        let pipeline_output = GraphicsPipelineRenderTargets::builder()
+            // This tutorial will render to a single render target
+            .num_render_targets(1)
+            // Set render target format which is the format of the swap chain's color buffer
+            .rtv_formats(rtv_formats)
+            // Use the depth buffer format from the swap chain
+            .dsv_format(swap_chain_desc.depth_buffer_format)
+            .build();
+
+        let graphics_pipeline_desc = GraphicsPipelineDesc::builder()
+            .rasterizer_desc(rasterizer_desc)
+            .depth_stencil_desc(depth_desc)
+            .output(pipeline_output)
+            // Primitive topology defines what kind of primitives will be rendered by this pipeline state
+            .primitive_topology(PrimitiveTopology::TriangleList)
+            .build();
 
         let pso_create_info =
             GraphicsPipelineStateCreateInfo::new("Simple triangle PSO", graphics_pipeline_desc)
@@ -162,7 +177,7 @@ void main(in PSInput PSIn, out PSOutput PSOut)
 
         // Typically we should now call CommitShaderResources(), however shaders in this example don't
         // use any resources.
-        immediate_context.draw(&DrawAttribs::new(3));
+        immediate_context.draw(&DrawAttribs::builder().num_vertices(3).build());
     }
 
     fn get_name() -> &'static str {

@@ -1,5 +1,5 @@
 use diligent::{
-    buffer::{Buffer, BufferDesc, BufferMode},
+    buffer::{Buffer, BufferDesc},
     device_context::{
         DeferredDeviceContext, DrawFlags, DrawIndexedAttribs, ImmediateDeviceContext,
         ResourceStateTransitionMode, SetVertexBufferFlags,
@@ -150,20 +150,20 @@ impl SampleBase for Instancing {
         let layout_elements = vec![
             // Per-vertex data - first buffer slot
             // Attribute 0 - vertex position
-            LayoutElement::new(0, 3, ValueType::Float32).is_normalized(false),
+            LayoutElement::builder().slot(0).f32_3().build(),
             // Attribute 1 - texture coordinates
-            LayoutElement::new(0, 2, ValueType::Float32).is_normalized(false),
+            LayoutElement::builder().slot(0).f32_2().build(),
 
             // Per-instance data - second buffer slot
             // We will use four attributes to encode instance-specific 4x4 transformation matrix
             // Attribute 2 - first row
-            LayoutElement::new(1, 4, ValueType::Float32).is_normalized(false).frequency(InputElementFrequency::PerInstance),
+            LayoutElement::builder().slot(1).f32_4().frequency(InputElementFrequency::PerInstance).build(),
             // Attribute 3 - second row
-            LayoutElement::new(1, 4, ValueType::Float32).is_normalized(false).frequency(InputElementFrequency::PerInstance),
+            LayoutElement::builder().slot(1).f32_4().frequency(InputElementFrequency::PerInstance).build(),
             // Attribute 4 - third row
-            LayoutElement::new(1, 4, ValueType::Float32).is_normalized(false).frequency(InputElementFrequency::PerInstance),
+            LayoutElement::builder().slot(1).f32_4().frequency(InputElementFrequency::PerInstance).build(),
             // Attribute 5 - fourth row
-            LayoutElement::new(1, 4, ValueType::Float32).is_normalized(false).frequency(InputElementFrequency::PerInstance),
+            LayoutElement::builder().slot(1).f32_4().frequency(InputElementFrequency::PerInstance).build(),
         ];
 
         let cube_pso_ci = CreatePSOInfo::new(
@@ -179,7 +179,7 @@ impl SampleBase for Instancing {
         );
 
         let pipeline_state =
-            TexturedCube::create_pipeline_state(&cube_pso_ci, convert_ps_output_to_gamma).unwrap();
+            TexturedCube::create_pipeline_state(cube_pso_ci, convert_ps_output_to_gamma).unwrap();
 
         // Create dynamic uniform buffer that will store our transformation matrix
         // Dynamic buffers can be frequently updated by the CPU
@@ -209,9 +209,9 @@ impl SampleBase for Instancing {
             &device,
             GeometryPrimitiveVertexFlags::PosTex,
             BindFlags::VertexBuffer,
-            BufferMode::Undefined,
+            None,
             BindFlags::IndexBuffer,
-            BufferMode::Undefined,
+            None,
         )
         .unwrap();
 
@@ -221,23 +221,25 @@ impl SampleBase for Instancing {
                 .decode()
                 .unwrap();
 
-            let texture = device
-                .create_texture(
-                    &TextureDesc::new(
-                        "DGLogo",
-                        TextureDimension::Texture2D,
-                        image.width(),
-                        image.height(),
-                        TextureFormat::RGBA8_UNORM_SRGB,
-                    )
-                    .bind_flags(BindFlags::ShaderResource)
-                    .usage(Usage::Immutable),
-                    &[&TextureSubResource::new_cpu(
-                        image.as_bytes(),
-                        image.width() as u64 * std::mem::size_of::<[u8; 4]>() as u64,
-                    )],
-                    None,
+            let texture_desc = TextureDesc::builder()
+                .name("DGLogo")
+                .dimension(TextureDimension::Texture2D)
+                .width(image.width())
+                .height(image.height())
+                .format(TextureFormat::RGBA8_UNORM_SRGB)
+                .bind_flags(BindFlags::ShaderResource)
+                .usage(Usage::Immutable)
+                .build();
+
+            let subresource = TextureSubResource::builder()
+                .from_host(
+                    image.as_bytes(),
+                    image.width() as u64 * std::mem::size_of::<[u8; 4]>() as u64,
                 )
+                .build();
+
+            let texture = device
+                .create_texture(&texture_desc, &[&subresource], None)
                 .unwrap();
 
             // Get shader resource view from the texture
@@ -251,12 +253,12 @@ impl SampleBase for Instancing {
             .set(&texture_srv, SetShaderResourceFlags::None);
 
         // Use default usage as this buffer will only be updated when grid size changes
-        let inst_buff_desc = BufferDesc::new(
-            "Instance data buffer",
-            std::mem::size_of::<glam::Mat4>() as u64 * MAX_INSTANCES,
-        )
-        .usage(Usage::Default)
-        .bind_flags(BindFlags::VertexBuffer);
+        let inst_buff_desc = BufferDesc::builder()
+            .name("Instance data buffer")
+            .size(std::mem::size_of::<glam::Mat4>() as u64 * MAX_INSTANCES)
+            .usage(Usage::Default)
+            .bind_flags(BindFlags::VertexBuffer)
+            .build();
 
         let inst_buff = device.create_buffer(&inst_buff_desc).unwrap();
 
@@ -383,10 +385,13 @@ impl SampleBase for Instancing {
         immediate_context
             .commit_shader_resources(&self.srb, ResourceStateTransitionMode::Transition);
 
-        let draw_attribs = DrawIndexedAttribs::new(36, ValueType::Uint32)
+        let draw_attribs = DrawIndexedAttribs::builder()
+            .num_indices(36)
+            .index_type(ValueType::Uint32)
             .num_instances(self.grid_size * self.grid_size * self.grid_size)
             // Verify the state of vertex and index buffers
-            .flags(DrawFlags::VerifyAll);
+            .flags(DrawFlags::VerifyAll)
+            .build();
 
         immediate_context.draw_indexed(&draw_attribs);
     }

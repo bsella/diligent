@@ -1,9 +1,7 @@
-use std::{
-    ffi::{CStr, CString},
-    str::FromStr,
-};
+use std::ffi::{CStr, CString};
 
 use bitflags::bitflags;
+use bon::Builder;
 use static_assertions::const_assert;
 
 use super::{
@@ -13,6 +11,7 @@ use super::{
 };
 
 bitflags! {
+    #[derive(Clone,Copy)]
     pub struct SamplerFlags: diligent_sys::SAMPLER_FLAGS {
         const None                           = diligent_sys::SAMPLER_FLAG_NONE as diligent_sys::SAMPLER_FLAGS;
         const Subsampled                     = diligent_sys::SAMPLER_FLAG_SUBSAMPLED as diligent_sys::SAMPLER_FLAGS;
@@ -21,102 +20,58 @@ bitflags! {
 }
 const_assert!(diligent_sys::SAMPLER_FLAG_LAST == 2);
 
-pub struct SamplerDesc {
-    name: CString,
-    min_filter: FilterType,
-    mag_filter: FilterType,
-    mip_filter: FilterType,
-    address_u: TextureAddressMode,
-    address_v: TextureAddressMode,
-    address_w: TextureAddressMode,
-    flags: SamplerFlags,
-    unnormalized_coords: bool,
-    mip_lod_bias: f32,
-    max_anisotropy: u32,
-    comparison_func: ComparisonFunction,
-    border_color: [f32; 4usize],
-    min_lod: f32,
-    max_lod: f32,
+impl Default for SamplerFlags {
+    fn default() -> Self {
+        SamplerFlags::None
+    }
 }
 
-impl SamplerDesc {
-    pub fn new(name: impl AsRef<str>) -> Self {
-        SamplerDesc {
-            name: CString::from_str(name.as_ref()).unwrap(),
-            min_filter: FilterType::Linear,
-            mag_filter: FilterType::Linear,
-            mip_filter: FilterType::Linear,
+#[derive(Builder)]
+pub struct SamplerDesc {
+    #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
+    name: CString,
 
-            address_u: TextureAddressMode::Clamp,
-            address_v: TextureAddressMode::Clamp,
-            address_w: TextureAddressMode::Clamp,
-            flags: SamplerFlags::None,
-            unnormalized_coords: false,
-            mip_lod_bias: 0.0,
-            max_anisotropy: 0,
-            comparison_func: ComparisonFunction::Never,
-            border_color: [0.0, 0.0, 0.0, 0.0],
-            min_lod: 0.0,
-            max_lod: f32::MAX,
-        }
-    }
+    #[builder(default = FilterType::Linear)]
+    min_filter: FilterType,
 
-    pub fn min_filter(mut self, min_filter: FilterType) -> Self {
-        self.min_filter = min_filter;
-        self
-    }
-    pub fn mag_filter(mut self, mag_filter: FilterType) -> Self {
-        self.mag_filter = mag_filter;
-        self
-    }
-    pub fn mip_filter(mut self, mip_filter: FilterType) -> Self {
-        self.mip_filter = mip_filter;
-        self
-    }
-    pub fn address_u(mut self, address_u: TextureAddressMode) -> Self {
-        self.address_u = address_u;
-        self
-    }
-    pub fn address_v(mut self, address_v: TextureAddressMode) -> Self {
-        self.address_v = address_v;
-        self
-    }
-    pub fn address_w(mut self, address_w: TextureAddressMode) -> Self {
-        self.address_w = address_w;
-        self
-    }
-    pub fn flags(mut self, flags: SamplerFlags) -> Self {
-        self.flags = flags;
-        self
-    }
-    pub fn unnormalized_coords(mut self, unnormalized_coords: bool) -> Self {
-        self.unnormalized_coords = unnormalized_coords;
-        self
-    }
-    pub fn mip_lod_bias(mut self, mip_lod_bias: f32) -> Self {
-        self.mip_lod_bias = mip_lod_bias;
-        self
-    }
-    pub fn max_anisotropy(mut self, max_anisotropy: u32) -> Self {
-        self.max_anisotropy = max_anisotropy;
-        self
-    }
-    pub fn comparison_func(mut self, comparison_func: ComparisonFunction) -> Self {
-        self.comparison_func = comparison_func;
-        self
-    }
-    pub fn border_color(mut self, border_color: [f32; 4usize]) -> Self {
-        self.border_color = border_color;
-        self
-    }
-    pub fn min_lod(mut self, min_lod: f32) -> Self {
-        self.min_lod = min_lod;
-        self
-    }
-    pub fn max_lod(mut self, max_lod: f32) -> Self {
-        self.max_lod = max_lod;
-        self
-    }
+    #[builder(default = FilterType::Linear)]
+    mag_filter: FilterType,
+
+    #[builder(default = FilterType::Linear)]
+    mip_filter: FilterType,
+
+    #[builder(default = TextureAddressMode::Clamp)]
+    address_u: TextureAddressMode,
+
+    #[builder(default = TextureAddressMode::Clamp)]
+    address_v: TextureAddressMode,
+
+    #[builder(default = TextureAddressMode::Clamp)]
+    address_w: TextureAddressMode,
+
+    #[builder(default)]
+    flags: SamplerFlags,
+
+    #[builder(default = false)]
+    unnormalized_coords: bool,
+
+    #[builder(default = 0.0)]
+    mip_lod_bias: f32,
+
+    #[builder(default = 0)]
+    max_anisotropy: u32,
+
+    #[builder(default = ComparisonFunction::Never)]
+    comparison_func: ComparisonFunction,
+
+    #[builder(default = [0.0, 0.0, 0.0, 0.0])]
+    border_color: [f32; 4usize],
+
+    #[builder(default = 0.0)]
+    min_lod: f32,
+
+    #[builder(default = f32::MAX)]
+    max_lod: f32,
 }
 
 impl From<&SamplerDesc> for diligent_sys::SamplerDesc {

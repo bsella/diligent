@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use diligent::{
-    buffer::{Buffer, BufferMode},
+    buffer::Buffer,
     device_context::{
         DeferredDeviceContext, DrawFlags, DrawIndexedAttribs, ImmediateDeviceContext,
         ResourceStateTransitionMode, SetVertexBufferFlags,
@@ -17,16 +17,12 @@ use diligent::{
     input_layout::LayoutElement,
     pipeline_resource_signature::ImmutableSamplerDesc,
     pipeline_state::{
-        BlendStateDesc, CullMode, DepthStencilStateDesc, GraphicsPipelineDesc,
-        GraphicsPipelineRenderTargets, GraphicsPipelineStateCreateInfo, PipelineState,
-        RasterizerStateDesc,
+        CullMode, DepthStencilStateDesc, GraphicsPipelineDesc, GraphicsPipelineRenderTargets,
+        GraphicsPipelineStateCreateInfo, PipelineState, RasterizerStateDesc,
     },
     render_device::RenderDevice,
     sampler::SamplerDesc,
-    shader::{
-        ShaderCompileFlags, ShaderCreateInfo, ShaderLanguage, ShaderSource,
-        ShaderSourceInputStreamFactory,
-    },
+    shader::{ShaderCompileFlags, ShaderCreateInfo, ShaderLanguage, ShaderSource},
     shader_resource_binding::ShaderResourceBinding,
     shader_resource_variable::{ShaderResourceVariableDesc, ShaderResourceVariableType},
     swap_chain::SwapChain,
@@ -102,108 +98,117 @@ impl SampleBase for GeometryShader {
             .create_default_shader_source_stream_factory(&[])
             .unwrap();
 
-        fn common_shader_ci<'a>(
-            name: &'a str,
-            source: ShaderSource<'a>,
-            shader_type: ShaderType,
-            convert_ps_output_to_gamma: bool,
-            shader_source_factory: &'a ShaderSourceInputStreamFactory,
-        ) -> ShaderCreateInfo<'a> {
-            ShaderCreateInfo::new(name, source, shader_type)
-                .entry_point("main")
-                // Tell the system that the shader source code is in HLSL.
-                // For OpenGL, the engine will convert this into GLSL under the hood.
-                .language(ShaderLanguage::HLSL)
-                // OpenGL backend requires emulated combined HLSL texture samplers (g_Texture + g_Texture_sampler combination)
-                .use_combined_texture_samplers(true)
-                // Pack matrices in row-major order
-                .compile_flags(ShaderCompileFlags::PackMatrixRowMajor)
-                // Presentation engine always expects input in gamma space. Normally, pixel shader output is
-                // converted from linear to gamma space by the GPU. However, some platforms (e.g. Android in GLES mode,
-                // or Emscripten in WebGL mode) do not support gamma-correction. In this case the application
-                // has to do the conversion manually.
-                .set_macros(vec![(
-                    "CONVERT_PS_OUTPUT_TO_GAMMA",
-                    if convert_ps_output_to_gamma { "1" } else { "0" },
-                )])
-                .shader_source_input_stream_factory(Some(&shader_source_factory))
-        }
+        let shader_ci = ShaderCreateInfo::builder()
+            .entry_point("main")
+            // Tell the system that the shader source code is in HLSL.
+            // For OpenGL, the engine will convert this into GLSL under the hood.
+            .source_language(ShaderLanguage::HLSL)
+            // OpenGL backend requires emulated combined HLSL texture samplers (g_Texture + g_Texture_sampler combination)
+            .use_combined_texture_samplers(true)
+            // Pack matrices in row-major order
+            .compile_flags(ShaderCompileFlags::PackMatrixRowMajor)
+            // Presentation engine always expects input in gamma space. Normally, pixel shader output is
+            // converted from linear to gamma space by the GPU. However, some platforms (e.g. Android in GLES mode,
+            // or Emscripten in WebGL mode) do not support gamma-correction. In this case the application
+            // has to do the conversion manually.
+            .macros(vec![(
+                "CONVERT_PS_OUTPUT_TO_GAMMA",
+                if convert_ps_output_to_gamma { "1" } else { "0" },
+            )])
+            .shader_source_input_stream_factory(&shader_source_factory);
 
         // Create a vertex shader
         let vertex_shader = {
-            let shader_ci = common_shader_ci(
-                "Cube VS",
-                ShaderSource::FilePath(Path::new("assets/cube_geometry.vsh")),
-                ShaderType::Vertex,
-                convert_ps_output_to_gamma,
-                &shader_source_factory,
-            );
+            let shader_ci = shader_ci
+                .clone()
+                .name("Cube VS")
+                .source(ShaderSource::FilePath(Path::new(
+                    "assets/cube_geometry.vsh",
+                )))
+                .shader_type(ShaderType::Vertex)
+                .build();
 
             device.create_shader(&shader_ci).unwrap()
         };
 
         // Create a geometry shader
         let geometry_shader = {
-            let shader_ci = common_shader_ci(
-                "Cube GS",
-                ShaderSource::FilePath(Path::new("assets/cube_geometry.gsh")),
-                ShaderType::Geometry,
-                convert_ps_output_to_gamma,
-                &shader_source_factory,
-            );
+            let shader_ci = shader_ci
+                .clone()
+                .name("Cube GS")
+                .source(ShaderSource::FilePath(Path::new(
+                    "assets/cube_geometry.gsh",
+                )))
+                .shader_type(ShaderType::Geometry)
+                .build();
 
             device.create_shader(&shader_ci).unwrap()
         };
 
         // Create a pixel shader
         let pixel_shader = {
-            let shader_ci = common_shader_ci(
-                "Cube PS",
-                ShaderSource::FilePath(Path::new("assets/cube_geometry.psh")),
-                ShaderType::Pixel,
-                convert_ps_output_to_gamma,
-                &shader_source_factory,
-            );
+            let shader_ci = shader_ci
+                .clone()
+                .name("Cube PS")
+                .source(ShaderSource::FilePath(Path::new(
+                    "assets/cube_geometry.psh",
+                )))
+                .shader_type(ShaderType::Pixel)
+                .build();
 
             device.create_shader(&shader_ci).unwrap()
         };
 
         // Define immutable sampler for g_Texture. Immutable samplers should be used whenever possible
-        let sampler_desc = SamplerDesc::new("Cube texture sampler")
+        let sampler_desc = SamplerDesc::builder()
+            .name("Cube texture sampler")
             .min_filter(FilterType::Linear)
             .mag_filter(FilterType::Linear)
             .mip_filter(FilterType::Linear)
             .address_u(TextureAddressMode::Clamp)
             .address_v(TextureAddressMode::Clamp)
-            .address_w(TextureAddressMode::Clamp);
+            .address_w(TextureAddressMode::Clamp)
+            .build();
+
+        let rasterizer_desc = RasterizerStateDesc::builder()
+            // Cull back faces
+            .cull_mode(CullMode::Back)
+            .build();
+
+        let depth_desc = DepthStencilStateDesc::builder()
+            // Enable depth testing
+            .depth_enable(true)
+            .build();
+
+        let mut rtv_formats = std::array::from_fn(|_| None);
+        rtv_formats[0] = Some(swap_chain_desc.color_buffer_format);
+
+        let pipeline_output = GraphicsPipelineRenderTargets::builder()
+            // This tutorial will render to a single render target
+            .num_render_targets(1)
+            // Set render target format which is the format of the swap chain's color buffer
+            .rtv_formats(rtv_formats)
+            // Set depth buffer format which is the format of the swap chain's back buffer
+            .dsv_format(swap_chain_desc.depth_buffer_format)
+            .build();
 
         // Pipeline state object encompasses configuration of all GPU stages
         let pso_create_info = GraphicsPipelineStateCreateInfo::new(
             "Cube PSO",
-            GraphicsPipelineDesc::new(
-                BlendStateDesc::default(),
-                RasterizerStateDesc::default()
-                    // Cull back faces
-                    .cull_mode(CullMode::Back),
-                DepthStencilStateDesc::default()
-                    // Enable depth testing
-                    .depth_enable(true),
-                GraphicsPipelineRenderTargets::default() // This tutorial will render to a single render target
-                    .num_render_targets(1)
-                    // Set render target format which is the format of the swap chain's color buffer
-                    .rtv_format::<0>(swap_chain_desc.color_buffer_format)
-                    // Set depth buffer format which is the format of the swap chain's back buffer
-                    .dsv_format(swap_chain_desc.depth_buffer_format),
-            )
-            // Primitive topology defines what kind of primitives will be rendered by this pipeline state
-            .primitive_topology(PrimitiveTopology::TriangleList)
-            // Define vertex shader input layout
-            .set_input_layouts([
-                // Attribute 0 - vertex position
-                LayoutElement::new(0, 3, ValueType::Float32).is_normalized(false),
-                // Attribute 1 - texture coordinates
-                LayoutElement::new(0, 2, ValueType::Float32).is_normalized(false),
-            ]),
+            GraphicsPipelineDesc::builder()
+                .rasterizer_desc(rasterizer_desc)
+                .depth_stencil_desc(depth_desc)
+                .output(pipeline_output)
+                // Primitive topology defines what kind of primitives will be rendered by this pipeline state
+                .primitive_topology(PrimitiveTopology::TriangleList)
+                // Define vertex shader input layout
+                .input_layouts([
+                    // Attribute 0 - vertex position
+                    LayoutElement::builder().slot(0).f32_3().build(),
+                    // Attribute 1 - texture coordinates
+                    LayoutElement::builder().slot(0).f32_2().build(),
+                ])
+                .build(),
         )
         .vertex_shader(&vertex_shader)
         .geometry_shader(&geometry_shader)
@@ -212,11 +217,11 @@ impl SampleBase for GeometryShader {
         .default_variable_type(ShaderResourceVariableType::Static)
         // Shader variables should typically be mutable, which means they are expected
         // to change on a per-instance basis
-        .set_shader_resource_variables([ShaderResourceVariableDesc::new(
-            "g_Texture",
-            ShaderResourceVariableType::Mutable,
-            ShaderTypes::Pixel,
-        )])
+        .set_shader_resource_variables([ShaderResourceVariableDesc::builder()
+            .name("g_Texture")
+            .variable_type(ShaderResourceVariableType::Mutable)
+            .shader_stages(ShaderTypes::Pixel)
+            .build()])
         .set_immutable_samplers([ImmutableSamplerDesc::new(
             ShaderTypes::Pixel,
             "g_Texture",
@@ -261,23 +266,25 @@ impl SampleBase for GeometryShader {
                 .decode()
                 .unwrap();
 
-            let texture = device
-                .create_texture(
-                    &TextureDesc::new(
-                        "DGLogo",
-                        TextureDimension::Texture2D,
-                        image.width(),
-                        image.height(),
-                        TextureFormat::RGBA8_UNORM_SRGB,
-                    )
-                    .bind_flags(BindFlags::ShaderResource)
-                    .usage(Usage::Immutable),
-                    &[&TextureSubResource::new_cpu(
-                        image.as_bytes(),
-                        image.width() as u64 * std::mem::size_of::<[u8; 4]>() as u64,
-                    )],
-                    None,
+            let texture_desc = TextureDesc::builder()
+                .name("DGLogo")
+                .dimension(TextureDimension::Texture2D)
+                .width(image.width())
+                .height(image.height())
+                .format(TextureFormat::RGBA8_UNORM_SRGB)
+                .bind_flags(BindFlags::ShaderResource)
+                .usage(Usage::Immutable)
+                .build();
+
+            let subresource = TextureSubResource::builder()
+                .from_host(
+                    image.as_bytes(),
+                    image.width() as u64 * std::mem::size_of::<[u8; 4]>() as u64,
                 )
+                .build();
+
+            let texture = device
+                .create_texture(&texture_desc, &[&subresource], None)
                 .unwrap();
 
             // Get shader resource view from the texture
@@ -294,9 +301,9 @@ impl SampleBase for GeometryShader {
             &device,
             GeometryPrimitiveVertexFlags::PosTex,
             BindFlags::VertexBuffer,
-            BufferMode::Undefined,
+            None,
             BindFlags::IndexBuffer,
-            BufferMode::Undefined,
+            None,
         )
         .unwrap();
 
@@ -421,9 +428,12 @@ impl SampleBase for GeometryShader {
         immediate_context
             .commit_shader_resources(&self.srb, ResourceStateTransitionMode::Transition);
 
-        let draw_attribs = DrawIndexedAttribs::new(36, ValueType::Uint32)
+        let draw_attribs = DrawIndexedAttribs::builder()
+            .num_indices(36)
+            .index_type(ValueType::Uint32)
             // Verify the state of vertex and index buffers
-            .flags(DrawFlags::VerifyAll);
+            .flags(DrawFlags::VerifyAll)
+            .build();
 
         immediate_context.draw_indexed(&draw_attribs);
     }

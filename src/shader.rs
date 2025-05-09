@@ -4,6 +4,7 @@ use std::os::unix::ffi::OsStrExt;
 use std::{ffi::CString, ops::Deref, path::Path, str::FromStr};
 
 use bitflags::bitflags;
+use bon::Builder;
 use static_assertions::const_assert;
 
 use crate::{
@@ -12,6 +13,7 @@ use crate::{
     object::Object,
 };
 
+#[derive(Clone, Copy)]
 pub enum ShaderSource<'a> {
     FilePath(&'a Path),
     SourceCode(&'a str),
@@ -28,6 +30,12 @@ pub enum ShaderLanguage {
     MSLVerbatim,
     MTLB,
     WGSL,
+}
+
+impl Default for ShaderLanguage {
+    fn default() -> Self {
+        ShaderLanguage::Default
+    }
 }
 
 impl From<ShaderLanguage> for diligent_sys::SHADER_SOURCE_LANGUAGE {
@@ -51,6 +59,12 @@ pub enum ShaderCompiler {
     GLSLANG,
     DXC,
     FXC,
+}
+
+impl Default for ShaderCompiler {
+    fn default() -> Self {
+        ShaderCompiler::Default
+    }
 }
 
 impl From<ShaderCompiler> for diligent_sys::SHADER_COMPILER {
@@ -133,6 +147,7 @@ impl From<&diligent_sys::ShaderResourceDesc> for ShaderResourceDesc {
 }
 
 bitflags! {
+    #[derive(Clone,Copy)]
     pub struct ShaderCompileFlags : diligent_sys::SHADER_COMPILE_FLAGS {
         const None                  = diligent_sys::SHADER_COMPILE_FLAG_NONE as diligent_sys::SHADER_COMPILE_FLAGS;
         const EnableUnboundedArrays = diligent_sys::SHADER_COMPILE_FLAG_ENABLE_UNBOUNDED_ARRAYS as diligent_sys::SHADER_COMPILE_FLAGS;
@@ -144,85 +159,54 @@ bitflags! {
 }
 const_assert!(diligent_sys::SHADER_COMPILE_FLAG_LAST == 16);
 
-pub struct ShaderDesc {
-    name: CString,
-    shader_type: ShaderType,
-    use_combined_texture_samplers: bool,
-    combined_sampler_suffix: CString,
+impl Default for ShaderCompileFlags {
+    fn default() -> Self {
+        ShaderCompileFlags::None
+    }
 }
 
+#[derive(Builder)]
+#[builder(derive(Clone))]
 pub struct ShaderCreateInfo<'a> {
+    #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
+    name: CString,
+
     source: ShaderSource<'a>,
+
+    shader_type: ShaderType,
+
+    #[builder(default = false)]
+    use_combined_texture_samplers: bool,
+
+    #[builder(with =|suffix : impl AsRef<str>| CString::new(suffix.as_ref()).unwrap())]
+    #[builder(default = CString::new("_sampler").unwrap())]
+    combined_sampler_suffix: CString,
+
     shader_source_input_stream_factory: Option<&'a ShaderSourceInputStreamFactory>,
+
+    #[builder(with =|ep : impl AsRef<str>| ep.as_ref().to_owned())]
+    #[builder(default = "main".to_owned())]
     entry_point: String,
-    macros: Vec<(String, String)>,
-    desc: ShaderDesc,
-    source_language: ShaderLanguage,
-    compiler: ShaderCompiler,
-    language_version: Version,
-    compile_flags: ShaderCompileFlags,
-}
 
-impl<'a> ShaderCreateInfo<'a> {
-    pub fn new(name: impl AsRef<str>, source: ShaderSource<'a>, shader_type: ShaderType) -> Self {
-        ShaderCreateInfo {
-            source,
-            shader_source_input_stream_factory: None,
-            entry_point: "main".to_owned(),
-            macros: Vec::new(),
-            desc: ShaderDesc::new(name, shader_type),
-            source_language: ShaderLanguage::Default,
-            compiler: ShaderCompiler::Default,
-            language_version: Version { major: 0, minor: 0 },
-            compile_flags: ShaderCompileFlags::None,
-        }
-    }
-
-    pub fn entry_point(mut self, entry_point: impl Into<String>) -> Self {
-        self.entry_point = entry_point.into();
-        self
-    }
-
-    pub fn set_macros(mut self, macros: Vec<(impl Into<String>, impl Into<String>)>) -> Self {
-        self.macros = macros
+    #[builder(with =|macros: Vec<(impl Into<String>, impl Into<String>)>|
+        macros
             .into_iter()
             .map(|(name, def)| (name.into(), def.into()))
-            .collect();
-        self
-    }
+            .collect())]
+    #[builder(default = Vec::new())]
+    macros: Vec<(String, String)>,
 
-    pub fn use_combined_texture_samplers(mut self, use_combined_texture_samplers: bool) -> Self {
-        self.desc.use_combined_texture_samplers = use_combined_texture_samplers;
-        self
-    }
+    #[builder(default)]
+    source_language: ShaderLanguage,
 
-    pub fn language(mut self, language: ShaderLanguage) -> Self {
-        self.source_language = language;
-        self
-    }
+    #[builder(default)]
+    compiler: ShaderCompiler,
 
-    pub fn compiler(mut self, compiler: ShaderCompiler) -> Self {
-        self.compiler = compiler;
-        self
-    }
+    #[builder(default = Version { major: 0, minor: 0 })]
+    language_version: Version,
 
-    pub fn language_version(mut self, version: Version) -> Self {
-        self.language_version = version;
-        self
-    }
-
-    pub fn compile_flags(mut self, compile_flags: ShaderCompileFlags) -> Self {
-        self.compile_flags = compile_flags;
-        self
-    }
-
-    pub fn shader_source_input_stream_factory(
-        mut self,
-        shader_source_input_stream_factory: Option<&'a ShaderSourceInputStreamFactory>,
-    ) -> Self {
-        self.shader_source_input_stream_factory = shader_source_input_stream_factory;
-        self
-    }
+    #[builder(default)]
+    compile_flags: ShaderCompileFlags,
 }
 
 pub(crate) struct ShaderCreateInfoWrapper {
@@ -311,12 +295,12 @@ impl From<&ShaderCreateInfo<'_>> for ShaderCreateInfoWrapper {
             Desc: diligent_sys::ShaderDesc {
                 _DeviceObjectAttribs: {
                     diligent_sys::DeviceObjectAttribs {
-                        Name: value.desc.name.as_ptr(),
+                        Name: value.name.as_ptr(),
                     }
                 },
-                ShaderType: value.desc.shader_type.into(),
-                UseCombinedTextureSamplers: value.desc.use_combined_texture_samplers,
-                CombinedSamplerSuffix: value.desc.combined_sampler_suffix.as_ptr(),
+                ShaderType: value.shader_type.into(),
+                UseCombinedTextureSamplers: value.use_combined_texture_samplers,
+                CombinedSamplerSuffix: value.combined_sampler_suffix.as_ptr(),
             },
             SourceLanguage: value.source_language.into(),
             ShaderCompiler: value.compiler.into(),
@@ -349,17 +333,6 @@ impl From<&ShaderCreateInfo<'_>> for ShaderCreateInfoWrapper {
             _entry_point: entry_point,
             _shader_source_path: shader_source_path,
             sci,
-        }
-    }
-}
-
-impl ShaderDesc {
-    fn new(name: impl AsRef<str>, shader_type: ShaderType) -> Self {
-        ShaderDesc {
-            name: CString::new(name.as_ref()).unwrap(),
-            shader_type,
-            use_combined_texture_samplers: false,
-            combined_sampler_suffix: std::ffi::CString::new("_sampler").unwrap(),
         }
     }
 }

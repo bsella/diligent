@@ -233,7 +233,10 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
         mut engine_create_info: EngineCreateInfo,
         window: Option<&NativeWindow>,
     ) -> Self {
-        let swap_chain_desc = SwapChainDesc::default();
+        let swap_chain_desc = SwapChainDesc::builder()
+            .width(app_settings.width as u32)
+            .height(app_settings.height as u32)
+            .build();
 
         fn find_adapter(
             mut adapter_index: Option<usize>,
@@ -522,13 +525,15 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
 
         let swap_chain_desc = swap_chain.get_desc();
 
-        let imgui_renderer = ImguiRenderer::new(ImguiRendererCreateInfo::new(
-            &device,
-            swap_chain_desc.color_buffer_format,
-            swap_chain_desc.depth_buffer_format,
-            app_settings.width,
-            app_settings.height,
-        ));
+        let imgui_renderer = ImguiRenderer::new(
+            &ImguiRendererCreateInfo::builder()
+                .device(&device)
+                .back_buffer_format(swap_chain_desc.color_buffer_format)
+                .depth_buffer_format(swap_chain_desc.depth_buffer_format)
+                .initial_width(app_settings.width as f32)
+                .initial_height(app_settings.height as f32)
+                .build(),
+        );
 
         let display_modes_strings = display_modes
             .iter()

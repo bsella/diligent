@@ -1,3 +1,5 @@
+use bon::Builder;
+
 use crate::{
     buffer::{Buffer, BufferDesc, BufferMode},
     geometry_primitives::{
@@ -8,14 +10,26 @@ use crate::{
     render_device::RenderDevice,
 };
 
+#[derive(Builder)]
 pub struct GeometryPrimitiveBuffersCreateInfo {
+    #[builder(default)]
     vertex_buffer_usage: Usage,
+
+    #[builder(default)]
     index_buffer_usage: Usage,
+
     vertex_buffer_bind_flags: BindFlags,
+
     index_buffer_bind_flags: BindFlags,
-    vertex_buffer_mode: BufferMode,
-    index_buffer_mode: BufferMode,
+
+    vertex_buffer_mode: Option<BufferMode>,
+
+    index_buffer_mode: Option<BufferMode>,
+
+    #[builder(default)]
     vertex_buffer_cpu_access_flags: CpuAccessFlags,
+
+    #[builder(default)]
     index_buffer_cpu_access_flags: CpuAccessFlags,
 }
 
@@ -26,52 +40,11 @@ impl Default for GeometryPrimitiveBuffersCreateInfo {
             index_buffer_usage: Usage::Default,
             vertex_buffer_bind_flags: BindFlags::VertexBuffer,
             index_buffer_bind_flags: BindFlags::IndexBuffer,
-            vertex_buffer_mode: BufferMode::Undefined,
-            index_buffer_mode: BufferMode::Undefined,
+            vertex_buffer_mode: None,
+            index_buffer_mode: None,
             vertex_buffer_cpu_access_flags: CpuAccessFlags::None,
             index_buffer_cpu_access_flags: CpuAccessFlags::None,
         }
-    }
-}
-
-impl GeometryPrimitiveBuffersCreateInfo {
-    pub fn vertex_buffer_usage(mut self, vertex_buffer_usage: Usage) -> Self {
-        self.vertex_buffer_usage = vertex_buffer_usage;
-        self
-    }
-    pub fn index_buffer_usage(mut self, index_buffer_usage: Usage) -> Self {
-        self.index_buffer_usage = index_buffer_usage;
-        self
-    }
-    pub fn vertex_buffer_bind_flags(mut self, vertex_buffer_bind_flags: BindFlags) -> Self {
-        self.vertex_buffer_bind_flags = vertex_buffer_bind_flags;
-        self
-    }
-    pub fn index_buffer_bind_flags(mut self, index_buffer_bind_flags: BindFlags) -> Self {
-        self.index_buffer_bind_flags = index_buffer_bind_flags;
-        self
-    }
-    pub fn vertex_buffer_mode(mut self, vertex_buffer_mode: BufferMode) -> Self {
-        self.vertex_buffer_mode = vertex_buffer_mode;
-        self
-    }
-    pub fn index_buffer_mode(mut self, index_buffer_mode: BufferMode) -> Self {
-        self.index_buffer_mode = index_buffer_mode;
-        self
-    }
-    pub fn vertex_buffer_cpu_access_flags(
-        mut self,
-        vertex_buffer_cpu_access_flags: CpuAccessFlags,
-    ) -> Self {
-        self.vertex_buffer_cpu_access_flags = vertex_buffer_cpu_access_flags;
-        self
-    }
-    pub fn index_buffer_cpu_access_flags(
-        mut self,
-        index_buffer_cpu_access_flags: CpuAccessFlags,
-    ) -> Self {
-        self.index_buffer_cpu_access_flags = index_buffer_cpu_access_flags;
-        self
     }
 }
 
@@ -93,16 +66,20 @@ pub fn create_geometry_primitive_buffers(
     let name = format!("Geometry primitive {primitive_id} ({primitive_type_str})");
 
     let vb_desc = {
-        let vb_desc = BufferDesc::new(&name, vertices.get_size() as u64)
+        let vb_desc = BufferDesc::builder()
+            .name(&name)
+            .size(vertices.get_size() as _)
             .bind_flags(buffer_ci.vertex_buffer_bind_flags)
             .usage(buffer_ci.vertex_buffer_usage)
             .cpu_access_flags(buffer_ci.vertex_buffer_cpu_access_flags)
-            .mode(buffer_ci.vertex_buffer_mode);
+            .maybe_mode(buffer_ci.vertex_buffer_mode);
 
-        match buffer_ci.vertex_buffer_mode {
-            BufferMode::Undefined => vb_desc,
-            _ => vb_desc
-                .element_byte_stride(get_geometry_primitive_vertex_size(&attribs.vertex_flags)),
+        if buffer_ci.vertex_buffer_mode.is_some() {
+            vb_desc
+                .element_byte_stride(get_geometry_primitive_vertex_size(&attribs.vertex_flags))
+                .build()
+        } else {
+            vb_desc.build()
         }
     };
 
@@ -113,15 +90,20 @@ pub fn create_geometry_primitive_buffers(
     )?;
 
     let ib_desc = {
-        let ib_desc = BufferDesc::new(&name, indices.get_size() as u64)
+        let ib_desc = BufferDesc::builder()
+            .name(&name)
+            .size(indices.get_size() as _)
             .bind_flags(buffer_ci.index_buffer_bind_flags)
             .usage(buffer_ci.index_buffer_usage)
             .cpu_access_flags(buffer_ci.index_buffer_cpu_access_flags)
-            .mode(buffer_ci.index_buffer_mode);
+            .maybe_mode(buffer_ci.index_buffer_mode);
 
-        match buffer_ci.index_buffer_mode {
-            BufferMode::Undefined => ib_desc,
-            _ => ib_desc.element_byte_stride(std::mem::size_of::<u32>() as u32),
+        if buffer_ci.index_buffer_mode.is_some() {
+            ib_desc
+                .element_byte_stride(std::mem::size_of::<u32>() as u32)
+                .build()
+        } else {
+            ib_desc.build()
         }
     };
 
@@ -147,10 +129,13 @@ pub fn create_uniform_buffer(
         _ => cpu_access_flags,
     };
 
-    let cb_desc = BufferDesc::new(name, size)
+    let cb_desc = BufferDesc::builder()
+        .name(&name)
+        .size(size)
         .usage(usage)
         .bind_flags(bind_flags)
-        .cpu_access_flags(cpu_access_flags);
+        .cpu_access_flags(cpu_access_flags)
+        .build();
 
     device.create_buffer(&cb_desc)
 }
@@ -169,10 +154,13 @@ pub fn create_uniform_buffer_with_data<T>(
         _ => cpu_access_flags,
     };
 
-    let cb_desc = BufferDesc::new(name, size)
+    let cb_desc = BufferDesc::builder()
+        .name(name)
+        .size(size)
         .usage(usage)
         .bind_flags(bind_flags)
-        .cpu_access_flags(cpu_access_flags);
+        .cpu_access_flags(cpu_access_flags)
+        .build();
 
     device.create_buffer_with_data(&cb_desc, data, None)
 }

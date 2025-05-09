@@ -13,6 +13,7 @@ repository   = "https://github.com/bsella/diligent"
 diligent_sys      = { path = "./diligent_sys", version = "2.5.5"}
 static_assertions = "1.1.0"
 bitflags          = "2.9.0"
+bon               = "3.6.3"
 
 [features]
 

@@ -2,6 +2,7 @@ use std::str::FromStr;
 use std::{ffi::CString, ops::Deref};
 
 use bitflags::bitflags;
+use bon::Builder;
 use static_assertions::const_assert;
 
 use crate::pipeline_state_cache::PipelineStateCache;
@@ -237,6 +238,7 @@ impl From<diligent_sys::COMPARISON_FUNCTION> for ComparisonFunction {
 }
 
 bitflags! {
+    #[derive(Clone,Copy)]
     pub struct ShaderVariableFlags: diligent_sys::SHADER_VARIABLE_FLAGS {
         const None                           = diligent_sys::SHADER_VARIABLE_FLAG_NONE as diligent_sys::SHADER_VARIABLE_FLAGS;
         const NoDynamicBuffers               = diligent_sys::SHADER_VARIABLE_FLAG_NO_DYNAMIC_BUFFERS as diligent_sys::SHADER_VARIABLE_FLAGS;
@@ -247,7 +249,14 @@ bitflags! {
 }
 const_assert!(diligent_sys::SHADER_VARIABLE_FLAG_LAST == 8);
 
+impl Default for ShaderVariableFlags {
+    fn default() -> Self {
+        ShaderVariableFlags::None
+    }
+}
+
 bitflags! {
+    #[derive(Clone,Copy)]
     pub struct ColorMask: diligent_sys::COLOR_MASK {
         const NONE  = diligent_sys::COLOR_MASK_NONE as diligent_sys::COLOR_MASK;
         const RED   = diligent_sys::COLOR_MASK_RED as diligent_sys::COLOR_MASK;
@@ -260,6 +269,7 @@ bitflags! {
 }
 
 bitflags! {
+    #[derive(Clone,Copy)]
     pub struct PipelineStateObjectCreateFlags: diligent_sys::PSO_CREATE_FLAGS {
         const None                           = diligent_sys::PSO_CREATE_FLAG_NONE as diligent_sys::PSO_CREATE_FLAGS;
         const IgnoreMissingVariables         = diligent_sys::PSO_CREATE_FLAG_IGNORE_MISSING_VARIABLES as diligent_sys::PSO_CREATE_FLAGS;
@@ -270,7 +280,14 @@ bitflags! {
 }
 const_assert!(diligent_sys::PSO_CREATE_FLAG_LAST == 8);
 
+impl Default for PipelineStateObjectCreateFlags {
+    fn default() -> Self {
+        PipelineStateObjectCreateFlags::None
+    }
+}
+
 bitflags! {
+    #[derive(Clone,Copy)]
     pub struct PipelineShadingRateFlags: diligent_sys::PIPELINE_SHADING_RATE_FLAGS {
         const None         = diligent_sys::PIPELINE_SHADING_RATE_FLAG_NONE as diligent_sys::PIPELINE_SHADING_RATE_FLAGS;
         const PerPrimitive = diligent_sys::PIPELINE_SHADING_RATE_FLAG_PER_PRIMITIVE as diligent_sys::PIPELINE_SHADING_RATE_FLAGS;
@@ -278,6 +295,12 @@ bitflags! {
     }
 }
 const_assert!(diligent_sys::PIPELINE_SHADING_RATE_FLAG_LAST == 2);
+
+impl Default for PipelineShadingRateFlags {
+    fn default() -> Self {
+        PipelineShadingRateFlags::None
+    }
+}
 
 pub struct PipelineResourceLayoutDesc<'a> {
     default_variable_type: ShaderResourceVariableType,
@@ -472,60 +495,37 @@ impl<'a, const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE>
     }
 }
 
+#[derive(Builder)]
 pub struct RenderTargetBlendDesc {
+    #[builder(default = false)]
     blend_enable: bool,
-    logic_operation_enable: bool,
-    src_blend: BlendFactor,
-    dest_blend: BlendFactor,
-    blend_op: BlendOperation,
-    src_blend_alpha: BlendFactor,
-    dest_blend_alpha: BlendFactor,
-    blend_op_alpha: BlendOperation,
-    logic_op: LogicOperation,
-    render_target_write_mask: ColorMask,
-}
 
-impl RenderTargetBlendDesc {
-    pub fn blend_enable(mut self, blend_enable: bool) -> Self {
-        self.blend_enable = blend_enable;
-        self
-    }
-    pub fn logic_operation_enable(mut self, logic_operation_enable: bool) -> Self {
-        self.logic_operation_enable = logic_operation_enable;
-        self
-    }
-    pub fn src_blend(mut self, src_blend: BlendFactor) -> Self {
-        self.src_blend = src_blend;
-        self
-    }
-    pub fn dest_blend(mut self, dest_blend: BlendFactor) -> Self {
-        self.dest_blend = dest_blend;
-        self
-    }
-    pub fn blend_op(mut self, blend_op: BlendOperation) -> Self {
-        self.blend_op = blend_op;
-        self
-    }
-    pub fn src_blend_alpha(mut self, src_blend_alpha: BlendFactor) -> Self {
-        self.src_blend_alpha = src_blend_alpha;
-        self
-    }
-    pub fn dest_blend_alpha(mut self, dest_blend_alpha: BlendFactor) -> Self {
-        self.dest_blend_alpha = dest_blend_alpha;
-        self
-    }
-    pub fn blend_op_alpha(mut self, blend_op_alpha: BlendOperation) -> Self {
-        self.blend_op_alpha = blend_op_alpha;
-        self
-    }
-    pub fn logic_op(mut self, logic_op: LogicOperation) -> Self {
-        self.logic_op = logic_op;
-        self
-    }
-    pub fn render_target_write_mask(mut self, render_target_write_mask: ColorMask) -> Self {
-        self.render_target_write_mask = render_target_write_mask;
-        self
-    }
+    #[builder(default = false)]
+    logic_operation_enable: bool,
+
+    #[builder(default = BlendFactor::One)]
+    src_blend: BlendFactor,
+
+    #[builder(default = BlendFactor::Zero)]
+    dest_blend: BlendFactor,
+
+    #[builder(default = BlendOperation::Add)]
+    blend_op: BlendOperation,
+
+    #[builder(default = BlendFactor::One)]
+    src_blend_alpha: BlendFactor,
+
+    #[builder(default = BlendFactor::Zero)]
+    dest_blend_alpha: BlendFactor,
+
+    #[builder(default = BlendOperation::Add)]
+    blend_op_alpha: BlendOperation,
+
+    #[builder(default = LogicOperation::NoOp)]
+    logic_op: LogicOperation,
+
+    #[builder(default = ColorMask::RGBA)]
+    render_target_write_mask: ColorMask,
 }
 
 impl From<&RenderTargetBlendDesc> for diligent_sys::RenderTargetBlendDesc {
@@ -562,28 +562,16 @@ impl Default for RenderTargetBlendDesc {
     }
 }
 
+#[derive(Builder)]
 pub struct BlendStateDesc {
+    #[builder(default = false)]
     alpha_to_coverage_enable: bool,
-    independent_blend_enable: bool,
-    render_targets: [RenderTargetBlendDesc; diligent_sys::DILIGENT_MAX_RENDER_TARGETS as usize],
-}
 
-impl BlendStateDesc {
-    pub fn alpha_to_coverage_enable(mut self, alpha_to_coverage_enable: bool) -> Self {
-        self.alpha_to_coverage_enable = alpha_to_coverage_enable;
-        self
-    }
-    pub fn independent_blend_enable(mut self, independent_blend_enable: bool) -> Self {
-        self.independent_blend_enable = independent_blend_enable;
-        self
-    }
-    pub fn render_target_blend_desc<const INDEX: usize>(
-        mut self,
-        render_target_blend_desc: RenderTargetBlendDesc,
-    ) -> Self {
-        self.render_targets[INDEX] = render_target_blend_desc;
-        self
-    }
+    #[builder(default = false)]
+    independent_blend_enable: bool,
+
+    #[builder(default = std::array::from_fn(|_| RenderTargetBlendDesc::default()))]
+    render_targets: [RenderTargetBlendDesc; diligent_sys::DILIGENT_MAX_RENDER_TARGETS as usize],
 }
 
 impl From<&BlendStateDesc> for diligent_sys::BlendStateDesc {
@@ -606,55 +594,34 @@ impl Default for BlendStateDesc {
     }
 }
 
+#[derive(Builder)]
 pub struct RasterizerStateDesc {
+    #[builder(default = FillMode::Solid)]
     fill_mode: FillMode,
-    cull_mode: CullMode,
-    front_counter_clockwise: bool,
-    depth_clip_enable: bool,
-    scissor_enable: bool,
-    antialiased_line_enable: bool,
-    depth_bias: i32,
-    depth_bias_clamp: f32,
-    slope_scaled_depth_bias: f32,
-}
 
-impl RasterizerStateDesc {
-    pub fn fill_mode(mut self, fill_mode: FillMode) -> Self {
-        self.fill_mode = fill_mode;
-        self
-    }
-    pub fn cull_mode(mut self, cull_mode: CullMode) -> Self {
-        self.cull_mode = cull_mode;
-        self
-    }
-    pub fn front_counter_clockwise(mut self, front_counter_clockwise: bool) -> Self {
-        self.front_counter_clockwise = front_counter_clockwise;
-        self
-    }
-    pub fn depth_clip_enable(mut self, depth_clip_enable: bool) -> Self {
-        self.depth_clip_enable = depth_clip_enable;
-        self
-    }
-    pub fn scissor_enable(mut self, scissor_enable: bool) -> Self {
-        self.scissor_enable = scissor_enable;
-        self
-    }
-    pub fn antialiased_line_enable(mut self, antialiased_line_enable: bool) -> Self {
-        self.antialiased_line_enable = antialiased_line_enable;
-        self
-    }
-    pub fn depth_bias(mut self, depth_bias: i32) -> Self {
-        self.depth_bias = depth_bias;
-        self
-    }
-    pub fn depth_bias_clamp(mut self, depth_bias_clamp: f32) -> Self {
-        self.depth_bias_clamp = depth_bias_clamp;
-        self
-    }
-    pub fn slope_scaled_depth_bias(mut self, slope_scaled_depth_bias: f32) -> Self {
-        self.slope_scaled_depth_bias = slope_scaled_depth_bias;
-        self
-    }
+    #[builder(default = CullMode::Back)]
+    cull_mode: CullMode,
+
+    #[builder(default = false)]
+    front_counter_clockwise: bool,
+
+    #[builder(default = true)]
+    depth_clip_enable: bool,
+
+    #[builder(default = false)]
+    scissor_enable: bool,
+
+    #[builder(default = false)]
+    antialiased_line_enable: bool,
+
+    #[builder(default = 0)]
+    depth_bias: i32,
+
+    #[builder(default = 0.0)]
+    depth_bias_clamp: f32,
+
+    #[builder(default = 0.0)]
+    slope_scaled_depth_bias: f32,
 }
 
 impl From<&RasterizerStateDesc> for diligent_sys::RasterizerStateDesc {
@@ -689,30 +656,19 @@ impl Default for RasterizerStateDesc {
     }
 }
 
+#[derive(Builder)]
 pub struct StencilOperationsDesc {
+    #[builder(default = StencilOperation::Keep)]
     stencil_fail_op: StencilOperation,
-    stencil_depth_fail_op: StencilOperation,
-    stencil_pass_op: StencilOperation,
-    stencil_func: ComparisonFunction,
-}
 
-impl StencilOperationsDesc {
-    pub fn stencil_fail_op(mut self, stencil_fail_op: StencilOperation) -> Self {
-        self.stencil_fail_op = stencil_fail_op;
-        self
-    }
-    pub fn stencil_depth_fail_op(mut self, stencil_depth_fail_op: StencilOperation) -> Self {
-        self.stencil_depth_fail_op = stencil_depth_fail_op;
-        self
-    }
-    pub fn stencil_pass_op(mut self, stencil_pass_op: StencilOperation) -> Self {
-        self.stencil_pass_op = stencil_pass_op;
-        self
-    }
-    pub fn stencil_func(mut self, stencil_func: ComparisonFunction) -> Self {
-        self.stencil_func = stencil_func;
-        self
-    }
+    #[builder(default = StencilOperation::Keep)]
+    stencil_depth_fail_op: StencilOperation,
+
+    #[builder(default = StencilOperation::Keep)]
+    stencil_pass_op: StencilOperation,
+
+    #[builder(default = ComparisonFunction::Always)]
+    stencil_func: ComparisonFunction,
 }
 
 impl From<&StencilOperationsDesc> for diligent_sys::StencilOpDesc {
@@ -737,50 +693,31 @@ impl Default for StencilOperationsDesc {
     }
 }
 
+#[derive(Builder)]
 pub struct DepthStencilStateDesc {
+    #[builder(default = true)]
     depth_enable: bool,
-    depth_write_enable: bool,
-    depth_func: ComparisonFunction,
-    stencil_enable: bool,
-    stencil_read_mask: u8,
-    stencil_write_mask: u8,
-    front_face: StencilOperationsDesc,
-    back_face: StencilOperationsDesc,
-}
 
-impl DepthStencilStateDesc {
-    pub fn depth_enable(mut self, depth_enable: bool) -> Self {
-        self.depth_enable = depth_enable;
-        self
-    }
-    pub fn depth_write_enable(mut self, depth_write_enable: bool) -> Self {
-        self.depth_write_enable = depth_write_enable;
-        self
-    }
-    pub fn depth_func(mut self, depth_func: ComparisonFunction) -> Self {
-        self.depth_func = depth_func;
-        self
-    }
-    pub fn stencil_enable(mut self, stencil_enable: bool) -> Self {
-        self.stencil_enable = stencil_enable;
-        self
-    }
-    pub fn stencil_read_mask(mut self, stencil_read_mask: u8) -> Self {
-        self.stencil_read_mask = stencil_read_mask;
-        self
-    }
-    pub fn stencil_write_mask(mut self, stencil_write_mask: u8) -> Self {
-        self.stencil_write_mask = stencil_write_mask;
-        self
-    }
-    pub fn front_face(mut self, front_face: StencilOperationsDesc) -> Self {
-        self.front_face = front_face;
-        self
-    }
-    pub fn back_face(mut self, back_face: StencilOperationsDesc) -> Self {
-        self.back_face = back_face;
-        self
-    }
+    #[builder(default = true)]
+    depth_write_enable: bool,
+
+    #[builder(default = ComparisonFunction::Less)]
+    depth_func: ComparisonFunction,
+
+    #[builder(default = false)]
+    stencil_enable: bool,
+
+    #[builder(default = 0xff)]
+    stencil_read_mask: u8,
+
+    #[builder(default = 0xff)]
+    stencil_write_mask: u8,
+
+    #[builder(default)]
+    front_face: StencilOperationsDesc,
+
+    #[builder(default)]
+    back_face: StencilOperationsDesc,
 }
 
 impl From<&DepthStencilStateDesc> for diligent_sys::DepthStencilStateDesc {
@@ -813,10 +750,17 @@ impl Default for DepthStencilStateDesc {
     }
 }
 
+#[derive(Builder)]
 pub struct GraphicsPipelineRenderTargets {
+    #[builder(default = 0)]
     num_render_targets: u8,
+
+    #[builder(default = std::array::from_fn(|_| None))]
     rtv_formats: [Option<TextureFormat>; diligent_sys::DILIGENT_MAX_RENDER_TARGETS as usize],
+
     dsv_format: Option<TextureFormat>,
+
+    #[builder(default = false)]
     read_only_dsv: bool,
 }
 
@@ -828,25 +772,6 @@ impl Default for GraphicsPipelineRenderTargets {
             dsv_format: None,
             read_only_dsv: false,
         }
-    }
-}
-
-impl GraphicsPipelineRenderTargets {
-    pub fn num_render_targets(mut self, num_render_targets: u8) -> Self {
-        self.num_render_targets = num_render_targets;
-        self
-    }
-    pub fn rtv_format<const INDEX: usize>(mut self, value: TextureFormat) -> Self {
-        self.rtv_formats[INDEX] = Some(value);
-        self
-    }
-    pub fn dsv_format(mut self, dsv_format: TextureFormat) -> Self {
-        self.dsv_format = Some(dsv_format);
-        self
-    }
-    pub fn read_only_dsv(mut self, read_only_dsv: bool) -> Self {
-        self.read_only_dsv = read_only_dsv;
-        self
     }
 }
 
@@ -887,78 +812,50 @@ impl Default for GraphicsPipelineOutput<'_> {
     }
 }
 
+#[derive(Builder)]
 pub struct GraphicsPipelineDesc<'a> {
+    #[builder(default)]
     blend_desc: BlendStateDesc,
-    sample_mask: u32,
+
+    #[builder(default)]
     rasterizer_desc: RasterizerStateDesc,
+
+    #[builder(default)]
     depth_stencil_desc: DepthStencilStateDesc,
-    input_layouts: Vec<LayoutElement>,
-    primitive_topology: PrimitiveTopology,
-    num_viewports: u8,
-    shading_rate_flags: PipelineShadingRateFlags,
-    sample_count: u8,
-    sample_quality: u8,
-    node_mask: u32,
+
+    #[builder(with =|output : impl Into<GraphicsPipelineOutput<'a>>| output.into())]
+    #[builder(default)]
     output: GraphicsPipelineOutput<'a>,
+
+    #[builder(default = 0xFFFFFFFF)]
+    sample_mask: u32,
+
+    #[builder(default = Vec::new())]
+    #[builder(with =|elements : impl Into<Vec<LayoutElement>>| elements.into())]
+    input_layouts: Vec<LayoutElement>,
+
+    #[builder(default = PrimitiveTopology::TriangleList)]
+    primitive_topology: PrimitiveTopology,
+
+    #[builder(default = 1)]
+    num_viewports: u8,
+
+    #[builder(default)]
+    shading_rate_flags: PipelineShadingRateFlags,
+
+    #[builder(default = 1)]
+    sample_count: u8,
+
+    #[builder(default = 0)]
+    sample_quality: u8,
+
+    #[builder(default = 0)]
+    node_mask: u32,
 }
 
 impl Default for GraphicsPipelineDesc<'_> {
     fn default() -> Self {
-        GraphicsPipelineDesc::new(
-            BlendStateDesc::default(),
-            RasterizerStateDesc::default(),
-            DepthStencilStateDesc::default(),
-            GraphicsPipelineOutput::default(),
-        )
-    }
-}
-
-impl<'a> GraphicsPipelineDesc<'a> {
-    pub fn new(
-        blend_desc: BlendStateDesc,
-        rasterizer_desc: RasterizerStateDesc,
-        depth_stencil_desc: DepthStencilStateDesc,
-        output: impl Into<GraphicsPipelineOutput<'a>>,
-    ) -> Self {
-        GraphicsPipelineDesc {
-            blend_desc,
-            sample_mask: 0xFFFFFFFF,
-            rasterizer_desc,
-            depth_stencil_desc,
-            input_layouts: Vec::new(),
-            primitive_topology: PrimitiveTopology::TriangleList,
-            num_viewports: 1,
-            shading_rate_flags: PipelineShadingRateFlags::None,
-            node_mask: 0,
-            sample_count: 1,
-            sample_quality: 0,
-            output: output.into(),
-        }
-    }
-
-    pub fn sample_mask(mut self, sample_mask: u32) -> Self {
-        self.sample_mask = sample_mask;
-        self
-    }
-    pub fn primitive_topology(mut self, primitive_topology: PrimitiveTopology) -> Self {
-        self.primitive_topology = primitive_topology;
-        self
-    }
-    pub fn num_viewports(mut self, num_viewports: u8) -> Self {
-        self.num_viewports = num_viewports;
-        self
-    }
-    pub fn shading_rate_flags(mut self, shading_rate_flags: PipelineShadingRateFlags) -> Self {
-        self.shading_rate_flags = shading_rate_flags;
-        self
-    }
-    pub fn set_input_layouts(mut self, input_layout: impl Into<Vec<LayoutElement>>) -> Self {
-        self.input_layouts = input_layout.into();
-        self
-    }
-    pub fn sample_count(mut self, sample_count: u8) -> Self {
-        self.sample_count = sample_count;
-        self
+        GraphicsPipelineDesc::builder().build()
     }
 }
 
@@ -1057,15 +954,25 @@ impl<'a> From<&GraphicsPipelineDesc<'a>> for GraphicsPipelineDescWrapper {
 // convert a `::std::os::raw::c_uint` into a `u8` implicitly in compile time. If you know of a better
 // way of doing this, feel free to make a pull request.
 const_assert!(diligent_sys::PIPELINE_TYPE_GRAPHICS == 0);
+
+// TODO #[derive(Builder)]
 pub struct GraphicsPipelineStateCreateInfo<'a> {
     pipeline_state_create_info: PipelineStateCreateInfo<'a, 0>,
+
     graphics_pipeline_desc: GraphicsPipelineDesc<'a>,
+
     vertex_shader: Option<&'a Shader>,
+
     pixel_shader: Option<&'a Shader>,
+
     domain_shader: Option<&'a Shader>,
+
     hull_shader: Option<&'a Shader>,
+
     geometry_shader: Option<&'a Shader>,
+
     amplification_shader: Option<&'a Shader>,
+
     mesh_shader: Option<&'a Shader>,
 }
 

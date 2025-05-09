@@ -25,6 +25,7 @@ pub enum PsoCacheMode {
 }
 
 bitflags! {
+    #[derive(Clone,Copy)]
     pub struct PsoCacheFlags: diligent_sys::PSO_CACHE_FLAGS {
         const None    = diligent_sys::PSO_CACHE_FLAG_NONE as diligent_sys::PSO_CACHE_FLAGS;
         const Verbose = diligent_sys::PSO_CACHE_FLAG_VERBOSE as diligent_sys::PSO_CACHE_FLAGS;

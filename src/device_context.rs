@@ -1,6 +1,7 @@
 use std::{ffi::CString, ops::Deref};
 
 use bitflags::bitflags;
+use bon::Builder;
 use static_assertions::const_assert;
 
 use crate::{
@@ -26,6 +27,7 @@ use crate::{
 };
 
 bitflags! {
+    #[derive(Clone, Copy)]
     pub struct DrawFlags: diligent_sys::DRAW_FLAGS {
         const None                         = diligent_sys::DRAW_FLAG_NONE as diligent_sys::DRAW_FLAGS;
         const VerifyStates                 = diligent_sys::DRAW_FLAG_VERIFY_STATES as diligent_sys::DRAW_FLAGS;
@@ -35,48 +37,41 @@ bitflags! {
     }
 }
 
+impl Default for DrawFlags {
+    fn default() -> Self {
+        DrawFlags::None
+    }
+}
+
 bitflags! {
+    #[derive(Clone, Copy)]
     pub struct SetVertexBufferFlags: diligent_sys::SET_VERTEX_BUFFERS_FLAGS {
         const None  = diligent_sys::SET_VERTEX_BUFFERS_FLAG_NONE as diligent_sys::SET_VERTEX_BUFFERS_FLAGS;
         const Reset = diligent_sys::SET_VERTEX_BUFFERS_FLAG_RESET as diligent_sys::SET_VERTEX_BUFFERS_FLAGS;
     }
 }
 
-pub struct DrawAttribs {
-    num_vertices: u32,
-    flags: DrawFlags,
-    num_instances: u32,
-    start_vertex_location: u32,
-    first_instance_location: u32,
+impl Default for SetVertexBufferFlags {
+    fn default() -> Self {
+        SetVertexBufferFlags::None
+    }
 }
 
-impl DrawAttribs {
-    pub fn new(num_vertices: u32) -> Self {
-        DrawAttribs {
-            num_vertices: num_vertices,
-            flags: DrawFlags::None,
-            num_instances: 1,
-            start_vertex_location: 0,
-            first_instance_location: 0,
-        }
-    }
+#[derive(Builder)]
+pub struct DrawAttribs {
+    num_vertices: u32,
 
-    pub fn flags(mut self, flags: DrawFlags) -> Self {
-        self.flags = flags;
-        self
-    }
-    pub fn num_instances(mut self, num_instances: u32) -> Self {
-        self.num_instances = num_instances;
-        self
-    }
-    pub fn start_vertex_location(mut self, start_vertex_location: u32) -> Self {
-        self.start_vertex_location = start_vertex_location;
-        self
-    }
-    pub fn first_instance_location(mut self, first_instance_location: u32) -> Self {
-        self.first_instance_location = first_instance_location;
-        self
-    }
+    #[builder(default)]
+    flags: DrawFlags,
+
+    #[builder(default = 1)]
+    num_instances: u32,
+
+    #[builder(default = 0)]
+    start_vertex_location: u32,
+
+    #[builder(default = 0)]
+    first_instance_location: u32,
 }
 
 impl From<&DrawAttribs> for diligent_sys::DrawAttribs {
@@ -91,51 +86,25 @@ impl From<&DrawAttribs> for diligent_sys::DrawAttribs {
     }
 }
 
+#[derive(Builder)]
 pub struct DrawIndexedAttribs {
     num_indices: u32,
     index_type: ValueType,
 
+    #[builder(default)]
     flags: DrawFlags,
+
+    #[builder(default = 1)]
     num_instances: u32,
+
+    #[builder(default = 0)]
     first_index_location: u32,
+
+    #[builder(default = 0)]
     base_vertex: u32,
+
+    #[builder(default = 0)]
     first_instance_location: u32,
-}
-
-impl DrawIndexedAttribs {
-    pub fn new(num_indices: u32, index_type: ValueType) -> Self {
-        DrawIndexedAttribs {
-            num_indices,
-            index_type,
-
-            flags: DrawFlags::None,
-            num_instances: 1,
-            first_index_location: 0,
-            base_vertex: 0,
-            first_instance_location: 0,
-        }
-    }
-
-    pub fn flags(mut self, flags: DrawFlags) -> Self {
-        self.flags = flags;
-        self
-    }
-    pub fn num_instances(mut self, num_instances: u32) -> Self {
-        self.num_instances = num_instances;
-        self
-    }
-    pub fn first_index_location(mut self, first_index_location: u32) -> Self {
-        self.first_index_location = first_index_location;
-        self
-    }
-    pub fn base_vertex(mut self, base_vertex: u32) -> Self {
-        self.base_vertex = base_vertex;
-        self
-    }
-    pub fn first_instance_location(mut self, first_instance_location: u32) -> Self {
-        self.first_instance_location = first_instance_location;
-        self
-    }
 }
 
 impl From<&DrawIndexedAttribs> for diligent_sys::DrawIndexedAttribs {
@@ -218,22 +187,13 @@ impl From<&Viewport> for diligent_sys::Viewport {
 
 #[derive(Eq, PartialEq)]
 pub struct Rect {
-    left: i32,
-    top: i32,
-    right: i32,
-    bottom: i32,
+    pub left: i32,
+    pub top: i32,
+    pub right: i32,
+    pub bottom: i32,
 }
 
 impl Rect {
-    pub fn new(left: i32, top: i32, right: i32, bottom: i32) -> Self {
-        Rect {
-            left,
-            top,
-            right,
-            bottom,
-        }
-    }
-
     pub fn is_valid(&self) -> bool {
         self.right > self.left && self.bottom > self.top
     }
@@ -282,6 +242,7 @@ impl<'a> Drop for ScopedDebugGroup<'a> {
 }
 
 bitflags! {
+    #[derive(Clone, Copy)]
     pub struct StateTransitionFlags: diligent_sys::STATE_TRANSITION_FLAGS {
         const None           = diligent_sys::STATE_TRANSITION_FLAG_NONE as diligent_sys::STATE_TRANSITION_FLAGS;
         const UpdateState    = diligent_sys::STATE_TRANSITION_FLAG_UPDATE_STATE as diligent_sys::STATE_TRANSITION_FLAGS;
@@ -290,62 +251,39 @@ bitflags! {
     }
 }
 
-pub struct StateTransitionDesc<'a> {
-    resource: &'a DeviceObject,
-    new_state: ResourceState,
-    first_mip_level: u32,
-    mip_levels_count: u32,
-    first_array_slice: u32,
-    array_slice_count: u32,
-    old_state: Option<ResourceState>,
-    transition_type: StateTransitionType,
-    flags: StateTransitionFlags,
+impl Default for StateTransitionFlags {
+    fn default() -> Self {
+        StateTransitionFlags::None
+    }
 }
 
-impl<'a> StateTransitionDesc<'a> {
-    pub fn new(resource: &'a impl AsRef<DeviceObject>, new_state: ResourceState) -> Self {
-        StateTransitionDesc {
-            resource: resource.as_ref(),
-            new_state,
-            first_array_slice: 0,
-            array_slice_count: diligent_sys::REMAINING_ARRAY_SLICES,
-            first_mip_level: 0,
-            mip_levels_count: diligent_sys::REMAINING_MIP_LEVELS,
-            old_state: None,
-            transition_type: StateTransitionType::Immediate,
-            flags: StateTransitionFlags::None,
-        }
-    }
+#[derive(Builder)]
+#[builder(derive(Clone))]
+pub struct StateTransitionDesc<'a> {
+    #[builder(with =|resource : &'a impl AsRef<DeviceObject>| resource.as_ref())]
+    resource: &'a DeviceObject,
 
-    pub fn old_state(mut self, old_state: ResourceState) -> Self {
-        self.old_state = Some(old_state);
-        self
-    }
+    new_state: ResourceState,
 
-    pub fn first_mip_level(mut self, first_mip_level: u32) -> Self {
-        self.first_mip_level = first_mip_level;
-        self
-    }
-    pub fn mip_levels_count(mut self, mip_levels_count: u32) -> Self {
-        self.mip_levels_count = mip_levels_count;
-        self
-    }
-    pub fn first_array_slice(mut self, first_array_slice: u32) -> Self {
-        self.first_array_slice = first_array_slice;
-        self
-    }
-    pub fn array_slice_count(mut self, array_slice_count: u32) -> Self {
-        self.array_slice_count = array_slice_count;
-        self
-    }
-    pub fn transition_type(mut self, transition_type: StateTransitionType) -> Self {
-        self.transition_type = transition_type;
-        self
-    }
-    pub fn flags(mut self, flags: StateTransitionFlags) -> Self {
-        self.flags = flags;
-        self
-    }
+    #[builder(default = 0)]
+    first_mip_level: u32,
+
+    #[builder(default = diligent_sys::REMAINING_MIP_LEVELS)]
+    mip_levels_count: u32,
+
+    #[builder(default = 0)]
+    first_array_slice: u32,
+
+    #[builder(default = diligent_sys::REMAINING_ARRAY_SLICES)]
+    array_slice_count: u32,
+
+    old_state: Option<ResourceState>,
+
+    #[builder(default = StateTransitionType::Immediate)]
+    transition_type: StateTransitionType,
+
+    #[builder(default)]
+    flags: StateTransitionFlags,
 }
 
 impl<'a> From<&StateTransitionDesc<'a>> for diligent_sys::StateTransitionDesc {

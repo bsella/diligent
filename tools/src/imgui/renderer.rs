@@ -1,3 +1,4 @@
+use bon::Builder;
 use diligent::{
     buffer::{Buffer, BufferDesc},
     device_context::{
@@ -423,44 +424,22 @@ pub enum ColorConversionMode {
     None,
 }
 
+#[derive(Builder)]
 pub struct ImguiRendererCreateInfo<'a> {
     device: &'a RenderDevice,
 
     back_buffer_format: TextureFormat,
     depth_buffer_format: TextureFormat,
 
-    color_conversion: ColorConversionMode,
-
     initial_width: f32,
     initial_height: f32,
-}
 
-impl<'a> ImguiRendererCreateInfo<'a> {
-    pub fn new(
-        device: &'a RenderDevice,
-        back_buffer_format: TextureFormat,
-        depth_buffer_format: TextureFormat,
-        initial_width: u16,
-        initial_height: u16,
-    ) -> Self {
-        ImguiRendererCreateInfo {
-            device: &device,
-            back_buffer_format,
-            depth_buffer_format,
-            color_conversion: ColorConversionMode::Auto,
-            initial_height: initial_height as f32,
-            initial_width: initial_width as f32,
-        }
-    }
-
-    pub fn color_conversion(mut self, color_conversion: ColorConversionMode) -> Self {
-        self.color_conversion = color_conversion;
-        self
-    }
+    #[builder(default = ColorConversionMode::Auto)]
+    color_conversion: ColorConversionMode,
 }
 
 impl ImguiRenderer {
-    pub fn new(create_info: ImguiRendererCreateInfo) -> Self {
+    pub fn new(create_info: &ImguiRendererCreateInfo) -> Self {
         let mut imgui_context = imgui::Context::create();
 
         let srgb_framebuffer =
@@ -473,24 +452,18 @@ impl ImguiRenderer {
         let device_info = create_info.device.get_device_info();
         let device_type = device_info.device_type();
 
-        fn common_shader_ci<'a>(
-            name: &'a str,
-            source: ShaderSource<'a>,
-            shader_type: ShaderType,
-            manual_srgb: bool,
-        ) -> ShaderCreateInfo<'a> {
-            let shader_ci = ShaderCreateInfo::new(name, source, shader_type)
-                .use_combined_texture_samplers(true);
+        let macros = if manual_srgb {
+            vec![
+                ("GAMMA_TO_LINEAR(Gamma)", GAMMA_TO_LINEAR),
+                ("SRGBA_TO_LINEAR(col)", SRGBA_TO_LINEAR),
+            ]
+        } else {
+            vec![("SRGBA_TO_LINEAR(col)", "")]
+        };
 
-            if manual_srgb {
-                shader_ci.set_macros(vec![
-                    ("GAMMA_TO_LINEAR(Gamma)", GAMMA_TO_LINEAR),
-                    ("SRGBA_TO_LINEAR(col)", SRGBA_TO_LINEAR),
-                ])
-            } else {
-                shader_ci.set_macros(vec![("SRGBA_TO_LINEAR(col)", "")])
-            }
-        }
+        let shader_ci = ShaderCreateInfo::builder()
+            .use_combined_texture_samplers(true)
+            .macros(macros);
 
         let vertex_shader = {
             let shader_source = match device_type {
@@ -516,8 +489,12 @@ impl ImguiRenderer {
                 }
             };
 
-            let shader_ci =
-                common_shader_ci("Imgui VS", shader_source, ShaderType::Vertex, manual_srgb);
+            let shader_ci = shader_ci
+                .clone()
+                .name("Imgui VS")
+                .source(shader_source)
+                .shader_type(ShaderType::Vertex)
+                .build();
 
             create_info.device.create_shader(&shader_ci).unwrap()
         };
@@ -563,54 +540,77 @@ impl ImguiRenderer {
                 }
             };
 
-            let shader_ci =
-                common_shader_ci("Imgui PS", shader_source, ShaderType::Pixel, manual_srgb);
+            let shader_ci = shader_ci
+                .clone()
+                .name("Imgui PS")
+                .source(shader_source)
+                .shader_type(ShaderType::Pixel)
+                .build();
 
             create_info.device.create_shader(&shader_ci).unwrap()
         };
 
-        let sampler_desc = SamplerDesc::new("Texture Sampler")
+        let sampler_desc = SamplerDesc::builder()
+            .name("Texture Sampler")
             .address_u(TextureAddressMode::Wrap)
             .address_v(TextureAddressMode::Wrap)
-            .address_w(TextureAddressMode::Wrap);
+            .address_w(TextureAddressMode::Wrap)
+            .build();
+
+        let mut render_targets = std::array::from_fn(|_| RenderTargetBlendDesc::default());
+
+        render_targets[0] = RenderTargetBlendDesc::builder()
+            .blend_enable(true)
+            .src_blend(BlendFactor::One)
+            .dest_blend(BlendFactor::InvSrcAlpha)
+            .blend_op(BlendOperation::Add)
+            .src_blend_alpha(BlendFactor::One)
+            .dest_blend_alpha(BlendFactor::InvSrcAlpha)
+            .blend_op_alpha(BlendOperation::Add)
+            .render_target_write_mask(ColorMask::all())
+            .build();
+
+        let blend_state_desc = BlendStateDesc::builder()
+            .render_targets(render_targets)
+            .build();
+
+        let rasterizer_state_desc = RasterizerStateDesc::builder()
+            .cull_mode(CullMode::None)
+            .scissor_enable(false)
+            .build();
+
+        let mut rtv_formats = std::array::from_fn(|_| None);
+
+        rtv_formats[0] = Some(create_info.back_buffer_format);
 
         let pipeline_state_ci = GraphicsPipelineStateCreateInfo::new(
             "ImGUI PSO",
-            GraphicsPipelineDesc::new(
-                BlendStateDesc::default().render_target_blend_desc::<0>(
-                    RenderTargetBlendDesc::default()
-                        .blend_enable(true)
-                        .src_blend(BlendFactor::One)
-                        .dest_blend(BlendFactor::InvSrcAlpha)
-                        .blend_op(BlendOperation::Add)
-                        .src_blend_alpha(BlendFactor::One)
-                        .dest_blend_alpha(BlendFactor::InvSrcAlpha)
-                        .blend_op_alpha(BlendOperation::Add)
-                        .render_target_write_mask(ColorMask::all()),
-                ),
-                RasterizerStateDesc::default()
-                    .cull_mode(CullMode::None)
-                    .scissor_enable(false),
-                DepthStencilStateDesc::default().depth_enable(false),
-                GraphicsPipelineRenderTargets::default()
-                    .num_render_targets(1)
-                    .rtv_format::<0>(create_info.back_buffer_format)
-                    .dsv_format(create_info.depth_buffer_format),
-            )
-            .primitive_topology(PrimitiveTopology::TriangleList)
-            .set_input_layouts(vec![
-                LayoutElement::new(0, 2, ValueType::Float32),
-                LayoutElement::new(0, 2, ValueType::Float32),
-                LayoutElement::new(0, 4, ValueType::Uint8).is_normalized(true),
-            ]),
+            GraphicsPipelineDesc::builder()
+                .blend_desc(blend_state_desc)
+                .primitive_topology(PrimitiveTopology::TriangleList)
+                .input_layouts([
+                    LayoutElement::builder().slot(0).f32_2().build(),
+                    LayoutElement::builder().slot(0).f32_2().build(),
+                    LayoutElement::builder().slot(0).u8_4().build(),
+                ])
+                .rasterizer_desc(rasterizer_state_desc)
+                .depth_stencil_desc(DepthStencilStateDesc::builder().depth_enable(false).build())
+                .output(
+                    GraphicsPipelineRenderTargets::builder()
+                        .num_render_targets(1)
+                        .rtv_formats(rtv_formats)
+                        .dsv_format(create_info.depth_buffer_format)
+                        .build(),
+                )
+                .build(),
         )
         .vertex_shader(&vertex_shader)
         .pixel_shader(&pixel_shader)
-        .set_shader_resource_variables([ShaderResourceVariableDesc::new(
-            "Texture",
-            ShaderResourceVariableType::Dynamic,
-            ShaderTypes::Pixel,
-        )])
+        .set_shader_resource_variables([ShaderResourceVariableDesc::builder()
+            .name("Texture")
+            .variable_type(ShaderResourceVariableType::Dynamic)
+            .shader_stages(ShaderTypes::Pixel)
+            .build()])
         .set_immutable_samplers([ImmutableSamplerDesc::new(
             ShaderTypes::Pixel,
             "Texture",
@@ -623,13 +623,13 @@ impl ImguiRenderer {
             .unwrap();
 
         let vertex_constant_buffer = {
-            let buffer_desc = BufferDesc::new(
-                "Imgui Vertex Constant Buffer",
-                (std::mem::size_of::<f32>() * 4 * 4) as u64,
-            )
-            .usage(Usage::Dynamic)
-            .bind_flags(BindFlags::UniformBuffer)
-            .cpu_access_flags(CpuAccessFlags::Write);
+            let buffer_desc = BufferDesc::builder()
+                .name("Imgui Vertex Constant Buffer")
+                .size((std::mem::size_of::<f32>() * 4 * 4) as u64)
+                .usage(Usage::Dynamic)
+                .bind_flags(BindFlags::UniformBuffer)
+                .cpu_access_flags(CpuAccessFlags::Write)
+                .build();
             create_info.device.create_buffer(&buffer_desc).unwrap()
         };
 
@@ -642,26 +642,23 @@ impl ImguiRenderer {
         let font_atlas = imgui_context.fonts();
         let font_atlas_texture = font_atlas.build_rgba32_texture();
 
-        let font_texture_desc = TextureDesc::new(
-            "Imgui font texture",
-            TextureDimension::Texture2D,
-            font_atlas_texture.width,
-            font_atlas_texture.height,
-            TextureFormat::RGBA8_UNORM,
-        )
-        .bind_flags(BindFlags::ShaderResource)
-        .usage(Usage::Immutable);
+        let font_texture_desc = TextureDesc::builder()
+            .name("Imgui font texture")
+            .dimension(TextureDimension::Texture2D)
+            .width(font_atlas_texture.width)
+            .height(font_atlas_texture.height)
+            .format(TextureFormat::RGBA8_UNORM)
+            .bind_flags(BindFlags::ShaderResource)
+            .usage(Usage::Immutable)
+            .build();
+
+        let subresource = TextureSubResource::builder()
+            .from_host(font_atlas_texture.data, 4 * font_atlas_texture.width as u64)
+            .build();
 
         let font_texture = create_info
             .device
-            .create_texture(
-                &font_texture_desc,
-                &[&TextureSubResource::new_cpu(
-                    font_atlas_texture.data,
-                    4 * font_atlas_texture.width as u64,
-                )],
-                None,
-            )
+            .create_texture(&font_texture_desc, &[&subresource], None)
             .unwrap();
 
         let font_texture_view = Box::new(
@@ -734,13 +731,16 @@ impl ImguiRenderer {
                 self.vertex_buffer_size *= 2
             }
 
-            let buffer_desc = BufferDesc::new(
-                "Imgui vertex buffer",
-                (self.vertex_buffer_size as usize * std::mem::size_of::<imgui::DrawVert>()) as u64,
-            )
-            .usage(Usage::Dynamic)
-            .cpu_access_flags(CpuAccessFlags::Write)
-            .bind_flags(BindFlags::VertexBuffer);
+            let buffer_desc = BufferDesc::builder()
+                .name("Imgui vertex buffer")
+                .size(
+                    (self.vertex_buffer_size as usize * std::mem::size_of::<imgui::DrawVert>())
+                        as u64,
+                )
+                .usage(Usage::Dynamic)
+                .cpu_access_flags(CpuAccessFlags::Write)
+                .bind_flags(BindFlags::VertexBuffer)
+                .build();
 
             self.vertex_buffer
                 .insert(render_device.create_buffer(&buffer_desc).unwrap())
@@ -756,13 +756,16 @@ impl ImguiRenderer {
                 self.index_buffer_size *= 2
             }
 
-            let buffer_desc = BufferDesc::new(
-                "Imgui index buffer",
-                (self.index_buffer_size as usize * std::mem::size_of::<imgui::DrawIdx>()) as u64,
-            )
-            .usage(Usage::Dynamic)
-            .cpu_access_flags(CpuAccessFlags::Write)
-            .bind_flags(BindFlags::IndexBuffer);
+            let buffer_desc = BufferDesc::builder()
+                .name("Imgui index buffer")
+                .size(
+                    (self.index_buffer_size as usize * std::mem::size_of::<imgui::DrawIdx>())
+                        as u64,
+                )
+                .usage(Usage::Dynamic)
+                .cpu_access_flags(CpuAccessFlags::Write)
+                .bind_flags(BindFlags::IndexBuffer)
+                .build();
 
             self.index_buffer
                 .insert(render_device.create_buffer(&buffer_desc).unwrap())
@@ -880,12 +883,12 @@ impl ImguiRenderer {
                         // Apply pretransform
                         //clip_rect = TransformClipRect(draw_data.display_size, clip_rect);
 
-                        let scissor = Rect::new(
-                            clip_rect[0].max(0.0) as i32,
-                            clip_rect[1].max(0.0) as i32,
-                            clip_rect[2].min(draw_data.display_size[0]) as i32,
-                            clip_rect[3].min(draw_data.display_size[1]) as i32,
-                        );
+                        let scissor = Rect {
+                            left: clip_rect[0].max(0.0) as i32,
+                            top: clip_rect[1].max(0.0) as i32,
+                            right: clip_rect[2].min(draw_data.display_size[0]) as i32,
+                            bottom: clip_rect[3].min(draw_data.display_size[1]) as i32,
+                        };
 
                         if !scissor.is_valid() {
                             continue;
@@ -913,20 +916,26 @@ impl ImguiRenderer {
                         }
 
                         let draw_attribs = {
-                            let draw_attribs = DrawIndexedAttribs::new(
-                                count as u32,
-                                if std::mem::size_of::<ImDrawIdx>() == std::mem::size_of::<u16>() {
-                                    ValueType::Uint16
-                                } else {
-                                    ValueType::Uint32
-                                },
-                            )
-                            .flags(DrawFlags::VerifyStates)
-                            .first_index_location(cmd_params.idx_offset as u32 + global_idx_offset);
+                            let draw_attribs = DrawIndexedAttribs::builder()
+                                .num_indices(count as u32)
+                                .index_type(
+                                    if std::mem::size_of::<ImDrawIdx>()
+                                        == std::mem::size_of::<u16>()
+                                    {
+                                        ValueType::Uint16
+                                    } else {
+                                        ValueType::Uint32
+                                    },
+                                )
+                                .flags(DrawFlags::VerifyStates)
+                                .first_index_location(
+                                    cmd_params.idx_offset as u32 + global_idx_offset,
+                                );
 
                             if self.base_vertex_supported {
                                 draw_attribs
                                     .base_vertex(cmd_params.vtx_offset as u32 + global_vtx_offset)
+                                    .build()
                             } else {
                                 let offset = std::mem::size_of::<ImDrawVert>()
                                     * (cmd_params.vtx_offset + global_vtx_offset as usize);
@@ -935,7 +944,7 @@ impl ImguiRenderer {
                                     ResourceStateTransitionMode::Transition,
                                     SetVertexBufferFlags::None,
                                 );
-                                draw_attribs
+                                draw_attribs.build()
                             }
                         };
                         device_context.draw_indexed(&draw_attribs);

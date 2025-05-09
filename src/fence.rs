@@ -1,5 +1,6 @@
 use std::ffi::{CStr, CString};
 
+use bon::Builder;
 use static_assertions::const_assert;
 
 use crate::device_object::DeviceObject;
@@ -25,8 +26,12 @@ pub enum FenceType {
 
 const_assert!(diligent_sys::FENCE_TYPE_LAST == 1);
 
+#[derive(Builder)]
 pub struct FenceDesc {
+    #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
     name: CString,
+
+    #[builder(default = FenceType::CpuWaitOnly)]
     fence_type: FenceType,
 }
 
@@ -41,13 +46,6 @@ impl From<&FenceDesc> for diligent_sys::FenceDesc {
                 FenceType::General => diligent_sys::FENCE_TYPE_GENERAL,
             } as diligent_sys::FENCE_TYPE,
         }
-    }
-}
-
-impl FenceDesc {
-    pub fn fence_type(mut self, fence_type: FenceType) -> Self {
-        self.fence_type = fence_type;
-        self
     }
 }
 

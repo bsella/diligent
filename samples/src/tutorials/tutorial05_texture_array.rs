@@ -1,5 +1,5 @@
 use diligent::{
-    buffer::{Buffer, BufferDesc, BufferMode},
+    buffer::{Buffer, BufferDesc},
     device_context::{
         DeferredDeviceContext, DrawFlags, DrawIndexedAttribs, ImmediateDeviceContext,
         ResourceStateTransitionMode, SetVertexBufferFlags,
@@ -163,25 +163,25 @@ impl SampleBase for TextureArray {
         // Define vertex shader input layout
         // This tutorial uses two types of input: per-vertex data and per-instance data.
         #[rustfmt::skip]
-        let layout_elements = vec![
+        let layout_elements = [
             // Per-vertex data - first buffer slot
             // Attribute 0 - vertex position
-            LayoutElement::new(0, 3, ValueType::Float32).is_normalized(false),
+            LayoutElement::builder().slot(0).f32_3().build(),
             // Attribute 1 - texture coordinates
-            LayoutElement::new(0, 2, ValueType::Float32).is_normalized(false),
+            LayoutElement::builder().slot(0).f32_2().build(),
 
             // Per-instance data - second buffer slot
             // We will use four attributes to encode instance-specific 4x4 transformation matrix
             // Attribute 2 - first row
-            LayoutElement::new(1, 4, ValueType::Float32).is_normalized(false).frequency(InputElementFrequency::PerInstance),
+            LayoutElement::builder().slot(1).f32_4().frequency(InputElementFrequency::PerInstance).build(),
             // Attribute 3 - second row
-            LayoutElement::new(1, 4, ValueType::Float32).is_normalized(false).frequency(InputElementFrequency::PerInstance),
+            LayoutElement::builder().slot(1).f32_4().frequency(InputElementFrequency::PerInstance).build(),
             // Attribute 4 - third row
-            LayoutElement::new(1, 4, ValueType::Float32).is_normalized(false).frequency(InputElementFrequency::PerInstance),
+            LayoutElement::builder().slot(1).f32_4().frequency(InputElementFrequency::PerInstance).build(),
             // Attribute 5 - fourth row
-            LayoutElement::new(1, 4, ValueType::Float32).is_normalized(false).frequency(InputElementFrequency::PerInstance),
+            LayoutElement::builder().slot(1).f32_4().frequency(InputElementFrequency::PerInstance).build(),
             // Attribute 6 - texture array index
-            LayoutElement::new(1, 1, ValueType::Float32).is_normalized(false).frequency(InputElementFrequency::PerInstance),
+            LayoutElement::builder().slot(1).f32().frequency(InputElementFrequency::PerInstance).build(),
         ];
 
         let cube_pso_ci = CreatePSOInfo::new(
@@ -197,7 +197,7 @@ impl SampleBase for TextureArray {
         );
 
         let pipeline_state =
-            TexturedCube::create_pipeline_state(&cube_pso_ci, convert_ps_output_to_gamma).unwrap();
+            TexturedCube::create_pipeline_state(cube_pso_ci, convert_ps_output_to_gamma).unwrap();
 
         // Create dynamic uniform buffer that will store our transformation matrix
         // Dynamic buffers can be frequently updated by the CPU
@@ -227,9 +227,9 @@ impl SampleBase for TextureArray {
             &device,
             GeometryPrimitiveVertexFlags::PosTex,
             BindFlags::VertexBuffer,
-            BufferMode::Undefined,
+            None,
             BindFlags::IndexBuffer,
-            BufferMode::Undefined,
+            None,
         )
         .unwrap();
 
@@ -241,23 +241,25 @@ impl SampleBase for TextureArray {
                     .unwrap()
             });
 
-            let texture_desc = TextureDesc::new(
-                "DGLogo",
-                TextureDimension::Texture2DArray {
+            let texture_desc = TextureDesc::builder()
+                .name("DGLogo")
+                .dimension(TextureDimension::Texture2DArray {
                     array_size: NUM_TEXTURES as u32,
-                },
-                images[0].width(),
-                images[0].height(),
-                TextureFormat::RGBA8_UNORM_SRGB,
-            )
-            .bind_flags(BindFlags::ShaderResource)
-            .usage(Usage::Default);
+                })
+                .width(images[0].width())
+                .height(images[0].height())
+                .format(TextureFormat::RGBA8_UNORM_SRGB)
+                .bind_flags(BindFlags::ShaderResource)
+                .usage(Usage::Default)
+                .build();
 
             let texture_data = images.each_ref().map(|image| {
-                TextureSubResource::new_cpu(
-                    image.as_bytes(),
-                    image.width() as u64 * std::mem::size_of::<[u8; 4]>() as u64,
-                )
+                TextureSubResource::builder()
+                    .from_host(
+                        image.as_bytes(),
+                        image.width() as u64 * std::mem::size_of::<[u8; 4]>() as u64,
+                    )
+                    .build()
             });
 
             let texture = device
@@ -275,12 +277,12 @@ impl SampleBase for TextureArray {
             .set(&texture_srv, SetShaderResourceFlags::None);
 
         // Use default usage as this buffer will only be updated when grid size changes
-        let inst_buff_desc = BufferDesc::new(
-            "Instance data buffer",
-            std::mem::size_of::<InstanceData>() as u64 * MAX_INSTANCES,
-        )
-        .usage(Usage::Default)
-        .bind_flags(BindFlags::VertexBuffer);
+        let inst_buff_desc = BufferDesc::builder()
+            .name("Instance data buffer")
+            .size(std::mem::size_of::<InstanceData>() as u64 * MAX_INSTANCES)
+            .usage(Usage::Default)
+            .bind_flags(BindFlags::VertexBuffer)
+            .build();
 
         let inst_buff = device.create_buffer(&inst_buff_desc).unwrap();
 
@@ -407,10 +409,13 @@ impl SampleBase for TextureArray {
         immediate_context
             .commit_shader_resources(&self.srb, ResourceStateTransitionMode::Transition);
 
-        let draw_attribs = DrawIndexedAttribs::new(36, ValueType::Uint32)
+        let draw_attribs = DrawIndexedAttribs::builder()
+            .num_indices(36)
+            .index_type(ValueType::Uint32)
             .num_instances(self.grid_size * self.grid_size * self.grid_size)
             // Verify the state of vertex and index buffers
-            .flags(DrawFlags::VerifyAll);
+            .flags(DrawFlags::VerifyAll)
+            .build();
 
         immediate_context.draw_indexed(&draw_attribs);
     }

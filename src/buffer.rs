@@ -1,6 +1,7 @@
 use std::ffi::CString;
 
 use bitflags::bitflags;
+use bon::Builder;
 use static_assertions::const_assert;
 
 use crate::{
@@ -12,7 +13,6 @@ use crate::{
 
 #[derive(Clone, Copy)]
 pub enum BufferMode {
-    Undefined,
     Formatted,
     Structured,
     Raw,
@@ -22,7 +22,6 @@ const_assert!(diligent_sys::BUFFER_MODE_NUM_MODES == 4);
 impl From<BufferMode> for diligent_sys::BUFFER_MODE {
     fn from(value: BufferMode) -> Self {
         (match value {
-            BufferMode::Undefined => diligent_sys::BUFFER_MODE_UNDEFINED,
             BufferMode::Formatted => diligent_sys::BUFFER_MODE_FORMATTED,
             BufferMode::Structured => diligent_sys::BUFFER_MODE_STRUCTURED,
             BufferMode::Raw => diligent_sys::BUFFER_MODE_RAW,
@@ -31,23 +30,43 @@ impl From<BufferMode> for diligent_sys::BUFFER_MODE {
 }
 
 bitflags! {
+    #[derive(Clone, Copy)]
     pub struct MiscBufferFlags: diligent_sys::MISC_BUFFER_FLAGS {
         const None            = diligent_sys::MISC_BUFFER_FLAG_NONE as diligent_sys::MISC_BUFFER_FLAGS;
         const SparceAliasing  = diligent_sys::MISC_BUFFER_FLAG_SPARSE_ALIASING as diligent_sys::MISC_BUFFER_FLAGS;
     }
 }
 
+impl Default for MiscBufferFlags {
+    fn default() -> Self {
+        MiscBufferFlags::None
+    }
+}
+
+#[derive(Builder)]
+#[builder(derive(Clone))]
 pub struct BufferDesc {
+    #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
     name: CString,
 
     size: u64,
 
     bind_flags: BindFlags,
+
     usage: Usage,
+
+    #[builder(default)]
     cpu_access_flags: CpuAccessFlags,
-    mode: BufferMode,
+
+    mode: Option<BufferMode>,
+
+    #[builder(default)]
     misc_flags: MiscBufferFlags,
+
+    #[builder(default = 0)]
     element_byte_stride: u32,
+
+    #[builder(default = 1)]
     immediate_context_mask: u64,
 }
 
@@ -61,57 +80,13 @@ impl From<&BufferDesc> for diligent_sys::BufferDesc {
             BindFlags: value.bind_flags.bits(),
             Usage: value.usage.into(),
             CPUAccessFlags: value.cpu_access_flags.bits(),
-            Mode: value.mode.into(),
+            Mode: value
+                .mode
+                .map_or(diligent_sys::BUFFER_MODE_UNDEFINED as _, |bm| bm.into()),
             MiscFlags: value.misc_flags.bits(),
             ElementByteStride: value.element_byte_stride,
             ImmediateContextMask: value.immediate_context_mask,
         }
-    }
-}
-
-impl BufferDesc {
-    pub fn new(name: impl AsRef<str>, size: u64) -> Self {
-        BufferDesc {
-            size,
-            name: CString::new(name.as_ref()).unwrap(),
-            bind_flags: BindFlags::None,
-            usage: Usage::Default,
-            cpu_access_flags: CpuAccessFlags::None,
-            mode: BufferMode::Undefined,
-            misc_flags: MiscBufferFlags::None,
-
-            element_byte_stride: 0,
-            immediate_context_mask: 1,
-        }
-    }
-
-    pub fn bind_flags(mut self, bind_flags: BindFlags) -> Self {
-        self.bind_flags = bind_flags;
-        self
-    }
-    pub fn usage(mut self, usage: Usage) -> Self {
-        self.usage = usage;
-        self
-    }
-    pub fn cpu_access_flags(mut self, cpu_access_flags: CpuAccessFlags) -> Self {
-        self.cpu_access_flags = cpu_access_flags;
-        self
-    }
-    pub fn mode(mut self, mode: BufferMode) -> Self {
-        self.mode = mode;
-        self
-    }
-    pub fn misc_flags(mut self, misc_flags: MiscBufferFlags) -> Self {
-        self.misc_flags = misc_flags;
-        self
-    }
-    pub fn element_byte_stride(mut self, element_byte_stride: u32) -> Self {
-        self.element_byte_stride = element_byte_stride;
-        self
-    }
-    pub fn immediate_context_mask(mut self, immediate_context_mask: u64) -> Self {
-        self.immediate_context_mask = immediate_context_mask;
-        self
     }
 }
 
@@ -404,11 +379,13 @@ impl<T> Drop for BufferMapWriteToken<'_, T> {
         }
     }
 }
+
 pub struct BufferMapReadWriteToken<'a, T> {
     device_context: &'a DeviceContext,
     buffer: &'a Buffer,
     data_ptr: *mut T,
 }
+
 impl<'a, T> BufferMapReadWriteToken<'a, T> {
     pub(super) fn new(
         device_context: &'a DeviceContext,
