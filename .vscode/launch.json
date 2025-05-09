@@ -152,7 +152,8 @@
                     "Tutorial08_Tessellation"
                 ],
                 "cwd": "${workspaceFolder}/samples"
-            }
+            },
+            "cwd": "${workspaceFolder}/samples"
         },
         {
             "type": "lldb",
@@ -165,7 +166,8 @@
                     "Tutorial09_Quads"
                 ],
                 "cwd": "${workspaceFolder}/samples"
-            }
+            },
+            "cwd": "${workspaceFolder}/samples"
         },
         {
             "type": "lldb",
@@ -178,7 +180,8 @@
                     "Tutorial10_DataStreaming"
                 ],
                 "cwd": "${workspaceFolder}/samples"
-            }
+            },
+            "cwd": "${workspaceFolder}/samples"
         },
         {
             "type": "lldb",
@@ -191,7 +194,8 @@
                     "Tutorial11_ResourceUpdates"
                 ],
                 "cwd": "${workspaceFolder}/samples"
-            }
+            },
+            "cwd": "${workspaceFolder}/samples"
         },
         {
             "type": "lldb",
@@ -204,7 +208,8 @@
                     "Tutorial12_RenderTarget"
                 ],
                 "cwd": "${workspaceFolder}/samples"
-            }
+            },
+            "cwd": "${workspaceFolder}/samples"
         },
         {
             "type": "lldb",
@@ -217,7 +222,8 @@
                     "Tutorial13_ShadowMap"
                 ],
                 "cwd": "${workspaceFolder}/samples"
-            }
+            },
+            "cwd": "${workspaceFolder}/samples"
         },
         {
             "type": "lldb",
@@ -230,7 +236,8 @@
                     "Tutorial14_ComputeShader"
                 ],
                 "cwd": "${workspaceFolder}/samples"
-            }
+            },
+            "cwd": "${workspaceFolder}/samples"
         },
         {
             "type": "lldb",
@@ -243,7 +250,8 @@
                     "Tutorial15_MultipleWindows"
                 ],
                 "cwd": "${workspaceFolder}/samples"
-            }
+            },
+            "cwd": "${workspaceFolder}/samples"
         },
         {
             "type": "lldb",
@@ -256,7 +264,8 @@
                     "Tutorial16_BindlessResources"
                 ],
                 "cwd": "${workspaceFolder}/samples"
-            }
+            },
+            "cwd": "${workspaceFolder}/samples"
         },
         {
             "type": "lldb",
@@ -269,7 +278,8 @@
                     "Tutorial17_MSAA"
                 ],
                 "cwd": "${workspaceFolder}/samples"
-            }
+            },
+            "cwd": "${workspaceFolder}/samples"
         },
         {
             "type": "lldb",
@@ -282,7 +292,8 @@
                     "Tutorial18_Queries"
                 ],
                 "cwd": "${workspaceFolder}/samples"
-            }
+            },
+            "cwd": "${workspaceFolder}/samples"
         },
         {
             "type": "lldb",
@@ -295,7 +306,8 @@
                     "Tutorial19_RenderPasses"
                 ],
                 "cwd": "${workspaceFolder}/samples"
-            }
+            },
+            "cwd": "${workspaceFolder}/samples"
         },
         {
             "type": "lldb",
@@ -308,7 +320,8 @@
                     "Tutorial20_MeshShader"
                 ],
                 "cwd": "${workspaceFolder}/samples"
-            }
+            },
+            "cwd": "${workspaceFolder}/samples"
         },
         {
             "type": "lldb",
@@ -321,7 +334,8 @@
                     "Tutorial21_RayTracing"
                 ],
                 "cwd": "${workspaceFolder}/samples"
-            }
+            },
+            "cwd": "${workspaceFolder}/samples"
         },
         {
             "type": "lldb",
@@ -334,7 +348,8 @@
                     "Tutorial22_HybridRendering"
                 ],
                 "cwd": "${workspaceFolder}/samples"
-            }
+            },
+            "cwd": "${workspaceFolder}/samples"
         },
         {
             "type": "lldb",
@@ -347,7 +362,8 @@
                     "Tutorial23_CommandQueues"
                 ],
                 "cwd": "${workspaceFolder}/samples"
-            }
+            },
+            "cwd": "${workspaceFolder}/samples"
         },
         {
             "type": "lldb",
@@ -360,7 +376,8 @@
                     "Tutorial24_VRS"
                 ],
                 "cwd": "${workspaceFolder}/samples"
-            }
+            },
+            "cwd": "${workspaceFolder}/samples"
         },
         {
             "type": "lldb",
@@ -373,7 +390,8 @@
                     "Tutorial25_StatePackager"
                 ],
                 "cwd": "${workspaceFolder}/samples"
-            }
+            },
+            "cwd": "${workspaceFolder}/samples"
         },
         {
             "type": "lldb",
@@ -386,7 +404,8 @@
                     "Tutorial26_StateCache"
                 ],
                 "cwd": "${workspaceFolder}/samples"
-            }
+            },
+            "cwd": "${workspaceFolder}/samples"
         },
         {
             "type": "lldb",
@@ -399,7 +418,8 @@
                     "Tutorial27_PostProcessing"
                 ],
                 "cwd": "${workspaceFolder}/samples"
-            }
+            },
+            "cwd": "${workspaceFolder}/samples"
         },
         {
             "type": "lldb",
@@ -412,7 +432,8 @@
                     "Tutorial28_HelloOpenXR"
                 ],
                 "cwd": "${workspaceFolder}/samples"
-            }
+            },
+            "cwd": "${workspaceFolder}/samples"
         },
         {
             "type": "lldb",
@@ -425,7 +446,8 @@
                     "Tutorial29_OIT"
                 ],
                 "cwd": "${workspaceFolder}/samples"
-            }
+            },
+            "cwd": "${workspaceFolder}/samples"
         },
     ]
 }

@@ -71,3 +71,91 @@ path = "src/tutorials/tutorial06_multithreading.rs"
 [[example]]
 name = "Tutorial07_GeometryShader"
 path = "src/tutorials/tutorial07_geometry_shader.rs"
+
+[[example]]
+name = "Tutorial08_Tessellation"
+path = "src/tutorials/tutorial08_tessellation.rs"
+
+[[example]]
+name = "Tutorial09_Quads"
+path = "src/tutorials/tutorial09_quads.rs"
+
+[[example]]
+name = "Tutorial10_DataStreaming"
+path = "src/tutorials/tutorial10_data_streaming.rs"
+
+[[example]]
+name = "Tutorial11_ResourceUpdates"
+path = "src/tutorials/tutorial11_resource_updates.rs"
+
+[[example]]
+name = "Tutorial12_RenderTarget"
+path = "src/tutorials/tutorial12_render_target.rs"
+
+[[example]]
+name = "Tutorial13_ShadowMap"
+path = "src/tutorials/tutorial13_shadow_map.rs"
+
+[[example]]
+name = "Tutorial14_ComputeShader"
+path = "src/tutorials/tutorial14_compute_shader.rs"
+
+[[example]]
+name = "Tutorial15_MultipleWindows"
+path = "src/tutorials/tutorial15_multiple_windows.rs"
+
+[[example]]
+name = "Tutorial16_BindlessResources"
+path = "src/tutorials/tutorial16_bindless_resources.rs"
+
+[[example]]
+name = "Tutorial17_MSAA"
+path = "src/tutorials/tutorial17_msaa.rs"
+
+[[example]]
+name = "Tutorial18_Queries"
+path = "src/tutorials/tutorial18_queries.rs"
+
+[[example]]
+name = "Tutorial19_RenderPasses"
+path = "src/tutorials/tutorial19_render_passes.rs"
+
+[[example]]
+name = "Tutorial20_MeshShader"
+path = "src/tutorials/tutorial20_mesh_shader.rs"
+
+[[example]]
+name = "Tutorial21_RayTracing"
+path = "src/tutorials/tutorial21_ray_tracing.rs"
+
+[[example]]
+name = "Tutorial22_HybridRendering"
+path = "src/tutorials/tutorial22_hybrid_rendering.rs"
+
+[[example]]
+name = "Tutorial23_CommandQueues"
+path = "src/tutorials/tutorial23_command_queues.rs"
+
+[[example]]
+name = "Tutorial24_VRS"
+path = "src/tutorials/tutorial24_vrs.rs"
+
+[[example]]
+name = "Tutorial25_StatePackager"
+path = "src/tutorials/tutorial25_state_packager.rs"
+
+[[example]]
+name = "Tutorial26_StateCache"
+path = "src/tutorials/tutorial26_state_cache.rs"
+
+[[example]]
+name = "Tutorial27_PostProcessing"
+path = "src/tutorials/tutorial27_post_processing.rs"
+
+[[example]]
+name = "Tutorial28_HelloOpenXR"
+path = "src/tutorials/tutorial28_hello_open_xr.rs"
+
+[[example]]
+name = "Tutorial29_OIT"
+path = "src/tutorials/tutorial29_oit.rs"

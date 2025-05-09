@@ -1111,6 +1111,60 @@ impl From<&DeviceFeatures> for diligent_sys::DeviceFeatures {
     }
 }
 
+impl From<&diligent_sys::DeviceFeatures> for DeviceFeatures {
+    fn from(value: &diligent_sys::DeviceFeatures) -> Self {
+        DeviceFeatures {
+            separable_programs: value.SeparablePrograms.into(),
+            shader_resource_queries: value.ShaderResourceQueries.into(),
+            wireframe_fill: value.WireframeFill.into(),
+            multithreaded_resource_creation: value.MultithreadedResourceCreation.into(),
+            compute_shaders: value.ComputeShaders.into(),
+            geometry_shaders: value.GeometryShaders.into(),
+            tessellation: value.Tessellation.into(),
+            mesh_shaders: value.MeshShaders.into(),
+            ray_tracing: value.RayTracing.into(),
+            bindless_resources: value.BindlessResources.into(),
+            occlusion_queries: value.OcclusionQueries.into(),
+            binary_occlusion_queries: value.BinaryOcclusionQueries.into(),
+            timestamp_queries: value.TimestampQueries.into(),
+            pipeline_statistics_queries: value.PipelineStatisticsQueries.into(),
+            duration_queries: value.DurationQueries.into(),
+            depth_bias_clamp: value.DepthBiasClamp.into(),
+            depth_clamp: value.DepthClamp.into(),
+            independent_blend: value.IndependentBlend.into(),
+            dual_source_blend: value.DualSourceBlend.into(),
+            multi_viewport: value.MultiViewport.into(),
+            texture_compression_bc: value.TextureCompressionBC.into(),
+            texture_compression_etc2: value.TextureCompressionETC2.into(),
+            vertex_pipeline_uav_writes_and_atomics: value.VertexPipelineUAVWritesAndAtomics.into(),
+            pixel_uav_writes_and_atomics: value.PixelUAVWritesAndAtomics.into(),
+            texture_uav_extended_formats: value.TextureUAVExtendedFormats.into(),
+            shader_float16: value.ShaderFloat16.into(),
+            resource_buffer16_bit_access: value.ResourceBuffer16BitAccess.into(),
+            uniform_buffer16_bit_access: value.UniformBuffer16BitAccess.into(),
+            shader_input_output16: value.ShaderInputOutput16.into(),
+            shader_int8: value.ShaderInt8.into(),
+            resource_buffer8_bit_access: value.ResourceBuffer8BitAccess.into(),
+            uniform_buffer8_bit_access: value.UniformBuffer8BitAccess.into(),
+            shader_resource_static_arrays: value.ShaderResourceStaticArrays.into(),
+            shader_resource_runtime_arrays: value.ShaderResourceRuntimeArrays.into(),
+            wave_op: value.WaveOp.into(),
+            instance_data_step_rate: value.InstanceDataStepRate.into(),
+            native_fence: value.NativeFence.into(),
+            tile_shaders: value.TileShaders.into(),
+            transfer_queue_timestamp_queries: value.TransferQueueTimestampQueries.into(),
+            variable_rate_shading: value.VariableRateShading.into(),
+            sparse_resources: value.SparseResources.into(),
+            subpass_framebuffer_fetch: value.SubpassFramebufferFetch.into(),
+            texture_component_swizzle: value.TextureComponentSwizzle.into(),
+            texture_subresource_views: value.TextureSubresourceViews.into(),
+            native_multi_draw: value.NativeMultiDraw.into(),
+            async_shader_compilation: value.AsyncShaderCompilation.into(),
+            formatted_buffers: value.FormattedBuffers.into(),
+        }
+    }
+}
+
 bitflags! {
     #[derive(Clone,Copy)]
     pub struct CommandQueueType : diligent_sys::COMMAND_QUEUE_TYPE {

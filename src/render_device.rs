@@ -8,7 +8,9 @@ use crate::{
     device_context::{DeferredDeviceContext, DeviceContext},
     fence::{Fence, FenceDesc},
     frame_buffer::{Framebuffer, FramebufferDesc},
-    graphics_types::{GraphicsAdapterInfo, RenderDeviceType, TextureFormat, Version},
+    graphics_types::{
+        DeviceFeatures, GraphicsAdapterInfo, RenderDeviceType, TextureFormat, Version,
+    },
     object::Object,
     pipeline_resource_signature::{
         PipelineResourceSignature, PipelineResourceSignatureDesc,
@@ -32,8 +34,9 @@ use crate::{
 pub struct RenderDeviceInfo {
     device_type: RenderDeviceType,
     api_version: Version,
-    //TODO
-    //DeviceFeatures : Features;
+
+    features: DeviceFeatures,
+    // TODO
     //NDCAttribs NDC DEFAULT_INITIALIZER({});
     //RenderDeviceShaderVersionInfo MaxShaderVersion DEFAULT_INITIALIZER({});
 }
@@ -45,6 +48,10 @@ impl RenderDeviceInfo {
 
     pub fn api_version(&self) -> &Version {
         &self.api_version
+    }
+
+    pub fn features(&self) -> &DeviceFeatures {
+        &self.features
     }
 }
 
@@ -722,6 +729,7 @@ impl RenderDevice {
                 major: render_device_info.APIVersion.Major,
                 minor: render_device_info.APIVersion.Minor,
             },
+            features: (&render_device_info.Features).into(),
         }
     }
 
