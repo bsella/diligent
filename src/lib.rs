@@ -14,6 +14,7 @@ pub mod buffer_view;
 pub mod command_queue;
 pub mod data_blob;
 pub mod device_context;
+pub mod device_memory;
 pub mod engine_factory;
 pub mod fence;
 pub mod frame_buffer;

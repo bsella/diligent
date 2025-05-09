@@ -6,6 +6,7 @@ use crate::{
     buffer::{Buffer, BufferDesc},
     data_blob::DataBlob,
     device_context::{DeferredDeviceContext, DeviceContext},
+    device_memory::{DeviceMemory, DeviceMemoryCreateInfo},
     fence::{Fence, FenceDesc},
     frame_buffer::{Framebuffer, FramebufferDesc},
     graphics_types::{
@@ -644,7 +645,40 @@ impl RenderDevice {
         }
     }
 
-    //TODO pub fn create_device_memory();
+    pub fn create_device_memory(
+        &self,
+        create_info: &DeviceMemoryCreateInfo,
+    ) -> Result<DeviceMemory, ()> {
+        let mut compatible_resources: Vec<_> = create_info
+            .compatible_resources
+            .iter()
+            .map(|device_object| device_object.sys_ptr)
+            .collect();
+
+        let create_info = diligent_sys::DeviceMemoryCreateInfo {
+            Desc: (&create_info.desc).into(),
+            InitialSize: create_info.initial_size,
+            NumResources: compatible_resources.len() as u32,
+            ppCompatibleResources: compatible_resources.as_mut_ptr(),
+        };
+
+        let mut device_memory_ptr = std::ptr::null_mut();
+        unsafe {
+            (*self.virtual_functions)
+                .RenderDevice
+                .CreateDeviceMemory
+                .unwrap_unchecked()(
+                self.sys_ptr,
+                std::ptr::from_ref(&create_info),
+                std::ptr::addr_of_mut!(device_memory_ptr),
+            )
+        }
+        if device_memory_ptr.is_null() {
+            Err(())
+        } else {
+            Ok(DeviceMemory::new(device_memory_ptr))
+        }
+    }
 
     pub fn create_pipeline_state_cache<T>(
         &self,
