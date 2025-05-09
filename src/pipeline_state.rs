@@ -823,15 +823,15 @@ pub struct GraphicsPipelineDesc<'a> {
     #[builder(default)]
     depth_stencil_desc: DepthStencilStateDesc,
 
-    #[builder(with =|output : impl Into<GraphicsPipelineOutput<'a>>| output.into())]
+    #[builder(into)]
     #[builder(default)]
     output: GraphicsPipelineOutput<'a>,
 
     #[builder(default = 0xFFFFFFFF)]
     sample_mask: u32,
 
-    #[builder(default = Vec::new())]
-    #[builder(with =|elements : impl Into<Vec<LayoutElement>>| elements.into())]
+    #[builder(into)]
+    #[builder(default)]
     input_layouts: Vec<LayoutElement>,
 
     #[builder(default = PrimitiveTopology::TriangleList)]
