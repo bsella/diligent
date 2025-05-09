@@ -329,7 +329,7 @@ impl SampleBase for Tessellation {
             let subresource = TextureSubResource::builder()
                 .from_host(
                     image.as_bytes(),
-                    image.width() as u64 * std::mem::size_of::<[u8; 2]>() as u64,
+                    image.width() as u64 * std::mem::size_of::<u16>() as u64,
                 )
                 .build();
 
@@ -391,17 +391,12 @@ impl SampleBase for Tessellation {
             }
         }
 
+        #[rustfmt::skip]
         apply_to_pipelines(
             |pso| {
-                pso.get_static_variable_by_name(ShaderType::Vertex, "VSConstants")
-                    .unwrap()
-                    .set(&shader_constants, SetShaderResourceFlags::None);
-                pso.get_static_variable_by_name(ShaderType::Hull, "HSConstants")
-                    .unwrap()
-                    .set(&shader_constants, SetShaderResourceFlags::None);
-                pso.get_static_variable_by_name(ShaderType::Domain, "DSConstants")
-                    .unwrap()
-                    .set(&shader_constants, SetShaderResourceFlags::None);
+                pso.get_static_variable_by_name(ShaderType::Vertex, "VSConstants").unwrap().set(&shader_constants, SetShaderResourceFlags::None);
+                pso.get_static_variable_by_name(ShaderType::Hull, "HSConstants").unwrap().set(&shader_constants, SetShaderResourceFlags::None);
+                pso.get_static_variable_by_name(ShaderType::Domain, "DSConstants").unwrap().set(&shader_constants, SetShaderResourceFlags::None);
             },
             &main_pipeline,
             &wireframe_pipeline,
@@ -426,24 +421,18 @@ impl SampleBase for Tessellation {
             }
         }
 
+        #[rustfmt::skip]
         apply_to_srb(
             |(_, srb)| {
-                srb.get_variable_by_name("g_Texture", ShaderTypes::Pixel)
-                    .unwrap()
-                    .set(&color_map_srv, SetShaderResourceFlags::None);
-
-                srb.get_variable_by_name("g_HeightMap", ShaderTypes::Domain)
-                    .unwrap()
-                    .set(&height_map_srv, SetShaderResourceFlags::None);
-                srb.get_variable_by_name("g_HeightMap", ShaderTypes::Hull)
-                    .unwrap()
-                    .set(&height_map_srv, SetShaderResourceFlags::None);
+                srb.get_variable_by_name("g_Texture", ShaderTypes::Pixel).unwrap().set(&color_map_srv, SetShaderResourceFlags::None);
+                srb.get_variable_by_name("g_HeightMap", ShaderTypes::Domain).unwrap().set(&height_map_srv, SetShaderResourceFlags::None);
+                srb.get_variable_by_name("g_HeightMap", ShaderTypes::Hull).unwrap().set(&height_map_srv, SetShaderResourceFlags::None);
             },
             &main_pipeline,
             &wireframe_pipeline,
         );
 
-        let sample = Tessellation {
+        Tessellation {
             animate: true,
             wireframe: false,
             tess_density: 32.0,
@@ -467,9 +456,7 @@ impl SampleBase for Tessellation {
             shader_constants,
 
             adaptive_tessellation: true,
-        };
-
-        sample
+        }
     }
 
     fn get_immediate_context(&self) -> &ImmediateDeviceContext {
