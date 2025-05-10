@@ -1,4 +1,4 @@
-use std::{os::raw::c_void, path::PathBuf};
+use std::{os::raw::c_void, path::Path};
 
 use static_assertions::const_assert;
 
@@ -121,7 +121,7 @@ impl EngineFactory {
 
     pub fn create_default_shader_source_stream_factory(
         &self,
-        search_directories: &[&PathBuf],
+        search_directories: &[&Path],
     ) -> Result<ShaderSourceInputStreamFactory, ()> {
         let mut search = String::new();
 

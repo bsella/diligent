@@ -306,8 +306,10 @@ impl SampleBase for Instancing {
             let swap_chain_desc = swap_chain.get_desc();
 
             // Get pretransform matrix that rotates the scene according the surface orientation
-            let srf_pre_transform =
-                get_surface_pretransform_matrix(&swap_chain_desc, &glam::Vec3::new(0.0, 0.0, 1.0));
+            let srf_pre_transform = get_surface_pretransform_matrix(
+                swap_chain_desc.pre_transform,
+                &glam::Vec3::new(0.0, 0.0, 1.0),
+            );
 
             // Get projection matrix adjusted to the current screen orientation
             let proj = get_adjusted_projection_matrix(

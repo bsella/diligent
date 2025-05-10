@@ -49,10 +49,10 @@ pub fn get_adjusted_projection_matrix(
 
 // Returns pretransform matrix that matches the current screen rotation
 pub fn get_surface_pretransform_matrix(
-    swap_chain_desc: &SwapChainDesc,
+    pre_transform: SurfaceTransform,
     camera_view_axis: &glam::Vec3,
 ) -> glam::Mat4 {
-    match swap_chain_desc.pre_transform
+    match pre_transform
     {
         SurfaceTransform::Rotate90 =>
             // The image content is rotated 90 degrees clockwise.
