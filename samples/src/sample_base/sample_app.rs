@@ -65,8 +65,6 @@ pub struct SampleApp<Sample: SampleBase> {
 
     sample: Sample,
 
-    current_time: f64,
-
     imgui_renderer: ImguiRenderer,
 
     app_settings: SampleAppSettings,
@@ -121,8 +119,6 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
     }
 
     fn update(&mut self, current_time: f64, elapsed_time: f64) {
-        self.current_time = current_time;
-
         self.sample.update(current_time, elapsed_time);
     }
 
@@ -564,8 +560,6 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             sample,
 
             app_settings,
-
-            current_time: 0.0,
 
             imgui_renderer,
 
