@@ -949,15 +949,10 @@ impl<'a> From<&GraphicsPipelineDesc<'a>> for GraphicsPipelineDescWrapper {
     }
 }
 
-// For now, couldn't find any practical way to provide the `diligent_sys::PIPELINE_TYPE_GRAPHICS` value
-// directly to the PipelineStateCreateInfo<> template member. This happens because the compiler can't
-// convert a `::std::os::raw::c_uint` into a `u8` implicitly in compile time. If you know of a better
-// way of doing this, feel free to make a pull request.
-const_assert!(diligent_sys::PIPELINE_TYPE_GRAPHICS == 0);
-
 // TODO #[derive(Builder)]
 pub struct GraphicsPipelineStateCreateInfo<'a> {
-    pipeline_state_create_info: PipelineStateCreateInfo<'a, 0>,
+    pipeline_state_create_info:
+        PipelineStateCreateInfo<'a, { diligent_sys::PIPELINE_TYPE_GRAPHICS as _ }>,
 
     graphics_pipeline_desc: GraphicsPipelineDesc<'a>,
 
@@ -1081,6 +1076,165 @@ impl<'a> GraphicsPipelineStateCreateInfo<'a> {
     pub fn mesh_shader(mut self, shader: &'a Shader) -> Self {
         self.mesh_shader = Some(shader);
         self
+    }
+}
+
+#[derive(Builder)]
+pub struct RayTracingPipelineStateCreateInfo<'a> {
+    #[builder(setters(vis = ""))]
+    pipeline_state_create_info:
+        PipelineStateCreateInfo<'a, { diligent_sys::PIPELINE_TYPE_RAY_TRACING as _ }>,
+
+    shader_record_size: u16,
+
+    max_recursion_depth: u8,
+
+    #[builder(with = |shaders : Vec<(impl AsRef<str>, &'a Shader)>| {
+        shaders.into_iter().map(|(name, shader)| (CString::new(name.as_ref()).unwrap(), shader)).collect()
+    })]
+    general_shaders: Vec<(CString, &'a Shader)>,
+
+    #[builder(with = |shaders : Vec<(impl AsRef<str>, &'a Shader, Option<&'a Shader>)>| {
+        shaders.into_iter().map(|(name, closest_hit_shader, any_hit_shader)|
+            (CString::new(name.as_ref()).unwrap(), closest_hit_shader, any_hit_shader)
+        ).collect()
+    })]
+    triangle_hit_shaders: Option<Vec<(CString, &'a Shader, Option<&'a Shader>)>>,
+
+    #[builder(with = |shaders : Vec<(impl AsRef<str>, &'a Shader, Option<&'a Shader>, Option<&'a Shader>)>| {
+        shaders.into_iter().map(|(name, intersection_shader, closest_hit_shader, any_hit_shader)|
+            (CString::new(name.as_ref()).unwrap(), intersection_shader, closest_hit_shader, any_hit_shader)
+        ).collect()
+    })]
+    procedural_hit_shaders:
+        Option<Vec<(CString, &'a Shader, Option<&'a Shader>, Option<&'a Shader>)>>,
+
+    #[cfg(feature = "d3d12")]
+    shader_record_name: CString,
+
+    #[cfg(feature = "d3d12")]
+    max_attribute_size: u32,
+
+    #[cfg(feature = "d3d12")]
+    max_payload_size: u32,
+}
+
+use ray_tracing_pipeline_state_create_info_builder::{IsUnset, SetPipelineStateCreateInfo, State};
+impl<'a, S: State> RayTracingPipelineStateCreateInfoBuilder<'a, S> {
+    pub fn name(
+        self,
+        name: impl AsRef<str>,
+    ) -> RayTracingPipelineStateCreateInfoBuilder<'a, SetPipelineStateCreateInfo<S>>
+    where
+        S::PipelineStateCreateInfo: IsUnset,
+    {
+        self.pipeline_state_create_info(PipelineStateCreateInfo::new(name))
+    }
+}
+
+pub(crate) struct RayTracingPipelineStateCreateInfoWrapper {
+    _pci: PipelineStateCreateInfoWrapper,
+    _general_shaders: Vec<diligent_sys::RayTracingGeneralShaderGroup>,
+    _triangle_hit_shaders: Vec<diligent_sys::RayTracingTriangleHitShaderGroup>,
+    _procedural_hit_shaders: Vec<diligent_sys::RayTracingProceduralHitShaderGroup>,
+    ci: diligent_sys::RayTracingPipelineStateCreateInfo,
+}
+
+impl Deref for RayTracingPipelineStateCreateInfoWrapper {
+    type Target = diligent_sys::RayTracingPipelineStateCreateInfo;
+    fn deref(&self) -> &Self::Target {
+        &self.ci
+    }
+}
+
+impl From<&RayTracingPipelineStateCreateInfo<'_>> for RayTracingPipelineStateCreateInfoWrapper {
+    fn from(value: &RayTracingPipelineStateCreateInfo<'_>) -> Self {
+        let pci = PipelineStateCreateInfoWrapper::from(&value.pipeline_state_create_info);
+        let general_shaders = value
+            .general_shaders
+            .iter()
+            .map(
+                |(name, shader)| diligent_sys::RayTracingGeneralShaderGroup {
+                    Name: name.as_ptr(),
+                    pShader: shader.sys_ptr,
+                },
+            )
+            .collect::<Vec<_>>();
+
+        let triangle_hit_shaders =
+            value
+                .triangle_hit_shaders
+                .as_ref()
+                .map_or(Vec::default(), |shaders| {
+                    shaders
+                        .iter()
+                        .map(|(name, closest_hit_shader, any_hit_shader)| {
+                            diligent_sys::RayTracingTriangleHitShaderGroup {
+                                Name: name.as_ptr(),
+                                pClosestHitShader: closest_hit_shader.sys_ptr,
+                                pAnyHitShader: any_hit_shader
+                                    .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr),
+                            }
+                        })
+                        .collect()
+                });
+
+        let procedural_hit_shaders =
+            value
+                .procedural_hit_shaders
+                .as_ref()
+                .map_or(Vec::default(), |shaders| {
+                    shaders
+                        .iter()
+                        .map(
+                            |(name, intersection_shader, closest_hit_shader, any_hit_shader)| {
+                                diligent_sys::RayTracingProceduralHitShaderGroup {
+                                    Name: name.as_ptr(),
+                                    pIntersectionShader: intersection_shader.sys_ptr,
+                                    pClosestHitShader: closest_hit_shader
+                                        .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr),
+                                    pAnyHitShader: any_hit_shader
+                                        .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr),
+                                }
+                            },
+                        )
+                        .collect()
+                });
+
+        let ci = diligent_sys::RayTracingPipelineStateCreateInfo {
+            _PipelineStateCreateInfo: *pci,
+            RayTracingPipeline: diligent_sys::RayTracingPipelineDesc {
+                ShaderRecordSize: value.shader_record_size,
+                MaxRecursionDepth: value.max_recursion_depth,
+            },
+            pGeneralShaders: general_shaders.as_ptr(),
+            GeneralShaderCount: general_shaders.len() as u32,
+            pTriangleHitShaders: triangle_hit_shaders.as_ptr(),
+            TriangleHitShaderCount: triangle_hit_shaders.len() as u32,
+            pProceduralHitShaders: procedural_hit_shaders.as_ptr(),
+            ProceduralHitShaderCount: procedural_hit_shaders.len() as u32,
+            #[cfg(feature = "d3d12")]
+            pShaderRecordName: value.shader_record_name.as_ptr(),
+            #[cfg(feature = "d3d12")]
+            MaxAttributeSize: value.max_attribute_size,
+            #[cfg(feature = "d3d12")]
+            MaxPayloadSize: value.max_payload_size,
+
+            #[cfg(not(feature = "d3d12"))]
+            pShaderRecordName: std::ptr::null(),
+            #[cfg(not(feature = "d3d12"))]
+            MaxAttributeSize: 0,
+            #[cfg(not(feature = "d3d12"))]
+            MaxPayloadSize: 0,
+        };
+
+        Self {
+            _pci: pci,
+            _general_shaders: general_shaders,
+            _triangle_hit_shaders: triangle_hit_shaders,
+            _procedural_hit_shaders: procedural_hit_shaders,
+            ci,
+        }
     }
 }
 

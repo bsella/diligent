@@ -3,6 +3,7 @@ use std::{ffi::CString, os::raw::c_void, str::FromStr};
 use static_assertions::const_assert;
 
 use crate::{
+    blas::{BottomLevelAS, BottomLevelASDesc, BottomLevelASDescWrapper},
     buffer::{Buffer, BufferDesc},
     data_blob::DataBlob,
     device_context::{DeferredDeviceContext, DeviceContext},
@@ -19,6 +20,7 @@ use crate::{
     },
     pipeline_state::{
         GraphicsPipelineStateCreateInfo, GraphicsPipelineStateCreateInfoWrapper, PipelineState,
+        RayTracingPipelineStateCreateInfo, RayTracingPipelineStateCreateInfoWrapper,
     },
     pipeline_state_cache::{PipelineStateCache, PipelineStateCacheCreateInfo},
     query::{
@@ -29,7 +31,9 @@ use crate::{
     resource_mapping::ResourceMapping,
     sampler::{Sampler, SamplerDesc},
     shader::{Shader, ShaderCreateInfo, ShaderCreateInfoWrapper},
+    shader_binding_table::{ShaderBindingTable, ShaderBindingTableDesc},
     texture::{Texture, TextureDesc, TextureSubResource},
+    tlas::{TopLevelAS, TopLevelASDesc},
 };
 
 pub struct RenderDeviceInfo {
@@ -306,16 +310,19 @@ impl RenderDevice {
 
     pub fn create_ray_tracing_pipeline_state(
         &self,
-        pipeline_ci: &diligent_sys::RayTracingPipelineStateCreateInfo,
+        pipeline_ci: &RayTracingPipelineStateCreateInfo,
     ) -> Result<PipelineState, ()> {
         let mut pipeline_state_ptr = std::ptr::null_mut();
+
+        let pipeline_ci = RayTracingPipelineStateCreateInfoWrapper::from(pipeline_ci);
+
         unsafe {
             (*self.virtual_functions)
                 .RenderDevice
                 .CreateRayTracingPipelineState
                 .unwrap_unchecked()(
                 self.sys_ptr,
-                pipeline_ci,
+                std::ptr::from_ref(&pipeline_ci),
                 std::ptr::addr_of_mut!(pipeline_state_ptr),
             );
         }
@@ -617,9 +624,65 @@ impl RenderDevice {
         }
     }
 
-    //TODO pub fn create_blas(&self);
-    //TODO pub fn create_tlas(&self);
-    //TODO pub fn create_sbt(&self);
+    pub fn create_blas(&self, desc: &BottomLevelASDesc) -> Result<BottomLevelAS, ()> {
+        let desc = BottomLevelASDescWrapper::from(desc);
+        let mut blas_ptr = std::ptr::null_mut();
+        unsafe {
+            (*self.virtual_functions)
+                .RenderDevice
+                .CreateBLAS
+                .unwrap_unchecked()(
+                self.sys_ptr,
+                std::ptr::from_ref(&desc),
+                std::ptr::addr_of_mut!(blas_ptr),
+            );
+        }
+        if blas_ptr.is_null() {
+            Err(())
+        } else {
+            Ok(BottomLevelAS::new(blas_ptr))
+        }
+    }
+
+    pub fn create_tlas(&self, desc: &TopLevelASDesc) -> Result<TopLevelAS, ()> {
+        let desc = desc.into();
+        let mut tlas_ptr = std::ptr::null_mut();
+        unsafe {
+            (*self.virtual_functions)
+                .RenderDevice
+                .CreateTLAS
+                .unwrap_unchecked()(
+                self.sys_ptr,
+                std::ptr::from_ref(&desc),
+                std::ptr::addr_of_mut!(tlas_ptr),
+            );
+        }
+        if tlas_ptr.is_null() {
+            Err(())
+        } else {
+            Ok(TopLevelAS::new(tlas_ptr))
+        }
+    }
+
+    pub fn create_sbt(&self, desc: &ShaderBindingTableDesc) -> Result<ShaderBindingTable, ()> {
+        let desc = desc.into();
+        let mut sbt_ptr = std::ptr::null_mut();
+        unsafe {
+            (*self.virtual_functions)
+                .RenderDevice
+                .CreateSBT
+                .unwrap_unchecked()(
+                self.sys_ptr,
+                std::ptr::from_ref(&desc),
+                std::ptr::addr_of_mut!(sbt_ptr),
+            );
+        }
+        if sbt_ptr.is_null() {
+            Err(())
+        } else {
+            Ok(ShaderBindingTable::new(sbt_ptr))
+        }
+    }
 
     pub fn create_pipeline_resource_signature(
         &self,

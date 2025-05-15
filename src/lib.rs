@@ -9,6 +9,7 @@ pub mod graphics_utilities;
 
 pub mod platforms;
 
+pub mod blas;
 pub mod buffer;
 pub mod buffer_view;
 pub mod command_queue;
@@ -29,11 +30,13 @@ pub mod render_pass;
 pub mod resource_mapping;
 pub mod sampler;
 pub mod shader;
+pub mod shader_binding_table;
 pub mod shader_resource_binding;
 pub mod shader_resource_variable;
 pub mod swap_chain;
 pub mod texture;
 pub mod texture_view;
+pub mod tlas;
 
 #[cfg(feature = "vulkan")]
 pub mod vk;
