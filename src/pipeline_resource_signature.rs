@@ -15,6 +15,7 @@ use crate::{
     },
 };
 
+#[derive(Clone)]
 pub struct ImmutableSamplerDesc<'a> {
     shader_stages: ShaderTypes,
     sampler_or_texture_name: CString,

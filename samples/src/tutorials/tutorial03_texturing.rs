@@ -16,7 +16,7 @@ use diligent::{
     pipeline_resource_signature::ImmutableSamplerDesc,
     pipeline_state::{
         CullMode, DepthStencilStateDesc, GraphicsPipelineDesc, GraphicsPipelineRenderTargets,
-        GraphicsPipelineStateCreateInfo, PipelineState, RasterizerStateDesc,
+        PipelineState, PipelineStateCreateInfo, RasterizerStateDesc,
     },
     render_device::RenderDevice,
     sampler::SamplerDesc,
@@ -160,49 +160,50 @@ impl SampleBase for Texturing {
         rtv_formats[0] = Some(swap_chain_desc.color_buffer_format);
 
         // Pipeline state object encompasses configuration of all GPU stages
-        let pso_create_info = GraphicsPipelineStateCreateInfo::new(
-            // Pipeline state name is used by the engine to report issues.
-            "Cube PSO",
-            GraphicsPipelineDesc::builder()
-                .rasterizer_desc(rasterizer_desc)
-                .depth_stencil_desc(depth_desc)
-                .output(
-                    GraphicsPipelineRenderTargets::builder() // This tutorial will render to a single render target
-                        .num_render_targets(1)
-                        // Set render target format which is the format of the swap chain's color buffer
-                        .rtv_formats(rtv_formats)
-                        // Set depth buffer format which is the format of the swap chain's back buffer
-                        .dsv_format(swap_chain_desc.depth_buffer_format)
-                        .build(),
-                )
-                // Primitive topology defines what kind of primitives will be rendered by this pipeline state
-                .primitive_topology(PrimitiveTopology::TriangleList)
-                // Define vertex shader input layout
-                .input_layouts([
-                    // Attribute 0 - vertex position
-                    LayoutElement::builder().slot(0).f32_3().build(),
-                    // Attribute 1 - vertex color
-                    LayoutElement::builder().slot(0).f32_2().build(),
-                ])
-                .build(),
-        )
-        // Define variable type that will be used by default
-        .default_variable_type(ShaderResourceVariableType::Static)
-        // Shader variables should typically be mutable, which means they are expected
-        // to change on a per-instance basis
-        .set_shader_resource_variables([ShaderResourceVariableDesc::builder()
-            .name("g_Texture")
-            .variable_type(ShaderResourceVariableType::Mutable)
-            .shader_stages(ShaderTypes::Pixel)
-            .build()])
-        // Define immutable sampler for g_Texture. Immutable samplers should be used whenever possible
-        .set_immutable_samplers([ImmutableSamplerDesc::new(
-            ShaderTypes::Pixel,
-            "g_Texture",
-            &sampler_desc,
-        )])
-        .vertex_shader(&vertex_shader)
-        .pixel_shader(&pixel_shader);
+        let pso_create_info = PipelineStateCreateInfo::builder()
+            // Define variable type that will be used by default
+            .default_variable_type(ShaderResourceVariableType::Static)
+            // Shader variables should typically be mutable, which means they are expected
+            // to change on a per-instance basis
+            .shader_resource_variables([ShaderResourceVariableDesc::builder()
+                .name("g_Texture")
+                .variable_type(ShaderResourceVariableType::Mutable)
+                .shader_stages(ShaderTypes::Pixel)
+                .build()])
+            // Define immutable sampler for g_Texture. Immutable samplers should be used whenever possible
+            .immutable_samplers([ImmutableSamplerDesc::new(
+                ShaderTypes::Pixel,
+                "g_Texture",
+                &sampler_desc,
+            )])
+            .graphics("Cube PSO")
+            .graphics_pipeline_desc(
+                GraphicsPipelineDesc::builder()
+                    .rasterizer_desc(rasterizer_desc)
+                    .depth_stencil_desc(depth_desc)
+                    .output(
+                        GraphicsPipelineRenderTargets::builder() // This tutorial will render to a single render target
+                            .num_render_targets(1)
+                            // Set render target format which is the format of the swap chain's color buffer
+                            .rtv_formats(rtv_formats)
+                            // Set depth buffer format which is the format of the swap chain's back buffer
+                            .dsv_format(swap_chain_desc.depth_buffer_format)
+                            .build(),
+                    )
+                    // Primitive topology defines what kind of primitives will be rendered by this pipeline state
+                    .primitive_topology(PrimitiveTopology::TriangleList)
+                    // Define vertex shader input layout
+                    .input_layouts([
+                        // Attribute 0 - vertex position
+                        LayoutElement::builder().slot(0).f32_3().build(),
+                        // Attribute 1 - vertex color
+                        LayoutElement::builder().slot(0).f32_2().build(),
+                    ])
+                    .build(),
+            )
+            .vertex_shader(&vertex_shader)
+            .pixel_shader(&pixel_shader)
+            .build();
 
         let pipeline_state = device
             .create_graphics_pipeline_state(&pso_create_info)

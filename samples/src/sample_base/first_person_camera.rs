@@ -53,22 +53,7 @@ impl FirstPersonCamera {
 
         let reference_ahead_axis = handness * reference_right_axis.cross(reference_up_axis);
 
-        let fov = match srf_pre_transform {
-            SurfaceTransform::Rotate90
-            | SurfaceTransform::Rotate270
-            | SurfaceTransform::HorizontalMirrorRotate90
-            | SurfaceTransform::HorizontalMirrorRotate270 => {
-                // When the screen is rotated, vertical FOV becomes horizontal FOV
-                fov_y * aspect_ratio
-            }
-
-            _ => fov_y,
-        };
-
-        let proj_matrix =
-            glam::Mat4::perspective_lh(fov, aspect_ratio, near_clip_plane, far_clip_plane);
-
-        Self {
+        let mut camera = Self {
             last_mouse_pos: [0, 0],
             left_mouse_pressed: false,
             reference_right_axis: glam::Vec4::new(
@@ -91,7 +76,7 @@ impl FirstPersonCamera {
             ),
             view_matrix: glam::Mat4::IDENTITY,
             world_matrix: glam::Mat4::IDENTITY,
-            proj_matrix: proj_matrix,
+            proj_matrix: glam::Mat4::IDENTITY,
             rotation_speed: 0.01,
             move_direction: glam::Vec3 {
                 x: 0.0,
@@ -103,8 +88,18 @@ impl FirstPersonCamera {
             pitch_angle: 0.0,
             speed_up_scale: 5.0,
             super_speed_up_scale: 10.0,
-            handness,
-        }
+            handness: if is_right_handed { 1.0 } else { -1.0 },
+        };
+
+        camera.set_projection_attribs(
+            near_clip_plane,
+            far_clip_plane,
+            aspect_ratio,
+            fov_y,
+            srf_pre_transform,
+        );
+
+        camera
     }
 
     pub fn apply_event(&mut self, event: &Event) {
@@ -213,5 +208,47 @@ impl FirstPersonCamera {
     }
     pub fn projection_matrix(&self) -> &glam::Mat4 {
         &self.proj_matrix
+    }
+
+    pub fn set_pos(&mut self, pos: &glam::Vec3) {
+        *self.world_matrix.col_mut(3) = glam::vec4(pos.x, pos.y, pos.z, 1.0);
+    }
+    pub fn set_rotation(&mut self, yaw: f32, pitch: f32) {
+        self.yaw_angle = yaw;
+        self.pitch_angle = pitch;
+    }
+    pub fn set_rotation_speed(&mut self, speed: f32) {
+        self.rotation_speed = speed
+    }
+
+    //pub fn set_move_speed(&mut self, speed: f32) {}
+
+    pub fn set_speed_up_scales(&mut self, speed: f32, super_speed: f32) {
+        self.speed_up_scale = speed;
+        self.super_speed_up_scale = super_speed;
+    }
+
+    pub fn set_projection_attribs(
+        &mut self,
+        near_clip_plane: f32,
+        far_clip_plane: f32,
+        aspect_ratio: f32,
+        fov_y: f32,
+        srf_pre_transform: SurfaceTransform,
+    ) {
+        let fov = match srf_pre_transform {
+            SurfaceTransform::Rotate90
+            | SurfaceTransform::Rotate270
+            | SurfaceTransform::HorizontalMirrorRotate90
+            | SurfaceTransform::HorizontalMirrorRotate270 => {
+                // When the screen is rotated, vertical FOV becomes horizontal FOV
+                fov_y * aspect_ratio
+            }
+
+            _ => fov_y,
+        };
+
+        self.proj_matrix =
+            glam::Mat4::perspective_lh(fov, aspect_ratio, near_clip_plane, far_clip_plane);
     }
 }

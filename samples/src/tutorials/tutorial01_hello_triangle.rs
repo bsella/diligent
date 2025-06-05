@@ -6,7 +6,7 @@ use diligent::{
     graphics_types::{PrimitiveTopology, ShaderType},
     pipeline_state::{
         CullMode, DepthStencilStateDesc, GraphicsPipelineDesc, GraphicsPipelineRenderTargets,
-        GraphicsPipelineStateCreateInfo, PipelineState, RasterizerStateDesc,
+        PipelineState, PipelineStateCreateInfo, RasterizerStateDesc,
     },
     render_device::RenderDevice,
     shader::{ShaderCreateInfo, ShaderLanguage, ShaderSource},
@@ -140,10 +140,12 @@ void main(in PSInput PSIn, out PSOutput PSOut)
             .primitive_topology(PrimitiveTopology::TriangleList)
             .build();
 
-        let pso_create_info =
-            GraphicsPipelineStateCreateInfo::new("Simple triangle PSO", graphics_pipeline_desc)
-                .vertex_shader(&vertex_shader)
-                .pixel_shader(&pixel_shader);
+        let pso_create_info = PipelineStateCreateInfo::builder()
+            .graphics("Simple triangle PSO")
+            .graphics_pipeline_desc(graphics_pipeline_desc)
+            .vertex_shader(&vertex_shader)
+            .pixel_shader(&pixel_shader)
+            .build();
 
         // Finally, create the pipeline state
         let pipeline_state = device

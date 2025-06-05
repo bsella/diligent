@@ -34,13 +34,13 @@ pub struct GeometryPrimitiveAttributes {
     pub vertex_flags: GeometryPrimitiveVertexFlags,
 
     #[builder(default = 1)]
-    num_subdivisions: u32,
+    num_subdivisions: usize,
 }
 
 pub struct GeometryPrimitiveInfo {
-    pub num_vertices: u32,
-    pub num_indices: u32,
-    pub vertex_size: u32,
+    pub num_vertices: usize,
+    pub num_indices: usize,
+    pub vertex_size: usize,
 }
 
 pub fn create_geometry_primitive(
@@ -58,7 +58,7 @@ pub fn create_geometry_primitive(
                 _GeometryPrimitiveAttributes: diligent_sys::GeometryPrimitiveAttributes {
                     Type: diligent_sys::GEOMETRY_PRIMITIVE_TYPE_CUBE as _,
                     VertexFlags: attribs.vertex_flags.bits(),
-                    NumSubdivisions: attribs.num_subdivisions,
+                    NumSubdivisions: attribs.num_subdivisions as u32,
                 },
             })
         }
@@ -68,7 +68,7 @@ pub fn create_geometry_primitive(
                 _GeometryPrimitiveAttributes: diligent_sys::GeometryPrimitiveAttributes {
                     Type: diligent_sys::GEOMETRY_PRIMITIVE_TYPE_SPHERE as _,
                     VertexFlags: attribs.vertex_flags.bits(),
-                    NumSubdivisions: attribs.num_subdivisions,
+                    NumSubdivisions: attribs.num_subdivisions as u32,
                 },
             })
         }
@@ -104,9 +104,9 @@ pub fn create_geometry_primitive(
             DataBlob::new(vertices),
             DataBlob::new(indices),
             GeometryPrimitiveInfo {
-                num_indices: info.NumIndices,
-                num_vertices: info.NumVertices,
-                vertex_size: info.VertexSize,
+                num_indices: info.NumIndices as usize,
+                num_vertices: info.NumVertices as usize,
+                vertex_size: info.VertexSize as usize,
             },
         ))
     }

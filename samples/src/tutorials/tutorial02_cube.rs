@@ -15,7 +15,7 @@ use diligent::{
     input_layout::LayoutElement,
     pipeline_state::{
         CullMode, DepthStencilStateDesc, GraphicsPipelineDesc, GraphicsPipelineRenderTargets,
-        GraphicsPipelineStateCreateInfo, PipelineState, RasterizerStateDesc,
+        PipelineState, PipelineStateCreateInfo, RasterizerStateDesc,
     },
     render_device::RenderDevice,
     shader::{ShaderCompileFlags, ShaderCreateInfo, ShaderLanguage, ShaderSource},
@@ -152,28 +152,32 @@ impl SampleBase for Cube {
             .build();
 
         // Pipeline state object encompasses configuration of all GPU stages
-        let pso_create_info = GraphicsPipelineStateCreateInfo::new(
-            // Pipeline state name is used by the engine to report issues.
-            "Cube PSO",
-            GraphicsPipelineDesc::builder()
-                .rasterizer_desc(rasterizer_desc)
-                .depth_stencil_desc(depth_desc)
-                .output(pipeline_output)
-                // Primitive topology defines what kind of primitives will be rendered by this pipeline state
-                .primitive_topology(PrimitiveTopology::TriangleList)
-                // Define vertex shader input layout
-                .input_layouts([
-                    // Attribute 0 - vertex position
-                    LayoutElement::builder().slot(0).f32_3().build(),
-                    // Attribute 1 - vertex color
-                    LayoutElement::builder().slot(0).f32_4().build(),
-                ])
-                .build(),
-        )
-        // Define variable type that will be used by default
-        .default_variable_type(ShaderResourceVariableType::Static)
-        .vertex_shader(&vertex_shader)
-        .pixel_shader(&pixel_shader);
+        let pso_create_info = PipelineStateCreateInfo::builder()
+            // Define variable type that will be used by default
+            .default_variable_type(ShaderResourceVariableType::Static)
+            .graphics(
+                // Pipeline state name is used by the engine to report issues.
+                "Cube PSO",
+            )
+            .graphics_pipeline_desc(
+                GraphicsPipelineDesc::builder()
+                    .rasterizer_desc(rasterizer_desc)
+                    .depth_stencil_desc(depth_desc)
+                    .output(pipeline_output)
+                    // Primitive topology defines what kind of primitives will be rendered by this pipeline state
+                    .primitive_topology(PrimitiveTopology::TriangleList)
+                    // Define vertex shader input layout
+                    .input_layouts([
+                        // Attribute 0 - vertex position
+                        LayoutElement::builder().slot(0).f32_3().build(),
+                        // Attribute 1 - vertex color
+                        LayoutElement::builder().slot(0).f32_4().build(),
+                    ])
+                    .build(),
+            )
+            .vertex_shader(&vertex_shader)
+            .pixel_shader(&pixel_shader)
+            .build();
 
         let pipeline_state = device
             .create_graphics_pipeline_state(&pso_create_info)

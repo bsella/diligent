@@ -114,8 +114,7 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
 
         let swap_chain_desc = self.swap_chain.get_desc();
 
-        self.sample
-            .window_resize(swap_chain_desc.width, swap_chain_desc.height);
+        self.sample.window_resize(&self.device, &swap_chain_desc);
     }
 
     fn update(&mut self, current_time: f64, elapsed_time: f64) {

@@ -82,7 +82,8 @@ bitflags! {
     }
 }
 
-#[derive(Builder)]
+#[derive(Builder, Clone)]
+#[builder(derive(Clone))]
 pub struct ShaderResourceVariableDesc {
     #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
     name: CString,

@@ -13,9 +13,8 @@ use diligent::{
     input_layout::LayoutElement,
     pipeline_resource_signature::ImmutableSamplerDesc,
     pipeline_state::{
-        BlendStateDesc, CullMode, DepthStencilStateDesc, GraphicsPipelineDesc,
-        GraphicsPipelineRenderTargets, GraphicsPipelineStateCreateInfo, PipelineState,
-        RasterizerStateDesc,
+        CullMode, DepthStencilStateDesc, GraphicsPipelineDesc, GraphicsPipelineRenderTargets,
+        PipelineState, PipelineStateCreateInfo, RasterizerStateDesc,
     },
     render_device::RenderDevice,
     sampler::SamplerDesc,
@@ -137,7 +136,6 @@ impl TexturedCube {
         rtv_formats[0] = Some(create_info.rtv_format);
 
         let graphics_pipeline_desc = GraphicsPipelineDesc::builder()
-            .blend_desc(BlendStateDesc::default())
             .rasterizer_desc(
                 RasterizerStateDesc::builder()
                     // Cull back faces
@@ -222,25 +220,27 @@ impl TexturedCube {
 
         // Pipeline state name is used by the engine to report issues.
         // It is always a good idea to give objects descriptive names.
-        let pso_create_info =
-            GraphicsPipelineStateCreateInfo::new("Cube PSO", graphics_pipeline_desc)
-                .vertex_shader(&vertex_shader)
-                .pixel_shader(&pixel_shader)
-                // Define variable type that will be used by default
-                .default_variable_type(ShaderResourceVariableType::Static)
-                // Shader variables should typically be mutable, which means they are expected
-                // to change on a per-instance basis
-                .set_shader_resource_variables([ShaderResourceVariableDesc::builder()
-                    .name("g_Texture")
-                    .variable_type(ShaderResourceVariableType::Mutable)
-                    .shader_stages(ShaderTypes::Pixel)
-                    .build()])
-                // Define immutable sampler for g_Texture. Immutable samplers should be used whenever possible
-                .set_immutable_samplers([ImmutableSamplerDesc::new(
-                    ShaderTypes::Pixel,
-                    "g_Texture",
-                    &sampler_desc,
-                )]);
+        let pso_create_info = PipelineStateCreateInfo::builder()
+            // Define variable type that will be used by default
+            .default_variable_type(ShaderResourceVariableType::Static)
+            // Shader variables should typically be mutable, which means they are expected
+            // to change on a per-instance basis
+            .shader_resource_variables([ShaderResourceVariableDesc::builder()
+                .name("g_Texture")
+                .variable_type(ShaderResourceVariableType::Mutable)
+                .shader_stages(ShaderTypes::Pixel)
+                .build()])
+            // Define immutable sampler for g_Texture. Immutable samplers should be used whenever possible
+            .immutable_samplers([ImmutableSamplerDesc::new(
+                ShaderTypes::Pixel,
+                "g_Texture",
+                &sampler_desc,
+            )])
+            .graphics("Cube PSO")
+            .graphics_pipeline_desc(graphics_pipeline_desc)
+            .vertex_shader(&vertex_shader)
+            .pixel_shader(&pixel_shader)
+            .build();
 
         create_info
             .device

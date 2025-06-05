@@ -5,6 +5,7 @@ use bon::Builder;
 use static_assertions::const_assert;
 
 use crate::{
+    blas::BottomLevelAS,
     buffer::{Buffer, BufferMapReadToken, BufferMapReadWriteToken, BufferMapWriteToken},
     command_queue::CommandQueue,
     device_object::DeviceObject,
@@ -18,12 +19,14 @@ use crate::{
     pipeline_state::PipelineState,
     query::{GetSysQueryType, Query},
     render_pass::RenderPass,
+    shader_binding_table::ShaderBindingTable,
     shader_resource_binding::ShaderResourceBinding,
     texture::{
         Texture, TextureSubResource, TextureSubresourceReadMapToken,
         TextureSubresourceReadWriteMapToken, TextureSubresourceWriteMapToken,
     },
     texture_view::TextureView,
+    tlas::{HitGroupBindingMode, TLASBuildInstanceData, TopLevelAS},
 };
 
 bitflags! {
@@ -119,6 +122,175 @@ impl From<&DrawIndexedAttribs> for diligent_sys::DrawIndexedAttribs {
             NumInstances: value.num_instances,
         }
     }
+}
+
+bitflags! {
+    #[derive(Clone, Copy)]
+    pub struct RaytracingGeometryFlags: diligent_sys::RAYTRACING_GEOMETRY_FLAGS {
+        const None                        = diligent_sys::RAYTRACING_GEOMETRY_FLAG_NONE as _;
+        const Opaque                      = diligent_sys::RAYTRACING_GEOMETRY_FLAG_OPAQUE as _;
+        const NoDuplicateAnyHitInvocation = diligent_sys::RAYTRACING_GEOMETRY_FLAG_NO_DUPLICATE_ANY_HIT_INVOCATION as _;
+    }
+}
+
+impl Default for RaytracingGeometryFlags {
+    fn default() -> Self {
+        RaytracingGeometryFlags::None
+    }
+}
+
+const_assert!(diligent_sys::RAYTRACING_GEOMETRY_FLAG_LAST == 2);
+
+#[derive(Builder)]
+pub struct BLASBuildBoundingBoxData<'a> {
+    #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
+    geometry_name: CString,
+
+    box_buffer: &'a Buffer,
+
+    #[builder(default = 0)]
+    box_offset: u64,
+
+    box_stride: u32,
+
+    box_count: u32,
+
+    #[builder(default)]
+    flags: RaytracingGeometryFlags,
+}
+
+#[derive(Builder)]
+pub struct BLASBuildTriangleData<'a> {
+    #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
+    geometry_name: CString,
+
+    vertex_buffer: &'a Buffer,
+
+    #[builder(default = 0)]
+    vertex_offset: u64,
+
+    vertex_stride: u32,
+
+    vertex_count: usize,
+
+    vertex_value_type: Option<ValueType>,
+
+    #[builder(default = 0)]
+    vertex_component_count: u8,
+
+    primitive_count: usize,
+
+    index_buffer: Option<&'a Buffer>,
+
+    #[builder(default = 0)]
+    index_offset: u64,
+
+    index_type: Option<ValueType>,
+
+    transform_buffer: Option<Buffer>,
+
+    #[builder(default = 0)]
+    transform_buffer_offset: u64,
+
+    #[builder(default)]
+    flags: RaytracingGeometryFlags,
+}
+
+#[derive(Builder)]
+pub struct BuildBLASAttribs<'a> {
+    blas: &'a BottomLevelAS,
+
+    #[builder(default = ResourceStateTransitionMode::None)]
+    blas_transition_mode: ResourceStateTransitionMode,
+
+    #[builder(default = ResourceStateTransitionMode::None)]
+    geometry_transition_mode: ResourceStateTransitionMode,
+
+    #[builder(default)]
+    #[builder(into)]
+    triangle_data: Vec<BLASBuildTriangleData<'a>>,
+
+    #[builder(default)]
+    #[builder(into)]
+    box_data: Vec<BLASBuildBoundingBoxData<'a>>,
+
+    scratch_buffer: &'a Buffer,
+
+    #[builder(default = 0)]
+    scratch_buffer_offset: u64,
+
+    #[builder(default = ResourceStateTransitionMode::None)]
+    scratch_buffer_transition_mode: ResourceStateTransitionMode,
+
+    #[builder(default = false)]
+    update: bool,
+}
+
+#[derive(Builder)]
+pub struct BuildTLASAttribs<'a> {
+    tlas: &'a TopLevelAS,
+
+    #[builder(default = ResourceStateTransitionMode::None)]
+    tlas_transition_mode: ResourceStateTransitionMode,
+
+    #[builder(default = ResourceStateTransitionMode::None)]
+    blas_transition_mode: ResourceStateTransitionMode,
+
+    #[builder(into)]
+    instances: Vec<TLASBuildInstanceData<'a>>,
+
+    instance_buffer: &'a Buffer,
+
+    #[builder(default = 0)]
+    instance_buffer_offset: u64,
+
+    #[builder(default = ResourceStateTransitionMode::None)]
+    instance_buffer_transition_mode: ResourceStateTransitionMode,
+
+    #[builder(default = 1)]
+    hit_group_stride: u32,
+
+    #[builder(default = 0)]
+    base_contribution_to_hit_group_index: u32,
+
+    #[builder(default = HitGroupBindingMode::PerGeometry)]
+    binding_mode: HitGroupBindingMode,
+
+    scratch_buffer: &'a Buffer,
+
+    #[builder(default = 0)]
+    scratch_buffer_offset: u64,
+
+    #[builder(default = ResourceStateTransitionMode::None)]
+    scratch_buffer_transition_mode: ResourceStateTransitionMode,
+
+    #[builder(default = false)]
+    update: bool,
+}
+
+#[derive(Builder)]
+pub struct UpdateIndirectRTBufferAttribs<'a> {
+    attribs_buffer: &'a Buffer,
+
+    #[builder(default = 0)]
+    attribs_buffer_offset: u64,
+
+    #[builder(default = ResourceStateTransitionMode::None)]
+    transition_mode: ResourceStateTransitionMode,
+}
+
+#[derive(Builder)]
+pub struct TraceRaysAttribs<'a> {
+    sbt: &'a ShaderBindingTable,
+
+    #[builder(default = 0)]
+    dimension_x: u32,
+
+    #[builder(default = 0)]
+    dimension_y: u32,
+
+    #[builder(default = 0)]
+    dimension_z: u32,
 }
 
 #[derive(Clone, Copy)]
@@ -1135,21 +1307,101 @@ impl DeviceContext {
         }
     }
 
-    pub fn build_blas(&self, attribs: &diligent_sys::BuildBLASAttribs) {
+    pub fn build_blas(&self, attribs: &BuildBLASAttribs) {
+        let triangles = attribs
+            .triangle_data
+            .iter()
+            .map(|triangle| diligent_sys::BLASBuildTriangleData {
+                GeometryName: triangle.geometry_name.as_ptr(),
+                pVertexBuffer: triangle.vertex_buffer.sys_ptr,
+                VertexOffset: triangle.vertex_offset,
+                VertexStride: triangle.vertex_stride,
+                VertexCount: triangle.vertex_count as u32,
+                VertexValueType: triangle
+                    .vertex_value_type
+                    .map_or(diligent_sys::VT_UNDEFINED as _, |vt| vt.into()),
+                VertexComponentCount: triangle.vertex_component_count,
+                PrimitiveCount: triangle.primitive_count as u32,
+                pIndexBuffer: triangle
+                    .index_buffer
+                    .map_or(std::ptr::null_mut(), |ib| ib.sys_ptr),
+                IndexOffset: triangle.index_offset,
+                IndexType: triangle
+                    .index_type
+                    .map_or(diligent_sys::VT_UNDEFINED as _, |vt| vt.into()),
+                pTransformBuffer: triangle
+                    .transform_buffer
+                    .as_ref()
+                    .map_or(std::ptr::null_mut(), |tb| tb.sys_ptr),
+                TransformBufferOffset: triangle.transform_buffer_offset,
+                Flags: triangle.flags.bits(),
+            })
+            .collect::<Vec<_>>();
+
+        let boxes = attribs
+            .box_data
+            .iter()
+            .map(|box_data| diligent_sys::BLASBuildBoundingBoxData {
+                GeometryName: box_data.geometry_name.as_ptr(),
+                pBoxBuffer: box_data.box_buffer.sys_ptr,
+                BoxOffset: box_data.box_offset,
+                BoxStride: box_data.box_stride,
+                BoxCount: box_data.box_count,
+                Flags: box_data.flags.bits(),
+            })
+            .collect::<Vec<_>>();
+
+        let attribs = diligent_sys::BuildBLASAttribs {
+            pBLAS: attribs.blas.sys_ptr,
+            BLASTransitionMode: attribs.blas_transition_mode.into(),
+            GeometryTransitionMode: attribs.geometry_transition_mode.into(),
+            pTriangleData: triangles.as_ptr(),
+            TriangleDataCount: triangles.len() as u32,
+            pBoxData: boxes.as_ptr(),
+            BoxDataCount: boxes.len() as u32,
+            pScratchBuffer: attribs.scratch_buffer.sys_ptr,
+            ScratchBufferOffset: attribs.scratch_buffer_offset,
+            ScratchBufferTransitionMode: attribs.scratch_buffer_transition_mode.into(),
+            Update: attribs.update,
+        };
+
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
                 .BuildBLAS
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(&attribs))
         }
     }
 
-    pub fn build_tlas(&self, attribs: &diligent_sys::BuildTLASAttribs) {
+    pub fn build_tlas<'a>(&self, attribs: &BuildTLASAttribs<'a>) {
+        let instances = attribs
+            .instances
+            .iter()
+            .map(|instance| instance.into())
+            .collect::<Vec<_>>();
+        let attribs = diligent_sys::BuildTLASAttribs {
+            pTLAS: attribs.tlas.sys_ptr,
+            TLASTransitionMode: attribs.tlas_transition_mode.into(),
+            BLASTransitionMode: attribs.blas_transition_mode.into(),
+            pInstances: instances.as_ptr(),
+            InstanceCount: instances.len() as u32,
+            pInstanceBuffer: attribs.instance_buffer.sys_ptr,
+            InstanceBufferOffset: attribs.instance_buffer_offset,
+            InstanceBufferTransitionMode: attribs.instance_buffer_transition_mode.into(),
+            HitGroupStride: attribs.hit_group_stride,
+            BaseContributionToHitGroupIndex: attribs.base_contribution_to_hit_group_index,
+            BindingMode: attribs.binding_mode.into(),
+            pScratchBuffer: attribs.scratch_buffer.sys_ptr,
+            ScratchBufferOffset: attribs.scratch_buffer_offset,
+            ScratchBufferTransitionMode: attribs.scratch_buffer_transition_mode.into(),
+            Update: attribs.update,
+        };
+
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
                 .BuildTLAS
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(&attribs))
         }
     }
 
@@ -1189,12 +1441,19 @@ impl DeviceContext {
         }
     }
 
-    pub fn trace_rays(&self, attribs: &diligent_sys::TraceRaysAttribs) {
+    pub fn trace_rays(&self, attribs: &TraceRaysAttribs) {
+        let attribs = diligent_sys::TraceRaysAttribs {
+            pSBT: attribs.sbt.sys_ptr,
+            DimensionX: attribs.dimension_x,
+            DimensionY: attribs.dimension_y,
+            DimensionZ: attribs.dimension_z,
+        };
+
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
                 .TraceRays
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(&attribs))
         }
     }
 
@@ -1207,8 +1466,27 @@ impl DeviceContext {
         }
     }
 
-    // TODO
-    // pub fn update_sbt(&self, sbt : &mut ShaderBindingTable) {}
+    pub fn update_sbt(
+        &self,
+        sbt: &ShaderBindingTable,
+        attribs: Option<&UpdateIndirectRTBufferAttribs>,
+    ) {
+        let attribs = attribs.map(|attribs| diligent_sys::UpdateIndirectRTBufferAttribs {
+            pAttribsBuffer: attribs.attribs_buffer.sys_ptr,
+            AttribsBufferOffset: attribs.attribs_buffer_offset,
+            TransitionMode: attribs.transition_mode.into(),
+        });
+        unsafe {
+            (*self.virtual_functions)
+                .DeviceContext
+                .UpdateSBT
+                .unwrap_unchecked()(
+                self.sys_ptr,
+                sbt.sys_ptr,
+                attribs.map_or(std::ptr::null_mut(), |attribs| std::ptr::from_ref(&attribs)),
+            )
+        }
+    }
 
     #[allow(private_bounds)]
     pub fn set_user_data(&self, user_data: &impl AsRef<Object>) {

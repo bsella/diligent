@@ -30,41 +30,53 @@ impl Default for RayTracingBuildAsFlags {
 }
 
 #[derive(Builder)]
-struct BLASTriangleDesc {
+pub struct BLASTriangleDesc {
+    #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
     geometry_name: CString,
 
-    max_vertex_count: u32,
+    pub max_vertex_count: usize,
 
-    vertex_value_type: ValueType,
+    pub vertex_value_type: ValueType,
 
-    vertex_component_count: u8,
+    pub vertex_component_count: u8,
 
-    max_primitive_count: u32,
+    pub max_primitive_count: usize,
 
-    index_type: ValueType,
+    pub index_type: ValueType,
 
     #[cfg(feature = "vulkan")]
-    allows_transforms: bool,
+    #[builder(default = false)]
+    pub allows_transforms: bool,
 }
 
 #[derive(Builder)]
 pub struct BLASBoundingBoxDesc {
+    #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
     geometry_name: CString,
+
     max_box_count: usize,
 }
 
 #[derive(Builder)]
-pub struct BottomLevelASDesc {
+pub struct BottomLevelASDesc<'a> {
+    #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
     name: CString,
 
-    triangles: Vec<BLASTriangleDesc>,
+    #[builder(default = Vec::new())]
+    #[builder(into)]
+    triangles: Vec<&'a BLASTriangleDesc>,
 
+    #[builder(default = Vec::new())]
+    #[builder(into)]
     boxes: Vec<BLASBoundingBoxDesc>,
 
+    #[builder(default)]
     flags: RayTracingBuildAsFlags,
 
+    #[builder(default = 0)]
     compacted_size: u64,
 
+    #[builder(default = 1)]
     immediate_context_mask: u64,
 }
 
@@ -81,7 +93,7 @@ impl Deref for BottomLevelASDescWrapper {
     }
 }
 
-impl From<&BottomLevelASDesc> for BottomLevelASDescWrapper {
+impl From<&BottomLevelASDesc<'_>> for BottomLevelASDescWrapper {
     fn from(value: &BottomLevelASDesc) -> Self {
         let triangles = value
             .triangles
@@ -91,8 +103,8 @@ impl From<&BottomLevelASDesc> for BottomLevelASDescWrapper {
                 AllowsTransforms: triangle.allows_transforms,
                 GeometryName: triangle.geometry_name.as_ptr(),
                 IndexType: triangle.index_type.into(),
-                MaxPrimitiveCount: triangle.max_primitive_count,
-                MaxVertexCount: triangle.max_vertex_count,
+                MaxPrimitiveCount: triangle.max_primitive_count as u32,
+                MaxVertexCount: triangle.max_vertex_count as u32,
                 VertexComponentCount: triangle.vertex_component_count,
                 VertexValueType: triangle.vertex_value_type.into(),
             })
@@ -140,6 +152,11 @@ impl AsRef<DeviceObject> for BottomLevelAS {
     }
 }
 
+pub struct ScratchBufferSizes {
+    pub build: u64,
+    pub update: u64,
+}
+
 impl BottomLevelAS {
     pub(crate) fn new(sys_ptr: *mut diligent_sys::IBottomLevelAS) -> Self {
         // Both base and derived classes have exactly the same size.
@@ -185,7 +202,18 @@ impl BottomLevelAS {
         }
     }
 
-    // TODO pub fn get_scratch_buffer_sizes(&self) -> ScratchBufferSizes {}
+    pub fn get_scratch_buffer_sizes(&self) -> ScratchBufferSizes {
+        let sbs = unsafe {
+            (*self.virtual_functions)
+                .BottomLevelAS
+                .GetScratchBufferSizes
+                .unwrap_unchecked()(self.sys_ptr)
+        };
+        ScratchBufferSizes {
+            build: sbs.Build,
+            update: sbs.Update,
+        }
+    }
 
     pub fn get_native_handle(&self) -> u64 {
         unsafe {

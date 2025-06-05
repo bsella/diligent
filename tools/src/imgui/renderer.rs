@@ -14,8 +14,8 @@ use diligent::{
     pipeline_resource_signature::ImmutableSamplerDesc,
     pipeline_state::{
         BlendFactor, BlendOperation, BlendStateDesc, ColorMask, CullMode, DepthStencilStateDesc,
-        GraphicsPipelineDesc, GraphicsPipelineRenderTargets, GraphicsPipelineStateCreateInfo,
-        PipelineState, RasterizerStateDesc, RenderTargetBlendDesc,
+        GraphicsPipelineDesc, GraphicsPipelineRenderTargets, PipelineState,
+        PipelineStateCreateInfo, RasterizerStateDesc, RenderTargetBlendDesc,
     },
     render_device::RenderDevice,
     sampler::SamplerDesc,
@@ -583,39 +583,43 @@ impl ImguiRenderer {
 
         rtv_formats[0] = Some(create_info.back_buffer_format);
 
-        let pipeline_state_ci = GraphicsPipelineStateCreateInfo::new(
-            "ImGUI PSO",
-            GraphicsPipelineDesc::builder()
-                .blend_desc(blend_state_desc)
-                .primitive_topology(PrimitiveTopology::TriangleList)
-                .input_layouts([
-                    LayoutElement::builder().slot(0).f32_2().build(),
-                    LayoutElement::builder().slot(0).f32_2().build(),
-                    LayoutElement::builder().slot(0).u8_4().build(),
-                ])
-                .rasterizer_desc(rasterizer_state_desc)
-                .depth_stencil_desc(DepthStencilStateDesc::builder().depth_enable(false).build())
-                .output(
-                    GraphicsPipelineRenderTargets::builder()
-                        .num_render_targets(1)
-                        .rtv_formats(rtv_formats)
-                        .dsv_format(create_info.depth_buffer_format)
-                        .build(),
-                )
-                .build(),
-        )
-        .vertex_shader(&vertex_shader)
-        .pixel_shader(&pixel_shader)
-        .set_shader_resource_variables([ShaderResourceVariableDesc::builder()
-            .name("Texture")
-            .variable_type(ShaderResourceVariableType::Dynamic)
-            .shader_stages(ShaderTypes::Pixel)
-            .build()])
-        .set_immutable_samplers([ImmutableSamplerDesc::new(
-            ShaderTypes::Pixel,
-            "Texture",
-            &sampler_desc,
-        )]);
+        let pipeline_state_ci = PipelineStateCreateInfo::builder()
+            .shader_resource_variables([ShaderResourceVariableDesc::builder()
+                .name("Texture")
+                .variable_type(ShaderResourceVariableType::Dynamic)
+                .shader_stages(ShaderTypes::Pixel)
+                .build()])
+            .immutable_samplers([ImmutableSamplerDesc::new(
+                ShaderTypes::Pixel,
+                "Texture",
+                &sampler_desc,
+            )])
+            .graphics("ImGUI PSO")
+            .graphics_pipeline_desc(
+                GraphicsPipelineDesc::builder()
+                    .blend_desc(blend_state_desc)
+                    .primitive_topology(PrimitiveTopology::TriangleList)
+                    .input_layouts([
+                        LayoutElement::builder().slot(0).f32_2().build(),
+                        LayoutElement::builder().slot(0).f32_2().build(),
+                        LayoutElement::builder().slot(0).u8_4().build(),
+                    ])
+                    .rasterizer_desc(rasterizer_state_desc)
+                    .depth_stencil_desc(
+                        DepthStencilStateDesc::builder().depth_enable(false).build(),
+                    )
+                    .output(
+                        GraphicsPipelineRenderTargets::builder()
+                            .num_render_targets(1)
+                            .rtv_formats(rtv_formats)
+                            .dsv_format(create_info.depth_buffer_format)
+                            .build(),
+                    )
+                    .build(),
+            )
+            .vertex_shader(&vertex_shader)
+            .pixel_shader(&pixel_shader)
+            .build();
 
         let pipeline_state = create_info
             .device

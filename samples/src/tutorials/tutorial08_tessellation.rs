@@ -15,7 +15,7 @@ use diligent::{
     pipeline_resource_signature::ImmutableSamplerDesc,
     pipeline_state::{
         CullMode, DepthStencilStateDesc, GraphicsPipelineDesc, GraphicsPipelineRenderTargets,
-        GraphicsPipelineStateCreateInfo, PipelineState, RasterizerStateDesc,
+        PipelineState, PipelineStateCreateInfo, RasterizerStateDesc,
     },
     render_device::RenderDevice,
     sampler::SamplerDesc,
@@ -118,22 +118,56 @@ impl SampleBase for Tessellation {
         let mut rtv_formats = std::array::from_fn(|_| None);
         rtv_formats[0] = Some(swap_chain_desc.color_buffer_format);
 
+        let linear_clamp_sampler = SamplerDesc::builder()
+            .name("Linear Sampler")
+            .mag_filter(FilterType::Linear)
+            .min_filter(FilterType::Linear)
+            .mip_filter(FilterType::Linear)
+            .address_u(TextureAddressMode::Clamp)
+            .address_v(TextureAddressMode::Clamp)
+            .address_w(TextureAddressMode::Clamp)
+            .build();
+
+        let samplers = [
+            ImmutableSamplerDesc::new(
+                ShaderTypes::Hull | ShaderTypes::Domain,
+                "g_HeightMap",
+                &linear_clamp_sampler,
+            ),
+            ImmutableSamplerDesc::new(ShaderTypes::Pixel, "g_Texture", &linear_clamp_sampler),
+        ];
+
         // Pipeline state object encompasses configuration of all GPU stages
-        let pso_create_info = GraphicsPipelineStateCreateInfo::new(
-            "Terrain PSO",
-            GraphicsPipelineDesc::builder()
-                .rasterizer_desc(RasterizerStateDesc::builder().cull_mode(cull_mode).build())
-                .depth_stencil_desc(DepthStencilStateDesc::builder().depth_enable(true).build())
-                .output(
-                    GraphicsPipelineRenderTargets::builder()
-                        .num_render_targets(1)
-                        .rtv_formats(rtv_formats)
-                        .dsv_format(swap_chain_desc.depth_buffer_format)
-                        .build(),
-                )
-                .primitive_topology(PrimitiveTopology::ControlPointPatchList1)
-                .build(),
-        );
+        let pso_create_info = PipelineStateCreateInfo::builder()
+            .default_variable_type(ShaderResourceVariableType::Static)
+            .shader_resource_variables([
+                ShaderResourceVariableDesc::builder()
+                    .name("g_HeightMap")
+                    .variable_type(ShaderResourceVariableType::Mutable)
+                    .shader_stages(ShaderTypes::Hull | ShaderTypes::Domain)
+                    .build(),
+                ShaderResourceVariableDesc::builder()
+                    .name("g_Texture")
+                    .variable_type(ShaderResourceVariableType::Mutable)
+                    .shader_stages(ShaderTypes::Pixel)
+                    .build(),
+            ])
+            .immutable_samplers(samplers)
+            .graphics("Terrain PSO")
+            .graphics_pipeline_desc(
+                GraphicsPipelineDesc::builder()
+                    .rasterizer_desc(RasterizerStateDesc::builder().cull_mode(cull_mode).build())
+                    .depth_stencil_desc(DepthStencilStateDesc::builder().depth_enable(true).build())
+                    .output(
+                        GraphicsPipelineRenderTargets::builder()
+                            .num_render_targets(1)
+                            .rtv_formats(rtv_formats)
+                            .dsv_format(swap_chain_desc.depth_buffer_format)
+                            .build(),
+                    )
+                    .primitive_topology(PrimitiveTopology::ControlPointPatchList1)
+                    .build(),
+            );
 
         let shader_constants = create_uniform_buffer(
             device,
@@ -220,47 +254,12 @@ impl SampleBase for Tessellation {
         let pso_create_info = pso_create_info
             .vertex_shader(&vertex_shader)
             .hull_shader(&hull_shader)
-            .domain_shader(&domain_shader)
-            .pixel_shader(&pixel_shader);
-
-        let pso_create_info = pso_create_info
-            .default_variable_type(ShaderResourceVariableType::Static)
-            .set_shader_resource_variables([
-                ShaderResourceVariableDesc::builder()
-                    .name("g_HeightMap")
-                    .variable_type(ShaderResourceVariableType::Mutable)
-                    .shader_stages(ShaderTypes::Hull | ShaderTypes::Domain)
-                    .build(),
-                ShaderResourceVariableDesc::builder()
-                    .name("g_Texture")
-                    .variable_type(ShaderResourceVariableType::Mutable)
-                    .shader_stages(ShaderTypes::Pixel)
-                    .build(),
-            ]);
-
-        let linear_clamp_sampler = SamplerDesc::builder()
-            .name("Linear Sampler")
-            .mag_filter(FilterType::Linear)
-            .min_filter(FilterType::Linear)
-            .mip_filter(FilterType::Linear)
-            .address_u(TextureAddressMode::Clamp)
-            .address_v(TextureAddressMode::Clamp)
-            .address_w(TextureAddressMode::Clamp)
-            .build();
-
-        let samplers = [
-            ImmutableSamplerDesc::new(
-                ShaderTypes::Hull | ShaderTypes::Domain,
-                "g_HeightMap",
-                &linear_clamp_sampler,
-            ),
-            ImmutableSamplerDesc::new(ShaderTypes::Pixel, "g_Texture", &linear_clamp_sampler),
-        ];
-
-        let pso_create_info = pso_create_info.set_immutable_samplers(samplers);
+            .domain_shader(&domain_shader);
 
         let main_pipeline = device
-            .create_graphics_pipeline_state(&pso_create_info)
+            .create_graphics_pipeline_state(
+                &pso_create_info.clone().pixel_shader(&pixel_shader).build(),
+            )
             .unwrap();
 
         let wireframe_pipeline = if wireframe_supported {
@@ -290,7 +289,8 @@ impl SampleBase for Tessellation {
 
             let pso_create_info = pso_create_info
                 .pixel_shader(&wire_pixel_shader)
-                .geometry_shader(&wire_geometry_shader);
+                .geometry_shader(&wire_geometry_shader)
+                .build();
 
             let wire_pipeline = device
                 .create_graphics_pipeline_state(&pso_create_info)

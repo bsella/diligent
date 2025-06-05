@@ -23,7 +23,7 @@ impl From<InputElementFrequency> for diligent_sys::INPUT_ELEMENT_FREQUENCY {
     }
 }
 
-#[derive(Builder)]
+#[derive(Builder, Clone)]
 pub struct LayoutElement {
     slot: u32,
 

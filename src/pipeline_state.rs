@@ -302,47 +302,113 @@ impl Default for PipelineShadingRateFlags {
     }
 }
 
-pub struct PipelineResourceLayoutDesc<'a> {
-    default_variable_type: ShaderResourceVariableType,
-    default_variable_merge_stages: ShaderTypes,
-    variables: Vec<ShaderResourceVariableDesc>,
-    immutable_samplers: Vec<ImmutableSamplerDesc<'a>>,
-}
-
-impl<'a> PipelineResourceLayoutDesc<'a> {
-    fn new<const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE>() -> Self {
-        PipelineResourceLayoutDesc {
-            default_variable_type: ShaderResourceVariableType::Static,
-            default_variable_merge_stages: match PIPELINE_TYPE as _ {
-                diligent_sys::PIPELINE_TYPE_GRAPHICS => ShaderTypes::AllGraphics,
-                diligent_sys::PIPELINE_TYPE_COMPUTE => ShaderTypes::Compute,
-                diligent_sys::PIPELINE_TYPE_MESH => ShaderTypes::AllMesh,
-                diligent_sys::PIPELINE_TYPE_RAY_TRACING => ShaderTypes::AllRayTracing,
-                diligent_sys::PIPELINE_TYPE_TILE => ShaderTypes::Tile,
-                _ => panic!("Unknown pipeline type"),
-            },
-            variables: Vec::new(),
-            immutable_samplers: Vec::new(),
-        }
-    }
-}
-
-pub(crate) struct PipelineResourceLayoutDescWrapper {
+pub(crate) struct PipelineStateDescWrapper {
     _variables: Vec<diligent_sys::ShaderResourceVariableDesc>,
     _immutable_samplers: Vec<diligent_sys::ImmutableSamplerDesc>,
-    prld: diligent_sys::PipelineResourceLayoutDesc,
+    psd: diligent_sys::PipelineStateDesc,
 }
 
-impl Deref for PipelineResourceLayoutDescWrapper {
-    type Target = diligent_sys::PipelineResourceLayoutDesc;
+impl Deref for PipelineStateDescWrapper {
+    type Target = diligent_sys::PipelineStateDesc;
     fn deref(&self) -> &Self::Target {
-        &self.prld
+        &self.psd
     }
 }
 
-impl From<&PipelineResourceLayoutDesc<'_>> for PipelineResourceLayoutDescWrapper {
-    fn from(value: &PipelineResourceLayoutDesc<'_>) -> Self {
-        let variables: Vec<_> = value.variables.iter().map(|var| var.into()).collect();
+#[derive(Builder, Clone)]
+#[builder(derive(Clone))]
+pub struct PipelineStateCreateInfo<'a> {
+    pipeline_type: diligent_sys::PIPELINE_TYPE,
+
+    #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
+    name: CString,
+
+    #[builder(default = 1)]
+    srb_allocation_granularity: u32,
+
+    #[builder(default = 1)]
+    immediate_context_mask: u64,
+
+    #[builder(default = ShaderResourceVariableType::Static)]
+    default_variable_type: ShaderResourceVariableType,
+
+    default_variable_merge_stages: ShaderTypes,
+
+    #[builder(default)]
+    #[builder(into)]
+    shader_resource_variables: Vec<ShaderResourceVariableDesc>,
+
+    #[builder(default)]
+    #[builder(into)]
+    immutable_samplers: Vec<ImmutableSamplerDesc<'a>>,
+
+    #[builder(default)]
+    flags: PipelineStateObjectCreateFlags,
+
+    #[builder(default)]
+    #[builder(into)]
+    resource_signatures: Vec<&'a PipelineResourceSignature>,
+
+    pso_cache: Option<&'a PipelineStateCache>,
+}
+
+impl<'a, S: pipeline_state_create_info_builder::State> PipelineStateCreateInfoBuilder<'a, S>
+where
+    S::Name: pipeline_state_create_info_builder::IsUnset,
+    S::PipelineType: pipeline_state_create_info_builder::IsUnset,
+    S::DefaultVariableMergeStages: pipeline_state_create_info_builder::IsUnset,
+{
+    pub fn graphics(
+        self,
+        name: impl AsRef<str>,
+    ) -> GraphicsPipelineStateCreateInfoBuilder<
+        'a,
+        graphics_pipeline_state_create_info_builder::SetPipelineStateCreateInfo,
+    > {
+        GraphicsPipelineStateCreateInfo::builder().pipeline_state_create_info(
+            self.name(name)
+                .pipeline_type(diligent_sys::PIPELINE_TYPE_GRAPHICS as _)
+                .default_variable_merge_stages(ShaderTypes::AllGraphics)
+                .build(),
+        )
+    }
+
+    pub fn raytracing(
+        self,
+        name: impl AsRef<str>,
+    ) -> RayTracingPipelineStateCreateInfoBuilder<
+        'a,
+        ray_tracing_pipeline_state_create_info_builder::SetPipelineStateCreateInfo,
+    > {
+        RayTracingPipelineStateCreateInfo::builder().pipeline_state_create_info(
+            self.name(name)
+                .pipeline_type(diligent_sys::PIPELINE_TYPE_RAY_TRACING as _)
+                .default_variable_merge_stages(ShaderTypes::AllRayTracing)
+                .build(),
+        )
+    }
+}
+
+pub(crate) struct PipelineStateCreateInfoWrapper {
+    _psd: PipelineStateDescWrapper,
+    _resource_signatures: Vec<*mut diligent_sys::IPipelineResourceSignature>,
+    ci: diligent_sys::PipelineStateCreateInfo,
+}
+
+impl Deref for PipelineStateCreateInfoWrapper {
+    type Target = diligent_sys::PipelineStateCreateInfo;
+    fn deref(&self) -> &Self::Target {
+        &self.ci
+    }
+}
+
+impl From<&PipelineStateCreateInfo<'_>> for PipelineStateCreateInfoWrapper {
+    fn from(value: &PipelineStateCreateInfo<'_>) -> Self {
+        let variables: Vec<_> = value
+            .shader_resource_variables
+            .iter()
+            .map(|var| var.into())
+            .collect();
 
         let immutable_samplers: Vec<_> = value
             .immutable_samplers
@@ -367,89 +433,19 @@ impl From<&PipelineResourceLayoutDesc<'_>> for PipelineResourceLayoutDescWrapper
             },
         };
 
-        PipelineResourceLayoutDescWrapper {
-            prld,
+        let psd = PipelineStateDescWrapper {
             _variables: variables,
             _immutable_samplers: immutable_samplers,
-        }
-    }
-}
-
-struct PipelineStateDesc<'a, const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE> {
-    name: CString,
-    srb_allocation_granularity: u32,
-    immediate_context_mask: u64,
-    resource_layout: PipelineResourceLayoutDesc<'a>,
-}
-
-impl<'a, const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE> PipelineStateDesc<'a, PIPELINE_TYPE> {
-    fn new(name: impl AsRef<str>) -> Self {
-        PipelineStateDesc {
-            name: CString::from_str(name.as_ref()).unwrap(),
-            srb_allocation_granularity: 1,
-            immediate_context_mask: 1,
-            resource_layout: PipelineResourceLayoutDesc::new::<PIPELINE_TYPE>(),
-        }
-    }
-}
-
-pub(crate) struct PipelineStateDescWrapper {
-    _prld: PipelineResourceLayoutDescWrapper,
-    psd: diligent_sys::PipelineStateDesc,
-}
-
-impl Deref for PipelineStateDescWrapper {
-    type Target = diligent_sys::PipelineStateDesc;
-    fn deref(&self) -> &Self::Target {
-        &self.psd
-    }
-}
-
-impl<const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE> From<&PipelineStateDesc<'_, PIPELINE_TYPE>>
-    for PipelineStateDescWrapper
-{
-    fn from(value: &PipelineStateDesc<'_, PIPELINE_TYPE>) -> Self {
-        let prld = PipelineResourceLayoutDescWrapper::from(&value.resource_layout);
-
-        let psd = diligent_sys::PipelineStateDesc {
-            _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                Name: value.name.as_ptr(),
+            psd: diligent_sys::PipelineStateDesc {
+                _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
+                    Name: value.name.as_ptr(),
+                },
+                ImmediateContextMask: value.immediate_context_mask,
+                PipelineType: value.pipeline_type as _,
+                ResourceLayout: prld,
+                SRBAllocationGranularity: value.srb_allocation_granularity,
             },
-            PipelineType: PIPELINE_TYPE,
-            SRBAllocationGranularity: value.srb_allocation_granularity,
-            ImmediateContextMask: value.immediate_context_mask,
-            ResourceLayout: *prld,
         };
-
-        PipelineStateDescWrapper { _prld: prld, psd }
-    }
-}
-
-pub struct PipelineStateCreateInfo<'a, const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE> {
-    pso_desc: PipelineStateDesc<'a, PIPELINE_TYPE>,
-    flags: PipelineStateObjectCreateFlags,
-    resource_signatures: Vec<&'a PipelineResourceSignature>,
-    pso_cache: Option<PipelineStateCache>,
-}
-
-pub(crate) struct PipelineStateCreateInfoWrapper {
-    _psd: PipelineStateDescWrapper,
-    _resource_signatures: Vec<*mut diligent_sys::IPipelineResourceSignature>,
-    ci: diligent_sys::PipelineStateCreateInfo,
-}
-
-impl Deref for PipelineStateCreateInfoWrapper {
-    type Target = diligent_sys::PipelineStateCreateInfo;
-    fn deref(&self) -> &Self::Target {
-        &self.ci
-    }
-}
-
-impl<const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE>
-    From<&PipelineStateCreateInfo<'_, PIPELINE_TYPE>> for PipelineStateCreateInfoWrapper
-{
-    fn from(value: &PipelineStateCreateInfo<'_, PIPELINE_TYPE>) -> Self {
-        let psd = PipelineStateDescWrapper::from(&value.pso_desc);
 
         let mut resource_signatures = value
             .resource_signatures
@@ -482,20 +478,7 @@ impl<const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE>
     }
 }
 
-impl<'a, const PIPELINE_TYPE: diligent_sys::PIPELINE_TYPE>
-    PipelineStateCreateInfo<'a, PIPELINE_TYPE>
-{
-    fn new(name: impl AsRef<str>) -> Self {
-        PipelineStateCreateInfo {
-            pso_desc: PipelineStateDesc::new(name),
-            flags: PipelineStateObjectCreateFlags::None,
-            resource_signatures: Vec::new(),
-            pso_cache: None,
-        }
-    }
-}
-
-#[derive(Builder)]
+#[derive(Builder, Clone)]
 pub struct RenderTargetBlendDesc {
     #[builder(default = false)]
     blend_enable: bool,
@@ -562,7 +545,7 @@ impl Default for RenderTargetBlendDesc {
     }
 }
 
-#[derive(Builder)]
+#[derive(Builder, Clone)]
 pub struct BlendStateDesc {
     #[builder(default = false)]
     alpha_to_coverage_enable: bool,
@@ -594,7 +577,7 @@ impl Default for BlendStateDesc {
     }
 }
 
-#[derive(Builder)]
+#[derive(Builder, Clone)]
 pub struct RasterizerStateDesc {
     #[builder(default = FillMode::Solid)]
     fill_mode: FillMode,
@@ -656,7 +639,7 @@ impl Default for RasterizerStateDesc {
     }
 }
 
-#[derive(Builder)]
+#[derive(Builder, Clone)]
 pub struct StencilOperationsDesc {
     #[builder(default = StencilOperation::Keep)]
     stencil_fail_op: StencilOperation,
@@ -693,7 +676,7 @@ impl Default for StencilOperationsDesc {
     }
 }
 
-#[derive(Builder)]
+#[derive(Builder, Clone)]
 pub struct DepthStencilStateDesc {
     #[builder(default = true)]
     depth_enable: bool,
@@ -750,7 +733,7 @@ impl Default for DepthStencilStateDesc {
     }
 }
 
-#[derive(Builder)]
+#[derive(Builder, Clone)]
 pub struct GraphicsPipelineRenderTargets {
     #[builder(default = 0)]
     num_render_targets: u8,
@@ -775,6 +758,7 @@ impl Default for GraphicsPipelineRenderTargets {
     }
 }
 
+#[derive(Clone)]
 pub struct GraphicsPipelineRenderPass<'a> {
     render_pass: &'a RenderPass,
     subpass_index: u8,
@@ -789,6 +773,7 @@ impl<'a> GraphicsPipelineRenderPass<'a> {
     }
 }
 
+#[derive(Clone)]
 pub enum GraphicsPipelineOutput<'a> {
     RenderTargets(GraphicsPipelineRenderTargets),
     RenderPass(GraphicsPipelineRenderPass<'a>),
@@ -812,7 +797,8 @@ impl Default for GraphicsPipelineOutput<'_> {
     }
 }
 
-#[derive(Builder)]
+#[derive(Builder, Clone)]
+#[builder(derive(Clone))]
 pub struct GraphicsPipelineDesc<'a> {
     #[builder(default)]
     blend_desc: BlendStateDesc,
@@ -949,10 +935,10 @@ impl<'a> From<&GraphicsPipelineDesc<'a>> for GraphicsPipelineDescWrapper {
     }
 }
 
-// TODO #[derive(Builder)]
+#[derive(Builder)]
+#[builder(derive(Clone))]
 pub struct GraphicsPipelineStateCreateInfo<'a> {
-    pipeline_state_create_info:
-        PipelineStateCreateInfo<'a, { diligent_sys::PIPELINE_TYPE_GRAPHICS as _ }>,
+    pipeline_state_create_info: PipelineStateCreateInfo<'a>,
 
     graphics_pipeline_desc: GraphicsPipelineDesc<'a>,
 
@@ -971,119 +957,10 @@ pub struct GraphicsPipelineStateCreateInfo<'a> {
     mesh_shader: Option<&'a Shader>,
 }
 
-impl<'a> GraphicsPipelineStateCreateInfo<'a> {
-    pub fn new(name: impl AsRef<str>, graphics_pipeline_desc: GraphicsPipelineDesc<'a>) -> Self {
-        GraphicsPipelineStateCreateInfo {
-            pipeline_state_create_info: PipelineStateCreateInfo::new(name),
-            graphics_pipeline_desc,
-            vertex_shader: None,
-            pixel_shader: None,
-            domain_shader: None,
-            hull_shader: None,
-            geometry_shader: None,
-            amplification_shader: None,
-            mesh_shader: None,
-        }
-    }
-
-    pub fn default_variable_type(
-        mut self,
-        default_variable_type: ShaderResourceVariableType,
-    ) -> Self {
-        self.pipeline_state_create_info
-            .pso_desc
-            .resource_layout
-            .default_variable_type = default_variable_type;
-        self
-    }
-
-    pub fn default_variable_merge_stages(
-        mut self,
-        default_variable_merge_stages: ShaderTypes,
-    ) -> Self {
-        self.pipeline_state_create_info
-            .pso_desc
-            .resource_layout
-            .default_variable_merge_stages = default_variable_merge_stages;
-        self
-    }
-
-    pub fn set_resource_signatures(
-        mut self,
-        signatures: &'a [&'a PipelineResourceSignature],
-    ) -> Self {
-        self.pipeline_state_create_info.resource_signatures = signatures.into();
-        self
-    }
-
-    pub fn set_shader_resource_variables<T>(mut self, variables: T) -> Self
-    where
-        Vec<ShaderResourceVariableDesc>: From<T>,
-    {
-        self.pipeline_state_create_info
-            .pso_desc
-            .resource_layout
-            .variables = variables.into();
-        self
-    }
-
-    pub fn set_immutable_samplers<T>(mut self, sampler_descs: T) -> Self
-    where
-        Vec<ImmutableSamplerDesc<'a>>: From<T>,
-    {
-        self.pipeline_state_create_info
-            .pso_desc
-            .resource_layout
-            .immutable_samplers = sampler_descs.into();
-        self
-    }
-
-    pub fn set_pso_cache(mut self, pso_cache: PipelineStateCache) -> Self {
-        self.pipeline_state_create_info.pso_cache = Some(pso_cache);
-        self
-    }
-
-    pub fn vertex_shader(mut self, shader: &'a Shader) -> Self {
-        self.vertex_shader = Some(shader);
-        self
-    }
-
-    pub fn pixel_shader(mut self, shader: &'a Shader) -> Self {
-        self.pixel_shader = Some(shader);
-        self
-    }
-
-    pub fn domain_shader(mut self, shader: &'a Shader) -> Self {
-        self.domain_shader = Some(shader);
-        self
-    }
-
-    pub fn hull_shader(mut self, shader: &'a Shader) -> Self {
-        self.hull_shader = Some(shader);
-        self
-    }
-
-    pub fn geometry_shader(mut self, shader: &'a Shader) -> Self {
-        self.geometry_shader = Some(shader);
-        self
-    }
-
-    pub fn amplification_shader(mut self, shader: &'a Shader) -> Self {
-        self.amplification_shader = Some(shader);
-        self
-    }
-
-    pub fn mesh_shader(mut self, shader: &'a Shader) -> Self {
-        self.mesh_shader = Some(shader);
-        self
-    }
-}
-
 #[derive(Builder)]
 pub struct RayTracingPipelineStateCreateInfo<'a> {
     #[builder(setters(vis = ""))]
-    pipeline_state_create_info:
-        PipelineStateCreateInfo<'a, { diligent_sys::PIPELINE_TYPE_RAY_TRACING as _ }>,
+    pipeline_state_create_info: PipelineStateCreateInfo<'a>,
 
     shader_record_size: u16,
 
@@ -1117,19 +994,6 @@ pub struct RayTracingPipelineStateCreateInfo<'a> {
 
     #[cfg(feature = "d3d12")]
     max_payload_size: u32,
-}
-
-use ray_tracing_pipeline_state_create_info_builder::{IsUnset, SetPipelineStateCreateInfo, State};
-impl<'a, S: State> RayTracingPipelineStateCreateInfoBuilder<'a, S> {
-    pub fn name(
-        self,
-        name: impl AsRef<str>,
-    ) -> RayTracingPipelineStateCreateInfoBuilder<'a, SetPipelineStateCreateInfo<S>>
-    where
-        S::PipelineStateCreateInfo: IsUnset,
-    {
-        self.pipeline_state_create_info(PipelineStateCreateInfo::new(name))
-    }
 }
 
 pub(crate) struct RayTracingPipelineStateCreateInfoWrapper {

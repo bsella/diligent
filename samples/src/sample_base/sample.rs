@@ -142,7 +142,7 @@ pub trait SampleBase {
 
     fn pre_window_resize(&mut self) {}
 
-    fn window_resize(&mut self, _width: u32, _height: u32) {}
+    fn window_resize(&mut self, _device: &RenderDevice, _new_swap_chain: &SwapChainDesc) {}
 
     fn handle_event(&mut self, _event: Event) {}
 

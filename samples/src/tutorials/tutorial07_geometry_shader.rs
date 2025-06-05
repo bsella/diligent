@@ -18,7 +18,7 @@ use diligent::{
     pipeline_resource_signature::ImmutableSamplerDesc,
     pipeline_state::{
         CullMode, DepthStencilStateDesc, GraphicsPipelineDesc, GraphicsPipelineRenderTargets,
-        GraphicsPipelineStateCreateInfo, PipelineState, RasterizerStateDesc,
+        PipelineState, PipelineStateCreateInfo, RasterizerStateDesc,
     },
     render_device::RenderDevice,
     sampler::SamplerDesc,
@@ -193,40 +193,42 @@ impl SampleBase for GeometryShader {
             .build();
 
         // Pipeline state object encompasses configuration of all GPU stages
-        let pso_create_info = GraphicsPipelineStateCreateInfo::new(
-            "Cube PSO",
-            GraphicsPipelineDesc::builder()
-                .rasterizer_desc(rasterizer_desc)
-                .depth_stencil_desc(depth_desc)
-                .output(pipeline_output)
-                // Primitive topology defines what kind of primitives will be rendered by this pipeline state
-                .primitive_topology(PrimitiveTopology::TriangleList)
-                // Define vertex shader input layout
-                .input_layouts([
-                    // Attribute 0 - vertex position
-                    LayoutElement::builder().slot(0).f32_3().build(),
-                    // Attribute 1 - texture coordinates
-                    LayoutElement::builder().slot(0).f32_2().build(),
-                ])
-                .build(),
-        )
-        .vertex_shader(&vertex_shader)
-        .geometry_shader(&geometry_shader)
-        .pixel_shader(&pixel_shader)
-        // Define variable type that will be used by default
-        .default_variable_type(ShaderResourceVariableType::Static)
-        // Shader variables should typically be mutable, which means they are expected
-        // to change on a per-instance basis
-        .set_shader_resource_variables([ShaderResourceVariableDesc::builder()
-            .name("g_Texture")
-            .variable_type(ShaderResourceVariableType::Mutable)
-            .shader_stages(ShaderTypes::Pixel)
-            .build()])
-        .set_immutable_samplers([ImmutableSamplerDesc::new(
-            ShaderTypes::Pixel,
-            "g_Texture",
-            &sampler_desc,
-        )]);
+        let pso_create_info = PipelineStateCreateInfo::builder()
+            // Define variable type that will be used by default
+            .default_variable_type(ShaderResourceVariableType::Static)
+            // Shader variables should typically be mutable, which means they are expected
+            // to change on a per-instance basis
+            .shader_resource_variables([ShaderResourceVariableDesc::builder()
+                .name("g_Texture")
+                .variable_type(ShaderResourceVariableType::Mutable)
+                .shader_stages(ShaderTypes::Pixel)
+                .build()])
+            .immutable_samplers([ImmutableSamplerDesc::new(
+                ShaderTypes::Pixel,
+                "g_Texture",
+                &sampler_desc,
+            )])
+            .graphics("Cube PSO")
+            .graphics_pipeline_desc(
+                GraphicsPipelineDesc::builder()
+                    .rasterizer_desc(rasterizer_desc)
+                    .depth_stencil_desc(depth_desc)
+                    .output(pipeline_output)
+                    // Primitive topology defines what kind of primitives will be rendered by this pipeline state
+                    .primitive_topology(PrimitiveTopology::TriangleList)
+                    // Define vertex shader input layout
+                    .input_layouts([
+                        // Attribute 0 - vertex position
+                        LayoutElement::builder().slot(0).f32_3().build(),
+                        // Attribute 1 - texture coordinates
+                        LayoutElement::builder().slot(0).f32_2().build(),
+                    ])
+                    .build(),
+            )
+            .vertex_shader(&vertex_shader)
+            .geometry_shader(&geometry_shader)
+            .pixel_shader(&pixel_shader)
+            .build();
 
         let pso = device
             .create_graphics_pipeline_state(&pso_create_info)

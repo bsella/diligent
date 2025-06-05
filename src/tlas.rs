@@ -1,11 +1,111 @@
 use std::ffi::CString;
 
+use bitflags::bitflags;
 use bon::Builder;
 use static_assertions::const_assert;
 
 use crate::{
-    blas::RayTracingBuildAsFlags, device_object::DeviceObject, graphics_types::ResourceState,
+    blas::{BottomLevelAS, RayTracingBuildAsFlags, ScratchBufferSizes},
+    device_object::DeviceObject,
+    graphics_types::ResourceState,
 };
+
+pub const TLAS_INSTANCE_DATA_SIZE: u32 = diligent_sys::DILIGENT_TLAS_INSTANCE_DATA_SIZE;
+
+#[derive(Clone, Copy)]
+pub enum HitGroupBindingMode {
+    PerGeometry,
+    PerInstance,
+    PerTLAS,
+    UserDefined,
+}
+const_assert!(diligent_sys::HIT_GROUP_BINDING_MODE_LAST == 3);
+
+impl From<HitGroupBindingMode> for diligent_sys::HIT_GROUP_BINDING_MODE {
+    fn from(value: HitGroupBindingMode) -> Self {
+        (match value {
+            HitGroupBindingMode::PerGeometry => diligent_sys::HIT_GROUP_BINDING_MODE_PER_GEOMETRY,
+            HitGroupBindingMode::PerInstance => diligent_sys::HIT_GROUP_BINDING_MODE_PER_INSTANCE,
+            HitGroupBindingMode::PerTLAS => diligent_sys::HIT_GROUP_BINDING_MODE_PER_TLAS,
+            HitGroupBindingMode::UserDefined => diligent_sys::HIT_GROUP_BINDING_MODE_USER_DEFINED,
+        }) as _
+    }
+}
+
+bitflags! {
+    #[derive(Clone,Copy)]
+    pub struct RayTracingInstanceFlags: diligent_sys::RAYTRACING_INSTANCE_FLAGS {
+        const None                          = diligent_sys::RAYTRACING_INSTANCE_NONE as _;
+        const TriangleFacingCullDisable     = diligent_sys::RAYTRACING_INSTANCE_TRIANGLE_FACING_CULL_DISABLE as _;
+        const TriangleFrontCounterclockwise = diligent_sys::RAYTRACING_INSTANCE_TRIANGLE_FRONT_COUNTERCLOCKWISE as _;
+        const ForceOpaque                   = diligent_sys::RAYTRACING_INSTANCE_FORCE_OPAQUE as _;
+        const ForceNoOpaque                 = diligent_sys::RAYTRACING_INSTANCE_FORCE_NO_OPAQUE as _;
+    }
+}
+const_assert!(diligent_sys::RAYTRACING_INSTANCE_FLAG_LAST == 8);
+
+impl Default for RayTracingInstanceFlags {
+    fn default() -> Self {
+        RayTracingInstanceFlags::None
+    }
+}
+
+#[derive(Builder)]
+pub struct TLASBuildInstanceData<'a> {
+    #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
+    instance_name: CString,
+
+    blas: &'a BottomLevelAS,
+
+    transform: [f32; 4 * 3],
+
+    #[builder(default = 0)]
+    custom_id: u32,
+
+    #[builder(default)]
+    flags: RayTracingInstanceFlags,
+
+    #[builder(default = 0xff)]
+    mask: u8,
+
+    #[builder(default = diligent_sys::TLAS_INSTANCE_OFFSET_AUTO)]
+    contribution_to_hit_group_index: u32,
+}
+
+impl<'a> From<&TLASBuildInstanceData<'a>> for diligent_sys::TLASBuildInstanceData {
+    fn from(value: &TLASBuildInstanceData<'a>) -> Self {
+        Self {
+            InstanceName: value.instance_name.as_ptr(),
+            pBLAS: value.blas.sys_ptr,
+            Transform: diligent_sys::InstanceMatrix {
+                data: [
+                    [
+                        value.transform[0],
+                        value.transform[1],
+                        value.transform[2],
+                        value.transform[3],
+                    ],
+                    [
+                        value.transform[4],
+                        value.transform[5],
+                        value.transform[6],
+                        value.transform[7],
+                    ],
+                    [
+                        value.transform[8],
+                        value.transform[9],
+                        value.transform[10],
+                        value.transform[11],
+                    ],
+                ],
+            },
+            CustomId: value.custom_id,
+            Flags: value.flags.bits(),
+            Mask: value.mask,
+            ContributionToHitGroupIndex: value.contribution_to_hit_group_index,
+        }
+    }
+}
 
 #[derive(Builder)]
 pub struct TopLevelASDesc {
@@ -71,7 +171,20 @@ impl TopLevelAS {
     // TODO pub fn get_desc() -> TopLevelASDesc;
     // TODO pub fn get_instance_desc(&self, name: impl AsRef<str>) -> TLASInstanceDesc {}
     // TODO pub fn get_build_info(&self) -> TLASBuildInfo {}
-    // TODO pub fn get_scratch_buffer_sizes(&self) -> ScratchBufferSizes {}
+
+    pub fn get_scratch_buffer_sizes(&self) -> ScratchBufferSizes {
+        let sbs = unsafe {
+            (*self.virtual_functions)
+                .TopLevelAS
+                .GetScratchBufferSizes
+                .unwrap_unchecked()(self.sys_ptr)
+        };
+
+        ScratchBufferSizes {
+            build: sbs.Build,
+            update: sbs.Update,
+        }
+    }
 
     pub fn get_native_handle(&self) -> u64 {
         unsafe {

@@ -71,7 +71,7 @@ impl DeviceMemory {
         // Both base and derived classes have exactly the same size.
         // This means that we can up-cast to the base class without worrying about layout offset between both classes
         const_assert!(
-            std::mem::size_of::<diligent_sys::IObject>()
+            std::mem::size_of::<diligent_sys::IDeviceObject>()
                 == std::mem::size_of::<diligent_sys::IDeviceMemory>()
         );
         DeviceMemory {
