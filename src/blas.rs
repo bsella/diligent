@@ -123,9 +123,17 @@ impl From<&BottomLevelASDesc<'_>> for BottomLevelASDescWrapper {
             _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
                 Name: value.name.as_ptr(),
             },
-            pTriangles: triangles.as_ptr(),
+            pTriangles: if triangles.is_empty() {
+                std::ptr::null()
+            } else {
+                triangles.as_ptr()
+            },
             TriangleCount: triangles.len() as u32,
-            pBoxes: boxes.as_ptr(),
+            pBoxes: if boxes.is_empty() {
+                std::ptr::null()
+            } else {
+                boxes.as_ptr()
+            },
             BoxCount: boxes.len() as u32,
             Flags: value.flags.bits(),
             CompactedSize: value.compacted_size,

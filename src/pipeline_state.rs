@@ -332,7 +332,7 @@ pub struct PipelineStateCreateInfo<'a> {
     #[builder(default = ShaderResourceVariableType::Static)]
     default_variable_type: ShaderResourceVariableType,
 
-    default_variable_merge_stages: ShaderTypes,
+    default_variable_merge_stages: Option<ShaderTypes>,
 
     #[builder(default)]
     #[builder(into)]
@@ -356,7 +356,6 @@ impl<'a, S: pipeline_state_create_info_builder::State> PipelineStateCreateInfoBu
 where
     S::Name: pipeline_state_create_info_builder::IsUnset,
     S::PipelineType: pipeline_state_create_info_builder::IsUnset,
-    S::DefaultVariableMergeStages: pipeline_state_create_info_builder::IsUnset,
 {
     pub fn graphics(
         self,
@@ -368,7 +367,6 @@ where
         GraphicsPipelineStateCreateInfo::builder().pipeline_state_create_info(
             self.name(name)
                 .pipeline_type(diligent_sys::PIPELINE_TYPE_GRAPHICS as _)
-                .default_variable_merge_stages(ShaderTypes::AllGraphics)
                 .build(),
         )
     }
@@ -383,7 +381,6 @@ where
         RayTracingPipelineStateCreateInfo::builder().pipeline_state_create_info(
             self.name(name)
                 .pipeline_type(diligent_sys::PIPELINE_TYPE_RAY_TRACING as _)
-                .default_variable_merge_stages(ShaderTypes::AllRayTracing)
                 .build(),
         )
     }
@@ -418,7 +415,11 @@ impl From<&PipelineStateCreateInfo<'_>> for PipelineStateCreateInfoWrapper {
 
         let prld = diligent_sys::PipelineResourceLayoutDesc {
             DefaultVariableType: value.default_variable_type.into(),
-            DefaultVariableMergeStages: value.default_variable_merge_stages.bits(),
+            DefaultVariableMergeStages: value
+                .default_variable_merge_stages
+                .map_or(diligent_sys::SHADER_TYPE_UNKNOWN as _, |stages| {
+                    stages.bits()
+                }),
             NumVariables: variables.len() as u32,
             Variables: if variables.is_empty() {
                 std::ptr::null()

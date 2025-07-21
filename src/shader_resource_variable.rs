@@ -149,7 +149,7 @@ impl ShaderResourceVariable {
     }
 
     pub fn set_array(
-        &mut self,
+        &self,
         device_objects: &[impl AsRef<DeviceObject>],
         flags: SetShaderResourceFlags,
     ) {
@@ -170,7 +170,7 @@ impl ShaderResourceVariable {
     }
 
     pub fn set_buffer_range(
-        &mut self,
+        &self,
         device_object: &impl AsRef<DeviceObject>,
         offset: u64,
         size: u64,
@@ -192,7 +192,7 @@ impl ShaderResourceVariable {
         }
     }
 
-    pub fn set_buffer_offset(&mut self, offset: u32, array_index: Option<u32>) {
+    pub fn set_buffer_offset(&self, offset: u32, array_index: Option<u32>) {
         unsafe {
             (*self.virtual_functions)
                 .ShaderResourceVariable

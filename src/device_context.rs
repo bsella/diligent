@@ -283,13 +283,13 @@ pub struct UpdateIndirectRTBufferAttribs<'a> {
 pub struct TraceRaysAttribs<'a> {
     sbt: &'a ShaderBindingTable,
 
-    #[builder(default = 0)]
+    #[builder(default = 1)]
     dimension_x: u32,
 
-    #[builder(default = 0)]
+    #[builder(default = 1)]
     dimension_y: u32,
 
-    #[builder(default = 0)]
+    #[builder(default = 1)]
     dimension_z: u32,
 }
 
@@ -1355,9 +1355,17 @@ impl DeviceContext {
             pBLAS: attribs.blas.sys_ptr,
             BLASTransitionMode: attribs.blas_transition_mode.into(),
             GeometryTransitionMode: attribs.geometry_transition_mode.into(),
-            pTriangleData: triangles.as_ptr(),
+            pTriangleData: if triangles.is_empty() {
+                std::ptr::null()
+            } else {
+                triangles.as_ptr()
+            },
             TriangleDataCount: triangles.len() as u32,
-            pBoxData: boxes.as_ptr(),
+            pBoxData: if boxes.is_empty() {
+                std::ptr::null()
+            } else {
+                boxes.as_ptr()
+            },
             BoxDataCount: boxes.len() as u32,
             pScratchBuffer: attribs.scratch_buffer.sys_ptr,
             ScratchBufferOffset: attribs.scratch_buffer_offset,

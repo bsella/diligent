@@ -626,6 +626,7 @@ impl RenderDevice {
 
     pub fn create_blas(&self, desc: &BottomLevelASDesc) -> Result<BottomLevelAS, ()> {
         let desc = BottomLevelASDescWrapper::from(desc);
+        let desc = *desc;
         let mut blas_ptr = std::ptr::null_mut();
         unsafe {
             (*self.virtual_functions)

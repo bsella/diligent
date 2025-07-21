@@ -21,7 +21,7 @@ impl From<TextureViewType> for diligent_sys::TEXTURE_VIEW_TYPE {
             TextureViewType::ReadOnlyDepthStencil => {
                 diligent_sys::TEXTURE_VIEW_READ_ONLY_DEPTH_STENCIL
             }
-            TextureViewType::UnorderedAccess => diligent_sys::TEXTURE_VIEW_UNDEFINED,
+            TextureViewType::UnorderedAccess => diligent_sys::TEXTURE_VIEW_UNORDERED_ACCESS,
             TextureViewType::ShadingRate => diligent_sys::TEXTURE_VIEW_SHADING_RATE,
         }) as _
     }

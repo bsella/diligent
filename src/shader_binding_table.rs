@@ -276,7 +276,9 @@ impl ShaderBindingTable {
                 tlas.sys_ptr,
                 instance_name.as_ptr(),
                 ray_offset_in_hit_group_index,
-                shader_group_name.map_or(std::ptr::null(), |name| name.as_ptr()),
+                shader_group_name
+                    .as_ref()
+                    .map_or(std::ptr::null(), |name| name.as_ptr()),
                 std::ptr::null(),
                 0,
             )
@@ -324,7 +326,9 @@ impl ShaderBindingTable {
                 self.sys_ptr,
                 tlas.sys_ptr,
                 ray_offset_in_hit_group_index,
-                shader_group_name.map_or(std::ptr::null(), |name| name.as_ptr()),
+                shader_group_name
+                    .as_ref()
+                    .map_or(std::ptr::null(), |name| name.as_ptr()),
                 std::ptr::null(),
                 0,
             )
