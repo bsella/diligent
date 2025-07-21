@@ -101,6 +101,8 @@ impl From<&BottomLevelASDesc<'_>> for BottomLevelASDescWrapper {
             .map(|triangle| diligent_sys::BLASTriangleDesc {
                 #[cfg(feature = "vulkan")]
                 AllowsTransforms: triangle.allows_transforms,
+                #[cfg(not(feature = "vulkan"))]
+                AllowsTransforms: false,
                 GeometryName: triangle.geometry_name.as_ptr(),
                 IndexType: triangle.index_type.into(),
                 MaxPrimitiveCount: triangle.max_primitive_count as u32,

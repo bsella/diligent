@@ -988,12 +988,14 @@ pub struct RayTracingPipelineStateCreateInfo<'a> {
         Option<Vec<(CString, &'a Shader, Option<&'a Shader>, Option<&'a Shader>)>>,
 
     #[cfg(feature = "d3d12")]
-    shader_record_name: CString,
+    shader_record_name: Option<CString>,
 
     #[cfg(feature = "d3d12")]
+    #[builder(default = 0)]
     max_attribute_size: u32,
 
     #[cfg(feature = "d3d12")]
+    #[builder(default = 0)]
     max_payload_size: u32,
 }
 
@@ -1079,7 +1081,10 @@ impl From<&RayTracingPipelineStateCreateInfo<'_>> for RayTracingPipelineStateCre
             pProceduralHitShaders: procedural_hit_shaders.as_ptr(),
             ProceduralHitShaderCount: procedural_hit_shaders.len() as u32,
             #[cfg(feature = "d3d12")]
-            pShaderRecordName: value.shader_record_name.as_ptr(),
+            pShaderRecordName: value
+                .shader_record_name
+                .as_ref()
+                .map_or(std::ptr::null(), |name| name.as_ptr()),
             #[cfg(feature = "d3d12")]
             MaxAttributeSize: value.max_attribute_size,
             #[cfg(feature = "d3d12")]
