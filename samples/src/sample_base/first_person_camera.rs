@@ -2,6 +2,7 @@ use core::f32;
 
 use diligent::graphics_types::SurfaceTransform;
 use diligent_tools::native_app::events::{Event, Key, MouseButton};
+use glam::Vec4Swizzles;
 
 pub struct FirstPersonCamera {
     last_mouse_pos: [i16; 2],
@@ -83,7 +84,7 @@ impl FirstPersonCamera {
                 y: 0.0,
                 z: 0.0,
             },
-            current_speed: 0.0,
+            current_speed: 1.0,
             yaw_angle: 0.0,
             pitch_angle: 0.0,
             speed_up_scale: 5.0,
@@ -105,12 +106,12 @@ impl FirstPersonCamera {
     pub fn apply_event(&mut self, event: &Event) {
         match event {
             Event::KeyPress(key) => match key {
-                Key::W => self.move_direction.y += 1.0,
+                Key::W => self.move_direction.z += 1.0,
                 Key::A => self.move_direction.x -= 1.0,
-                Key::S => self.move_direction.y -= 1.0,
+                Key::S => self.move_direction.z -= 1.0,
                 Key::D => self.move_direction.x += 1.0,
-                Key::E => self.move_direction.z += 1.0,
-                Key::Q => self.move_direction.z -= 1.0,
+                Key::E => self.move_direction.y += 1.0,
+                Key::Q => self.move_direction.y -= 1.0,
                 Key::LeftShift | Key::RightShift => self.current_speed *= self.speed_up_scale,
                 Key::LeftCtrl | Key::RightCtrl => self.current_speed *= self.super_speed_up_scale,
                 _ => {}
@@ -145,12 +146,12 @@ impl FirstPersonCamera {
             }
 
             Event::KeyRelease(key) => match key {
-                Key::W => self.move_direction.y -= 1.0,
+                Key::W => self.move_direction.z -= 1.0,
                 Key::A => self.move_direction.x += 1.0,
-                Key::S => self.move_direction.y += 1.0,
+                Key::S => self.move_direction.z += 1.0,
                 Key::D => self.move_direction.x -= 1.0,
-                Key::E => self.move_direction.z -= 1.0,
-                Key::Q => self.move_direction.z += 1.0,
+                Key::E => self.move_direction.y -= 1.0,
+                Key::Q => self.move_direction.y += 1.0,
                 Key::LeftShift | Key::RightShift => self.current_speed /= self.speed_up_scale,
                 Key::LeftCtrl | Key::RightCtrl => self.current_speed /= self.super_speed_up_scale,
                 _ => {}
@@ -193,11 +194,12 @@ impl FirstPersonCamera {
         let pos_delta_world =
             world_rotation * glam::vec4(move_delta.x, move_delta.y, move_delta.z, 1.0);
 
-        let (_, _, mut position) = self.world_matrix.to_scale_rotation_translation();
+        let mut position = self.world_matrix.w_axis.xyz();
 
         position += glam::vec3(pos_delta_world.x, pos_delta_world.y, pos_delta_world.z);
 
-        self.view_matrix = glam::Mat4::from_translation(-position) * camera_rotation;
+        self.view_matrix = camera_rotation * glam::Mat4::from_translation(-position);
+        self.world_matrix = glam::Mat4::from_translation(position) * world_rotation;
     }
 
     pub fn world_matrix(&self) -> &glam::Mat4 {
