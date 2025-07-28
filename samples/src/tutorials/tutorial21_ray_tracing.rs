@@ -48,6 +48,8 @@ use diligent_samples::sample_base::{
 };
 use diligent_tools::native_app;
 
+use image::EncodableLayout;
+
 #[allow(non_camel_case_types)]
 type float2 = [f32; 2];
 #[allow(non_camel_case_types)]
@@ -477,6 +479,8 @@ fn load_textures(device: &RenderDevice) -> ([Texture; NUM_TEXTURES], Texture) {
             .unwrap()
             .decode()
             .unwrap();
+
+        let image = image.to_rgba8();
 
         let texture_desc = TextureDesc::builder()
             .name("Ground")
