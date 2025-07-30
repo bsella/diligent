@@ -1,5 +1,5 @@
 use diligent::graphics_types::RenderDeviceType;
-use std::io::{Error, ErrorKind};
+use std::io::Error;
 
 use super::{app::App, app_settings::AppSettings};
 
@@ -20,12 +20,8 @@ where
         #[cfg(feature = "opengl")]
         RenderDeviceType::GL => linux_x11::main::<Application>(settings),
         #[allow(unreachable_patterns)]
-        _ => Err(Error::new(
-            ErrorKind::Other,
-            format!(
-                "Render device type {} is not available on linux",
-                device_type.to_string()
-            ),
-        )),
+        _ => Err(Error::other(format!(
+            "Render device type {device_type} is not available on linux",
+        ))),
     }
 }

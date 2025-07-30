@@ -379,7 +379,7 @@ impl<'a, T> TextureSubresourceReadMapToken<'a, T> {
                 map_flags.bits(),
                 map_region
                     .as_ref()
-                    .map_or(std::ptr::null(), |bx| std::ptr::from_ref(bx)),
+                    .map_or(std::ptr::null(), std::ptr::from_ref),
                 ptr,
             )
         };
@@ -449,7 +449,7 @@ impl<'a, T> TextureSubresourceWriteMapToken<'a, T> {
                 map_flags.bits(),
                 map_region
                     .as_ref()
-                    .map_or(std::ptr::null(), |bx| std::ptr::from_ref(bx)),
+                    .map_or(std::ptr::null(), std::ptr::from_ref),
                 ptr,
             )
         };
@@ -463,7 +463,7 @@ impl<'a, T> TextureSubresourceWriteMapToken<'a, T> {
         }
     }
 
-    pub unsafe fn as_mut(&self) -> &mut T {
+    pub unsafe fn as_mut(&mut self) -> &mut T {
         unsafe { self.data_ptr.as_mut().unwrap_unchecked() }
     }
 
@@ -519,7 +519,7 @@ impl<'a, T> TextureSubresourceReadWriteMapToken<'a, T> {
                 map_flags.bits(),
                 map_region
                     .as_ref()
-                    .map_or(std::ptr::null(), |bx| std::ptr::from_ref(bx)),
+                    .map_or(std::ptr::null(), std::ptr::from_ref),
                 ptr,
             )
         };
@@ -541,7 +541,7 @@ impl<'a, T> TextureSubresourceReadWriteMapToken<'a, T> {
         unsafe { std::slice::from_raw_parts(self.data_ptr.offset(offset), len) }
     }
 
-    pub unsafe fn as_mut(&self) -> &mut T {
+    pub unsafe fn as_mut(&mut self) -> &mut T {
         unsafe { self.data_ptr.as_mut().unwrap_unchecked() }
     }
 

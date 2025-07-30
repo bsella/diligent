@@ -4,19 +4,23 @@ use crate::device_object::DeviceObject;
 
 const_assert!(diligent_sys::QUERY_TYPE_NUM_TYPES == 6);
 
+#[derive(Default)]
 pub struct QueryDataOcclusion {
     pub num_samples: u64,
 }
 
+#[derive(Default)]
 pub struct QueryDataBinaryOcclusion {
     pub any_sample_passed: bool,
 }
 
+#[derive(Default)]
 pub struct QueryDataTimestamp {
     pub counter: u64,
     pub frequency: u64,
 }
 
+#[derive(Default)]
 pub struct QueryDataPipelineStatistics {
     pub input_vertices: u64,
     pub input_primitives: u64,
@@ -31,59 +35,10 @@ pub struct QueryDataPipelineStatistics {
     pub cs_invocations: u64,
 }
 
+#[derive(Default)]
 pub struct QueryDataDuration {
     pub duration: u64,
     pub frequency: u64,
-}
-
-impl Default for QueryDataOcclusion {
-    fn default() -> Self {
-        Self { num_samples: 0 }
-    }
-}
-
-impl Default for QueryDataBinaryOcclusion {
-    fn default() -> Self {
-        Self {
-            any_sample_passed: false,
-        }
-    }
-}
-
-impl Default for QueryDataTimestamp {
-    fn default() -> Self {
-        Self {
-            counter: 0,
-            frequency: 0,
-        }
-    }
-}
-
-impl Default for QueryDataPipelineStatistics {
-    fn default() -> Self {
-        Self {
-            input_vertices: 0,
-            input_primitives: 0,
-            gs_primitives: 0,
-            clipping_invocations: 0,
-            clipping_primitives: 0,
-            vs_invocations: 0,
-            gs_invocations: 0,
-            ps_invocations: 0,
-            hs_invocations: 0,
-            ds_invocations: 0,
-            cs_invocations: 0,
-        }
-    }
-}
-
-impl Default for QueryDataDuration {
-    fn default() -> Self {
-        Self {
-            duration: 0,
-            frequency: 0,
-        }
-    }
 }
 
 pub trait GetSysQueryType {

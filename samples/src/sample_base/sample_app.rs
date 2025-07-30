@@ -80,9 +80,9 @@ pub struct SampleApp<Sample: SampleBase> {
 
 enum EngineFactory {
     #[cfg(feature = "vulkan")]
-    VULKAN(EngineFactoryVk),
+    Vulkan(EngineFactoryVk),
     #[cfg(feature = "opengl")]
-    OPENGL(EngineFactoryOpenGL),
+    OpenGL(EngineFactoryOpenGL),
     #[cfg(feature = "d3d11")]
     D3D11(EngineFactoryD3D11),
     #[cfg(feature = "d3d12")]
@@ -94,9 +94,9 @@ impl Deref for EngineFactory {
     fn deref(&self) -> &Self::Target {
         match self {
             #[cfg(feature = "vulkan")]
-            Self::VULKAN(factory) => factory,
+            Self::Vulkan(factory) => factory,
             #[cfg(feature = "opengl")]
-            Self::OPENGL(factory) => factory,
+            Self::OpenGL(factory) => factory,
             #[cfg(feature = "d3d11")]
             Self::D3D11(factory) => factory,
             #[cfg(feature = "d3d12")]
@@ -169,17 +169,12 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
                         self.fullscreen_mode = false;
                         self.swap_chain.set_windowed_mode();
                     }
-                } else {
-                    if !self.display_modes.is_empty() {
-                        if ui.button("Go Full Screen") {
-                            self.sample.release_swap_chain_buffers();
+                } else if !self.display_modes.is_empty() && ui.button("Go Full Screen") {
+                    self.sample.release_swap_chain_buffers();
 
-                            let display_mode =
-                                self.display_modes.get(self.selected_display_mode).unwrap();
-                            self.fullscreen_mode = true;
-                            self.swap_chain.set_fullscreen_mode(display_mode);
-                        }
-                    }
+                    let display_mode = self.display_modes.get(self.selected_display_mode).unwrap();
+                    self.fullscreen_mode = true;
+                    self.swap_chain.set_fullscreen_mode(display_mode);
                 }
 
                 // If you're noticing any difference in frame rate when you enable vsync,
@@ -252,8 +247,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             if adapter_index.is_none() && *adapter_type != AdapterType::Unknown {
                 adapter_index = adapters
                     .iter()
-                    .position(|adapter| adapter.adapter_type == *adapter_type)
-                    .map_or(None, |id| Some(id));
+                    .position(|adapter| adapter.adapter_type == *adapter_type);
             };
 
             if adapter_index.is_none() {
@@ -261,7 +255,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
                     adapters
                         .iter()
                         .enumerate()
-                        .max_by(|(_, &ref adapter1), (_, &ref adapter2)| {
+                        .max_by(|(_, adapter1), (_, adapter2)| {
                             // Prefer Discrete over Integrated over Software
                             let compare_type =
                                 |adapter1: &GraphicsAdapterInfo, adapter2: &GraphicsAdapterInfo| {
@@ -279,8 +273,8 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
                                     get_total_mem(adapter1).cmp(&get_total_mem(adapter2))
                                 };
 
-                            compare_type(&adapter1, &adapter2)
-                                .then(compare_memory(&adapter1, &adapter2))
+                            compare_type(adapter1, adapter2)
+                                .then(compare_memory(adapter1, adapter2))
                         })
                 {
                     adapter_index = Some(index);
@@ -307,10 +301,10 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
                 EngineFactory::D3D12(engine_factory)
             }
             #[cfg(feature = "opengl")]
-            RenderDeviceType::GL => EngineFactory::OPENGL(get_engine_factory_gl()),
+            RenderDeviceType::GL => EngineFactory::OpenGL(get_engine_factory_gl()),
             //RenderDeviceType::GLES => panic!(),
             #[cfg(feature = "vulkan")]
-            RenderDeviceType::VULKAN => EngineFactory::VULKAN(get_engine_factory_vk()),
+            RenderDeviceType::VULKAN => EngineFactory::Vulkan(get_engine_factory_vk()),
             #[cfg(feature = "metal")]
             RenderDeviceType::METAL => panic!(),
             #[cfg(feature = "webgpu")]
@@ -347,7 +341,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
         let (device, immediate_contexts, deferred_contexts, swap_chain, display_modes) =
             match &engine_factory {
                 #[cfg(feature = "vulkan")]
-                EngineFactory::VULKAN(engine_factory) => {
+                EngineFactory::Vulkan(engine_factory) => {
                     let mut engine_vk_create_info = EngineVkCreateInfo::new(engine_create_info);
 
                     if app_settings.vk_compatibility {
@@ -385,7 +379,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
                     )
                 }
                 #[cfg(feature = "opengl")]
-                EngineFactory::OPENGL(engine_factory) => {
+                EngineFactory::OpenGL(engine_factory) => {
                     if app_settings.non_separable_progs {
                         engine_create_info.features.separable_programs =
                             DeviceFeatureState::Disabled;

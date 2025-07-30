@@ -40,9 +40,9 @@ impl From<ShaderResourceVariableType> for diligent_sys::SHADER_RESOURCE_VARIABLE
     }
 }
 
-impl Into<ShaderResourceVariableType> for diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE {
-    fn into(self) -> ShaderResourceVariableType {
-        match self as _ {
+impl From<diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE> for ShaderResourceVariableType {
+    fn from(value: diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE) -> Self {
+        match value as _ {
             diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_STATIC => {
                 ShaderResourceVariableType::Static
             }

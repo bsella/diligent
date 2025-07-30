@@ -116,16 +116,13 @@ impl FirstPersonCamera {
                 Key::LeftCtrl | Key::RightCtrl => self.current_speed *= self.super_speed_up_scale,
                 _ => {}
             },
-            Event::MouseDown { button } => {
-                if let MouseButton::Left = button {
-                    self.left_mouse_pressed = true
-                }
-            }
-            Event::MouseUp { button } => {
-                if let MouseButton::Left = button {
-                    self.left_mouse_pressed = false
-                }
-            }
+            Event::MouseDown {
+                button: MouseButton::Left,
+            } => self.left_mouse_pressed = true,
+
+            Event::MouseUp {
+                button: MouseButton::Left,
+            } => self.left_mouse_pressed = false,
 
             Event::MouseMove { x, y } => {
                 if self.left_mouse_pressed {

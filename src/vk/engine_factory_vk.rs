@@ -187,13 +187,13 @@ impl EngineFactoryVk {
             .len()
             .max(1);
 
-        let num_deferred_contexts = create_info.engine_create_info.num_deferred_contexts as usize;
+        let num_deferred_contexts = create_info.engine_create_info.num_deferred_contexts;
 
         let mut render_device_ptr = std::ptr::null_mut();
-        let mut device_context_ptrs = Vec::from_iter(
-            std::iter::repeat(std::ptr::null_mut())
-                .take(num_immediate_contexts + num_deferred_contexts),
-        );
+        let mut device_context_ptrs = Vec::from_iter(std::iter::repeat_n(
+            std::ptr::null_mut(),
+            num_immediate_contexts + num_deferred_contexts,
+        ));
 
         {
             let instance_layer_names = create_info
@@ -332,9 +332,7 @@ impl EngineFactoryVk {
                 device.sys_ptr,
                 immediate_context.sys_ptr,
                 std::ptr::addr_of!(swapchain_desc),
-                window
-                    .as_ref()
-                    .map_or(std::ptr::null(), |window| std::ptr::from_ref(window)),
+                window.as_ref().map_or(std::ptr::null(), std::ptr::from_ref),
                 std::ptr::addr_of_mut!(swap_chain_ptr),
             );
         }

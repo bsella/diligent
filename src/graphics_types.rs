@@ -1,4 +1,4 @@
-//use std::ffi::CStr;
+use std::fmt::Display;
 
 use bitflags::bitflags;
 use bon::Builder;
@@ -352,22 +352,17 @@ impl Default for BindFlags {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub enum Usage {
-    Immutable,
+    #[default]
     Default,
+    Immutable,
     Dynamic,
     Staging,
     Unified,
     Sparse,
 }
 const_assert!(diligent_sys::USAGE_NUM_USAGES == 6);
-
-impl Default for Usage {
-    fn default() -> Self {
-        Usage::Default
-    }
-}
 
 impl From<Usage> for diligent_sys::USAGE {
     fn from(value: Usage) -> Self {
@@ -429,9 +424,9 @@ pub enum RenderDeviceType {
 }
 const_assert!(diligent_sys::RENDER_DEVICE_TYPE_COUNT == 8);
 
-impl ToString for RenderDeviceType {
-    fn to_string(&self) -> String {
-        match self {
+impl Display for RenderDeviceType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let string = match self {
             #[cfg(feature = "d3d11")]
             RenderDeviceType::D3D11 => "Direct3D11",
             #[cfg(feature = "d3d12")]
@@ -445,8 +440,8 @@ impl ToString for RenderDeviceType {
             RenderDeviceType::METAL => "Metal",
             #[cfg(feature = "webgpu")]
             RenderDeviceType::WEBGPU => "WebGPU",
-        }
-        .to_owned()
+        };
+        f.write_str(string)
     }
 }
 
@@ -563,7 +558,7 @@ impl Ord for AdapterType {
 
 impl PartialOrd for AdapterType {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(&other))
+        Some(self.cmp(other))
     }
 }
 
@@ -880,9 +875,9 @@ pub enum DeviceFeatureState {
     Optional,
 }
 
-impl Into<DeviceFeatureState> for diligent_sys::DEVICE_FEATURE_STATE {
-    fn into(self) -> DeviceFeatureState {
-        match self as _ {
+impl From<diligent_sys::DEVICE_FEATURE_STATE> for DeviceFeatureState {
+    fn from(value: diligent_sys::DEVICE_FEATURE_STATE) -> Self {
+        match value as _ {
             diligent_sys::DEVICE_FEATURE_STATE_DISABLED => DeviceFeatureState::Disabled,
             diligent_sys::DEVICE_FEATURE_STATE_ENABLED => DeviceFeatureState::Enabled,
             diligent_sys::DEVICE_FEATURE_STATE_OPTIONAL => DeviceFeatureState::Optional,
@@ -1184,12 +1179,12 @@ pub struct CommandQueueInfo {
     pub texture_copy_granularity: [u32; 3usize],
 }
 
-impl Into<CommandQueueInfo> for diligent_sys::CommandQueueInfo {
-    fn into(self) -> CommandQueueInfo {
+impl From<diligent_sys::CommandQueueInfo> for CommandQueueInfo {
+    fn from(value: diligent_sys::CommandQueueInfo) -> Self {
         CommandQueueInfo {
-            queue_type: CommandQueueType::from_bits_retain(self.QueueType.into()),
-            max_device_contexts: self.MaxDeviceContexts,
-            texture_copy_granularity: self.TextureCopyGranularity,
+            queue_type: CommandQueueType::from_bits_retain(value.QueueType),
+            max_device_contexts: value.MaxDeviceContexts,
+            texture_copy_granularity: value.TextureCopyGranularity,
         }
     }
 }
@@ -1262,10 +1257,10 @@ impl From<&diligent_sys::GraphicsAdapterInfo> for GraphicsAdapterInfo {
                 unified_memory: value.Memory.UnifiedMemory,
                 max_memory_allocation: value.Memory.MaxMemoryAllocation,
                 unified_memory_cpu_access: CpuAccessFlags::from_bits_retain(
-                    value.Memory.UnifiedMemoryCPUAccess.into(),
+                    value.Memory.UnifiedMemoryCPUAccess,
                 ),
                 memoryless_texture_bind_flags: BindFlags::from_bits_retain(
-                    value.Memory.MemorylessTextureBindFlags.into(),
+                    value.Memory.MemorylessTextureBindFlags,
                 ),
             },
             ray_tracing: RayTracingProperties {
@@ -1283,7 +1278,7 @@ impl From<&diligent_sys::GraphicsAdapterInfo> for GraphicsAdapterInfo {
                 box_buffer_alignment: value.RayTracing.BoxBufferAlignment,
                 scratch_buffer_alignment: value.RayTracing.ScratchBufferAlignment,
                 instance_buffer_alignment: value.RayTracing.InstanceBufferAlignment,
-                cap_flags: RaytracingCapFlags::from_bits_retain(value.RayTracing.CapFlags.into()),
+                cap_flags: RaytracingCapFlags::from_bits_retain(value.RayTracing.CapFlags),
             },
             wave_op: WaveOpProperties {
                 min_size: value.WaveOp.MinSize,
@@ -1338,17 +1333,15 @@ impl From<&diligent_sys::GraphicsAdapterInfo> for GraphicsAdapterInfo {
                                 diligent_sys::SHADING_RATE_4X4 => ShadingRate::_4X4,
                                 _ => panic!(),
                             },
-                            sample_bits: SampleCount::from_bits_retain(sr.SampleBits.into()),
+                            sample_bits: SampleCount::from_bits_retain(sr.SampleBits),
                         })
                         .take(value.ShadingRate.NumShadingRates.into()),
                 ),
-                cap_flags: ShadingRateCapFlags::from_bits_retain(value.ShadingRate.CapFlags.into()),
-                combiners: ShadingRateCombiner::from_bits_retain(
-                    value.ShadingRate.Combiners.into(),
-                ),
-                format: ShadingRateFormat::from_bits_retain(value.ShadingRate.Format.into()),
+                cap_flags: ShadingRateCapFlags::from_bits_retain(value.ShadingRate.CapFlags),
+                combiners: ShadingRateCombiner::from_bits_retain(value.ShadingRate.Combiners),
+                format: ShadingRateFormat::from_bits_retain(value.ShadingRate.Format),
                 shading_rate_texture_access: ShadingRateTextureAccess::from_bits_retain(
-                    value.ShadingRate.ShadingRateTextureAccess.into(),
+                    value.ShadingRate.ShadingRateTextureAccess,
                 ),
                 bind_flags: BindFlags::from_bits_retain(value.ShadingRate.BindFlags),
                 min_tile_size: value.ShadingRate.MinTileSize,
@@ -1366,7 +1359,7 @@ impl From<&diligent_sys::GraphicsAdapterInfo> for GraphicsAdapterInfo {
                 max_thread_group_count_z: value.ComputeShader.MaxThreadGroupCountZ,
             },
             draw_command: DrawCommandProperties {
-                cap_flags: DrawCommandCapFlags::from_bits_retain(value.DrawCommand.CapFlags.into()),
+                cap_flags: DrawCommandCapFlags::from_bits_retain(value.DrawCommand.CapFlags),
                 max_index_value: value.DrawCommand.MaxIndexValue,
                 max_draw_indirect_count: value.DrawCommand.MaxDrawIndirectCount,
             },

@@ -9,9 +9,9 @@ pub enum BufferViewType {
 }
 const_assert!(diligent_sys::BUFFER_VIEW_NUM_VIEWS == 3);
 
-impl Into<diligent_sys::BUFFER_VIEW_TYPE> for BufferViewType {
-    fn into(self) -> diligent_sys::BUFFER_VIEW_TYPE {
-        (match self {
+impl From<BufferViewType> for diligent_sys::BUFFER_VIEW_TYPE {
+    fn from(value: BufferViewType) -> Self {
+        (match value {
             BufferViewType::ShaderResource => diligent_sys::BUFFER_VIEW_SHADER_RESOURCE,
             BufferViewType::UnorderedAccess => diligent_sys::BUFFER_VIEW_UNORDERED_ACCESS,
         }) as _

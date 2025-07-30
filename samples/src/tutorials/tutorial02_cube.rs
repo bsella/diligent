@@ -61,10 +61,10 @@ impl SampleBase for Cube {
 
         // If the swap chain color buffer format is a non-sRGB UNORM format,
         // we need to manually convert pixel shader output to gamma space.
-        let convert_ps_output_to_gamma = match swap_chain_desc.color_buffer_format {
-            TextureFormat::RGBA8_UNORM | TextureFormat::BGRA8_UNORM => true,
-            _ => false,
-        };
+        let convert_ps_output_to_gamma = matches!(
+            swap_chain_desc.color_buffer_format,
+            TextureFormat::RGBA8_UNORM | TextureFormat::BGRA8_UNORM
+        );
 
         // In this tutorial, we will load shaders from file. To be able to do that,
         // we need to create a shader source stream factory

@@ -57,10 +57,10 @@ struct Instancing {
 
 impl Instancing {
     fn populate_instance_buffer(&mut self) {
-        let mut instance_data = Vec::from_iter(
-            std::iter::repeat(glam::Mat4::ZERO)
-                .take((self.grid_size * self.grid_size * self.grid_size) as usize),
-        );
+        let mut instance_data = Vec::from_iter(std::iter::repeat_n(
+            glam::Mat4::ZERO,
+            (self.grid_size * self.grid_size * self.grid_size) as usize,
+        ));
 
         let mut rng = rand::rng();
 
@@ -134,10 +134,10 @@ impl SampleBase for Instancing {
 
         // If the swap chain color buffer format is a non-sRGB UNORM format,
         // we need to manually convert pixel shader output to gamma space.
-        let convert_ps_output_to_gamma = match swap_chain_desc.color_buffer_format {
-            TextureFormat::RGBA8_UNORM | TextureFormat::BGRA8_UNORM => true,
-            _ => false,
-        };
+        let convert_ps_output_to_gamma = matches!(
+            swap_chain_desc.color_buffer_format,
+            TextureFormat::RGBA8_UNORM | TextureFormat::BGRA8_UNORM
+        );
 
         // Create a shader source stream factory to load shaders from files.
         let shader_source_factory = engine_factory
@@ -167,7 +167,7 @@ impl SampleBase for Instancing {
         ];
 
         let cube_pso_ci = CreatePSOInfo::new(
-            &device,
+            device,
             swap_chain_desc.color_buffer_format,
             swap_chain_desc.depth_buffer_format,
             &shader_source_factory,
@@ -184,7 +184,7 @@ impl SampleBase for Instancing {
         // Create dynamic uniform buffer that will store our transformation matrix
         // Dynamic buffers can be frequently updated by the CPU
         let vs_constants = create_uniform_buffer(
-            &device,
+            device,
             std::mem::size_of::<glam::Mat4>() as u64 * 2,
             "VS constants CB",
             Usage::Dynamic,
@@ -206,7 +206,7 @@ impl SampleBase for Instancing {
         let srb = pipeline_state.create_shader_resource_binding(true).unwrap();
 
         let textured_cube = TexturedCube::new(
-            &device,
+            device,
             GeometryPrimitiveVertexFlags::PosTex,
             BindFlags::VertexBuffer,
             None,

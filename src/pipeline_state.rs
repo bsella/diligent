@@ -780,15 +780,15 @@ pub enum GraphicsPipelineOutput<'a> {
     RenderPass(GraphicsPipelineRenderPass<'a>),
 }
 
-impl<'a> Into<GraphicsPipelineOutput<'a>> for GraphicsPipelineRenderTargets {
-    fn into(self) -> GraphicsPipelineOutput<'a> {
-        GraphicsPipelineOutput::RenderTargets(self)
+impl<'a> From<GraphicsPipelineRenderTargets> for GraphicsPipelineOutput<'a> {
+    fn from(value: GraphicsPipelineRenderTargets) -> Self {
+        GraphicsPipelineOutput::RenderTargets(value)
     }
 }
 
-impl<'a> Into<GraphicsPipelineOutput<'a>> for GraphicsPipelineRenderPass<'a> {
-    fn into(self) -> GraphicsPipelineOutput<'a> {
-        GraphicsPipelineOutput::RenderPass(self)
+impl<'a> From<GraphicsPipelineRenderPass<'a>> for GraphicsPipelineOutput<'a> {
+    fn from(value: GraphicsPipelineRenderPass<'a>) -> Self {
+        GraphicsPipelineOutput::RenderPass(value)
     }
 }
 

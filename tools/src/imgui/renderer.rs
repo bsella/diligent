@@ -6,9 +6,9 @@ use diligent::{
         SetVertexBufferFlags, Viewport,
     },
     graphics_types::{
-        BindFlags, ComponentType, CpuAccessFlags, DrawCommandCapFlags, GraphicsAdapterInfo,
-        MapFlags, PrimitiveTopology, RenderDeviceType, SetShaderResourceFlags, ShaderType,
-        ShaderTypes, TextureAddressMode, TextureFormat, Usage, ValueType,
+        BindFlags, ComponentType, CpuAccessFlags, DrawCommandCapFlags, MapFlags, PrimitiveTopology,
+        RenderDeviceType, SetShaderResourceFlags, ShaderType, ShaderTypes, TextureAddressMode,
+        TextureFormat, Usage, ValueType,
     },
     input_layout::LayoutElement,
     pipeline_resource_signature::ImmutableSamplerDesc,
@@ -471,7 +471,7 @@ impl ImguiRenderer {
                 RenderDeviceType::VULKAN => ShaderSource::ByteCode(unsafe {
                     std::slice::from_raw_parts(
                         VERTEX_SHADER_SPIRV.as_ptr() as *const u8,
-                        VERTEX_SHADER_SPIRV.len() * std::mem::size_of::<u32>(),
+                        std::mem::size_of_val(VERTEX_SHADER_SPIRV),
                     )
                 }),
                 #[cfg(feature = "d3d11")]
@@ -507,14 +507,14 @@ impl ImguiRenderer {
                         ShaderSource::ByteCode(unsafe {
                             std::slice::from_raw_parts(
                                 PIXEL_SHADER_GAMMA_SPIRV.as_ptr() as *const u8,
-                                PIXEL_SHADER_GAMMA_SPIRV.len() * std::mem::size_of::<u32>(),
+                                std::mem::size_of_val(PIXEL_SHADER_GAMMA_SPIRV),
                             )
                         })
                     } else {
                         ShaderSource::ByteCode(unsafe {
                             std::slice::from_raw_parts(
                                 PIXEL_SHADER_SPIRV.as_ptr() as *const u8,
-                                PIXEL_SHADER_SPIRV.len() * std::mem::size_of::<u32>(),
+                                std::mem::size_of_val(PIXEL_SHADER_SPIRV),
                             )
                         })
                     }
@@ -685,7 +685,9 @@ impl ImguiRenderer {
             [create_info.initial_width, create_info.initial_height];
 
         ImguiRenderer {
-            base_vertex_supported: GraphicsAdapterInfo::from(create_info.device.get_adapter_info())
+            base_vertex_supported: create_info
+                .device
+                .get_adapter_info()
                 .draw_command
                 .cap_flags
                 .contains(DrawCommandCapFlags::BaseVertex),
@@ -837,7 +839,7 @@ impl ImguiRenderer {
                 SetVertexBufferFlags::Reset,
             );
             device_context.set_index_buffer(
-                &index_buffer,
+                index_buffer,
                 0,
                 ResourceStateTransitionMode::Transition,
             );

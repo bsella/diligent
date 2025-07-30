@@ -150,10 +150,10 @@ impl SampleBase for TextureArray {
 
         // If the swap chain color buffer format is a non-sRGB UNORM format,
         // we need to manually convert pixel shader output to gamma space.
-        let convert_ps_output_to_gamma = match swap_chain_desc.color_buffer_format {
-            TextureFormat::RGBA8_UNORM | TextureFormat::BGRA8_UNORM => true,
-            _ => false,
-        };
+        let convert_ps_output_to_gamma = matches!(
+            swap_chain_desc.color_buffer_format,
+            TextureFormat::RGBA8_UNORM | TextureFormat::BGRA8_UNORM
+        );
 
         // Create a shader source stream factory to load shaders from files.
         let shader_source_factory = engine_factory
@@ -185,7 +185,7 @@ impl SampleBase for TextureArray {
         ];
 
         let cube_pso_ci = CreatePSOInfo::new(
-            &device,
+            device,
             swap_chain_desc.color_buffer_format,
             swap_chain_desc.depth_buffer_format,
             &shader_source_factory,
@@ -202,7 +202,7 @@ impl SampleBase for TextureArray {
         // Create dynamic uniform buffer that will store our transformation matrix
         // Dynamic buffers can be frequently updated by the CPU
         let vs_constants = create_uniform_buffer(
-            &device,
+            device,
             std::mem::size_of::<glam::Mat4>() as u64 * 2,
             "VS constants CB",
             Usage::Dynamic,
@@ -224,7 +224,7 @@ impl SampleBase for TextureArray {
         let srb = pipeline_state.create_shader_resource_binding(true).unwrap();
 
         let textured_cube = TexturedCube::new(
-            &device,
+            device,
             GeometryPrimitiveVertexFlags::PosTex,
             BindFlags::VertexBuffer,
             None,
@@ -235,7 +235,7 @@ impl SampleBase for TextureArray {
 
         let texture_srv = {
             let images: [DynamicImage; NUM_TEXTURES] = std::array::from_fn(|i| i).map(|tex_id| {
-                image::ImageReader::open(format!("assets/DGLogo{}.png", tex_id))
+                image::ImageReader::open(format!("assets/DGLogo{tex_id}.png"))
                     .unwrap()
                     .decode()
                     .unwrap()

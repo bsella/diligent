@@ -141,23 +141,18 @@ fn generate_diligent_c_bindings(
 
     bindings
         .write_to_file(out_dir.join(diligent_bindings_filename))
-        .expect(
-            format!(
-                "Unable to write bindings to file {}",
-                diligent_bindings_filename
-            )
-            .as_str(),
-        );
+        .unwrap_or_else(|_| {
+            panic!("Unable to write bindings to file {diligent_bindings_filename}")
+        });
 }
 
 fn get_env_os(env_name: impl AsRef<OsStr>) -> OsString {
-    env::var_os(&env_name).expect(
-        format!(
+    env::var_os(&env_name).unwrap_or_else(|| {
+        panic!(
             "Could not find \"{}\" environment variable. Please add it your cargo config",
             env_name.as_ref().to_str().unwrap()
         )
-        .as_str(),
-    )
+    })
 }
 
 fn main() {
@@ -172,9 +167,5 @@ fn main() {
 
     configure_diligent_libs(Path::new(&diligent_install_dir));
 
-    generate_diligent_c_bindings(
-        &diligent_source_dir,
-        &diligent_install_dir,
-        &out_dir_path.to_path_buf(),
-    );
+    generate_diligent_c_bindings(diligent_source_dir, diligent_install_dir, out_dir_path);
 }

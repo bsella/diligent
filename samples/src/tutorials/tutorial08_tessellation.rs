@@ -88,18 +88,15 @@ impl SampleBase for Tessellation {
         _deferred_contexts: Vec<DeferredDeviceContext>,
         swap_chain: &SwapChain,
     ) -> Self {
-        let wireframe_supported = if let DeviceFeatureState::Disabled =
-            device.get_device_info().features().geometry_shaders
-        {
-            false
-        } else {
-            true
-        };
+        let wireframe_supported = matches!(
+            device.get_device_info().features().geometry_shaders,
+            DeviceFeatureState::Disabled
+        );
 
         let swap_chain_desc = swap_chain.get_desc();
 
         // Cull back faces. For some reason, in OpenGL the order is reversed
-        let cull_mode = if {
+        let cull = {
             #[cfg(feature = "opengl")]
             {
                 device.get_device_info().device_type() == RenderDeviceType::OpengGL
@@ -109,7 +106,9 @@ impl SampleBase for Tessellation {
             {
                 false
             }
-        } {
+        };
+
+        let cull_mode = if cull {
             CullMode::Front
         } else {
             CullMode::Back
@@ -181,10 +180,10 @@ impl SampleBase for Tessellation {
 
         let block_size = 32;
 
-        let convert_ps_output_to_gamma = match swap_chain_desc.color_buffer_format {
-            TextureFormat::RGBA8_UNORM | TextureFormat::BGRA8_UNORM => true,
-            _ => false,
-        };
+        let convert_ps_output_to_gamma = matches!(
+            swap_chain_desc.color_buffer_format,
+            TextureFormat::RGBA8_UNORM | TextureFormat::BGRA8_UNORM
+        );
 
         let shader_source_factory = engine_factory
             .create_default_shader_source_stream_factory(&[])
@@ -385,7 +384,7 @@ impl SampleBase for Tessellation {
             main_pipeline: &PipelineState,
             wireframe_pipeline: &Option<PipelineState>,
         ) {
-            f(&main_pipeline);
+            f(main_pipeline);
             if let Some(wireframe_pipeline) = &wireframe_pipeline {
                 f(wireframe_pipeline)
             }
@@ -405,9 +404,9 @@ impl SampleBase for Tessellation {
         let main_srb = main_pipeline.create_shader_resource_binding(true).unwrap();
         let main_pipeline = (main_pipeline, main_srb);
 
-        let wireframe_pipeline = wireframe_pipeline.and_then(|pso| {
+        let wireframe_pipeline = wireframe_pipeline.map(|pso| {
             let srb = pso.create_shader_resource_binding(true).unwrap();
-            Some((pso, srb))
+            (pso, srb)
         });
 
         fn apply_to_srb(
@@ -415,7 +414,7 @@ impl SampleBase for Tessellation {
             main_pipeline: &(PipelineState, ShaderResourceBinding),
             wireframe_pipeline: &Option<(PipelineState, ShaderResourceBinding)>,
         ) {
-            f(&main_pipeline);
+            f(main_pipeline);
             if let Some(wireframe_pipeline) = &wireframe_pipeline {
                 f(wireframe_pipeline)
             }

@@ -446,7 +446,7 @@ fn create_ray_tracing_pso(engine_factory: &EngineFactory, device: &RenderDevice)
 
 fn load_textures(device: &RenderDevice) -> ([Texture; NUM_TEXTURES], Texture) {
     let textures = std::array::from_fn(|i| i).map(|tex_id| {
-        let image_name = format!("DGLogo{}", tex_id);
+        let image_name = format!("DGLogo{tex_id}");
         let image = image::ImageReader::open(format!("assets/{image_name}.png"))
             .unwrap()
             .decode()
@@ -475,7 +475,7 @@ fn load_textures(device: &RenderDevice) -> ([Texture; NUM_TEXTURES], Texture) {
     });
 
     let ground = {
-        let image = image::ImageReader::open(format!("assets/Ground.jpg"))
+        let image = image::ImageReader::open("assets/Ground.jpg")
             .unwrap()
             .decode()
             .unwrap();
@@ -654,7 +654,7 @@ fn create_and_build_cube_blas(
                 .name("BLAS Scratch Buffer")
                 .usage(Usage::Default)
                 .bind_flags(BindFlags::RayTracing)
-                .size(blas.get_scratch_buffer_sizes().build as u64)
+                .size(blas.get_scratch_buffer_sizes().build)
                 .build(),
         )
         .unwrap();

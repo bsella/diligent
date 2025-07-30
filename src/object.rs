@@ -7,7 +7,7 @@ impl Object {
     pub(crate) fn new(object: *mut diligent_sys::IObject) -> Self {
         Object {
             virtual_functions: unsafe { (*object).pVtbl },
-            object: object,
+            object,
         }
     }
 

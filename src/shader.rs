@@ -20,8 +20,9 @@ pub enum ShaderSource<'a> {
     ByteCode(&'a [u8]),
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub enum ShaderLanguage {
+    #[default]
     Default,
     HLSL,
     GLSL,
@@ -30,12 +31,6 @@ pub enum ShaderLanguage {
     MSLVerbatim,
     MTLB,
     WGSL,
-}
-
-impl Default for ShaderLanguage {
-    fn default() -> Self {
-        ShaderLanguage::Default
-    }
 }
 
 impl From<ShaderLanguage> for diligent_sys::SHADER_SOURCE_LANGUAGE {
@@ -53,18 +48,13 @@ impl From<ShaderLanguage> for diligent_sys::SHADER_SOURCE_LANGUAGE {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub enum ShaderCompiler {
+    #[default]
     Default,
     GLSLANG,
     DXC,
     FXC,
-}
-
-impl Default for ShaderCompiler {
-    fn default() -> Self {
-        ShaderCompiler::Default
-    }
 }
 
 impl From<ShaderCompiler> for diligent_sys::SHADER_COMPILER {
@@ -91,9 +81,9 @@ pub enum ShaderResourceType {
 }
 const_assert!(diligent_sys::SHADER_RESOURCE_TYPE_LAST == 8);
 
-impl Into<ShaderResourceType> for diligent_sys::SHADER_RESOURCE_TYPE {
-    fn into(self) -> ShaderResourceType {
-        match self as diligent_sys::_SHADER_RESOURCE_TYPE {
+impl From<diligent_sys::SHADER_RESOURCE_TYPE> for ShaderResourceType {
+    fn from(value: diligent_sys::SHADER_RESOURCE_TYPE) -> Self {
+        match value as diligent_sys::_SHADER_RESOURCE_TYPE {
             diligent_sys::SHADER_RESOURCE_TYPE_CONSTANT_BUFFER => {
                 ShaderResourceType::ConstantBuffer
             }

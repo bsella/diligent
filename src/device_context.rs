@@ -1637,7 +1637,7 @@ impl ImmediateDeviceContext {
         &'a self,
         query: &'a Query<QueryDataType>,
     ) -> ScopedQueryToken<'a, QueryDataType> {
-        ScopedQueryToken::<QueryDataType>::new(&self, query)
+        ScopedQueryToken::<QueryDataType>::new(self, query)
     }
 
     pub fn bind_sparse_resource_memory(

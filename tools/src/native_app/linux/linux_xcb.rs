@@ -75,19 +75,16 @@ fn init_connection_and_window(
 
     // Force the x/y coordinates to 100,100 results are identical in consecutive runs
     connection.send_request(&x::ConfigureWindow {
-        window: window,
+        window,
         value_list: &[x::ConfigWindow::X(100), x::ConfigWindow::Y(100)],
     });
 
     connection.flush()?;
 
     loop {
-        match connection.wait_for_event()? {
-            xcb::Event::X(x::Event::Expose(_event)) => {
-                break;
-            }
-            _ => {}
-        };
+        if let Ok(xcb::Event::X(x::Event::Expose(_event))) = connection.wait_for_event() {
+            break;
+        }
     }
 
     Ok((connection, window, atom_wm_delete_window))
@@ -217,7 +214,7 @@ impl<'a> EventHandler for XcbEventHandler<'a> {
                         return Event::Quit;
                     }
                 }
-                return Event::Continue;
+                Event::Continue
             }
 
             xcb::Event::X(x::Event::KeyPress(key_event)) => {

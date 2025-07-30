@@ -61,7 +61,7 @@ impl ResourceMapping {
         }
         self.resources
             .entry(name.as_ref().to_owned())
-            .or_insert(Vec::new())
+            .or_default()
             .push(std::ptr::addr_of!(*object.as_ref()));
     }
 
@@ -94,7 +94,7 @@ impl ResourceMapping {
 
         self.resources
             .entry(name.as_ref().to_owned())
-            .or_insert(Vec::new())
+            .or_default()
             .extend(
                 device_objects
                     .iter()

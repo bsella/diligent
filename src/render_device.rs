@@ -705,7 +705,7 @@ impl RenderDevice {
         if prs_ptr.is_null() {
             Err(())
         } else {
-            Ok(PipelineResourceSignature::new(prs_ptr))
+            Ok(unsafe { PipelineResourceSignature::new(prs_ptr) })
         }
     }
 

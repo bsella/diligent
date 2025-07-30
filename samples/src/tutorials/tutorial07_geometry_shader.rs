@@ -88,10 +88,10 @@ impl SampleBase for GeometryShader {
 
         // If the swap chain color buffer format is a non-sRGB UNORM format,
         // we need to manually convert pixel shader output to gamma space.
-        let convert_ps_output_to_gamma = match swap_chain_desc.color_buffer_format {
-            TextureFormat::RGBA8_UNORM | TextureFormat::BGRA8_UNORM => true,
-            _ => false,
-        };
+        let convert_ps_output_to_gamma = matches!(
+            swap_chain_desc.color_buffer_format,
+            TextureFormat::RGBA8_UNORM | TextureFormat::BGRA8_UNORM,
+        );
 
         // Create a shader source stream factory to load shaders from files.
         let shader_source_factory = engine_factory
@@ -236,7 +236,7 @@ impl SampleBase for GeometryShader {
 
         // Create dynamic uniform buffer that will store shader constants
         let shader_constants = create_uniform_buffer(
-            &device,
+            device,
             std::mem::size_of::<Constants>() as u64,
             "Shader constants CB",
             Usage::Dynamic,
@@ -300,7 +300,7 @@ impl SampleBase for GeometryShader {
             .set(&texture_srv, SetShaderResourceFlags::None);
 
         let textured_cube = TexturedCube::new(
-            &device,
+            device,
             GeometryPrimitiveVertexFlags::PosTex,
             BindFlags::VertexBuffer,
             None,

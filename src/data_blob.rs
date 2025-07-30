@@ -25,8 +25,12 @@ impl fmt::Debug for DataBlob {
             write!(
                 f,
                 "{}",
-                String::from_raw_parts(std::ptr::from_mut(self.get_mut_data::<u8>(0)), size, size)
-                    .as_str()
+                String::from_raw_parts(
+                    std::ptr::from_ref(self.get_data::<u8>(0)) as *mut _,
+                    size,
+                    size
+                )
+                .as_str()
             )
         }
     }
@@ -76,7 +80,7 @@ impl DataBlob {
         .unwrap()
     }
 
-    pub fn get_mut_data<T>(&self, offset: usize) -> &mut T {
+    pub fn get_mut_data<T>(&mut self, offset: usize) -> &mut T {
         unsafe {
             ((*self.virtual_functions)
                 .DataBlob
@@ -100,7 +104,7 @@ impl DataBlob {
         }
     }
 
-    pub fn get_data_mut_slice<T>(&self, size: usize, offset: usize) -> &mut [T] {
+    pub fn get_data_mut_slice<T>(&mut self, size: usize, offset: usize) -> &mut [T] {
         unsafe {
             let ptr = (*self.virtual_functions)
                 .DataBlob
