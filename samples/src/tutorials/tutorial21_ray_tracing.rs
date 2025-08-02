@@ -833,6 +833,7 @@ impl RayTracing {
                 .mask(OPAQUE_GEOM_MASK as _)
                 .transform(
                     *animate_opaque_cube(0)
+                        .transpose()
                         .to_cols_array()
                         .split_first_chunk::<12>()
                         .unwrap()
@@ -846,6 +847,7 @@ impl RayTracing {
                 .mask(OPAQUE_GEOM_MASK as _)
                 .transform(
                     *animate_opaque_cube(1)
+                        .transpose()
                         .to_cols_array()
                         .split_first_chunk::<12>()
                         .unwrap()
@@ -859,6 +861,7 @@ impl RayTracing {
                 .mask(OPAQUE_GEOM_MASK as _)
                 .transform(
                     *animate_opaque_cube(2)
+                        .transpose()
                         .to_cols_array()
                         .split_first_chunk::<12>()
                         .unwrap()
@@ -872,6 +875,7 @@ impl RayTracing {
                 .mask(OPAQUE_GEOM_MASK as _)
                 .transform(
                     *animate_opaque_cube(3)
+                        .transpose()
                         .to_cols_array()
                         .split_first_chunk::<12>()
                         .unwrap()
@@ -883,8 +887,9 @@ impl RayTracing {
                 .blas(&self.cube_blas)
                 .mask(OPAQUE_GEOM_MASK as _)
                 .transform(
-                    *(glam::Mat4::from_scale(glam::vec3(100.0, 0.1, 100.0))
-                        * glam::Mat4::from_translation(glam::vec3(0.0, -0.6, 0.0)))
+                    *(glam::Mat4::from_translation(glam::vec3(0.0, -6.0, 0.0))
+                        * glam::Mat4::from_scale(glam::vec3(100.0, 0.1, 100.0)))
+                    .transpose()
                     .to_cols_array()
                     .split_first_chunk::<12>()
                     .unwrap()
@@ -898,6 +903,7 @@ impl RayTracing {
                 .mask(OPAQUE_GEOM_MASK as _)
                 .transform(
                     *glam::Mat4::from_translation(glam::vec3(-3.0, -3.0, -5.0))
+                        .transpose()
                         .to_cols_array()
                         .split_first_chunk::<12>()
                         .unwrap()
@@ -909,11 +915,12 @@ impl RayTracing {
                 .blas(&self.cube_blas)
                 .mask(TRANSPARENT_GEOM_MASK as _)
                 .transform(
-                    *(glam::Mat4::from_scale(glam::vec3(1.5, 1.5, 1.5))
+                    *(glam::Mat4::from_translation(glam::vec3(3.0, -4.0, -5.0))
+                        * glam::Mat4::from_scale(glam::vec3(1.5, 1.5, 1.5))
                         * glam::Mat4::from_rotation_y(
                             self.animation_time as f32 * f32::consts::PI * 0.25,
-                        )
-                        * glam::Mat4::from_translation(glam::vec3(-3.0, -3.0, -5.0)))
+                        ))
+                    .transpose()
                     .to_cols_array()
                     .split_first_chunk::<12>()
                     .unwrap()
@@ -1344,9 +1351,18 @@ impl SampleBase for RayTracing {
     }
 
     fn update(&mut self, _current_time: f64, elapsed_time: f64) {
+        const MAX_ANIMATION_TIME_DELTA: f64 = 1.0 / 60.0;
+
+        self.animation_time += f64::min(MAX_ANIMATION_TIME_DELTA, elapsed_time);
+
         self.camera.update(elapsed_time);
 
-        self.update_tlas(false);
+        // Do not allow going underground
+        let mut pos = self.camera.position();
+        if pos.y < -5.7 {
+            pos.y = -5.7;
+            self.camera.set_pos(&pos);
+        }
 
         // Update constants
         {
@@ -1364,6 +1380,8 @@ impl SampleBase for RayTracing {
                 ResourceStateTransitionMode::Transition,
             );
         }
+
+        self.update_tlas(false);
     }
 
     fn update_ui(&mut self, ui: &mut imgui::Ui) {
