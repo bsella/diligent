@@ -958,6 +958,9 @@ pub struct GraphicsPipelineStateCreateInfo<'a> {
     mesh_shader: Option<&'a Shader>,
 }
 
+type ClosestHitShader<'a> = Option<&'a Shader>;
+type AnyHitShader<'a> = Option<&'a Shader>;
+
 #[derive(Builder)]
 pub struct RayTracingPipelineStateCreateInfo<'a> {
     #[builder(setters(vis = ""))]
@@ -977,7 +980,7 @@ pub struct RayTracingPipelineStateCreateInfo<'a> {
             (CString::new(name.as_ref()).unwrap(), closest_hit_shader, any_hit_shader)
         ).collect()
     })]
-    triangle_hit_shaders: Option<Vec<(CString, &'a Shader, Option<&'a Shader>)>>,
+    triangle_hit_shaders: Option<Vec<(CString, &'a Shader, AnyHitShader<'a>)>>,
 
     #[builder(with = |shaders : Vec<(impl AsRef<str>, &'a Shader, Option<&'a Shader>, Option<&'a Shader>)>| {
         shaders.into_iter().map(|(name, intersection_shader, closest_hit_shader, any_hit_shader)|
@@ -985,7 +988,7 @@ pub struct RayTracingPipelineStateCreateInfo<'a> {
         ).collect()
     })]
     procedural_hit_shaders:
-        Option<Vec<(CString, &'a Shader, Option<&'a Shader>, Option<&'a Shader>)>>,
+        Option<Vec<(CString, &'a Shader, ClosestHitShader<'a>, AnyHitShader<'a>)>>,
 
     #[cfg(feature = "d3d12")]
     shader_record_name: Option<CString>,
