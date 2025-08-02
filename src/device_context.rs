@@ -496,7 +496,7 @@ impl AsRef<DeviceObject> for CommandList {
 }
 
 impl CommandList {
-    fn new(sys_ptr: *mut diligent_sys::ICommandList) -> Self {
+    pub(crate) fn new(sys_ptr: *mut diligent_sys::ICommandList) -> Self {
         // Both base and derived classes have exactly the same size.
         // This means that we can up-cast to the base class without worrying about layout offset between both classes
         const_assert!(
