@@ -182,15 +182,21 @@ impl SwapChain {
     }
 
     pub fn get_current_back_buffer_rtv(&self) -> TextureView {
-        let view = TextureView::new(
-            unsafe {
-                (*self.virtual_functions)
-                    .SwapChain
-                    .GetCurrentBackBufferRTV
-                    .unwrap_unchecked()(self.sys_ptr)
-            },
-            std::ptr::null_mut(),
-        );
+        let texture_view_ptr = unsafe {
+            (*self.virtual_functions)
+                .SwapChain
+                .GetCurrentBackBufferRTV
+                .unwrap_unchecked()(self.sys_ptr)
+        };
+
+        let texture_ptr = unsafe {
+            (*(*texture_view_ptr).pVtbl)
+                .TextureView
+                .GetTexture
+                .unwrap_unchecked()(texture_view_ptr)
+        };
+
+        let view = TextureView::new(texture_view_ptr, texture_ptr as *const _);
 
         view.device_object.as_ref().add_ref();
 
@@ -198,15 +204,21 @@ impl SwapChain {
     }
 
     pub fn get_depth_buffer_dsv(&self) -> TextureView {
-        let view = TextureView::new(
-            unsafe {
-                (*self.virtual_functions)
-                    .SwapChain
-                    .GetDepthBufferDSV
-                    .unwrap_unchecked()(self.sys_ptr)
-            },
-            std::ptr::null_mut(),
-        );
+        let texture_view_ptr = unsafe {
+            (*self.virtual_functions)
+                .SwapChain
+                .GetDepthBufferDSV
+                .unwrap_unchecked()(self.sys_ptr)
+        };
+
+        let texture_ptr = unsafe {
+            (*(*texture_view_ptr).pVtbl)
+                .TextureView
+                .GetTexture
+                .unwrap_unchecked()(texture_view_ptr)
+        };
+
+        let view = TextureView::new(texture_view_ptr, texture_ptr as *const _);
 
         view.device_object.as_ref().add_ref();
 
