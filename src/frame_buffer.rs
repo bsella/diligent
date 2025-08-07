@@ -40,7 +40,7 @@ impl Framebuffer {
         }
     }
 
-    pub fn get_desc(&self) -> FramebufferDesc {
+    pub fn get_desc(&self) -> FramebufferDesc<'_> {
         todo!()
     }
 }

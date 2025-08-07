@@ -172,9 +172,9 @@ impl Buffer {
     }
 
     pub fn create_view(
-        &mut self,
+        &self,
         view_desc: &diligent_sys::BufferViewDesc,
-    ) -> Result<BufferView, ()> {
+    ) -> Result<BufferView<'_>, ()> {
         let mut buffer_view_ptr = std::ptr::null_mut();
         unsafe {
             (*self.virtual_functions)
@@ -193,7 +193,7 @@ impl Buffer {
         }
     }
 
-    pub fn get_default_view(&self, view_type: BufferViewType) -> Result<BufferView, ()> {
+    pub fn get_default_view(&self, view_type: BufferViewType) -> Result<BufferView<'_>, ()> {
         let buffer_view_ptr = unsafe {
             (*self.virtual_functions)
                 .Buffer
