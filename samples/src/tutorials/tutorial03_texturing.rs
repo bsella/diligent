@@ -16,7 +16,7 @@ use diligent::{
     pipeline_resource_signature::ImmutableSamplerDesc,
     pipeline_state::{
         CullMode, DepthStencilStateDesc, GraphicsPipelineDesc, GraphicsPipelineRenderTargets,
-        PipelineState, PipelineStateCreateInfo, RasterizerStateDesc,
+        GraphicsPipelineState, PipelineStateCreateInfo, RasterizerStateDesc,
     },
     render_device::RenderDevice,
     sampler::SamplerDesc,
@@ -40,7 +40,7 @@ struct Texturing {
 
     convert_ps_output_to_gamma: bool,
 
-    pipeline_state: PipelineState,
+    pipeline_state: GraphicsPipelineState,
     vertex_shader_constant_buffer: Buffer,
     cube_vertex_buffer: Buffer,
     cube_index_buffer: Buffer,

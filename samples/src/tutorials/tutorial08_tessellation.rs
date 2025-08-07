@@ -15,7 +15,7 @@ use diligent::{
     pipeline_resource_signature::ImmutableSamplerDesc,
     pipeline_state::{
         CullMode, DepthStencilStateDesc, GraphicsPipelineDesc, GraphicsPipelineRenderTargets,
-        PipelineState, PipelineStateCreateInfo, RasterizerStateDesc,
+        GraphicsPipelineState, PipelineStateCreateInfo, RasterizerStateDesc,
     },
     render_device::RenderDevice,
     sampler::SamplerDesc,
@@ -35,8 +35,8 @@ use diligent_tools::native_app;
 struct Tessellation {
     immediate_context: ImmediateDeviceContext,
 
-    main_pipeline: (PipelineState, ShaderResourceBinding),
-    wireframe_pipeline: Option<(PipelineState, ShaderResourceBinding)>,
+    main_pipeline: (GraphicsPipelineState, ShaderResourceBinding),
+    wireframe_pipeline: Option<(GraphicsPipelineState, ShaderResourceBinding)>,
 
     animate: bool,
     wireframe: bool,
@@ -380,9 +380,9 @@ impl SampleBase for Tessellation {
         };
 
         fn apply_to_pipelines(
-            f: impl Fn(&PipelineState),
-            main_pipeline: &PipelineState,
-            wireframe_pipeline: &Option<PipelineState>,
+            f: impl Fn(&GraphicsPipelineState),
+            main_pipeline: &GraphicsPipelineState,
+            wireframe_pipeline: &Option<GraphicsPipelineState>,
         ) {
             f(main_pipeline);
             if let Some(wireframe_pipeline) = &wireframe_pipeline {
@@ -410,9 +410,9 @@ impl SampleBase for Tessellation {
         });
 
         fn apply_to_srb(
-            f: impl Fn(&(PipelineState, ShaderResourceBinding)),
-            main_pipeline: &(PipelineState, ShaderResourceBinding),
-            wireframe_pipeline: &Option<(PipelineState, ShaderResourceBinding)>,
+            f: impl Fn(&(GraphicsPipelineState, ShaderResourceBinding)),
+            main_pipeline: &(GraphicsPipelineState, ShaderResourceBinding),
+            wireframe_pipeline: &Option<(GraphicsPipelineState, ShaderResourceBinding)>,
         ) {
             f(main_pipeline);
             if let Some(wireframe_pipeline) = &wireframe_pipeline {

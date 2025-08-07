@@ -14,7 +14,7 @@ use diligent::{
     pipeline_resource_signature::ImmutableSamplerDesc,
     pipeline_state::{
         BlendFactor, BlendOperation, BlendStateDesc, ColorMask, CullMode, DepthStencilStateDesc,
-        GraphicsPipelineDesc, GraphicsPipelineRenderTargets, PipelineState,
+        GraphicsPipelineDesc, GraphicsPipelineRenderTargets, GraphicsPipelineState,
         PipelineStateCreateInfo, RasterizerStateDesc, RenderTargetBlendDesc,
     },
     render_device::RenderDevice,
@@ -402,7 +402,7 @@ const PIXEL_SHADER_GAMMA_SPIRV: &[u32] = &[
 
 pub struct ImguiRenderer {
     context: imgui::Context,
-    pipeline_state: PipelineState,
+    pipeline_state: GraphicsPipelineState,
     _font_texture_view: Box<TextureView>,
     texture_var: ShaderResourceVariable,
     shader_resource_binding: ShaderResourceBinding,

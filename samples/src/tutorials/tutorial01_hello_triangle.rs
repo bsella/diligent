@@ -6,7 +6,7 @@ use diligent::{
     graphics_types::{PrimitiveTopology, ShaderType},
     pipeline_state::{
         CullMode, DepthStencilStateDesc, GraphicsPipelineDesc, GraphicsPipelineRenderTargets,
-        PipelineState, PipelineStateCreateInfo, RasterizerStateDesc,
+        GraphicsPipelineState, PipelineStateCreateInfo, RasterizerStateDesc,
     },
     render_device::RenderDevice,
     shader::{ShaderCreateInfo, ShaderLanguage, ShaderSource},
@@ -19,7 +19,7 @@ use diligent_tools::native_app;
 struct HelloTriangle {
     immediate_context: ImmediateDeviceContext,
 
-    pipeline_state: PipelineState,
+    pipeline_state: GraphicsPipelineState,
 }
 
 impl SampleBase for HelloTriangle {

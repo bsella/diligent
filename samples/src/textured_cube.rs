@@ -14,7 +14,7 @@ use diligent::{
     pipeline_resource_signature::ImmutableSamplerDesc,
     pipeline_state::{
         CullMode, DepthStencilStateDesc, GraphicsPipelineDesc, GraphicsPipelineRenderTargets,
-        PipelineState, PipelineStateCreateInfo, RasterizerStateDesc,
+        GraphicsPipelineState, PipelineStateCreateInfo, RasterizerStateDesc,
     },
     render_device::RenderDevice,
     sampler::SamplerDesc,
@@ -107,7 +107,7 @@ impl TexturedCube {
     pub fn create_pipeline_state(
         create_info: CreatePSOInfo,
         convert_output_to_gamma: bool,
-    ) -> Result<PipelineState, ()> {
+    ) -> Result<GraphicsPipelineState, ()> {
         let mut input_layouts = Vec::new();
 
         if create_info

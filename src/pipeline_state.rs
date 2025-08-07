@@ -1206,18 +1206,6 @@ impl PipelineState {
         }
     }
 
-    pub fn get_graphics_pipeline_desc(&self) -> &diligent_sys::GraphicsPipelineDesc {
-        // TODO
-        unsafe {
-            (*self.virtual_functions)
-                .PipelineState
-                .GetGraphicsPipelineDesc
-                .unwrap_unchecked()(self.sys_ptr)
-            .as_ref()
-            .unwrap_unchecked()
-        }
-    }
-
     pub fn get_ray_tracing_pipeline_desc(&self) -> &diligent_sys::RayTracingPipelineDesc {
         // TODO
         unsafe {
@@ -1348,6 +1336,93 @@ impl PipelineState {
                 .PipelineState
                 .GetStatus
                 .unwrap_unchecked()(self.sys_ptr, wait_for_completion)
+        }
+    }
+}
+
+pub struct GraphicsPipelineState {
+    pipeline_state: PipelineState,
+}
+
+impl Deref for GraphicsPipelineState {
+    type Target = PipelineState;
+    fn deref(&self) -> &Self::Target {
+        &self.pipeline_state
+    }
+}
+
+impl GraphicsPipelineState {
+    pub(crate) fn new(
+        pipeline_state_ptr: *mut diligent_sys::IPipelineState,
+    ) -> GraphicsPipelineState {
+        GraphicsPipelineState {
+            pipeline_state: PipelineState::new(pipeline_state_ptr),
+        }
+    }
+
+    pub fn get_graphics_pipeline_desc(&self) -> &diligent_sys::GraphicsPipelineDesc {
+        // TODO
+        unsafe {
+            (*self.virtual_functions)
+                .PipelineState
+                .GetGraphicsPipelineDesc
+                .unwrap_unchecked()(self.sys_ptr)
+            .as_ref()
+            .unwrap_unchecked()
+        }
+    }
+}
+
+pub struct ComputePipelineState {
+    pipeline_state: PipelineState,
+}
+
+impl Deref for ComputePipelineState {
+    type Target = PipelineState;
+    fn deref(&self) -> &Self::Target {
+        &self.pipeline_state
+    }
+}
+
+impl ComputePipelineState {
+    pub(crate) fn new(
+        pipeline_state_ptr: *mut diligent_sys::IPipelineState,
+    ) -> ComputePipelineState {
+        ComputePipelineState {
+            pipeline_state: PipelineState::new(pipeline_state_ptr),
+        }
+    }
+}
+
+pub struct RayTracingPipelineState {
+    pipeline_state: PipelineState,
+}
+
+impl Deref for RayTracingPipelineState {
+    type Target = PipelineState;
+    fn deref(&self) -> &Self::Target {
+        &self.pipeline_state
+    }
+}
+
+impl RayTracingPipelineState {
+    pub(crate) fn new(
+        pipeline_state_ptr: *mut diligent_sys::IPipelineState,
+    ) -> RayTracingPipelineState {
+        RayTracingPipelineState {
+            pipeline_state: PipelineState::new(pipeline_state_ptr),
+        }
+    }
+
+    pub fn get_graphics_pipeline_desc(&self) -> &diligent_sys::RayTracingPipelineDesc {
+        // TODO
+        unsafe {
+            (*self.virtual_functions)
+                .PipelineState
+                .GetRayTracingPipelineDesc
+                .unwrap_unchecked()(self.sys_ptr)
+            .as_ref()
+            .unwrap_unchecked()
         }
     }
 }

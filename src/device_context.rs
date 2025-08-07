@@ -831,7 +831,7 @@ impl DeviceContext {
         }
     }
 
-    pub fn new_render_pass(&self, attribs: &BeginRenderPassAttribs) -> RenderPassToken {
+    pub fn new_render_pass(&self, attribs: &BeginRenderPassAttribs) -> RenderPassToken<'_> {
         RenderPassToken::new(self, attribs)
     }
 
@@ -1509,7 +1509,11 @@ impl DeviceContext {
     // TODO
     // pub fn get_user_data(&self);
 
-    pub fn debug_group(&self, name: impl AsRef<str>, color: Option<[f32; 4]>) -> ScopedDebugGroup {
+    pub fn debug_group(
+        &self,
+        name: impl AsRef<str>,
+        color: Option<[f32; 4]>,
+    ) -> ScopedDebugGroup<'_> {
         let name = CString::new(name.as_ref()).unwrap();
         ScopedDebugGroup::new(self, &name, color)
     }
@@ -1629,7 +1633,7 @@ impl ImmediateDeviceContext {
         }
     }
 
-    pub fn lock_command_queue(&self) -> Result<CommandQueue, ()> {
+    pub fn lock_command_queue(&self) -> Result<CommandQueue<'_>, ()> {
         CommandQueue::new(self)
     }
 

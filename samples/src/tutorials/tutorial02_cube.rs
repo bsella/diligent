@@ -15,7 +15,7 @@ use diligent::{
     input_layout::LayoutElement,
     pipeline_state::{
         CullMode, DepthStencilStateDesc, GraphicsPipelineDesc, GraphicsPipelineRenderTargets,
-        PipelineState, PipelineStateCreateInfo, RasterizerStateDesc,
+        GraphicsPipelineState, PipelineStateCreateInfo, RasterizerStateDesc,
     },
     render_device::RenderDevice,
     shader::{ShaderCompileFlags, ShaderCreateInfo, ShaderLanguage, ShaderSource},
@@ -36,7 +36,7 @@ struct Cube {
 
     convert_ps_output_to_gamma: bool,
 
-    pipeline_state: PipelineState,
+    pipeline_state: GraphicsPipelineState,
     vertex_shader_constant_buffer: Buffer,
     cube_vertex_buffer: Buffer,
     cube_index_buffer: Buffer,

@@ -12,7 +12,7 @@ use diligent::{
     },
     graphics_utilities::{create_uniform_buffer, linear_to_srgba},
     input_layout::{InputElementFrequency, LayoutElement},
-    pipeline_state::PipelineState,
+    pipeline_state::GraphicsPipelineState,
     render_device::RenderDevice,
     shader_resource_binding::ShaderResourceBinding,
     swap_chain::SwapChain,
@@ -50,7 +50,7 @@ struct TextureArray {
 
     convert_ps_output_to_gamma: bool,
 
-    pipeline_state: PipelineState,
+    pipeline_state: GraphicsPipelineState,
     srb: ShaderResourceBinding,
 
     _texture_view: TextureView,

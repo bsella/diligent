@@ -19,7 +19,8 @@ use crate::{
         PipelineResourceSignatureDescWrapper,
     },
     pipeline_state::{
-        GraphicsPipelineStateCreateInfo, GraphicsPipelineStateCreateInfoWrapper, PipelineState,
+        ComputePipelineState, GraphicsPipelineState, GraphicsPipelineStateCreateInfo,
+        GraphicsPipelineStateCreateInfoWrapper, PipelineState, RayTracingPipelineState,
         RayTracingPipelineStateCreateInfo, RayTracingPipelineStateCreateInfoWrapper,
     },
     pipeline_state_cache::{PipelineStateCache, PipelineStateCacheCreateInfo},
@@ -263,7 +264,7 @@ impl RenderDevice {
     pub fn create_graphics_pipeline_state(
         &self,
         pipeline_ci: &GraphicsPipelineStateCreateInfo,
-    ) -> Result<PipelineState, ()> {
+    ) -> Result<GraphicsPipelineState, ()> {
         let mut pipeline_state_ptr = std::ptr::null_mut();
 
         let pipeline_ci_wrapper = GraphicsPipelineStateCreateInfoWrapper::from(pipeline_ci);
@@ -281,14 +282,14 @@ impl RenderDevice {
         if pipeline_state_ptr.is_null() {
             Err(())
         } else {
-            Ok(PipelineState::new(pipeline_state_ptr))
+            Ok(GraphicsPipelineState::new(pipeline_state_ptr))
         }
     }
 
     pub fn create_compute_pipeline_state(
         &self,
         pipeline_ci: &diligent_sys::ComputePipelineStateCreateInfo,
-    ) -> Result<PipelineState, ()> {
+    ) -> Result<ComputePipelineState, ()> {
         let mut pipeline_state_ptr = std::ptr::null_mut();
         unsafe {
             (*self.virtual_functions)
@@ -304,14 +305,14 @@ impl RenderDevice {
         if pipeline_state_ptr.is_null() {
             Err(())
         } else {
-            Ok(PipelineState::new(pipeline_state_ptr))
+            Ok(ComputePipelineState::new(pipeline_state_ptr))
         }
     }
 
     pub fn create_ray_tracing_pipeline_state(
         &self,
         pipeline_ci: &RayTracingPipelineStateCreateInfo,
-    ) -> Result<PipelineState, ()> {
+    ) -> Result<RayTracingPipelineState, ()> {
         let mut pipeline_state_ptr = std::ptr::null_mut();
 
         let pipeline_ci = RayTracingPipelineStateCreateInfoWrapper::from(pipeline_ci);
@@ -329,7 +330,7 @@ impl RenderDevice {
         if pipeline_state_ptr.is_null() {
             Err(())
         } else {
-            Ok(PipelineState::new(pipeline_state_ptr))
+            Ok(RayTracingPipelineState::new(pipeline_state_ptr))
         }
     }
 

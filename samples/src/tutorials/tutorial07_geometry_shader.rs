@@ -18,7 +18,7 @@ use diligent::{
     pipeline_resource_signature::ImmutableSamplerDesc,
     pipeline_state::{
         CullMode, DepthStencilStateDesc, GraphicsPipelineDesc, GraphicsPipelineRenderTargets,
-        PipelineState, PipelineStateCreateInfo, RasterizerStateDesc,
+        GraphicsPipelineState, PipelineStateCreateInfo, RasterizerStateDesc,
     },
     render_device::RenderDevice,
     sampler::SamplerDesc,
@@ -54,7 +54,7 @@ struct GeometryShader {
 
     convert_ps_output_to_gamma: bool,
 
-    pipeline_state: PipelineState,
+    pipeline_state: GraphicsPipelineState,
     srb: ShaderResourceBinding,
 
     _texture_srv: TextureView,

@@ -27,7 +27,8 @@ use diligent::{
     pipeline_resource_signature::ImmutableSamplerDesc,
     pipeline_state::{
         CullMode, DepthStencilStateDesc, GraphicsPipelineDesc, GraphicsPipelineRenderTargets,
-        PipelineState, PipelineStateCreateInfo, RasterizerStateDesc,
+        GraphicsPipelineState, PipelineStateCreateInfo, RasterizerStateDesc,
+        RayTracingPipelineState,
     },
     render_device::RenderDevice,
     sampler::SamplerDesc,
@@ -127,10 +128,10 @@ struct RayTracing {
     constants: Constants,
     max_recursion_depth: i32,
 
-    image_blit_pso: PipelineState,
+    image_blit_pso: GraphicsPipelineState,
     image_blit_srb: ShaderResourceBinding,
 
-    ray_tracing_pso: PipelineState,
+    ray_tracing_pso: RayTracingPipelineState,
     ray_tracing_srb: ShaderResourceBinding,
 
     constant_buffer: Buffer,
@@ -161,7 +162,7 @@ fn create_graphics_pso(
     factory: &EngineFactory,
     device: &RenderDevice,
     swap_chain_desc: &SwapChainDesc,
-) -> PipelineState {
+) -> GraphicsPipelineState {
     // Create graphics pipeline to blit render target into swapchain image.
 
     let mut rtv_formats = std::array::from_fn(|_| None);
@@ -228,7 +229,10 @@ fn create_graphics_pso(
     device.create_graphics_pipeline_state(&pso_ci).unwrap()
 }
 
-fn create_ray_tracing_pso(engine_factory: &EngineFactory, device: &RenderDevice) -> PipelineState {
+fn create_ray_tracing_pso(
+    engine_factory: &EngineFactory,
+    device: &RenderDevice,
+) -> RayTracingPipelineState {
     // Create a shader source stream factory to load shaders from files.
     let shader_source_factory = engine_factory
         .create_default_shader_source_stream_factory(&[])
@@ -783,9 +787,13 @@ fn create_and_build_procedural_blas(
     (procedural_blas, box_attribs_cb)
 }
 
-fn create_sbt(device: &RenderDevice, raytracing_pso: &PipelineState) -> ShaderBindingTable {
-    let desc = ShaderBindingTableDesc::new("SBT", raytracing_pso);
-    device.create_sbt(&desc).unwrap()
+fn create_sbt(
+    device: &RenderDevice,
+    raytracing_pso: &RayTracingPipelineState,
+) -> ShaderBindingTable {
+    device
+        .create_sbt(&ShaderBindingTableDesc::new("SBT", raytracing_pso))
+        .unwrap()
 }
 
 impl RayTracing {
