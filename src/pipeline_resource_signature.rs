@@ -184,19 +184,6 @@ impl PipelineResourceSignature {
         }
     }
 
-    pub fn get_desc(&self) -> &diligent_sys::PipelineResourceSignatureDesc {
-        // TODO
-        unsafe {
-            ((*self.virtual_functions)
-                .DeviceObject
-                .GetDesc
-                .unwrap_unchecked()(self.device_object.sys_ptr)
-                as *const diligent_sys::PipelineResourceSignatureDesc)
-                .as_ref()
-                .unwrap_unchecked()
-        }
-    }
-
     pub fn create_shader_resource_binding(
         &self,
         init_static_resources: bool,

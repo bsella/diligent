@@ -1,4 +1,4 @@
-use std::ffi::{CStr, CString};
+use std::ffi::CString;
 
 use bon::Builder;
 use static_assertions::const_assert;
@@ -78,29 +78,6 @@ impl DeviceMemory {
             sys_ptr: fence_ptr,
             virtual_functions: unsafe { (*fence_ptr).pVtbl },
             device_object: DeviceObject::new(fence_ptr as *mut diligent_sys::IDeviceObject),
-        }
-    }
-
-    pub fn get_desc(&self) -> DeviceMemoryDesc {
-        let desc = unsafe {
-            ((*self.virtual_functions)
-                .DeviceObject
-                .GetDesc
-                .unwrap_unchecked()(self.sys_ptr as *mut diligent_sys::IDeviceObject)
-                as *const diligent_sys::DeviceMemoryDesc)
-                .as_ref()
-                .unwrap_unchecked()
-        };
-
-        DeviceMemoryDesc {
-            name: CString::from(unsafe { CStr::from_ptr(desc._DeviceObjectAttribs.Name) }),
-            device_memory_type: match desc.Type as _ {
-                diligent_sys::DEVICE_MEMORY_TYPE_SPARSE => Some(DeviceMemoryType::Sparce),
-                diligent_sys::DEVICE_MEMORY_TYPE_UNDEFINED => None,
-                _ => panic!("Unknown fence type"),
-            },
-            immediate_context_mask: desc.ImmediateContextMask,
-            page_size: desc.PageSize,
         }
     }
 

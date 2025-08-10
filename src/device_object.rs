@@ -29,17 +29,6 @@ impl DeviceObject {
         }
     }
 
-    pub fn get_desc(&self) -> &diligent_sys::DeviceObjectAttribs {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceObject
-                .GetDesc
-                .unwrap_unchecked()(self.sys_ptr)
-            .as_ref()
-            .unwrap_unchecked()
-        }
-    }
-
     pub fn get_unique_id(&self) -> i32 {
         unsafe {
             (*self.virtual_functions)

@@ -356,16 +356,6 @@ impl Shader {
         }
     }
 
-    pub fn get_desc(&self) -> diligent_sys::ShaderDesc {
-        unsafe {
-            *((*self.virtual_functions)
-                .DeviceObject
-                .GetDesc
-                .unwrap_unchecked()(self.device_object.sys_ptr)
-                as *const diligent_sys::ShaderDesc)
-        }
-    }
-
     pub fn get_resources(&self) -> Vec<ShaderResourceDesc> {
         unsafe {
             let num_resources = (*self.virtual_functions)

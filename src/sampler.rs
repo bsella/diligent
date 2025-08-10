@@ -1,4 +1,4 @@
-use std::ffi::{CStr, CString};
+use std::ffi::CString;
 
 use bitflags::bitflags;
 use bon::Builder;
@@ -100,7 +100,6 @@ impl From<&SamplerDesc> for diligent_sys::SamplerDesc {
 
 pub struct Sampler {
     pub(crate) sys_ptr: *mut diligent_sys::ISampler,
-    virtual_functions: *mut diligent_sys::ISamplerVtbl,
 
     device_object: DeviceObject,
 }
@@ -122,38 +121,7 @@ impl Sampler {
 
         Sampler {
             sys_ptr: sampler_ptr,
-            virtual_functions: unsafe { (*sampler_ptr).pVtbl },
             device_object: DeviceObject::new(sampler_ptr as *mut diligent_sys::IDeviceObject),
-        }
-    }
-
-    pub fn get_desc(&self) -> SamplerDesc {
-        let desc = unsafe {
-            ((*self.virtual_functions)
-                .DeviceObject
-                .GetDesc
-                .unwrap_unchecked()(self.device_object.sys_ptr)
-                as *const diligent_sys::SamplerDesc)
-                .as_ref()
-                .unwrap_unchecked()
-        };
-
-        SamplerDesc {
-            name: CString::from(unsafe { CStr::from_ptr(desc._DeviceObjectAttribs.Name) }),
-            address_u: desc.AddressU.into(),
-            address_v: desc.AddressV.into(),
-            address_w: desc.AddressW.into(),
-            border_color: desc.BorderColor,
-            comparison_func: desc.ComparisonFunc.into(),
-            flags: SamplerFlags::from_bits_retain(desc.Flags),
-            mag_filter: desc.MagFilter.into(),
-            max_anisotropy: desc.MaxAnisotropy,
-            max_lod: desc.MaxLOD,
-            min_filter: desc.MinFilter.into(),
-            min_lod: desc.MinLOD,
-            mip_filter: desc.MipFilter.into(),
-            mip_lod_bias: desc.MipLODBias,
-            unnormalized_coords: desc.UnnormalizedCoords,
         }
     }
 }

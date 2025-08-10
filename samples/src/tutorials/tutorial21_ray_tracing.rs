@@ -1311,12 +1311,12 @@ impl SampleBase for RayTracing {
                 ResourceStateTransitionMode::Transition,
             );
 
-            let color_rt_desc = self.color_rt.get_desc();
+            let swap_chain_desc = swap_chain.get_desc();
 
             let attribs = TraceRaysAttribs::builder()
                 .sbt(&self.sbt)
-                .dimension_x(color_rt_desc.Width)
-                .dimension_y(color_rt_desc.Height)
+                .dimension_x(swap_chain_desc.width)
+                .dimension_y(swap_chain_desc.height)
                 .build();
 
             self.immediate_context.trace_rays(&attribs);

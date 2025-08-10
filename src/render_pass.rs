@@ -177,8 +177,4 @@ impl RenderPass {
             device_object: DeviceObject::new(sys_ptr as *mut diligent_sys::IDeviceObject),
         }
     }
-
-    pub fn get_desc(&self) -> RenderPassDesc {
-        todo!()
-    }
 }

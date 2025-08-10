@@ -902,17 +902,6 @@ impl DeviceContext {
         }
     }
 
-    pub fn get_desc(&self) -> &diligent_sys::DeviceContextDesc {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .GetDesc
-                .unwrap_unchecked()(self.sys_ptr)
-            .as_ref()
-            .unwrap_unchecked()
-        }
-    }
-
     pub fn set_pipeline_state(&self, pipeline_state: &PipelineState) {
         unsafe {
             (*self.virtual_functions)

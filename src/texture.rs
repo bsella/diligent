@@ -254,19 +254,6 @@ impl Texture {
         }
     }
 
-    pub fn get_desc(&self) -> &diligent_sys::TextureDesc {
-        // TODO
-        unsafe {
-            ((*self.virtual_functions)
-                .DeviceObject
-                .GetDesc
-                .unwrap_unchecked()(self.device_object.sys_ptr)
-                as *const diligent_sys::TextureDesc)
-                .as_ref()
-                .unwrap_unchecked()
-        }
-    }
-
     pub fn create_view(
         &mut self,
         texture_view_desc: &diligent_sys::TextureViewDesc,

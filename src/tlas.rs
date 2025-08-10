@@ -168,7 +168,6 @@ impl TopLevelAS {
         }
     }
 
-    // TODO pub fn get_desc() -> TopLevelASDesc;
     // TODO pub fn get_instance_desc(&self, name: impl AsRef<str>) -> TLASInstanceDesc {}
     // TODO pub fn get_build_info(&self) -> TLASBuildInfo {}
 

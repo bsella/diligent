@@ -1,4 +1,4 @@
-use std::ffi::{CStr, CString};
+use std::ffi::CString;
 
 use bon::Builder;
 use static_assertions::const_assert;
@@ -61,27 +61,6 @@ impl Fence {
             sys_ptr: fence_ptr,
             virtual_functions: unsafe { (*fence_ptr).pVtbl },
             device_object: DeviceObject::new(fence_ptr as *mut diligent_sys::IDeviceObject),
-        }
-    }
-
-    pub fn get_desc(&self) -> FenceDesc {
-        let desc = unsafe {
-            ((*self.virtual_functions)
-                .DeviceObject
-                .GetDesc
-                .unwrap_unchecked()(self.sys_ptr as *mut diligent_sys::IDeviceObject)
-                as *const diligent_sys::FenceDesc)
-                .as_ref()
-                .unwrap_unchecked()
-        };
-
-        FenceDesc {
-            name: CString::from(unsafe { CStr::from_ptr(desc._DeviceObjectAttribs.Name) }),
-            fence_type: match desc.Type as _ {
-                diligent_sys::FENCE_TYPE_CPU_WAIT_ONLY => FenceType::CpuWaitOnly,
-                diligent_sys::FENCE_TYPE_GENERAL => FenceType::General,
-                _ => panic!("Unknown fence type"),
-            },
         }
     }
 

@@ -61,16 +61,6 @@ impl TextureView {
         }
     }
 
-    pub fn get_desc(&self) -> diligent_sys::TextureViewDesc {
-        unsafe {
-            *((*self.virtual_functions)
-                .DeviceObject
-                .GetDesc
-                .unwrap_unchecked()(self.device_object.sys_ptr)
-                as *const diligent_sys::TextureViewDesc)
-        }
-    }
-
     pub fn set_sampler(&mut self, sampler: &Sampler) {
         unsafe {
             (*self.virtual_functions)

@@ -1207,19 +1207,6 @@ impl PipelineState {
         }
     }
 
-    pub fn get_desc(&self) -> &diligent_sys::PipelineStateDesc {
-        // TODO
-        unsafe {
-            ((*self.virtual_functions)
-                .DeviceObject
-                .GetDesc
-                .unwrap_unchecked()(self.device_object.sys_ptr)
-                as *const diligent_sys::PipelineStateDesc)
-                .as_ref()
-                .unwrap_unchecked()
-        }
-    }
-
     pub fn get_ray_tracing_pipeline_desc(&self) -> &diligent_sys::RayTracingPipelineDesc {
         // TODO
         unsafe {

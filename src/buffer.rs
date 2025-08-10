@@ -158,19 +158,6 @@ impl Buffer {
         buffer
     }
 
-    pub fn get_desc(&self) -> &diligent_sys::BufferDesc {
-        // TODO
-        unsafe {
-            ((*self.virtual_functions)
-                .DeviceObject
-                .GetDesc
-                .unwrap_unchecked()(self.device_object.sys_ptr)
-                as *const diligent_sys::BufferDesc)
-                .as_ref()
-                .unwrap_unchecked()
-        }
-    }
-
     pub fn create_view(
         &self,
         view_desc: &diligent_sys::BufferViewDesc,
