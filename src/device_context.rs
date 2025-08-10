@@ -110,9 +110,209 @@ pub struct DrawIndexedAttribs {
     first_instance_location: u32,
 }
 
+#[derive(Builder)]
+pub struct DrawIndirectAttribs<'a> {
+    attribs_buffer: &'a Buffer,
+
+    #[builder(default = 0)]
+    draw_args_offset: u64,
+
+    #[builder(default = DrawFlags::None)]
+    flags: DrawFlags,
+
+    #[builder(default = 1)]
+    draw_count: u32,
+
+    #[builder(default = 16)]
+    draw_args_stride: u32,
+
+    #[builder(default = ResourceStateTransitionMode::None)]
+    attribs_buffer_state_transition_mode: ResourceStateTransitionMode,
+
+    counter_buffer: Option<&'a Buffer>,
+
+    #[builder(default = 0)]
+    counter_offset: u64,
+
+    #[builder(default = ResourceStateTransitionMode::None)]
+    counter_buffer_state_transition_mode: ResourceStateTransitionMode,
+}
+
+#[derive(Builder)]
+pub struct DrawIndexedIndirectAttribs<'a> {
+    index_type: ValueType,
+
+    attribs_buffer: &'a Buffer,
+
+    #[builder(default = 0)]
+    draw_args_offset: u64,
+
+    #[builder(default = DrawFlags::None)]
+    flags: DrawFlags,
+
+    #[builder(default = 1)]
+    draw_count: u32,
+
+    #[builder(default = 20)]
+    draw_args_stride: u32,
+
+    #[builder(default = ResourceStateTransitionMode::None)]
+    attribs_buffer_state_transition_mode: ResourceStateTransitionMode,
+
+    counter_buffer: Option<&'a Buffer>,
+
+    #[builder(default = 0)]
+    counter_offset: u64,
+
+    #[builder(default = ResourceStateTransitionMode::None)]
+    counter_buffer_state_transition_mode: ResourceStateTransitionMode,
+}
+
+#[derive(Builder)]
+pub struct DrawMeshAttribs {
+    #[builder(default = 1)]
+    thread_group_count_x: u32,
+
+    #[builder(default = 1)]
+    thread_group_count_y: u32,
+
+    #[builder(default = 1)]
+    thread_group_count_z: u32,
+
+    #[builder(default = DrawFlags::None)]
+    flags: DrawFlags,
+}
+
+#[derive(Builder)]
+pub struct DrawMeshIndirectAttribs<'a> {
+    attribs_buffer: &'a Buffer,
+
+    #[builder(default = 0)]
+    draw_args_offset: u64,
+
+    #[builder(default = DrawFlags::None)]
+    flags: DrawFlags,
+
+    #[builder(default = 1)]
+    command_count: u32,
+
+    #[builder(default = ResourceStateTransitionMode::None)]
+    attribs_buffer_state_transition_mode: ResourceStateTransitionMode,
+
+    counter_buffer: Option<&'a Buffer>,
+
+    #[builder(default = 0)]
+    counter_offset: u64,
+
+    #[builder(default = ResourceStateTransitionMode::None)]
+    counter_buffer_state_transition_mode: ResourceStateTransitionMode,
+}
+
+#[derive(Clone, Copy)]
+pub struct MultiDrawItem {
+    pub num_vertices: u32,
+    pub start_vertex_location: u32,
+}
+
+#[derive(Builder)]
+pub struct MultiDrawAttribs {
+    draw_items: Vec<MultiDrawItem>,
+
+    #[builder(default = DrawFlags::None)]
+    flags: DrawFlags,
+
+    #[builder(default = 1)]
+    num_instances: u32,
+
+    #[builder(default = 0)]
+    first_instance_location: u32,
+}
+
+#[derive(Clone, Copy)]
+pub struct MultiDrawIndexedItem {
+    pub num_vertices: u32,
+    pub first_index_location: u32,
+    pub base_vertex: u32,
+}
+
+#[derive(Builder)]
+pub struct MultiDrawIndexedAttribs {
+    draw_items: Vec<MultiDrawIndexedItem>,
+
+    index_type: ValueType,
+
+    #[builder(default = DrawFlags::None)]
+    flags: DrawFlags,
+
+    #[builder(default = 1)]
+    num_instances: u32,
+
+    #[builder(default = 0)]
+    first_instance_location: u32,
+}
+
+#[derive(Builder)]
+pub struct DispatchComputeAttribs {
+    #[builder(default = 1)]
+    thread_group_count_x: u32,
+
+    #[builder(default = 1)]
+    thread_group_count_y: u32,
+
+    #[builder(default = 1)]
+    thread_group_count_z: u32,
+
+    #[cfg(feature = "metal")]
+    #[builder(default = 0)]
+    mtl_thread_group_size_x: u32,
+
+    #[cfg(feature = "metal")]
+    #[builder(default = 0)]
+    mtl_thread_group_size_y: u32,
+
+    #[cfg(feature = "metal")]
+    #[builder(default = 0)]
+    mtl_thread_group_size_z: u32,
+}
+
+#[derive(Builder)]
+pub struct DispatchComputeIndirectAttribs<'a> {
+    attribs_buffer: &'a Buffer,
+
+    #[builder(default = ResourceStateTransitionMode::None)]
+    attribs_buffer_state_transition_mode: ResourceStateTransitionMode,
+
+    #[builder(default = 0)]
+    dispatch_args_byte_offset: u64,
+
+    #[cfg(feature = "metal")]
+    #[builder(default = 0)]
+    mtl_thread_group_size_x: u32,
+
+    #[cfg(feature = "metal")]
+    #[builder(default = 0)]
+    mtl_thread_group_size_y: u32,
+
+    #[cfg(feature = "metal")]
+    #[builder(default = 0)]
+    mtl_thread_group_size_z: u32,
+}
+
+#[derive(Builder)]
+pub struct DispatchTileAttribs {
+    #[builder(default = 1)]
+    threads_per_tile_x: u32,
+
+    #[builder(default = 1)]
+    threads_per_tile_y: u32,
+
+    #[builder(default = DrawFlags::None)]
+    flags: DrawFlags,
+}
+
 impl From<&DrawIndexedAttribs> for diligent_sys::DrawIndexedAttribs {
     fn from(value: &DrawIndexedAttribs) -> Self {
-        diligent_sys::DrawIndexedAttribs {
+        Self {
             BaseVertex: value.base_vertex,
             FirstIndexLocation: value.first_index_location,
             FirstInstanceLocation: value.first_instance_location,
@@ -120,6 +320,71 @@ impl From<&DrawIndexedAttribs> for diligent_sys::DrawIndexedAttribs {
             IndexType: value.index_type.into(),
             NumIndices: value.num_indices,
             NumInstances: value.num_instances,
+        }
+    }
+}
+
+impl<'a> From<&DrawIndirectAttribs<'a>> for diligent_sys::DrawIndirectAttribs {
+    fn from(value: &DrawIndirectAttribs) -> Self {
+        Self {
+            AttribsBufferStateTransitionMode: value.attribs_buffer_state_transition_mode.into(),
+            CounterBufferStateTransitionMode: value.counter_buffer_state_transition_mode.into(),
+            CounterOffset: value.counter_offset,
+            DrawArgsOffset: value.draw_args_offset,
+            DrawArgsStride: value.draw_args_stride,
+            DrawCount: value.draw_count,
+            Flags: value.flags.bits(),
+            pAttribsBuffer: value.attribs_buffer.sys_ptr,
+            pCounterBuffer: value
+                .counter_buffer
+                .map_or(std::ptr::null_mut(), |buffer| buffer.sys_ptr),
+        }
+    }
+}
+
+impl<'a> From<&DrawIndexedIndirectAttribs<'a>> for diligent_sys::DrawIndexedIndirectAttribs {
+    fn from(value: &DrawIndexedIndirectAttribs) -> Self {
+        Self {
+            IndexType: value.index_type.into(),
+            pAttribsBuffer: value.attribs_buffer.sys_ptr,
+            DrawArgsOffset: value.draw_args_offset,
+            Flags: value.flags.bits(),
+            DrawCount: value.draw_count,
+            DrawArgsStride: value.draw_args_stride,
+            AttribsBufferStateTransitionMode: value.attribs_buffer_state_transition_mode.into(),
+            pCounterBuffer: value
+                .counter_buffer
+                .map_or(std::ptr::null_mut(), |buffer| buffer.sys_ptr),
+            CounterOffset: value.counter_offset,
+            CounterBufferStateTransitionMode: value.counter_buffer_state_transition_mode.into(),
+        }
+    }
+}
+
+impl From<&DrawMeshAttribs> for diligent_sys::DrawMeshAttribs {
+    fn from(value: &DrawMeshAttribs) -> Self {
+        Self {
+            ThreadGroupCountX: value.thread_group_count_x,
+            ThreadGroupCountY: value.thread_group_count_y,
+            ThreadGroupCountZ: value.thread_group_count_z,
+            Flags: value.flags.bits(),
+        }
+    }
+}
+
+impl<'a> From<&DrawMeshIndirectAttribs<'a>> for diligent_sys::DrawMeshIndirectAttribs {
+    fn from(value: &DrawMeshIndirectAttribs) -> Self {
+        Self {
+            pAttribsBuffer: value.attribs_buffer.sys_ptr,
+            DrawArgsOffset: value.draw_args_offset,
+            Flags: value.flags.bits(),
+            CommandCount: value.command_count,
+            AttribsBufferStateTransitionMode: value.attribs_buffer_state_transition_mode.into(),
+            pCounterBuffer: value
+                .counter_buffer
+                .map_or(std::ptr::null_mut(), |buffer| buffer.sys_ptr),
+            CounterOffset: value.counter_offset,
+            CounterBufferStateTransitionMode: value.counter_buffer_state_transition_mode.into(),
         }
     }
 }
@@ -841,7 +1106,7 @@ impl DeviceContext {
             (*self.virtual_functions)
                 .DeviceContext
                 .Draw
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::addr_of!(attribs))
+                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(&attribs))
         }
     }
 
@@ -851,91 +1116,165 @@ impl DeviceContext {
             (*self.virtual_functions)
                 .DeviceContext
                 .DrawIndexed
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::addr_of!(attribs))
+                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(&attribs))
         }
     }
 
-    pub fn draw_indirect(&self, attribs: &diligent_sys::DrawIndirectAttribs) {
+    pub fn draw_indirect(&self, attribs: &DrawIndirectAttribs) {
+        let attribs = attribs.into();
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
                 .DrawIndirect
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(&attribs))
         }
     }
 
-    pub fn draw_indexed_indirect(&self, attribs: &diligent_sys::DrawIndexedIndirectAttribs) {
+    pub fn draw_indexed_indirect(&self, attribs: &DrawIndexedIndirectAttribs) {
+        let attribs = attribs.into();
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
                 .DrawIndexedIndirect
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(&attribs))
         }
     }
 
-    pub fn draw_mesh(&self, attribs: &diligent_sys::DrawMeshAttribs) {
+    pub fn draw_mesh(&self, attribs: &DrawMeshAttribs) {
+        let attribs = attribs.into();
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
                 .DrawMesh
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(&attribs))
         }
     }
 
-    pub fn draw_mesh_indirect(&self, attribs: &diligent_sys::DrawMeshIndirectAttribs) {
+    pub fn draw_mesh_indirect(&self, attribs: &DrawMeshIndirectAttribs) {
+        let attribs = attribs.into();
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
                 .DrawMeshIndirect
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(&attribs))
         }
     }
 
-    pub fn multi_draw(&self, attribs: &diligent_sys::MultiDrawAttribs) {
+    pub fn multi_draw(&self, attribs: &MultiDrawAttribs) {
+        let draw_items = attribs
+            .draw_items
+            .iter()
+            .map(|item| diligent_sys::MultiDrawItem {
+                NumVertices: item.num_vertices,
+                StartVertexLocation: item.start_vertex_location,
+            })
+            .collect::<Vec<_>>();
+        let attribs = diligent_sys::MultiDrawAttribs {
+            DrawCount: draw_items.len() as u32,
+            pDrawItems: draw_items.as_ptr(),
+            Flags: attribs.flags.bits(),
+            NumInstances: attribs.num_instances,
+            FirstInstanceLocation: attribs.first_instance_location,
+        };
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
                 .MultiDraw
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(&attribs))
         }
     }
 
-    pub fn multi_draw_indexed(&self, attribs: &diligent_sys::MultiDrawIndexedAttribs) {
+    pub fn multi_draw_indexed(&self, attribs: &MultiDrawIndexedAttribs) {
+        let draw_items = attribs
+            .draw_items
+            .iter()
+            .map(|item| diligent_sys::MultiDrawIndexedItem {
+                NumIndices: item.num_vertices,
+                FirstIndexLocation: item.first_index_location,
+                BaseVertex: item.base_vertex,
+            })
+            .collect::<Vec<_>>();
+        let attribs = diligent_sys::MultiDrawIndexedAttribs {
+            DrawCount: draw_items.len() as u32,
+            pDrawItems: draw_items.as_ptr(),
+            IndexType: attribs.index_type.into(),
+            Flags: attribs.flags.bits(),
+            NumInstances: attribs.num_instances,
+            FirstInstanceLocation: attribs.first_instance_location,
+        };
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
                 .MultiDrawIndexed
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(&attribs))
         }
     }
 
-    pub fn dispatch_compute(&self, attribs: &diligent_sys::DispatchComputeAttribs) {
+    pub fn dispatch_compute(&self, attribs: &DispatchComputeAttribs) {
+        let attribs = diligent_sys::DispatchComputeAttribs {
+            ThreadGroupCountX: attribs.thread_group_count_x,
+            ThreadGroupCountY: attribs.thread_group_count_y,
+            ThreadGroupCountZ: attribs.thread_group_count_z,
+
+            #[cfg(feature = "metal")]
+            MtlThreadGroupSizeX: attribs.mtl_thread_group_size_x,
+            #[cfg(feature = "metal")]
+            MtlThreadGroupSizeY: attribs.mtl_thread_group_size_y,
+            #[cfg(feature = "metal")]
+            MtlThreadGroupSizeZ: attribs.mtl_thread_group_size_z,
+
+            #[cfg(not(feature = "metal"))]
+            MtlThreadGroupSizeX: 0,
+            #[cfg(not(feature = "metal"))]
+            MtlThreadGroupSizeY: 0,
+            #[cfg(not(feature = "metal"))]
+            MtlThreadGroupSizeZ: 0,
+        };
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
                 .DispatchCompute
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(&attribs))
         }
     }
 
-    pub fn dispatch_compute_indirect(
-        &self,
-        attribs: &diligent_sys::DispatchComputeIndirectAttribs,
-    ) {
+    pub fn dispatch_compute_indirect(&self, attribs: &DispatchComputeIndirectAttribs) {
+        let attribs = diligent_sys::DispatchComputeIndirectAttribs {
+            pAttribsBuffer: attribs.attribs_buffer.sys_ptr,
+            AttribsBufferStateTransitionMode: attribs.attribs_buffer_state_transition_mode.into(),
+            DispatchArgsByteOffset: attribs.dispatch_args_byte_offset,
+            #[cfg(feature = "metal")]
+            MtlThreadGroupSizeX: attribs.mtl_thread_group_size_x,
+            #[cfg(feature = "metal")]
+            MtlThreadGroupSizeY: attribs.mtl_thread_group_size_y,
+            #[cfg(feature = "metal")]
+            MtlThreadGroupSizeZ: attribs.mtl_thread_group_size_z,
+            #[cfg(not(feature = "metal"))]
+            MtlThreadGroupSizeX: 0,
+            #[cfg(not(feature = "metal"))]
+            MtlThreadGroupSizeY: 0,
+            #[cfg(not(feature = "metal"))]
+            MtlThreadGroupSizeZ: 0,
+        };
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
                 .DispatchComputeIndirect
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(&attribs))
         }
     }
 
-    pub fn dispatch_tile(&self, attribs: &diligent_sys::DispatchTileAttribs) {
+    pub fn dispatch_tile(&self, attribs: &DispatchTileAttribs) {
+        let attribs = diligent_sys::DispatchTileAttribs {
+            ThreadsPerTileX: attribs.threads_per_tile_x,
+            ThreadsPerTileY: attribs.threads_per_tile_y,
+            Flags: attribs.flags.bits(),
+        };
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
                 .DispatchTile
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(attribs))
+                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(&attribs))
         }
     }
 
