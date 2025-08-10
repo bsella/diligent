@@ -20,8 +20,9 @@ use crate::{
     },
     pipeline_state::{
         ComputePipelineState, GraphicsPipelineState, GraphicsPipelineStateCreateInfo,
-        GraphicsPipelineStateCreateInfoWrapper, PipelineState, RayTracingPipelineState,
+        GraphicsPipelineStateCreateInfoWrapper, RayTracingPipelineState,
         RayTracingPipelineStateCreateInfo, RayTracingPipelineStateCreateInfoWrapper,
+        TilePipelineState, TilePipelineStateCreateInfo, TilePipelineStateCreateInfoWrapper,
     },
     pipeline_state_cache::{PipelineStateCache, PipelineStateCacheCreateInfo},
     query::{
@@ -336,23 +337,26 @@ impl RenderDevice {
 
     pub fn create_tile_pipeline_state(
         &self,
-        pipeline_ci: &diligent_sys::TilePipelineStateCreateInfo,
-    ) -> Result<PipelineState, ()> {
+        pipeline_ci: &TilePipelineStateCreateInfo,
+    ) -> Result<TilePipelineState, ()> {
         let mut pipeline_state_ptr = std::ptr::null_mut();
+
+        let pipeline_ci = TilePipelineStateCreateInfoWrapper::from(pipeline_ci);
+
         unsafe {
             (*self.virtual_functions)
                 .RenderDevice
                 .CreateTilePipelineState
                 .unwrap_unchecked()(
                 self.sys_ptr,
-                pipeline_ci,
+                std::ptr::from_ref(&pipeline_ci),
                 std::ptr::addr_of_mut!(pipeline_state_ptr),
             );
         }
         if pipeline_state_ptr.is_null() {
             Err(())
         } else {
-            Ok(PipelineState::new(pipeline_state_ptr))
+            Ok(TilePipelineState::new(pipeline_state_ptr))
         }
     }
 

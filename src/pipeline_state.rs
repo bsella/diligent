@@ -384,6 +384,20 @@ where
                 .build(),
         )
     }
+
+    pub fn tile(
+        self,
+        name: impl AsRef<str>,
+    ) -> TilePipelineStateCreateInfoBuilder<
+        'a,
+        tile_pipeline_state_create_info_builder::SetPipelineStateCreateInfo,
+    > {
+        TilePipelineStateCreateInfo::builder().pipeline_state_create_info(
+            self.name(name)
+                .pipeline_type(diligent_sys::PIPELINE_TYPE_TILE as _)
+                .build(),
+        )
+    }
 }
 
 pub(crate) struct PipelineStateCreateInfoWrapper {
@@ -1414,12 +1428,91 @@ impl RayTracingPipelineState {
         }
     }
 
-    pub fn get_graphics_pipeline_desc(&self) -> &diligent_sys::RayTracingPipelineDesc {
+    pub fn get_raytracing_pipeline_desc(&self) -> &diligent_sys::RayTracingPipelineDesc {
         // TODO
         unsafe {
             (*self.virtual_functions)
                 .PipelineState
                 .GetRayTracingPipelineDesc
+                .unwrap_unchecked()(self.sys_ptr)
+            .as_ref()
+            .unwrap_unchecked()
+        }
+    }
+}
+
+pub(crate) struct TilePipelineStateCreateInfoWrapper {
+    _pci: PipelineStateCreateInfoWrapper,
+    ci: diligent_sys::TilePipelineStateCreateInfo,
+}
+
+#[derive(Builder)]
+pub struct TilePipelineStateCreateInfo<'a> {
+    #[builder(setters(vis = ""))]
+    pipeline_state_create_info: PipelineStateCreateInfo<'a>,
+    render_target_formats: Vec<TextureFormat>,
+    sample_count: u8,
+
+    shader: &'a Shader,
+}
+
+impl<'a> From<&TilePipelineStateCreateInfo<'a>> for TilePipelineStateCreateInfoWrapper {
+    fn from(value: &TilePipelineStateCreateInfo) -> Self {
+        let pci = PipelineStateCreateInfoWrapper::from(&value.pipeline_state_create_info);
+        let ci = diligent_sys::TilePipelineStateCreateInfo {
+            _PipelineStateCreateInfo: *pci,
+            TilePipeline: diligent_sys::TilePipelineDesc {
+                NumRenderTargets: value.render_target_formats.len() as u8,
+                SampleCount: value.sample_count,
+                RTVFormats: {
+                    let mut formats = [diligent_sys::TEX_FORMAT_UNKNOWN
+                        as diligent_sys::TEXTURE_FORMAT;
+                        diligent_sys::MAX_RENDER_TARGETS as usize];
+                    value
+                        .render_target_formats
+                        .iter()
+                        .enumerate()
+                        .for_each(|(index, &fmt)| formats[index] = fmt.into());
+                    formats
+                },
+            },
+            pTS: value.shader.sys_ptr,
+        };
+        Self { _pci: pci, ci }
+    }
+}
+
+impl Deref for TilePipelineStateCreateInfoWrapper {
+    type Target = diligent_sys::TilePipelineStateCreateInfo;
+    fn deref(&self) -> &Self::Target {
+        &self.ci
+    }
+}
+
+pub struct TilePipelineState {
+    pipeline_state: PipelineState,
+}
+
+impl Deref for TilePipelineState {
+    type Target = PipelineState;
+    fn deref(&self) -> &Self::Target {
+        &self.pipeline_state
+    }
+}
+
+impl TilePipelineState {
+    pub(crate) fn new(pipeline_state_ptr: *mut diligent_sys::IPipelineState) -> TilePipelineState {
+        TilePipelineState {
+            pipeline_state: PipelineState::new(pipeline_state_ptr),
+        }
+    }
+
+    pub fn get_tile_pipeline_desc(&self) -> &diligent_sys::TilePipelineDesc {
+        // TODO
+        unsafe {
+            (*self.virtual_functions)
+                .PipelineState
+                .GetTilePipelineDesc
                 .unwrap_unchecked()(self.sys_ptr)
             .as_ref()
             .unwrap_unchecked()
