@@ -190,16 +190,13 @@ impl PipelineResourceSignature {
         init_static_resources: bool,
     ) -> Result<ShaderResourceBinding, ()> {
         let mut shader_resource_binding_ptr = std::ptr::null_mut();
-        unsafe {
-            (*self.virtual_functions)
-                .PipelineResourceSignature
-                .CreateShaderResourceBinding
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                std::ptr::addr_of_mut!(shader_resource_binding_ptr),
-                init_static_resources,
-            );
-        }
+        unsafe_member_call!(
+            self,
+            PipelineResourceSignature,
+            CreateShaderResourceBinding,
+            std::ptr::addr_of_mut!(shader_resource_binding_ptr),
+            init_static_resources
+        );
 
         if shader_resource_binding_ptr.is_null() {
             Err(())
@@ -214,17 +211,14 @@ impl PipelineResourceSignature {
         resource_mapping: &ResourceMapping,
         flags: BindShaderResourcesFlags,
     ) {
-        unsafe {
-            (*self.virtual_functions)
-                .PipelineResourceSignature
-                .BindStaticResources
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                shader_stages.bits(),
-                resource_mapping.sys_ptr,
-                flags.bits(),
-            );
-        }
+        unsafe_member_call!(
+            self,
+            PipelineResourceSignature,
+            BindStaticResources,
+            shader_stages.bits(),
+            resource_mapping.sys_ptr,
+            flags.bits()
+        )
     }
 
     pub fn get_static_variable_by_name(
@@ -234,12 +228,13 @@ impl PipelineResourceSignature {
     ) -> Option<ShaderResourceVariable> {
         let name = CString::from_str(name.as_ref()).unwrap();
 
-        let shader_resource_variable = unsafe {
-            (*self.virtual_functions)
-                .PipelineResourceSignature
-                .GetStaticVariableByName
-                .unwrap_unchecked()(self.sys_ptr, shader_type.into(), name.as_ptr())
-        };
+        let shader_resource_variable = unsafe_member_call!(
+            self,
+            PipelineResourceSignature,
+            GetStaticVariableByName,
+            shader_type.into(),
+            name.as_ptr()
+        );
 
         if shader_resource_variable.is_null() {
             None
@@ -251,29 +246,29 @@ impl PipelineResourceSignature {
     }
 
     pub fn initialize_static_srb_resources(&self, shader_resource_binding: &ShaderResourceBinding) {
-        unsafe {
-            (*self.virtual_functions)
-                .PipelineResourceSignature
-                .InitializeStaticSRBResources
-                .unwrap_unchecked()(self.sys_ptr, shader_resource_binding.sys_ptr);
-        }
+        unsafe_member_call!(
+            self,
+            PipelineResourceSignature,
+            InitializeStaticSRBResources,
+            shader_resource_binding.sys_ptr
+        )
     }
 
     pub fn copy_static_resources(&self, signature: &mut PipelineResourceSignature) {
-        unsafe {
-            (*self.virtual_functions)
-                .PipelineResourceSignature
-                .CopyStaticResources
-                .unwrap_unchecked()(self.sys_ptr, signature.sys_ptr);
-        }
+        unsafe_member_call!(
+            self,
+            PipelineResourceSignature,
+            CopyStaticResources,
+            signature.sys_ptr
+        )
     }
 
     pub fn is_compatible_with(&self, signature: &PipelineResourceSignature) -> bool {
-        unsafe {
-            (*self.virtual_functions)
-                .PipelineResourceSignature
-                .IsCompatibleWith
-                .unwrap_unchecked()(self.sys_ptr, signature.sys_ptr)
-        }
+        unsafe_member_call!(
+            self,
+            PipelineResourceSignature,
+            IsCompatibleWith,
+            signature.sys_ptr
+        )
     }
 }

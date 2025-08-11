@@ -28,11 +28,6 @@ impl<'a> From<&'a Fence> for FenceVk<'a> {
 
 impl FenceVk<'_> {
     pub fn get_vk_semaphore(&self) -> diligent_sys::VkSemaphore {
-        unsafe {
-            (*self.virtual_functions)
-                .FenceVk
-                .GetVkSemaphore
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, FenceVk, GetVkSemaphore,)
     }
 }

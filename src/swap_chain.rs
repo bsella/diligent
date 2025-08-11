@@ -121,73 +121,47 @@ impl SwapChain {
     }
 
     pub fn present(&self, sync_interval: u32) {
-        unsafe {
-            (*self.virtual_functions)
-                .SwapChain
-                .Present
-                .unwrap_unchecked()(self.sys_ptr, sync_interval)
-        }
+        unsafe_member_call!(self, SwapChain, Present, sync_interval)
     }
 
     pub fn get_desc(&self) -> SwapChainDesc {
-        let swap_chain_desc = unsafe {
-            (*self.virtual_functions)
-                .SwapChain
-                .GetDesc
-                .unwrap_unchecked()(self.sys_ptr)
-            .as_ref()
-            .unwrap_unchecked()
-        };
+        let swap_chain_desc = unsafe_member_call!(self, SwapChain, GetDesc,);
+        let swap_chain_desc = unsafe { swap_chain_desc.as_ref().unwrap_unchecked() };
 
         swap_chain_desc.into()
     }
 
     pub fn resize(&self, new_width: u32, new_height: u32, new_transform: SurfaceTransform) {
-        unsafe {
-            (*self.virtual_functions)
-                .SwapChain
-                .Resize
-                .unwrap_unchecked()(
-                self.sys_ptr, new_width, new_height, new_transform.into()
-            )
-        }
+        unsafe_member_call!(
+            self,
+            SwapChain,
+            Resize,
+            new_width,
+            new_height,
+            new_transform.into()
+        )
     }
 
     pub fn set_fullscreen_mode(&self, display_mode: &DisplayModeAttribs) {
         let display_mode = display_mode.into();
-        unsafe {
-            (*self.virtual_functions)
-                .SwapChain
-                .SetFullscreenMode
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(&display_mode))
-        }
+        unsafe_member_call!(
+            self,
+            SwapChain,
+            SetFullscreenMode,
+            std::ptr::from_ref(&display_mode)
+        )
     }
 
     pub fn set_windowed_mode(&self) {
-        unsafe {
-            (*self.virtual_functions)
-                .SwapChain
-                .SetWindowedMode
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, SwapChain, SetWindowedMode,)
     }
 
     pub fn set_maximum_frame_latency(&self, max_latency: u32) {
-        unsafe {
-            (*self.virtual_functions)
-                .SwapChain
-                .SetMaximumFrameLatency
-                .unwrap_unchecked()(self.sys_ptr, max_latency)
-        }
+        unsafe_member_call!(self, SwapChain, SetMaximumFrameLatency, max_latency)
     }
 
     pub fn get_current_back_buffer_rtv(&self) -> TextureView {
-        let texture_view_ptr = unsafe {
-            (*self.virtual_functions)
-                .SwapChain
-                .GetCurrentBackBufferRTV
-                .unwrap_unchecked()(self.sys_ptr)
-        };
+        let texture_view_ptr = unsafe_member_call!(self, SwapChain, GetCurrentBackBufferRTV,);
 
         let texture_ptr = unsafe {
             (*(*texture_view_ptr).pVtbl)
@@ -204,12 +178,7 @@ impl SwapChain {
     }
 
     pub fn get_depth_buffer_dsv(&self) -> TextureView {
-        let texture_view_ptr = unsafe {
-            (*self.virtual_functions)
-                .SwapChain
-                .GetDepthBufferDSV
-                .unwrap_unchecked()(self.sys_ptr)
-        };
+        let texture_view_ptr = unsafe_member_call!(self, SwapChain, GetDepthBufferDSV,);
 
         let texture_ptr = unsafe {
             (*(*texture_view_ptr).pVtbl)

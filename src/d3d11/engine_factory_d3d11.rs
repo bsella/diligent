@@ -126,17 +126,14 @@ impl EngineFactoryD3D11 {
                 .take(num_immediate_contexts + num_deferred_contexts),
         );
 
-        unsafe {
-            (*self.virtual_functions)
-                .EngineFactoryD3D11
-                .CreateDeviceAndContextsD3D11
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                std::ptr::from_ref(&engine_ci),
-                std::ptr::addr_of_mut!(render_device_ptr),
-                device_context_ptrs.as_mut_ptr(),
-            );
-        }
+        unsafe_member_call!(
+            self,
+            EngineFactoryD3D11,
+            CreateDeviceAndContextsD3D11,
+            std::ptr::from_ref(&engine_ci),
+            std::ptr::addr_of_mut!(render_device_ptr),
+            device_context_ptrs.as_mut_ptr()
+        );
 
         if render_device_ptr.is_null() {
             Err(())
@@ -173,22 +170,20 @@ impl EngineFactoryD3D11 {
         let mut swap_chain_ptr = std::ptr::null_mut();
 
         let fs_desc = fs_desc.into();
-        unsafe {
-            (*self.virtual_functions)
-                .EngineFactoryD3D11
-                .CreateSwapChainD3D11
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                device.sys_ptr,
-                context.sys_ptr,
-                std::ptr::from_ref(&swapchain_desc),
-                std::ptr::from_ref(&fs_desc),
-                window
-                    .as_ref()
-                    .map_or(std::ptr::null(), |window| std::ptr::from_ref(window)),
-                std::ptr::addr_of_mut!(swap_chain_ptr),
-            )
-        };
+        unsafe_member_call!(
+            self,
+            EngineFactoryD3D11,
+            CreateSwapChainD3D11,
+            device.sys_ptr,
+            context.sys_ptr,
+            std::ptr::from_ref(&swapchain_desc),
+            std::ptr::from_ref(&fs_desc),
+            window
+                .as_ref()
+                .map_or(std::ptr::null(), |window| std::ptr::from_ref(window)),
+            std::ptr::addr_of_mut!(swap_chain_ptr)
+        );
+
         if swap_chain_ptr.is_null() {
             Err(())
         } else {
@@ -224,19 +219,16 @@ impl EngineFactoryD3D11 {
         );
 
         let engine_ci = engine_ci.into();
-        unsafe {
-            (*self.virtual_functions)
-                .EngineFactoryD3D11
-                .AttachToD3D11Device
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                native_device,
-                immediate_context,
-                std::ptr::from_ref(&engine_ci),
-                std::ptr::addr_of_mut!(render_device_ptr),
-                device_context_ptrs.as_mut_ptr(),
-            );
-        }
+        unsafe_member_call!(
+            self,
+            EngineFactoryD3D11,
+            AttachToD3D11Device,
+            native_device,
+            immediate_context,
+            std::ptr::from_ref(&engine_ci),
+            std::ptr::addr_of_mut!(render_device_ptr),
+            device_context_ptrs.as_mut_ptr()
+        );
 
         if render_device_ptr.is_null() {
             Err(())
@@ -269,43 +261,37 @@ impl EngineFactoryD3D11 {
     ) -> Vec<DisplayModeAttribs> {
         let mut num_display_modes = 0;
 
-        unsafe {
-            (*self.virtual_functions)
-                .EngineFactoryD3D11
-                .EnumerateDisplayModes
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                diligent_sys::Version {
-                    Major: min_feature_level.major,
-                    Minor: min_feature_level.minor,
-                },
-                adapter_id,
-                output_id,
-                format.into(),
-                std::ptr::from_mut(&mut num_display_modes),
-                std::ptr::null_mut(),
-            )
-        };
+        unsafe_member_call!(
+            self,
+            EngineFactoryD3D11,
+            EnumerateDisplayModes,
+            diligent_sys::Version {
+                Major: min_feature_level.major,
+                Minor: min_feature_level.minor,
+            },
+            adapter_id,
+            output_id,
+            format.into(),
+            std::ptr::from_mut(&mut num_display_modes),
+            std::ptr::null_mut()
+        );
 
         let mut display_modes = Vec::with_capacity(num_display_modes as usize);
 
-        unsafe {
-            (*self.virtual_functions)
-                .EngineFactoryD3D11
-                .EnumerateDisplayModes
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                diligent_sys::Version {
-                    Major: min_feature_level.major,
-                    Minor: min_feature_level.minor,
-                },
-                adapter_id,
-                output_id,
-                format.into(),
-                std::ptr::from_mut(&mut num_display_modes),
-                display_modes.as_mut_ptr(),
-            )
-        };
+        unsafe_member_call!(
+            self,
+            EngineFactoryD3D11,
+            EnumerateDisplayModes,
+            diligent_sys::Version {
+                Major: min_feature_level.major,
+                Minor: min_feature_level.minor,
+            },
+            adapter_id,
+            output_id,
+            format.into(),
+            std::ptr::from_mut(&mut num_display_modes),
+            display_modes.as_mut_ptr()
+        );
 
         unsafe {
             display_modes.set_len(num_display_modes as usize);

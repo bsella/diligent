@@ -655,28 +655,21 @@ pub struct ScopedDebugGroup<'a> {
 
 impl<'a> ScopedDebugGroup<'a> {
     fn new(device_context: &'a DeviceContext, name: &CString, color: Option<[f32; 4]>) -> Self {
-        unsafe {
-            (*device_context.virtual_functions)
-                .DeviceContext
-                .BeginDebugGroup
-                .unwrap_unchecked()(
-                device_context.sys_ptr,
-                name.as_ptr(),
-                color.map_or(std::ptr::null(), |color| color.as_ptr()),
-            )
-        }
+        unsafe_member_call!(
+            device_context,
+            DeviceContext,
+            BeginDebugGroup,
+            name.as_ptr(),
+            color.map_or(std::ptr::null(), |color| color.as_ptr())
+        );
+
         ScopedDebugGroup { device_context }
     }
 }
 
 impl<'a> Drop for ScopedDebugGroup<'a> {
     fn drop(&mut self) {
-        unsafe {
-            (*self.device_context.virtual_functions)
-                .DeviceContext
-                .EndDebugGroup
-                .unwrap_unchecked()(self.device_context.sys_ptr)
-        }
+        unsafe_member_call!(self.device_context, DeviceContext, EndDebugGroup,)
     }
 }
 
@@ -823,33 +816,24 @@ impl<'a> RenderPassToken<'a> {
             pFramebuffer: attribs.frame_buffer.sys_ptr,
         };
 
-        unsafe {
-            (*context.virtual_functions)
-                .DeviceContext
-                .BeginRenderPass
-                .unwrap_unchecked()(context.sys_ptr, std::ptr::from_ref(&attribs))
-        }
+        unsafe_member_call!(
+            context,
+            DeviceContext,
+            BeginRenderPass,
+            std::ptr::from_ref(&attribs)
+        );
+
         RenderPassToken { context }
     }
 
     pub fn next_subpass(&self) {
-        unsafe {
-            (*self.context.virtual_functions)
-                .DeviceContext
-                .NextSubpass
-                .unwrap_unchecked()(self.context.sys_ptr)
-        }
+        unsafe_member_call!(self.context, DeviceContext, NextSubpass,)
     }
 }
 
 impl Drop for RenderPassToken<'_> {
     fn drop(&mut self) {
-        unsafe {
-            (*self.context.virtual_functions)
-                .DeviceContext
-                .EndRenderPass
-                .unwrap_unchecked()(self.context.sys_ptr)
-        }
+        unsafe_member_call!(self.context, DeviceContext, EndRenderPass,)
     }
 }
 
@@ -860,12 +844,7 @@ pub struct ScopedQueryToken<'a, QueryDataType: GetSysQueryType + Default> {
 
 impl<'a, QueryDataType: GetSysQueryType + Default> ScopedQueryToken<'a, QueryDataType> {
     pub fn new(context: &'a DeviceContext, query: &'a Query<QueryDataType>) -> Self {
-        unsafe {
-            (*context.virtual_functions)
-                .DeviceContext
-                .BeginQuery
-                .unwrap_unchecked()(context.sys_ptr, query.sys_ptr);
-        }
+        unsafe_member_call!(context, DeviceContext, BeginQuery, query.sys_ptr);
 
         Self { query, context }
     }
@@ -873,12 +852,7 @@ impl<'a, QueryDataType: GetSysQueryType + Default> ScopedQueryToken<'a, QueryDat
 
 impl<'a, QueryDataType: GetSysQueryType + Default> Drop for ScopedQueryToken<'a, QueryDataType> {
     fn drop(&mut self) {
-        unsafe {
-            (*self.context.virtual_functions)
-                .DeviceContext
-                .EndQuery
-                .unwrap_unchecked()(self.context.sys_ptr, self.query.sys_ptr);
-        }
+        unsafe_member_call!(self.context, DeviceContext, EndQuery, self.query.sys_ptr);
     }
 }
 
@@ -889,42 +863,42 @@ pub struct GraphicsPipelineToken<'a> {
 impl<'a> GraphicsPipelineToken<'a> {
     pub fn draw(&self, attribs: &DrawAttribs) {
         let attribs = attribs.into();
-        unsafe {
-            (*self.context.virtual_functions)
-                .DeviceContext
-                .Draw
-                .unwrap_unchecked()(self.context.sys_ptr, std::ptr::from_ref(&attribs))
-        }
+        unsafe_member_call!(
+            self.context,
+            DeviceContext,
+            Draw,
+            std::ptr::from_ref(&attribs)
+        )
     }
 
     pub fn draw_indexed(&self, attribs: &DrawIndexedAttribs) {
         let attribs = attribs.into();
-        unsafe {
-            (*self.context.virtual_functions)
-                .DeviceContext
-                .DrawIndexed
-                .unwrap_unchecked()(self.context.sys_ptr, std::ptr::from_ref(&attribs))
-        }
+        unsafe_member_call!(
+            self.context,
+            DeviceContext,
+            DrawIndexed,
+            std::ptr::from_ref(&attribs)
+        )
     }
 
     pub fn draw_indirect(&self, attribs: &DrawIndirectAttribs) {
         let attribs = attribs.into();
-        unsafe {
-            (*self.context.virtual_functions)
-                .DeviceContext
-                .DrawIndirect
-                .unwrap_unchecked()(self.context.sys_ptr, std::ptr::from_ref(&attribs))
-        }
+        unsafe_member_call!(
+            self.context,
+            DeviceContext,
+            DrawIndirect,
+            std::ptr::from_ref(&attribs)
+        )
     }
 
     pub fn draw_indexed_indirect(&self, attribs: &DrawIndexedIndirectAttribs) {
         let attribs = attribs.into();
-        unsafe {
-            (*self.context.virtual_functions)
-                .DeviceContext
-                .DrawIndexedIndirect
-                .unwrap_unchecked()(self.context.sys_ptr, std::ptr::from_ref(&attribs))
-        }
+        unsafe_member_call!(
+            self.context,
+            DeviceContext,
+            DrawIndexedIndirect,
+            std::ptr::from_ref(&attribs)
+        )
     }
 
     pub fn multi_draw(&self, attribs: &MultiDrawAttribs) {
@@ -943,12 +917,12 @@ impl<'a> GraphicsPipelineToken<'a> {
             NumInstances: attribs.num_instances,
             FirstInstanceLocation: attribs.first_instance_location,
         };
-        unsafe {
-            (*self.context.virtual_functions)
-                .DeviceContext
-                .MultiDraw
-                .unwrap_unchecked()(self.context.sys_ptr, std::ptr::from_ref(&attribs))
-        }
+        unsafe_member_call!(
+            self.context,
+            DeviceContext,
+            MultiDraw,
+            std::ptr::from_ref(&attribs)
+        )
     }
 
     pub fn multi_draw_indexed(&self, attribs: &MultiDrawIndexedAttribs) {
@@ -969,12 +943,12 @@ impl<'a> GraphicsPipelineToken<'a> {
             NumInstances: attribs.num_instances,
             FirstInstanceLocation: attribs.first_instance_location,
         };
-        unsafe {
-            (*self.context.virtual_functions)
-                .DeviceContext
-                .MultiDrawIndexed
-                .unwrap_unchecked()(self.context.sys_ptr, std::ptr::from_ref(&attribs))
-        }
+        unsafe_member_call!(
+            self.context,
+            DeviceContext,
+            MultiDrawIndexed,
+            std::ptr::from_ref(&attribs)
+        )
     }
 }
 
@@ -985,22 +959,22 @@ pub struct MeshPipelineToken<'a> {
 impl<'a> MeshPipelineToken<'a> {
     pub fn draw_mesh(&self, attribs: &DrawMeshAttribs) {
         let attribs = attribs.into();
-        unsafe {
-            (*self.context.virtual_functions)
-                .DeviceContext
-                .DrawMesh
-                .unwrap_unchecked()(self.context.sys_ptr, std::ptr::from_ref(&attribs))
-        }
+        unsafe_member_call!(
+            self.context,
+            DeviceContext,
+            DrawMesh,
+            std::ptr::from_ref(&attribs)
+        )
     }
 
     pub fn draw_mesh_indirect(&self, attribs: &DrawMeshIndirectAttribs) {
         let attribs = attribs.into();
-        unsafe {
-            (*self.context.virtual_functions)
-                .DeviceContext
-                .DrawMeshIndirect
-                .unwrap_unchecked()(self.context.sys_ptr, std::ptr::from_ref(&attribs))
-        }
+        unsafe_member_call!(
+            self.context,
+            DeviceContext,
+            DrawMeshIndirect,
+            std::ptr::from_ref(&attribs)
+        )
     }
 }
 
@@ -1029,12 +1003,12 @@ impl<'a> ComputePipelineToken<'a> {
             #[cfg(not(feature = "metal"))]
             MtlThreadGroupSizeZ: 0,
         };
-        unsafe {
-            (*self.context.virtual_functions)
-                .DeviceContext
-                .DispatchCompute
-                .unwrap_unchecked()(self.context.sys_ptr, std::ptr::from_ref(&attribs))
-        }
+        unsafe_member_call!(
+            self.context,
+            DeviceContext,
+            DispatchCompute,
+            std::ptr::from_ref(&attribs)
+        )
     }
 
     pub fn dispatch_compute_indirect(&self, attribs: &DispatchComputeIndirectAttribs) {
@@ -1055,12 +1029,12 @@ impl<'a> ComputePipelineToken<'a> {
             #[cfg(not(feature = "metal"))]
             MtlThreadGroupSizeZ: 0,
         };
-        unsafe {
-            (*self.context.virtual_functions)
-                .DeviceContext
-                .DispatchComputeIndirect
-                .unwrap_unchecked()(self.context.sys_ptr, std::ptr::from_ref(&attribs))
-        }
+        unsafe_member_call!(
+            self.context,
+            DeviceContext,
+            DispatchComputeIndirect,
+            std::ptr::from_ref(&attribs)
+        )
     }
 }
 
@@ -1075,12 +1049,12 @@ impl<'a> TilePipelineToken<'a> {
             ThreadsPerTileY: attribs.threads_per_tile_y,
             Flags: attribs.flags.bits(),
         };
-        unsafe {
-            (*self.context.virtual_functions)
-                .DeviceContext
-                .DispatchTile
-                .unwrap_unchecked()(self.context.sys_ptr, std::ptr::from_ref(&attribs))
-        }
+        unsafe_member_call!(
+            self.context,
+            DeviceContext,
+            DispatchTile,
+            std::ptr::from_ref(&attribs)
+        )
     }
 }
 
@@ -1097,22 +1071,22 @@ impl<'a> RayTracingPipelineToken<'a> {
             DimensionZ: attribs.dimension_z,
         };
 
-        unsafe {
-            (*self.context.virtual_functions)
-                .DeviceContext
-                .TraceRays
-                .unwrap_unchecked()(self.context.sys_ptr, std::ptr::from_ref(&attribs))
-        }
+        unsafe_member_call!(
+            self.context,
+            DeviceContext,
+            TraceRays,
+            std::ptr::from_ref(&attribs)
+        )
     }
 
     // TODO
     pub fn trace_rays_indirect(&self, attribs: &diligent_sys::TraceRaysIndirectAttribs) {
-        unsafe {
-            (*self.context.virtual_functions)
-                .DeviceContext
-                .TraceRaysIndirect
-                .unwrap_unchecked()(self.context.sys_ptr, std::ptr::from_ref(attribs))
-        }
+        unsafe_member_call!(
+            self.context,
+            DeviceContext,
+            TraceRaysIndirect,
+            std::ptr::from_ref(attribs)
+        )
     }
 }
 
@@ -1142,12 +1116,12 @@ impl DeviceContext {
         &self,
         pipeline_state: &GraphicsPipelineState,
     ) -> GraphicsPipelineToken<'_> {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .SetPipelineState
-                .unwrap_unchecked()(self.sys_ptr, pipeline_state.sys_ptr)
-        };
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            SetPipelineState,
+            pipeline_state.sys_ptr
+        );
 
         GraphicsPipelineToken { context: self }
     }
@@ -1156,12 +1130,12 @@ impl DeviceContext {
         &self,
         pipeline_state: &GraphicsPipelineState,
     ) -> GraphicsPipelineToken<'_> {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .SetPipelineState
-                .unwrap_unchecked()(self.sys_ptr, pipeline_state.sys_ptr)
-        };
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            SetPipelineState,
+            pipeline_state.sys_ptr
+        );
 
         GraphicsPipelineToken { context: self }
     }
@@ -1170,12 +1144,12 @@ impl DeviceContext {
         &self,
         pipeline_state: &ComputePipelineState,
     ) -> ComputePipelineToken<'_> {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .SetPipelineState
-                .unwrap_unchecked()(self.sys_ptr, pipeline_state.sys_ptr)
-        };
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            SetPipelineState,
+            pipeline_state.sys_ptr
+        );
 
         ComputePipelineToken { context: self }
     }
@@ -1184,12 +1158,12 @@ impl DeviceContext {
         &self,
         pipeline_state: &TilePipelineState,
     ) -> TilePipelineToken<'_> {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .SetPipelineState
-                .unwrap_unchecked()(self.sys_ptr, pipeline_state.sys_ptr)
-        };
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            SetPipelineState,
+            pipeline_state.sys_ptr
+        );
 
         TilePipelineToken { context: self }
     }
@@ -1198,23 +1172,23 @@ impl DeviceContext {
         &self,
         pipeline_state: &RayTracingPipelineState,
     ) -> RayTracingPipelineToken<'_> {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .SetPipelineState
-                .unwrap_unchecked()(self.sys_ptr, pipeline_state.sys_ptr)
-        };
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            SetPipelineState,
+            pipeline_state.sys_ptr
+        );
 
         RayTracingPipelineToken { context: self }
     }
 
     pub fn transition_shader_resources(&self, shader_resource_binding: &ShaderResourceBinding) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .TransitionShaderResources
-                .unwrap_unchecked()(self.sys_ptr, shader_resource_binding.sys_ptr)
-        }
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            TransitionShaderResources,
+            shader_resource_binding.sys_ptr
+        )
     }
 
     pub fn commit_shader_resources(
@@ -1222,37 +1196,26 @@ impl DeviceContext {
         shader_resource_binding: &ShaderResourceBinding,
         state_transition_mode: ResourceStateTransitionMode,
     ) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .CommitShaderResources
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                shader_resource_binding.sys_ptr,
-                state_transition_mode.into(),
-            )
-        }
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            CommitShaderResources,
+            shader_resource_binding.sys_ptr,
+            state_transition_mode.into()
+        )
     }
 
     pub fn set_stencil_ref(&self, stencil_ref: u32) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .SetStencilRef
-                .unwrap_unchecked()(self.sys_ptr, stencil_ref)
-        }
+        unsafe_member_call!(self, DeviceContext, SetStencilRef, stencil_ref);
     }
 
     pub fn set_blend_factors(&self, blend_factors: Option<&[f32; 4]>) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .SetBlendFactors
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                blend_factors.map_or(std::ptr::null(), |factors| factors.as_ptr()),
-            )
-        }
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            SetBlendFactors,
+            blend_factors.map_or(std::ptr::null(), |factors| factors.as_ptr())
+        );
     }
 
     pub fn set_vertex_buffers<'a>(
@@ -1268,29 +1231,21 @@ impl DeviceContext {
             .map(|&(buffer, offset)| (buffer.sys_ptr, offset))
             .unzip();
 
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .SetVertexBuffers
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                0,
-                num_buffers as u32,
-                buffer_pointers.as_ptr(),
-                offsets.as_ptr(),
-                state_transition_mode.into(),
-                flags.bits(),
-            )
-        }
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            SetVertexBuffers,
+            0,
+            num_buffers as u32,
+            buffer_pointers.as_ptr(),
+            offsets.as_ptr(),
+            state_transition_mode.into(),
+            flags.bits()
+        )
     }
 
     pub fn invalidate_state(&self) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .InvalidateState
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, DeviceContext, InvalidateState,)
     }
 
     pub fn set_index_buffer(
@@ -1299,17 +1254,14 @@ impl DeviceContext {
         offset: u64,
         state_transition_mode: ResourceStateTransitionMode,
     ) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .SetIndexBuffer
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                index_buffer.sys_ptr,
-                offset,
-                state_transition_mode.into(),
-            )
-        }
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            SetIndexBuffer,
+            index_buffer.sys_ptr,
+            offset,
+            state_transition_mode.into()
+        )
     }
 
     pub fn set_viewports(
@@ -1319,18 +1271,15 @@ impl DeviceContext {
         render_target_height: u32,
     ) {
         let viewports: Vec<_> = viewports.iter().map(|&viewport| viewport.into()).collect();
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .SetViewports
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                viewports.len() as u32,
-                viewports.as_ptr(),
-                render_target_width,
-                render_target_height,
-            )
-        }
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            SetViewports,
+            viewports.len() as u32,
+            viewports.as_ptr(),
+            render_target_width,
+            render_target_height
+        )
     }
 
     pub fn set_scissor_rects(
@@ -1341,18 +1290,15 @@ impl DeviceContext {
     ) {
         let rects: Vec<_> = rects.iter().map(|&rect| rect.into()).collect();
 
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .SetScissorRects
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                rects.len() as u32,
-                rects.as_ptr(),
-                render_target_width,
-                render_target_height,
-            )
-        }
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            SetScissorRects,
+            rects.len() as u32,
+            rects.as_ptr(),
+            render_target_width,
+            render_target_height
+        )
     }
 
     pub fn set_render_targets(
@@ -1368,18 +1314,15 @@ impl DeviceContext {
                 .map(|render_targets| render_targets.sys_ptr),
         );
 
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .SetRenderTargets
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                num_render_targets as u32,
-                render_target_pointers.as_mut_ptr(),
-                depth_stencil.map_or(std::ptr::null_mut(), |v| v.sys_ptr),
-                state_transition_mode.into(),
-            )
-        }
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            SetRenderTargets,
+            num_render_targets as u32,
+            render_target_pointers.as_mut_ptr(),
+            depth_stencil.map_or(std::ptr::null_mut(), |v| v.sys_ptr),
+            state_transition_mode.into()
+        )
     }
 
     pub fn new_render_pass(&self, attribs: &BeginRenderPassAttribs) -> RenderPassToken<'_> {
@@ -1389,16 +1332,13 @@ impl DeviceContext {
     pub fn get_tile_size(&self) -> (u32, u32) {
         let mut tile_size_x: u32 = 0;
         let mut tile_size_y: u32 = 0;
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .GetTileSize
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                std::ptr::addr_of_mut!(tile_size_x),
-                std::ptr::addr_of_mut!(tile_size_y),
-            )
-        };
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            GetTileSize,
+            std::ptr::addr_of_mut!(tile_size_x),
+            std::ptr::addr_of_mut!(tile_size_y)
+        );
         (tile_size_x, tile_size_y)
     }
 
@@ -1408,19 +1348,16 @@ impl DeviceContext {
         depth: f32,
         state_transition_mode: ResourceStateTransitionMode,
     ) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .ClearDepthStencil
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                view.sys_ptr,
-                diligent_sys::CLEAR_DEPTH_FLAG as diligent_sys::CLEAR_DEPTH_STENCIL_FLAGS,
-                depth,
-                0,
-                state_transition_mode.into(),
-            )
-        }
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            ClearDepthStencil,
+            view.sys_ptr,
+            diligent_sys::CLEAR_DEPTH_FLAG as diligent_sys::CLEAR_DEPTH_STENCIL_FLAGS,
+            depth,
+            0,
+            state_transition_mode.into()
+        )
     }
 
     pub fn clear_stencil(
@@ -1429,19 +1366,16 @@ impl DeviceContext {
         stencil: u8,
         state_transition_mode: ResourceStateTransitionMode,
     ) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .ClearDepthStencil
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                view.sys_ptr,
-                diligent_sys::CLEAR_STENCIL_FLAG as diligent_sys::CLEAR_DEPTH_STENCIL_FLAGS,
-                0.0,
-                stencil,
-                state_transition_mode.into(),
-            )
-        }
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            ClearDepthStencil,
+            view.sys_ptr,
+            diligent_sys::CLEAR_STENCIL_FLAG as diligent_sys::CLEAR_DEPTH_STENCIL_FLAGS,
+            0.0,
+            stencil,
+            state_transition_mode.into()
+        )
     }
 
     pub fn clear_depth_stencil(
@@ -1451,20 +1385,17 @@ impl DeviceContext {
         stencil: u8,
         state_transition_mode: ResourceStateTransitionMode,
     ) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .ClearDepthStencil
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                view.sys_ptr,
-                diligent_sys::CLEAR_STENCIL_FLAG as diligent_sys::CLEAR_DEPTH_STENCIL_FLAGS
-                    | diligent_sys::CLEAR_DEPTH_FLAG as diligent_sys::CLEAR_DEPTH_STENCIL_FLAGS,
-                depth,
-                stencil,
-                state_transition_mode.into(),
-            )
-        }
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            ClearDepthStencil,
+            view.sys_ptr,
+            diligent_sys::CLEAR_STENCIL_FLAG as diligent_sys::CLEAR_DEPTH_STENCIL_FLAGS
+                | diligent_sys::CLEAR_DEPTH_FLAG as diligent_sys::CLEAR_DEPTH_STENCIL_FLAGS,
+            depth,
+            stencil,
+            state_transition_mode.into()
+        )
     }
 
     pub fn clear_render_target<T>(
@@ -1473,26 +1404,18 @@ impl DeviceContext {
         rgba: &[T; 4],
         state_transition_mode: ResourceStateTransitionMode,
     ) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .ClearRenderTarget
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                view.sys_ptr,
-                (*rgba).as_ptr() as *const std::os::raw::c_void,
-                state_transition_mode.into(),
-            )
-        }
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            ClearRenderTarget,
+            view.sys_ptr,
+            (*rgba).as_ptr() as *const std::os::raw::c_void,
+            state_transition_mode.into()
+        )
     }
 
     pub fn enqueue_signal(&self, fence: &Fence, value: u64) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .EnqueueSignal
-                .unwrap_unchecked()(self.sys_ptr, fence.sys_ptr, value)
-        }
+        unsafe_member_call!(self, DeviceContext, EnqueueSignal, fence.sys_ptr, value);
     }
 
     pub fn update_buffer<T>(
@@ -1503,19 +1426,16 @@ impl DeviceContext {
         data: &T,
         state_transition_mode: ResourceStateTransitionMode,
     ) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .UpdateBuffer
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                buffer.sys_ptr,
-                offset,
-                size,
-                std::ptr::from_ref(data) as *const std::os::raw::c_void,
-                state_transition_mode.into(),
-            )
-        }
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            UpdateBuffer,
+            buffer.sys_ptr,
+            offset,
+            size,
+            std::ptr::from_ref(data) as *const std::os::raw::c_void,
+            state_transition_mode.into()
+        )
     }
 
     pub fn update_buffer_from_slice<T>(
@@ -1524,19 +1444,16 @@ impl DeviceContext {
         data: &[T],
         state_transition_mode: ResourceStateTransitionMode,
     ) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .UpdateBuffer
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                buffer.sys_ptr,
-                0,
-                data.len() as u64 * std::mem::size_of::<T>() as u64,
-                data.as_ptr() as *const std::os::raw::c_void,
-                state_transition_mode.into(),
-            )
-        }
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            UpdateBuffer,
+            buffer.sys_ptr,
+            0,
+            data.len() as u64 * std::mem::size_of::<T>() as u64,
+            data.as_ptr() as *const std::os::raw::c_void,
+            state_transition_mode.into()
+        )
     }
 
     pub fn copy_buffer(
@@ -1549,21 +1466,18 @@ impl DeviceContext {
         size: u64,
         dst_buffer_transition_mode: ResourceStateTransitionMode,
     ) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .CopyBuffer
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                src_buffer.sys_ptr,
-                src_offset,
-                src_buffer_transition_mode.into(),
-                dst_buffer.sys_ptr,
-                dst_offset,
-                size,
-                dst_buffer_transition_mode.into(),
-            )
-        }
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            CopyBuffer,
+            src_buffer.sys_ptr,
+            src_offset,
+            src_buffer_transition_mode.into(),
+            dst_buffer.sys_ptr,
+            dst_offset,
+            size,
+            dst_buffer_transition_mode.into()
+        )
     }
 
     pub fn map_buffer_read<'a, T>(
@@ -1611,30 +1525,27 @@ impl DeviceContext {
     ) {
         let subres_data = subres_data.into();
 
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .UpdateTexture
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                texture.sys_ptr,
-                mip_level,
-                slice,
-                std::ptr::from_ref(dst_box),
-                std::ptr::addr_of!(subres_data),
-                src_buffer_transition_mode.into(),
-                texture_transition_mode.into(),
-            )
-        }
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            UpdateTexture,
+            texture.sys_ptr,
+            mip_level,
+            slice,
+            std::ptr::from_ref(dst_box),
+            std::ptr::addr_of!(subres_data),
+            src_buffer_transition_mode.into(),
+            texture_transition_mode.into()
+        )
     }
 
     pub fn copy_texture(&self, copy_attribs: &diligent_sys::CopyTextureAttribs) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .CopyTexture
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(copy_attribs))
-        }
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            CopyTexture,
+            std::ptr::from_ref(copy_attribs)
+        )
     }
 
     pub fn map_texture_subresource_read<'a, T>(
@@ -1692,30 +1603,15 @@ impl DeviceContext {
     }
 
     pub fn generate_mips(&self, texture_view: &mut TextureView) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .GenerateMips
-                .unwrap_unchecked()(self.sys_ptr, texture_view.sys_ptr)
-        }
+        unsafe_member_call!(self, DeviceContext, GenerateMips, texture_view.sys_ptr)
     }
 
     pub fn finish_frame(&self) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .FinishFrame
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, DeviceContext, FinishFrame,)
     }
 
     pub fn get_frame_number(&self) -> u64 {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .GetFrameNumber
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, DeviceContext, GetFrameNumber,)
     }
 
     pub fn transition_resource_states<'a>(&self, barriers: &[&StateTransitionDesc<'a>]) {
@@ -1724,14 +1620,13 @@ impl DeviceContext {
             .map(|&state_transition_desc| state_transition_desc.into())
             .collect::<Vec<_>>();
 
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .TransitionResourceStates
-                .unwrap_unchecked()(
-                self.sys_ptr, barriers.len() as u32, barriers.as_ptr()
-            )
-        }
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            TransitionResourceStates,
+            barriers.len() as u32,
+            barriers.as_ptr()
+        )
     }
 
     pub fn resolve_texture_subresource(
@@ -1740,17 +1635,14 @@ impl DeviceContext {
         dst_texture: &mut Texture,
         resolve_attribs: &diligent_sys::ResolveTextureSubresourceAttribs,
     ) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .ResolveTextureSubresource
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                src_texture.sys_ptr,
-                dst_texture.sys_ptr,
-                std::ptr::from_ref(resolve_attribs),
-            )
-        }
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            ResolveTextureSubresource,
+            src_texture.sys_ptr,
+            dst_texture.sys_ptr,
+            std::ptr::from_ref(resolve_attribs)
+        )
     }
 
     pub fn build_blas(&self, attribs: &BuildBLASAttribs) {
@@ -1819,12 +1711,7 @@ impl DeviceContext {
             Update: attribs.update,
         };
 
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .BuildBLAS
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(&attribs))
-        }
+        unsafe_member_call!(self, DeviceContext, BuildBLAS, std::ptr::from_ref(&attribs))
     }
 
     pub fn build_tlas<'a>(&self, attribs: &BuildTLASAttribs<'a>) {
@@ -1851,48 +1738,33 @@ impl DeviceContext {
             Update: attribs.update,
         };
 
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .BuildTLAS
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(&attribs))
-        }
+        unsafe_member_call!(self, DeviceContext, BuildTLAS, std::ptr::from_ref(&attribs))
     }
 
     pub fn copy_blas(&self, attribs: &diligent_sys::CopyBLASAttribs) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .CopyBLAS
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(attribs))
-        }
+        unsafe_member_call!(self, DeviceContext, CopyBLAS, std::ptr::from_ref(attribs))
     }
 
     pub fn copy_tlas(&self, attribs: &diligent_sys::CopyTLASAttribs) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .CopyTLAS
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(attribs))
-        }
+        unsafe_member_call!(self, DeviceContext, CopyTLAS, std::ptr::from_ref(attribs))
     }
 
     pub fn write_blas_compacted_size(&self, attribs: &diligent_sys::WriteBLASCompactedSizeAttribs) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .WriteBLASCompactedSize
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(attribs))
-        }
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            WriteBLASCompactedSize,
+            std::ptr::from_ref(attribs)
+        )
     }
 
     pub fn write_tlas_compacted_size(&self, attribs: &diligent_sys::WriteTLASCompactedSizeAttribs) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .WriteTLASCompactedSize
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(attribs))
-        }
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            WriteTLASCompactedSize,
+            std::ptr::from_ref(attribs)
+        )
     }
 
     pub fn update_sbt(
@@ -1905,26 +1777,18 @@ impl DeviceContext {
             AttribsBufferOffset: attribs.attribs_buffer_offset,
             TransitionMode: attribs.transition_mode.into(),
         });
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .UpdateSBT
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                sbt.sys_ptr,
-                attribs.map_or(std::ptr::null_mut(), |attribs| std::ptr::from_ref(&attribs)),
-            )
-        }
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            UpdateSBT,
+            sbt.sys_ptr,
+            attribs.map_or(std::ptr::null_mut(), |attribs| std::ptr::from_ref(&attribs))
+        )
     }
 
     #[allow(private_bounds)]
     pub fn set_user_data(&self, user_data: &impl AsRef<Object>) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .SetUserData
-                .unwrap_unchecked()(self.sys_ptr, user_data.as_ref().object)
-        }
+        unsafe_member_call!(self, DeviceContext, SetUserData, user_data.as_ref().sys_ptr)
     }
 
     // TODO
@@ -1941,16 +1805,13 @@ impl DeviceContext {
 
     pub fn insert_debug_label(&self, label: impl AsRef<str>, color: Option<[f32; 4]>) {
         let label = CString::new(label.as_ref()).unwrap();
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .InsertDebugLabel
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                label.as_ptr(),
-                color.map_or(std::ptr::null(), |color| color.as_ptr()),
-            )
-        }
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            InsertDebugLabel,
+            label.as_ptr(),
+            color.map_or(std::ptr::null(), |color| color.as_ptr())
+        )
     }
 
     pub fn set_shading_rate(
@@ -1959,38 +1820,25 @@ impl DeviceContext {
         primitive_combiner: &ShadingRateCombiner,
         texture_combiner: &ShadingRateCombiner,
     ) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .SetShadingRate
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                base_rate.into(),
-                primitive_combiner.bits(),
-                texture_combiner.bits(),
-            )
-        }
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            SetShadingRate,
+            base_rate.into(),
+            primitive_combiner.bits(),
+            texture_combiner.bits()
+        )
     }
 
     pub fn clear_stats(&self) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .ClearStats
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, DeviceContext, ClearStats,)
     }
 
     pub fn get_stats(&self) -> &diligent_sys::DeviceContextStats {
         // TODO
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .GetStats
-                .unwrap_unchecked()(self.sys_ptr)
-            .as_ref()
-            .unwrap_unchecked()
-        }
+        let stats = unsafe_member_call!(self, DeviceContext, GetStats,);
+
+        unsafe { stats.as_ref().unwrap_unchecked() }
     }
 }
 
@@ -2018,12 +1866,7 @@ impl ImmediateDeviceContext {
     }
 
     pub fn flush(&self) {
-        unsafe {
-            (*self.device_context.virtual_functions)
-                .DeviceContext
-                .Flush
-                .unwrap_unchecked()(self.device_context.sys_ptr)
-        }
+        unsafe_member_call!(self.device_context, DeviceContext, Flush,)
     }
 
     pub fn execute_command_lists(&self, command_lists: &[&CommandList]) {
@@ -2032,25 +1875,17 @@ impl ImmediateDeviceContext {
             .map(|&command_list| command_list.sys_ptr)
             .collect::<Vec<_>>();
 
-        unsafe {
-            (*self.device_context.virtual_functions)
-                .DeviceContext
-                .ExecuteCommandLists
-                .unwrap_unchecked()(
-                self.device_context.sys_ptr,
-                command_lists.len() as u32,
-                command_lists.as_ptr(),
-            )
-        }
+        unsafe_member_call!(
+            self.device_context,
+            DeviceContext,
+            ExecuteCommandLists,
+            command_lists.len() as u32,
+            command_lists.as_ptr()
+        )
     }
 
     pub fn wait_for_idle(&self) {
-        unsafe {
-            (*self.device_context.virtual_functions)
-                .DeviceContext
-                .WaitForIdle
-                .unwrap_unchecked()(self.device_context.sys_ptr)
-        }
+        unsafe_member_call!(self.device_context, DeviceContext, WaitForIdle,)
     }
 
     pub fn lock_command_queue(&self) -> Result<CommandQueue<'_>, ()> {
@@ -2068,21 +1903,22 @@ impl ImmediateDeviceContext {
         &self,
         attribs: &diligent_sys::BindSparseResourceMemoryAttribs,
     ) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .BindSparseResourceMemory
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(attribs))
-        }
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            BindSparseResourceMemory,
+            std::ptr::from_ref(attribs)
+        )
     }
 
     pub fn device_wait_for_fence(&self, fence: &Fence, value: u64) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .DeviceWaitForFence
-                .unwrap_unchecked()(self.sys_ptr, fence.sys_ptr, value)
-        }
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            DeviceWaitForFence,
+            fence.sys_ptr,
+            value
+        )
     }
 }
 
@@ -2106,25 +1942,23 @@ impl DeferredDeviceContext {
     }
 
     pub fn begin(&self, immediate_context_id: u32) {
-        unsafe {
-            (*self.device_context.virtual_functions)
-                .DeviceContext
-                .Begin
-                .unwrap_unchecked()(self.device_context.sys_ptr, immediate_context_id)
-        }
+        unsafe_member_call!(
+            self.device_context,
+            DeviceContext,
+            Begin,
+            immediate_context_id
+        )
     }
 
     pub fn finish_command_list(&self) -> Result<CommandList, ()> {
         let mut command_list_ptr = std::ptr::null_mut();
-        unsafe {
-            (*self.device_context.virtual_functions)
-                .DeviceContext
-                .FinishCommandList
-                .unwrap_unchecked()(
-                self.device_context.sys_ptr,
-                std::ptr::addr_of_mut!(command_list_ptr),
-            );
-        }
+        unsafe_member_call!(
+            self.device_context,
+            DeviceContext,
+            FinishCommandList,
+            std::ptr::addr_of_mut!(command_list_ptr)
+        );
+
         if command_list_ptr.is_null() {
             Err(())
         } else {

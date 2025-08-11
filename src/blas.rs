@@ -186,40 +186,21 @@ impl BottomLevelAS {
 
     pub fn get_geometry_desc_index(&self, name: impl AsRef<str>) -> u32 {
         let name = CString::new(name.as_ref()).unwrap();
-        unsafe {
-            (*self.virtual_functions)
-                .BottomLevelAS
-                .GetGeometryDescIndex
-                .unwrap_unchecked()(self.sys_ptr, name.as_ptr())
-        }
+        unsafe_member_call!(self, BottomLevelAS, GetGeometryDescIndex, name.as_ptr())
     }
 
     pub fn get_geometry_index(&self, name: impl AsRef<str>) -> u32 {
         let name = CString::new(name.as_ref()).unwrap();
-        unsafe {
-            (*self.virtual_functions)
-                .BottomLevelAS
-                .GetGeometryIndex
-                .unwrap_unchecked()(self.sys_ptr, name.as_ptr())
-        }
+        unsafe_member_call!(self, BottomLevelAS, GetGeometryIndex, name.as_ptr())
     }
 
     pub fn get_actual_geometry_count(&self) -> u32 {
-        unsafe {
-            (*self.virtual_functions)
-                .BottomLevelAS
-                .GetActualGeometryCount
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, BottomLevelAS, GetActualGeometryCount,)
     }
 
     pub fn get_scratch_buffer_sizes(&self) -> ScratchBufferSizes {
-        let sbs = unsafe {
-            (*self.virtual_functions)
-                .BottomLevelAS
-                .GetScratchBufferSizes
-                .unwrap_unchecked()(self.sys_ptr)
-        };
+        let sbs = unsafe_member_call!(self, BottomLevelAS, GetScratchBufferSizes,);
+
         ScratchBufferSizes {
             build: sbs.Build,
             update: sbs.Update,
@@ -227,28 +208,14 @@ impl BottomLevelAS {
     }
 
     pub fn get_native_handle(&self) -> u64 {
-        unsafe {
-            (*self.virtual_functions)
-                .BottomLevelAS
-                .GetNativeHandle
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, BottomLevelAS, GetNativeHandle,)
     }
+
     pub fn set_state(&self, state: ResourceState) {
-        unsafe {
-            (*self.virtual_functions)
-                .BottomLevelAS
-                .SetState
-                .unwrap_unchecked()(self.sys_ptr, state.bits())
-        }
+        unsafe_member_call!(self, BottomLevelAS, SetState, state.bits())
     }
 
     pub fn get_state(&self) -> ResourceState {
-        ResourceState::from_bits_retain(unsafe {
-            (*self.virtual_functions)
-                .BottomLevelAS
-                .GetState
-                .unwrap_unchecked()(self.sys_ptr)
-        })
+        ResourceState::from_bits_retain(unsafe_member_call!(self, BottomLevelAS, GetState,))
     }
 }

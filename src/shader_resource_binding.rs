@@ -51,17 +51,14 @@ impl ShaderResourceBinding {
         resource_mapping: &ResourceMapping,
         flags: BindShaderResourcesFlags,
     ) {
-        unsafe {
-            (*self.virtual_functions)
-                .ShaderResourceBinding
-                .BindResources
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                shader_stages.bits(),
-                resource_mapping.sys_ptr,
-                flags.bits(),
-            )
-        }
+        unsafe_member_call!(
+            self,
+            ShaderResourceBinding,
+            BindResources,
+            shader_stages.bits(),
+            resource_mapping.sys_ptr,
+            flags.bits()
+        )
     }
 
     pub fn check_resources(
@@ -70,17 +67,14 @@ impl ShaderResourceBinding {
         resource_mapping: &ResourceMapping,
         flags: BindShaderResourcesFlags,
     ) -> ShaderResourceVariableTypeFlags {
-        let flags = unsafe {
-            (*self.virtual_functions)
-                .ShaderResourceBinding
-                .CheckResources
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                shader_stages.bits(),
-                resource_mapping.sys_ptr,
-                flags.bits(),
-            )
-        };
+        let flags = unsafe_member_call!(
+            self,
+            ShaderResourceBinding,
+            CheckResources,
+            shader_stages.bits(),
+            resource_mapping.sys_ptr,
+            flags.bits()
+        );
 
         ShaderResourceVariableTypeFlags::from_bits_retain(flags)
     }
@@ -99,12 +93,14 @@ impl ShaderResourceBinding {
     ) -> Result<ShaderResourceVariable, ()> {
         let name = CString::from_str(name.as_ref()).unwrap();
 
-        let variable = unsafe {
-            (*self.virtual_functions)
-                .ShaderResourceBinding
-                .GetVariableByName
-                .unwrap_unchecked()(self.sys_ptr, shader_stages.bits(), name.as_ptr())
-        };
+        let variable = unsafe_member_call!(
+            self,
+            ShaderResourceBinding,
+            GetVariableByName,
+            shader_stages.bits(),
+            name.as_ptr()
+        );
+
         if variable.is_null() {
             Err(())
         } else {
@@ -115,11 +111,6 @@ impl ShaderResourceBinding {
     }
 
     pub fn static_resources_initialized(&self) -> bool {
-        unsafe {
-            (*self.virtual_functions)
-                .ShaderResourceBinding
-                .StaticResourcesInitialized
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, ShaderResourceBinding, StaticResourcesInitialized,)
     }
 }

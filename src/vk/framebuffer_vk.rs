@@ -5,6 +5,7 @@ use crate::frame_buffer::Framebuffer;
 pub struct FramebufferVk<'a> {
     #[allow(dead_code)]
     sys_ptr: *mut diligent_sys::IFramebufferVk,
+    #[allow(dead_code)]
     virtual_functions: *mut diligent_sys::IFramebufferVkVtbl,
 
     framebuffer: &'a Framebuffer,
@@ -31,11 +32,7 @@ impl<'a> From<&'a Framebuffer> for FramebufferVk<'a> {
 
 impl FramebufferVk<'_> {
     pub fn get_vk_framebuffer(&self) -> diligent_sys::VkFramebuffer {
-        unsafe {
-            (*self.virtual_functions)
-                .FramebufferVk
-                .GetVkFramebuffer
-                .unwrap_unchecked()()
-        }
+        todo!()
+        //unsafe_member_call!(self, FramebufferVk, GetVkFramebuffer,)
     }
 }

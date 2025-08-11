@@ -173,12 +173,7 @@ impl TopLevelAS {
     // TODO pub fn get_build_info(&self) -> TLASBuildInfo {}
 
     pub fn get_scratch_buffer_sizes(&self) -> ScratchBufferSizes {
-        let sbs = unsafe {
-            (*self.virtual_functions)
-                .TopLevelAS
-                .GetScratchBufferSizes
-                .unwrap_unchecked()(self.sys_ptr)
-        };
+        let sbs = unsafe_member_call!(self, TopLevelAS, GetScratchBufferSizes,);
 
         ScratchBufferSizes {
             build: sbs.Build,
@@ -187,29 +182,14 @@ impl TopLevelAS {
     }
 
     pub fn get_native_handle(&self) -> u64 {
-        unsafe {
-            (*self.virtual_functions)
-                .TopLevelAS
-                .GetNativeHandle
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, TopLevelAS, GetNativeHandle,)
     }
 
     pub fn set_state(&self, state: ResourceState) {
-        unsafe {
-            (*self.virtual_functions)
-                .TopLevelAS
-                .SetState
-                .unwrap_unchecked()(self.sys_ptr, state.bits())
-        }
+        unsafe_member_call!(self, TopLevelAS, SetState, state.bits())
     }
 
     pub fn get_state(&self) -> ResourceState {
-        ResourceState::from_bits_retain(unsafe {
-            (*self.virtual_functions)
-                .TopLevelAS
-                .GetState
-                .unwrap_unchecked()(self.sys_ptr)
-        })
+        ResourceState::from_bits_retain(unsafe_member_call!(self, TopLevelAS, GetState,))
     }
 }

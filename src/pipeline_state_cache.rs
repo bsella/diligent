@@ -103,12 +103,12 @@ impl PipelineStateCache {
 
     pub fn get_data(&self) -> Result<DataBlob, ()> {
         let mut data_blob_ptr = std::ptr::null_mut();
-        unsafe {
-            (*self.virtual_functions)
-                .PipelineStateCache
-                .GetData
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::addr_of_mut!(data_blob_ptr));
-        }
+        unsafe_member_call!(
+            self,
+            PipelineStateCache,
+            GetData,
+            std::ptr::addr_of_mut!(data_blob_ptr)
+        );
 
         if data_blob_ptr.is_null() {
             Err(())

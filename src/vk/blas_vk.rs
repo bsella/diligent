@@ -30,20 +30,10 @@ impl<'a> From<&'a BottomLevelAS> for BottomLevelASVk<'a> {
 
 impl BottomLevelASVk<'_> {
     pub fn get_vk_blas(&self) -> diligent_sys::VkAccelerationStructureKHR {
-        unsafe {
-            (*self.virtual_functions)
-                .BottomLevelASVk
-                .GetVkBLAS
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, BottomLevelASVk, GetVkBLAS,)
     }
 
     pub fn get_vk_device_address(&self) -> u64 {
-        unsafe {
-            (*self.virtual_functions)
-                .BottomLevelASVk
-                .GetVkDeviceAddress
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, BottomLevelASVk, GetVkDeviceAddress,)
     }
 }

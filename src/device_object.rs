@@ -30,11 +30,6 @@ impl DeviceObject {
     }
 
     pub fn get_unique_id(&self) -> i32 {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceObject
-                .GetUniqueID
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, DeviceObject, GetUniqueID,)
     }
 }

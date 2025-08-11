@@ -30,11 +30,6 @@ impl<'a> From<&'a BufferView<'a>> for BufferViewVk<'a> {
 
 impl BufferViewVk<'_> {
     pub fn get_vk_buffer_view(&self) -> diligent_sys::VkBufferView {
-        unsafe {
-            (*self.virtual_functions)
-                .BufferViewVk
-                .GetVkBufferView
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, BufferViewVk, GetVkBufferView,)
     }
 }

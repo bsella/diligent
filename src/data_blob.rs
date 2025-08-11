@@ -54,65 +54,51 @@ impl DataBlob {
     }
 
     pub fn resize(&mut self, new_size: usize) {
-        unsafe {
-            (*self.virtual_functions).DataBlob.Resize.unwrap_unchecked()(self.sys_ptr, new_size)
-        }
+        unsafe_member_call!(self, DataBlob, Resize, new_size)
     }
 
     pub fn get_size(&self) -> usize {
-        unsafe {
-            (*self.virtual_functions)
-                .DataBlob
-                .GetSize
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, DataBlob, GetSize,)
     }
 
     pub fn get_data<T>(&self, offset: usize) -> &T {
-        unsafe {
-            ((*self.virtual_functions)
-                .DataBlob
-                .GetConstDataPtr
-                .unwrap_unchecked()(self.sys_ptr, offset * std::mem::size_of::<T>())
-                as *const T)
-                .as_ref()
-        }
-        .unwrap()
+        let data_ptr = unsafe_member_call!(
+            self,
+            DataBlob,
+            GetConstDataPtr,
+            offset * std::mem::size_of::<T>()
+        ) as *const T;
+
+        unsafe { data_ptr.as_ref() }.unwrap()
     }
 
     pub fn get_mut_data<T>(&mut self, offset: usize) -> &mut T {
-        unsafe {
-            ((*self.virtual_functions)
-                .DataBlob
-                .GetDataPtr
-                .unwrap_unchecked()(self.sys_ptr, offset * std::mem::size_of::<T>())
-                as *mut T)
-                .as_mut()
-        }
-        .unwrap()
+        let data_ptr = unsafe_member_call!(
+            self,
+            DataBlob,
+            GetDataPtr,
+            offset * std::mem::size_of::<T>()
+        ) as *mut T;
+        unsafe { data_ptr.as_mut() }.unwrap()
     }
 
     pub fn get_data_slice<T>(&self, size: usize, offset: usize) -> &[T] {
-        unsafe {
-            let ptr = (*self.virtual_functions)
-                .DataBlob
-                .GetConstDataPtr
-                .unwrap_unchecked()(
-                self.sys_ptr, offset * std::mem::size_of::<T>()
-            ) as *const T;
-            std::slice::from_raw_parts(ptr, size)
-        }
+        let ptr = unsafe_member_call!(
+            self,
+            DataBlob,
+            GetConstDataPtr,
+            offset * std::mem::size_of::<T>()
+        ) as *const T;
+        unsafe { std::slice::from_raw_parts(ptr, size) }
     }
 
     pub fn get_data_mut_slice<T>(&mut self, size: usize, offset: usize) -> &mut [T] {
-        unsafe {
-            let ptr = (*self.virtual_functions)
-                .DataBlob
-                .GetDataPtr
-                .unwrap_unchecked()(
-                self.sys_ptr, offset * std::mem::size_of::<T>()
-            ) as *mut T;
-            std::slice::from_raw_parts_mut(ptr, size)
-        }
+        let ptr = unsafe_member_call!(
+            self,
+            DataBlob,
+            GetDataPtr,
+            offset * std::mem::size_of::<T>()
+        ) as *mut T;
+        unsafe { std::slice::from_raw_parts_mut(ptr, size) }
     }
 }

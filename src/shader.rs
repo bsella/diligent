@@ -358,24 +358,18 @@ impl Shader {
     }
 
     pub fn get_resources(&self) -> Vec<ShaderResourceDesc> {
-        unsafe {
-            let num_resources = (*self.virtual_functions)
-                .Shader
-                .GetResourceCount
-                .unwrap_unchecked()(self.sys_ptr);
+        let num_resources = unsafe_member_call!(self, Shader, GetResourceCount,);
+        let mut resources = Vec::with_capacity(num_resources as usize);
 
-            let mut resources = Vec::with_capacity(num_resources as usize);
+        for index in 0..num_resources {
+            let resources_ptr = std::ptr::null_mut();
+            unsafe_member_call!(self, Shader, GetResourceDesc, index, resources_ptr);
 
-            for index in 0..num_resources {
-                let resources_ptr = std::ptr::null_mut();
-                (*self.virtual_functions)
-                    .Shader
-                    .GetResourceDesc
-                    .unwrap_unchecked()(self.sys_ptr, index, resources_ptr);
+            unsafe {
                 resources.push((&*resources_ptr).into());
             }
-            resources
         }
+        resources
     }
 
     pub fn get_constant_buffer_desc(
@@ -394,26 +388,19 @@ impl Shader {
 
     pub fn get_bytecode(&self, bytecode: *mut *const u8) -> u64 {
         let mut size: u64 = 0;
-        unsafe {
-            (*self.virtual_functions)
-                .Shader
-                .GetBytecode
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                bytecode as *mut *const _,
-                std::ptr::addr_of_mut!(size),
-            );
-        }
+        unsafe_member_call!(
+            self,
+            Shader,
+            GetBytecode,
+            bytecode as *mut *const _,
+            std::ptr::addr_of_mut!(size)
+        );
+
         size
     }
 
     pub fn get_status(&self, wait_for_completion: bool) -> diligent_sys::SHADER_STATUS {
-        unsafe {
-            (*self.virtual_functions)
-                .Shader
-                .GetStatus
-                .unwrap_unchecked()(self.sys_ptr, wait_for_completion)
-        }
+        unsafe_member_call!(self, Shader, GetStatus, wait_for_completion)
     }
 }
 

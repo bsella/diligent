@@ -109,14 +109,8 @@ impl EngineFactory {
 
     pub fn get_api_info(&self) -> &diligent_sys::APIInfo {
         // TODO
-        unsafe {
-            (*self.virtual_functions)
-                .EngineFactory
-                .GetAPIInfo
-                .unwrap_unchecked()(self.sys_ptr)
-            .as_ref()
-            .unwrap_unchecked()
-        }
+        let api_info = unsafe_member_call!(self, EngineFactory, GetAPIInfo,);
+        unsafe { api_info.as_ref().unwrap_unchecked() }
     }
 
     pub fn create_default_shader_source_stream_factory(
@@ -133,16 +127,14 @@ impl EngineFactory {
         let search = std::ffi::CString::new(search).unwrap();
 
         let mut stream_factory_ptr = std::ptr::null_mut();
-        unsafe {
-            (*self.virtual_functions)
-                .EngineFactory
-                .CreateDefaultShaderSourceStreamFactory
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                search.as_ptr(),
-                std::ptr::addr_of_mut!(stream_factory_ptr),
-            );
-        }
+        unsafe_member_call!(
+            self,
+            EngineFactory,
+            CreateDefaultShaderSourceStreamFactory,
+            search.as_ptr(),
+            std::ptr::addr_of_mut!(stream_factory_ptr)
+        );
+
         if stream_factory_ptr.is_null() {
             Err(())
         } else {
@@ -152,17 +144,15 @@ impl EngineFactory {
 
     pub fn create_empty_data_blob(&self, initial_size: usize) -> Result<DataBlob, ()> {
         let mut data_blob_ptr = std::ptr::null_mut();
-        unsafe {
-            (*self.virtual_functions)
-                .EngineFactory
-                .CreateDataBlob
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                initial_size,
-                std::ptr::null(),
-                std::ptr::addr_of_mut!(data_blob_ptr),
-            );
-        }
+        unsafe_member_call!(
+            self,
+            EngineFactory,
+            CreateDataBlob,
+            initial_size,
+            std::ptr::null(),
+            std::ptr::addr_of_mut!(data_blob_ptr)
+        );
+
         if data_blob_ptr.is_null() {
             Err(())
         } else {
@@ -172,17 +162,15 @@ impl EngineFactory {
 
     pub fn create_data_blob<T>(&self, data: &T) -> Result<DataBlob, ()> {
         let mut data_blob_ptr = std::ptr::null_mut();
-        unsafe {
-            (*self.virtual_functions)
-                .EngineFactory
-                .CreateDataBlob
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                std::mem::size_of_val(data),
-                std::ptr::from_ref(data) as *const c_void,
-                std::ptr::addr_of_mut!(data_blob_ptr),
-            );
-        }
+        unsafe_member_call!(
+            self,
+            EngineFactory,
+            CreateDataBlob,
+            std::mem::size_of_val(data),
+            std::ptr::from_ref(data) as *const c_void,
+            std::ptr::addr_of_mut!(data_blob_ptr)
+        );
+
         if data_blob_ptr.is_null() {
             Err(())
         } else {
@@ -199,32 +187,28 @@ impl EngineFactory {
 
         // The first call of EnumerateAdapters with nullptr as the adapters gets the number
         // of adapters
-        unsafe {
-            (*self.virtual_functions)
-                .EngineFactory
-                .EnumerateAdapters
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                version,
-                std::ptr::addr_of_mut!(num_adapters),
-                std::ptr::null_mut(),
-            );
-        }
+        unsafe_member_call!(
+            self,
+            EngineFactory,
+            EnumerateAdapters,
+            version,
+            std::ptr::addr_of_mut!(num_adapters),
+            std::ptr::null_mut()
+        );
 
         if num_adapters > 0 {
             let mut adapters = Vec::with_capacity(num_adapters as usize);
             // The second call of EnumerateAdapters gets a pointer to the adapters
-            unsafe {
-                (*self.virtual_functions)
-                    .EngineFactory
-                    .EnumerateAdapters
-                    .unwrap_unchecked()(
-                    self.sys_ptr,
-                    version,
-                    std::ptr::addr_of_mut!(num_adapters),
-                    adapters.as_mut_ptr(),
-                );
+            unsafe_member_call!(
+                self,
+                EngineFactory,
+                EnumerateAdapters,
+                version,
+                std::ptr::addr_of_mut!(num_adapters),
+                adapters.as_mut_ptr()
+            );
 
+            unsafe {
                 adapters.set_len(num_adapters as usize);
             }
 
@@ -237,20 +221,10 @@ impl EngineFactory {
     //pub fn create_dearchiver(&self, create_info : &diligent_sys::DearchiverCreateInfo) -> diligent_sys::IDearchiver;
 
     pub fn set_message_callback(&self, callback: diligent_sys::DebugMessageCallbackType) {
-        unsafe {
-            (*self.virtual_functions)
-                .EngineFactory
-                .SetMessageCallback
-                .unwrap_unchecked()(self.sys_ptr, callback)
-        }
+        unsafe_member_call!(self, EngineFactory, SetMessageCallback, callback)
     }
 
     pub fn set_break_on_error(&self, break_on_error: bool) {
-        unsafe {
-            (*self.virtual_functions)
-                .EngineFactory
-                .SetBreakOnError
-                .unwrap_unchecked()(self.sys_ptr, break_on_error)
-        }
+        unsafe_member_call!(self, EngineFactory, SetBreakOnError, break_on_error)
     }
 }

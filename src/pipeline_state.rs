@@ -1224,26 +1224,14 @@ impl PipelineState {
 
     pub fn get_ray_tracing_pipeline_desc(&self) -> &diligent_sys::RayTracingPipelineDesc {
         // TODO
-        unsafe {
-            (*self.virtual_functions)
-                .PipelineState
-                .GetRayTracingPipelineDesc
-                .unwrap_unchecked()(self.sys_ptr)
-            .as_ref()
-            .unwrap_unchecked()
-        }
+        let desc = unsafe_member_call!(self, PipelineState, GetRayTracingPipelineDesc,);
+        unsafe { desc.as_ref().unwrap_unchecked() }
     }
 
     pub fn get_tile_pipeline_desc(&self) -> &diligent_sys::TilePipelineDesc {
         // TODO
-        unsafe {
-            (*self.virtual_functions)
-                .PipelineState
-                .GetTilePipelineDesc
-                .unwrap_unchecked()(self.sys_ptr)
-            .as_ref()
-            .unwrap_unchecked()
-        }
+        let desc = unsafe_member_call!(self, PipelineState, GetTilePipelineDesc,);
+        unsafe { desc.as_ref().unwrap_unchecked() }
     }
 
     pub fn bind_static_resources(
@@ -1252,17 +1240,14 @@ impl PipelineState {
         resource_mapping: &ResourceMapping,
         flags: BindShaderResourcesFlags,
     ) {
-        unsafe {
-            (*self.virtual_functions)
-                .PipelineState
-                .BindStaticResources
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                shader_type.into(),
-                resource_mapping.sys_ptr,
-                flags.bits(),
-            )
-        }
+        unsafe_member_call!(
+            self,
+            PipelineState,
+            BindStaticResources,
+            shader_type.into(),
+            resource_mapping.sys_ptr,
+            flags.bits()
+        )
     }
 
     pub fn get_static_variable_by_name(
@@ -1272,12 +1257,13 @@ impl PipelineState {
     ) -> Option<ShaderResourceVariable> {
         let name = CString::from_str(name.as_ref()).unwrap();
 
-        let shader_resource_variable = unsafe {
-            (*self.virtual_functions)
-                .PipelineState
-                .GetStaticVariableByName
-                .unwrap_unchecked()(self.sys_ptr, shader_type.into(), name.as_ptr())
-        };
+        let shader_resource_variable = unsafe_member_call!(
+            self,
+            PipelineState,
+            GetStaticVariableByName,
+            shader_type.into(),
+            name.as_ptr()
+        );
 
         if shader_resource_variable.is_null() {
             None
@@ -1293,16 +1279,14 @@ impl PipelineState {
         init_static_resources: bool,
     ) -> Result<ShaderResourceBinding, ()> {
         let mut shader_resource_binding_ptr = std::ptr::null_mut();
-        unsafe {
-            (*self.virtual_functions)
-                .PipelineState
-                .CreateShaderResourceBinding
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                std::ptr::addr_of_mut!(shader_resource_binding_ptr),
-                init_static_resources,
-            );
-        }
+        unsafe_member_call!(
+            self,
+            PipelineState,
+            CreateShaderResourceBinding,
+            std::ptr::addr_of_mut!(shader_resource_binding_ptr),
+            init_static_resources
+        );
+
         if shader_resource_binding_ptr.is_null() {
             Err(())
         } else {
@@ -1316,30 +1300,30 @@ impl PipelineState {
         &self,
         shader_resource_binding: &mut ShaderResourceBinding,
     ) {
-        unsafe {
-            (*self.virtual_functions)
-                .PipelineState
-                .InitializeStaticSRBResources
-                .unwrap_unchecked()(self.sys_ptr, shader_resource_binding.sys_ptr)
-        }
+        unsafe_member_call!(
+            self,
+            PipelineState,
+            InitializeStaticSRBResources,
+            shader_resource_binding.sys_ptr
+        )
     }
 
     pub fn copy_static_resources(&self, pipeline_state: &mut PipelineState) {
-        unsafe {
-            (*self.virtual_functions)
-                .PipelineState
-                .CopyStaticResources
-                .unwrap_unchecked()(self.sys_ptr, pipeline_state.sys_ptr)
-        }
+        unsafe_member_call!(
+            self,
+            PipelineState,
+            CopyStaticResources,
+            pipeline_state.sys_ptr
+        )
     }
 
     pub fn is_compatible_with(&self, pipeline_state: &PipelineState) -> bool {
-        unsafe {
-            (*self.virtual_functions)
-                .PipelineState
-                .IsCompatibleWith
-                .unwrap_unchecked()(self.sys_ptr, pipeline_state.sys_ptr)
-        }
+        unsafe_member_call!(
+            self,
+            PipelineState,
+            IsCompatibleWith,
+            pipeline_state.sys_ptr
+        )
     }
 
     pub fn get_resource_signatures(&self) -> &[PipelineResourceSignature] {
@@ -1347,12 +1331,7 @@ impl PipelineState {
     }
 
     pub fn get_status(&self, wait_for_completion: bool) -> diligent_sys::PIPELINE_STATE_STATUS {
-        unsafe {
-            (*self.virtual_functions)
-                .PipelineState
-                .GetStatus
-                .unwrap_unchecked()(self.sys_ptr, wait_for_completion)
-        }
+        unsafe_member_call!(self, PipelineState, GetStatus, wait_for_completion)
     }
 }
 
@@ -1378,14 +1357,8 @@ impl GraphicsPipelineState {
 
     pub fn get_graphics_pipeline_desc(&self) -> &diligent_sys::GraphicsPipelineDesc {
         // TODO
-        unsafe {
-            (*self.virtual_functions)
-                .PipelineState
-                .GetGraphicsPipelineDesc
-                .unwrap_unchecked()(self.sys_ptr)
-            .as_ref()
-            .unwrap_unchecked()
-        }
+        let desc = unsafe_member_call!(self, PipelineState, GetGraphicsPipelineDesc,);
+        unsafe { desc.as_ref().unwrap_unchecked() }
     }
 }
 
@@ -1432,14 +1405,8 @@ impl RayTracingPipelineState {
 
     pub fn get_raytracing_pipeline_desc(&self) -> &diligent_sys::RayTracingPipelineDesc {
         // TODO
-        unsafe {
-            (*self.virtual_functions)
-                .PipelineState
-                .GetRayTracingPipelineDesc
-                .unwrap_unchecked()(self.sys_ptr)
-            .as_ref()
-            .unwrap_unchecked()
-        }
+        let desc = unsafe_member_call!(self, PipelineState, GetRayTracingPipelineDesc,);
+        unsafe { desc.as_ref().unwrap_unchecked() }
     }
 }
 
@@ -1511,13 +1478,7 @@ impl TilePipelineState {
 
     pub fn get_tile_pipeline_desc(&self) -> &diligent_sys::TilePipelineDesc {
         // TODO
-        unsafe {
-            (*self.virtual_functions)
-                .PipelineState
-                .GetTilePipelineDesc
-                .unwrap_unchecked()(self.sys_ptr)
-            .as_ref()
-            .unwrap_unchecked()
-        }
+        let desc = unsafe_member_call!(self, PipelineState, GetTilePipelineDesc,);
+        unsafe { desc.as_ref().unwrap_unchecked() }
     }
 }

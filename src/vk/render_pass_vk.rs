@@ -30,11 +30,6 @@ impl<'a> From<&'a RenderPass> for RenderPassVk<'a> {
 
 impl RenderPassVk<'_> {
     pub fn get_vk_render_pass(&self) -> diligent_sys::VkRenderPass {
-        unsafe {
-            (*self.virtual_functions)
-                .RenderPassVk
-                .GetVkRenderPass
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, RenderPassVk, GetVkRenderPass,)
     }
 }

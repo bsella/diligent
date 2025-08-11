@@ -276,17 +276,14 @@ impl EngineFactoryVk {
                     std::ptr::null()
                 },
             };
-            unsafe {
-                (*self.virtual_functions)
-                    .EngineFactoryVk
-                    .CreateDeviceAndContextsVk
-                    .unwrap_unchecked()(
-                    self.sys_ptr,
-                    std::ptr::addr_of!(create_info),
-                    std::ptr::addr_of_mut!(render_device_ptr),
-                    device_context_ptrs.as_mut_ptr(),
-                )
-            }
+            unsafe_member_call!(
+                self,
+                EngineFactoryVk,
+                CreateDeviceAndContextsVk,
+                std::ptr::addr_of!(create_info),
+                std::ptr::addr_of_mut!(render_device_ptr),
+                device_context_ptrs.as_mut_ptr()
+            )
         }
 
         if render_device_ptr.is_null() {
@@ -323,19 +320,17 @@ impl EngineFactoryVk {
 
         let window = window.map(|window| window.into());
 
-        unsafe {
-            (*self.virtual_functions)
-                .EngineFactoryVk
-                .CreateSwapChainVk
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                device.sys_ptr,
-                immediate_context.sys_ptr,
-                std::ptr::addr_of!(swapchain_desc),
-                window.as_ref().map_or(std::ptr::null(), std::ptr::from_ref),
-                std::ptr::addr_of_mut!(swap_chain_ptr),
-            );
-        }
+        unsafe_member_call!(
+            self,
+            EngineFactoryVk,
+            CreateSwapChainVk,
+            device.sys_ptr,
+            immediate_context.sys_ptr,
+            std::ptr::addr_of!(swapchain_desc),
+            window.as_ref().map_or(std::ptr::null(), std::ptr::from_ref),
+            std::ptr::addr_of_mut!(swap_chain_ptr)
+        );
+
         if swap_chain_ptr.is_null() {
             Err(())
         } else {
@@ -344,11 +339,6 @@ impl EngineFactoryVk {
     }
 
     pub fn enable_device_simulation(&self) {
-        unsafe {
-            (*self.virtual_functions)
-                .EngineFactoryVk
-                .EnableDeviceSimulation
-                .unwrap_unchecked()(self.sys_ptr);
-        }
+        unsafe_member_call!(self, EngineFactoryVk, EnableDeviceSimulation,);
     }
 }

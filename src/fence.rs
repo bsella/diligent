@@ -66,19 +66,14 @@ impl Fence {
     }
 
     pub fn get_completed_value(&self) -> u64 {
-        unsafe {
-            (*self.virtual_functions)
-                .Fence
-                .GetCompletedValue
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, Fence, GetCompletedValue,)
     }
 
     pub fn signal(&self, value: u64) {
-        unsafe { (*self.virtual_functions).Fence.Signal.unwrap_unchecked()(self.sys_ptr, value) }
+        unsafe_member_call!(self, Fence, Signal, value)
     }
 
     pub fn wait(&self, value: u64) {
-        unsafe { (*self.virtual_functions).Fence.Wait.unwrap_unchecked()(self.sys_ptr, value) }
+        unsafe_member_call!(self, Fence, Wait, value)
     }
 }

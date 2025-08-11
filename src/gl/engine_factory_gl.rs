@@ -83,19 +83,16 @@ impl EngineFactoryOpenGL {
 
         let swap_chain_desc = sc_desc.into();
 
-        unsafe {
-            (*self.virtual_functions)
-                .EngineFactoryOpenGL
-                .CreateDeviceAndSwapChainGL
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                std::ptr::from_ref(&engine_ci),
-                std::ptr::addr_of_mut!(render_device_ptr),
-                std::ptr::addr_of_mut!(device_context_ptr),
-                std::ptr::from_ref(&swap_chain_desc),
-                std::ptr::addr_of_mut!(swap_chain_ptr),
-            );
-        }
+        unsafe_member_call!(
+            self,
+            EngineFactoryOpenGL,
+            CreateDeviceAndSwapChainGL,
+            std::ptr::from_ref(&engine_ci),
+            std::ptr::addr_of_mut!(render_device_ptr),
+            std::ptr::addr_of_mut!(device_context_ptr),
+            std::ptr::from_ref(&swap_chain_desc),
+            std::ptr::addr_of_mut!(swap_chain_ptr),
+        );
 
         if render_device_ptr.is_null() {
             Err(())
@@ -119,17 +116,14 @@ impl EngineFactoryOpenGL {
         let mut render_device_ptr = std::ptr::null_mut();
         let mut device_context_ptr = std::ptr::null_mut();
 
-        unsafe {
-            (*self.virtual_functions)
-                .EngineFactoryOpenGL
-                .AttachToActiveGLContext
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                std::ptr::from_ref(&engine_ci),
-                std::ptr::addr_of_mut!(render_device_ptr),
-                std::ptr::addr_of_mut!(device_context_ptr),
-            );
-        }
+        unsafe_member_call!(
+            self,
+            EngineFactoryOpenGL,
+            AttachToActiveGLContext,
+            std::ptr::from_ref(&engine_ci),
+            std::ptr::addr_of_mut!(render_device_ptr),
+            std::ptr::addr_of_mut!(device_context_ptr)
+        );
 
         if render_device_ptr.is_null() {
             Err(())

@@ -100,23 +100,18 @@ impl<QueryDataType: GetSysQueryType + Default> Query<QueryDataType> {
     }
 
     pub fn invalidate(&self) {
-        unsafe {
-            (*self.virtual_functions)
-                .Query
-                .Invalidate
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, Query, Invalidate,)
     }
 
     pub fn get_data(&self, autoinvalidate: bool) -> &QueryDataType {
-        unsafe {
-            (*self.virtual_functions).Query.GetData.unwrap_unchecked()(
-                self.sys_ptr,
-                std::ptr::from_ref(&self.data) as _,
-                std::mem::size_of::<QueryDataType>() as u32,
-                autoinvalidate,
-            );
-        }
+        unsafe_member_call!(
+            self,
+            Query,
+            GetData,
+            std::ptr::from_ref(&self.data) as _,
+            std::mem::size_of::<QueryDataType>() as u32,
+            autoinvalidate
+        );
 
         &self.data
     }

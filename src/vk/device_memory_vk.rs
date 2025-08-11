@@ -30,11 +30,6 @@ impl<'a> From<&'a DeviceMemory> for DeviceMemoryVk<'a> {
 
 impl DeviceMemoryVk<'_> {
     pub fn get_range(&self, offset: u64, size: u64) -> diligent_sys::DeviceMemoryRangeVk {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceMemoryVk
-                .GetRange
-                .unwrap_unchecked()(self.sys_ptr, offset, size)
-        }
+        unsafe_member_call!(self, DeviceMemoryVk, GetRange, offset, size)
     }
 }

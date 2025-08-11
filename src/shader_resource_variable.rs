@@ -138,28 +138,26 @@ impl ShaderResourceVariable {
     }
 
     pub fn set(&self, device_object: &DeviceObject, flags: SetShaderResourceFlags) {
-        unsafe {
-            (*self.virtual_functions)
-                .ShaderResourceVariable
-                .Set
-                .unwrap_unchecked()(self.sys_ptr, device_object.sys_ptr, flags.bits())
-        }
+        unsafe_member_call!(
+            self,
+            ShaderResourceVariable,
+            Set,
+            device_object.sys_ptr,
+            flags.bits()
+        )
     }
 
     pub fn set_array(&self, device_objects: &[&DeviceObject], flags: SetShaderResourceFlags) {
         let object_ptrs = Vec::from_iter(device_objects.iter().map(|object| object.sys_ptr));
-        unsafe {
-            (*self.virtual_functions)
-                .ShaderResourceVariable
-                .SetArray
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                object_ptrs.as_ptr(),
-                0,
-                object_ptrs.len() as u32,
-                flags.bits(),
-            )
-        }
+        unsafe_member_call!(
+            self,
+            ShaderResourceVariable,
+            SetArray,
+            object_ptrs.as_ptr(),
+            0,
+            object_ptrs.len() as u32,
+            flags.bits()
+        )
     }
 
     pub fn set_buffer_range(
@@ -170,50 +168,45 @@ impl ShaderResourceVariable {
         array_index: Option<u32>,
         flags: SetShaderResourceFlags,
     ) {
-        unsafe {
-            (*self.virtual_functions)
-                .ShaderResourceVariable
-                .SetBufferRange
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                device_object.sys_ptr,
-                offset,
-                size,
-                array_index.unwrap_or(0),
-                flags.bits(),
-            )
-        }
+        unsafe_member_call!(
+            self,
+            ShaderResourceVariable,
+            SetBufferRange,
+            device_object.sys_ptr,
+            offset,
+            size,
+            array_index.unwrap_or(0),
+            flags.bits()
+        )
     }
 
     pub fn set_buffer_offset(&self, offset: u32, array_index: Option<u32>) {
-        unsafe {
-            (*self.virtual_functions)
-                .ShaderResourceVariable
-                .SetBufferOffset
-                .unwrap_unchecked()(self.sys_ptr, offset, array_index.unwrap_or(0))
-        }
+        unsafe_member_call!(
+            self,
+            ShaderResourceVariable,
+            SetBufferOffset,
+            offset,
+            array_index.unwrap_or(0)
+        )
     }
 
     pub fn get_type(&self) -> ShaderResourceVariableType {
-        unsafe {
-            (*self.virtual_functions)
-                .ShaderResourceVariable
-                .GetType
-                .unwrap_unchecked()(self.sys_ptr)
-        }
-        .into()
+        unsafe_member_call!(self, ShaderResourceVariable, GetType,).into()
     }
 
     pub fn get_resource_desc(&self) -> ShaderResourceDesc {
-        let shader_resource_desc = unsafe {
+        let shader_resource_desc = {
             let mut shader_resource_desc: MaybeUninit<diligent_sys::ShaderResourceDesc> =
                 std::mem::MaybeUninit::uninit();
 
-            (*self.virtual_functions)
-                .ShaderResourceVariable
-                .GetResourceDesc
-                .unwrap_unchecked()(self.sys_ptr, shader_resource_desc.as_mut_ptr());
-            shader_resource_desc.assume_init()
+            unsafe_member_call!(
+                self,
+                ShaderResourceVariable,
+                GetResourceDesc,
+                shader_resource_desc.as_mut_ptr()
+            );
+
+            unsafe { shader_resource_desc.assume_init() }
         };
 
         ShaderResourceDesc {
@@ -224,11 +217,6 @@ impl ShaderResourceVariable {
     }
 
     pub fn get_index(&self) -> u32 {
-        unsafe {
-            (*self.virtual_functions)
-                .ShaderResourceVariable
-                .GetIndex
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, ShaderResourceVariable, GetIndex,)
     }
 }

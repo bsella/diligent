@@ -65,12 +65,7 @@ impl TextureView {
     }
 
     pub fn set_sampler(&mut self, sampler: &Sampler) {
-        unsafe {
-            (*self.virtual_functions)
-                .TextureView
-                .SetSampler
-                .unwrap_unchecked()(self.sys_ptr, sampler.sys_ptr);
-        }
+        unsafe_member_call!(self, TextureView, SetSampler, sampler.sys_ptr);
     }
 
     pub fn get_sampler(&self) -> Result<&Sampler, ()> {

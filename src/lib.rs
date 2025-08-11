@@ -4,6 +4,20 @@ pub const API_VERSION: u32 = diligent_sys::DILIGENT_API_VERSION;
 
 const_assert_eq!(API_VERSION, 256008);
 
+macro_rules! unsafe_member_call {
+    ($instance:expr, $type_name: ident, $func_name:ident, $($arg:expr), *) => (
+        unsafe {
+            (*$instance.virtual_functions)
+                .$type_name
+                .$func_name
+                .unwrap_unchecked()(
+                $instance.sys_ptr,
+                $($arg), *
+            )
+        }
+    );
+}
+
 mod device_object;
 mod object;
 

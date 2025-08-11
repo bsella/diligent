@@ -74,74 +74,50 @@ impl ShaderBindingTable {
     //TODO pub fn GetDesc() -> ShaderBindingTableDesc{}
 
     pub fn verify(&self, flags: VerifySBTFlags) -> bool {
-        unsafe {
-            (*self.virtual_functions)
-                .ShaderBindingTable
-                .Verify
-                .unwrap_unchecked()(self.sys_ptr, flags.bits())
-        }
+        unsafe_member_call!(self, ShaderBindingTable, Verify, flags.bits())
     }
     pub fn reset(&self, pso: &PipelineState) {
-        unsafe {
-            (*self.virtual_functions)
-                .ShaderBindingTable
-                .Reset
-                .unwrap_unchecked()(self.sys_ptr, pso.sys_ptr)
-        }
+        unsafe_member_call!(self, ShaderBindingTable, Reset, pso.sys_ptr)
     }
     pub fn reset_hit_groups(&self) {
-        unsafe {
-            (*self.virtual_functions)
-                .ShaderBindingTable
-                .ResetHitGroups
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, ShaderBindingTable, ResetHitGroups,)
     }
 
     pub fn bind_ray_gen_shader(&self, shader_group_name: impl AsRef<str>) {
         let shader_group_name = CString::new(shader_group_name.as_ref()).unwrap();
-        unsafe {
-            (*self.virtual_functions)
-                .ShaderBindingTable
-                .BindRayGenShader
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                shader_group_name.as_ptr(),
-                std::ptr::null(),
-                0,
-            )
-        }
+        unsafe_member_call!(
+            self,
+            ShaderBindingTable,
+            BindRayGenShader,
+            shader_group_name.as_ptr(),
+            std::ptr::null(),
+            0
+        )
     }
 
     pub fn bind_ray_gen_shader_with_data<T>(&self, shader_group_name: impl AsRef<str>, data: &T) {
         let shader_group_name = CString::new(shader_group_name.as_ref()).unwrap();
-        unsafe {
-            (*self.virtual_functions)
-                .ShaderBindingTable
-                .BindRayGenShader
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                shader_group_name.as_ptr(),
-                std::ptr::from_ref(data) as _,
-                std::mem::size_of_val(data) as u32,
-            )
-        }
+        unsafe_member_call!(
+            self,
+            ShaderBindingTable,
+            BindRayGenShader,
+            shader_group_name.as_ptr(),
+            std::ptr::from_ref(data) as _,
+            std::mem::size_of_val(data) as u32
+        )
     }
 
     pub fn bind_miss_shader(&self, shader_group_name: impl AsRef<str>, miss_index: u32) {
         let shader_group_name = CString::new(shader_group_name.as_ref()).unwrap();
-        unsafe {
-            (*self.virtual_functions)
-                .ShaderBindingTable
-                .BindMissShader
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                shader_group_name.as_ptr(),
-                miss_index,
-                std::ptr::null(),
-                0,
-            )
-        }
+        unsafe_member_call!(
+            self,
+            ShaderBindingTable,
+            BindMissShader,
+            shader_group_name.as_ptr(),
+            miss_index,
+            std::ptr::null(),
+            0
+        )
     }
 
     pub fn bind_miss_shader_with_data<T>(
@@ -151,18 +127,15 @@ impl ShaderBindingTable {
         data: &T,
     ) {
         let shader_group_name = CString::new(shader_group_name.as_ref()).unwrap();
-        unsafe {
-            (*self.virtual_functions)
-                .ShaderBindingTable
-                .BindMissShader
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                shader_group_name.as_ptr(),
-                miss_index,
-                std::ptr::from_ref(data) as _,
-                std::mem::size_of_val(data) as u32,
-            )
-        }
+        unsafe_member_call!(
+            self,
+            ShaderBindingTable,
+            BindMissShader,
+            shader_group_name.as_ptr(),
+            miss_index,
+            std::ptr::from_ref(data) as _,
+            std::mem::size_of_val(data) as u32
+        )
     }
 
     pub fn bind_hit_group_for_geometry(
@@ -176,21 +149,18 @@ impl ShaderBindingTable {
         let instance_name = CString::new(instance_name.as_ref()).unwrap();
         let geometry_name = CString::new(geometry_name.as_ref()).unwrap();
         let shader_group_name = CString::new(shader_group_name.as_ref()).unwrap();
-        unsafe {
-            (*self.virtual_functions)
-                .ShaderBindingTable
-                .BindHitGroupForGeometry
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                tlas.sys_ptr,
-                instance_name.as_ptr(),
-                geometry_name.as_ptr(),
-                ray_offset_in_hit_group_index,
-                shader_group_name.as_ptr(),
-                std::ptr::null(),
-                0,
-            )
-        }
+        unsafe_member_call!(
+            self,
+            ShaderBindingTable,
+            BindHitGroupForGeometry,
+            tlas.sys_ptr,
+            instance_name.as_ptr(),
+            geometry_name.as_ptr(),
+            ray_offset_in_hit_group_index,
+            shader_group_name.as_ptr(),
+            std::ptr::null(),
+            0
+        )
     }
 
     pub fn bind_hit_group_for_geometry_with_data<T>(
@@ -205,37 +175,31 @@ impl ShaderBindingTable {
         let instance_name = CString::new(instance_name.as_ref()).unwrap();
         let geometry_name = CString::new(geometry_name.as_ref()).unwrap();
         let shader_group_name = CString::new(shader_group_name.as_ref()).unwrap();
-        unsafe {
-            (*self.virtual_functions)
-                .ShaderBindingTable
-                .BindHitGroupForGeometry
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                tlas.sys_ptr,
-                instance_name.as_ptr(),
-                geometry_name.as_ptr(),
-                ray_offset_in_hit_group_index,
-                shader_group_name.as_ptr(),
-                std::ptr::from_ref(data) as _,
-                std::mem::size_of_val(data) as u32,
-            )
-        }
+        unsafe_member_call!(
+            self,
+            ShaderBindingTable,
+            BindHitGroupForGeometry,
+            tlas.sys_ptr,
+            instance_name.as_ptr(),
+            geometry_name.as_ptr(),
+            ray_offset_in_hit_group_index,
+            shader_group_name.as_ptr(),
+            std::ptr::from_ref(data) as _,
+            std::mem::size_of_val(data) as u32
+        )
     }
 
     pub fn bind_hit_group_by_index(&self, binding_index: u32, shader_group_name: impl AsRef<str>) {
         let shader_group_name = CString::new(shader_group_name.as_ref()).unwrap();
-        unsafe {
-            (*self.virtual_functions)
-                .ShaderBindingTable
-                .BindHitGroupByIndex
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                binding_index,
-                shader_group_name.as_ptr(),
-                std::ptr::null(),
-                0,
-            )
-        }
+        unsafe_member_call!(
+            self,
+            ShaderBindingTable,
+            BindHitGroupByIndex,
+            binding_index,
+            shader_group_name.as_ptr(),
+            std::ptr::null(),
+            0
+        )
     }
 
     pub fn bind_hit_group_by_index_with_data<T>(
@@ -245,18 +209,15 @@ impl ShaderBindingTable {
         data: &T,
     ) {
         let shader_group_name = CString::new(shader_group_name.as_ref()).unwrap();
-        unsafe {
-            (*self.virtual_functions)
-                .ShaderBindingTable
-                .BindHitGroupByIndex
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                binding_index,
-                shader_group_name.as_ptr(),
-                std::ptr::from_ref(data) as _,
-                std::mem::size_of_val(data) as u32,
-            )
-        }
+        unsafe_member_call!(
+            self,
+            ShaderBindingTable,
+            BindHitGroupByIndex,
+            binding_index,
+            shader_group_name.as_ptr(),
+            std::ptr::from_ref(data) as _,
+            std::mem::size_of_val(data) as u32
+        )
     }
 
     pub fn bind_hit_group_for_instance(
@@ -268,22 +229,19 @@ impl ShaderBindingTable {
     ) {
         let instance_name = CString::new(instance_name.as_ref()).unwrap();
         let shader_group_name = shader_group_name.map(|name| CString::new(name.as_ref()).unwrap());
-        unsafe {
-            (*self.virtual_functions)
-                .ShaderBindingTable
-                .BindHitGroupForInstance
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                tlas.sys_ptr,
-                instance_name.as_ptr(),
-                ray_offset_in_hit_group_index,
-                shader_group_name
-                    .as_ref()
-                    .map_or(std::ptr::null(), |name| name.as_ptr()),
-                std::ptr::null(),
-                0,
-            )
-        }
+        unsafe_member_call!(
+            self,
+            ShaderBindingTable,
+            BindHitGroupForInstance,
+            tlas.sys_ptr,
+            instance_name.as_ptr(),
+            ray_offset_in_hit_group_index,
+            shader_group_name
+                .as_ref()
+                .map_or(std::ptr::null(), |name| name.as_ptr()),
+            std::ptr::null(),
+            0
+        )
     }
 
     pub fn bind_hit_group_for_instance_with_data<T>(
@@ -296,20 +254,17 @@ impl ShaderBindingTable {
     ) {
         let instance_name = CString::new(instance_name.as_ref()).unwrap();
         let shader_group_name = CString::new(shader_group_name.as_ref()).unwrap();
-        unsafe {
-            (*self.virtual_functions)
-                .ShaderBindingTable
-                .BindHitGroupForInstance
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                tlas.sys_ptr,
-                instance_name.as_ptr(),
-                ray_offset_in_hit_group_index,
-                shader_group_name.as_ptr(),
-                std::ptr::from_ref(data) as _,
-                std::mem::size_of_val(data) as u32,
-            )
-        }
+        unsafe_member_call!(
+            self,
+            ShaderBindingTable,
+            BindHitGroupForInstance,
+            tlas.sys_ptr,
+            instance_name.as_ptr(),
+            ray_offset_in_hit_group_index,
+            shader_group_name.as_ptr(),
+            std::ptr::from_ref(data) as _,
+            std::mem::size_of_val(data) as u32
+        )
     }
 
     pub fn bind_hit_group_for_tlas(
@@ -319,21 +274,18 @@ impl ShaderBindingTable {
         shader_group_name: Option<impl AsRef<str>>,
     ) {
         let shader_group_name = shader_group_name.map(|name| CString::new(name.as_ref()).unwrap());
-        unsafe {
-            (*self.virtual_functions)
-                .ShaderBindingTable
-                .BindHitGroupForTLAS
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                tlas.sys_ptr,
-                ray_offset_in_hit_group_index,
-                shader_group_name
-                    .as_ref()
-                    .map_or(std::ptr::null(), |name| name.as_ptr()),
-                std::ptr::null(),
-                0,
-            )
-        }
+        unsafe_member_call!(
+            self,
+            ShaderBindingTable,
+            BindHitGroupForTLAS,
+            tlas.sys_ptr,
+            ray_offset_in_hit_group_index,
+            shader_group_name
+                .as_ref()
+                .map_or(std::ptr::null(), |name| name.as_ptr()),
+            std::ptr::null(),
+            0
+        )
     }
 
     pub fn bind_hit_group_for_tlas_with_data<T>(
@@ -344,35 +296,29 @@ impl ShaderBindingTable {
         data: &T,
     ) {
         let shader_group_name = CString::new(shader_group_name.as_ref()).unwrap();
-        unsafe {
-            (*self.virtual_functions)
-                .ShaderBindingTable
-                .BindHitGroupForTLAS
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                tlas.sys_ptr,
-                ray_offset_in_hit_group_index,
-                shader_group_name.as_ptr(),
-                std::ptr::from_ref(data) as _,
-                std::mem::size_of_val(data) as u32,
-            )
-        }
+        unsafe_member_call!(
+            self,
+            ShaderBindingTable,
+            BindHitGroupForTLAS,
+            tlas.sys_ptr,
+            ray_offset_in_hit_group_index,
+            shader_group_name.as_ptr(),
+            std::ptr::from_ref(data) as _,
+            std::mem::size_of_val(data) as u32
+        )
     }
 
     pub fn bind_callable_shader(&self, shader_group_name: impl AsRef<str>, callable_index: u32) {
         let shader_group_name = CString::new(shader_group_name.as_ref()).unwrap();
-        unsafe {
-            (*self.virtual_functions)
-                .ShaderBindingTable
-                .BindCallableShader
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                shader_group_name.as_ptr(),
-                callable_index,
-                std::ptr::null(),
-                0,
-            )
-        }
+        unsafe_member_call!(
+            self,
+            ShaderBindingTable,
+            BindCallableShader,
+            shader_group_name.as_ptr(),
+            callable_index,
+            std::ptr::null(),
+            0
+        )
     }
 
     pub fn bind_callable_shader_with_data<T>(
@@ -382,17 +328,14 @@ impl ShaderBindingTable {
         data: &T,
     ) {
         let shader_group_name = CString::new(shader_group_name.as_ref()).unwrap();
-        unsafe {
-            (*self.virtual_functions)
-                .ShaderBindingTable
-                .BindCallableShader
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                shader_group_name.as_ptr(),
-                callable_index,
-                std::ptr::from_ref(data) as _,
-                std::mem::size_of_val(data) as u32,
-            )
-        }
+        unsafe_member_call!(
+            self,
+            ShaderBindingTable,
+            BindCallableShader,
+            shader_group_name.as_ptr(),
+            callable_index,
+            std::ptr::from_ref(data) as _,
+            std::mem::size_of_val(data) as u32
+        )
     }
 }

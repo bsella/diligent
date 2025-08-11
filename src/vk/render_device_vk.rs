@@ -36,39 +36,19 @@ impl<'a> From<&'a RenderDevice> for RenderDeviceVk<'a> {
 
 impl RenderDeviceVk<'_> {
     pub fn get_vk_device(&self) -> diligent_sys::VkDevice {
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDeviceVk
-                .GetVkDevice
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, RenderDeviceVk, GetVkDevice,)
     }
 
     pub fn get_vk_physical_device(&self) -> diligent_sys::VkPhysicalDevice {
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDeviceVk
-                .GetVkPhysicalDevice
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, RenderDeviceVk, GetVkPhysicalDevice,)
     }
 
     pub fn get_vk_instance(&self) -> diligent_sys::VkInstance {
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDeviceVk
-                .GetVkInstance
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, RenderDeviceVk, GetVkInstance,)
     }
 
     pub fn get_vk_version(&self) -> u32 {
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDeviceVk
-                .GetVkVersion
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, RenderDeviceVk, GetVkVersion,)
     }
 
     pub fn create_texture_from_vulkan_image(
@@ -81,18 +61,15 @@ impl RenderDeviceVk<'_> {
 
         let mut texture_ptr = std::ptr::null_mut();
 
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDeviceVk
-                .CreateTextureFromVulkanImage
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                vk_image,
-                std::ptr::from_ref(&texture_desc),
-                initial_state.bits(),
-                std::ptr::addr_of_mut!(texture_ptr),
-            )
-        };
+        unsafe_member_call!(
+            self,
+            RenderDeviceVk,
+            CreateTextureFromVulkanImage,
+            vk_image,
+            std::ptr::from_ref(&texture_desc),
+            initial_state.bits(),
+            std::ptr::addr_of_mut!(texture_ptr)
+        );
 
         if texture_ptr.is_null() {
             None
@@ -111,18 +88,15 @@ impl RenderDeviceVk<'_> {
 
         let mut buffer_ptr = std::ptr::null_mut();
 
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDeviceVk
-                .CreateBufferFromVulkanResource
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                vk_buffer,
-                std::ptr::from_ref(&buffer_desc),
-                initial_state.bits(),
-                std::ptr::addr_of_mut!(buffer_ptr),
-            )
-        };
+        unsafe_member_call!(
+            self,
+            RenderDeviceVk,
+            CreateBufferFromVulkanResource,
+            vk_buffer,
+            std::ptr::from_ref(&buffer_desc),
+            initial_state.bits(),
+            std::ptr::addr_of_mut!(buffer_ptr)
+        );
 
         if buffer_ptr.is_null() {
             None
@@ -143,17 +117,14 @@ impl RenderDeviceVk<'_> {
 
         let mut fence_ptr = std::ptr::null_mut();
 
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDeviceVk
-                .CreateFenceFromVulkanResource
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                vk_timeline_semaphore,
-                std::ptr::from_ref(&fence_desc),
-                std::ptr::addr_of_mut!(fence_ptr),
-            )
-        };
+        unsafe_member_call!(
+            self,
+            RenderDeviceVk,
+            CreateFenceFromVulkanResource,
+            vk_timeline_semaphore,
+            std::ptr::from_ref(&fence_desc),
+            std::ptr::addr_of_mut!(fence_ptr)
+        );
 
         if fence_ptr.is_null() {
             None

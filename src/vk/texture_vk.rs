@@ -28,29 +28,14 @@ impl<'a> From<&'a Texture> for TextureVk<'a> {
 
 impl TextureVk<'_> {
     pub fn get_vk_image(&self) -> diligent_sys::VkImage {
-        unsafe {
-            (*self.virtual_functions)
-                .TextureVk
-                .GetVkImage
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, TextureVk, GetVkImage,)
     }
 
     pub fn set_layout(&self, layout: diligent_sys::VkImageLayout) {
-        unsafe {
-            (*self.virtual_functions)
-                .TextureVk
-                .SetLayout
-                .unwrap_unchecked()(self.sys_ptr, layout)
-        }
+        unsafe_member_call!(self, TextureVk, SetLayout, layout)
     }
 
     pub fn get_layout(&self) -> diligent_sys::VkImageLayout {
-        unsafe {
-            (*self.virtual_functions)
-                .TextureVk
-                .GetLayout
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, TextureVk, GetLayout,)
     }
 }

@@ -34,12 +34,13 @@ impl DeviceContextVk<'_> {
         texture: &Texture,
         new_layout: diligent_sys::VkImageLayout,
     ) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContextVk
-                .TransitionImageLayout
-                .unwrap_unchecked()(self.sys_ptr, texture.sys_ptr, new_layout)
-        }
+        unsafe_member_call!(
+            self,
+            DeviceContextVk,
+            TransitionImageLayout,
+            texture.sys_ptr,
+            new_layout
+        )
     }
 
     pub fn buffer_memory_barrier(
@@ -47,20 +48,16 @@ impl DeviceContextVk<'_> {
         buffer: &Buffer,
         new_access_flags: diligent_sys::VkAccessFlags,
     ) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContextVk
-                .BufferMemoryBarrier
-                .unwrap_unchecked()(self.sys_ptr, buffer.sys_ptr, new_access_flags)
-        }
+        unsafe_member_call!(
+            self,
+            DeviceContextVk,
+            BufferMemoryBarrier,
+            buffer.sys_ptr,
+            new_access_flags
+        )
     }
 
     pub fn get_vk_command_buffer(&self) -> diligent_sys::VkCommandBuffer {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContextVk
-                .GetVkCommandBuffer
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, DeviceContextVk, GetVkCommandBuffer,)
     }
 }

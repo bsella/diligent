@@ -28,38 +28,18 @@ impl<'a> From<&'a Buffer> for BufferVk<'a> {
 
 impl BufferVk<'_> {
     pub fn get_vk_buffer_view(&self) -> diligent_sys::VkBuffer {
-        unsafe {
-            (*self.virtual_functions)
-                .BufferVk
-                .GetVkBuffer
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, BufferVk, GetVkBuffer,)
     }
 
     pub fn set_access_flags(&self, access_flags: diligent_sys::VkAccessFlags) {
-        unsafe {
-            (*self.virtual_functions)
-                .BufferVk
-                .SetAccessFlags
-                .unwrap_unchecked()(self.sys_ptr, access_flags)
-        }
+        unsafe_member_call!(self, BufferVk, SetAccessFlags, access_flags)
     }
 
     pub fn get_access_flags(&self) -> diligent_sys::VkAccessFlags {
-        unsafe {
-            (*self.virtual_functions)
-                .BufferVk
-                .GetAccessFlags
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, BufferVk, GetAccessFlags,)
     }
 
     pub fn get_vk_device_address(&self) -> diligent_sys::VkDeviceAddress {
-        unsafe {
-            (*self.virtual_functions)
-                .BufferVk
-                .GetVkDeviceAddress
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, BufferVk, GetVkDeviceAddress,)
     }
 }

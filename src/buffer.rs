@@ -164,16 +164,14 @@ impl Buffer {
         view_desc: &diligent_sys::BufferViewDesc,
     ) -> Result<BufferView<'_>, ()> {
         let mut buffer_view_ptr = std::ptr::null_mut();
-        unsafe {
-            (*self.virtual_functions)
-                .Buffer
-                .CreateView
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                view_desc,
-                std::ptr::addr_of_mut!(buffer_view_ptr),
-            );
-        }
+        unsafe_member_call!(
+            self,
+            Buffer,
+            CreateView,
+            view_desc,
+            std::ptr::addr_of_mut!(buffer_view_ptr)
+        );
+
         if buffer_view_ptr.is_null() {
             Err(())
         } else {
@@ -182,12 +180,7 @@ impl Buffer {
     }
 
     pub fn get_default_view(&self, view_type: BufferViewType) -> Result<BufferView<'_>, ()> {
-        let buffer_view_ptr = unsafe {
-            (*self.virtual_functions)
-                .Buffer
-                .GetDefaultView
-                .unwrap_unchecked()(self.sys_ptr, view_type.into())
-        };
+        let buffer_view_ptr = unsafe_member_call!(self, Buffer, GetDefaultView, view_type.into());
 
         if buffer_view_ptr.is_null() {
             Err(())
@@ -197,60 +190,33 @@ impl Buffer {
     }
 
     pub fn get_native_handle(&self) -> u64 {
-        unsafe {
-            (*self.virtual_functions)
-                .Buffer
-                .GetNativeHandle
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, Buffer, GetNativeHandle,)
     }
 
     pub fn set_state(&mut self, state: ResourceState) {
-        unsafe {
-            (*self.virtual_functions).Buffer.SetState.unwrap_unchecked()(self.sys_ptr, state.bits())
-        };
+        unsafe_member_call!(self, Buffer, SetState, state.bits())
     }
 
     pub fn get_state(&self) -> ResourceState {
-        let state =
-            unsafe { (*self.virtual_functions).Buffer.GetState.unwrap_unchecked()(self.sys_ptr) };
+        let state = unsafe_member_call!(self, Buffer, GetState,);
         ResourceState::from_bits_retain(state)
     }
 
     pub fn get_memory_properties(&self) -> diligent_sys::MEMORY_PROPERTIES {
-        unsafe {
-            (*self.virtual_functions)
-                .Buffer
-                .GetMemoryProperties
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        // TODO
+        unsafe_member_call!(self, Buffer, GetMemoryProperties,)
     }
 
     pub fn flush_mapped_range(&mut self, start_offset: u64, size: u64) {
-        unsafe {
-            (*self.virtual_functions)
-                .Buffer
-                .FlushMappedRange
-                .unwrap_unchecked()(self.sys_ptr, start_offset, size)
-        }
+        unsafe_member_call!(self, Buffer, FlushMappedRange, start_offset, size)
     }
 
     pub fn invalidate_mapped_range(&mut self, start_offset: u64, size: u64) {
-        unsafe {
-            (*self.virtual_functions)
-                .Buffer
-                .InvalidateMappedRange
-                .unwrap_unchecked()(self.sys_ptr, start_offset, size)
-        }
+        unsafe_member_call!(self, Buffer, InvalidateMappedRange, start_offset, size)
     }
 
     pub fn get_sparse_properties(&self) -> diligent_sys::SparseBufferProperties {
-        unsafe {
-            (*self.virtual_functions)
-                .Buffer
-                .GetSparseProperties
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, Buffer, GetSparseProperties,)
     }
 }
 
@@ -267,18 +233,15 @@ impl<'a, T> BufferMapReadToken<'a, T> {
         map_flags: diligent_sys::MAP_FLAGS,
     ) -> BufferMapReadToken<'a, T> {
         let mut ptr = std::ptr::null_mut();
-        unsafe {
-            (*device_context.virtual_functions)
-                .DeviceContext
-                .MapBuffer
-                .unwrap_unchecked()(
-                device_context.sys_ptr,
-                buffer.sys_ptr,
-                diligent_sys::MAP_READ as diligent_sys::MAP_TYPE,
-                map_flags,
-                std::ptr::addr_of_mut!(ptr),
-            );
-        };
+        unsafe_member_call!(
+            device_context,
+            DeviceContext,
+            MapBuffer,
+            buffer.sys_ptr,
+            diligent_sys::MAP_READ as diligent_sys::MAP_TYPE,
+            map_flags,
+            std::ptr::addr_of_mut!(ptr)
+        );
 
         BufferMapReadToken {
             buffer,
@@ -298,16 +261,13 @@ impl<'a, T> BufferMapReadToken<'a, T> {
 
 impl<T> Drop for BufferMapReadToken<'_, T> {
     fn drop(&mut self) {
-        unsafe {
-            (*self.device_context.virtual_functions)
-                .DeviceContext
-                .UnmapBuffer
-                .unwrap_unchecked()(
-                self.device_context.sys_ptr,
-                self.buffer.sys_ptr,
-                diligent_sys::MAP_READ as diligent_sys::MAP_TYPE,
-            )
-        }
+        unsafe_member_call!(
+            self.device_context,
+            DeviceContext,
+            UnmapBuffer,
+            self.buffer.sys_ptr,
+            diligent_sys::MAP_READ as diligent_sys::MAP_TYPE
+        )
     }
 }
 
@@ -324,18 +284,15 @@ impl<'a, T> BufferMapWriteToken<'a, T> {
         map_flags: diligent_sys::MAP_FLAGS,
     ) -> BufferMapWriteToken<'a, T> {
         let mut ptr = std::ptr::null_mut();
-        unsafe {
-            (*device_context.virtual_functions)
-                .DeviceContext
-                .MapBuffer
-                .unwrap_unchecked()(
-                device_context.sys_ptr,
-                buffer.sys_ptr,
-                diligent_sys::MAP_WRITE as diligent_sys::MAP_TYPE,
-                map_flags,
-                std::ptr::addr_of_mut!(ptr),
-            );
-        };
+        unsafe_member_call!(
+            device_context,
+            DeviceContext,
+            MapBuffer,
+            buffer.sys_ptr,
+            diligent_sys::MAP_WRITE as diligent_sys::MAP_TYPE,
+            map_flags,
+            std::ptr::addr_of_mut!(ptr)
+        );
 
         BufferMapWriteToken {
             buffer,
@@ -355,16 +312,13 @@ impl<'a, T> BufferMapWriteToken<'a, T> {
 
 impl<T> Drop for BufferMapWriteToken<'_, T> {
     fn drop(&mut self) {
-        unsafe {
-            (*self.device_context.virtual_functions)
-                .DeviceContext
-                .UnmapBuffer
-                .unwrap_unchecked()(
-                self.device_context.sys_ptr,
-                self.buffer.sys_ptr,
-                diligent_sys::MAP_WRITE as diligent_sys::MAP_TYPE,
-            )
-        }
+        unsafe_member_call!(
+            self.device_context,
+            DeviceContext,
+            UnmapBuffer,
+            self.buffer.sys_ptr,
+            diligent_sys::MAP_WRITE as diligent_sys::MAP_TYPE
+        )
     }
 }
 
@@ -381,18 +335,15 @@ impl<'a, T> BufferMapReadWriteToken<'a, T> {
         map_flags: diligent_sys::MAP_FLAGS,
     ) -> BufferMapReadWriteToken<'a, T> {
         let mut ptr = std::ptr::null_mut();
-        unsafe {
-            (*device_context.virtual_functions)
-                .DeviceContext
-                .MapBuffer
-                .unwrap_unchecked()(
-                device_context.sys_ptr,
-                buffer.sys_ptr,
-                diligent_sys::MAP_READ_WRITE as diligent_sys::MAP_TYPE,
-                map_flags,
-                std::ptr::addr_of_mut!(ptr),
-            );
-        };
+        unsafe_member_call!(
+            device_context,
+            DeviceContext,
+            MapBuffer,
+            buffer.sys_ptr,
+            diligent_sys::MAP_READ_WRITE as diligent_sys::MAP_TYPE,
+            map_flags,
+            std::ptr::addr_of_mut!(ptr)
+        );
 
         BufferMapReadWriteToken {
             buffer,
@@ -419,15 +370,12 @@ impl<'a, T> BufferMapReadWriteToken<'a, T> {
 }
 impl<T> Drop for BufferMapReadWriteToken<'_, T> {
     fn drop(&mut self) {
-        unsafe {
-            (*self.device_context.virtual_functions)
-                .DeviceContext
-                .UnmapBuffer
-                .unwrap_unchecked()(
-                self.device_context.sys_ptr,
-                self.buffer.sys_ptr,
-                diligent_sys::MAP_READ_WRITE as diligent_sys::MAP_TYPE,
-            )
-        }
+        unsafe_member_call!(
+            self.device_context,
+            DeviceContext,
+            UnmapBuffer,
+            self.buffer.sys_ptr,
+            diligent_sys::MAP_READ_WRITE as diligent_sys::MAP_TYPE
+        )
     }
 }

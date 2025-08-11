@@ -30,20 +30,10 @@ impl<'a> From<&'a TopLevelAS> for TopLevelASVk<'a> {
 
 impl TopLevelASVk<'_> {
     pub fn get_vk_tlas(&self) -> diligent_sys::VkAccelerationStructureKHR {
-        unsafe {
-            (*self.virtual_functions)
-                .TopLevelASVk
-                .GetVkTLAS
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, TopLevelASVk, GetVkTLAS,)
     }
 
     pub fn get_vk_device_address(&self) -> diligent_sys::VkDeviceAddress {
-        unsafe {
-            (*self.virtual_functions)
-                .TopLevelASVk
-                .GetVkDeviceAddress
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, TopLevelASVk, GetVkDeviceAddress,)
     }
 }

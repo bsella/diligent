@@ -95,17 +95,14 @@ impl RenderDevice {
         let mut buffer_ptr = std::ptr::null_mut();
 
         let buffer_desc = buffer_desc.into();
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDevice
-                .CreateBuffer
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                std::ptr::addr_of!(buffer_desc),
-                std::ptr::null(),
-                std::ptr::addr_of_mut!(buffer_ptr),
-            )
-        }
+        unsafe_member_call!(
+            self,
+            RenderDevice,
+            CreateBuffer,
+            std::ptr::addr_of!(buffer_desc),
+            std::ptr::null(),
+            std::ptr::addr_of_mut!(buffer_ptr)
+        );
 
         if buffer_ptr.is_null() {
             Err(())
@@ -129,17 +126,14 @@ impl RenderDevice {
         };
 
         let buffer_desc = buffer_desc.into();
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDevice
-                .CreateBuffer
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                std::ptr::from_ref(&buffer_desc),
-                std::ptr::from_ref(&buffer_data),
-                std::ptr::addr_of_mut!(buffer_ptr),
-            )
-        }
+        unsafe_member_call!(
+            self,
+            RenderDevice,
+            CreateBuffer,
+            std::ptr::from_ref(&buffer_desc),
+            std::ptr::from_ref(&buffer_data),
+            std::ptr::addr_of_mut!(buffer_ptr)
+        );
 
         if buffer_ptr.is_null() {
             Err(())
@@ -154,17 +148,14 @@ impl RenderDevice {
 
         let shader_ci_wrapper = ShaderCreateInfoWrapper::from(shader_ci);
 
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDevice
-                .CreateShader
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                std::ptr::from_ref(&shader_ci_wrapper),
-                std::ptr::addr_of_mut!(shader_ptr),
-                std::ptr::addr_of_mut!(data_blob_ptr),
-            );
-        }
+        unsafe_member_call!(
+            self,
+            RenderDevice,
+            CreateShader,
+            std::ptr::from_ref(&shader_ci_wrapper),
+            std::ptr::addr_of_mut!(shader_ptr),
+            std::ptr::addr_of_mut!(data_blob_ptr)
+        );
 
         if shader_ptr.is_null() {
             if data_blob_ptr.is_null() {
@@ -194,21 +185,18 @@ impl RenderDevice {
             pContext: device_context.map_or(std::ptr::null_mut(), |c| c.sys_ptr),
         };
 
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDevice
-                .CreateTexture
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                std::ptr::addr_of!(texture_desc),
-                if device_context.is_none() && subresources.is_empty() {
-                    std::ptr::null()
-                } else {
-                    std::ptr::addr_of!(texture_data)
-                },
-                std::ptr::addr_of_mut!(texture_ptr),
-            )
-        };
+        unsafe_member_call!(
+            self,
+            RenderDevice,
+            CreateTexture,
+            std::ptr::addr_of!(texture_desc),
+            if device_context.is_none() && subresources.is_empty() {
+                std::ptr::null()
+            } else {
+                std::ptr::addr_of!(texture_data)
+            },
+            std::ptr::addr_of_mut!(texture_ptr)
+        );
 
         if texture_ptr.is_null() {
             Err(())
@@ -221,16 +209,13 @@ impl RenderDevice {
         let sampler_desc = sampler_desc.into();
 
         let mut sampler_ptr = std::ptr::null_mut();
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDevice
-                .CreateSampler
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                std::ptr::addr_of!(sampler_desc),
-                std::ptr::addr_of_mut!(sampler_ptr),
-            );
-        }
+        unsafe_member_call!(
+            self,
+            RenderDevice,
+            CreateSampler,
+            std::ptr::addr_of!(sampler_desc),
+            std::ptr::addr_of_mut!(sampler_ptr)
+        );
 
         if sampler_ptr.is_null() {
             Err(())
@@ -244,16 +229,13 @@ impl RenderDevice {
         resource_mapping_ci: &diligent_sys::ResourceMappingCreateInfo,
     ) -> Result<ResourceMapping, ()> {
         let mut resource_mapping_ptr = std::ptr::null_mut();
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDevice
-                .CreateResourceMapping
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                resource_mapping_ci,
-                std::ptr::addr_of_mut!(resource_mapping_ptr),
-            );
-        }
+        unsafe_member_call!(
+            self,
+            RenderDevice,
+            CreateResourceMapping,
+            resource_mapping_ci,
+            std::ptr::addr_of_mut!(resource_mapping_ptr)
+        );
 
         if resource_mapping_ptr.is_null() {
             Err(())
@@ -270,16 +252,14 @@ impl RenderDevice {
 
         let pipeline_ci_wrapper = GraphicsPipelineStateCreateInfoWrapper::from(pipeline_ci);
 
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDevice
-                .CreateGraphicsPipelineState
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                std::ptr::from_ref(&pipeline_ci_wrapper),
-                std::ptr::addr_of_mut!(pipeline_state_ptr),
-            );
-        }
+        unsafe_member_call!(
+            self,
+            RenderDevice,
+            CreateGraphicsPipelineState,
+            std::ptr::from_ref(&pipeline_ci_wrapper),
+            std::ptr::addr_of_mut!(pipeline_state_ptr)
+        );
+
         if pipeline_state_ptr.is_null() {
             Err(())
         } else {
@@ -292,16 +272,13 @@ impl RenderDevice {
         pipeline_ci: &diligent_sys::ComputePipelineStateCreateInfo,
     ) -> Result<ComputePipelineState, ()> {
         let mut pipeline_state_ptr = std::ptr::null_mut();
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDevice
-                .CreateComputePipelineState
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                pipeline_ci,
-                std::ptr::addr_of_mut!(pipeline_state_ptr),
-            );
-        }
+        unsafe_member_call!(
+            self,
+            RenderDevice,
+            CreateComputePipelineState,
+            pipeline_ci,
+            std::ptr::addr_of_mut!(pipeline_state_ptr)
+        );
 
         if pipeline_state_ptr.is_null() {
             Err(())
@@ -318,16 +295,14 @@ impl RenderDevice {
 
         let pipeline_ci = RayTracingPipelineStateCreateInfoWrapper::from(pipeline_ci);
 
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDevice
-                .CreateRayTracingPipelineState
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                std::ptr::from_ref(&pipeline_ci),
-                std::ptr::addr_of_mut!(pipeline_state_ptr),
-            );
-        }
+        unsafe_member_call!(
+            self,
+            RenderDevice,
+            CreateRayTracingPipelineState,
+            std::ptr::from_ref(&pipeline_ci),
+            std::ptr::addr_of_mut!(pipeline_state_ptr)
+        );
+
         if pipeline_state_ptr.is_null() {
             Err(())
         } else {
@@ -343,16 +318,14 @@ impl RenderDevice {
 
         let pipeline_ci = TilePipelineStateCreateInfoWrapper::from(pipeline_ci);
 
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDevice
-                .CreateTilePipelineState
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                std::ptr::from_ref(&pipeline_ci),
-                std::ptr::addr_of_mut!(pipeline_state_ptr),
-            );
-        }
+        unsafe_member_call!(
+            self,
+            RenderDevice,
+            CreateTilePipelineState,
+            std::ptr::from_ref(&pipeline_ci),
+            std::ptr::addr_of_mut!(pipeline_state_ptr)
+        );
+
         if pipeline_state_ptr.is_null() {
             Err(())
         } else {
@@ -364,16 +337,14 @@ impl RenderDevice {
         let fence_desc = fence_desc.into();
 
         let mut fence_ptr = std::ptr::null_mut();
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDevice
-                .CreateFence
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                std::ptr::from_ref(&fence_desc),
-                std::ptr::addr_of_mut!(fence_ptr),
-            );
-        }
+        unsafe_member_call!(
+            self,
+            RenderDevice,
+            CreateFence,
+            std::ptr::from_ref(&fence_desc),
+            std::ptr::addr_of_mut!(fence_ptr)
+        );
+
         if fence_ptr.is_null() {
             Err(())
         } else {
@@ -395,16 +366,13 @@ impl RenderDevice {
 
         let mut query_ptr = std::ptr::null_mut();
 
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDevice
-                .CreateQuery
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                std::ptr::from_ref(&query_desc),
-                std::ptr::addr_of_mut!(query_ptr),
-            );
-        }
+        unsafe_member_call!(
+            self,
+            RenderDevice,
+            CreateQuery,
+            std::ptr::from_ref(&query_desc),
+            std::ptr::addr_of_mut!(query_ptr)
+        );
 
         if query_ptr.is_null() {
             Err(())
@@ -575,16 +543,14 @@ impl RenderDevice {
         };
 
         let mut render_pass_ptr = std::ptr::null_mut();
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDevice
-                .CreateRenderPass
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                std::ptr::from_ref(&desc),
-                std::ptr::addr_of_mut!(render_pass_ptr),
-            );
-        }
+        unsafe_member_call!(
+            self,
+            RenderDevice,
+            CreateRenderPass,
+            std::ptr::from_ref(&desc),
+            std::ptr::addr_of_mut!(render_pass_ptr)
+        );
+
         if render_pass_ptr.is_null() {
             Err(())
         } else {
@@ -612,16 +578,14 @@ impl RenderDevice {
         };
 
         let mut frame_buffer_ptr = std::ptr::null_mut();
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDevice
-                .CreateFramebuffer
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                std::ptr::from_ref(&desc),
-                std::ptr::addr_of_mut!(frame_buffer_ptr),
-            );
-        }
+        unsafe_member_call!(
+            self,
+            RenderDevice,
+            CreateFramebuffer,
+            std::ptr::from_ref(&desc),
+            std::ptr::addr_of_mut!(frame_buffer_ptr)
+        );
+
         if frame_buffer_ptr.is_null() {
             Err(())
         } else {
@@ -633,16 +597,14 @@ impl RenderDevice {
         let desc = BottomLevelASDescWrapper::from(desc);
         let desc = *desc;
         let mut blas_ptr = std::ptr::null_mut();
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDevice
-                .CreateBLAS
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                std::ptr::from_ref(&desc),
-                std::ptr::addr_of_mut!(blas_ptr),
-            );
-        }
+        unsafe_member_call!(
+            self,
+            RenderDevice,
+            CreateBLAS,
+            std::ptr::from_ref(&desc),
+            std::ptr::addr_of_mut!(blas_ptr)
+        );
+
         if blas_ptr.is_null() {
             Err(())
         } else {
@@ -653,16 +615,14 @@ impl RenderDevice {
     pub fn create_tlas(&self, desc: &TopLevelASDesc) -> Result<TopLevelAS, ()> {
         let desc = desc.into();
         let mut tlas_ptr = std::ptr::null_mut();
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDevice
-                .CreateTLAS
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                std::ptr::from_ref(&desc),
-                std::ptr::addr_of_mut!(tlas_ptr),
-            );
-        }
+        unsafe_member_call!(
+            self,
+            RenderDevice,
+            CreateTLAS,
+            std::ptr::from_ref(&desc),
+            std::ptr::addr_of_mut!(tlas_ptr)
+        );
+
         if tlas_ptr.is_null() {
             Err(())
         } else {
@@ -673,16 +633,14 @@ impl RenderDevice {
     pub fn create_sbt(&self, desc: &ShaderBindingTableDesc) -> Result<ShaderBindingTable, ()> {
         let desc = desc.into();
         let mut sbt_ptr = std::ptr::null_mut();
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDevice
-                .CreateSBT
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                std::ptr::from_ref(&desc),
-                std::ptr::addr_of_mut!(sbt_ptr),
-            );
-        }
+        unsafe_member_call!(
+            self,
+            RenderDevice,
+            CreateSBT,
+            std::ptr::from_ref(&desc),
+            std::ptr::addr_of_mut!(sbt_ptr)
+        );
+
         if sbt_ptr.is_null() {
             Err(())
         } else {
@@ -697,16 +655,14 @@ impl RenderDevice {
         let desc = PipelineResourceSignatureDescWrapper::from(desc);
 
         let mut prs_ptr = std::ptr::null_mut();
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDevice
-                .CreatePipelineResourceSignature
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                std::ptr::from_ref(&desc),
-                std::ptr::addr_of_mut!(prs_ptr),
-            );
-        }
+        unsafe_member_call!(
+            self,
+            RenderDevice,
+            CreatePipelineResourceSignature,
+            std::ptr::from_ref(&desc),
+            std::ptr::addr_of_mut!(prs_ptr)
+        );
+
         if prs_ptr.is_null() {
             Err(())
         } else {
@@ -732,16 +688,14 @@ impl RenderDevice {
         };
 
         let mut device_memory_ptr = std::ptr::null_mut();
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDevice
-                .CreateDeviceMemory
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                std::ptr::from_ref(&create_info),
-                std::ptr::addr_of_mut!(device_memory_ptr),
-            )
-        }
+        unsafe_member_call!(
+            self,
+            RenderDevice,
+            CreateDeviceMemory,
+            std::ptr::from_ref(&create_info),
+            std::ptr::addr_of_mut!(device_memory_ptr)
+        );
+
         if device_memory_ptr.is_null() {
             Err(())
         } else {
@@ -755,16 +709,14 @@ impl RenderDevice {
     ) -> Result<PipelineStateCache, ()> {
         let create_info = create_info.into();
         let mut pso_cache_ptr = std::ptr::null_mut();
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDevice
-                .CreatePipelineStateCache
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                std::ptr::from_ref(&create_info),
-                std::ptr::addr_of_mut!(pso_cache_ptr),
-            )
-        }
+        unsafe_member_call!(
+            self,
+            RenderDevice,
+            CreatePipelineStateCache,
+            std::ptr::from_ref(&create_info),
+            std::ptr::addr_of_mut!(pso_cache_ptr)
+        );
+
         if pso_cache_ptr.is_null() {
             Err(())
         } else {
@@ -774,14 +726,13 @@ impl RenderDevice {
 
     pub fn create_deferred_context(&self) -> Result<DeferredDeviceContext, ()> {
         let mut deferred_context_ptr = std::ptr::null_mut();
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDevice
-                .CreateDeferredContext
-                .unwrap_unchecked()(
-                self.sys_ptr, std::ptr::addr_of_mut!(deferred_context_ptr)
-            )
-        }
+        unsafe_member_call!(
+            self,
+            RenderDevice,
+            CreateDeferredContext,
+            std::ptr::addr_of_mut!(deferred_context_ptr)
+        );
+
         if deferred_context_ptr.is_null() {
             Err(())
         } else {
@@ -790,26 +741,13 @@ impl RenderDevice {
     }
 
     pub fn get_adapter_info(&self) -> GraphicsAdapterInfo {
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDevice
-                .GetAdapterInfo
-                .unwrap_unchecked()(self.sys_ptr)
-            .as_ref()
-            .unwrap_unchecked()
-        }
-        .into()
+        let info = unsafe_member_call!(self, RenderDevice, GetAdapterInfo,);
+        unsafe { info.as_ref().unwrap_unchecked() }.into()
     }
 
     pub fn get_device_info(&self) -> RenderDeviceInfo {
-        let render_device_info = unsafe {
-            (*self.virtual_functions)
-                .RenderDevice
-                .GetDeviceInfo
-                .unwrap_unchecked()(self.sys_ptr)
-            .as_ref()
-            .unwrap_unchecked()
-        };
+        let info = unsafe_member_call!(self, RenderDevice, GetDeviceInfo,);
+        let render_device_info = unsafe { info.as_ref().unwrap_unchecked() };
 
         RenderDeviceInfo {
             device_type: match render_device_info.Type {
@@ -841,14 +779,8 @@ impl RenderDevice {
         format: TextureFormat,
     ) -> &diligent_sys::TextureFormatInfo {
         // TODO
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDevice
-                .GetTextureFormatInfo
-                .unwrap_unchecked()(self.sys_ptr, format.into())
-            .as_ref()
-            .unwrap_unchecked()
-        }
+        let info = unsafe_member_call!(self, RenderDevice, GetTextureFormatInfo, format.into());
+        unsafe { info.as_ref().unwrap_unchecked() }
     }
 
     pub fn get_texture_format_info_ext(
@@ -856,14 +788,8 @@ impl RenderDevice {
         format: TextureFormat,
     ) -> &diligent_sys::TextureFormatInfoExt {
         // TODO
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDevice
-                .GetTextureFormatInfoExt
-                .unwrap_unchecked()(self.sys_ptr, format.into())
-            .as_ref()
-            .unwrap_unchecked()
-        }
+        let info = unsafe_member_call!(self, RenderDevice, GetTextureFormatInfoExt, format.into());
+        unsafe { info.as_ref().unwrap_unchecked() }
     }
 
     pub fn get_sparse_texture_format_info(
@@ -872,30 +798,22 @@ impl RenderDevice {
         dimension: diligent_sys::RESOURCE_DIMENSION,
         sample_count: u32,
     ) -> diligent_sys::SparseTextureFormatInfo {
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDevice
-                .GetSparseTextureFormatInfo
-                .unwrap_unchecked()(self.sys_ptr, format.into(), dimension, sample_count)
-        }
+        unsafe_member_call!(
+            self,
+            RenderDevice,
+            GetSparseTextureFormatInfo,
+            format.into(),
+            dimension,
+            sample_count
+        )
     }
 
     pub fn release_stale_resources(&self, force_release: bool) {
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDevice
-                .ReleaseStaleResources
-                .unwrap_unchecked()(self.sys_ptr, force_release)
-        }
+        unsafe_member_call!(self, RenderDevice, ReleaseStaleResources, force_release)
     }
 
     pub fn idle_gpu(&self) {
-        unsafe {
-            (*self.virtual_functions)
-                .RenderDevice
-                .IdleGPU
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, RenderDevice, IdleGPU,)
     }
 
     //TODO pub fn get_engine_factory(&self) -> &EngineFactory {}

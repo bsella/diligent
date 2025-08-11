@@ -30,11 +30,6 @@ impl<'a> From<&'a TextureView> for TextureViewVk<'a> {
 
 impl TextureViewVk<'_> {
     pub fn get_vulkan_image_view(&self) -> diligent_sys::VkImageView {
-        unsafe {
-            (*self.virtual_functions)
-                .TextureViewVk
-                .GetVulkanImageView
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, TextureViewVk, GetVulkanImageView,)
     }
 }

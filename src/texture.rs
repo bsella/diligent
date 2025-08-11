@@ -260,16 +260,13 @@ impl Texture {
         texture_view_desc: &diligent_sys::TextureViewDesc,
     ) -> Result<TextureView, ()> {
         let mut texture_view_ptr = std::ptr::null_mut();
-        unsafe {
-            (*self.virtual_functions)
-                .Texture
-                .CreateView
-                .unwrap_unchecked()(
-                self.sys_ptr,
-                std::ptr::addr_of!(texture_view_desc) as *const diligent_sys::TextureViewDesc,
-                std::ptr::addr_of_mut!(texture_view_ptr),
-            );
-        }
+        unsafe_member_call!(
+            self,
+            Texture,
+            CreateView,
+            std::ptr::addr_of!(texture_view_desc) as *const diligent_sys::TextureViewDesc,
+            std::ptr::addr_of_mut!(texture_view_ptr)
+        );
 
         if texture_view_ptr.is_null() {
             Err(())
@@ -279,12 +276,8 @@ impl Texture {
     }
 
     pub fn get_default_view(&self, texture_view_type: TextureViewType) -> Result<TextureView, ()> {
-        let texture_view_ptr = unsafe {
-            (*self.virtual_functions)
-                .Texture
-                .GetDefaultView
-                .unwrap_unchecked()(self.sys_ptr, texture_view_type.into())
-        };
+        let texture_view_ptr =
+            unsafe_member_call!(self, Texture, GetDefaultView, texture_view_type.into());
         if texture_view_ptr.is_null() {
             Err(())
         } else {
@@ -296,43 +289,22 @@ impl Texture {
     }
 
     pub fn get_native_handle(&self) -> u64 {
-        unsafe {
-            (*self.virtual_functions)
-                .Texture
-                .GetNativeHandle
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, Texture, GetNativeHandle,)
     }
 
     pub fn set_state(&mut self, state: ResourceState) {
-        unsafe {
-            (*self.virtual_functions)
-                .Texture
-                .SetState
-                .unwrap_unchecked()(self.sys_ptr, state.bits());
-        }
+        unsafe_member_call!(self, Texture, SetState, state.bits());
     }
 
     pub fn get_state(&self) -> ResourceState {
-        let state = unsafe {
-            (*self.virtual_functions)
-                .Texture
-                .GetState
-                .unwrap_unchecked()(self.sys_ptr)
-        };
+        let state = unsafe_member_call!(self, Texture, GetState,);
         ResourceState::from_bits_retain(state)
     }
 
     pub fn get_sparse_properties(&self) -> &diligent_sys::SparseTextureProperties {
         // TODO
-        unsafe {
-            (*self.virtual_functions)
-                .Texture
-                .GetSparseProperties
-                .unwrap_unchecked()(self.sys_ptr)
-            .as_ref()
-            .unwrap_unchecked()
-        }
+        let properties = unsafe_member_call!(self, Texture, GetSparseProperties,);
+        unsafe { properties.as_ref().unwrap_unchecked() }
     }
 }
 
@@ -354,23 +326,20 @@ impl<'a, T> TextureSubresourceReadMapToken<'a, T> {
         map_region: Option<diligent_sys::Box>,
     ) -> TextureSubresourceReadMapToken<'a, T> {
         let ptr = std::ptr::null_mut();
-        unsafe {
-            (*device_context.virtual_functions)
-                .DeviceContext
-                .MapTextureSubresource
-                .unwrap_unchecked()(
-                device_context.sys_ptr,
-                texture.sys_ptr,
-                mip_level,
-                array_slice,
-                diligent_sys::MAP_READ as diligent_sys::MAP_TYPE,
-                map_flags.bits(),
-                map_region
-                    .as_ref()
-                    .map_or(std::ptr::null(), std::ptr::from_ref),
-                ptr,
-            )
-        };
+        unsafe_member_call!(
+            device_context,
+            DeviceContext,
+            MapTextureSubresource,
+            texture.sys_ptr,
+            mip_level,
+            array_slice,
+            diligent_sys::MAP_READ as diligent_sys::MAP_TYPE,
+            map_flags.bits(),
+            map_region
+                .as_ref()
+                .map_or(std::ptr::null(), std::ptr::from_ref),
+            ptr
+        );
 
         TextureSubresourceReadMapToken {
             device_context,
@@ -392,17 +361,14 @@ impl<'a, T> TextureSubresourceReadMapToken<'a, T> {
 
 impl<T> Drop for TextureSubresourceReadMapToken<'_, T> {
     fn drop(&mut self) {
-        unsafe {
-            (*self.device_context.virtual_functions)
-                .DeviceContext
-                .UnmapTextureSubresource
-                .unwrap_unchecked()(
-                self.device_context.sys_ptr,
-                self.texture.sys_ptr,
-                self.mip_level,
-                self.array_slice,
-            )
-        }
+        unsafe_member_call!(
+            self.device_context,
+            DeviceContext,
+            UnmapTextureSubresource,
+            self.texture.sys_ptr,
+            self.mip_level,
+            self.array_slice
+        )
     }
 }
 
@@ -424,23 +390,20 @@ impl<'a, T> TextureSubresourceWriteMapToken<'a, T> {
         map_region: Option<diligent_sys::Box>,
     ) -> TextureSubresourceWriteMapToken<'a, T> {
         let ptr = std::ptr::null_mut();
-        unsafe {
-            (*device_context.virtual_functions)
-                .DeviceContext
-                .MapTextureSubresource
-                .unwrap_unchecked()(
-                device_context.sys_ptr,
-                texture.sys_ptr,
-                mip_level,
-                array_slice,
-                diligent_sys::MAP_WRITE as diligent_sys::MAP_TYPE,
-                map_flags.bits(),
-                map_region
-                    .as_ref()
-                    .map_or(std::ptr::null(), std::ptr::from_ref),
-                ptr,
-            )
-        };
+        unsafe_member_call!(
+            device_context,
+            DeviceContext,
+            MapTextureSubresource,
+            texture.sys_ptr,
+            mip_level,
+            array_slice,
+            diligent_sys::MAP_WRITE as diligent_sys::MAP_TYPE,
+            map_flags.bits(),
+            map_region
+                .as_ref()
+                .map_or(std::ptr::null(), std::ptr::from_ref),
+            ptr
+        );
 
         TextureSubresourceWriteMapToken {
             device_context,
@@ -462,17 +425,14 @@ impl<'a, T> TextureSubresourceWriteMapToken<'a, T> {
 
 impl<T> Drop for TextureSubresourceWriteMapToken<'_, T> {
     fn drop(&mut self) {
-        unsafe {
-            (*self.device_context.virtual_functions)
-                .DeviceContext
-                .UnmapTextureSubresource
-                .unwrap_unchecked()(
-                self.device_context.sys_ptr,
-                self.texture.sys_ptr,
-                self.mip_level,
-                self.array_slice,
-            )
-        }
+        unsafe_member_call!(
+            self.device_context,
+            DeviceContext,
+            UnmapTextureSubresource,
+            self.texture.sys_ptr,
+            self.mip_level,
+            self.array_slice
+        )
     }
 }
 
@@ -494,23 +454,20 @@ impl<'a, T> TextureSubresourceReadWriteMapToken<'a, T> {
         map_region: Option<diligent_sys::Box>,
     ) -> TextureSubresourceReadWriteMapToken<'a, T> {
         let ptr = std::ptr::null_mut();
-        unsafe {
-            (*device_context.virtual_functions)
-                .DeviceContext
-                .MapTextureSubresource
-                .unwrap_unchecked()(
-                device_context.sys_ptr,
-                texture.sys_ptr,
-                mip_level,
-                array_slice,
-                diligent_sys::MAP_READ_WRITE as diligent_sys::MAP_TYPE,
-                map_flags.bits(),
-                map_region
-                    .as_ref()
-                    .map_or(std::ptr::null(), std::ptr::from_ref),
-                ptr,
-            )
-        };
+        unsafe_member_call!(
+            device_context,
+            DeviceContext,
+            MapTextureSubresource,
+            texture.sys_ptr,
+            mip_level,
+            array_slice,
+            diligent_sys::MAP_READ_WRITE as diligent_sys::MAP_TYPE,
+            map_flags.bits(),
+            map_region
+                .as_ref()
+                .map_or(std::ptr::null(), std::ptr::from_ref),
+            ptr
+        );
 
         TextureSubresourceReadWriteMapToken {
             device_context,
@@ -540,16 +497,13 @@ impl<'a, T> TextureSubresourceReadWriteMapToken<'a, T> {
 
 impl<T> Drop for TextureSubresourceReadWriteMapToken<'_, T> {
     fn drop(&mut self) {
-        unsafe {
-            (*self.device_context.virtual_functions)
-                .DeviceContext
-                .UnmapTextureSubresource
-                .unwrap_unchecked()(
-                self.device_context.sys_ptr,
-                self.texture.sys_ptr,
-                self.mip_level,
-                self.array_slice,
-            )
-        }
+        unsafe_member_call!(
+            self.device_context,
+            DeviceContext,
+            UnmapTextureSubresource,
+            self.texture.sys_ptr,
+            self.mip_level,
+            self.array_slice
+        )
     }
 }

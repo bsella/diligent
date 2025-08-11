@@ -83,29 +83,14 @@ impl DeviceMemory {
     }
 
     pub fn resize(&self, new_size: u64) -> bool {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceMemory
-                .Resize
-                .unwrap_unchecked()(self.sys_ptr, new_size)
-        }
+        unsafe_member_call!(self, DeviceMemory, Resize, new_size)
     }
 
     pub fn get_capacity(&self) -> u64 {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceMemory
-                .GetCapacity
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, DeviceMemory, GetCapacity,)
     }
 
     pub fn is_compatible(&self, device_objet: &DeviceObject) -> bool {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceMemory
-                .IsCompatible
-                .unwrap_unchecked()(self.sys_ptr, device_objet.sys_ptr)
-        }
+        unsafe_member_call!(self, DeviceMemory, IsCompatible, device_objet.sys_ptr)
     }
 }

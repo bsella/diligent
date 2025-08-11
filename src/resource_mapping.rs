@@ -42,14 +42,14 @@ impl ResourceMapping {
     pub fn add_resource(&mut self, name: impl AsRef<str>, object: &DeviceObject, is_unique: bool) {
         {
             let name = std::ffi::CString::new(name.as_ref()).unwrap();
-            unsafe {
-                (*self.virtual_functions)
-                    .ResourceMapping
-                    .AddResource
-                    .unwrap_unchecked()(
-                    self.sys_ptr, name.as_ptr(), object.sys_ptr, is_unique
-                );
-            }
+            unsafe_member_call!(
+                self,
+                ResourceMapping,
+                AddResource,
+                name.as_ptr(),
+                object.sys_ptr,
+                is_unique
+            );
         }
         self.resources
             .entry(name.as_ref().to_owned())
@@ -68,19 +68,16 @@ impl ResourceMapping {
         {
             let name = std::ffi::CString::new(name.as_ref()).unwrap();
 
-            unsafe {
-                (*self.virtual_functions)
-                    .ResourceMapping
-                    .AddResourceArray
-                    .unwrap_unchecked()(
-                    self.sys_ptr,
-                    name.as_ptr(),
-                    0,
-                    object_ptrs.as_ptr(),
-                    device_objects.len() as u32,
-                    is_unique,
-                );
-            }
+            unsafe_member_call!(
+                self,
+                ResourceMapping,
+                AddResourceArray,
+                name.as_ptr(),
+                0,
+                object_ptrs.as_ptr(),
+                device_objects.len() as u32,
+                is_unique
+            );
         }
 
         self.resources
@@ -104,12 +101,13 @@ impl ResourceMapping {
 
         let name = std::ffi::CString::new(name.as_ref()).unwrap();
 
-        unsafe {
-            (*self.virtual_functions)
-                .ResourceMapping
-                .RemoveResourceByName
-                .unwrap_unchecked()(self.sys_ptr, name.as_ptr(), array_index);
-        }
+        unsafe_member_call!(
+            self,
+            ResourceMapping,
+            RemoveResourceByName,
+            name.as_ptr(),
+            array_index
+        );
     }
 
     pub fn get_resources_by_name(&self, _name: impl AsRef<str>) -> Result<&[DeviceObject], ()> {
@@ -121,11 +119,6 @@ impl ResourceMapping {
     }
 
     pub fn get_size(&self) -> usize {
-        unsafe {
-            (*self.virtual_functions)
-                .ResourceMapping
-                .GetSize
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, ResourceMapping, GetSize,)
     }
 }

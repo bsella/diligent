@@ -30,11 +30,6 @@ impl<'a> From<&'a PipelineStateCache> for PipelineStateCacheVk<'a> {
 
 impl PipelineStateCacheVk<'_> {
     pub fn get_vk_pipeline_cache(&self) -> diligent_sys::VkPipelineCache {
-        unsafe {
-            (*self.virtual_functions)
-                .PipelineStateCacheVk
-                .GetVkPipelineCache
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, PipelineStateCacheVk, GetVkPipelineCache,)
     }
 }

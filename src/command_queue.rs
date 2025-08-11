@@ -19,23 +19,13 @@ impl AsRef<Object> for CommandQueue<'_> {
 
 impl Drop for CommandQueue<'_> {
     fn drop(&mut self) {
-        unsafe {
-            (*self.context.virtual_functions)
-                .DeviceContext
-                .UnlockCommandQueue
-                .unwrap_unchecked()(self.context.sys_ptr)
-        };
+        unsafe_member_call!(self.context, DeviceContext, UnlockCommandQueue,)
     }
 }
 
 impl<'a> CommandQueue<'a> {
     pub(crate) fn new(context: &'a DeviceContext) -> Result<Self, ()> {
-        let command_queue_ptr = unsafe {
-            (*context.virtual_functions)
-                .DeviceContext
-                .LockCommandQueue
-                .unwrap_unchecked()(context.sys_ptr)
-        };
+        let command_queue_ptr = unsafe_member_call!(context, DeviceContext, LockCommandQueue,);
 
         // Both base and derived classes have exactly the same size.
         // This means that we can up-cast to the base class without worrying about layout offset between both classes
@@ -57,29 +47,14 @@ impl<'a> CommandQueue<'a> {
     }
 
     pub fn get_next_fence_value(&self) -> u64 {
-        unsafe {
-            (*self.virtual_functions)
-                .CommandQueue
-                .GetNextFenceValue
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, CommandQueue, GetNextFenceValue,)
     }
 
     pub fn get_completed_fence_value(&self) -> u64 {
-        unsafe {
-            (*self.virtual_functions)
-                .CommandQueue
-                .GetCompletedFenceValue
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, CommandQueue, GetCompletedFenceValue,)
     }
 
     pub fn wait_for_idle(&self) -> u64 {
-        unsafe {
-            (*self.virtual_functions)
-                .CommandQueue
-                .WaitForIdle
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, CommandQueue, WaitForIdle,)
     }
 }

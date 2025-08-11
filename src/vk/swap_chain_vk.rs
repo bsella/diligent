@@ -30,20 +30,10 @@ impl<'a> From<&'a SwapChain> for SwapChainVk<'a> {
 
 impl SwapChainVk<'_> {
     pub fn get_vk_surface(&self) -> diligent_sys::VkSurfaceKHR {
-        unsafe {
-            (*self.virtual_functions)
-                .SwapChainVk
-                .GetVkSurface
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, SwapChainVk, GetVkSurface,)
     }
 
     pub fn get_vk_swap_chain(&self) -> diligent_sys::VkSwapchainKHR {
-        unsafe {
-            (*self.virtual_functions)
-                .SwapChainVk
-                .GetVkSwapChain
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, SwapChainVk, GetVkSwapChain,)
     }
 }

@@ -28,11 +28,6 @@ impl<'a> From<&'a Sampler> for SamplerVk<'a> {
 
 impl SamplerVk<'_> {
     pub fn get_vk_sampler(&self) -> diligent_sys::VkSampler {
-        unsafe {
-            (*self.virtual_functions)
-                .SamplerVk
-                .GetVkSampler
-                .unwrap_unchecked()(self.sys_ptr)
-        }
+        unsafe_member_call!(self, SamplerVk, GetVkSampler,)
     }
 }
