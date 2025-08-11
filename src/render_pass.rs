@@ -7,8 +7,8 @@ use crate::{
     graphics_types::{AccessFlags, PipelineStageFlags, ResourceState, TextureFormat},
 };
 
+#[repr(transparent)]
 pub struct RenderPass {
-    pub(crate) sys_ptr: *mut diligent_sys::IRenderPass,
     device_object: DeviceObject,
 }
 
@@ -174,7 +174,6 @@ impl RenderPass {
                 == std::mem::size_of::<diligent_sys::IRenderPass>()
         );
         RenderPass {
-            sys_ptr,
             device_object: DeviceObject::new(sys_ptr as *mut diligent_sys::IDeviceObject),
         }
     }

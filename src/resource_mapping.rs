@@ -5,9 +5,6 @@ use static_assertions::const_assert;
 use crate::{device_object::DeviceObject, object::Object};
 
 pub struct ResourceMapping {
-    pub(crate) sys_ptr: *mut diligent_sys::IResourceMapping,
-    virtual_functions: *mut diligent_sys::IResourceMappingVtbl,
-
     resources: BTreeMap<String, Vec<*const DeviceObject>>,
 
     object: Object,
@@ -30,8 +27,6 @@ impl ResourceMapping {
         );
 
         ResourceMapping {
-            sys_ptr: resource_mapping_ptr,
-            virtual_functions: unsafe { (*resource_mapping_ptr).pVtbl },
             object: Object::new(resource_mapping_ptr as *mut diligent_sys::IObject),
 
             // We're assuming that resource_mapping_ptr is a pointer to a newly created resource
@@ -48,7 +43,7 @@ impl ResourceMapping {
                 ResourceMapping,
                 AddResource,
                 name.as_ptr(),
-                object.sys_ptr,
+                object.sys_ptr as _,
                 is_unique
             );
         }
@@ -75,7 +70,7 @@ impl ResourceMapping {
                 AddResourceArray,
                 name.as_ptr(),
                 0,
-                object_ptrs.as_ptr(),
+                object_ptrs.as_ptr() as _,
                 device_objects.len() as u32,
                 is_unique
             );

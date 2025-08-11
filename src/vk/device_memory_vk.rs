@@ -2,10 +2,8 @@ use std::ops::Deref;
 
 use crate::device_memory::DeviceMemory;
 
+#[repr(transparent)]
 pub struct DeviceMemoryVk<'a> {
-    sys_ptr: *mut diligent_sys::IDeviceMemoryVk,
-    virtual_functions: *mut diligent_sys::IDeviceMemoryVkVtbl,
-
     device_memory: &'a DeviceMemory,
 }
 
@@ -20,10 +18,6 @@ impl<'a> From<&'a DeviceMemory> for DeviceMemoryVk<'a> {
     fn from(value: &'a DeviceMemory) -> Self {
         DeviceMemoryVk {
             device_memory: value,
-            sys_ptr: value.sys_ptr as *mut diligent_sys::IDeviceMemoryVk,
-            virtual_functions: unsafe {
-                (*(value.sys_ptr as *mut diligent_sys::IDeviceMemoryVk)).pVtbl
-            },
         }
     }
 }

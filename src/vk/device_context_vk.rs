@@ -2,10 +2,8 @@ use std::ops::Deref;
 
 use crate::{buffer::Buffer, device_context::DeviceContext, texture::Texture};
 
+#[repr(transparent)]
 pub struct DeviceContextVk<'a> {
-    sys_ptr: *mut diligent_sys::IDeviceContextVk,
-    virtual_functions: *mut diligent_sys::IDeviceContextVkVtbl,
-
     device_context: &'a DeviceContext,
 }
 
@@ -20,10 +18,6 @@ impl<'a> From<&'a DeviceContext> for DeviceContextVk<'a> {
     fn from(value: &'a DeviceContext) -> Self {
         DeviceContextVk {
             device_context: value,
-            sys_ptr: value.sys_ptr as *mut diligent_sys::IDeviceContextVk,
-            virtual_functions: unsafe {
-                (*(value.sys_ptr as *mut diligent_sys::IDeviceContextVk)).pVtbl
-            },
         }
     }
 }
@@ -38,7 +32,7 @@ impl DeviceContextVk<'_> {
             self,
             DeviceContextVk,
             TransitionImageLayout,
-            texture.sys_ptr,
+            texture.sys_ptr as _,
             new_layout
         )
     }
@@ -52,7 +46,7 @@ impl DeviceContextVk<'_> {
             self,
             DeviceContextVk,
             BufferMemoryBarrier,
-            buffer.sys_ptr,
+            buffer.sys_ptr as _,
             new_access_flags
         )
     }

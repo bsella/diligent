@@ -4,8 +4,8 @@ use static_assertions::const_assert;
 
 use crate::{device_object::DeviceObject, render_pass::RenderPass, texture_view::TextureView};
 
+#[repr(transparent)]
 pub struct Framebuffer {
-    pub(crate) sys_ptr: *mut diligent_sys::IFramebuffer,
     device_object: DeviceObject,
 }
 
@@ -36,7 +36,6 @@ impl Framebuffer {
                 == std::mem::size_of::<diligent_sys::IFramebuffer>()
         );
         Framebuffer {
-            sys_ptr,
             device_object: DeviceObject::new(sys_ptr as *mut diligent_sys::IDeviceObject),
         }
     }

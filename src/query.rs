@@ -68,9 +68,6 @@ impl GetSysQueryType for QueryDataDuration {
 }
 
 pub struct Query<QueryDataType: GetSysQueryType> {
-    pub(crate) sys_ptr: *mut diligent_sys::IQuery,
-    virtual_functions: *mut diligent_sys::IQueryVtbl,
-
     data: QueryDataType,
 
     device_object: DeviceObject,
@@ -92,9 +89,7 @@ impl<QueryDataType: GetSysQueryType + Default> Query<QueryDataType> {
                 == std::mem::size_of::<diligent_sys::IQuery>()
         );
         Query::<QueryDataType> {
-            sys_ptr: query_ptr,
             data: QueryDataType::default(),
-            virtual_functions: unsafe { (*query_ptr).pVtbl },
             device_object: DeviceObject::new(query_ptr as *mut diligent_sys::IDeviceObject),
         }
     }

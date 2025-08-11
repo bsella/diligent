@@ -2,10 +2,8 @@ use std::ops::Deref;
 
 use crate::pipeline_state_cache::PipelineStateCache;
 
+#[repr(transparent)]
 pub struct PipelineStateCacheVk<'a> {
-    sys_ptr: *mut diligent_sys::IPipelineStateCacheVk,
-    virtual_functions: *mut diligent_sys::IPipelineStateCacheVkVtbl,
-
     cache: &'a PipelineStateCache,
 }
 
@@ -18,13 +16,7 @@ impl Deref for PipelineStateCacheVk<'_> {
 
 impl<'a> From<&'a PipelineStateCache> for PipelineStateCacheVk<'a> {
     fn from(value: &'a PipelineStateCache) -> Self {
-        PipelineStateCacheVk {
-            cache: value,
-            sys_ptr: value.sys_ptr as *mut diligent_sys::IPipelineStateCacheVk,
-            virtual_functions: unsafe {
-                (*(value.sys_ptr as *mut diligent_sys::IPipelineStateCacheVk)).pVtbl
-            },
-        }
+        PipelineStateCacheVk { cache: value }
     }
 }
 

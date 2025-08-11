@@ -98,9 +98,8 @@ impl From<&SamplerDesc> for diligent_sys::SamplerDesc {
     }
 }
 
+#[repr(transparent)]
 pub struct Sampler {
-    pub(crate) sys_ptr: *mut diligent_sys::ISampler,
-
     device_object: DeviceObject,
 }
 
@@ -121,7 +120,6 @@ impl Sampler {
         );
 
         Sampler {
-            sys_ptr: sampler_ptr,
             device_object: DeviceObject::new(sampler_ptr as *mut diligent_sys::IDeviceObject),
         }
     }

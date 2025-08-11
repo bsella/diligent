@@ -4,9 +4,8 @@ use static_assertions::const_assert;
 
 use super::object::Object;
 
+#[repr(transparent)]
 pub struct DeviceObject {
-    pub(crate) sys_ptr: *mut diligent_sys::IDeviceObject,
-    virtual_functions: *mut diligent_sys::IDeviceObjectVtbl,
     object: Object,
 }
 
@@ -27,8 +26,6 @@ impl DeviceObject {
                 == std::mem::size_of::<diligent_sys::IDeviceObject>()
         );
         DeviceObject {
-            virtual_functions: unsafe { (*device_object_ptr).pVtbl },
-            sys_ptr: device_object_ptr,
             object: Object::new(device_object_ptr as *mut diligent_sys::IObject),
         }
     }

@@ -8,10 +8,8 @@ use crate::{
     texture::{Texture, TextureDesc},
 };
 
+#[repr(transparent)]
 pub struct RenderDeviceVk<'a> {
-    sys_ptr: *mut diligent_sys::IRenderDeviceVk,
-    virtual_functions: *mut diligent_sys::IRenderDeviceVkVtbl,
-
     render_device: &'a RenderDevice,
 }
 
@@ -26,10 +24,6 @@ impl<'a> From<&'a RenderDevice> for RenderDeviceVk<'a> {
     fn from(value: &'a RenderDevice) -> Self {
         RenderDeviceVk {
             render_device: value,
-            sys_ptr: value.sys_ptr as *mut diligent_sys::IRenderDeviceVk,
-            virtual_functions: unsafe {
-                (*(value.sys_ptr as *mut diligent_sys::IRenderDeviceVk)).pVtbl
-            },
         }
     }
 }

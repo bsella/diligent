@@ -2,10 +2,8 @@ use std::ops::Deref;
 
 use crate::shader_binding_table::ShaderBindingTable;
 
+#[repr(transparent)]
 pub struct ShaderBindingTableVk<'a> {
-    sys_ptr: *mut diligent_sys::IShaderBindingTableVk,
-    virtual_functions: *mut diligent_sys::IShaderBindingTableVkVtbl,
-
     sbt: &'a ShaderBindingTable,
 }
 
@@ -18,13 +16,7 @@ impl Deref for ShaderBindingTableVk<'_> {
 
 impl<'a> From<&'a ShaderBindingTable> for ShaderBindingTableVk<'a> {
     fn from(value: &'a ShaderBindingTable) -> Self {
-        ShaderBindingTableVk {
-            sbt: value,
-            sys_ptr: value.sys_ptr as *mut diligent_sys::IShaderBindingTableVk,
-            virtual_functions: unsafe {
-                (*(value.sys_ptr as *mut diligent_sys::IShaderBindingTableVk)).pVtbl
-            },
-        }
+        ShaderBindingTableVk { sbt: value }
     }
 }
 

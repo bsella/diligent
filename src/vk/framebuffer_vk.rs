@@ -2,12 +2,8 @@ use std::ops::Deref;
 
 use crate::frame_buffer::Framebuffer;
 
+#[repr(transparent)]
 pub struct FramebufferVk<'a> {
-    #[allow(dead_code)]
-    sys_ptr: *mut diligent_sys::IFramebufferVk,
-    #[allow(dead_code)]
-    virtual_functions: *mut diligent_sys::IFramebufferVkVtbl,
-
     framebuffer: &'a Framebuffer,
 }
 
@@ -20,13 +16,7 @@ impl Deref for FramebufferVk<'_> {
 
 impl<'a> From<&'a Framebuffer> for FramebufferVk<'a> {
     fn from(value: &'a Framebuffer) -> Self {
-        FramebufferVk {
-            framebuffer: value,
-            sys_ptr: value.sys_ptr as *mut diligent_sys::IFramebufferVk,
-            virtual_functions: unsafe {
-                (*(value.sys_ptr as *mut diligent_sys::IFramebufferVk)).pVtbl
-            },
-        }
+        FramebufferVk { framebuffer: value }
     }
 }
 

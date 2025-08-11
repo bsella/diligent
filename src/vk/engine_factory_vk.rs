@@ -137,10 +137,8 @@ impl Default for EngineVkCreateInfo {
     }
 }
 
+#[repr(transparent)]
 pub struct EngineFactoryVk {
-    sys_ptr: *mut diligent_sys::IEngineFactoryVk,
-    virtual_functions: *mut diligent_sys::IEngineFactoryVkVtbl,
-
     engine_factory: EngineFactory,
 }
 
@@ -162,9 +160,6 @@ pub fn get_engine_factory_vk() -> EngineFactoryVk {
     );
 
     EngineFactoryVk {
-        sys_ptr: engine_factory_vk,
-        virtual_functions: unsafe { (*engine_factory_vk).pVtbl },
-
         engine_factory: EngineFactory::new(engine_factory_vk as *mut diligent_sys::IEngineFactory),
     }
 }
@@ -324,8 +319,8 @@ impl EngineFactoryVk {
             self,
             EngineFactoryVk,
             CreateSwapChainVk,
-            device.sys_ptr,
-            immediate_context.sys_ptr,
+            device.sys_ptr as _,
+            immediate_context.sys_ptr as _,
             std::ptr::addr_of!(swapchain_desc),
             window.as_ref().map_or(std::ptr::null(), std::ptr::from_ref),
             std::ptr::addr_of_mut!(swap_chain_ptr)

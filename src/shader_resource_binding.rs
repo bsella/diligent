@@ -12,10 +12,8 @@ use crate::{
     },
 };
 
+#[repr(transparent)]
 pub struct ShaderResourceBinding {
-    pub(crate) sys_ptr: *mut diligent_sys::IShaderResourceBinding,
-    virtual_functions: *mut diligent_sys::IShaderResourceBindingVtbl,
-
     object: Object,
 }
 
@@ -36,8 +34,6 @@ impl ShaderResourceBinding {
         );
 
         ShaderResourceBinding {
-            sys_ptr: srb_ptr,
-            virtual_functions: unsafe { (*srb_ptr).pVtbl },
             object: Object::new(srb_ptr as *mut diligent_sys::IObject),
         }
     }
@@ -57,7 +53,7 @@ impl ShaderResourceBinding {
             ShaderResourceBinding,
             BindResources,
             shader_stages.bits(),
-            resource_mapping.sys_ptr,
+            resource_mapping.sys_ptr as _,
             flags.bits()
         )
     }
@@ -73,7 +69,7 @@ impl ShaderResourceBinding {
             ShaderResourceBinding,
             CheckResources,
             shader_stages.bits(),
-            resource_mapping.sys_ptr,
+            resource_mapping.sys_ptr as _,
             flags.bits()
         );
 

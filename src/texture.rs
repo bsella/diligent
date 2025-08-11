@@ -126,7 +126,7 @@ impl From<&TextureSubResource<'_>> for diligent_sys::TextureSubResData {
                 std::ptr::null()
             },
             pSrcBuffer: if let TextureSubResData::GPU(buffer) = value.source {
-                buffer.sys_ptr
+                buffer.sys_ptr as _
             } else {
                 std::ptr::null_mut()
             },
@@ -225,10 +225,8 @@ impl From<&TextureDesc> for diligent_sys::TextureDesc {
     }
 }
 
+#[repr(transparent)]
 pub struct Texture {
-    pub(crate) sys_ptr: *mut diligent_sys::ITexture,
-    virtual_functions: *mut diligent_sys::ITextureVtbl,
-
     device_object: DeviceObject,
 }
 
@@ -249,8 +247,6 @@ impl Texture {
         );
 
         Texture {
-            sys_ptr: texture_ptr,
-            virtual_functions: unsafe { (*texture_ptr).pVtbl },
             device_object: DeviceObject::new(texture_ptr as *mut diligent_sys::IDeviceObject),
         }
     }
@@ -330,7 +326,7 @@ impl<'a, T> TextureSubresourceReadMapToken<'a, T> {
             device_context,
             DeviceContext,
             MapTextureSubresource,
-            texture.sys_ptr,
+            texture.sys_ptr as _,
             mip_level,
             array_slice,
             diligent_sys::MAP_READ as diligent_sys::MAP_TYPE,
@@ -365,7 +361,7 @@ impl<T> Drop for TextureSubresourceReadMapToken<'_, T> {
             self.device_context,
             DeviceContext,
             UnmapTextureSubresource,
-            self.texture.sys_ptr,
+            self.texture.sys_ptr as _,
             self.mip_level,
             self.array_slice
         )
@@ -394,7 +390,7 @@ impl<'a, T> TextureSubresourceWriteMapToken<'a, T> {
             device_context,
             DeviceContext,
             MapTextureSubresource,
-            texture.sys_ptr,
+            texture.sys_ptr as _,
             mip_level,
             array_slice,
             diligent_sys::MAP_WRITE as diligent_sys::MAP_TYPE,
@@ -429,7 +425,7 @@ impl<T> Drop for TextureSubresourceWriteMapToken<'_, T> {
             self.device_context,
             DeviceContext,
             UnmapTextureSubresource,
-            self.texture.sys_ptr,
+            self.texture.sys_ptr as _,
             self.mip_level,
             self.array_slice
         )
@@ -458,7 +454,7 @@ impl<'a, T> TextureSubresourceReadWriteMapToken<'a, T> {
             device_context,
             DeviceContext,
             MapTextureSubresource,
-            texture.sys_ptr,
+            texture.sys_ptr as _,
             mip_level,
             array_slice,
             diligent_sys::MAP_READ_WRITE as diligent_sys::MAP_TYPE,
@@ -501,7 +497,7 @@ impl<T> Drop for TextureSubresourceReadWriteMapToken<'_, T> {
             self.device_context,
             DeviceContext,
             UnmapTextureSubresource,
-            self.texture.sys_ptr,
+            self.texture.sys_ptr as _,
             self.mip_level,
             self.array_slice
         )

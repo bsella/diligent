@@ -149,10 +149,8 @@ impl From<&BottomLevelASDesc<'_>> for BottomLevelASDescWrapper {
     }
 }
 
+#[repr(transparent)]
 pub struct BottomLevelAS {
-    pub(crate) sys_ptr: *mut diligent_sys::IBottomLevelAS,
-    virtual_functions: *mut diligent_sys::IBottomLevelASVtbl,
-
     device_object: DeviceObject,
 }
 
@@ -178,8 +176,6 @@ impl BottomLevelAS {
         );
 
         Self {
-            sys_ptr,
-            virtual_functions: unsafe { (*sys_ptr).pVtbl },
             device_object: DeviceObject::new(sys_ptr as *mut diligent_sys::IDeviceObject),
         }
     }

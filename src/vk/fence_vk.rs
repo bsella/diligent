@@ -2,10 +2,8 @@ use std::ops::Deref;
 
 use crate::fence::Fence;
 
+#[repr(transparent)]
 pub struct FenceVk<'a> {
-    sys_ptr: *mut diligent_sys::IFenceVk,
-    virtual_functions: *mut diligent_sys::IFenceVkVtbl,
-
     fence: &'a Fence,
 }
 
@@ -18,11 +16,7 @@ impl Deref for FenceVk<'_> {
 
 impl<'a> From<&'a Fence> for FenceVk<'a> {
     fn from(value: &'a Fence) -> Self {
-        FenceVk {
-            fence: value,
-            sys_ptr: value.sys_ptr as *mut diligent_sys::IFenceVk,
-            virtual_functions: unsafe { (*(value.sys_ptr as *mut diligent_sys::IFenceVk)).pVtbl },
-        }
+        FenceVk { fence: value }
     }
 }
 

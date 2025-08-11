@@ -2,10 +2,8 @@ use std::ops::Deref;
 
 use crate::buffer::Buffer;
 
+#[repr(transparent)]
 pub struct BufferVk<'a> {
-    sys_ptr: *mut diligent_sys::IBufferVk,
-    virtual_functions: *mut diligent_sys::IBufferVkVtbl,
-
     buffer: &'a Buffer,
 }
 
@@ -18,11 +16,7 @@ impl<'a> Deref for BufferVk<'a> {
 
 impl<'a> From<&'a Buffer> for BufferVk<'a> {
     fn from(value: &'a Buffer) -> Self {
-        BufferVk {
-            buffer: value,
-            sys_ptr: value.sys_ptr as *mut diligent_sys::IBufferVk,
-            virtual_functions: unsafe { (*(value.sys_ptr as *mut diligent_sys::IBufferVk)).pVtbl },
-        }
+        BufferVk { buffer: value }
     }
 }
 

@@ -1,4 +1,4 @@
-use std::{os::raw::c_void, path::Path};
+use std::{ops::Deref, os::raw::c_void, path::Path};
 
 use static_assertions::const_assert;
 
@@ -83,11 +83,16 @@ impl From<&EngineCreateInfo> for diligent_sys::EngineCreateInfo {
     }
 }
 
+#[repr(transparent)]
 pub struct EngineFactory {
-    pub(crate) sys_ptr: *mut diligent_sys::IEngineFactory,
-    virtual_functions: *mut diligent_sys::IEngineFactoryVtbl,
+    object: Object,
+}
 
-    _object: Object,
+impl Deref for EngineFactory {
+    type Target = Object;
+    fn deref(&self) -> &Self::Target {
+        &self.object
+    }
 }
 
 impl EngineFactory {
@@ -100,10 +105,7 @@ impl EngineFactory {
         );
 
         EngineFactory {
-            sys_ptr: engine_factory_ptr,
-            virtual_functions: unsafe { (*engine_factory_ptr).pVtbl },
-
-            _object: Object::new(engine_factory_ptr as *mut diligent_sys::IObject),
+            object: Object::new(engine_factory_ptr as *mut diligent_sys::IObject),
         }
     }
 
@@ -126,7 +128,8 @@ impl EngineFactory {
 
         let search = std::ffi::CString::new(search).unwrap();
 
-        let mut stream_factory_ptr = std::ptr::null_mut();
+        let mut stream_factory_ptr: *mut diligent_sys::IShaderSourceInputStreamFactory =
+            std::ptr::null_mut();
         unsafe_member_call!(
             self,
             EngineFactory,
@@ -143,7 +146,7 @@ impl EngineFactory {
     }
 
     pub fn create_empty_data_blob(&self, initial_size: usize) -> Result<DataBlob, ()> {
-        let mut data_blob_ptr = std::ptr::null_mut();
+        let mut data_blob_ptr: *mut diligent_sys::IDataBlob = std::ptr::null_mut();
         unsafe_member_call!(
             self,
             EngineFactory,
@@ -161,7 +164,7 @@ impl EngineFactory {
     }
 
     pub fn create_data_blob<T>(&self, data: &T) -> Result<DataBlob, ()> {
-        let mut data_blob_ptr = std::ptr::null_mut();
+        let mut data_blob_ptr: *mut diligent_sys::IDataBlob = std::ptr::null_mut();
         unsafe_member_call!(
             self,
             EngineFactory,
@@ -205,14 +208,17 @@ impl EngineFactory {
                 EnumerateAdapters,
                 version,
                 std::ptr::addr_of_mut!(num_adapters),
-                adapters.as_mut_ptr()
+                adapters.as_mut_ptr() as _
             );
 
             unsafe {
                 adapters.set_len(num_adapters as usize);
             }
 
-            adapters.iter().map(|adapter| adapter.into()).collect()
+            adapters
+                .iter()
+                .map(|adapter: &diligent_sys::GraphicsAdapterInfo| adapter.into())
+                .collect()
         } else {
             Vec::new()
         }

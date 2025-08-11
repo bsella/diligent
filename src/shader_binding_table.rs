@@ -36,15 +36,13 @@ impl From<&ShaderBindingTableDesc<'_>> for diligent_sys::ShaderBindingTableDesc 
             _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
                 Name: value.name.as_ptr(),
             },
-            pPSO: value.raytracing_pso.sys_ptr,
+            pPSO: value.raytracing_pso.sys_ptr as _,
         }
     }
 }
 
+#[repr(transparent)]
 pub struct ShaderBindingTable {
-    pub(crate) sys_ptr: *mut diligent_sys::IShaderBindingTable,
-    virtual_functions: *mut diligent_sys::IShaderBindingTableVtbl,
-
     device_object: DeviceObject,
 }
 
@@ -65,8 +63,6 @@ impl ShaderBindingTable {
         );
 
         Self {
-            sys_ptr,
-            virtual_functions: unsafe { (*sys_ptr).pVtbl },
             device_object: DeviceObject::new(sys_ptr as *mut diligent_sys::IDeviceObject),
         }
     }
@@ -77,7 +73,7 @@ impl ShaderBindingTable {
         unsafe_member_call!(self, ShaderBindingTable, Verify, flags.bits())
     }
     pub fn reset(&self, pso: &PipelineState) {
-        unsafe_member_call!(self, ShaderBindingTable, Reset, pso.sys_ptr)
+        unsafe_member_call!(self, ShaderBindingTable, Reset, pso.sys_ptr as _)
     }
     pub fn reset_hit_groups(&self) {
         unsafe_member_call!(self, ShaderBindingTable, ResetHitGroups,)
@@ -153,7 +149,7 @@ impl ShaderBindingTable {
             self,
             ShaderBindingTable,
             BindHitGroupForGeometry,
-            tlas.sys_ptr,
+            tlas.sys_ptr as _,
             instance_name.as_ptr(),
             geometry_name.as_ptr(),
             ray_offset_in_hit_group_index,
@@ -179,7 +175,7 @@ impl ShaderBindingTable {
             self,
             ShaderBindingTable,
             BindHitGroupForGeometry,
-            tlas.sys_ptr,
+            tlas.sys_ptr as _,
             instance_name.as_ptr(),
             geometry_name.as_ptr(),
             ray_offset_in_hit_group_index,
@@ -233,7 +229,7 @@ impl ShaderBindingTable {
             self,
             ShaderBindingTable,
             BindHitGroupForInstance,
-            tlas.sys_ptr,
+            tlas.sys_ptr as _,
             instance_name.as_ptr(),
             ray_offset_in_hit_group_index,
             shader_group_name
@@ -258,7 +254,7 @@ impl ShaderBindingTable {
             self,
             ShaderBindingTable,
             BindHitGroupForInstance,
-            tlas.sys_ptr,
+            tlas.sys_ptr as _,
             instance_name.as_ptr(),
             ray_offset_in_hit_group_index,
             shader_group_name.as_ptr(),
@@ -278,7 +274,7 @@ impl ShaderBindingTable {
             self,
             ShaderBindingTable,
             BindHitGroupForTLAS,
-            tlas.sys_ptr,
+            tlas.sys_ptr as _,
             ray_offset_in_hit_group_index,
             shader_group_name
                 .as_ref()
@@ -300,7 +296,7 @@ impl ShaderBindingTable {
             self,
             ShaderBindingTable,
             BindHitGroupForTLAS,
-            tlas.sys_ptr,
+            tlas.sys_ptr as _,
             ray_offset_in_hit_group_index,
             shader_group_name.as_ptr(),
             std::ptr::from_ref(data) as _,

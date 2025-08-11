@@ -2,10 +2,8 @@ use std::ops::Deref;
 
 use crate::command_queue::CommandQueue;
 
+#[repr(transparent)]
 pub struct CommandQueueVk<'a> {
-    sys_ptr: *mut diligent_sys::ICommandQueueVk,
-    virtual_functions: *mut diligent_sys::ICommandQueueVkVtbl,
-
     command_queue: &'a CommandQueue<'a>,
 }
 
@@ -20,10 +18,6 @@ impl<'a> From<&'a CommandQueue<'a>> for CommandQueueVk<'a> {
     fn from(value: &'a CommandQueue) -> Self {
         CommandQueueVk {
             command_queue: value,
-            sys_ptr: value.sys_ptr as *mut diligent_sys::ICommandQueueVk,
-            virtual_functions: unsafe {
-                (*(value.sys_ptr as *mut diligent_sys::ICommandQueueVk)).pVtbl
-            },
         }
     }
 }

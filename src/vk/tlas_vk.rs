@@ -2,10 +2,8 @@ use std::ops::Deref;
 
 use crate::tlas::TopLevelAS;
 
+#[repr(transparent)]
 pub struct TopLevelASVk<'a> {
-    sys_ptr: *mut diligent_sys::ITopLevelASVk,
-    virtual_functions: *mut diligent_sys::ITopLevelASVkVtbl,
-
     tlas: &'a TopLevelAS,
 }
 
@@ -18,13 +16,7 @@ impl Deref for TopLevelASVk<'_> {
 
 impl<'a> From<&'a TopLevelAS> for TopLevelASVk<'a> {
     fn from(value: &'a TopLevelAS) -> Self {
-        TopLevelASVk {
-            tlas: value,
-            sys_ptr: value.sys_ptr as *mut diligent_sys::ITopLevelASVk,
-            virtual_functions: unsafe {
-                (*(value.sys_ptr as *mut diligent_sys::ITopLevelASVk)).pVtbl
-            },
-        }
+        TopLevelASVk { tlas: value }
     }
 }
 

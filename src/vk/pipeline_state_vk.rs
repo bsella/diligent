@@ -2,10 +2,8 @@ use std::ops::Deref;
 
 use crate::pipeline_state::PipelineState;
 
+#[repr(transparent)]
 pub struct PipelineStateVk<'a> {
-    sys_ptr: *mut diligent_sys::IPipelineStateVk,
-    virtual_functions: *mut diligent_sys::IPipelineStateVkVtbl,
-
     pipeline_state: &'a PipelineState,
 }
 
@@ -20,10 +18,6 @@ impl<'a> From<&'a PipelineState> for PipelineStateVk<'a> {
     fn from(value: &'a PipelineState) -> Self {
         PipelineStateVk {
             pipeline_state: value,
-            sys_ptr: value.sys_ptr as *mut diligent_sys::IPipelineStateVk,
-            virtual_functions: unsafe {
-                (*(value.sys_ptr as *mut diligent_sys::IPipelineStateVk)).pVtbl
-            },
         }
     }
 }

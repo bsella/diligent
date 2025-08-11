@@ -90,10 +90,8 @@ impl From<&BufferDesc> for diligent_sys::BufferDesc {
     }
 }
 
+#[repr(transparent)]
 pub struct Buffer {
-    pub(crate) sys_ptr: *mut diligent_sys::IBuffer,
-    virtual_functions: *mut diligent_sys::IBufferVtbl,
-
     device_object: DeviceObject,
 }
 
@@ -115,8 +113,6 @@ impl Buffer {
 
         let buffer = Buffer {
             device_object: DeviceObject::new(buffer_ptr as *mut diligent_sys::IDeviceObject),
-            sys_ptr: buffer_ptr,
-            virtual_functions: unsafe { (*buffer_ptr).pVtbl },
         };
 
         fn bind_flags_to_buffer_view_type(
@@ -237,7 +233,7 @@ impl<'a, T> BufferMapReadToken<'a, T> {
             device_context,
             DeviceContext,
             MapBuffer,
-            buffer.sys_ptr,
+            buffer.sys_ptr as _,
             diligent_sys::MAP_READ as diligent_sys::MAP_TYPE,
             map_flags,
             std::ptr::addr_of_mut!(ptr)
@@ -265,7 +261,7 @@ impl<T> Drop for BufferMapReadToken<'_, T> {
             self.device_context,
             DeviceContext,
             UnmapBuffer,
-            self.buffer.sys_ptr,
+            self.buffer.sys_ptr as _,
             diligent_sys::MAP_READ as diligent_sys::MAP_TYPE
         )
     }
@@ -288,7 +284,7 @@ impl<'a, T> BufferMapWriteToken<'a, T> {
             device_context,
             DeviceContext,
             MapBuffer,
-            buffer.sys_ptr,
+            buffer.sys_ptr as _,
             diligent_sys::MAP_WRITE as diligent_sys::MAP_TYPE,
             map_flags,
             std::ptr::addr_of_mut!(ptr)
@@ -316,7 +312,7 @@ impl<T> Drop for BufferMapWriteToken<'_, T> {
             self.device_context,
             DeviceContext,
             UnmapBuffer,
-            self.buffer.sys_ptr,
+            self.buffer.sys_ptr as _,
             diligent_sys::MAP_WRITE as diligent_sys::MAP_TYPE
         )
     }
@@ -339,7 +335,7 @@ impl<'a, T> BufferMapReadWriteToken<'a, T> {
             device_context,
             DeviceContext,
             MapBuffer,
-            buffer.sys_ptr,
+            buffer.sys_ptr as _,
             diligent_sys::MAP_READ_WRITE as diligent_sys::MAP_TYPE,
             map_flags,
             std::ptr::addr_of_mut!(ptr)
@@ -374,7 +370,7 @@ impl<T> Drop for BufferMapReadWriteToken<'_, T> {
             self.device_context,
             DeviceContext,
             UnmapBuffer,
-            self.buffer.sys_ptr,
+            self.buffer.sys_ptr as _,
             diligent_sys::MAP_READ_WRITE as diligent_sys::MAP_TYPE
         )
     }

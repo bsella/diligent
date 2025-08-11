@@ -108,9 +108,8 @@ impl From<&ShaderResourceVariableDesc> for diligent_sys::ShaderResourceVariableD
     }
 }
 
+#[repr(transparent)]
 pub struct ShaderResourceVariable {
-    pub(crate) sys_ptr: *mut diligent_sys::IShaderResourceVariable,
-    virtual_functions: *mut diligent_sys::IShaderResourceVariableVtbl,
     object: Object,
 }
 
@@ -133,8 +132,6 @@ impl ShaderResourceVariable {
         );
 
         ShaderResourceVariable {
-            sys_ptr: shader_resource_variable_ptr,
-            virtual_functions: unsafe { (*shader_resource_variable_ptr).pVtbl },
             object: Object::new(shader_resource_variable_ptr as *mut diligent_sys::IObject),
         }
     }
@@ -144,7 +141,7 @@ impl ShaderResourceVariable {
             self,
             ShaderResourceVariable,
             Set,
-            device_object.sys_ptr,
+            device_object.sys_ptr as _,
             flags.bits()
         )
     }
@@ -155,7 +152,7 @@ impl ShaderResourceVariable {
             self,
             ShaderResourceVariable,
             SetArray,
-            object_ptrs.as_ptr(),
+            object_ptrs.as_ptr() as _,
             0,
             object_ptrs.len() as u32,
             flags.bits()
@@ -174,7 +171,7 @@ impl ShaderResourceVariable {
             self,
             ShaderResourceVariable,
             SetBufferRange,
-            device_object.sys_ptr,
+            device_object.sys_ptr as _,
             offset,
             size,
             array_index.unwrap_or(0),

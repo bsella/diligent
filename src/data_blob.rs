@@ -6,9 +6,6 @@ use static_assertions::const_assert;
 use super::object::Object;
 
 pub struct DataBlob {
-    sys_ptr: *mut diligent_sys::IDataBlob,
-    virtual_functions: *mut diligent_sys::IDataBlobVtbl,
-
     object: Object,
 }
 
@@ -48,9 +45,6 @@ impl DataBlob {
         );
 
         DataBlob {
-            sys_ptr: data_blob_ptr,
-            virtual_functions: unsafe { (*data_blob_ptr).pVtbl },
-
             object: Object::new(data_blob_ptr as *mut diligent_sys::IObject),
         }
     }

@@ -2,10 +2,8 @@ use std::ops::Deref;
 
 use crate::sampler::Sampler;
 
+#[repr(transparent)]
 pub struct SamplerVk<'a> {
-    sys_ptr: *mut diligent_sys::ISamplerVk,
-    virtual_functions: *mut diligent_sys::ISamplerVkVtbl,
-
     sampler: &'a Sampler,
 }
 
@@ -18,11 +16,7 @@ impl Deref for SamplerVk<'_> {
 
 impl<'a> From<&'a Sampler> for SamplerVk<'a> {
     fn from(value: &'a Sampler) -> Self {
-        SamplerVk {
-            sampler: value,
-            sys_ptr: value.sys_ptr as *mut diligent_sys::ISamplerVk,
-            virtual_functions: unsafe { (*(value.sys_ptr as *mut diligent_sys::ISamplerVk)).pVtbl },
-        }
+        SamplerVk { sampler: value }
     }
 }
 

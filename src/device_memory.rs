@@ -5,10 +5,8 @@ use static_assertions::const_assert;
 
 use crate::device_object::DeviceObject;
 
+#[repr(transparent)]
 pub struct DeviceMemory {
-    pub(crate) sys_ptr: *mut diligent_sys::IDeviceMemory,
-    virtual_functions: *mut diligent_sys::IDeviceMemoryVtbl,
-
     device_object: DeviceObject,
 }
 
@@ -76,8 +74,6 @@ impl DeviceMemory {
                 == std::mem::size_of::<diligent_sys::IDeviceMemory>()
         );
         DeviceMemory {
-            sys_ptr: fence_ptr,
-            virtual_functions: unsafe { (*fence_ptr).pVtbl },
             device_object: DeviceObject::new(fence_ptr as *mut diligent_sys::IDeviceObject),
         }
     }
@@ -91,6 +87,6 @@ impl DeviceMemory {
     }
 
     pub fn is_compatible(&self, device_objet: &DeviceObject) -> bool {
-        unsafe_member_call!(self, DeviceMemory, IsCompatible, device_objet.sys_ptr)
+        unsafe_member_call!(self, DeviceMemory, IsCompatible, device_objet.sys_ptr as _)
     }
 }

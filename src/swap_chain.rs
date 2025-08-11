@@ -93,10 +93,8 @@ impl From<&diligent_sys::SwapChainDesc> for SwapChainDesc {
     }
 }
 
+#[repr(transparent)]
 pub struct SwapChain {
-    pub(crate) sys_ptr: *mut diligent_sys::ISwapChain,
-    virtual_functions: *mut diligent_sys::ISwapChainVtbl,
-
     object: Object,
 }
 
@@ -117,8 +115,6 @@ impl SwapChain {
         );
 
         SwapChain {
-            sys_ptr: swap_chain_ptr,
-            virtual_functions: unsafe { (*swap_chain_ptr).pVtbl },
             object: Object::new(swap_chain_ptr as *mut diligent_sys::IObject),
         }
     }

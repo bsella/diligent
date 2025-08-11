@@ -17,9 +17,6 @@ use crate::{
 };
 
 pub struct EngineFactoryD3D12 {
-    sys_ptr: *mut diligent_sys::IEngineFactoryD3D12,
-    virtual_functions: *mut diligent_sys::IEngineFactoryD3D12Vtbl,
-
     engine_factory: EngineFactory,
 }
 
@@ -40,9 +37,6 @@ pub fn get_engine_factory_d3d12() -> EngineFactoryD3D12 {
     );
 
     EngineFactoryD3D12 {
-        sys_ptr: engine_factory_d3d12,
-        virtual_functions: unsafe { (*engine_factory_d3d12).pVtbl },
-
         engine_factory: EngineFactory::new(
             engine_factory_d3d12 as *mut diligent_sys::IEngineFactory,
         ),

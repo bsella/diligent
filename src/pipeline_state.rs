@@ -479,7 +479,7 @@ impl From<&PipelineStateCreateInfo<'_>> for PipelineStateCreateInfoWrapper {
         let mut resource_signatures = value
             .resource_signatures
             .iter()
-            .map(|&rs| rs.sys_ptr)
+            .map(|&rs| rs.sys_ptr as _)
             .collect::<Vec<_>>();
 
         let ci = diligent_sys::PipelineStateCreateInfo {
@@ -489,10 +489,10 @@ impl From<&PipelineStateCreateInfo<'_>> for PipelineStateCreateInfoWrapper {
             ppResourceSignatures: if value.resource_signatures.is_empty() {
                 std::ptr::null_mut()
             } else {
-                resource_signatures.as_mut_ptr()
+                resource_signatures.as_mut_ptr() as _
             },
             pPSOCache: if let Some(pso_cache) = &value.pso_cache {
-                pso_cache.sys_ptr
+                pso_cache.sys_ptr as _
             } else {
                 std::ptr::null_mut()
             },
@@ -947,7 +947,9 @@ impl<'a> From<&GraphicsPipelineDesc<'a>> for GraphicsPipelineDescWrapper {
                 Quality: value.sample_quality,
             },
             pRenderPass: match &value.output {
-                GraphicsPipelineOutput::RenderPass(render_pass) => render_pass.render_pass.sys_ptr,
+                GraphicsPipelineOutput::RenderPass(render_pass) => {
+                    render_pass.render_pass.sys_ptr as _
+                }
                 GraphicsPipelineOutput::RenderTargets(_) => std::ptr::null_mut(),
             },
             SubpassIndex: match &value.output {
@@ -1054,7 +1056,7 @@ impl From<&RayTracingPipelineStateCreateInfo<'_>> for RayTracingPipelineStateCre
             .map(
                 |(name, shader)| diligent_sys::RayTracingGeneralShaderGroup {
                     Name: name.as_ptr(),
-                    pShader: shader.sys_ptr,
+                    pShader: shader.sys_ptr as _,
                 },
             )
             .collect::<Vec<_>>();
@@ -1069,9 +1071,9 @@ impl From<&RayTracingPipelineStateCreateInfo<'_>> for RayTracingPipelineStateCre
                         .map(|(name, closest_hit_shader, any_hit_shader)| {
                             diligent_sys::RayTracingTriangleHitShaderGroup {
                                 Name: name.as_ptr(),
-                                pClosestHitShader: closest_hit_shader.sys_ptr,
+                                pClosestHitShader: closest_hit_shader.sys_ptr as _,
                                 pAnyHitShader: any_hit_shader
-                                    .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr),
+                                    .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr as _),
                             }
                         })
                         .collect()
@@ -1088,11 +1090,11 @@ impl From<&RayTracingPipelineStateCreateInfo<'_>> for RayTracingPipelineStateCre
                             |(name, intersection_shader, closest_hit_shader, any_hit_shader)| {
                                 diligent_sys::RayTracingProceduralHitShaderGroup {
                                     Name: name.as_ptr(),
-                                    pIntersectionShader: intersection_shader.sys_ptr,
+                                    pIntersectionShader: intersection_shader.sys_ptr as _,
                                     pClosestHitShader: closest_hit_shader
-                                        .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr),
+                                        .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr as _),
                                     pAnyHitShader: any_hit_shader
-                                        .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr),
+                                        .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr as _),
                                 }
                             },
                         )
@@ -1161,25 +1163,25 @@ impl From<&GraphicsPipelineStateCreateInfo<'_>> for GraphicsPipelineStateCreateI
             GraphicsPipeline: *gpd,
             pVS: value
                 .vertex_shader
-                .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr),
+                .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr as _),
             pPS: value
                 .pixel_shader
-                .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr),
+                .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr as _),
             pDS: value
                 .domain_shader
-                .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr),
+                .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr as _),
             pHS: value
                 .hull_shader
-                .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr),
+                .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr as _),
             pGS: value
                 .geometry_shader
-                .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr),
+                .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr as _),
             pAS: value
                 .amplification_shader
-                .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr),
+                .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr as _),
             pMS: value
                 .mesh_shader
-                .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr),
+                .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr as _),
         };
 
         GraphicsPipelineStateCreateInfoWrapper {
@@ -1190,10 +1192,8 @@ impl From<&GraphicsPipelineStateCreateInfo<'_>> for GraphicsPipelineStateCreateI
     }
 }
 
+#[repr(transparent)]
 pub struct PipelineState {
-    pub(crate) sys_ptr: *mut diligent_sys::IPipelineState,
-    virtual_functions: *mut diligent_sys::IPipelineStateVtbl,
-
     device_object: DeviceObject,
 }
 
@@ -1214,8 +1214,6 @@ impl PipelineState {
         );
 
         PipelineState {
-            sys_ptr: pipeline_state_ptr,
-            virtual_functions: unsafe { (*pipeline_state_ptr).pVtbl },
             device_object: DeviceObject::new(
                 pipeline_state_ptr as *mut diligent_sys::IDeviceObject,
             ),
@@ -1245,7 +1243,7 @@ impl PipelineState {
             PipelineState,
             BindStaticResources,
             shader_type.into(),
-            resource_mapping.sys_ptr,
+            resource_mapping.sys_ptr as _,
             flags.bits()
         )
     }
@@ -1304,7 +1302,7 @@ impl PipelineState {
             self,
             PipelineState,
             InitializeStaticSRBResources,
-            shader_resource_binding.sys_ptr
+            shader_resource_binding.sys_ptr as _
         )
     }
 
@@ -1313,7 +1311,7 @@ impl PipelineState {
             self,
             PipelineState,
             CopyStaticResources,
-            pipeline_state.sys_ptr
+            pipeline_state.sys_ptr as _
         )
     }
 
@@ -1322,7 +1320,7 @@ impl PipelineState {
             self,
             PipelineState,
             IsCompatibleWith,
-            pipeline_state.sys_ptr
+            pipeline_state.sys_ptr as _
         )
     }
 
@@ -1445,7 +1443,7 @@ impl<'a> From<&TilePipelineStateCreateInfo<'a>> for TilePipelineStateCreateInfoW
                     formats
                 },
             },
-            pTS: value.shader.sys_ptr,
+            pTS: value.shader.sys_ptr as _,
         };
         Self { _pci: pci, ci }
     }

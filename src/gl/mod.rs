@@ -2,7 +2,7 @@ pub mod engine_factory_gl;
 
 #[cfg(feature = "opengl_interop")]
 #[path = ""]
-mod vulkan_interop_modules {
+mod gl_interop_modules {
     // TODO
     // BaseInterfacesGL
     // BufferGL
@@ -23,4 +23,4 @@ mod vulkan_interop_modules {
 }
 
 #[cfg(feature = "opengl_interop")]
-pub use vulkan_interop_modules::*;
+pub use gl_interop_modules::*;

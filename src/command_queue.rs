@@ -5,9 +5,6 @@ use static_assertions::const_assert;
 use crate::{device_context::DeviceContext, object::Object};
 
 pub struct CommandQueue<'a> {
-    pub(crate) sys_ptr: *mut diligent_sys::ICommandQueue,
-    virtual_functions: *mut diligent_sys::ICommandQueueVtbl,
-
     context: &'a DeviceContext,
 
     object: Object,
@@ -41,8 +38,6 @@ impl<'a> CommandQueue<'a> {
             Err(())
         } else {
             Ok(CommandQueue {
-                sys_ptr: command_queue_ptr,
-                virtual_functions: unsafe { (*command_queue_ptr).pVtbl },
                 context,
                 object: Object::new(command_queue_ptr as *mut diligent_sys::IObject),
             })

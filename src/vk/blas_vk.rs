@@ -2,10 +2,8 @@ use std::ops::Deref;
 
 use crate::blas::BottomLevelAS;
 
+#[repr(transparent)]
 pub struct BottomLevelASVk<'a> {
-    sys_ptr: *mut diligent_sys::IBottomLevelASVk,
-    virtual_functions: *mut diligent_sys::IBottomLevelASVkVtbl,
-
     blas: &'a BottomLevelAS,
 }
 
@@ -18,13 +16,7 @@ impl<'a> Deref for BottomLevelASVk<'a> {
 
 impl<'a> From<&'a BottomLevelAS> for BottomLevelASVk<'a> {
     fn from(value: &'a BottomLevelAS) -> Self {
-        BottomLevelASVk {
-            blas: value,
-            sys_ptr: value.sys_ptr as *mut diligent_sys::IBottomLevelASVk,
-            virtual_functions: unsafe {
-                (*(value.sys_ptr as *mut diligent_sys::IBottomLevelASVk)).pVtbl
-            },
-        }
+        BottomLevelASVk { blas: value }
     }
 }
 

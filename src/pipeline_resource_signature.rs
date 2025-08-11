@@ -46,10 +46,8 @@ impl From<&ImmutableSamplerDesc<'_>> for diligent_sys::ImmutableSamplerDesc {
     }
 }
 
+#[repr(transparent)]
 pub struct PipelineResourceSignature {
-    pub(crate) sys_ptr: *mut diligent_sys::IPipelineResourceSignature,
-    virtual_functions: *mut diligent_sys::IPipelineResourceSignatureVtbl,
-
     device_object: DeviceObject,
 }
 
@@ -176,9 +174,6 @@ impl PipelineResourceSignature {
         );
 
         PipelineResourceSignature {
-            sys_ptr: pipeline_resource_signature_ptr,
-            virtual_functions: unsafe { (*pipeline_resource_signature_ptr).pVtbl },
-
             device_object: DeviceObject::new(
                 pipeline_resource_signature_ptr as *mut diligent_sys::IDeviceObject,
             ),
@@ -216,7 +211,7 @@ impl PipelineResourceSignature {
             PipelineResourceSignature,
             BindStaticResources,
             shader_stages.bits(),
-            resource_mapping.sys_ptr,
+            resource_mapping.sys_ptr as _,
             flags.bits()
         )
     }
@@ -250,7 +245,7 @@ impl PipelineResourceSignature {
             self,
             PipelineResourceSignature,
             InitializeStaticSRBResources,
-            shader_resource_binding.sys_ptr
+            shader_resource_binding.sys_ptr as _
         )
     }
 
@@ -259,7 +254,7 @@ impl PipelineResourceSignature {
             self,
             PipelineResourceSignature,
             CopyStaticResources,
-            signature.sys_ptr
+            signature.sys_ptr as _
         )
     }
 
@@ -268,7 +263,7 @@ impl PipelineResourceSignature {
             self,
             PipelineResourceSignature,
             IsCompatibleWith,
-            signature.sys_ptr
+            signature.sys_ptr as _
         )
     }
 }

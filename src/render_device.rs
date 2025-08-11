@@ -62,10 +62,8 @@ impl RenderDeviceInfo {
     }
 }
 
+#[repr(transparent)]
 pub struct RenderDevice {
-    pub(crate) sys_ptr: *mut diligent_sys::IRenderDevice,
-    virtual_functions: *mut diligent_sys::IRenderDeviceVtbl,
-
     object: Object,
 }
 
@@ -86,8 +84,6 @@ impl RenderDevice {
         );
 
         RenderDevice {
-            sys_ptr: render_device_ptr,
-            virtual_functions: unsafe { (*render_device_ptr).pVtbl },
             object: Object::new(render_device_ptr as *mut diligent_sys::IObject),
         }
     }
@@ -123,7 +119,7 @@ impl RenderDevice {
         let buffer_data = diligent_sys::BufferData {
             pData: std::ptr::from_ref(buffer_data) as *const c_void,
             DataSize: std::mem::size_of_val(buffer_data) as u64,
-            pContext: device_context.map_or(std::ptr::null_mut(), |context| context.sys_ptr),
+            pContext: device_context.map_or(std::ptr::null_mut(), |context| context.sys_ptr as _),
         };
 
         let buffer_desc = buffer_desc.into();
@@ -183,7 +179,7 @@ impl RenderDevice {
         let texture_data = diligent_sys::TextureData {
             NumSubresources: subresources.len() as u32,
             pSubResources: subresources.as_mut_ptr(),
-            pContext: device_context.map_or(std::ptr::null_mut(), |c| c.sys_ptr),
+            pContext: device_context.map_or(std::ptr::null_mut(), |c| c.sys_ptr as _),
         };
 
         unsafe_member_call!(
@@ -570,9 +566,9 @@ impl RenderDevice {
             _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
                 Name: desc.name.as_ptr(),
             },
-            pRenderPass: desc.render_pass.sys_ptr,
+            pRenderPass: desc.render_pass.sys_ptr as _,
             AttachmentCount: texture_views.len() as u32,
-            ppAttachments: texture_views.as_ptr(),
+            ppAttachments: texture_views.as_ptr() as _,
             Width: desc.width,
             Height: desc.height,
             NumArraySlices: desc.num_array_slices,
@@ -685,7 +681,7 @@ impl RenderDevice {
             Desc: (&create_info.desc).into(),
             InitialSize: create_info.initial_size,
             NumResources: compatible_resources.len() as u32,
-            ppCompatibleResources: compatible_resources.as_mut_ptr(),
+            ppCompatibleResources: compatible_resources.as_mut_ptr() as _,
         };
 
         let mut device_memory_ptr = std::ptr::null_mut();

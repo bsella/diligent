@@ -260,7 +260,7 @@ impl From<&ShaderCreateInfo<'_>> for ShaderCreateInfoWrapper {
             pShaderSourceStreamFactory: value
                 .shader_source_input_stream_factory
                 .map_or(std::ptr::null_mut(), |stream_factory| {
-                    stream_factory.factory_ptr
+                    stream_factory.sys_ptr as _
                 }),
             Source: match value.source {
                 ShaderSource::SourceCode(code) => code.as_ptr() as *const i8,
@@ -328,9 +328,6 @@ impl From<&ShaderCreateInfo<'_>> for ShaderCreateInfoWrapper {
 }
 
 pub struct Shader {
-    pub(crate) sys_ptr: *mut diligent_sys::IShader,
-    virtual_functions: *mut diligent_sys::IShaderVtbl,
-
     device_object: DeviceObject,
 }
 
@@ -351,8 +348,6 @@ impl Shader {
         );
 
         Shader {
-            sys_ptr: shader_ptr,
-            virtual_functions: unsafe { (*shader_ptr).pVtbl },
             device_object: DeviceObject::new(shader_ptr as *mut diligent_sys::IDeviceObject),
         }
     }
@@ -404,11 +399,8 @@ impl Shader {
     }
 }
 
+#[repr(transparent)]
 pub struct ShaderSourceInputStreamFactory {
-    pub(crate) factory_ptr: *mut diligent_sys::IShaderSourceInputStreamFactory,
-    #[allow(dead_code)] // TODO : imlement methods of ShaderSourceInputStreamFactory
-    virtual_functions: *mut diligent_sys::IShaderSourceInputStreamFactoryVtbl,
-
     object: Object,
 }
 
@@ -422,8 +414,6 @@ impl Deref for ShaderSourceInputStreamFactory {
 impl ShaderSourceInputStreamFactory {
     pub(crate) fn new(factory_ptr: *mut diligent_sys::IShaderSourceInputStreamFactory) -> Self {
         ShaderSourceInputStreamFactory {
-            factory_ptr,
-            virtual_functions: unsafe { (*factory_ptr).pVtbl },
             object: Object::new(factory_ptr as *mut diligent_sys::IObject),
         }
     }

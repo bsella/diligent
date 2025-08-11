@@ -7,11 +7,11 @@ const_assert_eq!(API_VERSION, 256008);
 macro_rules! unsafe_member_call {
     ($instance:expr, $type_name: ident, $func_name:ident, $($arg:expr), *) => (
         unsafe {
-            (*$instance.virtual_functions)
+            (*(*($instance.sys_ptr as *mut paste::paste! {diligent_sys::[<I $type_name>]})).pVtbl)
                 .$type_name
                 .$func_name
                 .unwrap_unchecked()(
-                $instance.sys_ptr,
+                $instance.sys_ptr as _,
                 $($arg), *
             )
         }

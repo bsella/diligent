@@ -1,14 +1,11 @@
+#[repr(transparent)]
 pub struct Object {
     pub(crate) sys_ptr: *mut diligent_sys::IObject,
-    pub(crate) virtual_functions: *mut diligent_sys::IObjectVtbl,
 }
 
 impl Object {
     pub(crate) fn new(sys_ptr: *mut diligent_sys::IObject) -> Self {
-        Object {
-            virtual_functions: unsafe { (*sys_ptr).pVtbl },
-            sys_ptr,
-        }
+        Object { sys_ptr }
     }
 
     pub(crate) fn add_ref(&self) {

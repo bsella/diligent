@@ -5,10 +5,8 @@ use static_assertions::const_assert;
 
 use crate::{data_blob::DataBlob, device_object::DeviceObject};
 
+#[repr(transparent)]
 pub struct PipelineStateCache {
-    pub(crate) sys_ptr: *mut diligent_sys::IPipelineStateCache,
-    virtual_functions: *mut diligent_sys::IPipelineStateCacheVtbl,
-
     device_object: DeviceObject,
 }
 
@@ -95,8 +93,6 @@ impl PipelineStateCache {
                 == std::mem::size_of::<diligent_sys::IPipelineStateCache>()
         );
         PipelineStateCache {
-            sys_ptr: fence_ptr,
-            virtual_functions: unsafe { (*fence_ptr).pVtbl },
             device_object: DeviceObject::new(fence_ptr as *mut diligent_sys::IDeviceObject),
         }
     }

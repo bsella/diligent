@@ -76,7 +76,7 @@ impl<'a> From<&TLASBuildInstanceData<'a>> for diligent_sys::TLASBuildInstanceDat
     fn from(value: &TLASBuildInstanceData<'a>) -> Self {
         Self {
             InstanceName: value.instance_name.as_ptr(),
-            pBLAS: value.blas.sys_ptr,
+            pBLAS: value.blas.sys_ptr as _,
             Transform: diligent_sys::InstanceMatrix {
                 data: [
                     [
@@ -139,10 +139,8 @@ impl From<&TopLevelASDesc> for diligent_sys::TopLevelASDesc {
     }
 }
 
+#[repr(transparent)]
 pub struct TopLevelAS {
-    pub(crate) sys_ptr: *mut diligent_sys::ITopLevelAS,
-    virtual_functions: *mut diligent_sys::ITopLevelASVtbl,
-
     device_object: DeviceObject,
 }
 
@@ -163,8 +161,6 @@ impl TopLevelAS {
         );
 
         Self {
-            sys_ptr,
-            virtual_functions: unsafe { (*sys_ptr).pVtbl },
             device_object: DeviceObject::new(sys_ptr as *mut diligent_sys::IDeviceObject),
         }
     }

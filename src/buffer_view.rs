@@ -21,9 +21,6 @@ impl From<BufferViewType> for diligent_sys::BUFFER_VIEW_TYPE {
 }
 
 pub struct BufferView<'a> {
-    // sys_ptr is used in the interop feature but we get a warning when the interop feature is not exabled
-    #[allow(dead_code)]
-    pub(crate) sys_ptr: *mut diligent_sys::IBufferView,
     buffer: &'a Buffer,
 
     device_object: DeviceObject,
@@ -46,7 +43,6 @@ impl<'a> BufferView<'a> {
         );
 
         BufferView {
-            sys_ptr: buffer_view_ptr,
             buffer,
             device_object: DeviceObject::new(buffer_view_ptr as *mut diligent_sys::IDeviceObject),
         }

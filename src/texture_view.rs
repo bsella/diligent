@@ -30,8 +30,6 @@ impl From<TextureViewType> for diligent_sys::TEXTURE_VIEW_TYPE {
 }
 
 pub struct TextureView {
-    pub(crate) sys_ptr: *mut diligent_sys::ITextureView,
-    virtual_functions: *mut diligent_sys::ITextureViewVtbl,
     texture: *const Texture,
 
     pub(crate) device_object: DeviceObject,
@@ -57,15 +55,13 @@ impl TextureView {
         );
 
         TextureView {
-            virtual_functions: unsafe { (*texture_view_ptr).pVtbl },
-            sys_ptr: texture_view_ptr,
             texture,
             device_object: DeviceObject::new(texture_view_ptr as *mut diligent_sys::IDeviceObject),
         }
     }
 
     pub fn set_sampler(&mut self, sampler: &Sampler) {
-        unsafe_member_call!(self, TextureView, SetSampler, sampler.sys_ptr);
+        unsafe_member_call!(self, TextureView, SetSampler, sampler.sys_ptr as _);
     }
 
     pub fn get_sampler(&self) -> Result<&Sampler, ()> {

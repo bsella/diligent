@@ -56,9 +56,6 @@ impl From<&EngineGLCreateInfo> for diligent_sys::EngineGLCreateInfo {
 }
 
 pub struct EngineFactoryOpenGL {
-    sys_ptr: *mut diligent_sys::IEngineFactoryOpenGL,
-    virtual_functions: *mut diligent_sys::IEngineFactoryOpenGLVtbl,
-
     engine_factory: EngineFactory,
 }
 
@@ -77,7 +74,7 @@ impl EngineFactoryOpenGL {
     ) -> Result<(RenderDevice, ImmediateDeviceContext, SwapChain), ()> {
         let engine_ci = engine_ci.into();
 
-        let mut render_device_ptr = std::ptr::null_mut();
+        let mut render_device_ptr: *mut diligent_sys::IRenderDevice = std::ptr::null_mut();
         let mut device_context_ptr = std::ptr::null_mut();
         let mut swap_chain_ptr = std::ptr::null_mut();
 
@@ -91,7 +88,7 @@ impl EngineFactoryOpenGL {
             std::ptr::addr_of_mut!(render_device_ptr),
             std::ptr::addr_of_mut!(device_context_ptr),
             std::ptr::from_ref(&swap_chain_desc),
-            std::ptr::addr_of_mut!(swap_chain_ptr),
+            std::ptr::addr_of_mut!(swap_chain_ptr)
         );
 
         if render_device_ptr.is_null() {
@@ -147,9 +144,6 @@ pub fn get_engine_factory_gl() -> EngineFactoryOpenGL {
     );
 
     EngineFactoryOpenGL {
-        sys_ptr: engine_factory_gl,
-        virtual_functions: unsafe { (*engine_factory_gl).pVtbl },
-
         engine_factory: EngineFactory::new(engine_factory_gl as _),
     }
 }

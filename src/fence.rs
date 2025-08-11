@@ -5,10 +5,8 @@ use static_assertions::const_assert;
 
 use crate::device_object::DeviceObject;
 
+#[repr(transparent)]
 pub struct Fence {
-    pub(crate) sys_ptr: *mut diligent_sys::IFence,
-    virtual_functions: *mut diligent_sys::IFenceVtbl,
-
     device_object: DeviceObject,
 }
 
@@ -59,8 +57,6 @@ impl Fence {
                 == std::mem::size_of::<diligent_sys::IFence>()
         );
         Fence {
-            sys_ptr: fence_ptr,
-            virtual_functions: unsafe { (*fence_ptr).pVtbl },
             device_object: DeviceObject::new(fence_ptr as *mut diligent_sys::IDeviceObject),
         }
     }

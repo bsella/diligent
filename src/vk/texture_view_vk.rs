@@ -2,10 +2,8 @@ use std::ops::Deref;
 
 use crate::texture_view::TextureView;
 
+#[repr(transparent)]
 pub struct TextureViewVk<'a> {
-    sys_ptr: *mut diligent_sys::ITextureViewVk,
-    virtual_functions: *mut diligent_sys::ITextureViewVkVtbl,
-
     texture_view: &'a TextureView,
 }
 
@@ -20,10 +18,6 @@ impl<'a> From<&'a TextureView> for TextureViewVk<'a> {
     fn from(value: &'a TextureView) -> Self {
         TextureViewVk {
             texture_view: value,
-            sys_ptr: value.sys_ptr as *mut diligent_sys::ITextureViewVk,
-            virtual_functions: unsafe {
-                (*(value.sys_ptr as *mut diligent_sys::ITextureViewVk)).pVtbl
-            },
         }
     }
 }
