@@ -604,7 +604,7 @@ impl SampleBase for Tessellation {
         };
 
         // Set the pipeline state
-        immediate_context.set_pipeline_state(pso);
+        let graphics = immediate_context.set_graphics_pipeline_state(pso);
 
         // Commit shader resources. RESOURCE_STATE_TRANSITION_MODE_TRANSITION mode
         // makes sure that resources are transitioned to required states.
@@ -615,7 +615,7 @@ impl SampleBase for Tessellation {
             .flags(DrawFlags::VerifyAll)
             .build();
 
-        immediate_context.draw(&draw_attribs);
+        graphics.draw(&draw_attribs);
     }
 
     fn get_name() -> &'static str {

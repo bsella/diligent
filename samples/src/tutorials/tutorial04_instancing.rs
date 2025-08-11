@@ -380,7 +380,7 @@ impl SampleBase for Instancing {
         }
 
         // Set the pipeline state
-        immediate_context.set_pipeline_state(&self.pipeline_state);
+        let graphics = immediate_context.set_graphics_pipeline_state(&self.pipeline_state);
 
         // Commit shader resources. RESOURCE_STATE_TRANSITION_MODE_TRANSITION mode
         // makes sure that resources are transitioned to required states.
@@ -395,7 +395,7 @@ impl SampleBase for Instancing {
             .flags(DrawFlags::VerifyAll)
             .build();
 
-        immediate_context.draw_indexed(&draw_attribs);
+        graphics.draw_indexed(&draw_attribs);
     }
 
     fn get_name() -> &'static str {

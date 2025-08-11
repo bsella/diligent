@@ -354,14 +354,14 @@ impl SampleBase for Cube {
         );
 
         // Set the pipeline state
-        immediate_context.set_pipeline_state(&self.pipeline_state);
+        let graphics = immediate_context.set_graphics_pipeline_state(&self.pipeline_state);
 
         // Commit shader resources. RESOURCE_STATE_TRANSITION_MODE_TRANSITION mode
         // makes sure that resources are transitioned to required states.
         immediate_context
             .commit_shader_resources(&self.srb, ResourceStateTransitionMode::Transition);
 
-        immediate_context.draw_indexed(
+        graphics.draw_indexed(
             &DrawIndexedAttribs::builder()
                 .num_indices(36)
                 .index_type(ValueType::Uint32)

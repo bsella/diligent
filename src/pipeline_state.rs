@@ -371,6 +371,20 @@ where
         )
     }
 
+    pub fn mesh(
+        self,
+        name: impl AsRef<str>,
+    ) -> GraphicsPipelineStateCreateInfoBuilder<
+        'a,
+        graphics_pipeline_state_create_info_builder::SetPipelineStateCreateInfo,
+    > {
+        GraphicsPipelineStateCreateInfo::builder().pipeline_state_create_info(
+            self.name(name)
+                .pipeline_type(diligent_sys::PIPELINE_TYPE_MESH as _)
+                .build(),
+        )
+    }
+
     pub fn raytracing(
         self,
         name: impl AsRef<str>,

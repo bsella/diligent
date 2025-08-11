@@ -1304,8 +1304,10 @@ impl SampleBase for RayTracing {
                     SetShaderResourceFlags::None,
                 );
 
-            self.immediate_context
-                .set_pipeline_state(&self.ray_tracing_pso);
+            let ray_tracing = self
+                .immediate_context
+                .set_ray_tracing_pipeline_state(&self.ray_tracing_pso);
+
             self.immediate_context.commit_shader_resources(
                 &self.ray_tracing_srb,
                 ResourceStateTransitionMode::Transition,
@@ -1319,7 +1321,7 @@ impl SampleBase for RayTracing {
                 .dimension_y(swap_chain_desc.height)
                 .build();
 
-            self.immediate_context.trace_rays(&attribs);
+            ray_tracing.trace_rays(&attribs);
         }
 
         // Blit to swapchain image
@@ -1342,14 +1344,15 @@ impl SampleBase for RayTracing {
                 ResourceStateTransitionMode::Transition,
             );
 
-            self.immediate_context
-                .set_pipeline_state(&self.image_blit_pso);
+            let blit = self
+                .immediate_context
+                .set_graphics_pipeline_state(&self.image_blit_pso);
             self.immediate_context.commit_shader_resources(
                 &self.image_blit_srb,
                 ResourceStateTransitionMode::Transition,
             );
 
-            self.immediate_context.draw(
+            blit.draw(
                 &DrawAttribs::builder()
                     .num_vertices(3)
                     .flags(DrawFlags::VerifyAll)

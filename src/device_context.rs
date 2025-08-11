@@ -16,7 +16,9 @@ use crate::{
         TextureFormat, ValueType,
     },
     object::Object,
-    pipeline_state::PipelineState,
+    pipeline_state::{
+        ComputePipelineState, GraphicsPipelineState, RayTracingPipelineState, TilePipelineState,
+    },
     query::{GetSysQueryType, Query},
     render_pass::RenderPass,
     shader_binding_table::ShaderBindingTable,
@@ -880,6 +882,240 @@ impl<'a, QueryDataType: GetSysQueryType + Default> Drop for ScopedQueryToken<'a,
     }
 }
 
+pub struct GraphicsPipelineToken<'a> {
+    context: &'a DeviceContext,
+}
+
+impl<'a> GraphicsPipelineToken<'a> {
+    pub fn draw(&self, attribs: &DrawAttribs) {
+        let attribs = attribs.into();
+        unsafe {
+            (*self.context.virtual_functions)
+                .DeviceContext
+                .Draw
+                .unwrap_unchecked()(self.context.sys_ptr, std::ptr::from_ref(&attribs))
+        }
+    }
+
+    pub fn draw_indexed(&self, attribs: &DrawIndexedAttribs) {
+        let attribs = attribs.into();
+        unsafe {
+            (*self.context.virtual_functions)
+                .DeviceContext
+                .DrawIndexed
+                .unwrap_unchecked()(self.context.sys_ptr, std::ptr::from_ref(&attribs))
+        }
+    }
+
+    pub fn draw_indirect(&self, attribs: &DrawIndirectAttribs) {
+        let attribs = attribs.into();
+        unsafe {
+            (*self.context.virtual_functions)
+                .DeviceContext
+                .DrawIndirect
+                .unwrap_unchecked()(self.context.sys_ptr, std::ptr::from_ref(&attribs))
+        }
+    }
+
+    pub fn draw_indexed_indirect(&self, attribs: &DrawIndexedIndirectAttribs) {
+        let attribs = attribs.into();
+        unsafe {
+            (*self.context.virtual_functions)
+                .DeviceContext
+                .DrawIndexedIndirect
+                .unwrap_unchecked()(self.context.sys_ptr, std::ptr::from_ref(&attribs))
+        }
+    }
+
+    pub fn multi_draw(&self, attribs: &MultiDrawAttribs) {
+        let draw_items = attribs
+            .draw_items
+            .iter()
+            .map(|item| diligent_sys::MultiDrawItem {
+                NumVertices: item.num_vertices,
+                StartVertexLocation: item.start_vertex_location,
+            })
+            .collect::<Vec<_>>();
+        let attribs = diligent_sys::MultiDrawAttribs {
+            DrawCount: draw_items.len() as u32,
+            pDrawItems: draw_items.as_ptr(),
+            Flags: attribs.flags.bits(),
+            NumInstances: attribs.num_instances,
+            FirstInstanceLocation: attribs.first_instance_location,
+        };
+        unsafe {
+            (*self.context.virtual_functions)
+                .DeviceContext
+                .MultiDraw
+                .unwrap_unchecked()(self.context.sys_ptr, std::ptr::from_ref(&attribs))
+        }
+    }
+
+    pub fn multi_draw_indexed(&self, attribs: &MultiDrawIndexedAttribs) {
+        let draw_items = attribs
+            .draw_items
+            .iter()
+            .map(|item| diligent_sys::MultiDrawIndexedItem {
+                NumIndices: item.num_vertices,
+                FirstIndexLocation: item.first_index_location,
+                BaseVertex: item.base_vertex,
+            })
+            .collect::<Vec<_>>();
+        let attribs = diligent_sys::MultiDrawIndexedAttribs {
+            DrawCount: draw_items.len() as u32,
+            pDrawItems: draw_items.as_ptr(),
+            IndexType: attribs.index_type.into(),
+            Flags: attribs.flags.bits(),
+            NumInstances: attribs.num_instances,
+            FirstInstanceLocation: attribs.first_instance_location,
+        };
+        unsafe {
+            (*self.context.virtual_functions)
+                .DeviceContext
+                .MultiDrawIndexed
+                .unwrap_unchecked()(self.context.sys_ptr, std::ptr::from_ref(&attribs))
+        }
+    }
+}
+
+pub struct MeshPipelineToken<'a> {
+    context: &'a DeviceContext,
+}
+
+impl<'a> MeshPipelineToken<'a> {
+    pub fn draw_mesh(&self, attribs: &DrawMeshAttribs) {
+        let attribs = attribs.into();
+        unsafe {
+            (*self.context.virtual_functions)
+                .DeviceContext
+                .DrawMesh
+                .unwrap_unchecked()(self.context.sys_ptr, std::ptr::from_ref(&attribs))
+        }
+    }
+
+    pub fn draw_mesh_indirect(&self, attribs: &DrawMeshIndirectAttribs) {
+        let attribs = attribs.into();
+        unsafe {
+            (*self.context.virtual_functions)
+                .DeviceContext
+                .DrawMeshIndirect
+                .unwrap_unchecked()(self.context.sys_ptr, std::ptr::from_ref(&attribs))
+        }
+    }
+}
+
+pub struct ComputePipelineToken<'a> {
+    context: &'a DeviceContext,
+}
+
+impl<'a> ComputePipelineToken<'a> {
+    pub fn dispatch_compute(&self, attribs: &DispatchComputeAttribs) {
+        let attribs = diligent_sys::DispatchComputeAttribs {
+            ThreadGroupCountX: attribs.thread_group_count_x,
+            ThreadGroupCountY: attribs.thread_group_count_y,
+            ThreadGroupCountZ: attribs.thread_group_count_z,
+
+            #[cfg(feature = "metal")]
+            MtlThreadGroupSizeX: attribs.mtl_thread_group_size_x,
+            #[cfg(feature = "metal")]
+            MtlThreadGroupSizeY: attribs.mtl_thread_group_size_y,
+            #[cfg(feature = "metal")]
+            MtlThreadGroupSizeZ: attribs.mtl_thread_group_size_z,
+
+            #[cfg(not(feature = "metal"))]
+            MtlThreadGroupSizeX: 0,
+            #[cfg(not(feature = "metal"))]
+            MtlThreadGroupSizeY: 0,
+            #[cfg(not(feature = "metal"))]
+            MtlThreadGroupSizeZ: 0,
+        };
+        unsafe {
+            (*self.context.virtual_functions)
+                .DeviceContext
+                .DispatchCompute
+                .unwrap_unchecked()(self.context.sys_ptr, std::ptr::from_ref(&attribs))
+        }
+    }
+
+    pub fn dispatch_compute_indirect(&self, attribs: &DispatchComputeIndirectAttribs) {
+        let attribs = diligent_sys::DispatchComputeIndirectAttribs {
+            pAttribsBuffer: attribs.attribs_buffer.sys_ptr,
+            AttribsBufferStateTransitionMode: attribs.attribs_buffer_state_transition_mode.into(),
+            DispatchArgsByteOffset: attribs.dispatch_args_byte_offset,
+            #[cfg(feature = "metal")]
+            MtlThreadGroupSizeX: attribs.mtl_thread_group_size_x,
+            #[cfg(feature = "metal")]
+            MtlThreadGroupSizeY: attribs.mtl_thread_group_size_y,
+            #[cfg(feature = "metal")]
+            MtlThreadGroupSizeZ: attribs.mtl_thread_group_size_z,
+            #[cfg(not(feature = "metal"))]
+            MtlThreadGroupSizeX: 0,
+            #[cfg(not(feature = "metal"))]
+            MtlThreadGroupSizeY: 0,
+            #[cfg(not(feature = "metal"))]
+            MtlThreadGroupSizeZ: 0,
+        };
+        unsafe {
+            (*self.context.virtual_functions)
+                .DeviceContext
+                .DispatchComputeIndirect
+                .unwrap_unchecked()(self.context.sys_ptr, std::ptr::from_ref(&attribs))
+        }
+    }
+}
+
+pub struct TilePipelineToken<'a> {
+    context: &'a DeviceContext,
+}
+
+impl<'a> TilePipelineToken<'a> {
+    pub fn dispatch_tile(&self, attribs: &DispatchTileAttribs) {
+        let attribs = diligent_sys::DispatchTileAttribs {
+            ThreadsPerTileX: attribs.threads_per_tile_x,
+            ThreadsPerTileY: attribs.threads_per_tile_y,
+            Flags: attribs.flags.bits(),
+        };
+        unsafe {
+            (*self.context.virtual_functions)
+                .DeviceContext
+                .DispatchTile
+                .unwrap_unchecked()(self.context.sys_ptr, std::ptr::from_ref(&attribs))
+        }
+    }
+}
+
+pub struct RayTracingPipelineToken<'a> {
+    context: &'a DeviceContext,
+}
+
+impl<'a> RayTracingPipelineToken<'a> {
+    pub fn trace_rays(&self, attribs: &TraceRaysAttribs) {
+        let attribs = diligent_sys::TraceRaysAttribs {
+            pSBT: attribs.sbt.sys_ptr,
+            DimensionX: attribs.dimension_x,
+            DimensionY: attribs.dimension_y,
+            DimensionZ: attribs.dimension_z,
+        };
+
+        unsafe {
+            (*self.context.virtual_functions)
+                .DeviceContext
+                .TraceRays
+                .unwrap_unchecked()(self.context.sys_ptr, std::ptr::from_ref(&attribs))
+        }
+    }
+
+    // TODO
+    pub fn trace_rays_indirect(&self, attribs: &diligent_sys::TraceRaysIndirectAttribs) {
+        unsafe {
+            (*self.context.virtual_functions)
+                .DeviceContext
+                .TraceRaysIndirect
+                .unwrap_unchecked()(self.context.sys_ptr, std::ptr::from_ref(attribs))
+        }
+    }
+}
+
 pub struct DeviceContext {
     pub(crate) sys_ptr: *mut diligent_sys::IDeviceContext,
     pub(crate) virtual_functions: *mut diligent_sys::IDeviceContextVtbl,
@@ -902,13 +1138,74 @@ impl DeviceContext {
         }
     }
 
-    pub fn set_pipeline_state(&self, pipeline_state: &PipelineState) {
+    pub fn set_graphics_pipeline_state(
+        &self,
+        pipeline_state: &GraphicsPipelineState,
+    ) -> GraphicsPipelineToken<'_> {
         unsafe {
             (*self.virtual_functions)
                 .DeviceContext
                 .SetPipelineState
                 .unwrap_unchecked()(self.sys_ptr, pipeline_state.sys_ptr)
-        }
+        };
+
+        GraphicsPipelineToken { context: self }
+    }
+
+    pub fn set_mesh_pipeline_state(
+        &self,
+        pipeline_state: &GraphicsPipelineState,
+    ) -> GraphicsPipelineToken<'_> {
+        unsafe {
+            (*self.virtual_functions)
+                .DeviceContext
+                .SetPipelineState
+                .unwrap_unchecked()(self.sys_ptr, pipeline_state.sys_ptr)
+        };
+
+        GraphicsPipelineToken { context: self }
+    }
+
+    pub fn set_compute_pipeline_state(
+        &self,
+        pipeline_state: &ComputePipelineState,
+    ) -> ComputePipelineToken<'_> {
+        unsafe {
+            (*self.virtual_functions)
+                .DeviceContext
+                .SetPipelineState
+                .unwrap_unchecked()(self.sys_ptr, pipeline_state.sys_ptr)
+        };
+
+        ComputePipelineToken { context: self }
+    }
+
+    pub fn set_tile_pipeline_state(
+        &self,
+        pipeline_state: &TilePipelineState,
+    ) -> TilePipelineToken<'_> {
+        unsafe {
+            (*self.virtual_functions)
+                .DeviceContext
+                .SetPipelineState
+                .unwrap_unchecked()(self.sys_ptr, pipeline_state.sys_ptr)
+        };
+
+        TilePipelineToken { context: self }
+    }
+
+    pub fn set_ray_tracing_pipeline_state(
+        &self,
+        pipeline_state: &RayTracingPipelineState,
+    ) -> RayTracingPipelineToken<'_> {
+        unsafe {
+            (*self.virtual_functions)
+                .DeviceContext
+                .SetPipelineState
+                .unwrap_unchecked()(self.sys_ptr, pipeline_state.sys_ptr)
+        };
+
+        RayTracingPipelineToken { context: self }
     }
 
     pub fn transition_shader_resources(&self, shader_resource_binding: &ShaderResourceBinding) {
@@ -1087,184 +1384,6 @@ impl DeviceContext {
 
     pub fn new_render_pass(&self, attribs: &BeginRenderPassAttribs) -> RenderPassToken<'_> {
         RenderPassToken::new(self, attribs)
-    }
-
-    pub fn draw(&self, attribs: &DrawAttribs) {
-        let attribs = attribs.into();
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .Draw
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(&attribs))
-        }
-    }
-
-    pub fn draw_indexed(&self, attribs: &DrawIndexedAttribs) {
-        let attribs = attribs.into();
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .DrawIndexed
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(&attribs))
-        }
-    }
-
-    pub fn draw_indirect(&self, attribs: &DrawIndirectAttribs) {
-        let attribs = attribs.into();
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .DrawIndirect
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(&attribs))
-        }
-    }
-
-    pub fn draw_indexed_indirect(&self, attribs: &DrawIndexedIndirectAttribs) {
-        let attribs = attribs.into();
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .DrawIndexedIndirect
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(&attribs))
-        }
-    }
-
-    pub fn draw_mesh(&self, attribs: &DrawMeshAttribs) {
-        let attribs = attribs.into();
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .DrawMesh
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(&attribs))
-        }
-    }
-
-    pub fn draw_mesh_indirect(&self, attribs: &DrawMeshIndirectAttribs) {
-        let attribs = attribs.into();
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .DrawMeshIndirect
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(&attribs))
-        }
-    }
-
-    pub fn multi_draw(&self, attribs: &MultiDrawAttribs) {
-        let draw_items = attribs
-            .draw_items
-            .iter()
-            .map(|item| diligent_sys::MultiDrawItem {
-                NumVertices: item.num_vertices,
-                StartVertexLocation: item.start_vertex_location,
-            })
-            .collect::<Vec<_>>();
-        let attribs = diligent_sys::MultiDrawAttribs {
-            DrawCount: draw_items.len() as u32,
-            pDrawItems: draw_items.as_ptr(),
-            Flags: attribs.flags.bits(),
-            NumInstances: attribs.num_instances,
-            FirstInstanceLocation: attribs.first_instance_location,
-        };
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .MultiDraw
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(&attribs))
-        }
-    }
-
-    pub fn multi_draw_indexed(&self, attribs: &MultiDrawIndexedAttribs) {
-        let draw_items = attribs
-            .draw_items
-            .iter()
-            .map(|item| diligent_sys::MultiDrawIndexedItem {
-                NumIndices: item.num_vertices,
-                FirstIndexLocation: item.first_index_location,
-                BaseVertex: item.base_vertex,
-            })
-            .collect::<Vec<_>>();
-        let attribs = diligent_sys::MultiDrawIndexedAttribs {
-            DrawCount: draw_items.len() as u32,
-            pDrawItems: draw_items.as_ptr(),
-            IndexType: attribs.index_type.into(),
-            Flags: attribs.flags.bits(),
-            NumInstances: attribs.num_instances,
-            FirstInstanceLocation: attribs.first_instance_location,
-        };
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .MultiDrawIndexed
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(&attribs))
-        }
-    }
-
-    pub fn dispatch_compute(&self, attribs: &DispatchComputeAttribs) {
-        let attribs = diligent_sys::DispatchComputeAttribs {
-            ThreadGroupCountX: attribs.thread_group_count_x,
-            ThreadGroupCountY: attribs.thread_group_count_y,
-            ThreadGroupCountZ: attribs.thread_group_count_z,
-
-            #[cfg(feature = "metal")]
-            MtlThreadGroupSizeX: attribs.mtl_thread_group_size_x,
-            #[cfg(feature = "metal")]
-            MtlThreadGroupSizeY: attribs.mtl_thread_group_size_y,
-            #[cfg(feature = "metal")]
-            MtlThreadGroupSizeZ: attribs.mtl_thread_group_size_z,
-
-            #[cfg(not(feature = "metal"))]
-            MtlThreadGroupSizeX: 0,
-            #[cfg(not(feature = "metal"))]
-            MtlThreadGroupSizeY: 0,
-            #[cfg(not(feature = "metal"))]
-            MtlThreadGroupSizeZ: 0,
-        };
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .DispatchCompute
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(&attribs))
-        }
-    }
-
-    pub fn dispatch_compute_indirect(&self, attribs: &DispatchComputeIndirectAttribs) {
-        let attribs = diligent_sys::DispatchComputeIndirectAttribs {
-            pAttribsBuffer: attribs.attribs_buffer.sys_ptr,
-            AttribsBufferStateTransitionMode: attribs.attribs_buffer_state_transition_mode.into(),
-            DispatchArgsByteOffset: attribs.dispatch_args_byte_offset,
-            #[cfg(feature = "metal")]
-            MtlThreadGroupSizeX: attribs.mtl_thread_group_size_x,
-            #[cfg(feature = "metal")]
-            MtlThreadGroupSizeY: attribs.mtl_thread_group_size_y,
-            #[cfg(feature = "metal")]
-            MtlThreadGroupSizeZ: attribs.mtl_thread_group_size_z,
-            #[cfg(not(feature = "metal"))]
-            MtlThreadGroupSizeX: 0,
-            #[cfg(not(feature = "metal"))]
-            MtlThreadGroupSizeY: 0,
-            #[cfg(not(feature = "metal"))]
-            MtlThreadGroupSizeZ: 0,
-        };
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .DispatchComputeIndirect
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(&attribs))
-        }
-    }
-
-    pub fn dispatch_tile(&self, attribs: &DispatchTileAttribs) {
-        let attribs = diligent_sys::DispatchTileAttribs {
-            ThreadsPerTileX: attribs.threads_per_tile_x,
-            ThreadsPerTileY: attribs.threads_per_tile_y,
-            Flags: attribs.flags.bits(),
-        };
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .DispatchTile
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(&attribs))
-        }
     }
 
     pub fn get_tile_size(&self) -> (u32, u32) {
@@ -1773,31 +1892,6 @@ impl DeviceContext {
             (*self.virtual_functions)
                 .DeviceContext
                 .WriteTLASCompactedSize
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(attribs))
-        }
-    }
-
-    pub fn trace_rays(&self, attribs: &TraceRaysAttribs) {
-        let attribs = diligent_sys::TraceRaysAttribs {
-            pSBT: attribs.sbt.sys_ptr,
-            DimensionX: attribs.dimension_x,
-            DimensionY: attribs.dimension_y,
-            DimensionZ: attribs.dimension_z,
-        };
-
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .TraceRays
-                .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(&attribs))
-        }
-    }
-
-    pub fn trace_rays_indirect(&self, attribs: &diligent_sys::TraceRaysIndirectAttribs) {
-        unsafe {
-            (*self.virtual_functions)
-                .DeviceContext
-                .TraceRaysIndirect
                 .unwrap_unchecked()(self.sys_ptr, std::ptr::from_ref(attribs))
         }
     }

@@ -831,7 +831,7 @@ impl ImguiRenderer {
         }
 
         // Setup the render state
-        {
+        let pipeline_token = {
             // Setup shader and vertex buffers
             device_context.set_vertex_buffers(
                 &[(vertex_buffer, 0)],
@@ -843,7 +843,8 @@ impl ImguiRenderer {
                 0,
                 ResourceStateTransitionMode::Transition,
             );
-            device_context.set_pipeline_state(&self.pipeline_state);
+
+            let pipeline_token = device_context.set_graphics_pipeline_state(&self.pipeline_state);
 
             device_context.set_blend_factors(Some(&[0.0, 0.0, 0.0, 0.0]));
 
@@ -861,7 +862,9 @@ impl ImguiRenderer {
                 draw_data.display_size[0] as u32,
                 draw_data.display_size[1] as u32,
             );
-        }
+
+            pipeline_token
+        };
 
         // Render command lists
         // (Because we merged all buffers into a single one, we maintain our own offset into them)
@@ -953,7 +956,7 @@ impl ImguiRenderer {
                                 draw_attribs.build()
                             }
                         };
-                        device_context.draw_indexed(&draw_attribs);
+                        pipeline_token.draw_indexed(&draw_attribs);
                     }
                     imgui::DrawCmd::RawCallback { callback, raw_cmd } => unsafe {
                         callback(cmd_list.raw(), raw_cmd);

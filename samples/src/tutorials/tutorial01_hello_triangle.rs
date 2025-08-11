@@ -175,11 +175,11 @@ void main(in PSInput PSIn, out PSOutput PSOut)
         immediate_context.clear_depth(&mut dsv, 1.0, ResourceStateTransitionMode::Transition);
 
         // Set the pipeline state in the immediate context
-        immediate_context.set_pipeline_state(&self.pipeline_state);
+        let graphics = immediate_context.set_graphics_pipeline_state(&self.pipeline_state);
 
         // Typically we should now call CommitShaderResources(), however shaders in this example don't
         // use any resources.
-        immediate_context.draw(&DrawAttribs::builder().num_vertices(3).build());
+        graphics.draw(&DrawAttribs::builder().num_vertices(3).build());
     }
 
     fn get_name() -> &'static str {
