@@ -1,15 +1,18 @@
-use crate::{device_object::DeviceObject, fence::Fence};
+use std::ops::Deref;
+
+use crate::fence::Fence;
 
 pub struct FenceVk<'a> {
-    fence_ptr: *mut diligent_sys::IFenceVk,
+    sys_ptr: *mut diligent_sys::IFenceVk,
     virtual_functions: *mut diligent_sys::IFenceVkVtbl,
 
     fence: &'a Fence,
 }
 
-impl AsRef<DeviceObject> for FenceVk<'_> {
-    fn as_ref(&self) -> &DeviceObject {
-        self.fence.as_ref()
+impl Deref for FenceVk<'_> {
+    type Target = Fence;
+    fn deref(&self) -> &Self::Target {
+        self.fence
     }
 }
 
@@ -17,7 +20,7 @@ impl<'a> From<&'a Fence> for FenceVk<'a> {
     fn from(value: &'a Fence) -> Self {
         FenceVk {
             fence: value,
-            fence_ptr: value.sys_ptr as *mut diligent_sys::IFenceVk,
+            sys_ptr: value.sys_ptr as *mut diligent_sys::IFenceVk,
             virtual_functions: unsafe { (*(value.sys_ptr as *mut diligent_sys::IFenceVk)).pVtbl },
         }
     }
@@ -29,7 +32,7 @@ impl FenceVk<'_> {
             (*self.virtual_functions)
                 .FenceVk
                 .GetVkSemaphore
-                .unwrap_unchecked()(self.fence_ptr)
+                .unwrap_unchecked()(self.sys_ptr)
         }
     }
 }

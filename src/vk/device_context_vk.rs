@@ -1,15 +1,18 @@
-use crate::{buffer::Buffer, device_context::DeviceContext, object::Object, texture::Texture};
+use std::ops::Deref;
+
+use crate::{buffer::Buffer, device_context::DeviceContext, texture::Texture};
 
 pub struct DeviceContextVk<'a> {
-    device_context_ptr: *mut diligent_sys::IDeviceContextVk,
+    sys_ptr: *mut diligent_sys::IDeviceContextVk,
     virtual_functions: *mut diligent_sys::IDeviceContextVkVtbl,
 
     device_context: &'a DeviceContext,
 }
 
-impl AsRef<Object> for DeviceContextVk<'_> {
-    fn as_ref(&self) -> &Object {
-        self.device_context.as_ref()
+impl Deref for DeviceContextVk<'_> {
+    type Target = DeviceContext;
+    fn deref(&self) -> &Self::Target {
+        self.device_context
     }
 }
 
@@ -17,7 +20,7 @@ impl<'a> From<&'a DeviceContext> for DeviceContextVk<'a> {
     fn from(value: &'a DeviceContext) -> Self {
         DeviceContextVk {
             device_context: value,
-            device_context_ptr: value.sys_ptr as *mut diligent_sys::IDeviceContextVk,
+            sys_ptr: value.sys_ptr as *mut diligent_sys::IDeviceContextVk,
             virtual_functions: unsafe {
                 (*(value.sys_ptr as *mut diligent_sys::IDeviceContextVk)).pVtbl
             },
@@ -35,7 +38,7 @@ impl DeviceContextVk<'_> {
             (*self.virtual_functions)
                 .DeviceContextVk
                 .TransitionImageLayout
-                .unwrap_unchecked()(self.device_context_ptr, texture.sys_ptr, new_layout)
+                .unwrap_unchecked()(self.sys_ptr, texture.sys_ptr, new_layout)
         }
     }
 
@@ -48,9 +51,7 @@ impl DeviceContextVk<'_> {
             (*self.virtual_functions)
                 .DeviceContextVk
                 .BufferMemoryBarrier
-                .unwrap_unchecked()(
-                self.device_context_ptr, buffer.sys_ptr, new_access_flags
-            )
+                .unwrap_unchecked()(self.sys_ptr, buffer.sys_ptr, new_access_flags)
         }
     }
 
@@ -59,7 +60,7 @@ impl DeviceContextVk<'_> {
             (*self.virtual_functions)
                 .DeviceContextVk
                 .GetVkCommandBuffer
-                .unwrap_unchecked()(self.device_context_ptr)
+                .unwrap_unchecked()(self.sys_ptr)
         }
     }
 }

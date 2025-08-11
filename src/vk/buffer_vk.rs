@@ -1,15 +1,18 @@
-use crate::{buffer::Buffer, device_object::DeviceObject};
+use std::ops::Deref;
+
+use crate::buffer::Buffer;
 
 pub struct BufferVk<'a> {
-    buffer_ptr: *mut diligent_sys::IBufferVk,
+    sys_ptr: *mut diligent_sys::IBufferVk,
     virtual_functions: *mut diligent_sys::IBufferVkVtbl,
 
     buffer: &'a Buffer,
 }
 
-impl AsRef<DeviceObject> for BufferVk<'_> {
-    fn as_ref(&self) -> &DeviceObject {
-        self.buffer.as_ref()
+impl<'a> Deref for BufferVk<'a> {
+    type Target = Buffer;
+    fn deref(&self) -> &Self::Target {
+        self.buffer
     }
 }
 
@@ -17,7 +20,7 @@ impl<'a> From<&'a Buffer> for BufferVk<'a> {
     fn from(value: &'a Buffer) -> Self {
         BufferVk {
             buffer: value,
-            buffer_ptr: value.sys_ptr as *mut diligent_sys::IBufferVk,
+            sys_ptr: value.sys_ptr as *mut diligent_sys::IBufferVk,
             virtual_functions: unsafe { (*(value.sys_ptr as *mut diligent_sys::IBufferVk)).pVtbl },
         }
     }
@@ -29,7 +32,7 @@ impl BufferVk<'_> {
             (*self.virtual_functions)
                 .BufferVk
                 .GetVkBuffer
-                .unwrap_unchecked()(self.buffer_ptr)
+                .unwrap_unchecked()(self.sys_ptr)
         }
     }
 
@@ -38,7 +41,7 @@ impl BufferVk<'_> {
             (*self.virtual_functions)
                 .BufferVk
                 .SetAccessFlags
-                .unwrap_unchecked()(self.buffer_ptr, access_flags)
+                .unwrap_unchecked()(self.sys_ptr, access_flags)
         }
     }
 
@@ -47,7 +50,7 @@ impl BufferVk<'_> {
             (*self.virtual_functions)
                 .BufferVk
                 .GetAccessFlags
-                .unwrap_unchecked()(self.buffer_ptr)
+                .unwrap_unchecked()(self.sys_ptr)
         }
     }
 
@@ -56,7 +59,7 @@ impl BufferVk<'_> {
             (*self.virtual_functions)
                 .BufferVk
                 .GetVkDeviceAddress
-                .unwrap_unchecked()(self.buffer_ptr)
+                .unwrap_unchecked()(self.sys_ptr)
         }
     }
 }

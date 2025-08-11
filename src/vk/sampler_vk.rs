@@ -1,15 +1,18 @@
-use crate::{device_object::DeviceObject, sampler::Sampler};
+use std::ops::Deref;
+
+use crate::sampler::Sampler;
 
 pub struct SamplerVk<'a> {
-    sampler_ptr: *mut diligent_sys::ISamplerVk,
+    sys_ptr: *mut diligent_sys::ISamplerVk,
     virtual_functions: *mut diligent_sys::ISamplerVkVtbl,
 
     sampler: &'a Sampler,
 }
 
-impl AsRef<DeviceObject> for SamplerVk<'_> {
-    fn as_ref(&self) -> &DeviceObject {
-        self.sampler.as_ref()
+impl Deref for SamplerVk<'_> {
+    type Target = Sampler;
+    fn deref(&self) -> &Self::Target {
+        self.sampler
     }
 }
 
@@ -17,7 +20,7 @@ impl<'a> From<&'a Sampler> for SamplerVk<'a> {
     fn from(value: &'a Sampler) -> Self {
         SamplerVk {
             sampler: value,
-            sampler_ptr: value.sys_ptr as *mut diligent_sys::ISamplerVk,
+            sys_ptr: value.sys_ptr as *mut diligent_sys::ISamplerVk,
             virtual_functions: unsafe { (*(value.sys_ptr as *mut diligent_sys::ISamplerVk)).pVtbl },
         }
     }
@@ -29,7 +32,7 @@ impl SamplerVk<'_> {
             (*self.virtual_functions)
                 .SamplerVk
                 .GetVkSampler
-                .unwrap_unchecked()(self.sampler_ptr)
+                .unwrap_unchecked()(self.sys_ptr)
         }
     }
 }

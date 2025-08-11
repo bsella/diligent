@@ -1,15 +1,18 @@
-use crate::{device_object::DeviceObject, pipeline_state::PipelineState};
+use std::ops::Deref;
+
+use crate::pipeline_state::PipelineState;
 
 pub struct PipelineStateVk<'a> {
-    pipeline_state_ptr: *mut diligent_sys::IPipelineStateVk,
+    sys_ptr: *mut diligent_sys::IPipelineStateVk,
     virtual_functions: *mut diligent_sys::IPipelineStateVkVtbl,
 
     pipeline_state: &'a PipelineState,
 }
 
-impl AsRef<DeviceObject> for PipelineStateVk<'_> {
-    fn as_ref(&self) -> &DeviceObject {
-        self.pipeline_state.as_ref()
+impl Deref for PipelineStateVk<'_> {
+    type Target = PipelineState;
+    fn deref(&self) -> &Self::Target {
+        self.pipeline_state
     }
 }
 
@@ -17,7 +20,7 @@ impl<'a> From<&'a PipelineState> for PipelineStateVk<'a> {
     fn from(value: &'a PipelineState) -> Self {
         PipelineStateVk {
             pipeline_state: value,
-            pipeline_state_ptr: value.sys_ptr as *mut diligent_sys::IPipelineStateVk,
+            sys_ptr: value.sys_ptr as *mut diligent_sys::IPipelineStateVk,
             virtual_functions: unsafe {
                 (*(value.sys_ptr as *mut diligent_sys::IPipelineStateVk)).pVtbl
             },
@@ -32,7 +35,7 @@ impl PipelineStateVk<'_> {
         //    (*self.virtual_functions)
         //        .PipelineStateVk
         //        .GetRenderPass
-        //        .unwrap_unchecked()(self.pipeline_state_ptr)
+        //        .unwrap_unchecked()(self.sys_ptr)
         //}
     }
 
@@ -41,7 +44,7 @@ impl PipelineStateVk<'_> {
             (*self.virtual_functions)
                 .PipelineStateVk
                 .GetVkPipeline
-                .unwrap_unchecked()(self.pipeline_state_ptr)
+                .unwrap_unchecked()(self.sys_ptr)
         }
     }
 }

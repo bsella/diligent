@@ -1,15 +1,18 @@
-use crate::{device_object::DeviceObject, texture::Texture};
+use std::ops::Deref;
+
+use crate::texture::Texture;
 
 pub struct TextureVk<'a> {
-    texture_ptr: *mut diligent_sys::ITextureVk,
+    sys_ptr: *mut diligent_sys::ITextureVk,
     virtual_functions: *mut diligent_sys::ITextureVkVtbl,
 
     texture: &'a Texture,
 }
 
-impl AsRef<DeviceObject> for TextureVk<'_> {
-    fn as_ref(&self) -> &DeviceObject {
-        self.texture.as_ref()
+impl Deref for TextureVk<'_> {
+    type Target = Texture;
+    fn deref(&self) -> &Self::Target {
+        self.texture
     }
 }
 
@@ -17,7 +20,7 @@ impl<'a> From<&'a Texture> for TextureVk<'a> {
     fn from(value: &'a Texture) -> Self {
         TextureVk {
             texture: value,
-            texture_ptr: value.sys_ptr as *mut diligent_sys::ITextureVk,
+            sys_ptr: value.sys_ptr as *mut diligent_sys::ITextureVk,
             virtual_functions: unsafe { (*(value.sys_ptr as *mut diligent_sys::ITextureVk)).pVtbl },
         }
     }
@@ -29,7 +32,7 @@ impl TextureVk<'_> {
             (*self.virtual_functions)
                 .TextureVk
                 .GetVkImage
-                .unwrap_unchecked()(self.texture_ptr)
+                .unwrap_unchecked()(self.sys_ptr)
         }
     }
 
@@ -38,7 +41,7 @@ impl TextureVk<'_> {
             (*self.virtual_functions)
                 .TextureVk
                 .SetLayout
-                .unwrap_unchecked()(self.texture_ptr, layout)
+                .unwrap_unchecked()(self.sys_ptr, layout)
         }
     }
 
@@ -47,7 +50,7 @@ impl TextureVk<'_> {
             (*self.virtual_functions)
                 .TextureVk
                 .GetLayout
-                .unwrap_unchecked()(self.texture_ptr)
+                .unwrap_unchecked()(self.sys_ptr)
         }
     }
 }

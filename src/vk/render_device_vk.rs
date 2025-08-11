@@ -1,22 +1,24 @@
+use std::ops::Deref;
+
 use crate::{
     buffer::{Buffer, BufferDesc},
     fence::{Fence, FenceDesc},
     graphics_types::ResourceState,
-    object::Object,
     render_device::RenderDevice,
     texture::{Texture, TextureDesc},
 };
 
 pub struct RenderDeviceVk<'a> {
-    render_device_ptr: *mut diligent_sys::IRenderDeviceVk,
+    sys_ptr: *mut diligent_sys::IRenderDeviceVk,
     virtual_functions: *mut diligent_sys::IRenderDeviceVkVtbl,
 
     render_device: &'a RenderDevice,
 }
 
-impl AsRef<Object> for RenderDeviceVk<'_> {
-    fn as_ref(&self) -> &Object {
-        self.render_device.as_ref()
+impl Deref for RenderDeviceVk<'_> {
+    type Target = RenderDevice;
+    fn deref(&self) -> &Self::Target {
+        self.render_device
     }
 }
 
@@ -24,7 +26,7 @@ impl<'a> From<&'a RenderDevice> for RenderDeviceVk<'a> {
     fn from(value: &'a RenderDevice) -> Self {
         RenderDeviceVk {
             render_device: value,
-            render_device_ptr: value.sys_ptr as *mut diligent_sys::IRenderDeviceVk,
+            sys_ptr: value.sys_ptr as *mut diligent_sys::IRenderDeviceVk,
             virtual_functions: unsafe {
                 (*(value.sys_ptr as *mut diligent_sys::IRenderDeviceVk)).pVtbl
             },
@@ -38,7 +40,7 @@ impl RenderDeviceVk<'_> {
             (*self.virtual_functions)
                 .RenderDeviceVk
                 .GetVkDevice
-                .unwrap_unchecked()(self.render_device_ptr)
+                .unwrap_unchecked()(self.sys_ptr)
         }
     }
 
@@ -47,7 +49,7 @@ impl RenderDeviceVk<'_> {
             (*self.virtual_functions)
                 .RenderDeviceVk
                 .GetVkPhysicalDevice
-                .unwrap_unchecked()(self.render_device_ptr)
+                .unwrap_unchecked()(self.sys_ptr)
         }
     }
 
@@ -56,7 +58,7 @@ impl RenderDeviceVk<'_> {
             (*self.virtual_functions)
                 .RenderDeviceVk
                 .GetVkInstance
-                .unwrap_unchecked()(self.render_device_ptr)
+                .unwrap_unchecked()(self.sys_ptr)
         }
     }
 
@@ -65,7 +67,7 @@ impl RenderDeviceVk<'_> {
             (*self.virtual_functions)
                 .RenderDeviceVk
                 .GetVkVersion
-                .unwrap_unchecked()(self.render_device_ptr)
+                .unwrap_unchecked()(self.sys_ptr)
         }
     }
 
@@ -84,7 +86,7 @@ impl RenderDeviceVk<'_> {
                 .RenderDeviceVk
                 .CreateTextureFromVulkanImage
                 .unwrap_unchecked()(
-                self.render_device_ptr,
+                self.sys_ptr,
                 vk_image,
                 std::ptr::from_ref(&texture_desc),
                 initial_state.bits(),
@@ -114,7 +116,7 @@ impl RenderDeviceVk<'_> {
                 .RenderDeviceVk
                 .CreateBufferFromVulkanResource
                 .unwrap_unchecked()(
-                self.render_device_ptr,
+                self.sys_ptr,
                 vk_buffer,
                 std::ptr::from_ref(&buffer_desc),
                 initial_state.bits(),
@@ -146,7 +148,7 @@ impl RenderDeviceVk<'_> {
                 .RenderDeviceVk
                 .CreateFenceFromVulkanResource
                 .unwrap_unchecked()(
-                self.render_device_ptr,
+                self.sys_ptr,
                 vk_timeline_semaphore,
                 std::ptr::from_ref(&fence_desc),
                 std::ptr::addr_of_mut!(fence_ptr),
