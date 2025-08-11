@@ -88,7 +88,7 @@ impl SampleBase for Tessellation {
         _deferred_contexts: Vec<DeferredDeviceContext>,
         swap_chain: &SwapChain,
     ) -> Self {
-        let wireframe_supported = matches!(
+        let wireframe_supported = !matches!(
             device.get_device_info().features().geometry_shaders,
             DeviceFeatureState::Disabled
         );
