@@ -1,4 +1,8 @@
+use static_assertions::const_assert_eq;
+
 pub const API_VERSION: u32 = diligent_sys::DILIGENT_API_VERSION;
+
+const_assert_eq!(API_VERSION, 256008);
 
 mod device_object;
 mod object;
