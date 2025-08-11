@@ -1,6 +1,6 @@
-pub(crate) struct Object {
+pub struct Object {
     pub(crate) sys_ptr: *mut diligent_sys::IObject,
-    virtual_functions: *mut diligent_sys::IObjectVtbl,
+    pub(crate) virtual_functions: *mut diligent_sys::IObjectVtbl,
 }
 
 impl Object {

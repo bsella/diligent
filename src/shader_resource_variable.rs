@@ -1,6 +1,7 @@
 use std::{
     ffi::{CStr, CString},
     mem::MaybeUninit,
+    ops::Deref,
 };
 
 use bitflags::bitflags;
@@ -113,8 +114,9 @@ pub struct ShaderResourceVariable {
     object: Object,
 }
 
-impl AsRef<Object> for ShaderResourceVariable {
-    fn as_ref(&self) -> &Object {
+impl Deref for ShaderResourceVariable {
+    type Target = Object;
+    fn deref(&self) -> &Self::Target {
         &self.object
     }
 }

@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use static_assertions::const_assert;
 
 use crate::{device_context::DeviceContext, object::Object};
@@ -11,8 +13,9 @@ pub struct CommandQueue<'a> {
     object: Object,
 }
 
-impl AsRef<Object> for CommandQueue<'_> {
-    fn as_ref(&self) -> &Object {
+impl Deref for CommandQueue<'_> {
+    type Target = Object;
+    fn deref(&self) -> &Self::Target {
         &self.object
     }
 }

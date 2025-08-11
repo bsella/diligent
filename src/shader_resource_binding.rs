@@ -1,4 +1,4 @@
-use std::{ffi::CString, str::FromStr};
+use std::{ffi::CString, ops::Deref, str::FromStr};
 
 use static_assertions::const_assert;
 
@@ -19,8 +19,9 @@ pub struct ShaderResourceBinding {
     object: Object,
 }
 
-impl AsRef<Object> for ShaderResourceBinding {
-    fn as_ref(&self) -> &Object {
+impl Deref for ShaderResourceBinding {
+    type Target = Object;
+    fn deref(&self) -> &Self::Target {
         &self.object
     }
 }
@@ -105,7 +106,7 @@ impl ShaderResourceBinding {
             Err(())
         } else {
             let srv = ShaderResourceVariable::new(variable);
-            srv.as_ref().add_ref();
+            srv.add_ref();
             Ok(srv)
         }
     }

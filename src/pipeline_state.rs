@@ -1269,7 +1269,7 @@ impl PipelineState {
             None
         } else {
             let srv = ShaderResourceVariable::new(shader_resource_variable);
-            srv.as_ref().add_ref();
+            srv.add_ref();
             Some(srv)
         }
     }
@@ -1291,7 +1291,7 @@ impl PipelineState {
             Err(())
         } else {
             let srb = ShaderResourceBinding::new(shader_resource_binding_ptr);
-            srb.as_ref().add_ref();
+            srb.add_ref();
             Ok(srb)
         }
     }

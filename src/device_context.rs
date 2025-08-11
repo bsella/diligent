@@ -1787,8 +1787,8 @@ impl DeviceContext {
     }
 
     #[allow(private_bounds)]
-    pub fn set_user_data(&self, user_data: &impl AsRef<Object>) {
-        unsafe_member_call!(self, DeviceContext, SetUserData, user_data.as_ref().sys_ptr)
+    pub fn set_user_data(&self, user_data: &Object) {
+        unsafe_member_call!(self, DeviceContext, SetUserData, user_data.sys_ptr)
     }
 
     // TODO
@@ -1842,8 +1842,9 @@ impl DeviceContext {
     }
 }
 
-impl AsRef<Object> for DeviceContext {
-    fn as_ref(&self) -> &Object {
+impl Deref for DeviceContext {
+    type Target = Object;
+    fn deref(&self) -> &Self::Target {
         &self.object
     }
 }

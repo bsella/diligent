@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use static_assertions::const_assert;
 
 use super::object::Object;
@@ -8,8 +10,10 @@ pub struct DeviceObject {
     object: Object,
 }
 
-impl AsRef<Object> for DeviceObject {
-    fn as_ref(&self) -> &Object {
+impl Deref for DeviceObject {
+    type Target = Object;
+
+    fn deref(&self) -> &Self::Target {
         &self.object
     }
 }

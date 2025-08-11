@@ -412,8 +412,9 @@ pub struct ShaderSourceInputStreamFactory {
     object: Object,
 }
 
-impl AsRef<Object> for ShaderSourceInputStreamFactory {
-    fn as_ref(&self) -> &Object {
+impl Deref for ShaderSourceInputStreamFactory {
+    type Target = Object;
+    fn deref(&self) -> &Self::Target {
         &self.object
     }
 }

@@ -153,7 +153,7 @@ impl Buffer {
                 },
                 &buffer,
             );
-            buffer_view.as_ref().add_ref();
+            buffer_view.add_ref();
         }
 
         buffer

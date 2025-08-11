@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, ops::Deref};
 
 use static_assertions::const_assert;
 
@@ -13,8 +13,9 @@ pub struct ResourceMapping {
     object: Object,
 }
 
-impl AsRef<Object> for ResourceMapping {
-    fn as_ref(&self) -> &Object {
+impl Deref for ResourceMapping {
+    type Target = Object;
+    fn deref(&self) -> &Self::Target {
         &self.object
     }
 }

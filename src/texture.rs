@@ -282,7 +282,7 @@ impl Texture {
             Err(())
         } else {
             let texture_view = TextureView::new(texture_view_ptr, std::ptr::addr_of!(*self));
-            texture_view.as_ref().add_ref();
+            texture_view.add_ref();
 
             Ok(texture_view)
         }

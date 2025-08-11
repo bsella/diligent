@@ -1,4 +1,5 @@
 use core::fmt;
+use std::ops::Deref;
 
 use static_assertions::const_assert;
 
@@ -11,8 +12,9 @@ pub struct DataBlob {
     object: Object,
 }
 
-impl AsRef<Object> for DataBlob {
-    fn as_ref(&self) -> &Object {
+impl Deref for DataBlob {
+    type Target = Object;
+    fn deref(&self) -> &Self::Target {
         &self.object
     }
 }

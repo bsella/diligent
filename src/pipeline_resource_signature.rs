@@ -240,7 +240,7 @@ impl PipelineResourceSignature {
             None
         } else {
             let srv = ShaderResourceVariable::new(shader_resource_variable);
-            srv.as_ref().add_ref();
+            srv.add_ref();
             Some(srv)
         }
     }

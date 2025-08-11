@@ -1,4 +1,4 @@
-use std::{ffi::CString, os::raw::c_void, str::FromStr};
+use std::{ffi::CString, ops::Deref, os::raw::c_void, str::FromStr};
 
 use static_assertions::const_assert;
 
@@ -69,8 +69,9 @@ pub struct RenderDevice {
     object: Object,
 }
 
-impl AsRef<Object> for RenderDevice {
-    fn as_ref(&self) -> &Object {
+impl Deref for RenderDevice {
+    type Target = Object;
+    fn deref(&self) -> &Self::Target {
         &self.object
     }
 }

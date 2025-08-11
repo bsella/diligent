@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use bitflags::bitflags;
 use bon::Builder;
 use static_assertions::const_assert;
@@ -98,8 +100,9 @@ pub struct SwapChain {
     object: Object,
 }
 
-impl AsRef<Object> for SwapChain {
-    fn as_ref(&self) -> &Object {
+impl Deref for SwapChain {
+    type Target = Object;
+    fn deref(&self) -> &Self::Target {
         &self.object
     }
 }
@@ -172,7 +175,7 @@ impl SwapChain {
 
         let view = TextureView::new(texture_view_ptr, texture_ptr as *const _);
 
-        view.device_object.as_ref().add_ref();
+        view.device_object.add_ref();
 
         view
     }
@@ -189,7 +192,7 @@ impl SwapChain {
 
         let view = TextureView::new(texture_view_ptr, texture_ptr as *const _);
 
-        view.device_object.as_ref().add_ref();
+        view.device_object.add_ref();
 
         view
     }
