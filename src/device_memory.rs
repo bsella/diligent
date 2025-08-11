@@ -1,4 +1,4 @@
-use std::ffi::CString;
+use std::{ffi::CString, ops::Deref};
 
 use bon::Builder;
 use static_assertions::const_assert;
@@ -12,8 +12,9 @@ pub struct DeviceMemory {
     device_object: DeviceObject,
 }
 
-impl AsRef<DeviceObject> for DeviceMemory {
-    fn as_ref(&self) -> &DeviceObject {
+impl Deref for DeviceMemory {
+    type Target = DeviceObject;
+    fn deref(&self) -> &Self::Target {
         &self.device_object
     }
 }
@@ -99,12 +100,12 @@ impl DeviceMemory {
         }
     }
 
-    pub fn is_compatible(&self, device_objet: impl AsRef<DeviceObject>) -> bool {
+    pub fn is_compatible(&self, device_objet: &DeviceObject) -> bool {
         unsafe {
             (*self.virtual_functions)
                 .DeviceMemory
                 .IsCompatible
-                .unwrap_unchecked()(self.sys_ptr, device_objet.as_ref().sys_ptr)
+                .unwrap_unchecked()(self.sys_ptr, device_objet.sys_ptr)
         }
     }
 }

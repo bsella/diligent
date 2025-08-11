@@ -699,7 +699,6 @@ impl Default for StateTransitionFlags {
 #[derive(Builder)]
 #[builder(derive(Clone))]
 pub struct StateTransitionDesc<'a> {
-    #[builder(with =|resource : &'a impl AsRef<DeviceObject>| resource.as_ref())]
     resource: &'a DeviceObject,
 
     new_state: ResourceState,
@@ -756,8 +755,9 @@ pub struct CommandList {
     device_object: DeviceObject,
 }
 
-impl AsRef<DeviceObject> for CommandList {
-    fn as_ref(&self) -> &DeviceObject {
+impl Deref for CommandList {
+    type Target = DeviceObject;
+    fn deref(&self) -> &Self::Target {
         &self.device_object
     }
 }
@@ -1718,11 +1718,10 @@ impl DeviceContext {
         }
     }
 
-    pub fn transition_resource_states<'a>(&self, barriers: &impl AsRef<[StateTransitionDesc<'a>]>) {
+    pub fn transition_resource_states<'a>(&self, barriers: &[&StateTransitionDesc<'a>]) {
         let barriers = barriers
-            .as_ref()
             .iter()
-            .map(|state_transition_desc| state_transition_desc.into())
+            .map(|&state_transition_desc| state_transition_desc.into())
             .collect::<Vec<_>>();
 
         unsafe {
@@ -2027,9 +2026,8 @@ impl ImmediateDeviceContext {
         }
     }
 
-    pub fn execute_command_lists<'a>(&self, command_lists: &impl AsRef<[&'a CommandList]>) {
+    pub fn execute_command_lists(&self, command_lists: &[&CommandList]) {
         let command_lists = command_lists
-            .as_ref()
             .iter()
             .map(|&command_list| command_list.sys_ptr)
             .collect::<Vec<_>>();

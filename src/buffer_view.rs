@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use static_assertions::const_assert;
 
 use crate::{buffer::Buffer, device_object::DeviceObject};
@@ -27,8 +29,9 @@ pub struct BufferView<'a> {
     device_object: DeviceObject,
 }
 
-impl AsRef<DeviceObject> for BufferView<'_> {
-    fn as_ref(&self) -> &DeviceObject {
+impl Deref for BufferView<'_> {
+    type Target = DeviceObject;
+    fn deref(&self) -> &Self::Target {
         &self.device_object
     }
 }

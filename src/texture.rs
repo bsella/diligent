@@ -1,4 +1,4 @@
-use std::ffi::CString;
+use std::{ffi::CString, ops::Deref};
 
 use bitflags::bitflags;
 use bon::Builder;
@@ -232,8 +232,9 @@ pub struct Texture {
     device_object: DeviceObject,
 }
 
-impl AsRef<DeviceObject> for Texture {
-    fn as_ref(&self) -> &DeviceObject {
+impl Deref for Texture {
+    type Target = DeviceObject;
+    fn deref(&self) -> &Self::Target {
         &self.device_object
     }
 }
@@ -288,7 +289,7 @@ impl Texture {
             Err(())
         } else {
             let texture_view = TextureView::new(texture_view_ptr, std::ptr::addr_of!(*self));
-            texture_view.as_ref().as_ref().add_ref();
+            texture_view.as_ref().add_ref();
 
             Ok(texture_view)
         }

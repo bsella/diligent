@@ -1,4 +1,4 @@
-use std::{ffi::CString, str::FromStr};
+use std::{ffi::CString, ops::Deref, str::FromStr};
 
 use bitflags::bitflags;
 use static_assertions::const_assert;
@@ -12,8 +12,9 @@ pub struct PipelineStateCache {
     device_object: DeviceObject,
 }
 
-impl AsRef<DeviceObject> for PipelineStateCache {
-    fn as_ref(&self) -> &DeviceObject {
+impl Deref for PipelineStateCache {
+    type Target = DeviceObject;
+    fn deref(&self) -> &Self::Target {
         &self.device_object
     }
 }

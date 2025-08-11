@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use static_assertions::const_assert;
 
 use crate::device_object::DeviceObject;
@@ -74,8 +76,9 @@ pub struct Query<QueryDataType: GetSysQueryType> {
     device_object: DeviceObject,
 }
 
-impl<QueryDataType: GetSysQueryType> AsRef<DeviceObject> for Query<QueryDataType> {
-    fn as_ref(&self) -> &DeviceObject {
+impl<QueryDataType: GetSysQueryType> Deref for Query<QueryDataType> {
+    type Target = DeviceObject;
+    fn deref(&self) -> &Self::Target {
         &self.device_object
     }
 }

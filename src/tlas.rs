@@ -1,4 +1,4 @@
-use std::ffi::CString;
+use std::{ffi::CString, ops::Deref};
 
 use bitflags::bitflags;
 use bon::Builder;
@@ -146,8 +146,9 @@ pub struct TopLevelAS {
     device_object: DeviceObject,
 }
 
-impl AsRef<DeviceObject> for TopLevelAS {
-    fn as_ref(&self) -> &DeviceObject {
+impl Deref for TopLevelAS {
+    type Target = DeviceObject;
+    fn deref(&self) -> &Self::Target {
         &self.device_object
     }
 }

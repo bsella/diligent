@@ -39,12 +39,7 @@ impl ResourceMapping {
         }
     }
 
-    pub fn add_resource(
-        &mut self,
-        name: impl AsRef<str>,
-        object: &impl AsRef<DeviceObject>,
-        is_unique: bool,
-    ) {
+    pub fn add_resource(&mut self, name: impl AsRef<str>, object: &DeviceObject, is_unique: bool) {
         {
             let name = std::ffi::CString::new(name.as_ref()).unwrap();
             unsafe {
@@ -52,27 +47,23 @@ impl ResourceMapping {
                     .ResourceMapping
                     .AddResource
                     .unwrap_unchecked()(
-                    self.sys_ptr,
-                    name.as_ptr(),
-                    object.as_ref().sys_ptr,
-                    is_unique,
+                    self.sys_ptr, name.as_ptr(), object.sys_ptr, is_unique
                 );
             }
         }
         self.resources
             .entry(name.as_ref().to_owned())
             .or_default()
-            .push(std::ptr::addr_of!(*object.as_ref()));
+            .push(std::ptr::from_ref(object));
     }
 
     pub fn add_resource_array(
         &mut self,
         name: impl AsRef<str>,
-        device_objects: &[impl AsRef<DeviceObject>],
+        device_objects: &[&DeviceObject],
         is_unique: bool,
     ) {
-        let object_ptrs =
-            Vec::from_iter(device_objects.iter().map(|object| object.as_ref().sys_ptr));
+        let object_ptrs = Vec::from_iter(device_objects.iter().map(|object| object.sys_ptr));
 
         {
             let name = std::ffi::CString::new(name.as_ref()).unwrap();
@@ -98,7 +89,7 @@ impl ResourceMapping {
             .extend(
                 device_objects
                     .iter()
-                    .map(|object| std::ptr::addr_of!(*object.as_ref())),
+                    .map(|object| std::ptr::from_ref(*object)),
             );
     }
 

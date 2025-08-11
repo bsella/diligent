@@ -53,8 +53,9 @@ pub struct PipelineResourceSignature {
     device_object: DeviceObject,
 }
 
-impl AsRef<DeviceObject> for PipelineResourceSignature {
-    fn as_ref(&self) -> &DeviceObject {
+impl Deref for PipelineResourceSignature {
+    type Target = DeviceObject;
+    fn deref(&self) -> &Self::Target {
         &self.device_object
     }
 }

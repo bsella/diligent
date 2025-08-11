@@ -334,8 +334,9 @@ pub struct Shader {
     device_object: DeviceObject,
 }
 
-impl AsRef<DeviceObject> for Shader {
-    fn as_ref(&self) -> &DeviceObject {
+impl Deref for Shader {
+    type Target = DeviceObject;
+    fn deref(&self) -> &Self::Target {
         &self.device_object
     }
 }

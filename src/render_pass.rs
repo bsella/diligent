@@ -1,4 +1,4 @@
-use std::ffi::CString;
+use std::{ffi::CString, ops::Deref};
 
 use static_assertions::const_assert;
 
@@ -12,8 +12,9 @@ pub struct RenderPass {
     device_object: DeviceObject,
 }
 
-impl AsRef<DeviceObject> for RenderPass {
-    fn as_ref(&self) -> &DeviceObject {
+impl Deref for RenderPass {
+    type Target = DeviceObject;
+    fn deref(&self) -> &Self::Target {
         &self.device_object
     }
 }

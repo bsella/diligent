@@ -1197,8 +1197,9 @@ pub struct PipelineState {
     device_object: DeviceObject,
 }
 
-impl AsRef<DeviceObject> for PipelineState {
-    fn as_ref(&self) -> &DeviceObject {
+impl Deref for PipelineState {
+    type Target = DeviceObject;
+    fn deref(&self) -> &Self::Target {
         &self.device_object
     }
 }

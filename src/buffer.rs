@@ -1,4 +1,4 @@
-use std::ffi::CString;
+use std::{ffi::CString, ops::Deref};
 
 use bitflags::bitflags;
 use bon::Builder;
@@ -97,8 +97,9 @@ pub struct Buffer {
     device_object: DeviceObject,
 }
 
-impl AsRef<DeviceObject> for Buffer {
-    fn as_ref(&self) -> &DeviceObject {
+impl Deref for Buffer {
+    type Target = DeviceObject;
+    fn deref(&self) -> &Self::Target {
         &self.device_object
     }
 }
@@ -152,7 +153,7 @@ impl Buffer {
                 },
                 &buffer,
             );
-            buffer_view.as_ref().as_ref().add_ref();
+            buffer_view.as_ref().add_ref();
         }
 
         buffer

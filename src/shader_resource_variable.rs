@@ -137,24 +137,17 @@ impl ShaderResourceVariable {
         }
     }
 
-    pub fn set(&self, device_object: &impl AsRef<DeviceObject>, flags: SetShaderResourceFlags) {
+    pub fn set(&self, device_object: &DeviceObject, flags: SetShaderResourceFlags) {
         unsafe {
             (*self.virtual_functions)
                 .ShaderResourceVariable
                 .Set
-                .unwrap_unchecked()(
-                self.sys_ptr, device_object.as_ref().sys_ptr, flags.bits()
-            )
+                .unwrap_unchecked()(self.sys_ptr, device_object.sys_ptr, flags.bits())
         }
     }
 
-    pub fn set_array(
-        &self,
-        device_objects: &[impl AsRef<DeviceObject>],
-        flags: SetShaderResourceFlags,
-    ) {
-        let object_ptrs =
-            Vec::from_iter(device_objects.iter().map(|object| object.as_ref().sys_ptr));
+    pub fn set_array(&self, device_objects: &[&DeviceObject], flags: SetShaderResourceFlags) {
+        let object_ptrs = Vec::from_iter(device_objects.iter().map(|object| object.sys_ptr));
         unsafe {
             (*self.virtual_functions)
                 .ShaderResourceVariable
@@ -171,7 +164,7 @@ impl ShaderResourceVariable {
 
     pub fn set_buffer_range(
         &self,
-        device_object: &impl AsRef<DeviceObject>,
+        device_object: &DeviceObject,
         offset: u64,
         size: u64,
         array_index: Option<u32>,
@@ -183,7 +176,7 @@ impl ShaderResourceVariable {
                 .SetBufferRange
                 .unwrap_unchecked()(
                 self.sys_ptr,
-                device_object.as_ref().sys_ptr,
+                device_object.sys_ptr,
                 offset,
                 size,
                 array_index.unwrap_or(0),

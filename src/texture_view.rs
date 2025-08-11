@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use static_assertions::const_assert;
 
 use crate::{device_object::DeviceObject, sampler::Sampler, texture::Texture};
@@ -35,8 +37,9 @@ pub struct TextureView {
     pub(crate) device_object: DeviceObject,
 }
 
-impl AsRef<DeviceObject> for TextureView {
-    fn as_ref(&self) -> &DeviceObject {
+impl Deref for TextureView {
+    type Target = DeviceObject;
+    fn deref(&self) -> &Self::Target {
         &self.device_object
     }
 }

@@ -1,5 +1,5 @@
 use core::f32;
-use std::path::Path;
+use std::{ops::Deref, path::Path};
 
 use diligent::{
     blas::{
@@ -1028,10 +1028,12 @@ impl SampleBase for RayTracing {
                 .get_default_view(TextureViewType::ShaderResource)
                 .unwrap();
 
+            let logo_srvs = logo_srvs.each_ref().map(|srv| srv.deref());
+
             ray_tracing_srb
                 .get_variable_by_name("g_CubeTextures", ShaderTypes::RayClosestHit)
                 .unwrap()
-                .set_array(&logo_srvs, SetShaderResourceFlags::None);
+                .set_array(logo_srvs.as_slice(), SetShaderResourceFlags::None);
 
             ray_tracing_srb
                 .get_variable_by_name("g_GroundTexture", ShaderTypes::RayClosestHit)

@@ -156,8 +156,9 @@ pub struct BottomLevelAS {
     device_object: DeviceObject,
 }
 
-impl AsRef<DeviceObject> for BottomLevelAS {
-    fn as_ref(&self) -> &DeviceObject {
+impl Deref for BottomLevelAS {
+    type Target = DeviceObject;
+    fn deref(&self) -> &Self::Target {
         &self.device_object
     }
 }
