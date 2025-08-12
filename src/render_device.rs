@@ -8,6 +8,7 @@ use crate::{
     data_blob::DataBlob,
     device_context::{DeferredDeviceContext, DeviceContext},
     device_memory::{DeviceMemory, DeviceMemoryCreateInfo},
+    engine_factory::EngineFactory,
     fence::{Fence, FenceDesc},
     frame_buffer::{Framebuffer, FramebufferDesc},
     graphics_types::{
@@ -663,7 +664,7 @@ impl RenderDevice {
         if prs_ptr.is_null() {
             Err(())
         } else {
-            Ok(unsafe { PipelineResourceSignature::new(prs_ptr) })
+            Ok(PipelineResourceSignature::new(prs_ptr))
         }
     }
 
@@ -813,6 +814,10 @@ impl RenderDevice {
         unsafe_member_call!(self, RenderDevice, IdleGPU,)
     }
 
-    //TODO pub fn get_engine_factory(&self) -> &EngineFactory {}
+    pub fn get_engine_factory(&self) -> &EngineFactory {
+        let ptr = unsafe_member_call!(self, RenderDevice, GetEngineFactory,);
+        unsafe { &*(ptr as *const EngineFactory) }
+    }
+
     //TODO pub fn get_shader_compilation_thread_pool();
 }

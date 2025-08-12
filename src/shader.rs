@@ -197,6 +197,16 @@ pub struct ShaderCreateInfo<'a> {
 
     #[builder(default)]
     compile_flags: ShaderCompileFlags,
+
+    #[builder(default = false)]
+    load_constant_buffer_reflection: bool,
+
+    #[builder(with =|cstr : impl AsRef<str>| CString::new(cstr.as_ref()).unwrap())]
+    glsl_extensions: Option<CString>,
+
+    #[cfg(feature = "webgpu")]
+    #[builder(with =|suffix : impl AsRef<str>| CString::new(suffix.as_ref()).unwrap())]
+    web_gpu_emulated_array_index_suffix: Option<CString>,
 }
 
 pub(crate) struct ShaderCreateInfoWrapper {
@@ -310,10 +320,18 @@ impl From<&ShaderCreateInfo<'_>> for ShaderCreateInfoWrapper {
                 Major: value.language_version.major,
                 Minor: value.language_version.minor,
             },
-            // TODO
             CompileFlags: value.compile_flags.bits(),
-            LoadConstantBufferReflection: false,
-            GLSLExtensions: std::ptr::null(),
+            LoadConstantBufferReflection: value.load_constant_buffer_reflection,
+            GLSLExtensions: value
+                .glsl_extensions
+                .as_ref()
+                .map_or(std::ptr::null(), |cstr| cstr.as_ptr()),
+            #[cfg(feature = "webgpu")]
+            WebGPUEmulatedArrayIndexSuffix: value
+                .web_gpu_emulated_array_index_suffix
+                .as_ref()
+                .map_or(std::ptr::null(), |cstr| cstr.as_ptr()),
+            #[cfg(not(feature = "webgpu"))]
             WebGPUEmulatedArrayIndexSuffix: std::ptr::null(),
         };
 

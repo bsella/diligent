@@ -1,12 +1,11 @@
-use std::{collections::BTreeMap, ops::Deref};
+use std::ops::Deref;
 
 use static_assertions::const_assert;
 
 use crate::{device_object::DeviceObject, object::Object};
 
+#[repr(transparent)]
 pub struct ResourceMapping {
-    resources: BTreeMap<String, Vec<*const DeviceObject>>,
-
     object: Object,
 }
 
@@ -28,29 +27,19 @@ impl ResourceMapping {
 
         ResourceMapping {
             object: Object::new(resource_mapping_ptr as *mut diligent_sys::IObject),
-
-            // We're assuming that resource_mapping_ptr is a pointer to a newly created resource
-            // mapping that does not contain any resources for now
-            resources: BTreeMap::new(),
         }
     }
 
     pub fn add_resource(&mut self, name: impl AsRef<str>, object: &DeviceObject, is_unique: bool) {
-        {
-            let name = std::ffi::CString::new(name.as_ref()).unwrap();
-            unsafe_member_call!(
-                self,
-                ResourceMapping,
-                AddResource,
-                name.as_ptr(),
-                object.sys_ptr as _,
-                is_unique
-            );
-        }
-        self.resources
-            .entry(name.as_ref().to_owned())
-            .or_default()
-            .push(std::ptr::from_ref(object));
+        let name = std::ffi::CString::new(name.as_ref()).unwrap();
+        unsafe_member_call!(
+            self,
+            ResourceMapping,
+            AddResource,
+            name.as_ptr(),
+            object.sys_ptr as _,
+            is_unique
+        );
     }
 
     pub fn add_resource_array(
@@ -75,25 +64,10 @@ impl ResourceMapping {
                 is_unique
             );
         }
-
-        self.resources
-            .entry(name.as_ref().to_owned())
-            .or_default()
-            .extend(
-                device_objects
-                    .iter()
-                    .map(|object| std::ptr::from_ref(*object)),
-            );
     }
 
     pub fn remove_resource_by_name(&mut self, name: impl AsRef<str>, array_index: Option<u32>) {
         let array_index = array_index.unwrap_or(0);
-
-        self.resources
-            .entry(name.as_ref().to_owned())
-            .and_modify(|objects| {
-                objects.remove(array_index as usize);
-            });
 
         let name = std::ffi::CString::new(name.as_ref()).unwrap();
 
@@ -106,12 +80,30 @@ impl ResourceMapping {
         );
     }
 
-    pub fn get_resources_by_name(&self, _name: impl AsRef<str>) -> Result<&[DeviceObject], ()> {
-        //self.resources
-        //    .get(name)
-        //    .map(|resources| resources.as_slice())
-        //    .map(|resources| resources.iter().map(|resource| *resource))
-        todo!()
+    pub fn get_resource_by_name(
+        &self,
+        name: impl AsRef<str>,
+        array_index: Option<u32>,
+    ) -> Option<DeviceObject> {
+        let array_index = array_index.unwrap_or(0);
+
+        let name = std::ffi::CString::new(name.as_ref()).unwrap();
+
+        let resource_ptr = unsafe_member_call!(
+            self,
+            ResourceMapping,
+            GetResource,
+            name.as_ptr(),
+            array_index
+        );
+
+        if resource_ptr.is_null() {
+            None
+        } else {
+            let object = DeviceObject::new(resource_ptr);
+            object.add_ref();
+            Some(object)
+        }
     }
 
     pub fn get_size(&self) -> usize {

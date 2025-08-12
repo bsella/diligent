@@ -267,7 +267,7 @@ impl Texture {
         if texture_view_ptr.is_null() {
             Err(())
         } else {
-            Ok(TextureView::new(texture_view_ptr, self as *const Self))
+            Ok(TextureView::new(texture_view_ptr))
         }
     }
 
@@ -277,7 +277,7 @@ impl Texture {
         if texture_view_ptr.is_null() {
             Err(())
         } else {
-            let texture_view = TextureView::new(texture_view_ptr, std::ptr::addr_of!(*self));
+            let texture_view = TextureView::new(texture_view_ptr);
             texture_view.add_ref();
 
             Ok(texture_view)

@@ -742,6 +742,7 @@ impl<'a> From<&StateTransitionDesc<'a>> for diligent_sys::StateTransitionDesc {
     }
 }
 
+#[repr(transparent)]
 pub struct CommandList {
     device_object: DeviceObject,
 }
@@ -1853,6 +1854,7 @@ impl Deref for DeviceContext {
     }
 }
 
+#[repr(transparent)]
 pub struct ImmediateDeviceContext {
     device_context: DeviceContext,
 }
@@ -1863,6 +1865,7 @@ impl Deref for ImmediateDeviceContext {
         &self.device_context
     }
 }
+
 impl ImmediateDeviceContext {
     pub(crate) fn new(device_context_ptr: *mut diligent_sys::IDeviceContext) -> Self {
         ImmediateDeviceContext {
@@ -1874,12 +1877,7 @@ impl ImmediateDeviceContext {
         unsafe_member_call!(self.device_context, DeviceContext, Flush,)
     }
 
-    pub fn execute_command_lists(&self, command_lists: &[&CommandList]) {
-        let command_lists = command_lists
-            .iter()
-            .map(|&command_list| command_list.sys_ptr)
-            .collect::<Vec<_>>();
-
+    pub fn execute_command_lists(&self, command_lists: &[CommandList]) {
         unsafe_member_call!(
             self.device_context,
             DeviceContext,
@@ -1927,6 +1925,7 @@ impl ImmediateDeviceContext {
     }
 }
 
+#[repr(transparent)]
 pub struct DeferredDeviceContext {
     device_context: DeviceContext,
 }
@@ -1939,7 +1938,6 @@ impl Deref for DeferredDeviceContext {
 }
 
 impl DeferredDeviceContext {
-    #[allow(dead_code)] // In case backends that doesn't support deffered contexts like OpenGL are used
     pub(crate) fn new(device_context_ptr: *mut diligent_sys::IDeviceContext) -> Self {
         DeferredDeviceContext {
             device_context: DeviceContext::new(device_context_ptr),

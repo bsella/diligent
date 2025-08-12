@@ -38,8 +38,17 @@ impl ShaderResourceBinding {
         }
     }
 
-    pub fn get_pipeline_resource_signature(&self) -> Result<&PipelineResourceSignature, ()> {
-        todo!()
+    pub fn get_pipeline_resource_signature(&self) -> Option<PipelineResourceSignature> {
+        let prs_ptr =
+            unsafe_member_call!(self, ShaderResourceBinding, GetPipelineResourceSignature,);
+
+        if prs_ptr.is_null() {
+            None
+        } else {
+            let prs = PipelineResourceSignature::new(prs_ptr);
+            prs.add_ref();
+            Some(prs)
+        }
     }
 
     pub fn bind_resources(
@@ -76,18 +85,11 @@ impl ShaderResourceBinding {
         ShaderResourceVariableTypeFlags::from_bits_retain(flags)
     }
 
-    pub fn get_variables(
-        &self,
-        _shader_type: ShaderTypes,
-    ) -> Result<&[ShaderResourceVariable], ()> {
-        todo!()
-    }
-
     pub fn get_variable_by_name(
         &self,
         name: impl AsRef<str>,
         shader_stages: ShaderTypes,
-    ) -> Result<ShaderResourceVariable, ()> {
+    ) -> Option<ShaderResourceVariable> {
         let name = CString::from_str(name.as_ref()).unwrap();
 
         let variable = unsafe_member_call!(
@@ -99,11 +101,11 @@ impl ShaderResourceBinding {
         );
 
         if variable.is_null() {
-            Err(())
+            None
         } else {
             let srv = ShaderResourceVariable::new(variable);
             srv.add_ref();
-            Ok(srv)
+            Some(srv)
         }
     }
 

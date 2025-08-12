@@ -162,16 +162,9 @@ impl SwapChain {
     pub fn get_current_back_buffer_rtv(&self) -> TextureView {
         let texture_view_ptr = unsafe_member_call!(self, SwapChain, GetCurrentBackBufferRTV,);
 
-        let texture_ptr = unsafe {
-            (*(*texture_view_ptr).pVtbl)
-                .TextureView
-                .GetTexture
-                .unwrap_unchecked()(texture_view_ptr)
-        };
+        let view = TextureView::new(texture_view_ptr);
 
-        let view = TextureView::new(texture_view_ptr, texture_ptr as *const _);
-
-        view.device_object.add_ref();
+        view.add_ref();
 
         view
     }
@@ -179,16 +172,9 @@ impl SwapChain {
     pub fn get_depth_buffer_dsv(&self) -> TextureView {
         let texture_view_ptr = unsafe_member_call!(self, SwapChain, GetDepthBufferDSV,);
 
-        let texture_ptr = unsafe {
-            (*(*texture_view_ptr).pVtbl)
-                .TextureView
-                .GetTexture
-                .unwrap_unchecked()(texture_view_ptr)
-        };
+        let view = TextureView::new(texture_view_ptr);
 
-        let view = TextureView::new(texture_view_ptr, texture_ptr as *const _);
-
-        view.device_object.add_ref();
+        view.add_ref();
 
         view
     }

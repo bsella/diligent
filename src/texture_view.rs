@@ -29,10 +29,9 @@ impl From<TextureViewType> for diligent_sys::TEXTURE_VIEW_TYPE {
     }
 }
 
+#[repr(transparent)]
 pub struct TextureView {
-    texture: *const Texture,
-
-    pub(crate) device_object: DeviceObject,
+    device_object: DeviceObject,
 }
 
 impl Deref for TextureView {
@@ -43,10 +42,7 @@ impl Deref for TextureView {
 }
 
 impl TextureView {
-    pub(crate) fn new(
-        texture_view_ptr: *mut diligent_sys::ITextureView,
-        texture: *const Texture,
-    ) -> Self {
+    pub(crate) fn new(texture_view_ptr: *mut diligent_sys::ITextureView) -> Self {
         // Both base and derived classes have exactly the same size.
         // This means that we can up-cast to the base class without worrying about layout offset between both classes
         const_assert!(
@@ -55,7 +51,6 @@ impl TextureView {
         );
 
         TextureView {
-            texture,
             device_object: DeviceObject::new(texture_view_ptr as *mut diligent_sys::IDeviceObject),
         }
     }
@@ -69,7 +64,9 @@ impl TextureView {
     }
 
     #[inline]
-    pub fn get_texture(&self) -> &Texture {
-        unsafe { self.texture.as_ref().unwrap_unchecked() }
+    pub fn get_texture(&self) -> Texture {
+        let texture = Texture::new(unsafe_member_call!(self, TextureView, GetTexture,));
+        texture.add_ref();
+        texture
     }
 }

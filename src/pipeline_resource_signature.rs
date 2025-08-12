@@ -163,7 +163,7 @@ impl From<&PipelineResourceSignatureDesc<'_>> for PipelineResourceSignatureDescW
 }
 
 impl PipelineResourceSignature {
-    pub(crate) unsafe fn new(
+    pub(crate) fn new(
         pipeline_resource_signature_ptr: *mut diligent_sys::IPipelineResourceSignature,
     ) -> Self {
         // Both base and derived classes have exactly the same size.

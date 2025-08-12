@@ -416,7 +416,6 @@ where
 
 pub(crate) struct PipelineStateCreateInfoWrapper {
     _psd: PipelineStateDescWrapper,
-    _resource_signatures: Vec<*mut diligent_sys::IPipelineResourceSignature>,
     ci: diligent_sys::PipelineStateCreateInfo,
 }
 
@@ -476,12 +475,6 @@ impl From<&PipelineStateCreateInfo<'_>> for PipelineStateCreateInfoWrapper {
             },
         };
 
-        let mut resource_signatures = value
-            .resource_signatures
-            .iter()
-            .map(|&rs| rs.sys_ptr as _)
-            .collect::<Vec<_>>();
-
         let ci = diligent_sys::PipelineStateCreateInfo {
             PSODesc: *psd,
             Flags: value.flags.bits(),
@@ -489,7 +482,7 @@ impl From<&PipelineStateCreateInfo<'_>> for PipelineStateCreateInfoWrapper {
             ppResourceSignatures: if value.resource_signatures.is_empty() {
                 std::ptr::null_mut()
             } else {
-                resource_signatures.as_mut_ptr() as _
+                value.resource_signatures.as_ptr() as _
             },
             pPSOCache: if let Some(pso_cache) = &value.pso_cache {
                 pso_cache.sys_ptr as _
@@ -499,11 +492,7 @@ impl From<&PipelineStateCreateInfo<'_>> for PipelineStateCreateInfoWrapper {
             pInternalData: std::ptr::null_mut(),
         };
 
-        PipelineStateCreateInfoWrapper {
-            _psd: psd,
-            _resource_signatures: resource_signatures,
-            ci,
-        }
+        PipelineStateCreateInfoWrapper { _psd: psd, ci }
     }
 }
 
@@ -1324,7 +1313,7 @@ impl PipelineState {
         )
     }
 
-    pub fn get_resource_signatures(&self) -> &[PipelineResourceSignature] {
+    pub fn get_resource_signatures(&self) -> Vec<PipelineResourceSignature> {
         todo!()
     }
 
