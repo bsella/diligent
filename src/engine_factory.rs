@@ -1,6 +1,6 @@
 use std::{ops::Deref, os::raw::c_void, path::Path};
 
-use static_assertions::const_assert;
+use static_assertions::{const_assert, const_assert_eq};
 
 use crate::{
     data_blob::DataBlob,
@@ -82,6 +82,11 @@ impl From<&EngineCreateInfo> for diligent_sys::EngineCreateInfo {
         }
     }
 }
+
+const_assert_eq!(
+    std::mem::size_of::<diligent_sys::IEngineFactoryMethods>(),
+    7 * std::mem::size_of::<*const ()>()
+);
 
 #[repr(transparent)]
 pub struct EngineFactory {

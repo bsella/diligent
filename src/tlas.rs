@@ -2,7 +2,7 @@ use std::{ffi::CString, ops::Deref};
 
 use bitflags::bitflags;
 use bon::Builder;
-use static_assertions::const_assert;
+use static_assertions::{const_assert, const_assert_eq};
 
 use crate::{
     blas::{BottomLevelAS, RayTracingBuildAsFlags, ScratchBufferSizes},
@@ -138,6 +138,11 @@ impl From<&TopLevelASDesc> for diligent_sys::TopLevelASDesc {
         }
     }
 }
+
+const_assert_eq!(
+    std::mem::size_of::<diligent_sys::ITopLevelASMethods>(),
+    6 * std::mem::size_of::<*const ()>()
+);
 
 #[repr(transparent)]
 pub struct TopLevelAS {

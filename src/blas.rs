@@ -2,7 +2,7 @@ use std::{ffi::CString, ops::Deref};
 
 use bitflags::bitflags;
 use bon::Builder;
-use static_assertions::const_assert;
+use static_assertions::{const_assert, const_assert_eq};
 
 use crate::{
     device_object::DeviceObject,
@@ -165,6 +165,11 @@ pub struct ScratchBufferSizes {
     pub build: u64,
     pub update: u64,
 }
+
+const_assert_eq!(
+    std::mem::size_of::<diligent_sys::IBottomLevelASMethods>(),
+    7 * std::mem::size_of::<*const ()>()
+);
 
 impl BottomLevelAS {
     pub(crate) fn new(sys_ptr: *mut diligent_sys::IBottomLevelAS) -> Self {

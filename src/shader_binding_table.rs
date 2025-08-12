@@ -1,7 +1,7 @@
 use std::{ffi::CString, ops::Deref};
 
 use bitflags::bitflags;
-use static_assertions::const_assert;
+use static_assertions::{const_assert, const_assert_eq};
 
 use crate::{device_object::DeviceObject, pipeline_state::PipelineState, tlas::TopLevelAS};
 
@@ -40,6 +40,11 @@ impl From<&ShaderBindingTableDesc<'_>> for diligent_sys::ShaderBindingTableDesc 
         }
     }
 }
+
+const_assert_eq!(
+    std::mem::size_of::<diligent_sys::IShaderBindingTableMethods>(),
+    10 * std::mem::size_of::<*const ()>()
+);
 
 #[repr(transparent)]
 pub struct ShaderBindingTable {

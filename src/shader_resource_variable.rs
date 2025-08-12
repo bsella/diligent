@@ -6,7 +6,7 @@ use std::{
 
 use bitflags::bitflags;
 use bon::Builder;
-use static_assertions::const_assert;
+use static_assertions::{const_assert, const_assert_eq};
 
 use crate::device_object::DeviceObject;
 
@@ -107,6 +107,11 @@ impl From<&ShaderResourceVariableDesc> for diligent_sys::ShaderResourceVariableD
         }
     }
 }
+
+const_assert_eq!(
+    std::mem::size_of::<diligent_sys::IShaderResourceVariableMethods>(),
+    8 * std::mem::size_of::<*const ()>()
+);
 
 #[repr(transparent)]
 pub struct ShaderResourceVariable {

@@ -1,6 +1,13 @@
 use std::ops::Deref;
 
+use static_assertions::const_assert_eq;
+
 use crate::buffer::Buffer;
+
+const_assert_eq!(
+    std::mem::size_of::<diligent_sys::IBufferVkMethods>(),
+    4 * std::mem::size_of::<*const ()>()
+);
 
 #[repr(transparent)]
 pub struct BufferVk<'a> {

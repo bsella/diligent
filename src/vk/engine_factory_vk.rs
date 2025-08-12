@@ -4,6 +4,7 @@ use std::ops::DerefMut;
 use std::path::PathBuf;
 
 use static_assertions::const_assert;
+use static_assertions::const_assert_eq;
 
 use crate::{
     device_context::DeferredDeviceContext, device_context::ImmediateDeviceContext,
@@ -136,6 +137,11 @@ impl Default for EngineVkCreateInfo {
         EngineVkCreateInfo::new(EngineCreateInfo::default())
     }
 }
+
+const_assert_eq!(
+    std::mem::size_of::<diligent_sys::IEngineFactoryVkMethods>(),
+    3 * std::mem::size_of::<*const ()>()
+);
 
 #[repr(transparent)]
 pub struct EngineFactoryVk {

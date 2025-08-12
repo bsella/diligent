@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use bitflags::bitflags;
 use bon::Builder;
-use static_assertions::const_assert;
+use static_assertions::{const_assert, const_assert_eq};
 
 use crate::{
     graphics_types::{DisplayModeAttribs, SurfaceTransform, TextureFormat},
@@ -92,6 +92,11 @@ impl From<&diligent_sys::SwapChainDesc> for SwapChainDesc {
         }
     }
 }
+
+const_assert_eq!(
+    std::mem::size_of::<diligent_sys::ISwapChainMethods>(),
+    8 * std::mem::size_of::<*const ()>()
+);
 
 #[repr(transparent)]
 pub struct SwapChain {

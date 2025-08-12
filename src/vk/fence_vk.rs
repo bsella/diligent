@@ -1,6 +1,13 @@
 use std::ops::Deref;
 
+use static_assertions::const_assert_eq;
+
 use crate::fence::Fence;
+
+const_assert_eq!(
+    std::mem::size_of::<diligent_sys::IFenceVkMethods>(),
+    std::mem::size_of::<*const ()>()
+);
 
 #[repr(transparent)]
 pub struct FenceVk<'a> {

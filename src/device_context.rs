@@ -2,7 +2,7 @@ use std::{ffi::CString, ops::Deref};
 
 use bitflags::bitflags;
 use bon::Builder;
-use static_assertions::const_assert;
+use static_assertions::{const_assert, const_assert_eq};
 
 use crate::{
     blas::BottomLevelAS,
@@ -1092,6 +1092,11 @@ impl<'a> RayTracingPipelineToken<'a> {
         )
     }
 }
+
+const_assert_eq!(
+    std::mem::size_of::<diligent_sys::IDeviceContextMethods>(),
+    72 * std::mem::size_of::<*const ()>()
+);
 
 #[repr(transparent)]
 pub struct DeviceContext {

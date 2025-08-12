@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use static_assertions::const_assert;
+use static_assertions::{const_assert, const_assert_eq};
 
 use crate::device_object::DeviceObject;
 
@@ -66,6 +66,11 @@ impl GetSysQueryType for QueryDataPipelineStatistics {
 impl GetSysQueryType for QueryDataDuration {
     const QUERY_TYPE: diligent_sys::QUERY_TYPE = diligent_sys::QUERY_TYPE_DURATION;
 }
+
+const_assert_eq!(
+    std::mem::size_of::<diligent_sys::IQueryMethods>(),
+    2 * std::mem::size_of::<*const ()>()
+);
 
 pub struct Query<QueryDataType: GetSysQueryType> {
     data: QueryDataType,

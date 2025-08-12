@@ -1,9 +1,14 @@
 use std::{ffi::CString, ops::Deref};
 
 use bon::Builder;
-use static_assertions::const_assert;
+use static_assertions::{const_assert, const_assert_eq};
 
 use crate::device_object::DeviceObject;
+
+const_assert_eq!(
+    std::mem::size_of::<diligent_sys::IDeviceMemoryMethods>(),
+    3 * std::mem::size_of::<*const ()>()
+);
 
 #[repr(transparent)]
 pub struct DeviceMemory {

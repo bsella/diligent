@@ -2,7 +2,7 @@ use std::{ffi::CString, ops::Deref};
 
 use bitflags::bitflags;
 use bon::Builder;
-use static_assertions::const_assert;
+use static_assertions::{const_assert, const_assert_eq};
 
 use crate::{
     buffer_view::{BufferView, BufferViewType},
@@ -89,6 +89,11 @@ impl From<&BufferDesc> for diligent_sys::BufferDesc {
         }
     }
 }
+
+const_assert_eq!(
+    std::mem::size_of::<diligent_sys::IBufferMethods>(),
+    9 * std::mem::size_of::<*const ()>()
+);
 
 #[repr(transparent)]
 pub struct Buffer {

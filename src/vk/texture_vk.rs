@@ -1,6 +1,13 @@
 use std::ops::Deref;
 
+use static_assertions::const_assert_eq;
+
 use crate::texture::Texture;
+
+const_assert_eq!(
+    std::mem::size_of::<diligent_sys::ITextureVkMethods>(),
+    3 * std::mem::size_of::<*const ()>()
+);
 
 #[repr(transparent)]
 pub struct TextureVk<'a> {

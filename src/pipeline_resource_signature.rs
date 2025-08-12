@@ -1,7 +1,7 @@
 use std::{ffi::CString, ops::Deref, str::FromStr};
 
 use bitflags::bitflags;
-use static_assertions::const_assert;
+use static_assertions::{const_assert, const_assert_eq};
 
 use crate::{
     device_object::DeviceObject,
@@ -45,6 +45,11 @@ impl From<&ImmutableSamplerDesc<'_>> for diligent_sys::ImmutableSamplerDesc {
         }
     }
 }
+
+const_assert_eq!(
+    std::mem::size_of::<diligent_sys::IPipelineResourceSignatureMethods>(),
+    8 * std::mem::size_of::<*const ()>()
+);
 
 #[repr(transparent)]
 pub struct PipelineResourceSignature {

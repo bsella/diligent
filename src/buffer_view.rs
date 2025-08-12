@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use static_assertions::const_assert;
+use static_assertions::{const_assert, const_assert_eq};
 
 use crate::{buffer::Buffer, device_object::DeviceObject};
 
@@ -32,6 +32,11 @@ impl Deref for BufferView<'_> {
         &self.device_object
     }
 }
+
+const_assert_eq!(
+    std::mem::size_of::<diligent_sys::IBufferViewMethods>(),
+    std::mem::size_of::<*const ()>()
+);
 
 impl<'a> BufferView<'a> {
     pub(crate) fn new(buffer_view_ptr: *mut diligent_sys::IBufferView, buffer: &'a Buffer) -> Self {

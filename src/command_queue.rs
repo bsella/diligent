@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use static_assertions::const_assert;
+use static_assertions::{const_assert, const_assert_eq};
 
 use crate::{device_context::DeviceContext, object::Object};
 
@@ -22,6 +22,11 @@ impl Drop for CommandQueue<'_> {
         unsafe_member_call!(self.context, DeviceContext, UnlockCommandQueue,)
     }
 }
+
+const_assert_eq!(
+    std::mem::size_of::<diligent_sys::ICommandQueueMethods>(),
+    3 * std::mem::size_of::<*const ()>()
+);
 
 impl<'a> CommandQueue<'a> {
     pub(crate) fn new(context: &'a DeviceContext) -> Result<Self, ()> {

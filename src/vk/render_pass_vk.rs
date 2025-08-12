@@ -1,6 +1,13 @@
 use std::ops::Deref;
 
+use static_assertions::const_assert_eq;
+
 use crate::render_pass::RenderPass;
+
+const_assert_eq!(
+    std::mem::size_of::<diligent_sys::IRenderPassVkMethods>(),
+    std::mem::size_of::<*const ()>()
+);
 
 #[repr(transparent)]
 pub struct RenderPassVk<'a> {

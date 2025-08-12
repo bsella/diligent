@@ -1,6 +1,6 @@
 use std::{ffi::CString, ops::Deref, str::FromStr};
 
-use static_assertions::const_assert;
+use static_assertions::{const_assert, const_assert_eq};
 
 use crate::{
     graphics_types::ShaderTypes,
@@ -11,6 +11,11 @@ use crate::{
         BindShaderResourcesFlags, ShaderResourceVariable, ShaderResourceVariableTypeFlags,
     },
 };
+
+const_assert_eq!(
+    std::mem::size_of::<diligent_sys::IShaderResourceBindingMethods>(),
+    7 * std::mem::size_of::<*const ()>()
+);
 
 #[repr(transparent)]
 pub struct ShaderResourceBinding {

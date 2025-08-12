@@ -1,6 +1,13 @@
 use std::ops::Deref;
 
+use static_assertions::const_assert_eq;
+
 use crate::command_queue::CommandQueue;
+
+const_assert_eq!(
+    std::mem::size_of::<diligent_sys::ICommandQueueVkMethods>(),
+    8 * std::mem::size_of::<*const ()>()
+);
 
 #[repr(transparent)]
 pub struct CommandQueueVk<'a> {

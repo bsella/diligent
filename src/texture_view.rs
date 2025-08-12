@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use static_assertions::const_assert;
+use static_assertions::{const_assert, const_assert_eq};
 
 use crate::{device_object::DeviceObject, sampler::Sampler, texture::Texture};
 
@@ -28,6 +28,11 @@ impl From<TextureViewType> for diligent_sys::TEXTURE_VIEW_TYPE {
         }) as _
     }
 }
+
+const_assert_eq!(
+    std::mem::size_of::<diligent_sys::ITextureViewMethods>(),
+    3 * std::mem::size_of::<*const ()>()
+);
 
 #[repr(transparent)]
 pub struct TextureView {

@@ -3,7 +3,7 @@ use std::{ffi::CString, ops::Deref};
 
 use bitflags::bitflags;
 use bon::Builder;
-use static_assertions::const_assert;
+use static_assertions::{const_assert, const_assert_eq};
 
 use crate::pipeline_state_cache::PipelineStateCache;
 use crate::{
@@ -1180,6 +1180,11 @@ impl From<&GraphicsPipelineStateCreateInfo<'_>> for GraphicsPipelineStateCreateI
         }
     }
 }
+
+const_assert_eq!(
+    std::mem::size_of::<diligent_sys::IPipelineStateMethods>(),
+    14 * std::mem::size_of::<*const ()>()
+);
 
 #[repr(transparent)]
 pub struct PipelineState {

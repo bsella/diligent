@@ -5,7 +5,7 @@ use std::{ffi::CString, ops::Deref, path::Path, str::FromStr};
 
 use bitflags::bitflags;
 use bon::Builder;
-use static_assertions::const_assert;
+use static_assertions::{const_assert, const_assert_eq};
 
 use crate::{
     device_object::DeviceObject,
@@ -345,6 +345,12 @@ impl From<&ShaderCreateInfo<'_>> for ShaderCreateInfoWrapper {
     }
 }
 
+const_assert_eq!(
+    std::mem::size_of::<diligent_sys::IShaderMethods>(),
+    5 * std::mem::size_of::<*const ()>()
+);
+
+#[repr(transparent)]
 pub struct Shader {
     device_object: DeviceObject,
 }
@@ -416,6 +422,11 @@ impl Shader {
         unsafe_member_call!(self, Shader, GetStatus, wait_for_completion)
     }
 }
+
+const_assert_eq!(
+    std::mem::size_of::<diligent_sys::IShaderSourceInputStreamFactoryMethods>(),
+    2 * std::mem::size_of::<*const ()>()
+);
 
 #[repr(transparent)]
 pub struct ShaderSourceInputStreamFactory {

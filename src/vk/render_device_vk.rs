@@ -1,5 +1,7 @@
 use std::ops::Deref;
 
+use static_assertions::const_assert_eq;
+
 use crate::{
     buffer::{Buffer, BufferDesc},
     fence::{Fence, FenceDesc},
@@ -7,6 +9,11 @@ use crate::{
     render_device::RenderDevice,
     texture::{Texture, TextureDesc},
 };
+
+const_assert_eq!(
+    std::mem::size_of::<diligent_sys::IRenderDeviceVkMethods>(),
+    10 * std::mem::size_of::<*const ()>()
+);
 
 #[repr(transparent)]
 pub struct RenderDeviceVk<'a> {
@@ -99,6 +106,7 @@ impl RenderDeviceVk<'_> {
         }
     }
 
+    // TODO
     //pub fn create_blas_from_vulkan_resource(&self,   vkBLAS: VkAccelerationStructureKHR, blas_desc: &BottomLevelASDesc , RESOURCE_STATE              InitialState) -> Option<BottomLevelAS>{}
     //pub fn create_tlas_from_vulkan_resource(&self,   vkTLAS: VkAccelerationStructureKHR, tlas_desc: &TopLevelASDesc    , RESOURCE_STATE             InitialState)  -> Option<TopLevelAS>{}
 
@@ -126,4 +134,7 @@ impl RenderDeviceVk<'_> {
             Some(Fence::new(fence_ptr))
         }
     }
+
+    // TODO
+    //pub fn get_device_features_vk(){}
 }

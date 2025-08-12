@@ -1,8 +1,13 @@
 use std::ops::Deref;
 
-use static_assertions::const_assert;
+use static_assertions::{const_assert, const_assert_eq};
 
 use crate::{device_object::DeviceObject, object::Object};
+
+const_assert_eq!(
+    std::mem::size_of::<diligent_sys::IResourceMappingMethods>(),
+    5 * std::mem::size_of::<*const ()>()
+);
 
 #[repr(transparent)]
 pub struct ResourceMapping {
