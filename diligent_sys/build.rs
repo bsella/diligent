@@ -31,6 +31,8 @@ fn configure_diligent_libs(diligent_install_dir: &Path) {
         println!("cargo::rustc-link-lib=static=SPIRV-Tools");
         println!("cargo::rustc-link-lib=static=SPIRV-Tools-opt");
         println!("cargo::rustc-link-lib=static=spirv-cross-core{library_suffix}");
+
+        println!("cargo::rustc-link-lib=static=volk");
     }
 
     #[cfg(target_os = "windows")]

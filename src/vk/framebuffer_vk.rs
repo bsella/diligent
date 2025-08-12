@@ -29,7 +29,6 @@ impl<'a> From<&'a Framebuffer> for FramebufferVk<'a> {
 
 impl FramebufferVk<'_> {
     pub fn get_vk_framebuffer(&self) -> diligent_sys::VkFramebuffer {
-        todo!()
-        //unsafe_member_call!(self, FramebufferVk, GetVkFramebuffer)
+        unsafe_member_call!(self, FramebufferVk, GetVkFramebuffer)
     }
 }

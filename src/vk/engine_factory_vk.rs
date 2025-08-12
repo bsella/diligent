@@ -6,6 +6,7 @@ use std::path::PathBuf;
 use static_assertions::const_assert;
 use static_assertions::const_assert_eq;
 
+use crate::graphics_types::Version;
 use crate::{
     device_context::DeferredDeviceContext, device_context::ImmediateDeviceContext,
     engine_factory::EngineCreateInfo, engine_factory::EngineFactory,
@@ -140,7 +141,7 @@ impl Default for EngineVkCreateInfo {
 
 const_assert_eq!(
     std::mem::size_of::<diligent_sys::IEngineFactoryVkMethods>(),
-    3 * std::mem::size_of::<*const ()>()
+    4 * std::mem::size_of::<*const ()>()
 );
 
 #[repr(transparent)]
@@ -341,5 +342,13 @@ impl EngineFactoryVk {
 
     pub fn enable_device_simulation(&self) {
         unsafe_member_call!(self, EngineFactoryVk, EnableDeviceSimulation);
+    }
+
+    pub fn get_vulkan_version(&self) -> Version {
+        let version = unsafe_member_call!(self, EngineFactoryVk, GetVulkanVersion);
+        Version {
+            major: version.Major,
+            minor: version.Minor,
+        }
     }
 }
