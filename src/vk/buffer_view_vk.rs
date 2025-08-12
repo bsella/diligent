@@ -29,6 +29,6 @@ impl<'a> From<&'a BufferView<'a>> for BufferViewVk<'a> {
 
 impl BufferViewVk<'_> {
     pub fn get_vk_buffer_view(&self) -> diligent_sys::VkBufferView {
-        unsafe_member_call!(self, BufferViewVk, GetVkBufferView,)
+        unsafe_member_call!(self, BufferViewVk, GetVkBufferView)
     }
 }

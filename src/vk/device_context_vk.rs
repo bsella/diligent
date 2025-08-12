@@ -59,6 +59,6 @@ impl DeviceContextVk<'_> {
     }
 
     pub fn get_vk_command_buffer(&self) -> diligent_sys::VkCommandBuffer {
-        unsafe_member_call!(self, DeviceContextVk, GetVkCommandBuffer,)
+        unsafe_member_call!(self, DeviceContextVk, GetVkCommandBuffer)
     }
 }

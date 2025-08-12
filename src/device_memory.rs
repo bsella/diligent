@@ -88,7 +88,7 @@ impl DeviceMemory {
     }
 
     pub fn get_capacity(&self) -> u64 {
-        unsafe_member_call!(self, DeviceMemory, GetCapacity,)
+        unsafe_member_call!(self, DeviceMemory, GetCapacity)
     }
 
     pub fn is_compatible(&self, device_objet: &DeviceObject) -> bool {

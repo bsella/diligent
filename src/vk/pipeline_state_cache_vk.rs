@@ -29,6 +29,6 @@ impl<'a> From<&'a PipelineStateCache> for PipelineStateCacheVk<'a> {
 
 impl PipelineStateCacheVk<'_> {
     pub fn get_vk_pipeline_cache(&self) -> diligent_sys::VkPipelineCache {
-        unsafe_member_call!(self, PipelineStateCacheVk, GetVkPipelineCache,)
+        unsafe_member_call!(self, PipelineStateCacheVk, GetVkPipelineCache)
     }
 }

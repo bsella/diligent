@@ -45,7 +45,7 @@ impl ShaderResourceBinding {
 
     pub fn get_pipeline_resource_signature(&self) -> Option<PipelineResourceSignature> {
         let prs_ptr =
-            unsafe_member_call!(self, ShaderResourceBinding, GetPipelineResourceSignature,);
+            unsafe_member_call!(self, ShaderResourceBinding, GetPipelineResourceSignature);
 
         if prs_ptr.is_null() {
             None
@@ -115,6 +115,6 @@ impl ShaderResourceBinding {
     }
 
     pub fn static_resources_initialized(&self) -> bool {
-        unsafe_member_call!(self, ShaderResourceBinding, StaticResourcesInitialized,)
+        unsafe_member_call!(self, ShaderResourceBinding, StaticResourcesInitialized)
     }
 }

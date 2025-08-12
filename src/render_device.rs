@@ -744,12 +744,12 @@ impl RenderDevice {
     }
 
     pub fn get_adapter_info(&self) -> GraphicsAdapterInfo {
-        let info = unsafe_member_call!(self, RenderDevice, GetAdapterInfo,);
+        let info = unsafe_member_call!(self, RenderDevice, GetAdapterInfo);
         unsafe { info.as_ref().unwrap_unchecked() }.into()
     }
 
     pub fn get_device_info(&self) -> RenderDeviceInfo {
-        let info = unsafe_member_call!(self, RenderDevice, GetDeviceInfo,);
+        let info = unsafe_member_call!(self, RenderDevice, GetDeviceInfo);
         let render_device_info = unsafe { info.as_ref().unwrap_unchecked() };
 
         RenderDeviceInfo {
@@ -816,11 +816,11 @@ impl RenderDevice {
     }
 
     pub fn idle_gpu(&self) {
-        unsafe_member_call!(self, RenderDevice, IdleGPU,)
+        unsafe_member_call!(self, RenderDevice, IdleGPU)
     }
 
     pub fn get_engine_factory(&self) -> &EngineFactory {
-        let ptr = unsafe_member_call!(self, RenderDevice, GetEngineFactory,);
+        let ptr = unsafe_member_call!(self, RenderDevice, GetEngineFactory);
         unsafe { &*(ptr as *const EngineFactory) }
     }
 

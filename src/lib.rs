@@ -5,7 +5,7 @@ pub const API_VERSION: u32 = diligent_sys::DILIGENT_API_VERSION;
 const_assert_eq!(API_VERSION, 256008);
 
 macro_rules! unsafe_member_call {
-    ($instance:expr, $type_name: ident, $func_name:ident, $($arg:expr), *) => (
+    ($instance:expr, $type_name: ident, $func_name:ident $(, $arg:expr) *) => (
         unsafe {
             (*(*($instance.sys_ptr as *mut paste::paste! {diligent_sys::[<I $type_name>]})).pVtbl)
                 .$type_name

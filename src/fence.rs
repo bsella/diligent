@@ -67,7 +67,7 @@ impl Fence {
     }
 
     pub fn get_completed_value(&self) -> u64 {
-        unsafe_member_call!(self, Fence, GetCompletedValue,)
+        unsafe_member_call!(self, Fence, GetCompletedValue)
     }
 
     pub fn signal(&self, value: u64) {

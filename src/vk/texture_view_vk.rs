@@ -31,6 +31,6 @@ impl<'a> From<&'a TextureView> for TextureViewVk<'a> {
 
 impl TextureViewVk<'_> {
     pub fn get_vulkan_image_view(&self) -> diligent_sys::VkImageView {
-        unsafe_member_call!(self, TextureViewVk, GetVulkanImageView,)
+        unsafe_member_call!(self, TextureViewVk, GetVulkanImageView)
     }
 }

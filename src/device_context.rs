@@ -669,7 +669,7 @@ impl<'a> ScopedDebugGroup<'a> {
 
 impl<'a> Drop for ScopedDebugGroup<'a> {
     fn drop(&mut self) {
-        unsafe_member_call!(self.device_context, DeviceContext, EndDebugGroup,)
+        unsafe_member_call!(self.device_context, DeviceContext, EndDebugGroup)
     }
 }
 
@@ -825,13 +825,13 @@ impl<'a> RenderPassToken<'a> {
     }
 
     pub fn next_subpass(&self) {
-        unsafe_member_call!(self.context, DeviceContext, NextSubpass,)
+        unsafe_member_call!(self.context, DeviceContext, NextSubpass)
     }
 }
 
 impl Drop for RenderPassToken<'_> {
     fn drop(&mut self) {
-        unsafe_member_call!(self.context, DeviceContext, EndRenderPass,)
+        unsafe_member_call!(self.context, DeviceContext, EndRenderPass)
     }
 }
 
@@ -1249,7 +1249,7 @@ impl DeviceContext {
     }
 
     pub fn invalidate_state(&self) {
-        unsafe_member_call!(self, DeviceContext, InvalidateState,)
+        unsafe_member_call!(self, DeviceContext, InvalidateState)
     }
 
     pub fn set_index_buffer(
@@ -1617,11 +1617,11 @@ impl DeviceContext {
     }
 
     pub fn finish_frame(&self) {
-        unsafe_member_call!(self, DeviceContext, FinishFrame,)
+        unsafe_member_call!(self, DeviceContext, FinishFrame)
     }
 
     pub fn get_frame_number(&self) -> u64 {
-        unsafe_member_call!(self, DeviceContext, GetFrameNumber,)
+        unsafe_member_call!(self, DeviceContext, GetFrameNumber)
     }
 
     pub fn transition_resource_states<'a>(&self, barriers: &[&StateTransitionDesc<'a>]) {
@@ -1841,12 +1841,12 @@ impl DeviceContext {
     }
 
     pub fn clear_stats(&self) {
-        unsafe_member_call!(self, DeviceContext, ClearStats,)
+        unsafe_member_call!(self, DeviceContext, ClearStats)
     }
 
     pub fn get_stats(&self) -> &diligent_sys::DeviceContextStats {
         // TODO
-        let stats = unsafe_member_call!(self, DeviceContext, GetStats,);
+        let stats = unsafe_member_call!(self, DeviceContext, GetStats);
 
         unsafe { stats.as_ref().unwrap_unchecked() }
     }
@@ -1879,7 +1879,7 @@ impl ImmediateDeviceContext {
     }
 
     pub fn flush(&self) {
-        unsafe_member_call!(self.device_context, DeviceContext, Flush,)
+        unsafe_member_call!(self.device_context, DeviceContext, Flush)
     }
 
     pub fn execute_command_lists(&self, command_lists: &[CommandList]) {
@@ -1893,7 +1893,7 @@ impl ImmediateDeviceContext {
     }
 
     pub fn wait_for_idle(&self) {
-        unsafe_member_call!(self.device_context, DeviceContext, WaitForIdle,)
+        unsafe_member_call!(self.device_context, DeviceContext, WaitForIdle)
     }
 
     pub fn lock_command_queue(&self) -> Result<CommandQueue<'_>, ()> {

@@ -1216,13 +1216,13 @@ impl PipelineState {
 
     pub fn get_ray_tracing_pipeline_desc(&self) -> &diligent_sys::RayTracingPipelineDesc {
         // TODO
-        let desc = unsafe_member_call!(self, PipelineState, GetRayTracingPipelineDesc,);
+        let desc = unsafe_member_call!(self, PipelineState, GetRayTracingPipelineDesc);
         unsafe { desc.as_ref().unwrap_unchecked() }
     }
 
     pub fn get_tile_pipeline_desc(&self) -> &diligent_sys::TilePipelineDesc {
         // TODO
-        let desc = unsafe_member_call!(self, PipelineState, GetTilePipelineDesc,);
+        let desc = unsafe_member_call!(self, PipelineState, GetTilePipelineDesc);
         unsafe { desc.as_ref().unwrap_unchecked() }
     }
 
@@ -1349,7 +1349,7 @@ impl GraphicsPipelineState {
 
     pub fn get_graphics_pipeline_desc(&self) -> &diligent_sys::GraphicsPipelineDesc {
         // TODO
-        let desc = unsafe_member_call!(self, PipelineState, GetGraphicsPipelineDesc,);
+        let desc = unsafe_member_call!(self, PipelineState, GetGraphicsPipelineDesc);
         unsafe { desc.as_ref().unwrap_unchecked() }
     }
 }
@@ -1397,7 +1397,7 @@ impl RayTracingPipelineState {
 
     pub fn get_raytracing_pipeline_desc(&self) -> &diligent_sys::RayTracingPipelineDesc {
         // TODO
-        let desc = unsafe_member_call!(self, PipelineState, GetRayTracingPipelineDesc,);
+        let desc = unsafe_member_call!(self, PipelineState, GetRayTracingPipelineDesc);
         unsafe { desc.as_ref().unwrap_unchecked() }
     }
 }
@@ -1470,7 +1470,7 @@ impl TilePipelineState {
 
     pub fn get_tile_pipeline_desc(&self) -> &diligent_sys::TilePipelineDesc {
         // TODO
-        let desc = unsafe_member_call!(self, PipelineState, GetTilePipelineDesc,);
+        let desc = unsafe_member_call!(self, PipelineState, GetTilePipelineDesc);
         unsafe { desc.as_ref().unwrap_unchecked() }
     }
 }

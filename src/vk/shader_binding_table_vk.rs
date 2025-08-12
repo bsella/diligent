@@ -29,7 +29,7 @@ impl<'a> From<&'a ShaderBindingTable> for ShaderBindingTableVk<'a> {
 
 impl ShaderBindingTableVk<'_> {
     pub fn get_vk_binding_table(&self) -> &diligent_sys::BindingTableVk {
-        let bt = unsafe_member_call!(self, ShaderBindingTableVk, GetVkBindingTable,);
+        let bt = unsafe_member_call!(self, ShaderBindingTableVk, GetVkBindingTable);
         unsafe { bt.as_ref().unwrap_unchecked() }
     }
 }

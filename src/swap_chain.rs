@@ -129,7 +129,7 @@ impl SwapChain {
     }
 
     pub fn get_desc(&self) -> SwapChainDesc {
-        let swap_chain_desc = unsafe_member_call!(self, SwapChain, GetDesc,);
+        let swap_chain_desc = unsafe_member_call!(self, SwapChain, GetDesc);
         let swap_chain_desc = unsafe { swap_chain_desc.as_ref().unwrap_unchecked() };
 
         swap_chain_desc.into()
@@ -157,7 +157,7 @@ impl SwapChain {
     }
 
     pub fn set_windowed_mode(&self) {
-        unsafe_member_call!(self, SwapChain, SetWindowedMode,)
+        unsafe_member_call!(self, SwapChain, SetWindowedMode)
     }
 
     pub fn set_maximum_frame_latency(&self, max_latency: u32) {
@@ -165,7 +165,7 @@ impl SwapChain {
     }
 
     pub fn get_current_back_buffer_rtv(&self) -> TextureView {
-        let texture_view_ptr = unsafe_member_call!(self, SwapChain, GetCurrentBackBufferRTV,);
+        let texture_view_ptr = unsafe_member_call!(self, SwapChain, GetCurrentBackBufferRTV);
 
         let view = TextureView::new(texture_view_ptr);
 
@@ -175,7 +175,7 @@ impl SwapChain {
     }
 
     pub fn get_depth_buffer_dsv(&self) -> TextureView {
-        let texture_view_ptr = unsafe_member_call!(self, SwapChain, GetDepthBufferDSV,);
+        let texture_view_ptr = unsafe_member_call!(self, SwapChain, GetDepthBufferDSV);
 
         let view = TextureView::new(texture_view_ptr);
 

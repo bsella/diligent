@@ -191,7 +191,7 @@ impl Buffer {
     }
 
     pub fn get_native_handle(&self) -> u64 {
-        unsafe_member_call!(self, Buffer, GetNativeHandle,)
+        unsafe_member_call!(self, Buffer, GetNativeHandle)
     }
 
     pub fn set_state(&mut self, state: ResourceState) {
@@ -199,13 +199,13 @@ impl Buffer {
     }
 
     pub fn get_state(&self) -> ResourceState {
-        let state = unsafe_member_call!(self, Buffer, GetState,);
+        let state = unsafe_member_call!(self, Buffer, GetState);
         ResourceState::from_bits_retain(state)
     }
 
     pub fn get_memory_properties(&self) -> diligent_sys::MEMORY_PROPERTIES {
         // TODO
-        unsafe_member_call!(self, Buffer, GetMemoryProperties,)
+        unsafe_member_call!(self, Buffer, GetMemoryProperties)
     }
 
     pub fn flush_mapped_range(&mut self, start_offset: u64, size: u64) {
@@ -217,7 +217,7 @@ impl Buffer {
     }
 
     pub fn get_sparse_properties(&self) -> diligent_sys::SparseBufferProperties {
-        unsafe_member_call!(self, Buffer, GetSparseProperties,)
+        unsafe_member_call!(self, Buffer, GetSparseProperties)
     }
 }
 

@@ -41,6 +41,6 @@ impl PipelineStateVk<'_> {
     }
 
     pub fn get_vk_pipeline(&self) -> diligent_sys::VkPipeline {
-        unsafe_member_call!(self, PipelineStateVk, GetVkPipeline,)
+        unsafe_member_call!(self, PipelineStateVk, GetVkPipeline)
     }
 }

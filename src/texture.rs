@@ -290,7 +290,7 @@ impl Texture {
     }
 
     pub fn get_native_handle(&self) -> u64 {
-        unsafe_member_call!(self, Texture, GetNativeHandle,)
+        unsafe_member_call!(self, Texture, GetNativeHandle)
     }
 
     pub fn set_state(&mut self, state: ResourceState) {
@@ -298,13 +298,13 @@ impl Texture {
     }
 
     pub fn get_state(&self) -> ResourceState {
-        let state = unsafe_member_call!(self, Texture, GetState,);
+        let state = unsafe_member_call!(self, Texture, GetState);
         ResourceState::from_bits_retain(state)
     }
 
     pub fn get_sparse_properties(&self) -> &diligent_sys::SparseTextureProperties {
         // TODO
-        let properties = unsafe_member_call!(self, Texture, GetSparseProperties,);
+        let properties = unsafe_member_call!(self, Texture, GetSparseProperties);
         unsafe { properties.as_ref().unwrap_unchecked() }
     }
 }

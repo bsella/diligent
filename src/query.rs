@@ -100,7 +100,7 @@ impl<QueryDataType: GetSysQueryType + Default> Query<QueryDataType> {
     }
 
     pub fn invalidate(&self) {
-        unsafe_member_call!(self, Query, Invalidate,)
+        unsafe_member_call!(self, Query, Invalidate)
     }
 
     pub fn get_data(&self, autoinvalidate: bool) -> &QueryDataType {

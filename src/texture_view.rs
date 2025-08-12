@@ -70,7 +70,7 @@ impl TextureView {
 
     #[inline]
     pub fn get_texture(&self) -> Texture {
-        let texture = Texture::new(unsafe_member_call!(self, TextureView, GetTexture,));
+        let texture = Texture::new(unsafe_member_call!(self, TextureView, GetTexture));
         texture.add_ref();
         texture
     }

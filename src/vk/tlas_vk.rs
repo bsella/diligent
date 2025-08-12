@@ -29,10 +29,10 @@ impl<'a> From<&'a TopLevelAS> for TopLevelASVk<'a> {
 
 impl TopLevelASVk<'_> {
     pub fn get_vk_tlas(&self) -> diligent_sys::VkAccelerationStructureKHR {
-        unsafe_member_call!(self, TopLevelASVk, GetVkTLAS,)
+        unsafe_member_call!(self, TopLevelASVk, GetVkTLAS)
     }
 
     pub fn get_vk_device_address(&self) -> diligent_sys::VkDeviceAddress {
-        unsafe_member_call!(self, TopLevelASVk, GetVkDeviceAddress,)
+        unsafe_member_call!(self, TopLevelASVk, GetVkDeviceAddress)
     }
 }

@@ -81,7 +81,7 @@ impl ShaderBindingTable {
         unsafe_member_call!(self, ShaderBindingTable, Reset, pso.sys_ptr as _)
     }
     pub fn reset_hit_groups(&self) {
-        unsafe_member_call!(self, ShaderBindingTable, ResetHitGroups,)
+        unsafe_member_call!(self, ShaderBindingTable, ResetHitGroups)
     }
 
     pub fn bind_ray_gen_shader(&self, shader_group_name: impl AsRef<str>) {

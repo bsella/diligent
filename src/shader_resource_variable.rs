@@ -195,7 +195,7 @@ impl ShaderResourceVariable {
     }
 
     pub fn get_type(&self) -> ShaderResourceVariableType {
-        unsafe_member_call!(self, ShaderResourceVariable, GetType,).into()
+        unsafe_member_call!(self, ShaderResourceVariable, GetType).into()
     }
 
     pub fn get_resource_desc(&self) -> ShaderResourceDesc {
@@ -221,6 +221,6 @@ impl ShaderResourceVariable {
     }
 
     pub fn get_index(&self) -> u32 {
-        unsafe_member_call!(self, ShaderResourceVariable, GetIndex,)
+        unsafe_member_call!(self, ShaderResourceVariable, GetIndex)
     }
 }

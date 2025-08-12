@@ -36,6 +36,6 @@ impl DeviceObject {
     }
 
     pub fn get_unique_id(&self) -> i32 {
-        unsafe_member_call!(self, DeviceObject, GetUniqueID,)
+        unsafe_member_call!(self, DeviceObject, GetUniqueID)
     }
 }

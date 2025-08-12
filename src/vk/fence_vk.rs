@@ -29,6 +29,6 @@ impl<'a> From<&'a Fence> for FenceVk<'a> {
 
 impl FenceVk<'_> {
     pub fn get_vk_semaphore(&self) -> diligent_sys::VkSemaphore {
-        unsafe_member_call!(self, FenceVk, GetVkSemaphore,)
+        unsafe_member_call!(self, FenceVk, GetVkSemaphore)
     }
 }

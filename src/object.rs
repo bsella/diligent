@@ -16,12 +16,12 @@ impl Object {
     }
 
     pub(crate) fn add_ref(&self) {
-        unsafe_member_call!(self, Object, AddRef,);
+        unsafe_member_call!(self, Object, AddRef);
     }
 }
 
 impl Drop for Object {
     fn drop(&mut self) {
-        unsafe_member_call!(self, Object, Release,);
+        unsafe_member_call!(self, Object, Release);
     }
 }

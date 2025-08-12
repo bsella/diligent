@@ -116,7 +116,7 @@ impl EngineFactory {
 
     pub fn get_api_info(&self) -> &diligent_sys::APIInfo {
         // TODO
-        let api_info = unsafe_member_call!(self, EngineFactory, GetAPIInfo,);
+        let api_info = unsafe_member_call!(self, EngineFactory, GetAPIInfo);
         unsafe { api_info.as_ref().unwrap_unchecked() }
     }
 

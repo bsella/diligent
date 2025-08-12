@@ -37,19 +37,19 @@ impl<'a> From<&'a RenderDevice> for RenderDeviceVk<'a> {
 
 impl RenderDeviceVk<'_> {
     pub fn get_vk_device(&self) -> diligent_sys::VkDevice {
-        unsafe_member_call!(self, RenderDeviceVk, GetVkDevice,)
+        unsafe_member_call!(self, RenderDeviceVk, GetVkDevice)
     }
 
     pub fn get_vk_physical_device(&self) -> diligent_sys::VkPhysicalDevice {
-        unsafe_member_call!(self, RenderDeviceVk, GetVkPhysicalDevice,)
+        unsafe_member_call!(self, RenderDeviceVk, GetVkPhysicalDevice)
     }
 
     pub fn get_vk_instance(&self) -> diligent_sys::VkInstance {
-        unsafe_member_call!(self, RenderDeviceVk, GetVkInstance,)
+        unsafe_member_call!(self, RenderDeviceVk, GetVkInstance)
     }
 
     pub fn get_vk_version(&self) -> u32 {
-        unsafe_member_call!(self, RenderDeviceVk, GetVkVersion,)
+        unsafe_member_call!(self, RenderDeviceVk, GetVkVersion)
     }
 
     pub fn create_texture_from_vulkan_image(

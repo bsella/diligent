@@ -19,7 +19,7 @@ impl Deref for CommandQueue<'_> {
 
 impl Drop for CommandQueue<'_> {
     fn drop(&mut self) {
-        unsafe_member_call!(self.context, DeviceContext, UnlockCommandQueue,)
+        unsafe_member_call!(self.context, DeviceContext, UnlockCommandQueue)
     }
 }
 
@@ -30,7 +30,7 @@ const_assert_eq!(
 
 impl<'a> CommandQueue<'a> {
     pub(crate) fn new(context: &'a DeviceContext) -> Result<Self, ()> {
-        let command_queue_ptr = unsafe_member_call!(context, DeviceContext, LockCommandQueue,);
+        let command_queue_ptr = unsafe_member_call!(context, DeviceContext, LockCommandQueue);
 
         // Both base and derived classes have exactly the same size.
         // This means that we can up-cast to the base class without worrying about layout offset between both classes
@@ -50,14 +50,14 @@ impl<'a> CommandQueue<'a> {
     }
 
     pub fn get_next_fence_value(&self) -> u64 {
-        unsafe_member_call!(self, CommandQueue, GetNextFenceValue,)
+        unsafe_member_call!(self, CommandQueue, GetNextFenceValue)
     }
 
     pub fn get_completed_fence_value(&self) -> u64 {
-        unsafe_member_call!(self, CommandQueue, GetCompletedFenceValue,)
+        unsafe_member_call!(self, CommandQueue, GetCompletedFenceValue)
     }
 
     pub fn wait_for_idle(&self) -> u64 {
-        unsafe_member_call!(self, CommandQueue, WaitForIdle,)
+        unsafe_member_call!(self, CommandQueue, WaitForIdle)
     }
 }

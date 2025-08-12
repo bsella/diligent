@@ -60,7 +60,7 @@ impl DataBlob {
     }
 
     pub fn get_size(&self) -> usize {
-        unsafe_member_call!(self, DataBlob, GetSize,)
+        unsafe_member_call!(self, DataBlob, GetSize)
     }
 
     pub fn get_data<T>(&self, offset: usize) -> &T {

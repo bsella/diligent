@@ -196,11 +196,11 @@ impl BottomLevelAS {
     }
 
     pub fn get_actual_geometry_count(&self) -> u32 {
-        unsafe_member_call!(self, BottomLevelAS, GetActualGeometryCount,)
+        unsafe_member_call!(self, BottomLevelAS, GetActualGeometryCount)
     }
 
     pub fn get_scratch_buffer_sizes(&self) -> ScratchBufferSizes {
-        let sbs = unsafe_member_call!(self, BottomLevelAS, GetScratchBufferSizes,);
+        let sbs = unsafe_member_call!(self, BottomLevelAS, GetScratchBufferSizes);
 
         ScratchBufferSizes {
             build: sbs.Build,
@@ -209,7 +209,7 @@ impl BottomLevelAS {
     }
 
     pub fn get_native_handle(&self) -> u64 {
-        unsafe_member_call!(self, BottomLevelAS, GetNativeHandle,)
+        unsafe_member_call!(self, BottomLevelAS, GetNativeHandle)
     }
 
     pub fn set_state(&self, state: ResourceState) {
@@ -217,6 +217,6 @@ impl BottomLevelAS {
     }
 
     pub fn get_state(&self) -> ResourceState {
-        ResourceState::from_bits_retain(unsafe_member_call!(self, BottomLevelAS, GetState,))
+        ResourceState::from_bits_retain(unsafe_member_call!(self, BottomLevelAS, GetState))
     }
 }

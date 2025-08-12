@@ -377,7 +377,7 @@ impl Shader {
     }
 
     pub fn get_resources(&self) -> Vec<ShaderResourceDesc> {
-        let num_resources = unsafe_member_call!(self, Shader, GetResourceCount,);
+        let num_resources = unsafe_member_call!(self, Shader, GetResourceCount);
         let mut resources = Vec::with_capacity(num_resources as usize);
 
         for index in 0..num_resources {

@@ -29,7 +29,7 @@ impl<'a> From<&'a Buffer> for BufferVk<'a> {
 
 impl BufferVk<'_> {
     pub fn get_vk_buffer_view(&self) -> diligent_sys::VkBuffer {
-        unsafe_member_call!(self, BufferVk, GetVkBuffer,)
+        unsafe_member_call!(self, BufferVk, GetVkBuffer)
     }
 
     pub fn set_access_flags(&self, access_flags: diligent_sys::VkAccessFlags) {
@@ -37,10 +37,10 @@ impl BufferVk<'_> {
     }
 
     pub fn get_access_flags(&self) -> diligent_sys::VkAccessFlags {
-        unsafe_member_call!(self, BufferVk, GetAccessFlags,)
+        unsafe_member_call!(self, BufferVk, GetAccessFlags)
     }
 
     pub fn get_vk_device_address(&self) -> diligent_sys::VkDeviceAddress {
-        unsafe_member_call!(self, BufferVk, GetVkDeviceAddress,)
+        unsafe_member_call!(self, BufferVk, GetVkDeviceAddress)
     }
 }

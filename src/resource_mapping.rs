@@ -112,6 +112,6 @@ impl ResourceMapping {
     }
 
     pub fn get_size(&self) -> usize {
-        unsafe_member_call!(self, ResourceMapping, GetSize,)
+        unsafe_member_call!(self, ResourceMapping, GetSize)
     }
 }

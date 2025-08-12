@@ -340,6 +340,6 @@ impl EngineFactoryVk {
     }
 
     pub fn enable_device_simulation(&self) {
-        unsafe_member_call!(self, EngineFactoryVk, EnableDeviceSimulation,);
+        unsafe_member_call!(self, EngineFactoryVk, EnableDeviceSimulation);
     }
 }

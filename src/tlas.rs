@@ -174,7 +174,7 @@ impl TopLevelAS {
     // TODO pub fn get_build_info(&self) -> TLASBuildInfo {}
 
     pub fn get_scratch_buffer_sizes(&self) -> ScratchBufferSizes {
-        let sbs = unsafe_member_call!(self, TopLevelAS, GetScratchBufferSizes,);
+        let sbs = unsafe_member_call!(self, TopLevelAS, GetScratchBufferSizes);
 
         ScratchBufferSizes {
             build: sbs.Build,
@@ -183,7 +183,7 @@ impl TopLevelAS {
     }
 
     pub fn get_native_handle(&self) -> u64 {
-        unsafe_member_call!(self, TopLevelAS, GetNativeHandle,)
+        unsafe_member_call!(self, TopLevelAS, GetNativeHandle)
     }
 
     pub fn set_state(&self, state: ResourceState) {
@@ -191,6 +191,6 @@ impl TopLevelAS {
     }
 
     pub fn get_state(&self) -> ResourceState {
-        ResourceState::from_bits_retain(unsafe_member_call!(self, TopLevelAS, GetState,))
+        ResourceState::from_bits_retain(unsafe_member_call!(self, TopLevelAS, GetState))
     }
 }

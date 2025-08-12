@@ -47,11 +47,11 @@ impl CommandQueueVk<'_> {
     }
 
     pub fn get_vk_queue(&self) -> diligent_sys::VkQueue {
-        unsafe_member_call!(self, CommandQueueVk, GetVkQueue,)
+        unsafe_member_call!(self, CommandQueueVk, GetVkQueue)
     }
 
     pub fn get_queue_family_index(&self) -> u32 {
-        unsafe_member_call!(self, CommandQueueVk, GetQueueFamilyIndex,)
+        unsafe_member_call!(self, CommandQueueVk, GetQueueFamilyIndex)
     }
 
     pub fn enqueue_signal_fence(&self, vk_fence: diligent_sys::VkFence) {
