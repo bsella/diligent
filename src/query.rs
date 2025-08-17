@@ -6,24 +6,56 @@ use crate::device_object::DeviceObject;
 
 const_assert!(diligent_sys::QUERY_TYPE_NUM_TYPES == 6);
 
-#[derive(Default)]
+#[repr(C)]
 pub struct QueryDataOcclusion {
+    query_type: diligent_sys::QUERY_TYPE,
     pub num_samples: u64,
 }
 
-#[derive(Default)]
+impl Default for QueryDataOcclusion {
+    fn default() -> Self {
+        Self {
+            query_type: diligent_sys::QUERY_TYPE_OCCLUSION,
+            num_samples: 0,
+        }
+    }
+}
+
+#[repr(C)]
 pub struct QueryDataBinaryOcclusion {
+    query_type: diligent_sys::QUERY_TYPE,
     pub any_sample_passed: bool,
 }
 
-#[derive(Default)]
+impl Default for QueryDataBinaryOcclusion {
+    fn default() -> Self {
+        Self {
+            query_type: diligent_sys::QUERY_TYPE_BINARY_OCCLUSION,
+            any_sample_passed: false,
+        }
+    }
+}
+
+#[repr(C)]
 pub struct QueryDataTimestamp {
+    query_type: diligent_sys::QUERY_TYPE,
     pub counter: u64,
     pub frequency: u64,
 }
 
-#[derive(Default)]
+impl Default for QueryDataTimestamp {
+    fn default() -> Self {
+        Self {
+            query_type: diligent_sys::QUERY_TYPE_TIMESTAMP,
+            counter: 0,
+            frequency: 0,
+        }
+    }
+}
+
+#[repr(C)]
 pub struct QueryDataPipelineStatistics {
+    query_type: diligent_sys::QUERY_TYPE,
     pub input_vertices: u64,
     pub input_primitives: u64,
     pub gs_primitives: u64,
@@ -37,10 +69,40 @@ pub struct QueryDataPipelineStatistics {
     pub cs_invocations: u64,
 }
 
-#[derive(Default)]
+impl Default for QueryDataPipelineStatistics {
+    fn default() -> Self {
+        Self {
+            query_type: diligent_sys::QUERY_TYPE_PIPELINE_STATISTICS,
+            input_vertices: 0,
+            input_primitives: 0,
+            gs_primitives: 0,
+            clipping_invocations: 0,
+            clipping_primitives: 0,
+            vs_invocations: 0,
+            gs_invocations: 0,
+            ps_invocations: 0,
+            hs_invocations: 0,
+            ds_invocations: 0,
+            cs_invocations: 0,
+        }
+    }
+}
+
+#[repr(C)]
 pub struct QueryDataDuration {
+    query_type: diligent_sys::QUERY_TYPE,
     pub duration: u64,
     pub frequency: u64,
+}
+
+impl Default for QueryDataDuration {
+    fn default() -> Self {
+        Self {
+            query_type: diligent_sys::QUERY_TYPE_DURATION,
+            duration: 0,
+            frequency: 0,
+        }
+    }
 }
 
 pub trait GetSysQueryType {
