@@ -231,14 +231,12 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct Texture {
-    device_object: DeviceObject,
-}
+pub struct Texture(DeviceObject);
 
 impl Deref for Texture {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
-        &self.device_object
+        &self.0
     }
 }
 
@@ -251,9 +249,9 @@ impl Texture {
                 == std::mem::size_of::<diligent_sys::ITexture>()
         );
 
-        Texture {
-            device_object: DeviceObject::new(texture_ptr as *mut diligent_sys::IDeviceObject),
-        }
+        Self(DeviceObject::new(
+            texture_ptr as *mut diligent_sys::IDeviceObject,
+        ))
     }
 
     pub fn create_view(

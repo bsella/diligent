@@ -89,14 +89,12 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct EngineFactory {
-    object: Object,
-}
+pub struct EngineFactory(Object);
 
 impl Deref for EngineFactory {
     type Target = Object;
     fn deref(&self) -> &Self::Target {
-        &self.object
+        &self.0
     }
 }
 
@@ -109,9 +107,9 @@ impl EngineFactory {
                 == std::mem::size_of::<diligent_sys::IEngineFactory>()
         );
 
-        EngineFactory {
-            object: Object::new(engine_factory_ptr as *mut diligent_sys::IObject),
-        }
+        Self(Object::new(
+            engine_factory_ptr as *mut diligent_sys::IObject,
+        ))
     }
 
     pub fn get_api_info(&self) -> &diligent_sys::APIInfo {

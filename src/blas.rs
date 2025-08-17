@@ -150,14 +150,12 @@ impl From<&BottomLevelASDesc<'_>> for BottomLevelASDescWrapper {
 }
 
 #[repr(transparent)]
-pub struct BottomLevelAS {
-    device_object: DeviceObject,
-}
+pub struct BottomLevelAS(DeviceObject);
 
 impl Deref for BottomLevelAS {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
-        &self.device_object
+        &self.0
     }
 }
 
@@ -180,9 +178,9 @@ impl BottomLevelAS {
                 == std::mem::size_of::<diligent_sys::IBottomLevelAS>()
         );
 
-        Self {
-            device_object: DeviceObject::new(sys_ptr as *mut diligent_sys::IDeviceObject),
-        }
+        Self(DeviceObject::new(
+            sys_ptr as *mut diligent_sys::IDeviceObject,
+        ))
     }
 
     pub fn get_geometry_desc_index(&self, name: impl AsRef<str>) -> u32 {

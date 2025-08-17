@@ -10,20 +10,18 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct TopLevelASVk<'a> {
-    tlas: &'a TopLevelAS,
-}
+pub struct TopLevelASVk<'a>(&'a TopLevelAS);
 
 impl Deref for TopLevelASVk<'_> {
     type Target = TopLevelAS;
     fn deref(&self) -> &Self::Target {
-        self.tlas
+        self.0
     }
 }
 
 impl<'a> From<&'a TopLevelAS> for TopLevelASVk<'a> {
     fn from(value: &'a TopLevelAS) -> Self {
-        TopLevelASVk { tlas: value }
+        TopLevelASVk(value)
     }
 }
 

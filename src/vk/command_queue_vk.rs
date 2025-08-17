@@ -10,22 +10,18 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct CommandQueueVk<'a> {
-    command_queue: &'a CommandQueue<'a>,
-}
+pub struct CommandQueueVk<'a>(&'a CommandQueue<'a>);
 
 impl<'a> Deref for CommandQueueVk<'a> {
     type Target = CommandQueue<'a>;
     fn deref(&self) -> &Self::Target {
-        self.command_queue
+        self.0
     }
 }
 
 impl<'a> From<&'a CommandQueue<'a>> for CommandQueueVk<'a> {
     fn from(value: &'a CommandQueue) -> Self {
-        CommandQueueVk {
-            command_queue: value,
-        }
+        CommandQueueVk(value)
     }
 }
 

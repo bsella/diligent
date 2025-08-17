@@ -10,20 +10,18 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct BottomLevelASVk<'a> {
-    blas: &'a BottomLevelAS,
-}
+pub struct BottomLevelASVk<'a>(&'a BottomLevelAS);
 
 impl<'a> Deref for BottomLevelASVk<'a> {
     type Target = BottomLevelAS;
     fn deref(&self) -> &Self::Target {
-        self.blas
+        self.0
     }
 }
 
 impl<'a> From<&'a BottomLevelAS> for BottomLevelASVk<'a> {
     fn from(value: &'a BottomLevelAS) -> Self {
-        BottomLevelASVk { blas: value }
+        BottomLevelASVk(value)
     }
 }
 

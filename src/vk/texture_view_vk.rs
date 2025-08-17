@@ -10,22 +10,18 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct TextureViewVk<'a> {
-    texture_view: &'a TextureView,
-}
+pub struct TextureViewVk<'a>(&'a TextureView);
 
 impl Deref for TextureViewVk<'_> {
     type Target = TextureView;
     fn deref(&self) -> &Self::Target {
-        self.texture_view
+        self.0
     }
 }
 
 impl<'a> From<&'a TextureView> for TextureViewVk<'a> {
     fn from(value: &'a TextureView) -> Self {
-        TextureViewVk {
-            texture_view: value,
-        }
+        TextureViewVk(value)
     }
 }
 

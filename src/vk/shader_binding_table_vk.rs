@@ -10,20 +10,18 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct ShaderBindingTableVk<'a> {
-    sbt: &'a ShaderBindingTable,
-}
+pub struct ShaderBindingTableVk<'a>(&'a ShaderBindingTable);
 
 impl Deref for ShaderBindingTableVk<'_> {
     type Target = ShaderBindingTable;
     fn deref(&self) -> &Self::Target {
-        self.sbt
+        self.0
     }
 }
 
 impl<'a> From<&'a ShaderBindingTable> for ShaderBindingTableVk<'a> {
     fn from(value: &'a ShaderBindingTable) -> Self {
-        ShaderBindingTableVk { sbt: value }
+        ShaderBindingTableVk(value)
     }
 }
 

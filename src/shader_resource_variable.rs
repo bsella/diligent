@@ -114,14 +114,12 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct ShaderResourceVariable {
-    object: Object,
-}
+pub struct ShaderResourceVariable(Object);
 
 impl Deref for ShaderResourceVariable {
     type Target = Object;
     fn deref(&self) -> &Self::Target {
-        &self.object
+        &self.0
     }
 }
 
@@ -136,9 +134,9 @@ impl ShaderResourceVariable {
                 == std::mem::size_of::<diligent_sys::IShaderResourceVariable>()
         );
 
-        ShaderResourceVariable {
-            object: Object::new(shader_resource_variable_ptr as *mut diligent_sys::IObject),
-        }
+        Self(Object::new(
+            shader_resource_variable_ptr as *mut diligent_sys::IObject,
+        ))
     }
 
     pub fn set(&self, device_object: &DeviceObject, flags: SetShaderResourceFlags) {

@@ -10,20 +10,18 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct SamplerVk<'a> {
-    sampler: &'a Sampler,
-}
+pub struct SamplerVk<'a>(&'a Sampler);
 
 impl Deref for SamplerVk<'_> {
     type Target = Sampler;
     fn deref(&self) -> &Self::Target {
-        self.sampler
+        self.0
     }
 }
 
 impl<'a> From<&'a Sampler> for SamplerVk<'a> {
     fn from(value: &'a Sampler) -> Self {
-        SamplerVk { sampler: value }
+        SamplerVk(value)
     }
 }
 

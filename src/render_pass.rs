@@ -8,14 +8,12 @@ use crate::{
 };
 
 #[repr(transparent)]
-pub struct RenderPass {
-    device_object: DeviceObject,
-}
+pub struct RenderPass(DeviceObject);
 
 impl Deref for RenderPass {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
-        &self.device_object
+        &self.0
     }
 }
 
@@ -173,8 +171,8 @@ impl RenderPass {
             std::mem::size_of::<diligent_sys::IObject>()
                 == std::mem::size_of::<diligent_sys::IRenderPass>()
         );
-        RenderPass {
-            device_object: DeviceObject::new(sys_ptr as *mut diligent_sys::IDeviceObject),
-        }
+        Self(DeviceObject::new(
+            sys_ptr as *mut diligent_sys::IDeviceObject,
+        ))
     }
 }

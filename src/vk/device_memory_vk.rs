@@ -10,22 +10,18 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct DeviceMemoryVk<'a> {
-    device_memory: &'a DeviceMemory,
-}
+pub struct DeviceMemoryVk<'a>(&'a DeviceMemory);
 
 impl Deref for DeviceMemoryVk<'_> {
     type Target = DeviceMemory;
     fn deref(&self) -> &Self::Target {
-        self.device_memory
+        self.0
     }
 }
 
 impl<'a> From<&'a DeviceMemory> for DeviceMemoryVk<'a> {
     fn from(value: &'a DeviceMemory) -> Self {
-        DeviceMemoryVk {
-            device_memory: value,
-        }
+        DeviceMemoryVk(value)
     }
 }
 

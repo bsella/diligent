@@ -5,14 +5,12 @@ use static_assertions::const_assert;
 use crate::{device_object::DeviceObject, render_pass::RenderPass, texture_view::TextureView};
 
 #[repr(transparent)]
-pub struct Framebuffer {
-    device_object: DeviceObject,
-}
+pub struct Framebuffer(DeviceObject);
 
 impl Deref for Framebuffer {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
-        &self.device_object
+        &self.0
     }
 }
 
@@ -35,8 +33,8 @@ impl Framebuffer {
             std::mem::size_of::<diligent_sys::IDeviceObject>()
                 == std::mem::size_of::<diligent_sys::IFramebuffer>()
         );
-        Framebuffer {
-            device_object: DeviceObject::new(sys_ptr as *mut diligent_sys::IDeviceObject),
-        }
+        Self(DeviceObject::new(
+            sys_ptr as *mut diligent_sys::IDeviceObject,
+        ))
     }
 }

@@ -99,14 +99,12 @@ impl From<&SamplerDesc> for diligent_sys::SamplerDesc {
 }
 
 #[repr(transparent)]
-pub struct Sampler {
-    device_object: DeviceObject,
-}
+pub struct Sampler(DeviceObject);
 
 impl Deref for Sampler {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
-        &self.device_object
+        &self.0
     }
 }
 
@@ -119,8 +117,8 @@ impl Sampler {
                 == std::mem::size_of::<diligent_sys::ISampler>()
         );
 
-        Sampler {
-            device_object: DeviceObject::new(sampler_ptr as *mut diligent_sys::IDeviceObject),
-        }
+        Self(DeviceObject::new(
+            sampler_ptr as *mut diligent_sys::IDeviceObject,
+        ))
     }
 }

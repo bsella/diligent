@@ -11,14 +11,12 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct DeviceMemory {
-    device_object: DeviceObject,
-}
+pub struct DeviceMemory(DeviceObject);
 
 impl Deref for DeviceMemory {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
-        &self.device_object
+        &self.0
     }
 }
 
@@ -78,9 +76,9 @@ impl DeviceMemory {
             std::mem::size_of::<diligent_sys::IDeviceObject>()
                 == std::mem::size_of::<diligent_sys::IDeviceMemory>()
         );
-        DeviceMemory {
-            device_object: DeviceObject::new(fence_ptr as *mut diligent_sys::IDeviceObject),
-        }
+        Self(DeviceObject::new(
+            fence_ptr as *mut diligent_sys::IDeviceObject,
+        ))
     }
 
     pub fn resize(&self, new_size: u64) -> bool {

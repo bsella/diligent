@@ -16,22 +16,18 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct RenderDeviceVk<'a> {
-    render_device: &'a RenderDevice,
-}
+pub struct RenderDeviceVk<'a>(&'a RenderDevice);
 
 impl Deref for RenderDeviceVk<'_> {
     type Target = RenderDevice;
     fn deref(&self) -> &Self::Target {
-        self.render_device
+        self.0
     }
 }
 
 impl<'a> From<&'a RenderDevice> for RenderDeviceVk<'a> {
     fn from(value: &'a RenderDevice) -> Self {
-        RenderDeviceVk {
-            render_device: value,
-        }
+        RenderDeviceVk(value)
     }
 }
 

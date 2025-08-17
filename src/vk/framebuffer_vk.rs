@@ -10,20 +10,18 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct FramebufferVk<'a> {
-    framebuffer: &'a Framebuffer,
-}
+pub struct FramebufferVk<'a>(&'a Framebuffer);
 
 impl Deref for FramebufferVk<'_> {
     type Target = Framebuffer;
     fn deref(&self) -> &Self::Target {
-        self.framebuffer
+        self.0
     }
 }
 
 impl<'a> From<&'a Framebuffer> for FramebufferVk<'a> {
     fn from(value: &'a Framebuffer) -> Self {
-        FramebufferVk { framebuffer: value }
+        FramebufferVk(value)
     }
 }
 

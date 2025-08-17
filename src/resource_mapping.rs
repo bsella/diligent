@@ -10,14 +10,12 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct ResourceMapping {
-    object: Object,
-}
+pub struct ResourceMapping(Object);
 
 impl Deref for ResourceMapping {
     type Target = Object;
     fn deref(&self) -> &Self::Target {
-        &self.object
+        &self.0
     }
 }
 
@@ -30,9 +28,9 @@ impl ResourceMapping {
                 == std::mem::size_of::<diligent_sys::IResourceMapping>()
         );
 
-        ResourceMapping {
-            object: Object::new(resource_mapping_ptr as *mut diligent_sys::IObject),
-        }
+        Self(Object::new(
+            resource_mapping_ptr as *mut diligent_sys::IObject,
+        ))
     }
 
     pub fn add_resource(&mut self, name: impl AsRef<str>, object: &DeviceObject, is_unique: bool) {

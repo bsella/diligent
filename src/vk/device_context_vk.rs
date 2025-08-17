@@ -10,22 +10,18 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct DeviceContextVk<'a> {
-    device_context: &'a DeviceContext,
-}
+pub struct DeviceContextVk<'a>(&'a DeviceContext);
 
 impl Deref for DeviceContextVk<'_> {
     type Target = DeviceContext;
     fn deref(&self) -> &Self::Target {
-        self.device_context
+        self.0
     }
 }
 
 impl<'a> From<&'a DeviceContext> for DeviceContextVk<'a> {
     fn from(value: &'a DeviceContext) -> Self {
-        DeviceContextVk {
-            device_context: value,
-        }
+        DeviceContextVk(value)
     }
 }
 

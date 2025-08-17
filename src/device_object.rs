@@ -10,15 +10,13 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct DeviceObject {
-    object: Object,
-}
+pub struct DeviceObject(Object);
 
 impl Deref for DeviceObject {
     type Target = Object;
 
     fn deref(&self) -> &Self::Target {
-        &self.object
+        &self.0
     }
 }
 
@@ -30,9 +28,7 @@ impl DeviceObject {
             std::mem::size_of::<diligent_sys::IObject>()
                 == std::mem::size_of::<diligent_sys::IDeviceObject>()
         );
-        DeviceObject {
-            object: Object::new(device_object_ptr as *mut diligent_sys::IObject),
-        }
+        Self(Object::new(device_object_ptr as *mut diligent_sys::IObject))
     }
 
     pub fn get_unique_id(&self) -> i32 {

@@ -1187,14 +1187,12 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct PipelineState {
-    device_object: DeviceObject,
-}
+pub struct PipelineState(DeviceObject);
 
 impl Deref for PipelineState {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
-        &self.device_object
+        &self.0
     }
 }
 
@@ -1207,11 +1205,9 @@ impl PipelineState {
                 == std::mem::size_of::<diligent_sys::IPipelineState>()
         );
 
-        PipelineState {
-            device_object: DeviceObject::new(
-                pipeline_state_ptr as *mut diligent_sys::IDeviceObject,
-            ),
-        }
+        Self(DeviceObject::new(
+            pipeline_state_ptr as *mut diligent_sys::IDeviceObject,
+        ))
     }
 
     pub fn get_ray_tracing_pipeline_desc(&self) -> &diligent_sys::RayTracingPipelineDesc {

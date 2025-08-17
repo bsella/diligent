@@ -18,14 +18,12 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct ShaderResourceBinding {
-    object: Object,
-}
+pub struct ShaderResourceBinding(Object);
 
 impl Deref for ShaderResourceBinding {
     type Target = Object;
     fn deref(&self) -> &Self::Target {
-        &self.object
+        &self.0
     }
 }
 
@@ -38,9 +36,7 @@ impl ShaderResourceBinding {
                 == std::mem::size_of::<diligent_sys::IShaderResourceBinding>()
         );
 
-        ShaderResourceBinding {
-            object: Object::new(srb_ptr as *mut diligent_sys::IObject),
-        }
+        Self(Object::new(srb_ptr as *mut diligent_sys::IObject))
     }
 
     pub fn get_pipeline_resource_signature(&self) -> Option<PipelineResourceSignature> {

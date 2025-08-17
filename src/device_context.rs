@@ -743,14 +743,12 @@ impl<'a> From<&StateTransitionDesc<'a>> for diligent_sys::StateTransitionDesc {
 }
 
 #[repr(transparent)]
-pub struct CommandList {
-    device_object: DeviceObject,
-}
+pub struct CommandList(DeviceObject);
 
 impl Deref for CommandList {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
-        &self.device_object
+        &self.0
     }
 }
 
@@ -763,9 +761,9 @@ impl CommandList {
                 == std::mem::size_of::<diligent_sys::ICommandList>()
         );
 
-        CommandList {
-            device_object: DeviceObject::new(sys_ptr as *mut diligent_sys::IDeviceObject),
-        }
+        Self(DeviceObject::new(
+            sys_ptr as *mut diligent_sys::IDeviceObject,
+        ))
     }
 }
 
@@ -1099,9 +1097,7 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct DeviceContext {
-    object: Object,
-}
+pub struct DeviceContext(Object);
 
 impl DeviceContext {
     pub(crate) fn new(device_context_ptr: *mut diligent_sys::IDeviceContext) -> Self {
@@ -1111,9 +1107,9 @@ impl DeviceContext {
             std::mem::size_of::<diligent_sys::IObject>()
                 == std::mem::size_of::<diligent_sys::IDeviceContext>()
         );
-        DeviceContext {
-            object: Object::new(device_context_ptr as *mut diligent_sys::IObject),
-        }
+        Self(Object::new(
+            device_context_ptr as *mut diligent_sys::IObject,
+        ))
     }
 
     pub fn set_graphics_pipeline_state(
@@ -1855,36 +1851,32 @@ impl DeviceContext {
 impl Deref for DeviceContext {
     type Target = Object;
     fn deref(&self) -> &Self::Target {
-        &self.object
+        &self.0
     }
 }
 
 #[repr(transparent)]
-pub struct ImmediateDeviceContext {
-    device_context: DeviceContext,
-}
+pub struct ImmediateDeviceContext(DeviceContext);
 
 impl Deref for ImmediateDeviceContext {
     type Target = DeviceContext;
     fn deref(&self) -> &Self::Target {
-        &self.device_context
+        &self.0
     }
 }
 
 impl ImmediateDeviceContext {
     pub(crate) fn new(device_context_ptr: *mut diligent_sys::IDeviceContext) -> Self {
-        ImmediateDeviceContext {
-            device_context: DeviceContext::new(device_context_ptr),
-        }
+        Self(DeviceContext::new(device_context_ptr))
     }
 
     pub fn flush(&self) {
-        unsafe_member_call!(self.device_context, DeviceContext, Flush)
+        unsafe_member_call!(self, DeviceContext, Flush)
     }
 
     pub fn execute_command_lists(&self, command_lists: &[CommandList]) {
         unsafe_member_call!(
-            self.device_context,
+            self,
             DeviceContext,
             ExecuteCommandLists,
             command_lists.len() as u32,
@@ -1893,7 +1885,7 @@ impl ImmediateDeviceContext {
     }
 
     pub fn wait_for_idle(&self) {
-        unsafe_member_call!(self.device_context, DeviceContext, WaitForIdle)
+        unsafe_member_call!(self.0, DeviceContext, WaitForIdle)
     }
 
     pub fn lock_command_queue(&self) -> Result<CommandQueue<'_>, ()> {
@@ -1931,37 +1923,28 @@ impl ImmediateDeviceContext {
 }
 
 #[repr(transparent)]
-pub struct DeferredDeviceContext {
-    device_context: DeviceContext,
-}
+pub struct DeferredDeviceContext(DeviceContext);
 
 impl Deref for DeferredDeviceContext {
     type Target = DeviceContext;
     fn deref(&self) -> &Self::Target {
-        &self.device_context
+        &self.0
     }
 }
 
 impl DeferredDeviceContext {
     pub(crate) fn new(device_context_ptr: *mut diligent_sys::IDeviceContext) -> Self {
-        DeferredDeviceContext {
-            device_context: DeviceContext::new(device_context_ptr),
-        }
+        Self(DeviceContext::new(device_context_ptr))
     }
 
     pub fn begin(&self, immediate_context_id: u32) {
-        unsafe_member_call!(
-            self.device_context,
-            DeviceContext,
-            Begin,
-            immediate_context_id
-        )
+        unsafe_member_call!(self, DeviceContext, Begin, immediate_context_id)
     }
 
     pub fn finish_command_list(&self) -> Result<CommandList, ()> {
         let mut command_list_ptr = std::ptr::null_mut();
         unsafe_member_call!(
-            self.device_context,
+            self,
             DeviceContext,
             FinishCommandList,
             std::ptr::addr_of_mut!(command_list_ptr)

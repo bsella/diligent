@@ -52,14 +52,12 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct PipelineResourceSignature {
-    device_object: DeviceObject,
-}
+pub struct PipelineResourceSignature(DeviceObject);
 
 impl Deref for PipelineResourceSignature {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
-        &self.device_object
+        &self.0
     }
 }
 
@@ -178,11 +176,9 @@ impl PipelineResourceSignature {
                 == std::mem::size_of::<diligent_sys::IPipelineResourceSignature>()
         );
 
-        PipelineResourceSignature {
-            device_object: DeviceObject::new(
-                pipeline_resource_signature_ptr as *mut diligent_sys::IDeviceObject,
-            ),
-        }
+        Self(DeviceObject::new(
+            pipeline_resource_signature_ptr as *mut diligent_sys::IDeviceObject,
+        ))
     }
 
     pub fn create_shader_resource_binding(

@@ -10,22 +10,18 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct PipelineStateVk<'a> {
-    pipeline_state: &'a PipelineState,
-}
+pub struct PipelineStateVk<'a>(&'a PipelineState);
 
 impl Deref for PipelineStateVk<'_> {
     type Target = PipelineState;
     fn deref(&self) -> &Self::Target {
-        self.pipeline_state
+        self.0
     }
 }
 
 impl<'a> From<&'a PipelineState> for PipelineStateVk<'a> {
     fn from(value: &'a PipelineState) -> Self {
-        PipelineStateVk {
-            pipeline_state: value,
-        }
+        PipelineStateVk(value)
     }
 }
 

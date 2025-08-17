@@ -47,14 +47,12 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct ShaderBindingTable {
-    device_object: DeviceObject,
-}
+pub struct ShaderBindingTable(DeviceObject);
 
 impl Deref for ShaderBindingTable {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
-        &self.device_object
+        &self.0
     }
 }
 
@@ -67,9 +65,9 @@ impl ShaderBindingTable {
                 == std::mem::size_of::<diligent_sys::IShaderBindingTable>()
         );
 
-        Self {
-            device_object: DeviceObject::new(sys_ptr as *mut diligent_sys::IDeviceObject),
-        }
+        Self(DeviceObject::new(
+            sys_ptr as *mut diligent_sys::IDeviceObject,
+        ))
     }
 
     //TODO pub fn GetDesc() -> ShaderBindingTableDesc{}

@@ -96,14 +96,12 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct Buffer {
-    device_object: DeviceObject,
-}
+pub struct Buffer(DeviceObject);
 
 impl Deref for Buffer {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
-        &self.device_object
+        &self.0
     }
 }
 
@@ -116,9 +114,9 @@ impl Buffer {
                 == std::mem::size_of::<diligent_sys::IBuffer>()
         );
 
-        let buffer = Buffer {
-            device_object: DeviceObject::new(buffer_ptr as *mut diligent_sys::IDeviceObject),
-        };
+        let buffer = Buffer(DeviceObject::new(
+            buffer_ptr as *mut diligent_sys::IDeviceObject,
+        ));
 
         fn bind_flags_to_buffer_view_type(
             bind_flags: diligent_sys::BIND_FLAGS,

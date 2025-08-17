@@ -11,14 +11,12 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct DataBlob {
-    object: Object,
-}
+pub struct DataBlob(Object);
 
 impl Deref for DataBlob {
     type Target = Object;
     fn deref(&self) -> &Self::Target {
-        &self.object
+        &self.0
     }
 }
 
@@ -50,9 +48,7 @@ impl DataBlob {
                 == std::mem::size_of::<diligent_sys::IDataBlob>()
         );
 
-        DataBlob {
-            object: Object::new(data_blob_ptr as *mut diligent_sys::IObject),
-        }
+        Self(Object::new(data_blob_ptr as *mut diligent_sys::IObject))
     }
 
     pub fn resize(&mut self, new_size: usize) {

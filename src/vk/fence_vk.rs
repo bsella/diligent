@@ -10,20 +10,18 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct FenceVk<'a> {
-    fence: &'a Fence,
-}
+pub struct FenceVk<'a>(&'a Fence);
 
 impl Deref for FenceVk<'_> {
     type Target = Fence;
     fn deref(&self) -> &Self::Target {
-        self.fence
+        self.0
     }
 }
 
 impl<'a> From<&'a Fence> for FenceVk<'a> {
     fn from(value: &'a Fence) -> Self {
-        FenceVk { fence: value }
+        FenceVk(value)
     }
 }
 

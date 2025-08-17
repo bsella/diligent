@@ -146,14 +146,12 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct EngineFactoryVk {
-    engine_factory: EngineFactory,
-}
+pub struct EngineFactoryVk(EngineFactory);
 
 impl Deref for EngineFactoryVk {
     type Target = EngineFactory;
     fn deref(&self) -> &Self::Target {
-        &self.engine_factory
+        &self.0
     }
 }
 
@@ -167,9 +165,9 @@ pub fn get_engine_factory_vk() -> EngineFactoryVk {
             == std::mem::size_of::<diligent_sys::IEngineFactoryVk>()
     );
 
-    EngineFactoryVk {
-        engine_factory: EngineFactory::new(engine_factory_vk as *mut diligent_sys::IEngineFactory),
-    }
+    EngineFactoryVk(EngineFactory::new(
+        engine_factory_vk as *mut diligent_sys::IEngineFactory,
+    ))
 }
 
 impl EngineFactoryVk {

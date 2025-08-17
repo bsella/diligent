@@ -69,14 +69,12 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct RenderDevice {
-    object: Object,
-}
+pub struct RenderDevice(Object);
 
 impl Deref for RenderDevice {
     type Target = Object;
     fn deref(&self) -> &Self::Target {
-        &self.object
+        &self.0
     }
 }
 
@@ -89,9 +87,7 @@ impl RenderDevice {
                 == std::mem::size_of::<diligent_sys::IRenderDevice>()
         );
 
-        RenderDevice {
-            object: Object::new(render_device_ptr as *mut diligent_sys::IObject),
-        }
+        Self(Object::new(render_device_ptr as *mut diligent_sys::IObject))
     }
 
     pub fn create_buffer(&self, buffer_desc: &BufferDesc) -> Result<Buffer, ()> {

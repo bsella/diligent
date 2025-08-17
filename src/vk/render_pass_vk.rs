@@ -10,20 +10,18 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct RenderPassVk<'a> {
-    render_pass: &'a RenderPass,
-}
+pub struct RenderPassVk<'a>(&'a RenderPass);
 
 impl Deref for RenderPassVk<'_> {
     type Target = RenderPass;
     fn deref(&self) -> &Self::Target {
-        self.render_pass
+        self.0
     }
 }
 
 impl<'a> From<&'a RenderPass> for RenderPassVk<'a> {
     fn from(value: &'a RenderPass) -> Self {
-        RenderPassVk { render_pass: value }
+        RenderPassVk(value)
     }
 }
 

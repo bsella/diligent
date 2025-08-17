@@ -11,14 +11,12 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct Fence {
-    device_object: DeviceObject,
-}
+pub struct Fence(DeviceObject);
 
 impl Deref for Fence {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
-        &self.device_object
+        &self.0
     }
 }
 
@@ -61,9 +59,9 @@ impl Fence {
             std::mem::size_of::<diligent_sys::IDeviceObject>()
                 == std::mem::size_of::<diligent_sys::IFence>()
         );
-        Fence {
-            device_object: DeviceObject::new(fence_ptr as *mut diligent_sys::IDeviceObject),
-        }
+        Self(DeviceObject::new(
+            fence_ptr as *mut diligent_sys::IDeviceObject,
+        ))
     }
 
     pub fn get_completed_value(&self) -> u64 {

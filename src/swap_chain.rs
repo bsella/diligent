@@ -121,14 +121,12 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct SwapChain {
-    object: Object,
-}
+pub struct SwapChain(Object);
 
 impl Deref for SwapChain {
     type Target = Object;
     fn deref(&self) -> &Self::Target {
-        &self.object
+        &self.0
     }
 }
 
@@ -141,9 +139,7 @@ impl SwapChain {
                 == std::mem::size_of::<diligent_sys::ISwapChain>()
         );
 
-        SwapChain {
-            object: Object::new(swap_chain_ptr as *mut diligent_sys::IObject),
-        }
+        Self(Object::new(swap_chain_ptr as *mut diligent_sys::IObject))
     }
 
     pub fn present(&self, sync_interval: u32) {

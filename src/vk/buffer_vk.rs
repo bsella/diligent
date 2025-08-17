@@ -10,20 +10,18 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct BufferVk<'a> {
-    buffer: &'a Buffer,
-}
+pub struct BufferVk<'a>(&'a Buffer);
 
 impl<'a> Deref for BufferVk<'a> {
     type Target = Buffer;
     fn deref(&self) -> &Self::Target {
-        self.buffer
+        self.0
     }
 }
 
 impl<'a> From<&'a Buffer> for BufferVk<'a> {
     fn from(value: &'a Buffer) -> Self {
-        BufferVk { buffer: value }
+        BufferVk(value)
     }
 }
 

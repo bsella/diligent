@@ -145,14 +145,12 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct TopLevelAS {
-    device_object: DeviceObject,
-}
+pub struct TopLevelAS(DeviceObject);
 
 impl Deref for TopLevelAS {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
-        &self.device_object
+        &self.0
     }
 }
 
@@ -165,9 +163,9 @@ impl TopLevelAS {
                 == std::mem::size_of::<diligent_sys::ITopLevelAS>()
         );
 
-        Self {
-            device_object: DeviceObject::new(sys_ptr as *mut diligent_sys::IDeviceObject),
-        }
+        Self(DeviceObject::new(
+            sys_ptr as *mut diligent_sys::IDeviceObject,
+        ))
     }
 
     // TODO pub fn get_instance_desc(&self, name: impl AsRef<str>) -> TLASInstanceDesc {}

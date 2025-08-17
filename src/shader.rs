@@ -351,14 +351,12 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct Shader {
-    device_object: DeviceObject,
-}
+pub struct Shader(DeviceObject);
 
 impl Deref for Shader {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
-        &self.device_object
+        &self.0
     }
 }
 
@@ -371,9 +369,9 @@ impl Shader {
                 == std::mem::size_of::<diligent_sys::IShader>()
         );
 
-        Shader {
-            device_object: DeviceObject::new(shader_ptr as *mut diligent_sys::IDeviceObject),
-        }
+        Self(DeviceObject::new(
+            shader_ptr as *mut diligent_sys::IDeviceObject,
+        ))
     }
 
     pub fn get_resources(&self) -> Vec<ShaderResourceDesc> {
@@ -429,22 +427,18 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct ShaderSourceInputStreamFactory {
-    object: Object,
-}
+pub struct ShaderSourceInputStreamFactory(Object);
 
 impl Deref for ShaderSourceInputStreamFactory {
     type Target = Object;
     fn deref(&self) -> &Self::Target {
-        &self.object
+        &self.0
     }
 }
 
 impl ShaderSourceInputStreamFactory {
     pub(crate) fn new(factory_ptr: *mut diligent_sys::IShaderSourceInputStreamFactory) -> Self {
-        ShaderSourceInputStreamFactory {
-            object: Object::new(factory_ptr as *mut diligent_sys::IObject),
-        }
+        Self(Object::new(factory_ptr as *mut diligent_sys::IObject))
     }
 
     //pub fn create_input_stream(&self, name : impl AsRef<str>, IFileStream** ppStream);

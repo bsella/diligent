@@ -11,14 +11,12 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct PipelineStateCache {
-    device_object: DeviceObject,
-}
+pub struct PipelineStateCache(DeviceObject);
 
 impl Deref for PipelineStateCache {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
-        &self.device_object
+        &self.0
     }
 }
 
@@ -97,9 +95,9 @@ impl PipelineStateCache {
             std::mem::size_of::<diligent_sys::IObject>()
                 == std::mem::size_of::<diligent_sys::IPipelineStateCache>()
         );
-        PipelineStateCache {
-            device_object: DeviceObject::new(fence_ptr as *mut diligent_sys::IDeviceObject),
-        }
+        Self(DeviceObject::new(
+            fence_ptr as *mut diligent_sys::IDeviceObject,
+        ))
     }
 
     pub fn get_data(&self) -> Result<DataBlob, ()> {

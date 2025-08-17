@@ -35,14 +35,12 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct TextureView {
-    device_object: DeviceObject,
-}
+pub struct TextureView(DeviceObject);
 
 impl Deref for TextureView {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
-        &self.device_object
+        &self.0
     }
 }
 
@@ -55,9 +53,9 @@ impl TextureView {
                 == std::mem::size_of::<diligent_sys::ITextureView>()
         );
 
-        TextureView {
-            device_object: DeviceObject::new(texture_view_ptr as *mut diligent_sys::IDeviceObject),
-        }
+        Self(DeviceObject::new(
+            texture_view_ptr as *mut diligent_sys::IDeviceObject,
+        ))
     }
 
     pub fn set_sampler(&mut self, sampler: &Sampler) {

@@ -10,20 +10,18 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct PipelineStateCacheVk<'a> {
-    cache: &'a PipelineStateCache,
-}
+pub struct PipelineStateCacheVk<'a>(&'a PipelineStateCache);
 
 impl Deref for PipelineStateCacheVk<'_> {
     type Target = PipelineStateCache;
     fn deref(&self) -> &Self::Target {
-        self.cache
+        self.0
     }
 }
 
 impl<'a> From<&'a PipelineStateCache> for PipelineStateCacheVk<'a> {
     fn from(value: &'a PipelineStateCache) -> Self {
-        PipelineStateCacheVk { cache: value }
+        PipelineStateCacheVk(value)
     }
 }
 

@@ -10,20 +10,18 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct SwapChainVk<'a> {
-    swap_chain: &'a SwapChain,
-}
+pub struct SwapChainVk<'a>(&'a SwapChain);
 
 impl Deref for SwapChainVk<'_> {
     type Target = SwapChain;
     fn deref(&self) -> &Self::Target {
-        self.swap_chain
+        self.0
     }
 }
 
 impl<'a> From<&'a SwapChain> for SwapChainVk<'a> {
     fn from(value: &'a SwapChain) -> Self {
-        SwapChainVk { swap_chain: value }
+        SwapChainVk(value)
     }
 }
 
