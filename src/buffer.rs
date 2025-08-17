@@ -114,48 +114,9 @@ impl Buffer {
                 == std::mem::size_of::<diligent_sys::IBuffer>()
         );
 
-        let buffer = Buffer(DeviceObject::new(
+        Buffer(DeviceObject::new(
             buffer_ptr as *mut diligent_sys::IDeviceObject,
-        ));
-
-        fn bind_flags_to_buffer_view_type(
-            bind_flags: diligent_sys::BIND_FLAGS,
-        ) -> diligent_sys::BUFFER_VIEW_TYPE {
-            if bind_flags & diligent_sys::BIND_UNORDERED_ACCESS as diligent_sys::BIND_FLAGS != 0 {
-                diligent_sys::BUFFER_VIEW_UNORDERED_ACCESS as diligent_sys::BUFFER_VIEW_TYPE
-            } else if bind_flags & diligent_sys::BIND_SHADER_RESOURCE as diligent_sys::BIND_FLAGS
-                != 0
-            {
-                diligent_sys::BUFFER_VIEW_SHADER_RESOURCE as diligent_sys::BUFFER_VIEW_TYPE
-            } else {
-                diligent_sys::BUFFER_VIEW_UNDEFINED as diligent_sys::BUFFER_VIEW_TYPE
-            }
-        }
-
-        let buffer_desc = unsafe {
-            &*((*(*buffer_ptr).pVtbl)
-                .DeviceObject
-                .GetDesc
-                .unwrap_unchecked()(buffer_ptr as *mut diligent_sys::IDeviceObject)
-                as *const diligent_sys::BufferDesc)
-        };
-
-        let buffer_view_type = bind_flags_to_buffer_view_type(buffer_desc.BindFlags);
-
-        if buffer_view_type != (diligent_sys::BUFFER_VIEW_UNDEFINED as u8) {
-            let buffer_view = BufferView::new(
-                unsafe {
-                    (*(*buffer_ptr).pVtbl)
-                        .Buffer
-                        .GetDefaultView
-                        .unwrap_unchecked()(buffer_ptr, buffer_view_type)
-                },
-                &buffer,
-            );
-            buffer_view.add_ref();
-        }
-
-        buffer
+        ))
     }
 
     pub fn create_view(
@@ -184,7 +145,9 @@ impl Buffer {
         if buffer_view_ptr.is_null() {
             Err(())
         } else {
-            Ok(BufferView::new(buffer_view_ptr, self))
+            let view = BufferView::new(buffer_view_ptr, self);
+            view.add_ref();
+            Ok(view)
         }
     }
 

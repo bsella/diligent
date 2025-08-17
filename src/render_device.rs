@@ -815,9 +815,11 @@ impl RenderDevice {
         unsafe_member_call!(self, RenderDevice, IdleGPU)
     }
 
-    pub fn get_engine_factory(&self) -> &EngineFactory {
+    pub fn get_engine_factory(&self) -> EngineFactory {
         let ptr = unsafe_member_call!(self, RenderDevice, GetEngineFactory);
-        unsafe { &*(ptr as *const EngineFactory) }
+        let engine_factory = EngineFactory::new(ptr);
+        engine_factory.add_ref();
+        engine_factory
     }
 
     //TODO pub fn get_shader_compilation_thread_pool();
