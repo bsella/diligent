@@ -12,7 +12,7 @@ use crate::{
 
 const_assert_eq!(
     std::mem::size_of::<diligent_sys::IRenderDeviceVkMethods>(),
-    10 * std::mem::size_of::<*const ()>()
+    11 * std::mem::size_of::<*const ()>()
 );
 
 #[repr(transparent)]
@@ -137,4 +137,7 @@ impl RenderDeviceVk<'_> {
 
     // TODO
     //pub fn get_device_features_vk(){}
+
+    // TODO
+    //pub fn get_dx_compiler(){}
 }
