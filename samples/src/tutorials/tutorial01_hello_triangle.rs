@@ -111,7 +111,7 @@ void main(in PSInput PSIn, out PSOutput PSOut)
         };
 
         let mut rtv_formats = std::array::from_fn(|_| None);
-        rtv_formats[0] = Some(swap_chain_desc.color_buffer_format);
+        rtv_formats[0] = Some(swap_chain_desc.color_buffer_format());
 
         let rasterizer_desc = RasterizerStateDesc::builder()
             // No back face culling for this tutorial
@@ -129,7 +129,7 @@ void main(in PSInput PSIn, out PSOutput PSOut)
             // Set render target format which is the format of the swap chain's color buffer
             .rtv_formats(rtv_formats)
             // Use the depth buffer format from the swap chain
-            .dsv_format(swap_chain_desc.depth_buffer_format)
+            .dsv_format(swap_chain_desc.depth_buffer_format())
             .build();
 
         let graphics_pipeline_desc = GraphicsPipelineDesc::builder()

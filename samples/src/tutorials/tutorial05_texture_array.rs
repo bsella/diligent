@@ -151,7 +151,7 @@ impl SampleBase for TextureArray {
         // If the swap chain color buffer format is a non-sRGB UNORM format,
         // we need to manually convert pixel shader output to gamma space.
         let convert_ps_output_to_gamma = matches!(
-            swap_chain_desc.color_buffer_format,
+            swap_chain_desc.color_buffer_format(),
             TextureFormat::RGBA8_UNORM | TextureFormat::BGRA8_UNORM
         );
 
@@ -186,8 +186,8 @@ impl SampleBase for TextureArray {
 
         let cube_pso_ci = CreatePSOInfo::new(
             device,
-            swap_chain_desc.color_buffer_format,
-            swap_chain_desc.depth_buffer_format,
+            swap_chain_desc.color_buffer_format(),
+            swap_chain_desc.depth_buffer_format(),
             &shader_source_factory,
             "assets/cube_inst_tex_array.vsh",
             "assets/cube_inst_tex_array.psh",
@@ -331,7 +331,7 @@ impl SampleBase for TextureArray {
 
             // Get pretransform matrix that rotates the scene according the surface orientation
             let srf_pre_transform = get_surface_pretransform_matrix(
-                swap_chain_desc.pre_transform,
+                swap_chain_desc.pre_transform(),
                 &glam::Vec3::new(0.0, 0.0, 1.0),
             );
 

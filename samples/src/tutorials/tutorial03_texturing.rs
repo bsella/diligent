@@ -68,7 +68,7 @@ impl SampleBase for Texturing {
         // If the swap chain color buffer format is a non-sRGB UNORM format,
         // we need to manually convert pixel shader output to gamma space.
         let convert_ps_output_to_gamma = matches!(
-            swap_chain_desc.color_buffer_format,
+            swap_chain_desc.color_buffer_format(),
             TextureFormat::RGBA8_UNORM | TextureFormat::BGRA8_UNORM,
         );
 
@@ -157,7 +157,7 @@ impl SampleBase for Texturing {
             .build();
 
         let mut rtv_formats = std::array::from_fn(|_| None);
-        rtv_formats[0] = Some(swap_chain_desc.color_buffer_format);
+        rtv_formats[0] = Some(swap_chain_desc.color_buffer_format());
 
         // Pipeline state object encompasses configuration of all GPU stages
         let pso_create_info = PipelineStateCreateInfo::builder()
@@ -187,7 +187,7 @@ impl SampleBase for Texturing {
                             // Set render target format which is the format of the swap chain's color buffer
                             .rtv_formats(rtv_formats)
                             // Set depth buffer format which is the format of the swap chain's back buffer
-                            .dsv_format(swap_chain_desc.depth_buffer_format)
+                            .dsv_format(swap_chain_desc.depth_buffer_format())
                             .build(),
                     )
                     // Primitive topology defines what kind of primitives will be rendered by this pipeline state
@@ -408,7 +408,7 @@ impl SampleBase for Texturing {
 
             // Get pretransform matrix that rotates the scene according the surface orientation
             let srf_pre_transform = get_surface_pretransform_matrix(
-                swap_chain_desc.pre_transform,
+                swap_chain_desc.pre_transform(),
                 &glam::Vec3::new(0.0, 0.0, 1.0),
             );
 

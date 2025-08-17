@@ -9,7 +9,7 @@ use diligent::{
     },
     platforms::native_window::NativeWindow,
     render_device::RenderDevice,
-    swap_chain::{SwapChain, SwapChainDesc},
+    swap_chain::{SwapChain, SwapChainCreateInfo},
     API_VERSION,
 };
 
@@ -126,7 +126,7 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
 
         let swap_chain_desc = self.swap_chain.get_desc();
 
-        let adapters_wnd_width = swap_chain_desc.width.min(330);
+        let adapters_wnd_width = swap_chain_desc.width().min(330);
 
         if self.app_settings.show_adapters_dialog {
             if let Some(_window_token) = ui
@@ -134,7 +134,8 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
                 .size([adapters_wnd_width as f32, 0.0], imgui::Condition::Always)
                 .position(
                     [
-                        (swap_chain_desc.width as f32 - adapters_wnd_width as f32).max(10.0) - 10.0,
+                        (swap_chain_desc.width() as f32 - adapters_wnd_width as f32).max(10.0)
+                            - 10.0,
                         10.0,
                     ],
                     imgui::Condition::Always,
@@ -223,7 +224,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
         mut engine_create_info: EngineCreateInfo,
         window: Option<&NativeWindow>,
     ) -> Self {
-        let swap_chain_desc = SwapChainDesc::builder()
+        let swap_chain_ci = SwapChainCreateInfo::builder()
             .width(app_settings.width as u32)
             .height(app_settings.height as u32)
             .build();
@@ -365,7 +366,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
                         .create_swap_chain(
                             &device,
                             immediate_contexts.first().unwrap(),
-                            &swap_chain_desc,
+                            &swap_chain_ci,
                             window,
                         )
                         .unwrap();
@@ -517,8 +518,8 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
         let imgui_renderer = ImguiRenderer::new(
             &ImguiRendererCreateInfo::builder()
                 .device(&device)
-                .back_buffer_format(swap_chain_desc.color_buffer_format)
-                .depth_buffer_format(swap_chain_desc.depth_buffer_format)
+                .back_buffer_format(swap_chain_desc.color_buffer_format())
+                .depth_buffer_format(swap_chain_desc.depth_buffer_format())
                 .initial_width(app_settings.width as f32)
                 .initial_height(app_settings.height as f32)
                 .build(),

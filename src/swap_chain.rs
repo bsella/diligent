@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::{marker::PhantomData, ops::Deref};
 
 use bitflags::bitflags;
 use bon::Builder;
@@ -28,39 +28,78 @@ impl Default for SwapChainUsageFlags {
     }
 }
 
-#[derive(Builder)]
-pub struct SwapChainDesc {
-    pub width: u32,
+#[repr(transparent)]
+pub struct SwapChainDesc<'a>(
+    *const diligent_sys::SwapChainDesc,
+    PhantomData<&'a SwapChain>,
+);
 
-    pub height: u32,
-
-    #[builder(default = TextureFormat::RGBA8_UNORM_SRGB)]
-    pub color_buffer_format: TextureFormat,
-
-    #[builder(default = TextureFormat::D32_FLOAT)]
-    pub depth_buffer_format: TextureFormat,
-
-    #[builder(default = SwapChainUsageFlags::RenderTarget)]
-    pub usage: SwapChainUsageFlags,
-
-    #[builder(default = SurfaceTransform::Optimal)]
-    pub pre_transform: SurfaceTransform,
-
-    #[builder(default = 2)]
-    pub buffer_count: u32,
-
-    #[builder(default = 1.0)]
-    pub default_depth_value: f32,
-
-    #[builder(default = 0)]
-    pub default_stencil_value: u8,
-
-    #[builder(default = true)]
-    pub is_primary: bool,
+impl SwapChainDesc<'_> {
+    pub fn width(&self) -> u32 {
+        unsafe { (*self.0).Width }
+    }
+    pub fn height(&self) -> u32 {
+        unsafe { (*self.0).Height }
+    }
+    pub fn color_buffer_format(&self) -> TextureFormat {
+        unsafe { (*self.0).ColorBufferFormat }.into()
+    }
+    pub fn depth_buffer_format(&self) -> TextureFormat {
+        unsafe { (*self.0).DepthBufferFormat }.into()
+    }
+    pub fn usage(&self) -> SwapChainUsageFlags {
+        SwapChainUsageFlags::from_bits_retain(unsafe { (*self.0).Usage })
+    }
+    pub fn pre_transform(&self) -> SurfaceTransform {
+        unsafe { (*self.0).PreTransform }.into()
+    }
+    pub fn buffer_count(&self) -> u32 {
+        unsafe { (*self.0).BufferCount }
+    }
+    pub fn default_depth_value(&self) -> f32 {
+        unsafe { (*self.0).DefaultDepthValue }
+    }
+    pub fn default_stencil_value(&self) -> u8 {
+        unsafe { (*self.0).DefaultStencilValue }
+    }
+    pub fn is_primary(&self) -> bool {
+        unsafe { (*self.0).IsPrimary }
+    }
 }
 
-impl From<&SwapChainDesc> for diligent_sys::SwapChainDesc {
-    fn from(value: &SwapChainDesc) -> Self {
+#[derive(Builder)]
+pub struct SwapChainCreateInfo {
+    width: u32,
+
+    height: u32,
+
+    #[builder(default = TextureFormat::RGBA8_UNORM_SRGB)]
+    color_buffer_format: TextureFormat,
+
+    #[builder(default = TextureFormat::D32_FLOAT)]
+    depth_buffer_format: TextureFormat,
+
+    #[builder(default = SwapChainUsageFlags::RenderTarget)]
+    usage: SwapChainUsageFlags,
+
+    #[builder(default = SurfaceTransform::Optimal)]
+    pre_transform: SurfaceTransform,
+
+    #[builder(default = 2)]
+    buffer_count: u32,
+
+    #[builder(default = 1.0)]
+    default_depth_value: f32,
+
+    #[builder(default = 0)]
+    default_stencil_value: u8,
+
+    #[builder(default = true)]
+    is_primary: bool,
+}
+
+impl From<&SwapChainCreateInfo> for diligent_sys::SwapChainDesc {
+    fn from(value: &SwapChainCreateInfo) -> Self {
         diligent_sys::SwapChainDesc {
             Width: value.width,
             Height: value.height,
@@ -72,23 +111,6 @@ impl From<&SwapChainDesc> for diligent_sys::SwapChainDesc {
             DefaultDepthValue: value.default_depth_value,
             DefaultStencilValue: value.default_stencil_value,
             IsPrimary: value.is_primary,
-        }
-    }
-}
-
-impl From<&diligent_sys::SwapChainDesc> for SwapChainDesc {
-    fn from(value: &diligent_sys::SwapChainDesc) -> Self {
-        SwapChainDesc {
-            width: value.Width,
-            height: value.Height,
-            color_buffer_format: value.ColorBufferFormat.into(),
-            depth_buffer_format: value.DepthBufferFormat.into(),
-            usage: SwapChainUsageFlags::from_bits_retain(value.Usage),
-            pre_transform: value.PreTransform.into(),
-            buffer_count: value.BufferCount,
-            default_depth_value: value.DefaultDepthValue,
-            default_stencil_value: value.DefaultStencilValue,
-            is_primary: value.IsPrimary,
         }
     }
 }
@@ -128,11 +150,9 @@ impl SwapChain {
         unsafe_member_call!(self, SwapChain, Present, sync_interval)
     }
 
-    pub fn get_desc(&self) -> SwapChainDesc {
-        let swap_chain_desc = unsafe_member_call!(self, SwapChain, GetDesc);
-        let swap_chain_desc = unsafe { swap_chain_desc.as_ref().unwrap_unchecked() };
-
-        swap_chain_desc.into()
+    pub fn get_desc(&self) -> SwapChainDesc<'_> {
+        let sys_ptr = unsafe_member_call!(self, SwapChain, GetDesc);
+        SwapChainDesc(sys_ptr, PhantomData)
     }
 
     pub fn resize(&self, new_width: u32, new_height: u32, new_transform: SurfaceTransform) {

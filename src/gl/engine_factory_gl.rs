@@ -8,7 +8,7 @@ use crate::{
     graphics_types::AdapterType,
     platforms::native_window::NativeWindow,
     render_device::RenderDevice,
-    swap_chain::{SwapChain, SwapChainDesc},
+    swap_chain::{SwapChain, SwapChainCreateInfo},
 };
 
 pub struct EngineGLCreateInfo {
@@ -70,7 +70,7 @@ impl EngineFactoryOpenGL {
     pub fn create_device_and_swap_chain_gl(
         &self,
         engine_ci: &EngineGLCreateInfo,
-        sc_desc: &SwapChainDesc,
+        sc_desc: &SwapChainCreateInfo,
     ) -> Result<(RenderDevice, ImmediateDeviceContext, SwapChain), ()> {
         let engine_ci = engine_ci.into();
 

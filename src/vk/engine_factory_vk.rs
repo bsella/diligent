@@ -7,11 +7,12 @@ use static_assertions::const_assert;
 use static_assertions::const_assert_eq;
 
 use crate::graphics_types::Version;
+use crate::swap_chain::SwapChainCreateInfo;
 use crate::{
     device_context::DeferredDeviceContext, device_context::ImmediateDeviceContext,
     engine_factory::EngineCreateInfo, engine_factory::EngineFactory,
     graphics_types::DeviceFeatureState, platforms::native_window::NativeWindow,
-    render_device::RenderDevice, swap_chain::SwapChain, swap_chain::SwapChainDesc,
+    render_device::RenderDevice, swap_chain::SwapChain,
 };
 
 pub struct DeviceFeaturesVk {
@@ -314,10 +315,10 @@ impl EngineFactoryVk {
         &self,
         device: &RenderDevice,
         immediate_context: &ImmediateDeviceContext,
-        swapchain_desc: &SwapChainDesc,
+        swapchain_ci: &SwapChainCreateInfo,
         window: Option<&NativeWindow>,
     ) -> Result<SwapChain, ()> {
-        let swapchain_desc = swapchain_desc.into();
+        let swapchain_desc = swapchain_ci.into();
         let mut swap_chain_ptr = std::ptr::null_mut();
 
         let window = window.map(|window| window.into());
@@ -328,7 +329,7 @@ impl EngineFactoryVk {
             CreateSwapChainVk,
             device.sys_ptr as _,
             immediate_context.sys_ptr as _,
-            std::ptr::addr_of!(swapchain_desc),
+            std::ptr::from_ref(&swapchain_desc),
             window.as_ref().map_or(std::ptr::null(), std::ptr::from_ref),
             std::ptr::addr_of_mut!(swap_chain_ptr)
         );

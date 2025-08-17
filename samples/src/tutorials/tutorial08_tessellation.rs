@@ -115,7 +115,7 @@ impl SampleBase for Tessellation {
         };
 
         let mut rtv_formats = std::array::from_fn(|_| None);
-        rtv_formats[0] = Some(swap_chain_desc.color_buffer_format);
+        rtv_formats[0] = Some(swap_chain_desc.color_buffer_format());
 
         let linear_clamp_sampler = SamplerDesc::builder()
             .name("Linear Sampler")
@@ -161,7 +161,7 @@ impl SampleBase for Tessellation {
                         GraphicsPipelineRenderTargets::builder()
                             .num_render_targets(1)
                             .rtv_formats(rtv_formats)
-                            .dsv_format(swap_chain_desc.depth_buffer_format)
+                            .dsv_format(swap_chain_desc.depth_buffer_format())
                             .build(),
                     )
                     .primitive_topology(PrimitiveTopology::ControlPointPatchList1)
@@ -181,7 +181,7 @@ impl SampleBase for Tessellation {
         let block_size = 32;
 
         let convert_ps_output_to_gamma = matches!(
-            swap_chain_desc.color_buffer_format,
+            swap_chain_desc.color_buffer_format(),
             TextureFormat::RGBA8_UNORM | TextureFormat::BGRA8_UNORM
         );
 
@@ -505,7 +505,7 @@ impl SampleBase for Tessellation {
         let proj_matrix = {
             // Get pretransform matrix that rotates the scene according the surface orientation
             let srf_pre_transform = get_surface_pretransform_matrix(
-                swap_chain_desc.pre_transform,
+                swap_chain_desc.pre_transform(),
                 &glam::Vec3::new(0.0, 0.0, 1.0),
             );
 
@@ -587,10 +587,10 @@ impl SampleBase for Tessellation {
                 dummy2: [0.0, 0.0],
 
                 viewport_size: [
-                    swap_chain_desc.width as f32,
-                    swap_chain_desc.height as f32,
-                    1.0 / swap_chain_desc.width as f32,
-                    1.0 / swap_chain_desc.height as f32,
+                    swap_chain_desc.width() as f32,
+                    swap_chain_desc.height() as f32,
+                    1.0 / swap_chain_desc.width() as f32,
+                    1.0 / swap_chain_desc.height() as f32,
                 ],
 
                 line_width: 3.0,

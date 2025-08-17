@@ -166,7 +166,7 @@ fn create_graphics_pso(
     // Create graphics pipeline to blit render target into swapchain image.
 
     let mut rtv_formats = std::array::from_fn(|_| None);
-    rtv_formats[0] = Some(swap_chain_desc.color_buffer_format);
+    rtv_formats[0] = Some(swap_chain_desc.color_buffer_format());
 
     let graphics_pso_desc = GraphicsPipelineDesc::builder()
         .rasterizer_desc(
@@ -1083,7 +1083,7 @@ impl SampleBase for RayTracing {
 
         let near = 0.1;
         let far = 100.0;
-        let aspect_ratio = swap_chain_desc.width as f32 / swap_chain_desc.height as f32;
+        let aspect_ratio = swap_chain_desc.width() as f32 / swap_chain_desc.height() as f32;
 
         let mut camera = FirstPersonCamera::new(
             &glam::vec3(1.0, 0.0, 0.0),
@@ -1093,7 +1093,7 @@ impl SampleBase for RayTracing {
             far,
             aspect_ratio,
             f32::consts::PI / 4.0,
-            swap_chain_desc.pre_transform,
+            swap_chain_desc.pre_transform(),
         );
 
         let initial_position = glam::vec3(7.0, -0.5, -16.5);
@@ -1110,8 +1110,8 @@ impl SampleBase for RayTracing {
         let texture_desc = TextureDesc::builder()
             .name("Color buffer")
             .dimension(TextureDimension::Texture2D)
-            .width(swap_chain_desc.width)
-            .height(swap_chain_desc.height)
+            .width(swap_chain_desc.width())
+            .height(swap_chain_desc.height())
             .bind_flags(BindFlags::UnorderedAccess | BindFlags::ShaderResource)
             .format(COLOR_BUFFER_FORMAT)
             .build();
@@ -1319,8 +1319,8 @@ impl SampleBase for RayTracing {
 
             let attribs = TraceRaysAttribs::builder()
                 .sbt(&self.sbt)
-                .dimension_x(swap_chain_desc.width)
-                .dimension_y(swap_chain_desc.height)
+                .dimension_x(swap_chain_desc.width())
+                .dimension_y(swap_chain_desc.height())
                 .build();
 
             ray_tracing.trace_rays(&attribs);
@@ -1488,20 +1488,20 @@ impl SampleBase for RayTracing {
     }
 
     fn window_resize(&mut self, device: &RenderDevice, new_swap_chain: &SwapChainDesc) {
-        let aspect_ratio = new_swap_chain.width as f32 / new_swap_chain.height as f32;
+        let aspect_ratio = new_swap_chain.width() as f32 / new_swap_chain.height() as f32;
         self.camera.set_projection_attribs(
             self.constants.clip_planes[0],
             self.constants.clip_planes[1],
             aspect_ratio,
             f32::consts::PI / 4.0,
-            new_swap_chain.pre_transform,
+            new_swap_chain.pre_transform(),
         );
 
         let texture_desc = TextureDesc::builder()
             .name("Color buffer")
             .dimension(TextureDimension::Texture2D)
-            .width(new_swap_chain.width)
-            .height(new_swap_chain.height)
+            .width(new_swap_chain.width())
+            .height(new_swap_chain.height())
             .bind_flags(BindFlags::UnorderedAccess | BindFlags::ShaderResource)
             .format(COLOR_BUFFER_FORMAT)
             .build();

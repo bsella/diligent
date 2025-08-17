@@ -30,9 +30,9 @@ pub fn get_adjusted_projection_matrix(
     near_plane: f32,
     far_plane: f32,
 ) -> glam::Mat4 {
-    let aspect_ratio = swap_chain_desc.width as f32 / swap_chain_desc.height as f32;
+    let aspect_ratio = swap_chain_desc.width() as f32 / swap_chain_desc.height() as f32;
 
-    let fov = match swap_chain_desc.pre_transform {
+    let fov = match swap_chain_desc.pre_transform() {
         SurfaceTransform::Rotate90
         | SurfaceTransform::Rotate270
         | SurfaceTransform::HorizontalMirrorRotate90

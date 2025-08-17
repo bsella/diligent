@@ -155,7 +155,7 @@ impl EngineFactoryD3D11 {
         &self,
         device: &RenderDevice,
         context: &ImmediateDeviceContext,
-        swapchain_desc: &SwapChainDesc,
+        swapchain_desc: &SwapChainCreateInfo,
         fs_desc: &FullScreenModeDesc,
         window: Option<&NativeWindow>,
     ) -> Result<SwapChain, ()> {
