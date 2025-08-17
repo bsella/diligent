@@ -1,7 +1,7 @@
 #[cfg(unix)]
 use std::os::unix::ffi::OsStrExt;
 
-use std::{ffi::CString, ops::Deref, path::Path, str::FromStr};
+use std::{ffi::CString, ops::Deref, os::raw::c_void, path::Path, str::FromStr};
 
 use bitflags::bitflags;
 use bon::Builder;
@@ -403,17 +403,24 @@ impl Shader {
         todo!()
     }
 
-    pub fn get_bytecode(&self, bytecode: *mut *const u8) -> u64 {
-        let mut size: u64 = 0;
+    pub fn get_bytecode(&self) -> Option<&[u8]> {
+        let mut size = 0;
+
+        let mut bytecode: *const u8 = std::ptr::null_mut();
+
         unsafe_member_call!(
             self,
             Shader,
             GetBytecode,
-            bytecode as *mut *const _,
+            std::ptr::addr_of_mut!(bytecode) as *mut *const c_void,
             std::ptr::addr_of_mut!(size)
         );
 
-        size
+        if bytecode.is_null() {
+            None
+        } else {
+            Some(unsafe { std::slice::from_raw_parts(bytecode, size as usize) })
+        }
     }
 
     pub fn get_status(&self, wait_for_completion: bool) -> diligent_sys::SHADER_STATUS {
