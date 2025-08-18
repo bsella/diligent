@@ -14,7 +14,7 @@ fn configure_diligent_libs(diligent_install_dir: &Path) {
     #[cfg(not(debug_assertions))]
     println!(
         "cargo::rustc-link-search={}/lib/DiligentCore/Release",
-        dst.display()
+        diligent_install_dir.display()
     );
 
     println!("cargo::rustc-link-lib=static=DiligentCore");
