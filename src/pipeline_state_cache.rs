@@ -1,6 +1,7 @@
-use std::{ffi::CString, ops::Deref, str::FromStr};
+use std::{ffi::CString, ops::Deref};
 
 use bitflags::bitflags;
+use bon::Builder;
 use static_assertions::{const_assert, const_assert_eq};
 
 use crate::{data_blob::DataBlob, device_object::DeviceObject};
@@ -34,35 +35,13 @@ bitflags! {
     }
 }
 
+#[derive(Builder)]
 pub struct PipelineStateCacheCreateInfo<T> {
-    name: CString,
+    #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
+    name: Option<CString>,
     mode: PsoCacheMode,
     flags: PsoCacheFlags,
     cache_data: Vec<T>,
-}
-
-impl<T> PipelineStateCacheCreateInfo<T> {
-    pub fn new(name: impl AsRef<str>) -> Self {
-        let name = CString::from_str(name.as_ref()).unwrap();
-        Self {
-            name,
-            mode: PsoCacheMode::LoadStore,
-            flags: PsoCacheFlags::None,
-            cache_data: Vec::new(),
-        }
-    }
-    pub fn mode(mut self, mode: PsoCacheMode) -> Self {
-        self.mode = mode;
-        self
-    }
-    pub fn flags(mut self, flags: PsoCacheFlags) -> Self {
-        self.flags = flags;
-        self
-    }
-    pub fn cache_data(mut self, cache_data: impl Into<Vec<T>>) -> Self {
-        self.cache_data = cache_data.into();
-        self
-    }
 }
 
 impl<T> From<&PipelineStateCacheCreateInfo<T>> for diligent_sys::PipelineStateCacheCreateInfo {
@@ -71,7 +50,10 @@ impl<T> From<&PipelineStateCacheCreateInfo<T>> for diligent_sys::PipelineStateCa
             Desc: diligent_sys::PipelineStateCacheDesc {
                 _DeviceObjectAttribs: {
                     diligent_sys::DeviceObjectAttribs {
-                        Name: value.name.as_ptr(),
+                        Name: value
+                            .name
+                            .as_ref()
+                            .map_or(std::ptr::null(), |name| name.as_ptr()),
                     }
                 },
                 Mode: match value.mode {

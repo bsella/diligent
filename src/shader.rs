@@ -159,7 +159,7 @@ impl Default for ShaderCompileFlags {
 #[builder(derive(Clone))]
 pub struct ShaderCreateInfo<'a> {
     #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
-    name: CString,
+    name: Option<CString>,
 
     source: ShaderSource<'a>,
 
@@ -295,7 +295,10 @@ impl From<&ShaderCreateInfo<'_>> for ShaderCreateInfoWrapper {
             Desc: diligent_sys::ShaderDesc {
                 _DeviceObjectAttribs: {
                     diligent_sys::DeviceObjectAttribs {
-                        Name: value.name.as_ptr(),
+                        Name: value
+                            .name
+                            .as_ref()
+                            .map_or(std::ptr::null(), |name| name.as_ptr()),
                     }
                 },
                 ShaderType: value.shader_type.into(),

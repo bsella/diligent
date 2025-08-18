@@ -1,6 +1,7 @@
 use std::{ffi::CString, ops::Deref};
 
 use bitflags::bitflags;
+use bon::Builder;
 use static_assertions::{const_assert, const_assert_eq};
 
 use crate::{device_object::DeviceObject, pipeline_state::PipelineState, tlas::TopLevelAS};
@@ -16,25 +17,21 @@ bitflags! {
     }
 }
 
+#[derive(Builder)]
 pub struct ShaderBindingTableDesc<'a> {
-    name: CString,
+    #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
+    name: Option<CString>,
     raytracing_pso: &'a PipelineState,
-}
-
-impl<'a> ShaderBindingTableDesc<'a> {
-    pub fn new(name: impl AsRef<str>, raytracing_pso: &'a PipelineState) -> Self {
-        Self {
-            name: CString::new(name.as_ref()).unwrap(),
-            raytracing_pso,
-        }
-    }
 }
 
 impl From<&ShaderBindingTableDesc<'_>> for diligent_sys::ShaderBindingTableDesc {
     fn from(value: &ShaderBindingTableDesc<'_>) -> Self {
         Self {
             _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                Name: value.name.as_ptr(),
+                Name: value
+                    .name
+                    .as_ref()
+                    .map_or(std::ptr::null(), |name| name.as_ptr()),
             },
             pPSO: value.raytracing_pso.sys_ptr as _,
         }

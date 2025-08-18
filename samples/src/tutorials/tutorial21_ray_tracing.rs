@@ -792,7 +792,12 @@ fn create_sbt(
     raytracing_pso: &RayTracingPipelineState,
 ) -> ShaderBindingTable {
     device
-        .create_sbt(&ShaderBindingTableDesc::new("SBT", raytracing_pso))
+        .create_sbt(
+            &ShaderBindingTableDesc::builder()
+                .name("SBT")
+                .raytracing_pso(raytracing_pso)
+                .build(),
+        )
         .unwrap()
 }
 

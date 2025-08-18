@@ -353,12 +353,12 @@ impl RenderDevice {
 
     fn create_query<QueryDataType: GetSysQueryType + Default>(
         &self,
-        name: impl AsRef<str>,
+        name: Option<impl AsRef<str>>,
     ) -> Result<Query<QueryDataType>, ()> {
-        let name = CString::from_str(name.as_ref()).unwrap();
+        let name = name.map(|name| CString::from_str(name.as_ref()).unwrap());
         let query_desc = diligent_sys::QueryDesc {
             _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                Name: name.as_ptr(),
+                Name: name.as_ref().map_or(std::ptr::null(), |name| name.as_ptr()),
             },
             Type: QueryDataType::QUERY_TYPE,
         };
@@ -382,35 +382,35 @@ impl RenderDevice {
 
     pub fn create_query_occlusion(
         &self,
-        name: impl AsRef<str>,
+        name: Option<impl AsRef<str>>,
     ) -> Result<Query<QueryDataOcclusion>, ()> {
         self.create_query(name)
     }
 
     pub fn create_query_binary_occlusion(
         &self,
-        name: impl AsRef<str>,
+        name: Option<impl AsRef<str>>,
     ) -> Result<Query<QueryDataBinaryOcclusion>, ()> {
         self.create_query(name)
     }
 
     pub fn create_query_timestamp(
         &self,
-        name: impl AsRef<str>,
+        name: Option<impl AsRef<str>>,
     ) -> Result<Query<QueryDataTimestamp>, ()> {
         self.create_query(name)
     }
 
     pub fn create_query_pipeline_statistics(
         &self,
-        name: impl AsRef<str>,
+        name: Option<impl AsRef<str>>,
     ) -> Result<Query<QueryDataPipelineStatistics>, ()> {
         self.create_query(name)
     }
 
     pub fn create_query_duration(
         &self,
-        name: impl AsRef<str>,
+        name: Option<impl AsRef<str>>,
     ) -> Result<Query<QueryDataDuration>, ()> {
         self.create_query(name)
     }
@@ -531,7 +531,10 @@ impl RenderDevice {
 
         let desc = diligent_sys::RenderPassDesc {
             _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                Name: desc.name.as_ptr(),
+                Name: desc
+                    .name
+                    .as_ref()
+                    .map_or(std::ptr::null(), |name| name.as_ptr()),
             },
             AttachmentCount: attachments.len() as u32,
             pAttachments: attachments.as_ptr(),
@@ -566,7 +569,10 @@ impl RenderDevice {
 
         let desc = diligent_sys::FramebufferDesc {
             _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                Name: desc.name.as_ptr(),
+                Name: desc
+                    .name
+                    .as_ref()
+                    .map_or(std::ptr::null(), |name| name.as_ptr()),
             },
             pRenderPass: desc.render_pass.sys_ptr as _,
             AttachmentCount: texture_views.len() as u32,

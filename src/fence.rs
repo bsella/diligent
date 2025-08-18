@@ -31,7 +31,7 @@ const_assert!(diligent_sys::FENCE_TYPE_LAST == 1);
 #[derive(Builder)]
 pub struct FenceDesc {
     #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
-    name: CString,
+    name: Option<CString>,
 
     #[builder(default = FenceType::CpuWaitOnly)]
     fence_type: FenceType,
@@ -41,7 +41,10 @@ impl From<&FenceDesc> for diligent_sys::FenceDesc {
     fn from(value: &FenceDesc) -> Self {
         diligent_sys::FenceDesc {
             _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                Name: value.name.as_ptr(),
+                Name: value
+                    .name
+                    .as_ref()
+                    .map_or(std::ptr::null(), |name| name.as_ptr()),
             },
             Type: match value.fence_type {
                 FenceType::CpuWaitOnly => diligent_sys::FENCE_TYPE_CPU_WAIT_ONLY,

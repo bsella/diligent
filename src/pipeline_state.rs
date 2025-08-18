@@ -321,7 +321,7 @@ pub struct PipelineStateCreateInfo<'a> {
     pipeline_type: diligent_sys::PIPELINE_TYPE,
 
     #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
-    name: CString,
+    name: Option<CString>,
 
     #[builder(default = 1)]
     srb_allocation_granularity: u32,
@@ -466,7 +466,10 @@ impl From<&PipelineStateCreateInfo<'_>> for PipelineStateCreateInfoWrapper {
             _immutable_samplers: immutable_samplers,
             psd: diligent_sys::PipelineStateDesc {
                 _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                    Name: value.name.as_ptr(),
+                    Name: value
+                        .name
+                        .as_ref()
+                        .map_or(std::ptr::null(), |name| name.as_ptr()),
                 },
                 ImmediateContextMask: value.immediate_context_mask,
                 PipelineType: value.pipeline_type as _,

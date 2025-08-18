@@ -47,7 +47,7 @@ impl Default for MiscBufferFlags {
 #[builder(derive(Clone))]
 pub struct BufferDesc {
     #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
-    name: CString,
+    name: Option<CString>,
 
     size: u64,
 
@@ -74,7 +74,10 @@ impl From<&BufferDesc> for diligent_sys::BufferDesc {
     fn from(value: &BufferDesc) -> Self {
         diligent_sys::BufferDesc {
             _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                Name: value.name.as_ptr(),
+                Name: value
+                    .name
+                    .as_ref()
+                    .map_or(std::ptr::null(), |name| name.as_ptr()),
             },
             Size: value.size,
             BindFlags: value.bind_flags.bits(),

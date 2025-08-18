@@ -140,7 +140,7 @@ impl From<&TextureSubResource<'_>> for diligent_sys::TextureSubResData {
 #[derive(Builder)]
 pub struct TextureDesc {
     #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
-    name: CString,
+    name: Option<CString>,
 
     dimension: TextureDimension,
 
@@ -199,7 +199,10 @@ impl From<&TextureDesc> for diligent_sys::TextureDesc {
 
         diligent_sys::TextureDesc {
             _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                Name: value.name.as_ptr(),
+                Name: value
+                    .name
+                    .as_ref()
+                    .map_or(std::ptr::null(), |name| name.as_ptr()),
             },
             Type: value.dimension.into(),
             Width: value.width,

@@ -87,7 +87,7 @@ bitflags! {
 #[builder(derive(Clone))]
 pub struct ShaderResourceVariableDesc {
     #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
-    name: CString,
+    name: Option<CString>,
 
     variable_type: ShaderResourceVariableType,
 
@@ -100,7 +100,10 @@ pub struct ShaderResourceVariableDesc {
 impl From<&ShaderResourceVariableDesc> for diligent_sys::ShaderResourceVariableDesc {
     fn from(value: &ShaderResourceVariableDesc) -> Self {
         diligent_sys::ShaderResourceVariableDesc {
-            Name: value.name.as_ptr(),
+            Name: value
+                .name
+                .as_ref()
+                .map_or(std::ptr::null(), |name| name.as_ptr()),
             ShaderStages: value.shader_stages.bits(),
             Type: value.variable_type.into(),
             Flags: value.flags.bits(),

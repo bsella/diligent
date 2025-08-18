@@ -1,5 +1,6 @@
 use std::{ffi::CString, ops::Deref};
 
+use bon::Builder;
 use static_assertions::const_assert;
 
 use crate::{
@@ -145,22 +146,13 @@ impl Default for SubpassDependencyDesc {
     }
 }
 
+#[derive(Builder)]
 pub struct RenderPassDesc {
-    pub name: CString,
-    pub attachments: Vec<RenderPassAttachmentDesc>,
-    pub subpasses: Vec<SubpassDesc>,
-    pub dependencies: Vec<SubpassDependencyDesc>,
-}
-
-impl RenderPassDesc {
-    pub fn new(name: impl AsRef<str>) -> Self {
-        RenderPassDesc {
-            name: CString::new(name.as_ref()).unwrap(),
-            attachments: Vec::new(),
-            subpasses: Vec::new(),
-            dependencies: Vec::new(),
-        }
-    }
+    #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
+    pub(crate) name: Option<CString>,
+    pub(crate) attachments: Vec<RenderPassAttachmentDesc>,
+    pub(crate) subpasses: Vec<SubpassDesc>,
+    pub(crate) dependencies: Vec<SubpassDependencyDesc>,
 }
 
 impl RenderPass {

@@ -29,7 +29,7 @@ impl Default for SamplerFlags {
 #[derive(Builder)]
 pub struct SamplerDesc {
     #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
-    name: CString,
+    name: Option<CString>,
 
     #[builder(default = FilterType::Linear)]
     min_filter: FilterType,
@@ -78,7 +78,10 @@ impl From<&SamplerDesc> for diligent_sys::SamplerDesc {
     fn from(value: &SamplerDesc) -> Self {
         diligent_sys::SamplerDesc {
             _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                Name: value.name.as_ptr(),
+                Name: value
+                    .name
+                    .as_ref()
+                    .map_or(std::ptr::null(), |name| name.as_ptr()),
             },
             MinFilter: value.min_filter.into(),
             MagFilter: value.mag_filter.into(),

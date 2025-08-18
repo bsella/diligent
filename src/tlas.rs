@@ -110,7 +110,7 @@ impl<'a> From<&TLASBuildInstanceData<'a>> for diligent_sys::TLASBuildInstanceDat
 #[derive(Builder)]
 pub struct TopLevelASDesc {
     #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
-    name: CString,
+    name: Option<CString>,
 
     #[builder(default = 0)]
     max_instance_count: u32,
@@ -129,7 +129,10 @@ impl From<&TopLevelASDesc> for diligent_sys::TopLevelASDesc {
     fn from(value: &TopLevelASDesc) -> Self {
         Self {
             _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                Name: value.name.as_ptr(),
+                Name: value
+                    .name
+                    .as_ref()
+                    .map_or(std::ptr::null(), |name| name.as_ptr()),
             },
             MaxInstanceCount: value.max_instance_count,
             Flags: value.flags.bits(),

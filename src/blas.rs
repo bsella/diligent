@@ -60,7 +60,7 @@ pub struct BLASBoundingBoxDesc {
 #[derive(Builder)]
 pub struct BottomLevelASDesc<'a> {
     #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
-    name: CString,
+    name: Option<CString>,
 
     #[builder(default = Vec::new())]
     #[builder(into)]
@@ -123,7 +123,10 @@ impl From<&BottomLevelASDesc<'_>> for BottomLevelASDescWrapper {
 
         let desc = diligent_sys::BottomLevelASDesc {
             _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                Name: value.name.as_ptr(),
+                Name: value
+                    .name
+                    .as_ref()
+                    .map_or(std::ptr::null(), |name| name.as_ptr()),
             },
             pTriangles: if triangles.is_empty() {
                 std::ptr::null()

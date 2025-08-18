@@ -15,7 +15,7 @@ impl Deref for Framebuffer {
 }
 
 pub struct FramebufferDesc<'a> {
-    pub name: CString,
+    pub name: Option<CString>,
 
     pub render_pass: &'a RenderPass,
 

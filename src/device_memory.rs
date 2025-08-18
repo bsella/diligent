@@ -28,7 +28,7 @@ pub enum DeviceMemoryType {
 #[derive(Builder)]
 pub struct DeviceMemoryDesc {
     #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
-    name: CString,
+    name: Option<CString>,
 
     device_memory_type: Option<DeviceMemoryType>,
 
@@ -51,7 +51,10 @@ impl From<&DeviceMemoryDesc> for diligent_sys::DeviceMemoryDesc {
     fn from(value: &DeviceMemoryDesc) -> Self {
         diligent_sys::DeviceMemoryDesc {
             _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                Name: value.name.as_ptr(),
+                Name: value
+                    .name
+                    .as_ref()
+                    .map_or(std::ptr::null(), |name| name.as_ptr()),
             },
             Type: if let Some(memory_type) = value.device_memory_type {
                 match memory_type {
