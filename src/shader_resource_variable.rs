@@ -6,7 +6,7 @@ use std::{
 
 use bitflags::bitflags;
 use bon::Builder;
-use static_assertions::{const_assert, const_assert_eq};
+use static_assertions::const_assert_eq;
 
 use crate::device_object::DeviceObject;
 
@@ -23,7 +23,7 @@ pub enum ShaderResourceVariableType {
     Mutable,
     Dynamic,
 }
-const_assert!(diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_NUM_TYPES == 3);
+const_assert_eq!(diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_NUM_TYPES, 3);
 
 impl From<ShaderResourceVariableType> for diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE {
     fn from(value: ShaderResourceVariableType) -> Self {
@@ -132,9 +132,9 @@ impl ShaderResourceVariable {
     ) -> Self {
         // Both base and derived classes have exactly the same size.
         // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert!(
-            std::mem::size_of::<diligent_sys::IObject>()
-                == std::mem::size_of::<diligent_sys::IShaderResourceVariable>()
+        const_assert_eq!(
+            std::mem::size_of::<diligent_sys::IObject>(),
+            std::mem::size_of::<diligent_sys::IShaderResourceVariable>()
         );
 
         Self(Object::new(

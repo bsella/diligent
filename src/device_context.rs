@@ -2,7 +2,7 @@ use std::{ffi::CString, ops::Deref};
 
 use bitflags::bitflags;
 use bon::Builder;
-use static_assertions::{const_assert, const_assert_eq};
+use static_assertions::const_assert_eq;
 
 use crate::{
     blas::BottomLevelAS,
@@ -406,7 +406,7 @@ impl Default for RaytracingGeometryFlags {
     }
 }
 
-const_assert!(diligent_sys::RAYTRACING_GEOMETRY_FLAG_LAST == 2);
+const_assert_eq!(diligent_sys::RAYTRACING_GEOMETRY_FLAG_LAST, 2);
 
 #[derive(Builder)]
 pub struct BLASBuildBoundingBoxData<'a> {
@@ -756,9 +756,9 @@ impl CommandList {
     pub(crate) fn new(sys_ptr: *mut diligent_sys::ICommandList) -> Self {
         // Both base and derived classes have exactly the same size.
         // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert!(
-            std::mem::size_of::<diligent_sys::IDeviceObject>()
-                == std::mem::size_of::<diligent_sys::ICommandList>()
+        const_assert_eq!(
+            std::mem::size_of::<diligent_sys::IDeviceObject>(),
+            std::mem::size_of::<diligent_sys::ICommandList>()
         );
 
         Self(DeviceObject::new(
@@ -1103,9 +1103,9 @@ impl DeviceContext {
     pub(crate) fn new(device_context_ptr: *mut diligent_sys::IDeviceContext) -> Self {
         // Both base and derived classes have exactly the same size.
         // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert!(
-            std::mem::size_of::<diligent_sys::IObject>()
-                == std::mem::size_of::<diligent_sys::IDeviceContext>()
+        const_assert_eq!(
+            std::mem::size_of::<diligent_sys::IObject>(),
+            std::mem::size_of::<diligent_sys::IDeviceContext>()
         );
         Self(Object::new(
             device_context_ptr as *mut diligent_sys::IObject,

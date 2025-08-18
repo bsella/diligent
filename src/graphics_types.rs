@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use bitflags::bitflags;
 use bon::Builder;
-use static_assertions::const_assert;
+use static_assertions::{const_assert, const_assert_eq};
 
 bitflags! {
     #[derive(Clone, Copy)]
@@ -30,7 +30,7 @@ bitflags! {
         const All           = diligent_sys::SHADER_TYPE_ALL as diligent_sys::SHADER_TYPE;
     }
 }
-const_assert!(diligent_sys::SHADER_TYPE_LAST == 16384);
+const_assert_eq!(diligent_sys::SHADER_TYPE_LAST, 16384);
 
 #[derive(Clone, Copy)]
 pub enum ShaderType {
@@ -88,7 +88,7 @@ pub enum FilterType {
     MaximumLinear,
     MaximumAnisotropic,
 }
-const_assert!(diligent_sys::FILTER_TYPE_NUM_FILTERS == 13);
+const_assert_eq!(diligent_sys::FILTER_TYPE_NUM_FILTERS, 13);
 
 impl From<FilterType> for diligent_sys::FILTER_TYPE {
     fn from(value: FilterType) -> Self {
@@ -137,7 +137,7 @@ pub enum TextureAddressMode {
     Border,
     MirrorOnce,
 }
-const_assert!(diligent_sys::TEXTURE_ADDRESS_NUM_MODES == 6);
+const_assert_eq!(diligent_sys::TEXTURE_ADDRESS_NUM_MODES, 6);
 
 impl From<TextureAddressMode> for diligent_sys::TEXTURE_ADDRESS_MODE {
     fn from(value: TextureAddressMode) -> Self {
@@ -208,7 +208,7 @@ pub enum PrimitiveTopology {
     ControlPointPatchList31,
     ControlPointPatchList32,
 }
-const_assert!(diligent_sys::PRIMITIVE_TOPOLOGY_NUM_TOPOLOGIES == 42);
+const_assert_eq!(diligent_sys::PRIMITIVE_TOPOLOGY_NUM_TOPOLOGIES, 42);
 
 impl From<PrimitiveTopology> for diligent_sys::PRIMITIVE_TOPOLOGY {
     fn from(value: PrimitiveTopology) -> Self {
@@ -344,7 +344,7 @@ bitflags! {
         const ShadingRate      = diligent_sys::BIND_SHADING_RATE as diligent_sys::BIND_FLAGS;
     }
 }
-const_assert!(diligent_sys::BIND_FLAG_LAST == 2048);
+const_assert_eq!(diligent_sys::BIND_FLAG_LAST, 2048);
 
 impl Default for BindFlags {
     fn default() -> Self {
@@ -362,7 +362,7 @@ pub enum Usage {
     Unified,
     Sparse,
 }
-const_assert!(diligent_sys::USAGE_NUM_USAGES == 6);
+const_assert_eq!(diligent_sys::USAGE_NUM_USAGES, 6);
 
 impl From<Usage> for diligent_sys::USAGE {
     fn from(value: Usage) -> Self {
@@ -385,7 +385,7 @@ bitflags! {
         const Write = diligent_sys::CPU_ACCESS_WRITE as diligent_sys::CPU_ACCESS_FLAGS;
     }
 }
-const_assert!(diligent_sys::CPU_ACCESS_FLAG_LAST == 2);
+const_assert_eq!(diligent_sys::CPU_ACCESS_FLAG_LAST, 2);
 
 impl Default for CpuAccessFlags {
     fn default() -> Self {
@@ -422,7 +422,7 @@ pub enum RenderDeviceType {
     #[cfg(feature = "webgpu")]
     WEBGPU,
 }
-const_assert!(diligent_sys::RENDER_DEVICE_TYPE_COUNT == 8);
+const_assert_eq!(diligent_sys::RENDER_DEVICE_TYPE_COUNT, 8);
 
 impl Display for RenderDeviceType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -484,7 +484,7 @@ pub enum ValueType {
     Float32,
     Float64,
 }
-const_assert!(diligent_sys::VT_NUM_TYPES == 10);
+const_assert_eq!(diligent_sys::VT_NUM_TYPES, 10);
 
 impl From<ValueType> for diligent_sys::VALUE_TYPE {
     fn from(value: ValueType) -> Self {
@@ -581,7 +581,7 @@ impl From<AdapterType> for diligent_sys::ADAPTER_TYPE {
     }
 }
 
-const_assert!(diligent_sys::ADAPTER_TYPE_COUNT == 4);
+const_assert_eq!(diligent_sys::ADAPTER_TYPE_COUNT, 4);
 
 #[derive(Clone, Copy)]
 pub enum AdapterVendor {
@@ -597,7 +597,7 @@ pub enum AdapterVendor {
     Mesa,
     Broadcom,
 }
-const_assert!(diligent_sys::ADAPTER_VENDOR_LAST == 10);
+const_assert_eq!(diligent_sys::ADAPTER_VENDOR_LAST, 10);
 
 pub struct AdapterMemoryInfo {
     pub local_memory: u64,
@@ -650,7 +650,7 @@ bitflags! {
         const Quad            = diligent_sys::WAVE_FEATURE_QUAD as diligent_sys::WAVE_FEATURE;
     }
 }
-const_assert!(diligent_sys::WAVE_FEATURE_LAST == 128);
+const_assert_eq!(diligent_sys::WAVE_FEATURE_LAST, 128);
 
 pub struct WaveOpProperties {
     pub min_size: u32,
@@ -703,7 +703,7 @@ pub enum ShadingRate {
     _4X2,
     _4X4,
 }
-const_assert!(diligent_sys::SHADING_RATE_MAX == 10);
+const_assert_eq!(diligent_sys::SHADING_RATE_MAX, 10);
 
 impl From<ShadingRate> for diligent_sys::SHADING_RATE {
     fn from(value: ShadingRate) -> Self {
@@ -734,7 +734,7 @@ bitflags! {
         const _64  = diligent_sys::SAMPLE_COUNT_64 as diligent_sys::SAMPLE_COUNT;
     }
 }
-const_assert!(diligent_sys::SAMPLE_COUNT_MAX == 64);
+const_assert_eq!(diligent_sys::SAMPLE_COUNT_MAX, 64);
 
 pub struct ShadingRateMode {
     pub rate: ShadingRate,
@@ -772,7 +772,7 @@ bitflags! {
         const Mul         = diligent_sys::SHADING_RATE_COMBINER_MUL as diligent_sys::SHADING_RATE_COMBINER;
     }
 }
-const_assert!(diligent_sys::SAMPLE_COUNT_MAX == 64);
+const_assert_eq!(diligent_sys::SAMPLE_COUNT_MAX, 64);
 
 bitflags! {
     #[derive(Clone, Copy)]
@@ -1171,7 +1171,7 @@ bitflags! {
         const SparseBinding = diligent_sys::COMMAND_QUEUE_TYPE_SPARSE_BINDING as diligent_sys::COMMAND_QUEUE_TYPE;
     }
 }
-const_assert!(diligent_sys::COMMAND_QUEUE_TYPE_MAX_BIT == 7);
+const_assert_eq!(diligent_sys::COMMAND_QUEUE_TYPE_MAX_BIT, 7);
 
 pub struct CommandQueueInfo {
     pub queue_type: CommandQueueType,
@@ -1522,7 +1522,7 @@ bitflags! {
     }
 }
 
-const_assert!(diligent_sys::RESOURCE_STATE_MAX_BIT == 2097152);
+const_assert_eq!(diligent_sys::RESOURCE_STATE_MAX_BIT, 2097152);
 
 #[derive(Clone, Copy)]
 pub enum QueuePriority {
@@ -1531,7 +1531,7 @@ pub enum QueuePriority {
     High,
     RealTime,
 }
-const_assert!(diligent_sys::QUEUE_PRIORITY_LAST == 4);
+const_assert_eq!(diligent_sys::QUEUE_PRIORITY_LAST, 4);
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum ComponentType {
@@ -1657,7 +1657,7 @@ pub enum TextureFormat {
     ETC2_RGBA8_UNORM,
     ETC2_RGBA8_UNORM_SRGB,
 }
-const_assert!(diligent_sys::TEX_FORMAT_NUM_FORMATS == 106);
+const_assert_eq!(diligent_sys::TEX_FORMAT_NUM_FORMATS, 106);
 
 impl From<TextureFormat> for diligent_sys::TEXTURE_FORMAT {
     fn from(value: TextureFormat) -> Self {

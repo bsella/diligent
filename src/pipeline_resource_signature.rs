@@ -1,7 +1,7 @@
 use std::{ffi::CString, ops::Deref, str::FromStr};
 
 use bitflags::bitflags;
-use static_assertions::{const_assert, const_assert_eq};
+use static_assertions::const_assert_eq;
 
 use crate::{
     device_object::DeviceObject,
@@ -72,7 +72,7 @@ bitflags! {
         const GeneralInputAttachment = diligent_sys::PIPELINE_RESOURCE_FLAG_GENERAL_INPUT_ATTACHMENT as diligent_sys::PIPELINE_RESOURCE_FLAGS;
     }
 }
-const_assert!(diligent_sys::PIPELINE_RESOURCE_FLAG_LAST == 16);
+const_assert_eq!(diligent_sys::PIPELINE_RESOURCE_FLAG_LAST, 16);
 
 pub struct PipelineResourceDesc {
     name: CString,
@@ -171,9 +171,9 @@ impl PipelineResourceSignature {
     ) -> Self {
         // Both base and derived classes have exactly the same size.
         // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert!(
-            std::mem::size_of::<diligent_sys::IDeviceObject>()
-                == std::mem::size_of::<diligent_sys::IPipelineResourceSignature>()
+        const_assert_eq!(
+            std::mem::size_of::<diligent_sys::IDeviceObject>(),
+            std::mem::size_of::<diligent_sys::IPipelineResourceSignature>()
         );
 
         Self(DeviceObject::new(

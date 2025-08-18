@@ -1,7 +1,7 @@
 use core::fmt;
 use std::ops::Deref;
 
-use static_assertions::{const_assert, const_assert_eq};
+use static_assertions::const_assert_eq;
 
 use super::object::Object;
 
@@ -43,9 +43,9 @@ impl DataBlob {
     pub(crate) fn new(data_blob_ptr: *mut diligent_sys::IDataBlob) -> Self {
         // Both base and derived classes have exactly the same size.
         // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert!(
-            std::mem::size_of::<diligent_sys::IDeviceObject>()
-                == std::mem::size_of::<diligent_sys::IDataBlob>()
+        const_assert_eq!(
+            std::mem::size_of::<diligent_sys::IDeviceObject>(),
+            std::mem::size_of::<diligent_sys::IDataBlob>()
         );
 
         Self(Object::new(data_blob_ptr as *mut diligent_sys::IObject))

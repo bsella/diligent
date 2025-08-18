@@ -1,6 +1,6 @@
 use bitflags::bitflags;
 use bon::Builder;
-use static_assertions::const_assert;
+use static_assertions::const_assert_eq;
 
 use crate::data_blob::DataBlob;
 
@@ -18,13 +18,13 @@ bitflags! {
         const PosTex  = diligent_sys::GEOMETRY_PRIMITIVE_VERTEX_FLAG_POS_TEX as _;
     }
 }
-const_assert!(diligent_sys::GEOMETRY_PRIMITIVE_VERTEX_FLAG_LAST == 4);
+const_assert_eq!(diligent_sys::GEOMETRY_PRIMITIVE_VERTEX_FLAG_LAST, 4);
 
 pub enum GeometryPrimitive {
     Cube { size: f32 },
     Sphere { radius: f32 },
 }
-const_assert!(diligent_sys::GEOMETRY_PRIMITIVE_TYPE_COUNT == 3);
+const_assert_eq!(diligent_sys::GEOMETRY_PRIMITIVE_TYPE_COUNT, 3);
 
 #[derive(Builder)]
 pub struct GeometryPrimitiveAttributes {

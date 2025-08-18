@@ -2,7 +2,7 @@ use std::{ffi::CString, ops::Deref};
 
 use bitflags::bitflags;
 use bon::Builder;
-use static_assertions::{const_assert, const_assert_eq};
+use static_assertions::const_assert_eq;
 
 use crate::{
     buffer::Buffer,
@@ -22,7 +22,7 @@ pub enum TextureDimension {
     TextureCube,
     TextureCubeArray { array_size: u32 },
 }
-const_assert!(diligent_sys::RESOURCE_DIM_NUM_DIMENSIONS == 9);
+const_assert_eq!(diligent_sys::RESOURCE_DIM_NUM_DIMENSIONS, 9);
 
 impl From<TextureDimension> for diligent_sys::RESOURCE_DIMENSION {
     fn from(value: TextureDimension) -> Self {
@@ -247,9 +247,9 @@ impl Texture {
     pub(crate) fn new(texture_ptr: *mut diligent_sys::ITexture) -> Self {
         // Both base and derived classes have exactly the same size.
         // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert!(
-            std::mem::size_of::<diligent_sys::IDeviceObject>()
-                == std::mem::size_of::<diligent_sys::ITexture>()
+        const_assert_eq!(
+            std::mem::size_of::<diligent_sys::IDeviceObject>(),
+            std::mem::size_of::<diligent_sys::ITexture>()
         );
 
         Self(DeviceObject::new(

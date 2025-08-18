@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use static_assertions::{const_assert, const_assert_eq};
+use static_assertions::const_assert_eq;
 
 use crate::{device_object::DeviceObject, sampler::Sampler, texture::Texture};
 
@@ -48,9 +48,9 @@ impl TextureView {
     pub(crate) fn new(texture_view_ptr: *mut diligent_sys::ITextureView) -> Self {
         // Both base and derived classes have exactly the same size.
         // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert!(
-            std::mem::size_of::<diligent_sys::IDeviceObject>()
-                == std::mem::size_of::<diligent_sys::ITextureView>()
+        const_assert_eq!(
+            std::mem::size_of::<diligent_sys::IDeviceObject>(),
+            std::mem::size_of::<diligent_sys::ITextureView>()
         );
 
         Self(DeviceObject::new(

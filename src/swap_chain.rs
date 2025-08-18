@@ -2,7 +2,7 @@ use std::{marker::PhantomData, ops::Deref};
 
 use bitflags::bitflags;
 use bon::Builder;
-use static_assertions::{const_assert, const_assert_eq};
+use static_assertions::const_assert_eq;
 
 use crate::{
     graphics_types::{DisplayModeAttribs, SurfaceTransform, TextureFormat},
@@ -20,7 +20,7 @@ bitflags! {
         const CopySource      = diligent_sys::SWAP_CHAIN_USAGE_COPY_SOURCE as diligent_sys::SWAP_CHAIN_USAGE_FLAGS;
     }
 }
-const_assert!(diligent_sys::SWAP_CHAIN_USAGE_LAST == 8);
+const_assert_eq!(diligent_sys::SWAP_CHAIN_USAGE_LAST, 8);
 
 impl Default for SwapChainUsageFlags {
     fn default() -> Self {
@@ -134,9 +134,9 @@ impl SwapChain {
     pub(crate) fn new(swap_chain_ptr: *mut diligent_sys::ISwapChain) -> Self {
         // Both base and derived classes have exactly the same size.
         // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert!(
-            std::mem::size_of::<diligent_sys::IObject>()
-                == std::mem::size_of::<diligent_sys::ISwapChain>()
+        const_assert_eq!(
+            std::mem::size_of::<diligent_sys::IObject>(),
+            std::mem::size_of::<diligent_sys::ISwapChain>()
         );
 
         Self(Object::new(swap_chain_ptr as *mut diligent_sys::IObject))

@@ -1,10 +1,10 @@
 use std::ops::Deref;
 
-use static_assertions::{const_assert, const_assert_eq};
+use static_assertions::const_assert_eq;
 
 use crate::device_object::DeviceObject;
 
-const_assert!(diligent_sys::QUERY_TYPE_NUM_TYPES == 6);
+const_assert_eq!(diligent_sys::QUERY_TYPE_NUM_TYPES, 6);
 
 #[repr(C)]
 pub struct QueryDataOcclusion {
@@ -151,9 +151,9 @@ impl<QueryDataType: GetSysQueryType + Default> Query<QueryDataType> {
     pub(crate) fn new(query_ptr: *mut diligent_sys::IQuery) -> Self {
         // Both base and derived classes have exactly the same size.
         // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert!(
-            std::mem::size_of::<diligent_sys::IDeviceObject>()
-                == std::mem::size_of::<diligent_sys::IQuery>()
+        const_assert_eq!(
+            std::mem::size_of::<diligent_sys::IDeviceObject>(),
+            std::mem::size_of::<diligent_sys::IQuery>()
         );
         Query::<QueryDataType> {
             data: QueryDataType::default(),

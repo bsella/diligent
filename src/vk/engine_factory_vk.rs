@@ -3,7 +3,6 @@ use std::ops::Deref;
 use std::ops::DerefMut;
 use std::path::PathBuf;
 
-use static_assertions::const_assert;
 use static_assertions::const_assert_eq;
 
 use crate::graphics_types::Version;
@@ -160,9 +159,9 @@ pub fn get_engine_factory_vk() -> EngineFactoryVk {
 
     // Both base and derived classes have exactly the same size.
     // This means that we can up-cast to the base class without worrying about layout offset between both classes
-    const_assert!(
-        std::mem::size_of::<diligent_sys::IEngineFactory>()
-            == std::mem::size_of::<diligent_sys::IEngineFactoryVk>()
+    const_assert_eq!(
+        std::mem::size_of::<diligent_sys::IEngineFactory>(),
+        std::mem::size_of::<diligent_sys::IEngineFactoryVk>()
     );
 
     EngineFactoryVk(EngineFactory::new(

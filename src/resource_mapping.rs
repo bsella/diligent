@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use static_assertions::{const_assert, const_assert_eq};
+use static_assertions::const_assert_eq;
 
 use crate::{device_object::DeviceObject, object::Object};
 
@@ -23,9 +23,9 @@ impl ResourceMapping {
     pub(crate) fn new(resource_mapping_ptr: *mut diligent_sys::IResourceMapping) -> Self {
         // Both base and derived classes have exactly the same size.
         // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert!(
-            std::mem::size_of::<diligent_sys::IObject>()
-                == std::mem::size_of::<diligent_sys::IResourceMapping>()
+        const_assert_eq!(
+            std::mem::size_of::<diligent_sys::IObject>(),
+            std::mem::size_of::<diligent_sys::IResourceMapping>()
         );
 
         Self(Object::new(

@@ -3,7 +3,7 @@ use std::{ffi::CString, ops::Deref};
 
 use bitflags::bitflags;
 use bon::Builder;
-use static_assertions::{const_assert, const_assert_eq};
+use static_assertions::const_assert_eq;
 
 use crate::pipeline_state_cache::PipelineStateCache;
 use crate::{
@@ -41,7 +41,7 @@ pub enum BlendFactor {
     Src1Alpha,
     InvSrc1Alpha,
 }
-const_assert!(diligent_sys::BLEND_OPERATION_NUM_OPERATIONS == 6);
+const_assert_eq!(diligent_sys::BLEND_OPERATION_NUM_OPERATIONS, 6);
 
 impl From<BlendFactor> for diligent_sys::BLEND_FACTOR {
     fn from(value: BlendFactor) -> Self {
@@ -75,7 +75,7 @@ pub enum BlendOperation {
     Min,
     Max,
 }
-const_assert!(diligent_sys::BLEND_OPERATION_NUM_OPERATIONS == 6);
+const_assert_eq!(diligent_sys::BLEND_OPERATION_NUM_OPERATIONS, 6);
 
 impl From<BlendOperation> for diligent_sys::BLEND_OPERATION {
     fn from(value: BlendOperation) -> Self {
@@ -108,7 +108,7 @@ pub enum LogicOperation {
     OrReverse,
     OrInverted,
 }
-const_assert!(diligent_sys::LOGIC_OP_NUM_OPERATIONS == 16);
+const_assert_eq!(diligent_sys::LOGIC_OP_NUM_OPERATIONS, 16);
 
 impl From<LogicOperation> for diligent_sys::LOGIC_OPERATION {
     fn from(value: LogicOperation) -> Self {
@@ -176,7 +176,7 @@ pub enum StencilOperation {
     IncrWrap,
     DecrWrap,
 }
-const_assert!(diligent_sys::STENCIL_OP_NUM_OPS == 9);
+const_assert_eq!(diligent_sys::STENCIL_OP_NUM_OPS, 9);
 
 impl From<StencilOperation> for diligent_sys::STENCIL_OP {
     fn from(value: StencilOperation) -> Self {
@@ -204,7 +204,7 @@ pub enum ComparisonFunction {
     GreaterEqual,
     Always,
 }
-const_assert!(diligent_sys::COMPARISON_FUNC_NUM_FUNCTIONS == 9);
+const_assert_eq!(diligent_sys::COMPARISON_FUNC_NUM_FUNCTIONS, 9);
 
 impl From<ComparisonFunction> for diligent_sys::COMPARISON_FUNCTION {
     fn from(value: ComparisonFunction) -> Self {
@@ -247,7 +247,7 @@ bitflags! {
         const NonFilteringSamplerWebgpu      = diligent_sys::SHADER_VARIABLE_FLAG_NON_FILTERING_SAMPLER_WEBGPU as diligent_sys::SHADER_VARIABLE_FLAGS;
     }
 }
-const_assert!(diligent_sys::SHADER_VARIABLE_FLAG_LAST == 8);
+const_assert_eq!(diligent_sys::SHADER_VARIABLE_FLAG_LAST, 8);
 
 impl Default for ShaderVariableFlags {
     fn default() -> Self {
@@ -278,7 +278,7 @@ bitflags! {
         const Asynchronous                   = diligent_sys::PSO_CREATE_FLAG_ASYNCHRONOUS as diligent_sys::PSO_CREATE_FLAGS;
     }
 }
-const_assert!(diligent_sys::PSO_CREATE_FLAG_LAST == 8);
+const_assert_eq!(diligent_sys::PSO_CREATE_FLAG_LAST, 8);
 
 impl Default for PipelineStateObjectCreateFlags {
     fn default() -> Self {
@@ -294,7 +294,7 @@ bitflags! {
         const TextureBased = diligent_sys::PIPELINE_SHADING_RATE_FLAG_TEXTURE_BASED as diligent_sys::PIPELINE_SHADING_RATE_FLAGS;
     }
 }
-const_assert!(diligent_sys::PIPELINE_SHADING_RATE_FLAG_LAST == 2);
+const_assert_eq!(diligent_sys::PIPELINE_SHADING_RATE_FLAG_LAST, 2);
 
 impl Default for PipelineShadingRateFlags {
     fn default() -> Self {
@@ -1206,9 +1206,9 @@ impl PipelineState {
     pub(crate) fn new(pipeline_state_ptr: *mut diligent_sys::IPipelineState) -> Self {
         // Both base and derived classes have exactly the same size.
         // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert!(
-            std::mem::size_of::<diligent_sys::IDeviceObject>()
-                == std::mem::size_of::<diligent_sys::IPipelineState>()
+        const_assert_eq!(
+            std::mem::size_of::<diligent_sys::IDeviceObject>(),
+            std::mem::size_of::<diligent_sys::IPipelineState>()
         );
 
         Self(DeviceObject::new(

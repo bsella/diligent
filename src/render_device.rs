@@ -1,6 +1,6 @@
 use std::{ffi::CString, ops::Deref, os::raw::c_void, str::FromStr};
 
-use static_assertions::{const_assert, const_assert_eq};
+use static_assertions::const_assert_eq;
 
 use crate::{
     blas::{BottomLevelAS, BottomLevelASDesc, BottomLevelASDescWrapper},
@@ -84,9 +84,9 @@ impl RenderDevice {
     pub(crate) fn new(render_device_ptr: *mut diligent_sys::IRenderDevice) -> Self {
         // Both base and derived classes have exactly the same size.
         // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert!(
-            std::mem::size_of::<diligent_sys::IObject>()
-                == std::mem::size_of::<diligent_sys::IRenderDevice>()
+        const_assert_eq!(
+            std::mem::size_of::<diligent_sys::IObject>(),
+            std::mem::size_of::<diligent_sys::IRenderDevice>()
         );
 
         Self(Object::new(render_device_ptr as *mut diligent_sys::IObject))

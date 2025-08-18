@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use static_assertions::{const_assert, const_assert_eq};
+use static_assertions::const_assert_eq;
 
 use crate::{device_context::DeviceContext, object::Object};
 
@@ -34,9 +34,9 @@ impl<'a> CommandQueue<'a> {
 
         // Both base and derived classes have exactly the same size.
         // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert!(
-            std::mem::size_of::<diligent_sys::IObject>()
-                == std::mem::size_of::<diligent_sys::ICommandQueue>()
+        const_assert_eq!(
+            std::mem::size_of::<diligent_sys::IObject>(),
+            std::mem::size_of::<diligent_sys::ICommandQueue>()
         );
 
         if command_queue_ptr.is_null() {

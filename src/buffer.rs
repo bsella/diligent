@@ -2,7 +2,7 @@ use std::{ffi::CString, ops::Deref};
 
 use bitflags::bitflags;
 use bon::Builder;
-use static_assertions::{const_assert, const_assert_eq};
+use static_assertions::const_assert_eq;
 
 use crate::{
     buffer_view::{BufferView, BufferViewType},
@@ -17,7 +17,7 @@ pub enum BufferMode {
     Structured,
     Raw,
 }
-const_assert!(diligent_sys::BUFFER_MODE_NUM_MODES == 4);
+const_assert_eq!(diligent_sys::BUFFER_MODE_NUM_MODES, 4);
 
 impl From<BufferMode> for diligent_sys::BUFFER_MODE {
     fn from(value: BufferMode) -> Self {
@@ -112,9 +112,9 @@ impl Buffer {
     pub(crate) fn new(buffer_ptr: *mut diligent_sys::IBuffer) -> Self {
         // Both base and derived classes have exactly the same size.
         // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert!(
-            std::mem::size_of::<diligent_sys::IDeviceObject>()
-                == std::mem::size_of::<diligent_sys::IBuffer>()
+        const_assert_eq!(
+            std::mem::size_of::<diligent_sys::IDeviceObject>(),
+            std::mem::size_of::<diligent_sys::IBuffer>()
         );
 
         Buffer(DeviceObject::new(

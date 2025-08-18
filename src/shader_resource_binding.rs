@@ -1,6 +1,6 @@
 use std::{ffi::CString, ops::Deref, str::FromStr};
 
-use static_assertions::{const_assert, const_assert_eq};
+use static_assertions::const_assert_eq;
 
 use crate::{
     graphics_types::ShaderTypes,
@@ -31,9 +31,9 @@ impl ShaderResourceBinding {
     pub(crate) fn new(srb_ptr: *mut diligent_sys::IShaderResourceBinding) -> Self {
         // Both base and derived classes have exactly the same size.
         // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert!(
-            std::mem::size_of::<diligent_sys::IObject>()
-                == std::mem::size_of::<diligent_sys::IShaderResourceBinding>()
+        const_assert_eq!(
+            std::mem::size_of::<diligent_sys::IObject>(),
+            std::mem::size_of::<diligent_sys::IShaderResourceBinding>()
         );
 
         Self(Object::new(srb_ptr as *mut diligent_sys::IObject))

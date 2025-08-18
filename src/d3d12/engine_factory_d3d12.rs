@@ -5,7 +5,7 @@ use std::{
 };
 
 use bitflags::bitflags;
-use static_assertions::const_assert;
+use static_assertions::const_assert_eq;
 
 use crate::{
     device_context::{DeferredDeviceContext, ImmediateDeviceContext},
@@ -31,9 +31,9 @@ pub fn get_engine_factory_d3d12() -> EngineFactoryD3D12 {
 
     // Both base and derived classes have exactly the same size.
     // This means that we can up-cast to the base class without worrying about layout offset between both classes
-    const_assert!(
-        std::mem::size_of::<diligent_sys::IEngineFactory>()
-            == std::mem::size_of::<diligent_sys::IEngineFactoryD3D12>()
+    const_assert_eq!(
+        std::mem::size_of::<diligent_sys::IEngineFactory>(),
+        std::mem::size_of::<diligent_sys::IEngineFactoryD3D12>()
     );
 
     EngineFactoryD3D12 {

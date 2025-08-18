@@ -1,7 +1,7 @@
 use std::{ffi::CString, ops::Deref};
 
 use bon::Builder;
-use static_assertions::{const_assert, const_assert_eq};
+use static_assertions::const_assert_eq;
 
 use crate::device_object::DeviceObject;
 
@@ -75,9 +75,9 @@ impl DeviceMemory {
     pub(crate) fn new(fence_ptr: *mut diligent_sys::IDeviceMemory) -> Self {
         // Both base and derived classes have exactly the same size.
         // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert!(
-            std::mem::size_of::<diligent_sys::IDeviceObject>()
-                == std::mem::size_of::<diligent_sys::IDeviceMemory>()
+        const_assert_eq!(
+            std::mem::size_of::<diligent_sys::IDeviceObject>(),
+            std::mem::size_of::<diligent_sys::IDeviceMemory>()
         );
         Self(DeviceObject::new(
             fence_ptr as *mut diligent_sys::IDeviceObject,

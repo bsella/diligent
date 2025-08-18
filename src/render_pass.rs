@@ -1,7 +1,7 @@
 use std::{ffi::CString, ops::Deref};
 
 use bon::Builder;
-use static_assertions::const_assert;
+use static_assertions::const_assert_eq;
 
 use crate::{
     device_object::DeviceObject,
@@ -24,7 +24,7 @@ pub enum AttachmentLoadOperation {
     Clear,
     Discard,
 }
-const_assert!(diligent_sys::ATTACHMENT_LOAD_OP_COUNT == 3);
+const_assert_eq!(diligent_sys::ATTACHMENT_LOAD_OP_COUNT, 3);
 
 impl From<AttachmentLoadOperation> for diligent_sys::ATTACHMENT_LOAD_OP {
     fn from(value: AttachmentLoadOperation) -> Self {
@@ -41,7 +41,7 @@ pub enum AttachmentStoreOperation {
     Store,
     Discard,
 }
-const_assert!(diligent_sys::ATTACHMENT_STORE_OP_COUNT == 2);
+const_assert_eq!(diligent_sys::ATTACHMENT_STORE_OP_COUNT, 2);
 
 impl From<AttachmentStoreOperation> for diligent_sys::ATTACHMENT_STORE_OP {
     fn from(value: AttachmentStoreOperation) -> Self {
@@ -159,9 +159,9 @@ impl RenderPass {
     pub(crate) fn new(sys_ptr: *mut diligent_sys::IRenderPass) -> Self {
         // Both base and derived classes have exactly the same size.
         // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert!(
-            std::mem::size_of::<diligent_sys::IObject>()
-                == std::mem::size_of::<diligent_sys::IRenderPass>()
+        const_assert_eq!(
+            std::mem::size_of::<diligent_sys::IObject>(),
+            std::mem::size_of::<diligent_sys::IRenderPass>()
         );
         Self(DeviceObject::new(
             sys_ptr as *mut diligent_sys::IDeviceObject,

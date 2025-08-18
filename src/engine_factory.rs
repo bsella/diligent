@@ -1,6 +1,6 @@
 use std::{ops::Deref, os::raw::c_void, path::Path};
 
-use static_assertions::{const_assert, const_assert_eq};
+use static_assertions::const_assert_eq;
 
 use crate::{
     data_blob::DataBlob,
@@ -102,9 +102,9 @@ impl EngineFactory {
     pub(crate) fn new(engine_factory_ptr: *mut diligent_sys::IEngineFactory) -> Self {
         // Both base and derived classes have exactly the same size.
         // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert!(
-            std::mem::size_of::<diligent_sys::IObject>()
-                == std::mem::size_of::<diligent_sys::IEngineFactory>()
+        const_assert_eq!(
+            std::mem::size_of::<diligent_sys::IObject>(),
+            std::mem::size_of::<diligent_sys::IEngineFactory>()
         );
 
         Self(Object::new(

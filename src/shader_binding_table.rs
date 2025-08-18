@@ -2,7 +2,7 @@ use std::{ffi::CString, ops::Deref};
 
 use bitflags::bitflags;
 use bon::Builder;
-use static_assertions::{const_assert, const_assert_eq};
+use static_assertions::const_assert_eq;
 
 use crate::{device_object::DeviceObject, pipeline_state::PipelineState, tlas::TopLevelAS};
 
@@ -57,9 +57,9 @@ impl ShaderBindingTable {
     pub(crate) fn new(sys_ptr: *mut diligent_sys::IShaderBindingTable) -> Self {
         // Both base and derived classes have exactly the same size.
         // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert!(
-            std::mem::size_of::<diligent_sys::IDeviceObject>()
-                == std::mem::size_of::<diligent_sys::IShaderBindingTable>()
+        const_assert_eq!(
+            std::mem::size_of::<diligent_sys::IDeviceObject>(),
+            std::mem::size_of::<diligent_sys::IShaderBindingTable>()
         );
 
         Self(DeviceObject::new(

@@ -1,7 +1,7 @@
 use std::{ffi::CString, ops::Deref};
 
 use bon::Builder;
-use static_assertions::const_assert;
+use static_assertions::const_assert_eq;
 
 use crate::graphics_types::ValueType;
 
@@ -10,7 +10,7 @@ pub enum InputElementFrequency {
     PerVertex,
     PerInstance,
 }
-const_assert!(diligent_sys::INPUT_ELEMENT_FREQUENCY_NUM_FREQUENCIES == 3);
+const_assert_eq!(diligent_sys::INPUT_ELEMENT_FREQUENCY_NUM_FREQUENCIES, 3);
 
 impl From<InputElementFrequency> for diligent_sys::INPUT_ELEMENT_FREQUENCY {
     fn from(value: InputElementFrequency) -> Self {

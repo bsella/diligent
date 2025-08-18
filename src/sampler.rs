@@ -2,7 +2,7 @@ use std::{ffi::CString, ops::Deref};
 
 use bitflags::bitflags;
 use bon::Builder;
-use static_assertions::const_assert;
+use static_assertions::const_assert_eq;
 
 use super::{
     device_object::DeviceObject,
@@ -18,7 +18,7 @@ bitflags! {
         const SubsampledCoarseReconstruction = diligent_sys::SAMPLER_FLAG_SUBSAMPLED_COARSE_RECONSTRUCTION as diligent_sys::SAMPLER_FLAGS;
     }
 }
-const_assert!(diligent_sys::SAMPLER_FLAG_LAST == 2);
+const_assert_eq!(diligent_sys::SAMPLER_FLAG_LAST, 2);
 
 impl Default for SamplerFlags {
     fn default() -> Self {
@@ -115,9 +115,9 @@ impl Sampler {
     pub(crate) fn new(sampler_ptr: *mut diligent_sys::ISampler) -> Self {
         // Both base and derived classes have exactly the same size.
         // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert!(
-            std::mem::size_of::<diligent_sys::IDeviceObject>()
-                == std::mem::size_of::<diligent_sys::ISampler>()
+        const_assert_eq!(
+            std::mem::size_of::<diligent_sys::IDeviceObject>(),
+            std::mem::size_of::<diligent_sys::ISampler>()
         );
 
         Self(DeviceObject::new(

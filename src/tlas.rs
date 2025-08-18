@@ -2,7 +2,7 @@ use std::{ffi::CString, ops::Deref};
 
 use bitflags::bitflags;
 use bon::Builder;
-use static_assertions::{const_assert, const_assert_eq};
+use static_assertions::const_assert_eq;
 
 use crate::{
     blas::{BottomLevelAS, RayTracingBuildAsFlags, ScratchBufferSizes},
@@ -19,7 +19,7 @@ pub enum HitGroupBindingMode {
     PerTLAS,
     UserDefined,
 }
-const_assert!(diligent_sys::HIT_GROUP_BINDING_MODE_LAST == 3);
+const_assert_eq!(diligent_sys::HIT_GROUP_BINDING_MODE_LAST, 3);
 
 impl From<HitGroupBindingMode> for diligent_sys::HIT_GROUP_BINDING_MODE {
     fn from(value: HitGroupBindingMode) -> Self {
@@ -42,7 +42,7 @@ bitflags! {
         const ForceNoOpaque                 = diligent_sys::RAYTRACING_INSTANCE_FORCE_NO_OPAQUE as _;
     }
 }
-const_assert!(diligent_sys::RAYTRACING_INSTANCE_FLAG_LAST == 8);
+const_assert_eq!(diligent_sys::RAYTRACING_INSTANCE_FLAG_LAST, 8);
 
 impl Default for RayTracingInstanceFlags {
     fn default() -> Self {
@@ -161,9 +161,9 @@ impl TopLevelAS {
     pub(crate) fn new(sys_ptr: *mut diligent_sys::ITopLevelAS) -> Self {
         // Both base and derived classes have exactly the same size.
         // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert!(
-            std::mem::size_of::<diligent_sys::IDeviceObject>()
-                == std::mem::size_of::<diligent_sys::ITopLevelAS>()
+        const_assert_eq!(
+            std::mem::size_of::<diligent_sys::IDeviceObject>(),
+            std::mem::size_of::<diligent_sys::ITopLevelAS>()
         );
 
         Self(DeviceObject::new(
