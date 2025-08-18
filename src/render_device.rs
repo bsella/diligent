@@ -20,10 +20,12 @@ use crate::{
         PipelineResourceSignatureDescWrapper,
     },
     pipeline_state::{
-        ComputePipelineState, GraphicsPipelineState, GraphicsPipelineStateCreateInfo,
-        GraphicsPipelineStateCreateInfoWrapper, RayTracingPipelineState,
-        RayTracingPipelineStateCreateInfo, RayTracingPipelineStateCreateInfoWrapper,
-        TilePipelineState, TilePipelineStateCreateInfo, TilePipelineStateCreateInfoWrapper,
+        ComputePipelineState, ComputePipelineStateCreateInfo,
+        ComputePipelineStateCreateInfoWrapper, GraphicsPipelineState,
+        GraphicsPipelineStateCreateInfo, GraphicsPipelineStateCreateInfoWrapper,
+        RayTracingPipelineState, RayTracingPipelineStateCreateInfo,
+        RayTracingPipelineStateCreateInfoWrapper, TilePipelineState, TilePipelineStateCreateInfo,
+        TilePipelineStateCreateInfoWrapper,
     },
     pipeline_state_cache::{PipelineStateCache, PipelineStateCacheCreateInfo},
     query::{
@@ -268,14 +270,17 @@ impl RenderDevice {
 
     pub fn create_compute_pipeline_state(
         &self,
-        pipeline_ci: &diligent_sys::ComputePipelineStateCreateInfo,
+        pipeline_ci: &ComputePipelineStateCreateInfo,
     ) -> Result<ComputePipelineState, ()> {
         let mut pipeline_state_ptr = std::ptr::null_mut();
+
+        let pipeline_ci_wrapper = ComputePipelineStateCreateInfoWrapper::from(pipeline_ci);
+
         unsafe_member_call!(
             self,
             RenderDevice,
             CreateComputePipelineState,
-            pipeline_ci,
+            std::ptr::from_ref(&pipeline_ci_wrapper),
             std::ptr::addr_of_mut!(pipeline_state_ptr)
         );
 
@@ -779,13 +784,9 @@ impl RenderDevice {
         }
     }
 
-    pub fn get_texture_format_info(
-        &self,
-        format: TextureFormat,
-    ) -> &diligent_sys::TextureFormatInfo {
-        // TODO
+    pub fn is_texture_format_supported(&self, format: TextureFormat) -> bool {
         let info = unsafe_member_call!(self, RenderDevice, GetTextureFormatInfo, format.into());
-        unsafe { info.as_ref().unwrap_unchecked() }
+        unsafe { (*info).Supported }
     }
 
     pub fn get_texture_format_info_ext(

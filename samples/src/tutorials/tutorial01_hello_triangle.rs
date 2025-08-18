@@ -141,7 +141,8 @@ void main(in PSInput PSIn, out PSOutput PSOut)
             .build();
 
         let pso_create_info = PipelineStateCreateInfo::builder()
-            .graphics("Simple triangle PSO")
+            .name("Simple triangle PSO")
+            .graphics()
             .graphics_pipeline_desc(graphics_pipeline_desc)
             .vertex_shader(&vertex_shader)
             .pixel_shader(&pixel_shader)

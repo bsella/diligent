@@ -152,7 +152,8 @@ impl SampleBase for Tessellation {
                     .build(),
             ])
             .immutable_samplers(samplers)
-            .graphics("Terrain PSO")
+            .name("Terrain PSO")
+            .graphics()
             .graphics_pipeline_desc(
                 GraphicsPipelineDesc::builder()
                     .rasterizer_desc(RasterizerStateDesc::builder().cull_mode(cull_mode).build())

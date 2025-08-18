@@ -236,7 +236,8 @@ impl TexturedCube {
                 "g_Texture",
                 &sampler_desc,
             )])
-            .graphics("Cube PSO")
+            .name("Cube PSO")
+            .graphics()
             .graphics_pipeline_desc(graphics_pipeline_desc)
             .vertex_shader(&vertex_shader)
             .pixel_shader(&pixel_shader)

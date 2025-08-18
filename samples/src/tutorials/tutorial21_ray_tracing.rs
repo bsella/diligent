@@ -220,7 +220,8 @@ fn create_graphics_pso(
 
     let pso_ci = PipelineStateCreateInfo::builder()
         .default_variable_type(ShaderResourceVariableType::Dynamic)
-        .graphics("Image blit PSO")
+        .name("Image blit PSO")
+        .graphics()
         .graphics_pipeline_desc(graphics_pso_desc)
         .vertex_shader(&vertex_shader)
         .pixel_shader(&pixel_shader)
@@ -401,7 +402,8 @@ fn create_ray_tracing_pso(
         ])
         .default_variable_type(ShaderResourceVariableType::Mutable)
         .immutable_samplers([sampler])
-        .raytracing("Ray tracing PSO")
+        .name("Ray tracing PSO")
+        .raytracing()
         .general_shaders(vec![
             // Ray generation shader is an entry point for a ray tracing pipeline.
             ("Main", &ray_gen_shader),

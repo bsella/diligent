@@ -594,7 +594,8 @@ impl ImguiRenderer {
                 "Texture",
                 &sampler_desc,
             )])
-            .graphics("ImGUI PSO")
+            .name("ImGUI PSO")
+            .graphics()
             .graphics_pipeline_desc(
                 GraphicsPipelineDesc::builder()
                     .blend_desc(blend_state_desc)

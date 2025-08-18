@@ -176,7 +176,8 @@ impl SampleBase for Texturing {
                 "g_Texture",
                 &sampler_desc,
             )])
-            .graphics("Cube PSO")
+            .name("Cube PSO")
+            .graphics()
             .graphics_pipeline_desc(
                 GraphicsPipelineDesc::builder()
                     .rasterizer_desc(rasterizer_desc)

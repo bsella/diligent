@@ -155,10 +155,9 @@ impl SampleBase for Cube {
         let pso_create_info = PipelineStateCreateInfo::builder()
             // Define variable type that will be used by default
             .default_variable_type(ShaderResourceVariableType::Static)
-            .graphics(
-                // Pipeline state name is used by the engine to report issues.
-                "Cube PSO",
-            )
+            // Pipeline state name is used by the engine to report issues.
+            .name("Cube PSO")
+            .graphics()
             .graphics_pipeline_desc(
                 GraphicsPipelineDesc::builder()
                     .rasterizer_desc(rasterizer_desc)

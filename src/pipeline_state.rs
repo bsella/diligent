@@ -354,61 +354,64 @@ pub struct PipelineStateCreateInfo<'a> {
 
 impl<'a, S: pipeline_state_create_info_builder::State> PipelineStateCreateInfoBuilder<'a, S>
 where
-    S::Name: pipeline_state_create_info_builder::IsUnset,
     S::PipelineType: pipeline_state_create_info_builder::IsUnset,
 {
     pub fn graphics(
         self,
-        name: impl AsRef<str>,
     ) -> GraphicsPipelineStateCreateInfoBuilder<
         'a,
         graphics_pipeline_state_create_info_builder::SetPipelineStateCreateInfo,
     > {
         GraphicsPipelineStateCreateInfo::builder().pipeline_state_create_info(
-            self.name(name)
-                .pipeline_type(diligent_sys::PIPELINE_TYPE_GRAPHICS as _)
+            self.pipeline_type(diligent_sys::PIPELINE_TYPE_GRAPHICS as _)
                 .build(),
         )
     }
 
     pub fn mesh(
         self,
-        name: impl AsRef<str>,
     ) -> GraphicsPipelineStateCreateInfoBuilder<
         'a,
         graphics_pipeline_state_create_info_builder::SetPipelineStateCreateInfo,
     > {
         GraphicsPipelineStateCreateInfo::builder().pipeline_state_create_info(
-            self.name(name)
-                .pipeline_type(diligent_sys::PIPELINE_TYPE_MESH as _)
+            self.pipeline_type(diligent_sys::PIPELINE_TYPE_MESH as _)
                 .build(),
         )
     }
 
     pub fn raytracing(
         self,
-        name: impl AsRef<str>,
     ) -> RayTracingPipelineStateCreateInfoBuilder<
         'a,
         ray_tracing_pipeline_state_create_info_builder::SetPipelineStateCreateInfo,
     > {
         RayTracingPipelineStateCreateInfo::builder().pipeline_state_create_info(
-            self.name(name)
-                .pipeline_type(diligent_sys::PIPELINE_TYPE_RAY_TRACING as _)
+            self.pipeline_type(diligent_sys::PIPELINE_TYPE_RAY_TRACING as _)
                 .build(),
         )
     }
 
     pub fn tile(
         self,
-        name: impl AsRef<str>,
     ) -> TilePipelineStateCreateInfoBuilder<
         'a,
         tile_pipeline_state_create_info_builder::SetPipelineStateCreateInfo,
     > {
         TilePipelineStateCreateInfo::builder().pipeline_state_create_info(
-            self.name(name)
-                .pipeline_type(diligent_sys::PIPELINE_TYPE_TILE as _)
+            self.pipeline_type(diligent_sys::PIPELINE_TYPE_TILE as _)
+                .build(),
+        )
+    }
+
+    pub fn compute(
+        self,
+    ) -> ComputePipelineStateCreateInfoBuilder<
+        'a,
+        compute_pipeline_state_create_info_builder::SetPipelineStateCreateInfo,
+    > {
+        ComputePipelineStateCreateInfo::builder().pipeline_state_create_info(
+            self.pipeline_type(diligent_sys::PIPELINE_TYPE_COMPUTE as _)
                 .build(),
         )
     }
@@ -1213,18 +1216,6 @@ impl PipelineState {
         ))
     }
 
-    pub fn get_ray_tracing_pipeline_desc(&self) -> &diligent_sys::RayTracingPipelineDesc {
-        // TODO
-        let desc = unsafe_member_call!(self, PipelineState, GetRayTracingPipelineDesc);
-        unsafe { desc.as_ref().unwrap_unchecked() }
-    }
-
-    pub fn get_tile_pipeline_desc(&self) -> &diligent_sys::TilePipelineDesc {
-        // TODO
-        let desc = unsafe_member_call!(self, PipelineState, GetTilePipelineDesc);
-        unsafe { desc.as_ref().unwrap_unchecked() }
-    }
-
     pub fn bind_static_resources(
         &mut self,
         shader_type: ShaderType,
@@ -1326,14 +1317,13 @@ impl PipelineState {
     }
 }
 
-pub struct GraphicsPipelineState {
-    pipeline_state: PipelineState,
-}
+#[repr(transparent)]
+pub struct GraphicsPipelineState(PipelineState);
 
 impl Deref for GraphicsPipelineState {
     type Target = PipelineState;
     fn deref(&self) -> &Self::Target {
-        &self.pipeline_state
+        &self.0
     }
 }
 
@@ -1341,9 +1331,7 @@ impl GraphicsPipelineState {
     pub(crate) fn new(
         pipeline_state_ptr: *mut diligent_sys::IPipelineState,
     ) -> GraphicsPipelineState {
-        GraphicsPipelineState {
-            pipeline_state: PipelineState::new(pipeline_state_ptr),
-        }
+        GraphicsPipelineState(PipelineState::new(pipeline_state_ptr))
     }
 
     pub fn get_graphics_pipeline_desc(&self) -> &diligent_sys::GraphicsPipelineDesc {
@@ -1353,35 +1341,29 @@ impl GraphicsPipelineState {
     }
 }
 
-pub struct ComputePipelineState {
-    pipeline_state: PipelineState,
-}
+#[repr(transparent)]
+pub struct ComputePipelineState(PipelineState);
 
 impl Deref for ComputePipelineState {
     type Target = PipelineState;
     fn deref(&self) -> &Self::Target {
-        &self.pipeline_state
+        &self.0
     }
 }
 
 impl ComputePipelineState {
-    pub(crate) fn new(
-        pipeline_state_ptr: *mut diligent_sys::IPipelineState,
-    ) -> ComputePipelineState {
-        ComputePipelineState {
-            pipeline_state: PipelineState::new(pipeline_state_ptr),
-        }
+    pub(crate) fn new(pipeline_state_ptr: *mut diligent_sys::IPipelineState) -> Self {
+        Self(PipelineState::new(pipeline_state_ptr))
     }
 }
 
-pub struct RayTracingPipelineState {
-    pipeline_state: PipelineState,
-}
+#[repr(transparent)]
+pub struct RayTracingPipelineState(PipelineState);
 
 impl Deref for RayTracingPipelineState {
     type Target = PipelineState;
     fn deref(&self) -> &Self::Target {
-        &self.pipeline_state
+        &self.0
     }
 }
 
@@ -1389,9 +1371,7 @@ impl RayTracingPipelineState {
     pub(crate) fn new(
         pipeline_state_ptr: *mut diligent_sys::IPipelineState,
     ) -> RayTracingPipelineState {
-        RayTracingPipelineState {
-            pipeline_state: PipelineState::new(pipeline_state_ptr),
-        }
+        RayTracingPipelineState(PipelineState::new(pipeline_state_ptr))
     }
 
     pub fn get_raytracing_pipeline_desc(&self) -> &diligent_sys::RayTracingPipelineDesc {
@@ -1449,27 +1429,54 @@ impl Deref for TilePipelineStateCreateInfoWrapper {
     }
 }
 
-pub struct TilePipelineState {
-    pipeline_state: PipelineState,
-}
+#[repr(transparent)]
+pub struct TilePipelineState(PipelineState);
 
 impl Deref for TilePipelineState {
     type Target = PipelineState;
     fn deref(&self) -> &Self::Target {
-        &self.pipeline_state
+        &self.0
     }
 }
 
 impl TilePipelineState {
     pub(crate) fn new(pipeline_state_ptr: *mut diligent_sys::IPipelineState) -> TilePipelineState {
-        TilePipelineState {
-            pipeline_state: PipelineState::new(pipeline_state_ptr),
-        }
+        TilePipelineState(PipelineState::new(pipeline_state_ptr))
     }
 
     pub fn get_tile_pipeline_desc(&self) -> &diligent_sys::TilePipelineDesc {
         // TODO
         let desc = unsafe_member_call!(self, PipelineState, GetTilePipelineDesc);
         unsafe { desc.as_ref().unwrap_unchecked() }
+    }
+}
+
+#[derive(Builder)]
+pub struct ComputePipelineStateCreateInfo<'a> {
+    #[builder(setters(vis = ""))]
+    pipeline_state_create_info: PipelineStateCreateInfo<'a>,
+    shader: &'a Shader,
+}
+
+pub(crate) struct ComputePipelineStateCreateInfoWrapper {
+    _pci: PipelineStateCreateInfoWrapper,
+    ci: diligent_sys::ComputePipelineStateCreateInfo,
+}
+
+impl<'a> From<&ComputePipelineStateCreateInfo<'a>> for ComputePipelineStateCreateInfoWrapper {
+    fn from(value: &ComputePipelineStateCreateInfo) -> Self {
+        let pci = PipelineStateCreateInfoWrapper::from(&value.pipeline_state_create_info);
+        let ci = diligent_sys::ComputePipelineStateCreateInfo {
+            _PipelineStateCreateInfo: *pci,
+            pCS: value.shader.sys_ptr as _,
+        };
+        Self { _pci: pci, ci }
+    }
+}
+
+impl Deref for ComputePipelineStateCreateInfoWrapper {
+    type Target = diligent_sys::ComputePipelineStateCreateInfo;
+    fn deref(&self) -> &Self::Target {
+        &self.ci
     }
 }
