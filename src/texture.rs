@@ -1,4 +1,4 @@
-use std::{ffi::CString, ops::Deref};
+use std::{ffi::CString, num::NonZero, ops::Deref};
 
 use bitflags::bitflags;
 use bon::Builder;
@@ -9,18 +9,18 @@ use crate::{
     device_context::DeviceContext,
     device_object::DeviceObject,
     graphics_types::{BindFlags, CpuAccessFlags, MapFlags, ResourceState, TextureFormat, Usage},
-    texture_view::{TextureView, TextureViewType},
+    texture_view::{TextureView, TextureViewDesc, TextureViewType},
 };
 
 #[derive(Clone, Copy)]
 pub enum TextureDimension {
     Texture1D,
-    Texture1DArray { array_size: u32 },
+    Texture1DArray { array_size: NonZero<usize> },
     Texture2D,
-    Texture2DArray { array_size: u32 },
-    Texture3D { depth: u32 },
+    Texture2DArray { array_size: NonZero<usize> },
+    Texture3D { depth: NonZero<usize> },
     TextureCube,
-    TextureCubeArray { array_size: u32 },
+    TextureCubeArray { array_size: NonZero<usize> },
 }
 const_assert_eq!(diligent_sys::RESOURCE_DIM_NUM_DIMENSIONS, 9);
 
@@ -188,12 +188,12 @@ impl From<&TextureDesc> for diligent_sys::TextureDesc {
             | TextureDimension::Texture2DArray { array_size }
             | TextureDimension::TextureCubeArray { array_size } => {
                 diligent_sys::TextureDesc__bindgen_ty_1 {
-                    ArraySize: array_size,
+                    ArraySize: array_size.get() as u32,
                 }
             }
-            TextureDimension::Texture3D { depth } => {
-                diligent_sys::TextureDesc__bindgen_ty_1 { Depth: depth }
-            }
+            TextureDimension::Texture3D { depth } => diligent_sys::TextureDesc__bindgen_ty_1 {
+                Depth: depth.get() as u32,
+            },
             _ => diligent_sys::TextureDesc__bindgen_ty_1 { ArraySize: 1 },
         };
 
@@ -257,16 +257,14 @@ impl Texture {
         ))
     }
 
-    pub fn create_view(
-        &mut self,
-        texture_view_desc: &diligent_sys::TextureViewDesc,
-    ) -> Result<TextureView, ()> {
+    pub fn create_view(&self, texture_view_desc: &TextureViewDesc) -> Result<TextureView, ()> {
         let mut texture_view_ptr = std::ptr::null_mut();
+        let texture_view_desc = texture_view_desc.into();
         unsafe_member_call!(
             self,
             Texture,
             CreateView,
-            std::ptr::addr_of!(texture_view_desc) as *const diligent_sys::TextureViewDesc,
+            std::ptr::from_ref(&texture_view_desc),
             std::ptr::addr_of_mut!(texture_view_ptr)
         );
 

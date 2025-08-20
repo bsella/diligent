@@ -1,8 +1,15 @@
-use std::ops::Deref;
+use std::{ffi::CString, ops::Deref};
 
+use bitflags::bitflags;
+use bon::Builder;
 use static_assertions::const_assert_eq;
 
-use crate::{device_object::DeviceObject, sampler::Sampler, texture::Texture};
+use crate::{
+    device_object::DeviceObject,
+    graphics_types::TextureFormat,
+    sampler::Sampler,
+    texture::{Texture, TextureDimension},
+};
 
 #[derive(Clone, Copy)]
 pub enum TextureViewType {
@@ -33,6 +40,140 @@ const_assert_eq!(
     std::mem::size_of::<diligent_sys::ITextureViewMethods>(),
     3 * std::mem::size_of::<*const ()>()
 );
+
+bitflags! {
+    #[derive(Clone,Copy)]
+    pub struct UavAccessFlags: diligent_sys::UAV_ACCESS_FLAG {
+        const Unspecified = diligent_sys::UAV_ACCESS_UNSPECIFIED as diligent_sys::UAV_ACCESS_FLAG;
+        const Read        = diligent_sys::UAV_ACCESS_FLAG_READ as diligent_sys::UAV_ACCESS_FLAG;
+        const Write       = diligent_sys::UAV_ACCESS_FLAG_WRITE as diligent_sys::UAV_ACCESS_FLAG;
+        const ReadWrite   = diligent_sys::UAV_ACCESS_FLAG_READ_WRITE as diligent_sys::UAV_ACCESS_FLAG;
+    }
+}
+
+const_assert_eq!(diligent_sys::UAV_ACCESS_FLAG_LAST, 3);
+
+bitflags! {
+    #[derive(Clone,Copy)]
+    pub struct TextureViewFlags: diligent_sys::TEXTURE_VIEW_FLAGS {
+        const None                  = diligent_sys::TEXTURE_VIEW_FLAG_NONE as diligent_sys::TEXTURE_VIEW_FLAGS;
+        const AllowMipMapGeneration = diligent_sys::TEXTURE_VIEW_FLAG_ALLOW_MIP_MAP_GENERATION as diligent_sys::TEXTURE_VIEW_FLAGS;
+    }
+}
+
+const_assert_eq!(diligent_sys::TEXTURE_VIEW_FLAG_LAST, 1);
+
+#[derive(Clone, Copy)]
+pub enum TextureComponentSwizzle {
+    Identity,
+    Zero,
+    One,
+    R,
+    G,
+    B,
+    A,
+}
+const_assert_eq!(diligent_sys::TEXTURE_COMPONENT_SWIZZLE_COUNT, 7);
+
+impl From<TextureComponentSwizzle> for diligent_sys::TEXTURE_COMPONENT_SWIZZLE {
+    fn from(value: TextureComponentSwizzle) -> Self {
+        (match value {
+            TextureComponentSwizzle::Identity => diligent_sys::TEXTURE_COMPONENT_SWIZZLE_IDENTITY,
+            TextureComponentSwizzle::Zero => diligent_sys::TEXTURE_COMPONENT_SWIZZLE_ZERO,
+            TextureComponentSwizzle::One => diligent_sys::TEXTURE_COMPONENT_SWIZZLE_ONE,
+            TextureComponentSwizzle::R => diligent_sys::TEXTURE_COMPONENT_SWIZZLE_R,
+            TextureComponentSwizzle::G => diligent_sys::TEXTURE_COMPONENT_SWIZZLE_G,
+            TextureComponentSwizzle::B => diligent_sys::TEXTURE_COMPONENT_SWIZZLE_B,
+            TextureComponentSwizzle::A => diligent_sys::TEXTURE_COMPONENT_SWIZZLE_A,
+        }) as _
+    }
+}
+
+#[derive(Builder)]
+pub struct TextureComponentMapping {
+    #[builder(default = TextureComponentSwizzle::Identity)]
+    r: TextureComponentSwizzle,
+    #[builder(default = TextureComponentSwizzle::Identity)]
+    g: TextureComponentSwizzle,
+    #[builder(default = TextureComponentSwizzle::Identity)]
+    b: TextureComponentSwizzle,
+    #[builder(default = TextureComponentSwizzle::Identity)]
+    a: TextureComponentSwizzle,
+}
+
+impl Default for TextureComponentMapping {
+    fn default() -> Self {
+        Self {
+            r: TextureComponentSwizzle::Identity,
+            g: TextureComponentSwizzle::Identity,
+            b: TextureComponentSwizzle::Identity,
+            a: TextureComponentSwizzle::Identity,
+        }
+    }
+}
+
+impl From<&TextureComponentMapping> for diligent_sys::TextureComponentMapping {
+    fn from(value: &TextureComponentMapping) -> Self {
+        Self {
+            R: value.r.into(),
+            G: value.g.into(),
+            B: value.b.into(),
+            A: value.a.into(),
+        }
+    }
+}
+
+#[derive(Builder)]
+pub struct TextureViewDesc {
+    #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
+    name: Option<CString>,
+    view_type: TextureViewType,
+    dimension: Option<TextureDimension>,
+    num_array_or_depth_slices: usize,
+    first_array_or_depth_slice: usize,
+    format: Option<TextureFormat>,
+    #[builder(default = 0)]
+    most_detailed_mip: usize,
+    #[builder(default = 0)]
+    num_mip_levels: usize,
+    #[builder(default = UavAccessFlags::Unspecified)]
+    access_flags: UavAccessFlags,
+    #[builder(default = TextureViewFlags::None)]
+    flags: TextureViewFlags,
+    #[builder(default)]
+    swizzle: TextureComponentMapping,
+}
+
+impl From<&TextureViewDesc> for diligent_sys::TextureViewDesc {
+    fn from(value: &TextureViewDesc) -> Self {
+        Self {
+            _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
+                Name: value
+                    .name
+                    .as_ref()
+                    .map_or(std::ptr::null(), |name| name.as_ptr()),
+            },
+            ViewType: value.view_type.into(),
+            TextureDim: value
+                .dimension
+                .map_or(diligent_sys::RESOURCE_DIM_UNDEFINED as _, |dim| dim.into()),
+            Format: value
+                .format
+                .map_or(diligent_sys::TEX_FORMAT_UNKNOWN as _, |dim| dim.into()),
+            MostDetailedMip: value.most_detailed_mip as u32,
+            NumMipLevels: value.num_mip_levels as u32,
+            __bindgen_anon_1: diligent_sys::TextureViewDesc__bindgen_ty_1 {
+                FirstArraySlice: value.first_array_or_depth_slice as u32,
+            },
+            __bindgen_anon_2: diligent_sys::TextureViewDesc__bindgen_ty_2 {
+                NumArraySlices: value.num_array_or_depth_slices as u32,
+            },
+            AccessFlags: value.access_flags.bits(),
+            Flags: value.flags.bits(),
+            Swizzle: (&value.swizzle).into(),
+        }
+    }
+}
 
 #[repr(transparent)]
 pub struct TextureView(DeviceObject);
