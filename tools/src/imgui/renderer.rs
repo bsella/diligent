@@ -33,6 +33,7 @@ use imgui::{
     sys::{ImDrawIdx, ImDrawVert},
     Io, TextureId, Ui,
 };
+use static_assertions::const_assert_eq;
 
 const GAMMA_TO_LINEAR: &str =
     "((Gamma) < 0.04045 ? (Gamma) / 12.92 : pow(max((Gamma) + 0.055, 0.0) / 1.055, 2.4))";
@@ -403,7 +404,7 @@ const PIXEL_SHADER_GAMMA_SPIRV: &[u32] = &[
 pub struct ImguiRenderer {
     context: imgui::Context,
     pipeline_state: GraphicsPipelineState,
-    _font_texture_view: Box<TextureView>,
+    _font_texture_view: TextureView,
     texture_var: ShaderResourceVariable,
     shader_resource_binding: ShaderResourceBinding,
 
@@ -666,11 +667,9 @@ impl ImguiRenderer {
             .create_texture(&font_texture_desc, &[&subresource], None)
             .unwrap();
 
-        let font_texture_view = Box::new(
-            font_texture
-                .get_default_view(TextureViewType::ShaderResource)
-                .unwrap(),
-        );
+        let font_texture_view = font_texture
+            .get_default_view(TextureViewType::ShaderResource)
+            .unwrap();
 
         let shader_resource_binding = pipeline_state.create_shader_resource_binding(true).unwrap();
 
@@ -678,9 +677,15 @@ impl ImguiRenderer {
             .get_variable_by_name("Texture", ShaderTypes::Pixel)
             .unwrap();
 
+        const_assert_eq!(
+            std::mem::size_of::<TextureView>(),
+            std::mem::size_of::<usize>()
+        );
+
         // Store our identifier
-        imgui_context.fonts().tex_id =
-            TextureId::new(&*font_texture_view as *const TextureView as usize);
+        imgui_context.fonts().tex_id = TextureId::new(unsafe {
+            std::mem::transmute::<&TextureView, usize>(&font_texture_view)
+        });
 
         imgui_context.io_mut().display_size =
             [create_info.initial_width, create_info.initial_height];
