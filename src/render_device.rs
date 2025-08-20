@@ -52,8 +52,8 @@ pub struct RenderDeviceInfo {
 }
 
 impl RenderDeviceInfo {
-    pub fn device_type(&self) -> &RenderDeviceType {
-        &self.device_type
+    pub fn device_type(&self) -> RenderDeviceType {
+        self.device_type
     }
 
     pub fn api_version(&self) -> &Version {
