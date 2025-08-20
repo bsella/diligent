@@ -244,7 +244,7 @@ impl SampleBase for TextureArray {
             let texture_desc = TextureDesc::builder()
                 .name("DGLogo")
                 .dimension(TextureDimension::Texture2DArray {
-                    array_size: NUM_TEXTURES as u32,
+                    array_size: std::num::NonZero::new(NUM_TEXTURES).unwrap(),
                 })
                 .width(images[0].width())
                 .height(images[0].height())
