@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, ops::Deref};
+use std::ops::Deref;
 
 use bitflags::bitflags;
 use bon::Builder;
@@ -29,41 +29,38 @@ impl Default for SwapChainUsageFlags {
 }
 
 #[repr(transparent)]
-pub struct SwapChainDesc<'a>(
-    *const diligent_sys::SwapChainDesc,
-    PhantomData<&'a SwapChain>,
-);
+pub struct SwapChainDesc(diligent_sys::SwapChainDesc);
 
-impl SwapChainDesc<'_> {
+impl SwapChainDesc {
     pub fn width(&self) -> u32 {
-        unsafe { (*self.0).Width }
+        self.0.Width
     }
     pub fn height(&self) -> u32 {
-        unsafe { (*self.0).Height }
+        self.0.Height
     }
     pub fn color_buffer_format(&self) -> TextureFormat {
-        unsafe { (*self.0).ColorBufferFormat }.into()
+        self.0.ColorBufferFormat.into()
     }
     pub fn depth_buffer_format(&self) -> TextureFormat {
-        unsafe { (*self.0).DepthBufferFormat }.into()
+        self.0.DepthBufferFormat.into()
     }
     pub fn usage(&self) -> SwapChainUsageFlags {
-        SwapChainUsageFlags::from_bits_retain(unsafe { (*self.0).Usage })
+        SwapChainUsageFlags::from_bits_retain(self.0.Usage)
     }
     pub fn pre_transform(&self) -> SurfaceTransform {
-        unsafe { (*self.0).PreTransform }.into()
+        self.0.PreTransform.into()
     }
     pub fn buffer_count(&self) -> u32 {
-        unsafe { (*self.0).BufferCount }
+        self.0.BufferCount
     }
     pub fn default_depth_value(&self) -> f32 {
-        unsafe { (*self.0).DefaultDepthValue }
+        self.0.DefaultDepthValue
     }
     pub fn default_stencil_value(&self) -> u8 {
-        unsafe { (*self.0).DefaultStencilValue }
+        self.0.DefaultStencilValue
     }
     pub fn is_primary(&self) -> bool {
-        unsafe { (*self.0).IsPrimary }
+        self.0.IsPrimary
     }
 }
 
@@ -146,9 +143,9 @@ impl SwapChain {
         unsafe_member_call!(self, SwapChain, Present, sync_interval)
     }
 
-    pub fn get_desc(&self) -> SwapChainDesc<'_> {
+    pub fn get_desc(&self) -> &SwapChainDesc {
         let sys_ptr = unsafe_member_call!(self, SwapChain, GetDesc);
-        SwapChainDesc(sys_ptr, PhantomData)
+        unsafe { &*(sys_ptr as *const SwapChainDesc) }
     }
 
     pub fn resize(&self, new_width: u32, new_height: u32, new_transform: SurfaceTransform) {
