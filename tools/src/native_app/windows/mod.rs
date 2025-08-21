@@ -22,7 +22,7 @@ struct Win32EventHandler {
     resized: bool,
 }
 
-impl<'a> EventHandler for Win32EventHandler {
+impl EventHandler for Win32EventHandler {
     type EventType = MSG;
 
     fn poll_event(&self) -> Option<Self::EventType> {
@@ -407,7 +407,7 @@ where
             resize_param: LPARAM::default(),
             resized: false,
         },
-        &|title: &str| unsafe {
+        |title: &str| unsafe {
             let _ = SetWindowTextW(hwnd, &HSTRING::from(title));
         },
     )
