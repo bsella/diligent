@@ -1,7 +1,12 @@
 #[cfg(unix)]
 use std::os::unix::ffi::OsStrExt;
 
-use std::{ffi::CString, ops::Deref, os::raw::c_void, path::Path, str::FromStr};
+use std::{
+    ffi::{CStr, CString},
+    ops::Deref,
+    path::Path,
+    str::FromStr,
+};
 
 use bitflags::bitflags;
 use bon::Builder;
@@ -348,6 +353,156 @@ impl From<&ShaderCreateInfo<'_>> for ShaderCreateInfoWrapper {
     }
 }
 
+#[derive(Clone, Copy)]
+pub enum ShaderCodeBasicType {
+    Void,
+    Bool,
+    Int,
+    Int8,
+    Int16,
+    Int64,
+    Uint,
+    Uint8,
+    Uint16,
+    Uint64,
+    Float,
+    Float16,
+    Double,
+    Min8Float,
+    Min10Float,
+    Min16Float,
+    Min12Int,
+    Min16Int,
+    Min16Uint,
+    String,
+}
+const_assert_eq!(diligent_sys::SHADER_CODE_BASIC_TYPE_COUNT, 21);
+
+#[derive(Clone, Copy)]
+pub enum ShaderCodeVariableClass {
+    Scalar,
+    Vector,
+    MatrixRows,
+    MatrixColumns,
+    Struct,
+}
+const_assert_eq!(diligent_sys::SHADER_CODE_VARIABLE_CLASS_COUNT, 6);
+
+#[derive(Clone, Copy)]
+pub enum ShaderStatus {
+    Uninitialized,
+    Compiling,
+    Ready,
+    Failed,
+}
+
+#[repr(transparent)]
+pub struct ShaderCodeVariableDesc(diligent_sys::ShaderCodeVariableDesc);
+
+impl ShaderCodeVariableDesc {
+    pub fn name(&self) -> Option<&str> {
+        unsafe { CStr::from_ptr(self.0.Name).to_str().ok() }
+    }
+
+    pub fn type_name(&self) -> Option<&str> {
+        unsafe { CStr::from_ptr(self.0.TypeName).to_str().ok() }
+    }
+
+    pub fn class(&self) -> Option<ShaderCodeVariableClass> {
+        match self.0.Class as _ {
+            diligent_sys::SHADER_CODE_VARIABLE_CLASS_UNKNOWN => None,
+            diligent_sys::SHADER_CODE_VARIABLE_CLASS_SCALAR => {
+                Some(ShaderCodeVariableClass::Scalar)
+            }
+            diligent_sys::SHADER_CODE_VARIABLE_CLASS_VECTOR => {
+                Some(ShaderCodeVariableClass::Vector)
+            }
+            diligent_sys::SHADER_CODE_VARIABLE_CLASS_MATRIX_ROWS => {
+                Some(ShaderCodeVariableClass::MatrixRows)
+            }
+            diligent_sys::SHADER_CODE_VARIABLE_CLASS_MATRIX_COLUMNS => {
+                Some(ShaderCodeVariableClass::MatrixColumns)
+            }
+            diligent_sys::SHADER_CODE_VARIABLE_CLASS_STRUCT => {
+                Some(ShaderCodeVariableClass::Struct)
+            }
+            _ => panic!("Unknown SHADER_CODE_VARIABLE_CLASS value"),
+        }
+    }
+
+    pub fn basic_type(&self) -> Option<ShaderCodeBasicType> {
+        match self.0.BasicType as _ {
+            diligent_sys::SHADER_CODE_BASIC_TYPE_UNKNOWN => None,
+            diligent_sys::SHADER_CODE_BASIC_TYPE_VOID => Some(ShaderCodeBasicType::Void),
+            diligent_sys::SHADER_CODE_BASIC_TYPE_BOOL => Some(ShaderCodeBasicType::Bool),
+            diligent_sys::SHADER_CODE_BASIC_TYPE_INT => Some(ShaderCodeBasicType::Int),
+            diligent_sys::SHADER_CODE_BASIC_TYPE_INT8 => Some(ShaderCodeBasicType::Int8),
+            diligent_sys::SHADER_CODE_BASIC_TYPE_INT16 => Some(ShaderCodeBasicType::Int16),
+            diligent_sys::SHADER_CODE_BASIC_TYPE_INT64 => Some(ShaderCodeBasicType::Int64),
+            diligent_sys::SHADER_CODE_BASIC_TYPE_UINT => Some(ShaderCodeBasicType::Uint),
+            diligent_sys::SHADER_CODE_BASIC_TYPE_UINT8 => Some(ShaderCodeBasicType::Uint8),
+            diligent_sys::SHADER_CODE_BASIC_TYPE_UINT16 => Some(ShaderCodeBasicType::Uint16),
+            diligent_sys::SHADER_CODE_BASIC_TYPE_UINT64 => Some(ShaderCodeBasicType::Uint64),
+            diligent_sys::SHADER_CODE_BASIC_TYPE_FLOAT => Some(ShaderCodeBasicType::Float),
+            diligent_sys::SHADER_CODE_BASIC_TYPE_FLOAT16 => Some(ShaderCodeBasicType::Float16),
+            diligent_sys::SHADER_CODE_BASIC_TYPE_DOUBLE => Some(ShaderCodeBasicType::Double),
+            diligent_sys::SHADER_CODE_BASIC_TYPE_MIN8FLOAT => Some(ShaderCodeBasicType::Min8Float),
+            diligent_sys::SHADER_CODE_BASIC_TYPE_MIN10FLOAT => {
+                Some(ShaderCodeBasicType::Min10Float)
+            }
+            diligent_sys::SHADER_CODE_BASIC_TYPE_MIN16FLOAT => {
+                Some(ShaderCodeBasicType::Min16Float)
+            }
+            diligent_sys::SHADER_CODE_BASIC_TYPE_MIN12INT => Some(ShaderCodeBasicType::Min12Int),
+            diligent_sys::SHADER_CODE_BASIC_TYPE_MIN16INT => Some(ShaderCodeBasicType::Min16Int),
+            diligent_sys::SHADER_CODE_BASIC_TYPE_MIN16UINT => Some(ShaderCodeBasicType::Min16Uint),
+            diligent_sys::SHADER_CODE_BASIC_TYPE_STRING => Some(ShaderCodeBasicType::String),
+            _ => panic!("Unknown SHADER_CODE_BASIC_TYPE value"),
+        }
+    }
+
+    pub fn num_rows(&self) -> u8 {
+        self.0.NumRows
+    }
+    pub fn num_columns(&self) -> u8 {
+        self.0.NumColumns
+    }
+    pub fn offset(&self) -> u32 {
+        self.0.Offset
+    }
+
+    pub fn array_size(&self) -> u32 {
+        self.0.ArraySize
+    }
+
+    pub fn members(&self) -> &[ShaderCodeVariableDesc] {
+        unsafe {
+            std::slice::from_raw_parts(
+                self.0.pMembers as *const ShaderCodeVariableDesc,
+                self.0.NumMembers as usize,
+            )
+        }
+    }
+}
+
+#[repr(transparent)]
+pub struct ShaderCodeBufferDesc(diligent_sys::ShaderCodeBufferDesc);
+
+impl ShaderCodeBufferDesc {
+    pub fn size(&self) -> u32 {
+        self.0.Size
+    }
+
+    pub fn variables(&self) -> &[ShaderCodeVariableDesc] {
+        unsafe {
+            std::slice::from_raw_parts(
+                self.0.pVariables as *const ShaderCodeVariableDesc,
+                self.0.NumVariables as usize,
+            )
+        }
+    }
+}
+
 const_assert_eq!(
     std::mem::size_of::<diligent_sys::IShaderMethods>(),
     5 * std::mem::size_of::<*const ()>()
@@ -392,18 +547,13 @@ impl Shader {
         resources
     }
 
-    pub fn get_constant_buffer_desc(
-        &self,
-        _index: u32,
-    ) -> Result<diligent_sys::ShaderCodeBufferDesc, ()> {
-        //unsafe {
-        //    (*self.virtual_functions)
-        //        .Shader
-        //        .GetConstantBufferDesc
-        //        .unwrap_unchecked()(self.sys_ptr, index)
-        //    .as_ref()
-        //}
-        todo!()
+    pub fn get_constant_buffer_desc(&self, index: u32) -> Option<&ShaderCodeBufferDesc> {
+        let desc_ptr = unsafe_member_call!(self, Shader, GetConstantBufferDesc, index);
+        if desc_ptr.is_null() {
+            None
+        } else {
+            Some(unsafe { &*(desc_ptr as *const ShaderCodeBufferDesc) })
+        }
     }
 
     pub fn get_bytecode(&self) -> Option<&[u8]> {
@@ -415,7 +565,7 @@ impl Shader {
             self,
             Shader,
             GetBytecode,
-            std::ptr::addr_of_mut!(bytecode) as *mut *const c_void,
+            std::ptr::addr_of_mut!(bytecode) as *mut *const std::ffi::c_void,
             std::ptr::addr_of_mut!(size)
         );
 
@@ -426,8 +576,15 @@ impl Shader {
         }
     }
 
-    pub fn get_status(&self, wait_for_completion: bool) -> diligent_sys::SHADER_STATUS {
-        unsafe_member_call!(self, Shader, GetStatus, wait_for_completion)
+    pub fn get_status(&self, wait_for_completion: bool) -> ShaderStatus {
+        let status = unsafe_member_call!(self, Shader, GetStatus, wait_for_completion);
+        match status as _ {
+            diligent_sys::SHADER_STATUS_UNINITIALIZED => ShaderStatus::Uninitialized,
+            diligent_sys::SHADER_STATUS_COMPILING => ShaderStatus::Compiling,
+            diligent_sys::SHADER_STATUS_READY => ShaderStatus::Ready,
+            diligent_sys::SHADER_STATUS_FAILED => ShaderStatus::Failed,
+            _ => panic!("Unknown SHADER_STATUS value"),
+        }
     }
 }
 
