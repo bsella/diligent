@@ -12,17 +12,16 @@ use crate::{
     graphics_types::{DisplayModeAttribs, FullScreenModeDesc, TextureFormat, Version},
     platforms::native_window::NativeWindow,
     render_device::RenderDevice,
-    swap_chain::{SwapChain, SwapChainDesc},
+    swap_chain::{SwapChain, SwapChainCreateInfo},
 };
 
-pub struct EngineFactoryD3D11 {
-    engine_factory: EngineFactory,
-}
+#[repr(transparent)]
+pub struct EngineFactoryD3D11(EngineFactory);
 
 impl Deref for EngineFactoryD3D11 {
     type Target = EngineFactory;
     fn deref(&self) -> &Self::Target {
-        &self.engine_factory
+        &self.0
     }
 }
 
@@ -36,11 +35,9 @@ pub fn get_engine_factory_d3d11() -> EngineFactoryD3D11 {
         std::mem::size_of::<diligent_sys::IEngineFactoryD3D11>()
     );
 
-    EngineFactoryD3D11 {
-        engine_factory: EngineFactory::new(
-            engine_factory_d3d11 as *mut diligent_sys::IEngineFactory,
-        ),
-    }
+    EngineFactoryD3D11(EngineFactory::new(
+        engine_factory_d3d11 as *mut diligent_sys::IEngineFactory,
+    ))
 }
 
 bitflags! {
@@ -168,8 +165,8 @@ impl EngineFactoryD3D11 {
             self,
             EngineFactoryD3D11,
             CreateSwapChainD3D11,
-            device.sys_ptr,
-            context.sys_ptr,
+            device.sys_ptr as _,
+            context.sys_ptr as _,
             std::ptr::from_ref(&swapchain_desc),
             std::ptr::from_ref(&fs_desc),
             window
@@ -188,7 +185,7 @@ impl EngineFactoryD3D11 {
     pub fn attach_to_d3d11_device(
         &self,
         native_device: *mut c_void,
-        immediate_context: *mut c_void,
+        immediate_context: &ImmediateDeviceContext,
         engine_ci: &EngineD3D11CreateInfo,
     ) -> Result<
         (
@@ -218,7 +215,7 @@ impl EngineFactoryD3D11 {
             EngineFactoryD3D11,
             AttachToD3D11Device,
             native_device,
-            immediate_context,
+            immediate_context.sys_ptr as _,
             std::ptr::from_ref(&engine_ci),
             std::ptr::addr_of_mut!(render_device_ptr),
             device_context_ptrs.as_mut_ptr()

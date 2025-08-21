@@ -114,7 +114,7 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
 
         let swap_chain_desc = self.swap_chain.get_desc();
 
-        self.sample.window_resize(&self.device, &swap_chain_desc);
+        self.sample.window_resize(&self.device, swap_chain_desc);
     }
 
     fn update(&mut self, current_time: f64, elapsed_time: f64) {
@@ -222,7 +222,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
     fn new(
         app_settings: SampleAppSettings,
         mut engine_create_info: EngineCreateInfo,
-        window: Option<&NativeWindow>,
+        window: Option<NativeWindow>,
     ) -> Self {
         let swap_chain_ci = SwapChainCreateInfo::builder()
             .width(app_settings.width as u32)
@@ -367,7 +367,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
                             &device,
                             immediate_contexts.first().unwrap(),
                             &swap_chain_ci,
-                            window,
+                            window.as_ref(),
                         )
                         .unwrap();
 
@@ -381,35 +381,39 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
                 }
                 #[cfg(feature = "opengl")]
                 EngineFactory::OpenGL(engine_factory) => {
-                    if app_settings.non_separable_progs {
-                        engine_create_info.features.separable_programs =
-                            DeviceFeatureState::Disabled;
+                    if let Some(window) = window {
+                        if app_settings.non_separable_progs {
+                            engine_create_info.features.separable_programs =
+                                DeviceFeatureState::Disabled;
+                        }
+
+                        if engine_create_info.num_deferred_contexts != 0 {
+                            panic!("Deferred contexts are not supported in OpenGL mode");
+                        }
+
+                        let mut engine_gl_create_info =
+                            EngineGLCreateInfo::new(window, engine_create_info);
+
+                        GenericSample::modify_engine_init_info(
+                            &mut sample::EngineCreateInfo::EngineGLCreateInfo(
+                                &mut engine_gl_create_info,
+                            ),
+                        );
+
+                        let (device, immediate_context, swap_chain) = engine_factory
+                            .create_device_and_swap_chain_gl(&engine_gl_create_info, &swap_chain_ci)
+                            .unwrap();
+
+                        (
+                            device,
+                            vec![immediate_context],
+                            Vec::new(),
+                            swap_chain,
+                            Vec::new(),
+                        )
+                    } else {
+                        panic!("")
                     }
-
-                    if engine_create_info.num_deferred_contexts != 0 {
-                        panic!("Deferred contexts are not supported in OpenGL mode");
-                    }
-
-                    let mut engine_gl_create_info =
-                        EngineGLCreateInfo::new(*window.unwrap(), engine_create_info);
-
-                    GenericSample::modify_engine_init_info(
-                        &mut sample::EngineCreateInfo::EngineGLCreateInfo(
-                            &mut engine_gl_create_info,
-                        ),
-                    );
-
-                    let (device, immediate_context, swap_chain) = engine_factory
-                        .create_device_and_swap_chain_gl(&engine_gl_create_info, &swap_chain_desc)
-                        .unwrap();
-
-                    (
-                        device,
-                        vec![immediate_context],
-                        Vec::new(),
-                        swap_chain,
-                        Vec::new(),
-                    )
                 }
                 #[cfg(feature = "d3d11")]
                 EngineFactory::D3D11(engine_factory) => {
@@ -443,9 +447,9 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
                         .create_swap_chain(
                             &device,
                             immediate_contexts.first().unwrap(),
-                            &swap_chain_desc,
+                            &swap_chain_ci,
                             &FullScreenModeDesc::default(),
-                            window,
+                            window.as_ref(),
                         )
                         .unwrap();
 
@@ -489,9 +493,9 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
                         .create_swap_chain(
                             &device,
                             immediate_contexts.first().unwrap(),
-                            &swap_chain_desc,
+                            &swap_chain_ci,
                             &FullScreenModeDesc::default(),
-                            window,
+                            window.as_ref(),
                         )
                         .unwrap();
 

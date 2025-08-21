@@ -99,7 +99,10 @@ impl SampleBase for Tessellation {
         let cull = {
             #[cfg(feature = "opengl")]
             {
-                device.get_device_info().device_type() == RenderDeviceType::OpengGL
+                matches!(
+                    device.get_device_info().device_type(),
+                    diligent::graphics_types::RenderDeviceType::GL
+                )
             }
 
             #[cfg(not(feature = "opengl"))]

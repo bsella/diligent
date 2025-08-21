@@ -13,17 +13,16 @@ use crate::{
     graphics_types::{DisplayModeAttribs, FullScreenModeDesc, TextureFormat, Version},
     platforms::native_window::NativeWindow,
     render_device::RenderDevice,
-    swap_chain::{SwapChain, SwapChainDesc},
+    swap_chain::{SwapChain, SwapChainCreateInfo},
 };
 
-pub struct EngineFactoryD3D12 {
-    engine_factory: EngineFactory,
-}
+#[repr(transparent)]
+pub struct EngineFactoryD3D12(EngineFactory);
 
 impl Deref for EngineFactoryD3D12 {
     type Target = EngineFactory;
     fn deref(&self) -> &Self::Target {
-        &self.engine_factory
+        &self.0
     }
 }
 pub fn get_engine_factory_d3d12() -> EngineFactoryD3D12 {
@@ -36,11 +35,9 @@ pub fn get_engine_factory_d3d12() -> EngineFactoryD3D12 {
         std::mem::size_of::<diligent_sys::IEngineFactoryD3D12>()
     );
 
-    EngineFactoryD3D12 {
-        engine_factory: EngineFactory::new(
-            engine_factory_d3d12 as *mut diligent_sys::IEngineFactory,
-        ),
-    }
+    EngineFactoryD3D12(EngineFactory::new(
+        engine_factory_d3d12 as *mut diligent_sys::IEngineFactory,
+    ))
 }
 
 bitflags! {
@@ -245,8 +242,8 @@ impl EngineFactoryD3D12 {
             self,
             EngineFactoryD3D12,
             CreateSwapChainD3D12,
-            device.sys_ptr,
-            context.sys_ptr,
+            device.sys_ptr as _,
+            context.sys_ptr as _,
             std::ptr::from_ref(&swapchain_desc),
             std::ptr::from_ref(&fs_desc),
             window
