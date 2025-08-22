@@ -86,26 +86,6 @@ pub enum ShaderResourceType {
 }
 const_assert_eq!(diligent_sys::SHADER_RESOURCE_TYPE_LAST, 8);
 
-impl From<diligent_sys::SHADER_RESOURCE_TYPE> for ShaderResourceType {
-    fn from(value: diligent_sys::SHADER_RESOURCE_TYPE) -> Self {
-        match value as diligent_sys::_SHADER_RESOURCE_TYPE {
-            diligent_sys::SHADER_RESOURCE_TYPE_CONSTANT_BUFFER => {
-                ShaderResourceType::ConstantBuffer
-            }
-            diligent_sys::SHADER_RESOURCE_TYPE_TEXTURE_SRV => ShaderResourceType::TextureSRV,
-            diligent_sys::SHADER_RESOURCE_TYPE_BUFFER_SRV => ShaderResourceType::BufferSRV,
-            diligent_sys::SHADER_RESOURCE_TYPE_TEXTURE_UAV => ShaderResourceType::TextureUAV,
-            diligent_sys::SHADER_RESOURCE_TYPE_BUFFER_UAV => ShaderResourceType::BufferUAV,
-            diligent_sys::SHADER_RESOURCE_TYPE_SAMPLER => ShaderResourceType::Sampler,
-            diligent_sys::SHADER_RESOURCE_TYPE_INPUT_ATTACHMENT => {
-                ShaderResourceType::InputAttachment
-            }
-            diligent_sys::SHADER_RESOURCE_TYPE_ACCEL_STRUCT => ShaderResourceType::AccelStruct,
-            _ => panic!(),
-        }
-    }
-}
-
 impl From<ShaderResourceType> for diligent_sys::SHADER_RESOURCE_TYPE {
     fn from(value: ShaderResourceType) -> Self {
         (match value {
@@ -125,19 +105,33 @@ impl From<ShaderResourceType> for diligent_sys::SHADER_RESOURCE_TYPE {
     }
 }
 
-pub struct ShaderResourceDesc {
-    pub name: CString,
-    pub resource_type: ShaderResourceType,
-    pub array_size: usize,
-}
+#[repr(transparent)]
+pub struct ShaderResourceDesc(diligent_sys::ShaderResourceDesc);
+impl ShaderResourceDesc {
+    pub fn name(&self) -> &CStr {
+        unsafe { CStr::from_ptr(self.0.Name) }
+    }
 
-impl From<&diligent_sys::ShaderResourceDesc> for ShaderResourceDesc {
-    fn from(value: &diligent_sys::ShaderResourceDesc) -> Self {
-        ShaderResourceDesc {
-            name: unsafe { CString::from_raw(value.Name as _) },
-            array_size: value.ArraySize as usize,
-            resource_type: value.Type.into(),
+    pub fn resource_type(&self) -> ShaderResourceType {
+        match self.0.Type as _ {
+            diligent_sys::SHADER_RESOURCE_TYPE_CONSTANT_BUFFER => {
+                ShaderResourceType::ConstantBuffer
+            }
+            diligent_sys::SHADER_RESOURCE_TYPE_TEXTURE_SRV => ShaderResourceType::TextureSRV,
+            diligent_sys::SHADER_RESOURCE_TYPE_BUFFER_SRV => ShaderResourceType::BufferSRV,
+            diligent_sys::SHADER_RESOURCE_TYPE_TEXTURE_UAV => ShaderResourceType::TextureUAV,
+            diligent_sys::SHADER_RESOURCE_TYPE_BUFFER_UAV => ShaderResourceType::BufferUAV,
+            diligent_sys::SHADER_RESOURCE_TYPE_SAMPLER => ShaderResourceType::Sampler,
+            diligent_sys::SHADER_RESOURCE_TYPE_INPUT_ATTACHMENT => {
+                ShaderResourceType::InputAttachment
+            }
+            diligent_sys::SHADER_RESOURCE_TYPE_ACCEL_STRUCT => ShaderResourceType::AccelStruct,
+            _ => panic!(),
         }
+    }
+
+    pub fn array_size(&self) -> usize {
+        self.0.ArraySize as usize
     }
 }
 
@@ -541,7 +535,7 @@ impl Shader {
             unsafe_member_call!(self, Shader, GetResourceDesc, index, resources_ptr);
 
             unsafe {
-                resources.push((&*resources_ptr).into());
+                resources.push(ShaderResourceDesc(*resources_ptr));
             }
         }
         resources

@@ -1,8 +1,4 @@
-use std::{
-    ffi::{CStr, CString},
-    mem::MaybeUninit,
-    ops::Deref,
-};
+use std::{ffi::CString, mem::MaybeUninit, ops::Deref};
 
 use bitflags::bitflags;
 use bon::Builder;
@@ -200,25 +196,17 @@ impl ShaderResourceVariable {
     }
 
     pub fn get_resource_desc(&self) -> ShaderResourceDesc {
-        let shader_resource_desc = {
-            let mut shader_resource_desc: MaybeUninit<diligent_sys::ShaderResourceDesc> =
-                std::mem::MaybeUninit::uninit();
+        let mut shader_resource_desc: MaybeUninit<ShaderResourceDesc> =
+            std::mem::MaybeUninit::uninit();
 
-            unsafe_member_call!(
-                self,
-                ShaderResourceVariable,
-                GetResourceDesc,
-                shader_resource_desc.as_mut_ptr()
-            );
+        unsafe_member_call!(
+            self,
+            ShaderResourceVariable,
+            GetResourceDesc,
+            shader_resource_desc.as_mut_ptr() as *mut diligent_sys::ShaderResourceDesc
+        );
 
-            unsafe { shader_resource_desc.assume_init() }
-        };
-
-        ShaderResourceDesc {
-            name: CString::from(unsafe { CStr::from_ptr(shader_resource_desc.Name) }),
-            array_size: shader_resource_desc.ArraySize as usize,
-            resource_type: shader_resource_desc.Type.into(),
-        }
+        unsafe { shader_resource_desc.assume_init() }
     }
 
     pub fn get_index(&self) -> u32 {

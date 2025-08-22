@@ -89,7 +89,7 @@ impl SampleBase for Tessellation {
         swap_chain: &SwapChain,
     ) -> Self {
         let wireframe_supported = !matches!(
-            device.get_device_info().features().geometry_shaders,
+            device.get_device_info().features().geometry_shaders(),
             DeviceFeatureState::Disabled
         );
 
@@ -469,8 +469,12 @@ impl SampleBase for Tessellation {
     fn modify_engine_init_info(
         engine_ci: &mut diligent_samples::sample_base::sample::EngineCreateInfo,
     ) {
-        engine_ci.features.tessellation = DeviceFeatureState::Enabled;
-        engine_ci.features.geometry_shaders = DeviceFeatureState::Optional;
+        engine_ci
+            .features
+            .set_tessellation(DeviceFeatureState::Enabled);
+        engine_ci
+            .features
+            .set_geometry_shaders(DeviceFeatureState::Optional);
     }
 
     fn update_ui(&mut self, ui: &mut imgui::Ui) {

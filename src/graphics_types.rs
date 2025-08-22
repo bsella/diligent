@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{ffi::CStr, fmt::Display};
 
 use bitflags::bitflags;
 use bon::Builder;
@@ -599,13 +599,28 @@ pub enum AdapterVendor {
 }
 const_assert_eq!(diligent_sys::ADAPTER_VENDOR_LAST, 10);
 
-pub struct AdapterMemoryInfo {
-    pub local_memory: u64,
-    pub host_visible_memory: u64,
-    pub unified_memory: u64,
-    pub max_memory_allocation: u64,
-    pub unified_memory_cpu_access: CpuAccessFlags,
-    pub memoryless_texture_bind_flags: BindFlags,
+#[repr(transparent)]
+pub struct AdapterMemoryInfo(diligent_sys::AdapterMemoryInfo);
+
+impl AdapterMemoryInfo {
+    pub fn local_memory(&self) -> u64 {
+        self.0.LocalMemory
+    }
+    pub fn host_visible_memory(&self) -> u64 {
+        self.0.HostVisibleMemory
+    }
+    pub fn unified_memory(&self) -> u64 {
+        self.0.UnifiedMemory
+    }
+    pub fn max_memory_allocation(&self) -> u64 {
+        self.0.MaxMemoryAllocation
+    }
+    pub fn unified_memory_cpu_access(&self) -> CpuAccessFlags {
+        CpuAccessFlags::from_bits_retain(self.0.UnifiedMemoryCPUAccess)
+    }
+    pub fn memoryless_texture_bind_flags(&self) -> BindFlags {
+        BindFlags::from_bits_retain(self.0.MemorylessTextureBindFlags)
+    }
 }
 
 bitflags! {
@@ -618,22 +633,54 @@ bitflags! {
     }
 }
 
-pub struct RayTracingProperties {
-    pub max_recursion_depth: u32,
-    pub shader_group_handle_size: u32,
-    pub max_shader_record_stride: u32,
-    pub shader_group_base_alignment: u32,
-    pub max_ray_gen_threads: u32,
-    pub max_instances_per_tlas: u32,
-    pub max_primitives_per_blas: u32,
-    pub max_geometries_per_blas: u32,
-    pub vertex_buffer_alignment: u32,
-    pub index_buffer_alignment: u32,
-    pub transform_buffer_alignment: u32,
-    pub box_buffer_alignment: u32,
-    pub scratch_buffer_alignment: u32,
-    pub instance_buffer_alignment: u32,
-    pub cap_flags: RaytracingCapFlags,
+#[repr(transparent)]
+pub struct RayTracingProperties(diligent_sys::RayTracingProperties);
+impl RayTracingProperties {
+    pub fn max_recursion_depth(&self) -> u32 {
+        self.0.MaxRecursionDepth
+    }
+    pub fn shader_group_handle_size(&self) -> u32 {
+        self.0.ShaderGroupHandleSize
+    }
+    pub fn max_shader_record_stride(&self) -> u32 {
+        self.0.MaxShaderRecordStride
+    }
+    pub fn shader_group_base_alignment(&self) -> u32 {
+        self.0.ShaderGroupBaseAlignment
+    }
+    pub fn max_ray_gen_threads(&self) -> u32 {
+        self.0.MaxRayGenThreads
+    }
+    pub fn max_instances_per_tlas(&self) -> u32 {
+        self.0.MaxInstancesPerTLAS
+    }
+    pub fn max_primitives_per_blas(&self) -> u32 {
+        self.0.MaxPrimitivesPerBLAS
+    }
+    pub fn max_geometries_per_blas(&self) -> u32 {
+        self.0.MaxGeometriesPerBLAS
+    }
+    pub fn vertex_buffer_alignment(&self) -> u32 {
+        self.0.VertexBufferAlignment
+    }
+    pub fn index_buffer_alignment(&self) -> u32 {
+        self.0.IndexBufferAlignment
+    }
+    pub fn transform_buffer_alignment(&self) -> u32 {
+        self.0.TransformBufferAlignment
+    }
+    pub fn box_buffer_alignment(&self) -> u32 {
+        self.0.BoxBufferAlignment
+    }
+    pub fn scratch_buffer_alignment(&self) -> u32 {
+        self.0.ScratchBufferAlignment
+    }
+    pub fn instance_buffer_alignment(&self) -> u32 {
+        self.0.IndexBufferAlignment
+    }
+    pub fn cap_flags(&self) -> RaytracingCapFlags {
+        RaytracingCapFlags::from_bits_retain(self.0.CapFlags)
+    }
 }
 
 bitflags! {
@@ -652,43 +699,101 @@ bitflags! {
 }
 const_assert_eq!(diligent_sys::WAVE_FEATURE_LAST, 128);
 
-pub struct WaveOpProperties {
-    pub min_size: u32,
-    pub max_size: u32,
-    pub supported_stages: ShaderTypes,
-    pub features: WaveFeature,
+#[repr(transparent)]
+pub struct WaveOpProperties(diligent_sys::WaveOpProperties);
+impl WaveOpProperties {
+    pub fn min_size(&self) -> u32 {
+        self.0.MinSize
+    }
+    pub fn max_size(&self) -> u32 {
+        self.0.MaxSize
+    }
+    pub fn supported_stages(&self) -> ShaderTypes {
+        ShaderTypes::from_bits_retain(self.0.SupportedStages)
+    }
+    pub fn features(&self) -> WaveFeature {
+        WaveFeature::from_bits_retain(self.0.MinSize)
+    }
 }
 
-pub struct BufferProperties {
-    pub constant_buffer_offset_alignment: u32,
-    pub structured_buffer_offset_alignment: u32,
+#[repr(transparent)]
+pub struct BufferProperties(diligent_sys::BufferProperties);
+impl BufferProperties {
+    pub fn constant_buffer_offset_alignment(&self) -> u32 {
+        self.0.ConstantBufferOffsetAlignment
+    }
+    pub fn structured_buffer_offset_alignment(&self) -> u32 {
+        self.0.StructuredBufferOffsetAlignment
+    }
 }
 
-pub struct TextureProperties {
-    pub max_texture1d_dimension: u32,
-    pub max_texture1d_array_slices: u32,
-    pub max_texture2d_dimension: u32,
-    pub max_texture2d_array_slices: u32,
-    pub max_texture3d_dimension: u32,
-    pub max_texture_cube_dimension: u32,
-    pub texture2dms_supported: bool,
-    pub texture2dms_array_supported: bool,
-    pub texture_view_supported: bool,
-    pub cubemap_arrays_supported: bool,
-    pub texture_view2d_on3d_supported: bool,
+#[repr(transparent)]
+pub struct TextureProperties(diligent_sys::TextureProperties);
+impl TextureProperties {
+    pub fn max_texture1d_dimension(&self) -> u32 {
+        self.0.MaxTexture1DDimension
+    }
+    pub fn max_texture1d_array_slices(&self) -> u32 {
+        self.0.MaxTexture1DArraySlices
+    }
+    pub fn max_texture2d_dimension(&self) -> u32 {
+        self.0.MaxTexture2DDimension
+    }
+    pub fn max_texture2d_array_slices(&self) -> u32 {
+        self.0.MaxTexture2DArraySlices
+    }
+    pub fn max_texture3d_dimension(&self) -> u32 {
+        self.0.MaxTexture3DDimension
+    }
+    pub fn max_texture_cube_dimension(&self) -> u32 {
+        self.0.MaxTextureCubeDimension
+    }
+    pub fn texture2d_ms_supported(&self) -> bool {
+        self.0.Texture2DMSSupported
+    }
+    pub fn texture2d_ms_array_supported(&self) -> bool {
+        self.0.Texture2DMSArraySupported
+    }
+    pub fn texture_view_supported(&self) -> bool {
+        self.0.TextureViewSupported
+    }
+    pub fn cubemap_arrays_supported(&self) -> bool {
+        self.0.CubemapArraysSupported
+    }
+    pub fn texture_view_2d_on_3d_supported(&self) -> bool {
+        self.0.TextureView2DOn3DSupported
+    }
 }
 
-pub struct SamplerProperties {
-    pub border_sampling_mode_supported: bool,
-    pub max_anisotropy: u8,
-    pub lod_bias_supported: bool,
+#[repr(transparent)]
+pub struct SamplerProperties(diligent_sys::SamplerProperties);
+impl SamplerProperties {
+    pub fn border_sampling_mode_supported(&self) -> bool {
+        self.0.BorderSamplingModeSupported
+    }
+    pub fn max_anisotropy(&self) -> u8 {
+        self.0.MaxAnisotropy
+    }
+    pub fn lod_bias_supported(&self) -> bool {
+        self.0.LODBiasSupported
+    }
 }
 
-pub struct MeshShaderProperties {
-    pub max_thread_group_count_x: u32,
-    pub max_thread_group_count_y: u32,
-    pub max_thread_group_count_z: u32,
-    pub max_thread_group_total_count: u32,
+#[repr(transparent)]
+pub struct MeshShaderProperties(diligent_sys::MeshShaderProperties);
+impl MeshShaderProperties {
+    pub fn max_thread_group_count_x(&self) -> u32 {
+        self.0.MaxThreadGroupCountX
+    }
+    pub fn max_thread_group_count_y(&self) -> u32 {
+        self.0.MaxThreadGroupCountY
+    }
+    pub fn max_thread_group_count_z(&self) -> u32 {
+        self.0.MaxThreadGroupCountZ
+    }
+    pub fn max_thread_group_total_count(&self) -> u32 {
+        self.0.MaxThreadGroupTotalCount
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -736,9 +841,26 @@ bitflags! {
 }
 const_assert_eq!(diligent_sys::SAMPLE_COUNT_MAX, 64);
 
-pub struct ShadingRateMode {
-    pub rate: ShadingRate,
-    pub sample_bits: SampleCount,
+#[repr(transparent)]
+pub struct ShadingRateMode(diligent_sys::ShadingRateMode);
+impl ShadingRateMode {
+    pub fn rate(&self) -> ShadingRate {
+        match self.0.Rate as _ {
+            diligent_sys::SHADING_RATE_1X1 => ShadingRate::_1X1,
+            diligent_sys::SHADING_RATE_1X2 => ShadingRate::_1X2,
+            diligent_sys::SHADING_RATE_1X4 => ShadingRate::_1X4,
+            diligent_sys::SHADING_RATE_2X1 => ShadingRate::_2X1,
+            diligent_sys::SHADING_RATE_2X2 => ShadingRate::_2X2,
+            diligent_sys::SHADING_RATE_2X4 => ShadingRate::_2X4,
+            diligent_sys::SHADING_RATE_4X1 => ShadingRate::_4X1,
+            diligent_sys::SHADING_RATE_4X2 => ShadingRate::_4X2,
+            diligent_sys::SHADING_RATE_4X4 => ShadingRate::_4X4,
+            _ => panic!(),
+        }
+    }
+    pub fn sample_bits(&self) -> SampleCount {
+        SampleCount::from_bits_retain(self.0.SampleBits)
+    }
 }
 
 bitflags! {
@@ -794,27 +916,70 @@ bitflags! {
     }
 }
 
-pub struct ShadingRateProperties {
-    pub shading_rates: Vec<ShadingRateMode>,
-    pub cap_flags: ShadingRateCapFlags,
-    pub combiners: ShadingRateCombiner,
-    pub format: ShadingRateFormat,
-    pub shading_rate_texture_access: ShadingRateTextureAccess,
-    pub bind_flags: BindFlags,
-    pub min_tile_size: [u32; 2usize],
-    pub max_tile_size: [u32; 2usize],
-    pub max_subsampled_array_slices: u32,
+#[repr(transparent)]
+pub struct ShadingRateProperties(diligent_sys::ShadingRateProperties);
+impl ShadingRateProperties {
+    pub fn shading_rates(&self) -> &[ShadingRateMode] {
+        unsafe {
+            std::slice::from_raw_parts(
+                std::ptr::from_ref(&self.0.ShadingRates[0]) as *const ShadingRateMode,
+                self.0.NumShadingRates as usize,
+            )
+        }
+    }
+    pub fn cap_flags(&self) -> ShadingRateCapFlags {
+        ShadingRateCapFlags::from_bits_retain(self.0.CapFlags)
+    }
+    pub fn combiners(&self) -> ShadingRateCombiner {
+        ShadingRateCombiner::from_bits_retain(self.0.Combiners)
+    }
+    pub fn format(&self) -> ShadingRateFormat {
+        ShadingRateFormat::from_bits_retain(self.0.Format)
+    }
+    pub fn shading_rate_texture_access(&self) -> ShadingRateTextureAccess {
+        ShadingRateTextureAccess::from_bits_retain(self.0.ShadingRateTextureAccess)
+    }
+    pub fn bind_flags(&self) -> BindFlags {
+        BindFlags::from_bits_retain(self.0.BindFlags)
+    }
+    pub fn min_tile_size(&self) -> (u32, u32) {
+        (self.0.MinTileSize[0], self.0.MinTileSize[1])
+    }
+    pub fn max_tile_size(&self) -> (u32, u32) {
+        (self.0.MaxTileSize[0], self.0.MaxTileSize[1])
+    }
+    pub fn max_subsampled_array_slices(&self) -> u32 {
+        self.0.MaxSabsampledArraySlices
+    }
 }
 
-pub struct ComputeShaderProperties {
-    pub shared_memory_size: u32,
-    pub max_thread_group_invocations: u32,
-    pub max_thread_group_size_x: u32,
-    pub max_thread_group_size_y: u32,
-    pub max_thread_group_size_z: u32,
-    pub max_thread_group_count_x: u32,
-    pub max_thread_group_count_y: u32,
-    pub max_thread_group_count_z: u32,
+#[repr(transparent)]
+pub struct ComputeShaderProperties(diligent_sys::ComputeShaderProperties);
+impl ComputeShaderProperties {
+    pub fn shared_memory_size(&self) -> u32 {
+        self.0.SharedMemorySize
+    }
+    pub fn max_thread_group_invocations(&self) -> u32 {
+        self.0.MaxThreadGroupInvocations
+    }
+    pub fn max_thread_group_size_x(&self) -> u32 {
+        self.0.MaxThreadGroupSizeX
+    }
+    pub fn max_thread_group_size_y(&self) -> u32 {
+        self.0.MaxThreadGroupSizeY
+    }
+    pub fn max_thread_group_size_z(&self) -> u32 {
+        self.0.MaxThreadGroupSizeZ
+    }
+    pub fn max_thread_group_count_x(&self) -> u32 {
+        self.0.MaxThreadGroupCountX
+    }
+    pub fn max_thread_group_count_y(&self) -> u32 {
+        self.0.MaxThreadGroupCountY
+    }
+    pub fn max_thread_group_count_z(&self) -> u32 {
+        self.0.MaxThreadGroupCountZ
+    }
 }
 
 bitflags! {
@@ -829,10 +994,18 @@ bitflags! {
     }
 }
 
-pub struct DrawCommandProperties {
-    pub cap_flags: DrawCommandCapFlags,
-    pub max_index_value: u32,
-    pub max_draw_indirect_count: u32,
+#[repr(transparent)]
+pub struct DrawCommandProperties(diligent_sys::DrawCommandProperties);
+impl DrawCommandProperties {
+    pub fn cap_flags(&self) -> DrawCommandCapFlags {
+        DrawCommandCapFlags::from_bits_retain(self.0.CapFlags)
+    }
+    pub fn max_index_value(&self) -> u32 {
+        self.0.MaxIndexValue
+    }
+    pub fn max_draw_indirect_count(&self) -> u32 {
+        self.0.MaxDrawIndirectCount
+    }
 }
 
 bitflags! {
@@ -860,12 +1033,24 @@ bitflags! {
     }
 }
 
-pub struct SparseResourceProperties {
-    pub address_space_size: u64,
-    pub resource_space_size: u64,
-    pub cap_flags: SparseResourceCapFlags,
-    pub standard_block_size: u32,
-    pub buffer_bind_flags: BindFlags,
+#[repr(transparent)]
+pub struct SparseResourceProperties(diligent_sys::SparseResourceProperties);
+impl SparseResourceProperties {
+    pub fn address_space_size(&self) -> u64 {
+        self.0.AddressSpaceSize
+    }
+    pub fn resource_space_size(&self) -> u64 {
+        self.0.ResourceSpaceSize
+    }
+    pub fn cap_flags(&self) -> SparseResourceCapFlags {
+        SparseResourceCapFlags::from_bits_retain(self.0.CapFlags)
+    }
+    pub fn standard_block_size(&self) -> u32 {
+        self.0.StandardBlockSize
+    }
+    pub fn buffer_bind_flags(&self) -> BindFlags {
+        BindFlags::from_bits_retain(self.0.BufferBindFlags)
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -896,267 +1081,398 @@ impl From<DeviceFeatureState> for diligent_sys::DEVICE_FEATURE_STATE {
     }
 }
 
-pub struct DeviceFeatures {
-    pub separable_programs: DeviceFeatureState,
-    pub shader_resource_queries: DeviceFeatureState,
-    pub wireframe_fill: DeviceFeatureState,
-    pub multithreaded_resource_creation: DeviceFeatureState,
-    pub compute_shaders: DeviceFeatureState,
-    pub geometry_shaders: DeviceFeatureState,
-    pub tessellation: DeviceFeatureState,
-    pub mesh_shaders: DeviceFeatureState,
-    pub ray_tracing: DeviceFeatureState,
-    pub bindless_resources: DeviceFeatureState,
-    pub occlusion_queries: DeviceFeatureState,
-    pub binary_occlusion_queries: DeviceFeatureState,
-    pub timestamp_queries: DeviceFeatureState,
-    pub pipeline_statistics_queries: DeviceFeatureState,
-    pub duration_queries: DeviceFeatureState,
-    pub depth_bias_clamp: DeviceFeatureState,
-    pub depth_clamp: DeviceFeatureState,
-    pub independent_blend: DeviceFeatureState,
-    pub dual_source_blend: DeviceFeatureState,
-    pub multi_viewport: DeviceFeatureState,
-    pub texture_compression_bc: DeviceFeatureState,
-    pub texture_compression_etc2: DeviceFeatureState,
-    pub vertex_pipeline_uav_writes_and_atomics: DeviceFeatureState,
-    pub pixel_uav_writes_and_atomics: DeviceFeatureState,
-    pub texture_uav_extended_formats: DeviceFeatureState,
-    pub shader_float16: DeviceFeatureState,
-    pub resource_buffer16_bit_access: DeviceFeatureState,
-    pub uniform_buffer16_bit_access: DeviceFeatureState,
-    pub shader_input_output16: DeviceFeatureState,
-    pub shader_int8: DeviceFeatureState,
-    pub resource_buffer8_bit_access: DeviceFeatureState,
-    pub uniform_buffer8_bit_access: DeviceFeatureState,
-    pub shader_resource_static_arrays: DeviceFeatureState,
-    pub shader_resource_runtime_arrays: DeviceFeatureState,
-    pub wave_op: DeviceFeatureState,
-    pub instance_data_step_rate: DeviceFeatureState,
-    pub native_fence: DeviceFeatureState,
-    pub tile_shaders: DeviceFeatureState,
-    pub transfer_queue_timestamp_queries: DeviceFeatureState,
-    pub variable_rate_shading: DeviceFeatureState,
-    pub sparse_resources: DeviceFeatureState,
-    pub subpass_framebuffer_fetch: DeviceFeatureState,
-    pub texture_component_swizzle: DeviceFeatureState,
-    pub texture_subresource_views: DeviceFeatureState,
-    pub native_multi_draw: DeviceFeatureState,
-    pub async_shader_compilation: DeviceFeatureState,
-    pub formatted_buffers: DeviceFeatureState,
+#[repr(transparent)]
+pub struct DeviceFeatures(pub(crate) diligent_sys::DeviceFeatures);
+impl DeviceFeatures {
+    pub fn separable_programs(&self) -> DeviceFeatureState {
+        self.0.SeparablePrograms.into()
+    }
+    pub fn shader_resource_queries(&self) -> DeviceFeatureState {
+        self.0.ShaderResourceQueries.into()
+    }
+    pub fn wireframe_fill(&self) -> DeviceFeatureState {
+        self.0.WireframeFill.into()
+    }
+    pub fn multithreaded_resource_creation(&self) -> DeviceFeatureState {
+        self.0.MultithreadedResourceCreation.into()
+    }
+    pub fn compute_shaders(&self) -> DeviceFeatureState {
+        self.0.ComputeShaders.into()
+    }
+    pub fn geometry_shaders(&self) -> DeviceFeatureState {
+        self.0.GeometryShaders.into()
+    }
+    pub fn tessellation(&self) -> DeviceFeatureState {
+        self.0.Tessellation.into()
+    }
+    pub fn mesh_shaders(&self) -> DeviceFeatureState {
+        self.0.MeshShaders.into()
+    }
+    pub fn ray_tracing(&self) -> DeviceFeatureState {
+        self.0.RayTracing.into()
+    }
+    pub fn bindless_resources(&self) -> DeviceFeatureState {
+        self.0.BindlessResources.into()
+    }
+    pub fn occlusion_queries(&self) -> DeviceFeatureState {
+        self.0.OcclusionQueries.into()
+    }
+    pub fn binary_occlusion_queries(&self) -> DeviceFeatureState {
+        self.0.BinaryOcclusionQueries.into()
+    }
+    pub fn timestamp_queries(&self) -> DeviceFeatureState {
+        self.0.TimestampQueries.into()
+    }
+    pub fn pipeline_statistics_queries(&self) -> DeviceFeatureState {
+        self.0.PipelineStatisticsQueries.into()
+    }
+    pub fn duration_queries(&self) -> DeviceFeatureState {
+        self.0.DurationQueries.into()
+    }
+    pub fn depth_bias_clamp(&self) -> DeviceFeatureState {
+        self.0.DepthBiasClamp.into()
+    }
+    pub fn depth_clamp(&self) -> DeviceFeatureState {
+        self.0.DepthClamp.into()
+    }
+    pub fn independent_blend(&self) -> DeviceFeatureState {
+        self.0.IndependentBlend.into()
+    }
+    pub fn dual_source_blend(&self) -> DeviceFeatureState {
+        self.0.DualSourceBlend.into()
+    }
+    pub fn multi_viewport(&self) -> DeviceFeatureState {
+        self.0.MultiViewport.into()
+    }
+    pub fn texture_compression_bc(&self) -> DeviceFeatureState {
+        self.0.TextureCompressionBC.into()
+    }
+    pub fn texture_compression_etc2(&self) -> DeviceFeatureState {
+        self.0.TextureCompressionETC2.into()
+    }
+    pub fn vertex_pipeline_uav_writes_and_atomics(&self) -> DeviceFeatureState {
+        self.0.VertexPipelineUAVWritesAndAtomics.into()
+    }
+    pub fn pixel_uav_writes_and_atomics(&self) -> DeviceFeatureState {
+        self.0.PixelUAVWritesAndAtomics.into()
+    }
+    pub fn texture_uav_extended_formats(&self) -> DeviceFeatureState {
+        self.0.TextureUAVExtendedFormats.into()
+    }
+    pub fn shader_float16(&self) -> DeviceFeatureState {
+        self.0.ShaderFloat16.into()
+    }
+    pub fn resource_buffer16_bit_access(&self) -> DeviceFeatureState {
+        self.0.ResourceBuffer16BitAccess.into()
+    }
+    pub fn uniform_buffer16_bit_access(&self) -> DeviceFeatureState {
+        self.0.UniformBuffer16BitAccess.into()
+    }
+    pub fn shader_input_output16(&self) -> DeviceFeatureState {
+        self.0.ShaderInputOutput16.into()
+    }
+    pub fn shader_int8(&self) -> DeviceFeatureState {
+        self.0.ShaderInt8.into()
+    }
+    pub fn resource_buffer8_bit_access(&self) -> DeviceFeatureState {
+        self.0.ResourceBuffer8BitAccess.into()
+    }
+    pub fn uniform_buffer8_bit_access(&self) -> DeviceFeatureState {
+        self.0.UniformBuffer8BitAccess.into()
+    }
+    pub fn shader_resource_static_arrays(&self) -> DeviceFeatureState {
+        self.0.ShaderResourceStaticArrays.into()
+    }
+    pub fn shader_resource_runtime_arrays(&self) -> DeviceFeatureState {
+        self.0.ShaderResourceRuntimeArrays.into()
+    }
+    pub fn wave_op(&self) -> DeviceFeatureState {
+        self.0.WaveOp.into()
+    }
+    pub fn instance_data_step_rate(&self) -> DeviceFeatureState {
+        self.0.InstanceDataStepRate.into()
+    }
+    pub fn native_fence(&self) -> DeviceFeatureState {
+        self.0.NativeFence.into()
+    }
+    pub fn tile_shaders(&self) -> DeviceFeatureState {
+        self.0.TileShaders.into()
+    }
+    pub fn transfer_queue_timestamp_queries(&self) -> DeviceFeatureState {
+        self.0.TransferQueueTimestampQueries.into()
+    }
+    pub fn variable_rate_shading(&self) -> DeviceFeatureState {
+        self.0.VariableRateShading.into()
+    }
+    pub fn sparse_resources(&self) -> DeviceFeatureState {
+        self.0.SparseResources.into()
+    }
+    pub fn subpass_framebuffer_fetch(&self) -> DeviceFeatureState {
+        self.0.SubpassFramebufferFetch.into()
+    }
+    pub fn texture_component_swizzle(&self) -> DeviceFeatureState {
+        self.0.TextureComponentSwizzle.into()
+    }
+    pub fn texture_subresource_views(&self) -> DeviceFeatureState {
+        self.0.TextureSubresourceViews.into()
+    }
+    pub fn native_multi_draw(&self) -> DeviceFeatureState {
+        self.0.NativeMultiDraw.into()
+    }
+    pub fn async_shader_compilation(&self) -> DeviceFeatureState {
+        self.0.AsyncShaderCompilation.into()
+    }
+    pub fn formatted_buffers(&self) -> DeviceFeatureState {
+        self.0.FormattedBuffers.into()
+    }
+
+    pub fn set_separable_programs(&mut self, state: DeviceFeatureState) {
+        self.0.SeparablePrograms = state.into()
+    }
+    pub fn set_shader_resource_queries(&mut self, state: DeviceFeatureState) {
+        self.0.ShaderResourceQueries = state.into()
+    }
+    pub fn set_wireframe_fill(&mut self, state: DeviceFeatureState) {
+        self.0.WireframeFill = state.into()
+    }
+    pub fn set_multithreaded_resource_creation(&mut self, state: DeviceFeatureState) {
+        self.0.MultithreadedResourceCreation = state.into()
+    }
+    pub fn set_compute_shaders(&mut self, state: DeviceFeatureState) {
+        self.0.ComputeShaders = state.into()
+    }
+    pub fn set_geometry_shaders(&mut self, state: DeviceFeatureState) {
+        self.0.GeometryShaders = state.into()
+    }
+    pub fn set_tessellation(&mut self, state: DeviceFeatureState) {
+        self.0.Tessellation = state.into()
+    }
+    pub fn set_mesh_shaders(&mut self, state: DeviceFeatureState) {
+        self.0.MeshShaders = state.into()
+    }
+    pub fn set_ray_tracing(&mut self, state: DeviceFeatureState) {
+        self.0.RayTracing = state.into()
+    }
+    pub fn set_bindless_resources(&mut self, state: DeviceFeatureState) {
+        self.0.BindlessResources = state.into()
+    }
+    pub fn set_occlusion_queries(&mut self, state: DeviceFeatureState) {
+        self.0.OcclusionQueries = state.into()
+    }
+    pub fn set_binary_occlusion_queries(&mut self, state: DeviceFeatureState) {
+        self.0.BinaryOcclusionQueries = state.into()
+    }
+    pub fn set_timestamp_queries(&mut self, state: DeviceFeatureState) {
+        self.0.TimestampQueries = state.into()
+    }
+    pub fn set_pipeline_statistics_queries(&mut self, state: DeviceFeatureState) {
+        self.0.PipelineStatisticsQueries = state.into()
+    }
+    pub fn set_duration_queries(&mut self, state: DeviceFeatureState) {
+        self.0.DurationQueries = state.into()
+    }
+    pub fn set_depth_bias_clamp(&mut self, state: DeviceFeatureState) {
+        self.0.DepthBiasClamp = state.into()
+    }
+    pub fn set_depth_clamp(&mut self, state: DeviceFeatureState) {
+        self.0.DepthClamp = state.into()
+    }
+    pub fn set_independent_blend(&mut self, state: DeviceFeatureState) {
+        self.0.IndependentBlend = state.into()
+    }
+    pub fn set_dual_source_blend(&mut self, state: DeviceFeatureState) {
+        self.0.DualSourceBlend = state.into()
+    }
+    pub fn set_multi_viewport(&mut self, state: DeviceFeatureState) {
+        self.0.MultiViewport = state.into()
+    }
+    pub fn set_texture_compression_bc(&mut self, state: DeviceFeatureState) {
+        self.0.TextureCompressionBC = state.into()
+    }
+    pub fn set_texture_compression_etc2(&mut self, state: DeviceFeatureState) {
+        self.0.TextureCompressionETC2 = state.into()
+    }
+    pub fn set_vertex_pipeline_uav_writes_and_atomics(&mut self, state: DeviceFeatureState) {
+        self.0.VertexPipelineUAVWritesAndAtomics = state.into()
+    }
+    pub fn set_pixel_uav_writes_and_atomics(&mut self, state: DeviceFeatureState) {
+        self.0.PixelUAVWritesAndAtomics = state.into()
+    }
+    pub fn set_texture_uav_extended_formats(&mut self, state: DeviceFeatureState) {
+        self.0.TextureUAVExtendedFormats = state.into()
+    }
+    pub fn set_shader_float16(&mut self, state: DeviceFeatureState) {
+        self.0.ShaderFloat16 = state.into()
+    }
+    pub fn set_resource_buffer16_bit_access(&mut self, state: DeviceFeatureState) {
+        self.0.ResourceBuffer16BitAccess = state.into()
+    }
+    pub fn set_uniform_buffer16_bit_access(&mut self, state: DeviceFeatureState) {
+        self.0.UniformBuffer16BitAccess = state.into()
+    }
+    pub fn set_shader_input_output16(&mut self, state: DeviceFeatureState) {
+        self.0.ShaderInputOutput16 = state.into()
+    }
+    pub fn set_shader_int8(&mut self, state: DeviceFeatureState) {
+        self.0.ShaderInt8 = state.into()
+    }
+    pub fn set_resource_buffer8_bit_access(&mut self, state: DeviceFeatureState) {
+        self.0.ResourceBuffer8BitAccess = state.into()
+    }
+    pub fn set_uniform_buffer8_bit_access(&mut self, state: DeviceFeatureState) {
+        self.0.UniformBuffer8BitAccess = state.into()
+    }
+    pub fn set_shader_resource_static_arrays(&mut self, state: DeviceFeatureState) {
+        self.0.ShaderResourceStaticArrays = state.into()
+    }
+    pub fn set_shader_resource_runtime_arrays(&mut self, state: DeviceFeatureState) {
+        self.0.ShaderResourceRuntimeArrays = state.into()
+    }
+    pub fn set_wave_op(&mut self, state: DeviceFeatureState) {
+        self.0.WaveOp = state.into()
+    }
+    pub fn set_instance_data_step_rate(&mut self, state: DeviceFeatureState) {
+        self.0.InstanceDataStepRate = state.into()
+    }
+    pub fn set_native_fence(&mut self, state: DeviceFeatureState) {
+        self.0.NativeFence = state.into()
+    }
+    pub fn set_tile_shaders(&mut self, state: DeviceFeatureState) {
+        self.0.TileShaders = state.into()
+    }
+    pub fn set_transfer_queue_timestamp_queries(&mut self, state: DeviceFeatureState) {
+        self.0.TransferQueueTimestampQueries = state.into()
+    }
+    pub fn set_variable_rate_shading(&mut self, state: DeviceFeatureState) {
+        self.0.VariableRateShading = state.into()
+    }
+    pub fn set_sparse_resources(&mut self, state: DeviceFeatureState) {
+        self.0.SparseResources = state.into()
+    }
+    pub fn set_subpass_framebuffer_fetch(&mut self, state: DeviceFeatureState) {
+        self.0.SubpassFramebufferFetch = state.into()
+    }
+    pub fn set_texture_component_swizzle(&mut self, state: DeviceFeatureState) {
+        self.0.TextureComponentSwizzle = state.into()
+    }
+    pub fn set_texture_subresource_views(&mut self, state: DeviceFeatureState) {
+        self.0.TextureSubresourceViews = state.into()
+    }
+    pub fn set_native_multi_draw(&mut self, state: DeviceFeatureState) {
+        self.0.NativeMultiDraw = state.into()
+    }
+    pub fn set_async_shader_compilation(&mut self, state: DeviceFeatureState) {
+        self.0.AsyncShaderCompilation = state.into()
+    }
+    pub fn set_formatted_buffers(&mut self, state: DeviceFeatureState) {
+        self.0.FormattedBuffers = state.into()
+    }
 }
 
 impl DeviceFeatures {
     pub fn set_all(&mut self, state: DeviceFeatureState) {
-        self.separable_programs = state;
-        self.shader_resource_queries = state;
-        self.wireframe_fill = state;
-        self.multithreaded_resource_creation = state;
-        self.compute_shaders = state;
-        self.geometry_shaders = state;
-        self.tessellation = state;
-        self.mesh_shaders = state;
-        self.ray_tracing = state;
-        self.bindless_resources = state;
-        self.occlusion_queries = state;
-        self.binary_occlusion_queries = state;
-        self.timestamp_queries = state;
-        self.pipeline_statistics_queries = state;
-        self.duration_queries = state;
-        self.depth_bias_clamp = state;
-        self.depth_clamp = state;
-        self.independent_blend = state;
-        self.dual_source_blend = state;
-        self.multi_viewport = state;
-        self.texture_compression_bc = state;
-        self.texture_compression_etc2 = state;
-        self.vertex_pipeline_uav_writes_and_atomics = state;
-        self.pixel_uav_writes_and_atomics = state;
-        self.texture_uav_extended_formats = state;
-        self.shader_float16 = state;
-        self.resource_buffer16_bit_access = state;
-        self.uniform_buffer16_bit_access = state;
-        self.shader_input_output16 = state;
-        self.shader_int8 = state;
-        self.resource_buffer8_bit_access = state;
-        self.uniform_buffer8_bit_access = state;
-        self.shader_resource_static_arrays = state;
-        self.shader_resource_runtime_arrays = state;
-        self.wave_op = state;
-        self.instance_data_step_rate = state;
-        self.native_fence = state;
-        self.tile_shaders = state;
-        self.transfer_queue_timestamp_queries = state;
-        self.variable_rate_shading = state;
-        self.sparse_resources = state;
-        self.subpass_framebuffer_fetch = state;
-        self.texture_component_swizzle = state;
-        self.texture_subresource_views = state;
-        self.native_multi_draw = state;
-        self.async_shader_compilation = state;
-        self.formatted_buffers = state;
+        let state = state.into();
+        self.0.SeparablePrograms = state;
+        self.0.ShaderResourceQueries = state;
+        self.0.WireframeFill = state;
+        self.0.MultithreadedResourceCreation = state;
+        self.0.ComputeShaders = state;
+        self.0.GeometryShaders = state;
+        self.0.Tessellation = state;
+        self.0.MeshShaders = state;
+        self.0.RayTracing = state;
+        self.0.BindlessResources = state;
+        self.0.OcclusionQueries = state;
+        self.0.BinaryOcclusionQueries = state;
+        self.0.TimestampQueries = state;
+        self.0.PipelineStatisticsQueries = state;
+        self.0.DurationQueries = state;
+        self.0.DepthBiasClamp = state;
+        self.0.DepthClamp = state;
+        self.0.IndependentBlend = state;
+        self.0.DualSourceBlend = state;
+        self.0.MultiViewport = state;
+        self.0.TextureCompressionBC = state;
+        self.0.TextureCompressionETC2 = state;
+        self.0.VertexPipelineUAVWritesAndAtomics = state;
+        self.0.PixelUAVWritesAndAtomics = state;
+        self.0.TextureUAVExtendedFormats = state;
+        self.0.ShaderFloat16 = state;
+        self.0.ResourceBuffer16BitAccess = state;
+        self.0.UniformBuffer16BitAccess = state;
+        self.0.ShaderInputOutput16 = state;
+        self.0.ShaderInt8 = state;
+        self.0.ResourceBuffer8BitAccess = state;
+        self.0.UniformBuffer8BitAccess = state;
+        self.0.ShaderResourceStaticArrays = state;
+        self.0.ShaderResourceRuntimeArrays = state;
+        self.0.WaveOp = state;
+        self.0.InstanceDataStepRate = state;
+        self.0.NativeFence = state;
+        self.0.TileShaders = state;
+        self.0.TransferQueueTimestampQueries = state;
+        self.0.VariableRateShading = state;
+        self.0.SparseResources = state;
+        self.0.SubpassFramebufferFetch = state;
+        self.0.TextureComponentSwizzle = state;
+        self.0.TextureSubresourceViews = state;
+        self.0.NativeMultiDraw = state;
+        self.0.AsyncShaderCompilation = state;
+        self.0.FormattedBuffers = state;
     }
 }
 
 impl Default for DeviceFeatures {
     fn default() -> Self {
-        DeviceFeatures {
-            separable_programs: DeviceFeatureState::Disabled,
-            shader_resource_queries: DeviceFeatureState::Disabled,
-            wireframe_fill: DeviceFeatureState::Disabled,
-            multithreaded_resource_creation: DeviceFeatureState::Disabled,
-            compute_shaders: DeviceFeatureState::Disabled,
-            geometry_shaders: DeviceFeatureState::Disabled,
-            tessellation: DeviceFeatureState::Disabled,
-            mesh_shaders: DeviceFeatureState::Disabled,
-            ray_tracing: DeviceFeatureState::Disabled,
-            bindless_resources: DeviceFeatureState::Disabled,
-            occlusion_queries: DeviceFeatureState::Disabled,
-            binary_occlusion_queries: DeviceFeatureState::Disabled,
-            timestamp_queries: DeviceFeatureState::Disabled,
-            pipeline_statistics_queries: DeviceFeatureState::Disabled,
-            duration_queries: DeviceFeatureState::Disabled,
-            depth_bias_clamp: DeviceFeatureState::Disabled,
-            depth_clamp: DeviceFeatureState::Disabled,
-            independent_blend: DeviceFeatureState::Disabled,
-            dual_source_blend: DeviceFeatureState::Disabled,
-            multi_viewport: DeviceFeatureState::Disabled,
-            texture_compression_bc: DeviceFeatureState::Disabled,
-            texture_compression_etc2: DeviceFeatureState::Disabled,
-            vertex_pipeline_uav_writes_and_atomics: DeviceFeatureState::Disabled,
-            pixel_uav_writes_and_atomics: DeviceFeatureState::Disabled,
-            texture_uav_extended_formats: DeviceFeatureState::Disabled,
-            shader_float16: DeviceFeatureState::Disabled,
-            resource_buffer16_bit_access: DeviceFeatureState::Disabled,
-            uniform_buffer16_bit_access: DeviceFeatureState::Disabled,
-            shader_input_output16: DeviceFeatureState::Disabled,
-            shader_int8: DeviceFeatureState::Disabled,
-            resource_buffer8_bit_access: DeviceFeatureState::Disabled,
-            uniform_buffer8_bit_access: DeviceFeatureState::Disabled,
-            shader_resource_static_arrays: DeviceFeatureState::Disabled,
-            shader_resource_runtime_arrays: DeviceFeatureState::Disabled,
-            wave_op: DeviceFeatureState::Disabled,
-            instance_data_step_rate: DeviceFeatureState::Disabled,
-            native_fence: DeviceFeatureState::Disabled,
-            tile_shaders: DeviceFeatureState::Disabled,
-            transfer_queue_timestamp_queries: DeviceFeatureState::Disabled,
-            variable_rate_shading: DeviceFeatureState::Disabled,
-            sparse_resources: DeviceFeatureState::Disabled,
-            subpass_framebuffer_fetch: DeviceFeatureState::Disabled,
-            texture_component_swizzle: DeviceFeatureState::Disabled,
-            texture_subresource_views: DeviceFeatureState::Disabled,
-            native_multi_draw: DeviceFeatureState::Disabled,
-            async_shader_compilation: DeviceFeatureState::Disabled,
-            formatted_buffers: DeviceFeatureState::Disabled,
-        }
-    }
-}
-
-impl From<&DeviceFeatures> for diligent_sys::DeviceFeatures {
-    fn from(value: &DeviceFeatures) -> Self {
-        diligent_sys::DeviceFeatures {
-            SeparablePrograms: value.separable_programs.into(),
-            ShaderResourceQueries: value.shader_resource_queries.into(),
-            WireframeFill: value.wireframe_fill.into(),
-            MultithreadedResourceCreation: value.multithreaded_resource_creation.into(),
-            ComputeShaders: value.compute_shaders.into(),
-            GeometryShaders: value.geometry_shaders.into(),
-            Tessellation: value.tessellation.into(),
-            MeshShaders: value.mesh_shaders.into(),
-            RayTracing: value.ray_tracing.into(),
-            BindlessResources: value.bindless_resources.into(),
-            OcclusionQueries: value.occlusion_queries.into(),
-            BinaryOcclusionQueries: value.binary_occlusion_queries.into(),
-            TimestampQueries: value.timestamp_queries.into(),
-            PipelineStatisticsQueries: value.pipeline_statistics_queries.into(),
-            DurationQueries: value.duration_queries.into(),
-            DepthBiasClamp: value.depth_bias_clamp.into(),
-            DepthClamp: value.depth_clamp.into(),
-            IndependentBlend: value.independent_blend.into(),
-            DualSourceBlend: value.dual_source_blend.into(),
-            MultiViewport: value.multi_viewport.into(),
-            TextureCompressionBC: value.texture_compression_bc.into(),
-            TextureCompressionETC2: value.texture_compression_etc2.into(),
-            VertexPipelineUAVWritesAndAtomics: value.vertex_pipeline_uav_writes_and_atomics.into(),
-            PixelUAVWritesAndAtomics: value.pixel_uav_writes_and_atomics.into(),
-            TextureUAVExtendedFormats: value.texture_uav_extended_formats.into(),
-            ShaderFloat16: value.shader_float16.into(),
-            ResourceBuffer16BitAccess: value.resource_buffer16_bit_access.into(),
-            UniformBuffer16BitAccess: value.uniform_buffer16_bit_access.into(),
-            ShaderInputOutput16: value.shader_input_output16.into(),
-            ShaderInt8: value.shader_int8.into(),
-            ResourceBuffer8BitAccess: value.resource_buffer8_bit_access.into(),
-            UniformBuffer8BitAccess: value.uniform_buffer8_bit_access.into(),
-            ShaderResourceStaticArrays: value.shader_resource_static_arrays.into(),
-            ShaderResourceRuntimeArrays: value.shader_resource_runtime_arrays.into(),
-            WaveOp: value.wave_op.into(),
-            InstanceDataStepRate: value.instance_data_step_rate.into(),
-            NativeFence: value.native_fence.into(),
-            TileShaders: value.tile_shaders.into(),
-            TransferQueueTimestampQueries: value.transfer_queue_timestamp_queries.into(),
-            VariableRateShading: value.variable_rate_shading.into(),
-            SparseResources: value.sparse_resources.into(),
-            SubpassFramebufferFetch: value.subpass_framebuffer_fetch.into(),
-            TextureComponentSwizzle: value.texture_component_swizzle.into(),
-            TextureSubresourceViews: value.texture_subresource_views.into(),
-            NativeMultiDraw: value.native_multi_draw.into(),
-            AsyncShaderCompilation: value.async_shader_compilation.into(),
-            FormattedBuffers: value.formatted_buffers.into(),
-        }
-    }
-}
-
-impl From<&diligent_sys::DeviceFeatures> for DeviceFeatures {
-    fn from(value: &diligent_sys::DeviceFeatures) -> Self {
-        DeviceFeatures {
-            separable_programs: value.SeparablePrograms.into(),
-            shader_resource_queries: value.ShaderResourceQueries.into(),
-            wireframe_fill: value.WireframeFill.into(),
-            multithreaded_resource_creation: value.MultithreadedResourceCreation.into(),
-            compute_shaders: value.ComputeShaders.into(),
-            geometry_shaders: value.GeometryShaders.into(),
-            tessellation: value.Tessellation.into(),
-            mesh_shaders: value.MeshShaders.into(),
-            ray_tracing: value.RayTracing.into(),
-            bindless_resources: value.BindlessResources.into(),
-            occlusion_queries: value.OcclusionQueries.into(),
-            binary_occlusion_queries: value.BinaryOcclusionQueries.into(),
-            timestamp_queries: value.TimestampQueries.into(),
-            pipeline_statistics_queries: value.PipelineStatisticsQueries.into(),
-            duration_queries: value.DurationQueries.into(),
-            depth_bias_clamp: value.DepthBiasClamp.into(),
-            depth_clamp: value.DepthClamp.into(),
-            independent_blend: value.IndependentBlend.into(),
-            dual_source_blend: value.DualSourceBlend.into(),
-            multi_viewport: value.MultiViewport.into(),
-            texture_compression_bc: value.TextureCompressionBC.into(),
-            texture_compression_etc2: value.TextureCompressionETC2.into(),
-            vertex_pipeline_uav_writes_and_atomics: value.VertexPipelineUAVWritesAndAtomics.into(),
-            pixel_uav_writes_and_atomics: value.PixelUAVWritesAndAtomics.into(),
-            texture_uav_extended_formats: value.TextureUAVExtendedFormats.into(),
-            shader_float16: value.ShaderFloat16.into(),
-            resource_buffer16_bit_access: value.ResourceBuffer16BitAccess.into(),
-            uniform_buffer16_bit_access: value.UniformBuffer16BitAccess.into(),
-            shader_input_output16: value.ShaderInputOutput16.into(),
-            shader_int8: value.ShaderInt8.into(),
-            resource_buffer8_bit_access: value.ResourceBuffer8BitAccess.into(),
-            uniform_buffer8_bit_access: value.UniformBuffer8BitAccess.into(),
-            shader_resource_static_arrays: value.ShaderResourceStaticArrays.into(),
-            shader_resource_runtime_arrays: value.ShaderResourceRuntimeArrays.into(),
-            wave_op: value.WaveOp.into(),
-            instance_data_step_rate: value.InstanceDataStepRate.into(),
-            native_fence: value.NativeFence.into(),
-            tile_shaders: value.TileShaders.into(),
-            transfer_queue_timestamp_queries: value.TransferQueueTimestampQueries.into(),
-            variable_rate_shading: value.VariableRateShading.into(),
-            sparse_resources: value.SparseResources.into(),
-            subpass_framebuffer_fetch: value.SubpassFramebufferFetch.into(),
-            texture_component_swizzle: value.TextureComponentSwizzle.into(),
-            texture_subresource_views: value.TextureSubresourceViews.into(),
-            native_multi_draw: value.NativeMultiDraw.into(),
-            async_shader_compilation: value.AsyncShaderCompilation.into(),
-            formatted_buffers: value.FormattedBuffers.into(),
-        }
+        Self(diligent_sys::DeviceFeatures {
+            SeparablePrograms: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            ShaderResourceQueries: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            WireframeFill: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            MultithreadedResourceCreation: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            ComputeShaders: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            GeometryShaders: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            Tessellation: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            MeshShaders: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            RayTracing: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            BindlessResources: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            OcclusionQueries: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            BinaryOcclusionQueries: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            TimestampQueries: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            PipelineStatisticsQueries: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            DurationQueries: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            DepthBiasClamp: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            DepthClamp: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            IndependentBlend: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            DualSourceBlend: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            MultiViewport: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            TextureCompressionBC: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            TextureCompressionETC2: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            VertexPipelineUAVWritesAndAtomics: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            PixelUAVWritesAndAtomics: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            TextureUAVExtendedFormats: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            ShaderFloat16: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            ResourceBuffer16BitAccess: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            UniformBuffer16BitAccess: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            ShaderInputOutput16: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            ShaderInt8: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            ResourceBuffer8BitAccess: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            UniformBuffer8BitAccess: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            ShaderResourceStaticArrays: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            ShaderResourceRuntimeArrays: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            WaveOp: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            InstanceDataStepRate: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            NativeFence: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            TileShaders: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            TransferQueueTimestampQueries: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            VariableRateShading: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            SparseResources: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            SubpassFramebufferFetch: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            TextureComponentSwizzle: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            TextureSubresourceViews: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            NativeMultiDraw: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            AsyncShaderCompilation: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            FormattedBuffers: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+        })
     }
 }
 
@@ -1173,264 +1489,103 @@ bitflags! {
 }
 const_assert_eq!(diligent_sys::COMMAND_QUEUE_TYPE_MAX_BIT, 7);
 
-pub struct CommandQueueInfo {
-    pub queue_type: CommandQueueType,
-    pub max_device_contexts: u32,
-    pub texture_copy_granularity: [u32; 3usize],
-}
+#[repr(transparent)]
+pub struct CommandQueueInfo(diligent_sys::CommandQueueInfo);
 
-impl From<diligent_sys::CommandQueueInfo> for CommandQueueInfo {
-    fn from(value: diligent_sys::CommandQueueInfo) -> Self {
-        CommandQueueInfo {
-            queue_type: CommandQueueType::from_bits_retain(value.QueueType),
-            max_device_contexts: value.MaxDeviceContexts,
-            texture_copy_granularity: value.TextureCopyGranularity,
-        }
+impl CommandQueueInfo {
+    pub fn queue_type(&self) -> CommandQueueType {
+        CommandQueueType::from_bits_retain(self.0.QueueType)
+    }
+    pub fn max_device_contexts(&self) -> u32 {
+        self.0.MaxDeviceContexts
+    }
+    pub fn texture_copy_granularity(&self) -> [u32; 3usize] {
+        self.0.TextureCopyGranularity
     }
 }
 
-pub struct GraphicsAdapterInfo {
-    pub description: String,
-    pub adapter_type: AdapterType,
-    pub vendor: AdapterVendor,
-    pub vendor_id: u32,
-    pub device_id: u32,
-    pub num_outputs: u32,
-    pub memory: AdapterMemoryInfo,
-    pub ray_tracing: RayTracingProperties,
-    pub wave_op: WaveOpProperties,
-    pub buffer: BufferProperties,
-    pub texture: TextureProperties,
-    pub sampler: SamplerProperties,
-    pub mesh_shader: MeshShaderProperties,
-    pub shading_rate: ShadingRateProperties,
-    pub compute_shader: ComputeShaderProperties,
-    pub draw_command: DrawCommandProperties,
-    pub sparse_resources: SparseResourceProperties,
-    pub features: DeviceFeatures,
-    pub queues: Vec<CommandQueueInfo>,
-}
-
-impl From<&diligent_sys::GraphicsAdapterInfo> for GraphicsAdapterInfo {
-    fn from(value: &diligent_sys::GraphicsAdapterInfo) -> Self {
-        let desc_vec = Vec::from_iter(
-            value
-                .Description
-                .split_inclusive(|&c| c == 0)
-                .next()
-                .unwrap()
-                .iter()
-                .map(|&c| c as u8),
-        );
-
-        let desc_cstring = std::ffi::CString::from_vec_with_nul(desc_vec).unwrap();
-
-        GraphicsAdapterInfo {
-            description: desc_cstring.into_string().unwrap(), //desc.to_str().unwrap().to_owned(),
-            adapter_type: match value.Type as _ {
-                diligent_sys::ADAPTER_TYPE_UNKNOWN => AdapterType::Unknown,
-                diligent_sys::ADAPTER_TYPE_SOFTWARE => AdapterType::Software,
-                diligent_sys::ADAPTER_TYPE_INTEGRATED => AdapterType::Integrated,
-                diligent_sys::ADAPTER_TYPE_DISCRETE => AdapterType::Discrete,
-                _ => panic!(),
-            },
-            vendor: match value.Vendor as _ {
-                diligent_sys::ADAPTER_VENDOR_UNKNOWN => AdapterVendor::Unknown,
-                diligent_sys::ADAPTER_VENDOR_NVIDIA => AdapterVendor::Nvidia,
-                diligent_sys::ADAPTER_VENDOR_AMD => AdapterVendor::AMD,
-                diligent_sys::ADAPTER_VENDOR_INTEL => AdapterVendor::Intel,
-                diligent_sys::ADAPTER_VENDOR_ARM => AdapterVendor::ARM,
-                diligent_sys::ADAPTER_VENDOR_QUALCOMM => AdapterVendor::Qualcomm,
-                diligent_sys::ADAPTER_VENDOR_IMGTECH => AdapterVendor::Imgtech,
-                diligent_sys::ADAPTER_VENDOR_MSFT => AdapterVendor::Msft,
-                diligent_sys::ADAPTER_VENDOR_APPLE => AdapterVendor::Apple,
-                diligent_sys::ADAPTER_VENDOR_MESA => AdapterVendor::Mesa,
-                diligent_sys::ADAPTER_VENDOR_BROADCOM => AdapterVendor::Broadcom,
-                _ => panic!(),
-            },
-            vendor_id: value.VendorId,
-            device_id: value.DeviceId,
-            num_outputs: value.NumOutputs,
-            memory: AdapterMemoryInfo {
-                local_memory: value.Memory.LocalMemory,
-                host_visible_memory: value.Memory.HostVisibleMemory,
-                unified_memory: value.Memory.UnifiedMemory,
-                max_memory_allocation: value.Memory.MaxMemoryAllocation,
-                unified_memory_cpu_access: CpuAccessFlags::from_bits_retain(
-                    value.Memory.UnifiedMemoryCPUAccess,
-                ),
-                memoryless_texture_bind_flags: BindFlags::from_bits_retain(
-                    value.Memory.MemorylessTextureBindFlags,
-                ),
-            },
-            ray_tracing: RayTracingProperties {
-                max_recursion_depth: value.RayTracing.MaxRecursionDepth,
-                shader_group_handle_size: value.RayTracing.ShaderGroupHandleSize,
-                max_shader_record_stride: value.RayTracing.MaxShaderRecordStride,
-                shader_group_base_alignment: value.RayTracing.ShaderGroupBaseAlignment,
-                max_ray_gen_threads: value.RayTracing.MaxRayGenThreads,
-                max_instances_per_tlas: value.RayTracing.MaxInstancesPerTLAS,
-                max_primitives_per_blas: value.RayTracing.MaxPrimitivesPerBLAS,
-                max_geometries_per_blas: value.RayTracing.MaxGeometriesPerBLAS,
-                vertex_buffer_alignment: value.RayTracing.VertexBufferAlignment,
-                index_buffer_alignment: value.RayTracing.IndexBufferAlignment,
-                transform_buffer_alignment: value.RayTracing.TransformBufferAlignment,
-                box_buffer_alignment: value.RayTracing.BoxBufferAlignment,
-                scratch_buffer_alignment: value.RayTracing.ScratchBufferAlignment,
-                instance_buffer_alignment: value.RayTracing.InstanceBufferAlignment,
-                cap_flags: RaytracingCapFlags::from_bits_retain(value.RayTracing.CapFlags),
-            },
-            wave_op: WaveOpProperties {
-                min_size: value.WaveOp.MinSize,
-                max_size: value.WaveOp.MaxSize,
-                supported_stages: ShaderTypes::from_bits_retain(value.WaveOp.SupportedStages),
-                features: WaveFeature::from_bits_retain(value.WaveOp.Features),
-            },
-            buffer: BufferProperties {
-                constant_buffer_offset_alignment: value.Buffer.ConstantBufferOffsetAlignment,
-                structured_buffer_offset_alignment: value.Buffer.StructuredBufferOffsetAlignment,
-            },
-            texture: TextureProperties {
-                max_texture1d_dimension: value.Texture.MaxTexture1DDimension,
-                max_texture1d_array_slices: value.Texture.MaxTexture1DArraySlices,
-                max_texture2d_dimension: value.Texture.MaxTexture2DDimension,
-                max_texture2d_array_slices: value.Texture.MaxTexture2DArraySlices,
-                max_texture3d_dimension: value.Texture.MaxTexture3DDimension,
-                max_texture_cube_dimension: value.Texture.MaxTextureCubeDimension,
-                texture2dms_supported: value.Texture.Texture2DMSSupported,
-                texture2dms_array_supported: value.Texture.Texture2DMSArraySupported,
-                texture_view_supported: value.Texture.TextureViewSupported,
-                cubemap_arrays_supported: value.Texture.CubemapArraysSupported,
-                texture_view2d_on3d_supported: value.Texture.TextureView2DOn3DSupported,
-            },
-            sampler: SamplerProperties {
-                border_sampling_mode_supported: value.Sampler.BorderSamplingModeSupported,
-                max_anisotropy: value.Sampler.MaxAnisotropy,
-                lod_bias_supported: value.Sampler.LODBiasSupported,
-            },
-            mesh_shader: MeshShaderProperties {
-                max_thread_group_count_x: value.MeshShader.MaxThreadGroupCountX,
-                max_thread_group_count_y: value.MeshShader.MaxThreadGroupCountY,
-                max_thread_group_count_z: value.MeshShader.MaxThreadGroupCountZ,
-                max_thread_group_total_count: value.MeshShader.MaxThreadGroupTotalCount,
-            },
-            shading_rate: ShadingRateProperties {
-                shading_rates: Vec::from_iter(
-                    value
-                        .ShadingRate
-                        .ShadingRates
-                        .into_iter()
-                        .map(|sr| ShadingRateMode {
-                            rate: match sr.Rate as _ {
-                                diligent_sys::SHADING_RATE_1X1 => ShadingRate::_1X1,
-                                diligent_sys::SHADING_RATE_1X2 => ShadingRate::_1X2,
-                                diligent_sys::SHADING_RATE_1X4 => ShadingRate::_1X4,
-                                diligent_sys::SHADING_RATE_2X1 => ShadingRate::_2X1,
-                                diligent_sys::SHADING_RATE_2X2 => ShadingRate::_2X2,
-                                diligent_sys::SHADING_RATE_2X4 => ShadingRate::_2X4,
-                                diligent_sys::SHADING_RATE_4X1 => ShadingRate::_4X1,
-                                diligent_sys::SHADING_RATE_4X2 => ShadingRate::_4X2,
-                                diligent_sys::SHADING_RATE_4X4 => ShadingRate::_4X4,
-                                _ => panic!(),
-                            },
-                            sample_bits: SampleCount::from_bits_retain(sr.SampleBits),
-                        })
-                        .take(value.ShadingRate.NumShadingRates.into()),
-                ),
-                cap_flags: ShadingRateCapFlags::from_bits_retain(value.ShadingRate.CapFlags),
-                combiners: ShadingRateCombiner::from_bits_retain(value.ShadingRate.Combiners),
-                format: ShadingRateFormat::from_bits_retain(value.ShadingRate.Format),
-                shading_rate_texture_access: ShadingRateTextureAccess::from_bits_retain(
-                    value.ShadingRate.ShadingRateTextureAccess,
-                ),
-                bind_flags: BindFlags::from_bits_retain(value.ShadingRate.BindFlags),
-                min_tile_size: value.ShadingRate.MinTileSize,
-                max_tile_size: value.ShadingRate.MaxTileSize,
-                max_subsampled_array_slices: value.ShadingRate.MaxSabsampledArraySlices,
-            },
-            compute_shader: ComputeShaderProperties {
-                shared_memory_size: value.ComputeShader.SharedMemorySize,
-                max_thread_group_invocations: value.ComputeShader.MaxThreadGroupInvocations,
-                max_thread_group_size_x: value.ComputeShader.MaxThreadGroupSizeX,
-                max_thread_group_size_y: value.ComputeShader.MaxThreadGroupSizeY,
-                max_thread_group_size_z: value.ComputeShader.MaxThreadGroupSizeZ,
-                max_thread_group_count_x: value.ComputeShader.MaxThreadGroupCountX,
-                max_thread_group_count_y: value.ComputeShader.MaxThreadGroupCountY,
-                max_thread_group_count_z: value.ComputeShader.MaxThreadGroupCountZ,
-            },
-            draw_command: DrawCommandProperties {
-                cap_flags: DrawCommandCapFlags::from_bits_retain(value.DrawCommand.CapFlags),
-                max_index_value: value.DrawCommand.MaxIndexValue,
-                max_draw_indirect_count: value.DrawCommand.MaxDrawIndirectCount,
-            },
-            sparse_resources: SparseResourceProperties {
-                address_space_size: value.SparseResources.AddressSpaceSize,
-                resource_space_size: value.SparseResources.ResourceSpaceSize,
-                cap_flags: SparseResourceCapFlags::from_bits_retain(value.SparseResources.CapFlags),
-                standard_block_size: value.SparseResources.StandardBlockSize,
-                buffer_bind_flags: BindFlags::from_bits_retain(
-                    value.SparseResources.BufferBindFlags,
-                ),
-            },
-            features: DeviceFeatures {
-                separable_programs: value.Features.SeparablePrograms.into(),
-                shader_resource_queries: value.Features.ShaderResourceQueries.into(),
-                wireframe_fill: value.Features.WireframeFill.into(),
-                multithreaded_resource_creation: value
-                    .Features
-                    .MultithreadedResourceCreation
-                    .into(),
-                compute_shaders: value.Features.ComputeShaders.into(),
-                geometry_shaders: value.Features.GeometryShaders.into(),
-                tessellation: value.Features.Tessellation.into(),
-                mesh_shaders: value.Features.MeshShaders.into(),
-                ray_tracing: value.Features.RayTracing.into(),
-                bindless_resources: value.Features.BindlessResources.into(),
-                occlusion_queries: value.Features.OcclusionQueries.into(),
-                binary_occlusion_queries: value.Features.BinaryOcclusionQueries.into(),
-                timestamp_queries: value.Features.TimestampQueries.into(),
-                pipeline_statistics_queries: value.Features.PipelineStatisticsQueries.into(),
-                duration_queries: value.Features.DurationQueries.into(),
-                depth_bias_clamp: value.Features.DepthBiasClamp.into(),
-                depth_clamp: value.Features.DepthClamp.into(),
-                independent_blend: value.Features.IndependentBlend.into(),
-                dual_source_blend: value.Features.DualSourceBlend.into(),
-                multi_viewport: value.Features.MultiViewport.into(),
-                texture_compression_bc: value.Features.TextureCompressionBC.into(),
-                texture_compression_etc2: value.Features.TextureCompressionETC2.into(),
-                vertex_pipeline_uav_writes_and_atomics: value
-                    .Features
-                    .VertexPipelineUAVWritesAndAtomics
-                    .into(),
-                pixel_uav_writes_and_atomics: value.Features.PixelUAVWritesAndAtomics.into(),
-                texture_uav_extended_formats: value.Features.TextureUAVExtendedFormats.into(),
-                shader_float16: value.Features.ShaderFloat16.into(),
-                resource_buffer16_bit_access: value.Features.ResourceBuffer16BitAccess.into(),
-                uniform_buffer16_bit_access: value.Features.UniformBuffer16BitAccess.into(),
-                shader_input_output16: value.Features.ShaderInputOutput16.into(),
-                shader_int8: value.Features.ShaderInt8.into(),
-                resource_buffer8_bit_access: value.Features.ResourceBuffer8BitAccess.into(),
-                uniform_buffer8_bit_access: value.Features.UniformBuffer8BitAccess.into(),
-                shader_resource_static_arrays: value.Features.ShaderResourceStaticArrays.into(),
-                shader_resource_runtime_arrays: value.Features.ShaderResourceRuntimeArrays.into(),
-                wave_op: value.Features.WaveOp.into(),
-                instance_data_step_rate: value.Features.InstanceDataStepRate.into(),
-                native_fence: value.Features.NativeFence.into(),
-                tile_shaders: value.Features.TileShaders.into(),
-                transfer_queue_timestamp_queries: value
-                    .Features
-                    .TransferQueueTimestampQueries
-                    .into(),
-                variable_rate_shading: value.Features.VariableRateShading.into(),
-                sparse_resources: value.Features.SparseResources.into(),
-                subpass_framebuffer_fetch: value.Features.SubpassFramebufferFetch.into(),
-                texture_component_swizzle: value.Features.TextureComponentSwizzle.into(),
-                texture_subresource_views: value.Features.TextureSubresourceViews.into(),
-                native_multi_draw: value.Features.NativeMultiDraw.into(),
-                async_shader_compilation: value.Features.AsyncShaderCompilation.into(),
-                formatted_buffers: value.Features.FormattedBuffers.into(),
-            },
-            queues: Vec::from_iter(value.Queues.into_iter().map(|queue| queue.into())),
+#[repr(transparent)]
+pub struct GraphicsAdapterInfo(diligent_sys::GraphicsAdapterInfo);
+impl GraphicsAdapterInfo {
+    pub fn description(&self) -> &CStr {
+        unsafe { CStr::from_ptr(self.0.Description.as_ptr()) }
+    }
+    pub fn adapter_type(&self) -> AdapterType {
+        match self.0.Type as _ {
+            diligent_sys::ADAPTER_TYPE_UNKNOWN => AdapterType::Unknown,
+            diligent_sys::ADAPTER_TYPE_SOFTWARE => AdapterType::Software,
+            diligent_sys::ADAPTER_TYPE_INTEGRATED => AdapterType::Integrated,
+            diligent_sys::ADAPTER_TYPE_DISCRETE => AdapterType::Discrete,
+            _ => panic!(),
+        }
+    }
+    pub fn vendor(&self) -> AdapterVendor {
+        match self.0.Vendor as _ {
+            diligent_sys::ADAPTER_VENDOR_UNKNOWN => AdapterVendor::Unknown,
+            diligent_sys::ADAPTER_VENDOR_NVIDIA => AdapterVendor::Nvidia,
+            diligent_sys::ADAPTER_VENDOR_AMD => AdapterVendor::AMD,
+            diligent_sys::ADAPTER_VENDOR_INTEL => AdapterVendor::Intel,
+            diligent_sys::ADAPTER_VENDOR_ARM => AdapterVendor::ARM,
+            diligent_sys::ADAPTER_VENDOR_QUALCOMM => AdapterVendor::Qualcomm,
+            diligent_sys::ADAPTER_VENDOR_IMGTECH => AdapterVendor::Imgtech,
+            diligent_sys::ADAPTER_VENDOR_MSFT => AdapterVendor::Msft,
+            diligent_sys::ADAPTER_VENDOR_APPLE => AdapterVendor::Apple,
+            diligent_sys::ADAPTER_VENDOR_MESA => AdapterVendor::Mesa,
+            diligent_sys::ADAPTER_VENDOR_BROADCOM => AdapterVendor::Broadcom,
+            _ => panic!(),
+        }
+    }
+    pub fn vendor_id(&self) -> u32 {
+        self.0.VendorId
+    }
+    pub fn device_id(&self) -> u32 {
+        self.0.DeviceId
+    }
+    pub fn num_outputs(&self) -> u32 {
+        self.0.NumOutputs
+    }
+    pub fn memory(&self) -> &AdapterMemoryInfo {
+        unsafe { std::mem::transmute(&self.0.Memory) }
+    }
+    pub fn ray_tracing(&self) -> &RayTracingProperties {
+        unsafe { std::mem::transmute(&self.0.RayTracing) }
+    }
+    pub fn wave_op(&self) -> &WaveOpProperties {
+        unsafe { std::mem::transmute(&self.0.WaveOp) }
+    }
+    pub fn buffer(&self) -> &BufferProperties {
+        unsafe { std::mem::transmute(&self.0.Buffer) }
+    }
+    pub fn texture(&self) -> &TextureProperties {
+        unsafe { std::mem::transmute(&self.0.Texture) }
+    }
+    pub fn sampler(&self) -> &SamplerProperties {
+        unsafe { std::mem::transmute(&self.0.Sampler) }
+    }
+    pub fn mesh_shader(&self) -> &MeshShaderProperties {
+        unsafe { std::mem::transmute(&self.0.MeshShader) }
+    }
+    pub fn shading_rate(&self) -> &ShadingRateProperties {
+        unsafe { std::mem::transmute(&self.0.ShadingRate) }
+    }
+    pub fn compute_shader(&self) -> &ComputeShaderProperties {
+        unsafe { std::mem::transmute(&self.0.ComputeShader) }
+    }
+    pub fn draw_command(&self) -> &DrawCommandProperties {
+        unsafe { std::mem::transmute(&self.0.DrawCommand) }
+    }
+    pub fn sparse_resources(&self) -> &SparseResourceProperties {
+        unsafe { std::mem::transmute(&self.0.SparseResources) }
+    }
+    pub fn features(&self) -> &DeviceFeatures {
+        unsafe { std::mem::transmute(&self.0.Features) }
+    }
+    pub fn queues(&self) -> &[CommandQueueInfo] {
+        unsafe {
+            std::slice::from_raw_parts(
+                std::ptr::from_ref(&self.0.Queues[0]) as *const CommandQueueInfo,
+                self.0.NumQueues as usize,
+            )
         }
     }
 }
@@ -2639,64 +2794,39 @@ impl From<ScanlineOrder> for diligent_sys::SCANLINE_ORDER {
     }
 }
 
-pub struct DisplayModeAttribs {
-    width: u32,
-    height: u32,
-    format: TextureFormat,
-    refresh_rate_numerator: u32,
-    refresh_rate_denominator: u32,
-    scaling_mode: ScalingMode,
-    scanline_order: ScanlineOrder,
-}
+pub struct DisplayModeAttribs(pub(crate) diligent_sys::DisplayModeAttribs);
 
 impl DisplayModeAttribs {
-    pub fn width(&self) -> &u32 {
-        &self.width
+    pub fn width(&self) -> u32 {
+        self.0.Width
     }
-    pub fn height(&self) -> &u32 {
-        &self.height
+    pub fn height(&self) -> u32 {
+        self.0.Height
     }
-    pub fn format(&self) -> &TextureFormat {
-        &self.format
+    pub fn format(&self) -> TextureFormat {
+        self.0.Format.into()
     }
-    pub fn refresh_rate_numerator(&self) -> &u32 {
-        &self.refresh_rate_numerator
+    pub fn refresh_rate_numerator(&self) -> u32 {
+        self.0.RefreshRateNumerator
     }
-    pub fn refresh_rate_denominator(&self) -> &u32 {
-        &self.refresh_rate_denominator
+    pub fn refresh_rate_denominator(&self) -> u32 {
+        self.0.RefreshRateDenominator
     }
-    pub fn scaling_mode(&self) -> &ScalingMode {
-        &self.scaling_mode
-    }
-    pub fn scanline_order(&self) -> &ScanlineOrder {
-        &self.scanline_order
-    }
-}
-
-impl From<&diligent_sys::DisplayModeAttribs> for DisplayModeAttribs {
-    fn from(value: &diligent_sys::DisplayModeAttribs) -> Self {
-        DisplayModeAttribs {
-            width: value.Width,
-            height: value.Height,
-            format: value.Format.into(),
-            refresh_rate_numerator: value.RefreshRateNumerator,
-            refresh_rate_denominator: value.RefreshRateDenominator,
-            scaling_mode: value.Scaling.into(),
-            scanline_order: value.ScanlineOrder.into(),
+    pub fn scaling_mode(&self) -> ScalingMode {
+        match self.0.Scaling as _ {
+            diligent_sys::SCALING_MODE_UNSPECIFIED => ScalingMode::Unspecified,
+            diligent_sys::SCALING_MODE_CENTERED => ScalingMode::Centered,
+            diligent_sys::SCALING_MODE_STRETCHED => ScalingMode::Stretched,
+            _ => panic!("Unknown SCALING_MODE value"),
         }
     }
-}
-
-impl From<&DisplayModeAttribs> for diligent_sys::DisplayModeAttribs {
-    fn from(value: &DisplayModeAttribs) -> Self {
-        diligent_sys::DisplayModeAttribs {
-            Width: value.width,
-            Height: value.height,
-            Format: value.format.into(),
-            RefreshRateNumerator: value.refresh_rate_numerator,
-            RefreshRateDenominator: value.refresh_rate_denominator,
-            Scaling: value.scaling_mode.into(),
-            ScanlineOrder: value.scanline_order.into(),
+    pub fn scanline_order(&self) -> ScanlineOrder {
+        match self.0.ScanlineOrder as _ {
+            diligent_sys::SCANLINE_ORDER_UNSPECIFIED => ScanlineOrder::Unspecified,
+            diligent_sys::SCANLINE_ORDER_UPPER_FIELD_FIRST => ScanlineOrder::UpperFieldFirst,
+            diligent_sys::SCANLINE_ORDER_LOWER_FIELD_FIRST => ScanlineOrder::LowerFieldFirst,
+            diligent_sys::SCANLINE_ORDER_PROGRESSIVE => ScanlineOrder::Progressive,
+            _ => panic!("Unknown SCANLINE_ORDER value"),
         }
     }
 }

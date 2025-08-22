@@ -368,8 +368,8 @@ fn create_ray_tracing_pso(
 
     let max_recursion_depth = device
         .get_adapter_info()
-        .ray_tracing
-        .max_recursion_depth
+        .ray_tracing()
+        .max_recursion_depth()
         .min(8);
 
     let sampler_desc = SamplerDesc::builder()
@@ -980,8 +980,8 @@ impl SampleBase for RayTracing {
     ) -> Self {
         if !device
             .get_adapter_info()
-            .ray_tracing
-            .cap_flags
+            .ray_tracing()
+            .cap_flags()
             .contains(RaytracingCapFlags::StandaloneShaders)
         {
             panic!("Ray tracing shaders are not supported by device")
@@ -1288,7 +1288,9 @@ impl SampleBase for RayTracing {
     fn modify_engine_init_info(
         engine_ci: &mut diligent_samples::sample_base::sample::EngineCreateInfo,
     ) {
-        engine_ci.features.ray_tracing = DeviceFeatureState::Enabled;
+        engine_ci
+            .features
+            .set_ray_tracing(DeviceFeatureState::Enabled);
     }
 
     fn get_immediate_context(&self) -> &ImmediateDeviceContext {

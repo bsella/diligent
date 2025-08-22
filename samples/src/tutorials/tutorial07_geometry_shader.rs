@@ -74,7 +74,9 @@ impl SampleBase for GeometryShader {
     fn modify_engine_init_info(
         engine_ci: &mut diligent_samples::sample_base::sample::EngineCreateInfo,
     ) {
-        engine_ci.features.geometry_shaders = DeviceFeatureState::Enabled;
+        engine_ci
+            .features
+            .set_geometry_shaders(DeviceFeatureState::Enabled);
     }
 
     fn new(

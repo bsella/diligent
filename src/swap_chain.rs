@@ -160,12 +160,11 @@ impl SwapChain {
     }
 
     pub fn set_fullscreen_mode(&self, display_mode: &DisplayModeAttribs) {
-        let display_mode = display_mode.into();
         unsafe_member_call!(
             self,
             SwapChain,
             SetFullscreenMode,
-            std::ptr::from_ref(&display_mode)
+            std::ptr::from_ref(&display_mode.0)
         )
     }
 

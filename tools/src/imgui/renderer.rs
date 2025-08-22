@@ -689,8 +689,8 @@ impl ImguiRenderer {
             base_vertex_supported: create_info
                 .device
                 .get_adapter_info()
-                .draw_command
-                .cap_flags
+                .draw_command()
+                .cap_flags()
                 .contains(DrawCommandCapFlags::BaseVertex),
             context: imgui_context,
             pipeline_state,

@@ -145,11 +145,11 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
                 .begin()
             {
                 if let Some(adapter) = &self.graphics_adapter {
-                    if adapter.adapter_type != AdapterType::Unknown {
+                    if adapter.adapter_type() != AdapterType::Unknown {
                         ui.text_disabled(format!(
                             "Adapter: {} ({} MB)",
-                            adapter.description,
-                            adapter.memory.local_memory >> 20
+                            adapter.description().to_str().unwrap(),
+                            adapter.memory().local_memory() >> 20
                         ));
                     }
                 }
@@ -231,24 +231,24 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
 
         fn find_adapter(
             mut adapter_index: Option<usize>,
-            adapter_type: &AdapterType,
+            adapter_type: AdapterType,
             adapters: &[GraphicsAdapterInfo],
         ) -> Option<usize> {
             let mut adapter_type = adapter_type;
 
             if let Some(adap_id) = adapter_index {
                 if adap_id < adapters.len() {
-                    adapter_type = &adapters.get(adap_id).unwrap().adapter_type;
+                    adapter_type = adapters.get(adap_id).unwrap().adapter_type();
                 } else {
                     //LOG_ERROR_MESSAGE("Adapter ID (", AdapterId, ") is invalid. Only ", Adapters.size(), " compatible ", (Adapters.size() == 1 ? "adapter" : "adapters"), " present in the system");
                     adapter_index = None;
                 }
             }
 
-            if adapter_index.is_none() && *adapter_type != AdapterType::Unknown {
+            if adapter_index.is_none() && adapter_type != AdapterType::Unknown {
                 adapter_index = adapters
                     .iter()
-                    .position(|adapter| adapter.adapter_type == *adapter_type);
+                    .position(|adapter| adapter.adapter_type() == adapter_type);
             };
 
             if adapter_index.is_none() {
@@ -260,14 +260,14 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
                             // Prefer Discrete over Integrated over Software
                             let compare_type =
                                 |adapter1: &GraphicsAdapterInfo, adapter2: &GraphicsAdapterInfo| {
-                                    adapter1.adapter_type.cmp(&adapter2.adapter_type)
+                                    adapter1.adapter_type().cmp(&adapter2.adapter_type())
                                 };
 
                             // Select adapter with most memory
                             let get_total_mem = |adapter: &GraphicsAdapterInfo| {
-                                adapter.memory.local_memory
-                                    + adapter.memory.host_visible_memory
-                                    + adapter.memory.unified_memory
+                                adapter.memory().local_memory()
+                                    + adapter.memory().host_visible_memory()
+                                    + adapter.memory().unified_memory()
                             };
                             let compare_memory =
                                 |adapter1: &GraphicsAdapterInfo, adapter2: &GraphicsAdapterInfo| {
@@ -283,8 +283,11 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             }
 
             if let Some(adapter_index) = adapter_index {
-                let adaper_description = &adapters.get(adapter_index).unwrap().description;
-                println!("Using adapter {adapter_index}, : '{adaper_description}'");
+                let adaper_description = adapters.get(adapter_index).unwrap().description();
+                println!(
+                    "Using adapter {adapter_index}, : '{}'",
+                    adaper_description.to_str().unwrap()
+                );
             }
 
             adapter_index
@@ -322,11 +325,11 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             engine_create_info.graphics_api_version = Version::new(11, 0);
         }
 
-        let adapters = engine_factory.enumerate_adapters(&engine_create_info.graphics_api_version);
+        let adapters = engine_factory.enumerate_adapters(engine_create_info.graphics_api_version);
 
         let adapter = if let Some(adapter_index) = find_adapter(
             app_settings.adapter_index,
-            &app_settings.adapter_type,
+            app_settings.adapter_type,
             adapters.as_slice(),
         ) {
             engine_create_info.adapter_index.replace(adapter_index);
@@ -383,8 +386,9 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
                 EngineFactory::OpenGL(engine_factory) => {
                     if let Some(window) = window {
                         if app_settings.non_separable_progs {
-                            engine_create_info.features.separable_programs =
-                                DeviceFeatureState::Disabled;
+                            engine_create_info
+                                .features
+                                .set_separable_programs(DeviceFeatureState::Disabled);
                         }
 
                         if engine_create_info.num_deferred_contexts != 0 {
@@ -532,8 +536,8 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
         let display_modes_strings = display_modes
             .iter()
             .map(|display_mode: &DisplayModeAttribs| {
-                let refresh_rate = *display_mode.refresh_rate_numerator() as f32
-                    / *display_mode.refresh_rate_denominator() as f32;
+                let refresh_rate = display_mode.refresh_rate_numerator() as f32
+                    / display_mode.refresh_rate_denominator() as f32;
 
                 format!(
                     "{}x{}@{refresh_rate} Hz{}",

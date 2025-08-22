@@ -15,7 +15,7 @@ pub struct EngineCreateInfo {
     pub adapter_index: Option<usize>,
     pub graphics_api_version: Version,
 
-    pub immediate_context_info: Vec<diligent_sys::ImmediateContextCreateInfo>,
+    pub immediate_context_info: Vec<diligent_sys::ImmediateContextCreateInfo>, // TODO
 
     pub num_deferred_contexts: usize,
 
@@ -71,7 +71,7 @@ impl From<&EngineCreateInfo> for diligent_sys::EngineCreateInfo {
             pImmediateContextInfo: std::ptr::null(),
             NumImmediateContexts: value.immediate_context_info.len() as u32,
             NumDeferredContexts: value.num_deferred_contexts as u32,
-            Features: (&value.features).into(),
+            Features: value.features.0,
             EnableValidation: value.enable_validation,
             ValidationFlags: value.validation_flags,
             pRawMemAllocator: std::ptr::null_mut(),
@@ -184,7 +184,7 @@ impl EngineFactory {
         }
     }
 
-    pub fn enumerate_adapters(&self, version: &Version) -> Vec<GraphicsAdapterInfo> {
+    pub fn enumerate_adapters(&self, version: Version) -> Vec<GraphicsAdapterInfo> {
         let mut num_adapters: u32 = 0;
         let version = diligent_sys::Version {
             Major: version.major,
@@ -203,7 +203,7 @@ impl EngineFactory {
         );
 
         if num_adapters > 0 {
-            let mut adapters = Vec::with_capacity(num_adapters as usize);
+            let mut adapters: Vec<GraphicsAdapterInfo> = Vec::with_capacity(num_adapters as usize);
             // The second call of EnumerateAdapters gets a pointer to the adapters
             unsafe_member_call!(
                 self,
@@ -216,12 +216,9 @@ impl EngineFactory {
 
             unsafe {
                 adapters.set_len(num_adapters as usize);
-            }
+            };
 
             adapters
-                .iter()
-                .map(|adapter: &diligent_sys::GraphicsAdapterInfo| adapter.into())
-                .collect()
         } else {
             Vec::new()
         }

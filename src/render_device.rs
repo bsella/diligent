@@ -37,32 +37,49 @@ use crate::{
     sampler::{Sampler, SamplerDesc},
     shader::{Shader, ShaderCreateInfo, ShaderCreateInfoWrapper},
     shader_binding_table::{ShaderBindingTable, ShaderBindingTableDesc},
-    texture::{Texture, TextureDesc, TextureSubResource},
+    texture::{Texture, TextureDesc, TextureDimension, TextureSubResource},
     tlas::{TopLevelAS, TopLevelASDesc},
 };
 
-pub struct RenderDeviceInfo {
-    device_type: RenderDeviceType,
-    api_version: Version,
-
-    features: DeviceFeatures,
-    // TODO
-    //NDCAttribs NDC DEFAULT_INITIALIZER({});
-    //RenderDeviceShaderVersionInfo MaxShaderVersion DEFAULT_INITIALIZER({});
-}
-
+#[repr(transparent)]
+pub struct RenderDeviceInfo(diligent_sys::RenderDeviceInfo);
 impl RenderDeviceInfo {
     pub fn device_type(&self) -> RenderDeviceType {
-        self.device_type
+        match self.0.Type {
+            #[cfg(feature = "d3d11")]
+            diligent_sys::RENDER_DEVICE_TYPE_D3D11 => RenderDeviceType::D3D11,
+            #[cfg(feature = "d3d12")]
+            diligent_sys::RENDER_DEVICE_TYPE_D3D12 => RenderDeviceType::D3D12,
+
+            #[cfg(feature = "opengl")]
+            diligent_sys::RENDER_DEVICE_TYPE_GL => RenderDeviceType::GL,
+
+            #[cfg(feature = "vulkan")]
+            diligent_sys::RENDER_DEVICE_TYPE_VULKAN => RenderDeviceType::VULKAN,
+
+            #[cfg(feature = "metal")]
+            diligent_sys::RENDER_DEVICE_TYPE_METAL => RenderDeviceType::METAL,
+
+            #[cfg(feature = "webgpu")]
+            diligent_sys::RENDER_DEVICE_TYPE_WEBGPU => RenderDeviceType::WEBGPU,
+
+            _ => panic!("Unknown RENDER_DEVICE_TYPE value"),
+        }
     }
 
-    pub fn api_version(&self) -> &Version {
-        &self.api_version
+    pub fn api_version(&self) -> Version {
+        Version {
+            major: self.0.APIVersion.Major,
+            minor: self.0.APIVersion.Minor,
+        }
     }
 
     pub fn features(&self) -> &DeviceFeatures {
-        &self.features
+        unsafe { std::mem::transmute(&self.0.Features) }
     }
+    // TODO
+    //NDCAttribs NDC DEFAULT_INITIALIZER({});
+    //RenderDeviceShaderVersionInfo MaxShaderVersion DEFAULT_INITIALIZER({});
 }
 
 const_assert_eq!(
@@ -750,38 +767,14 @@ impl RenderDevice {
         }
     }
 
-    pub fn get_adapter_info(&self) -> GraphicsAdapterInfo {
+    pub fn get_adapter_info(&self) -> &GraphicsAdapterInfo {
         let info = unsafe_member_call!(self, RenderDevice, GetAdapterInfo);
-        unsafe { info.as_ref().unwrap_unchecked() }.into()
+        unsafe { &*(info as *const GraphicsAdapterInfo) }
     }
 
-    pub fn get_device_info(&self) -> RenderDeviceInfo {
+    pub fn get_device_info(&self) -> &RenderDeviceInfo {
         let info = unsafe_member_call!(self, RenderDevice, GetDeviceInfo);
-        let render_device_info = unsafe { info.as_ref().unwrap_unchecked() };
-
-        RenderDeviceInfo {
-            device_type: match render_device_info.Type {
-                #[cfg(feature = "d3d11")]
-                diligent_sys::RENDER_DEVICE_TYPE_D3D11 => RenderDeviceType::D3D11,
-                #[cfg(feature = "d3d12")]
-                diligent_sys::RENDER_DEVICE_TYPE_D3D12 => RenderDeviceType::D3D12,
-                #[cfg(feature = "opengl")]
-                diligent_sys::RENDER_DEVICE_TYPE_GL => RenderDeviceType::GL,
-                //diligent_sys::RENDER_DEVICE_TYPE_GLES => RenderDeviceType::GLES,
-                #[cfg(feature = "vulkan")]
-                diligent_sys::RENDER_DEVICE_TYPE_VULKAN => RenderDeviceType::VULKAN,
-                #[cfg(feature = "metal")]
-                diligent_sys::RENDER_DEVICE_TYPE_METAL => RenderDeviceType::METAL,
-                #[cfg(feature = "webgpu")]
-                diligent_sys::RENDER_DEVICE_TYPE_WEBGPU => RenderDeviceType::WEBGPU,
-                _ => panic!(),
-            },
-            api_version: Version {
-                major: render_device_info.APIVersion.Major,
-                minor: render_device_info.APIVersion.Minor,
-            },
-            features: (&render_device_info.Features).into(),
-        }
+        unsafe { &*(info as *const RenderDeviceInfo) }
     }
 
     pub fn is_texture_format_supported(&self, format: TextureFormat) -> bool {
@@ -801,7 +794,7 @@ impl RenderDevice {
     pub fn get_sparse_texture_format_info(
         &self,
         format: TextureFormat,
-        dimension: diligent_sys::RESOURCE_DIMENSION,
+        dimension: TextureDimension,
         sample_count: u32,
     ) -> diligent_sys::SparseTextureFormatInfo {
         unsafe_member_call!(
@@ -809,7 +802,7 @@ impl RenderDevice {
             RenderDevice,
             GetSparseTextureFormatInfo,
             format.into(),
-            dimension,
+            dimension.into(),
             sample_count
         )
     }

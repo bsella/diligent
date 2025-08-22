@@ -283,7 +283,8 @@ impl EngineFactoryD3D12 {
             std::ptr::null_mut()
         );
 
-        let mut display_modes = Vec::with_capacity(num_display_modes as usize);
+        let mut display_modes: Vec<DisplayModeAttribs> =
+            Vec::with_capacity(num_display_modes as usize);
 
         unsafe_member_call!(
             self,
@@ -297,13 +298,13 @@ impl EngineFactoryD3D12 {
             output_id,
             format.into(),
             std::ptr::from_mut(&mut num_display_modes),
-            display_modes.as_mut_ptr()
+            display_modes.as_mut_ptr() as *mut diligent_sys::DisplayModeAttribs
         );
 
         unsafe {
             display_modes.set_len(num_display_modes as usize);
         }
 
-        Vec::from_iter(display_modes.iter().map(|display_mode| display_mode.into()))
+        display_modes
     }
 }
