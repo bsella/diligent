@@ -476,7 +476,7 @@ where
         display: display as _,
     };
 
-    let result = Application::new(settings, EngineCreateInfo::default(), Some(&native_window)).run(
+    let result = Application::new(settings, EngineCreateInfo::default(), Some(native_window)).run(
         X11EventHandler { display },
         |title| unsafe {
             let cstring = CString::new(title).unwrap();

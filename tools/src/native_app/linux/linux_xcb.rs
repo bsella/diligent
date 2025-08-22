@@ -304,7 +304,7 @@ where
         connection: connection.get_raw_conn() as _,
     };
 
-    let app = Application::new(settings, EngineCreateInfo::default(), Some(&native_window));
+    let app = Application::new(settings, EngineCreateInfo::default(), Some(native_window));
 
     connection.flush().unwrap();
 
