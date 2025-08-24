@@ -560,6 +560,16 @@ pub struct TraceRaysAttribs<'a> {
     dimension_z: u32,
 }
 
+#[derive(Builder)]
+pub struct TraceRaysIndirectAttribs<'a> {
+    sbt: &'a ShaderBindingTable,
+    attribs_buffer: &'a Buffer,
+    #[builder(default = ResourceStateTransitionMode::None)]
+    attribs_buffer_state_transition_mode: ResourceStateTransitionMode,
+    #[builder(default = 0)]
+    args_byte_offset: u64,
+}
+
 #[derive(Clone, Copy)]
 pub enum ResourceStateTransitionMode {
     None,
@@ -1080,13 +1090,18 @@ impl<'a> RayTracingPipelineToken<'a> {
         )
     }
 
-    // TODO
-    pub fn trace_rays_indirect(&self, attribs: &diligent_sys::TraceRaysIndirectAttribs) {
+    pub fn trace_rays_indirect(&self, attribs: &TraceRaysIndirectAttribs) {
+        let attribs = diligent_sys::TraceRaysIndirectAttribs {
+            pSBT: attribs.sbt.sys_ptr as _,
+            pAttribsBuffer: attribs.attribs_buffer.sys_ptr as _,
+            AttribsBufferStateTransitionMode: attribs.attribs_buffer_state_transition_mode.into(),
+            ArgsByteOffset: attribs.args_byte_offset,
+        };
         unsafe_member_call!(
             self.context,
             DeviceContext,
             TraceRaysIndirect,
-            std::ptr::from_ref(attribs)
+            std::ptr::from_ref(&attribs)
         )
     }
 }
