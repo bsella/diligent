@@ -415,7 +415,7 @@ impl SampleBase for Texturing {
 
             // Get projection matrix adjusted to the current screen orientation
             let proj = get_adjusted_projection_matrix(
-                &swap_chain_desc,
+                swap_chain_desc,
                 std::f32::consts::PI / 4.0,
                 0.1,
                 100.0,

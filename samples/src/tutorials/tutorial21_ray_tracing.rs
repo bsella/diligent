@@ -999,7 +999,7 @@ impl SampleBase for RayTracing {
 
         let swap_chain_desc = swap_chain.get_desc();
 
-        let image_blit_pso = create_graphics_pso(engine_factory, device, &swap_chain_desc);
+        let image_blit_pso = create_graphics_pso(engine_factory, device, swap_chain_desc);
         let image_blit_srb = image_blit_pso.create_shader_resource_binding(true).unwrap();
 
         let ray_tracing_pso = create_ray_tracing_pso(engine_factory, device);
