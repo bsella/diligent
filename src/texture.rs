@@ -275,16 +275,16 @@ impl Texture {
         }
     }
 
-    pub fn get_default_view(&self, texture_view_type: TextureViewType) -> Result<TextureView, ()> {
+    pub fn get_default_view(&self, texture_view_type: TextureViewType) -> Option<TextureView> {
         let texture_view_ptr =
             unsafe_member_call!(self, Texture, GetDefaultView, texture_view_type.into());
         if texture_view_ptr.is_null() {
-            Err(())
+            None
         } else {
             let texture_view = TextureView::new(texture_view_ptr);
             texture_view.add_ref();
 
-            Ok(texture_view)
+            Some(texture_view)
         }
     }
 

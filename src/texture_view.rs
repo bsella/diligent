@@ -203,7 +203,7 @@ impl TextureView {
         unsafe_member_call!(self, TextureView, SetSampler, sampler.sys_ptr as _);
     }
 
-    pub fn get_sampler(&self) -> Result<&Sampler, ()> {
+    pub fn get_sampler(&self) -> Option<&Sampler> {
         todo!()
     }
 

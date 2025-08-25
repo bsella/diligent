@@ -82,7 +82,7 @@ impl PipelineStateCache {
         ))
     }
 
-    pub fn get_data(&self) -> Result<DataBlob, ()> {
+    pub fn get_data(&self) -> Option<DataBlob> {
         let mut data_blob_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
@@ -92,9 +92,11 @@ impl PipelineStateCache {
         );
 
         if data_blob_ptr.is_null() {
-            Err(())
+            None
         } else {
-            Ok(DataBlob::new(data_blob_ptr))
+            let data = DataBlob::new(data_blob_ptr);
+            data.add_ref();
+            Some(data)
         }
     }
 }

@@ -142,15 +142,15 @@ impl Buffer {
         }
     }
 
-    pub fn get_default_view(&self, view_type: BufferViewType) -> Result<BufferView<'_>, ()> {
+    pub fn get_default_view(&self, view_type: BufferViewType) -> Option<BufferView<'_>> {
         let buffer_view_ptr = unsafe_member_call!(self, Buffer, GetDefaultView, view_type.into());
 
         if buffer_view_ptr.is_null() {
-            Err(())
+            None
         } else {
             let view = BufferView::new(buffer_view_ptr, self);
             view.add_ref();
-            Ok(view)
+            Some(view)
         }
     }
 
