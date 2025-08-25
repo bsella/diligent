@@ -3,6 +3,7 @@ use std::{ops::Deref, os::raw::c_void, path::Path};
 use static_assertions::const_assert_eq;
 
 use crate::{
+    APIInfo,
     data_blob::DataBlob,
     graphics_types::{DeviceFeatures, GraphicsAdapterInfo, Version},
     object::Object,
@@ -112,10 +113,9 @@ impl EngineFactory {
         ))
     }
 
-    pub fn get_api_info(&self) -> &diligent_sys::APIInfo {
-        // TODO
-        let api_info = unsafe_member_call!(self, EngineFactory, GetAPIInfo);
-        unsafe { api_info.as_ref().unwrap_unchecked() }
+    pub fn get_api_info(&self) -> &APIInfo {
+        let api_info_ptr = unsafe_member_call!(self, EngineFactory, GetAPIInfo);
+        unsafe { &*(api_info_ptr as *const APIInfo) }
     }
 
     pub fn create_default_shader_source_stream_factory(
