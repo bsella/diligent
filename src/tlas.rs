@@ -1,6 +1,7 @@
 use std::{
     ffi::{CStr, CString},
     marker::PhantomData,
+    mem::{transmute, transmute_copy},
     ops::Deref,
 };
 
@@ -51,6 +52,46 @@ const_assert_eq!(diligent_sys::RAYTRACING_INSTANCE_FLAG_LAST, 8);
 impl Default for RayTracingInstanceFlags {
     fn default() -> Self {
         RayTracingInstanceFlags::None
+    }
+}
+
+#[repr(transparent)]
+pub struct TLASInstanceDesc(diligent_sys::TLASInstanceDesc);
+impl TLASInstanceDesc {
+    pub fn contribution_to_hit_group_index(&self) -> u32 {
+        self.0.ContributionToHitGroupIndex
+    }
+    pub fn instance_index(&self) -> u32 {
+        self.0.InstanceIndex
+    }
+    pub fn blas(&self) -> &BottomLevelAS {
+        unsafe { &*(self.0.pBLAS as *const BottomLevelAS) }
+    }
+}
+
+#[repr(transparent)]
+pub struct TLASBuildInfo(diligent_sys::TLASBuildInfo);
+impl TLASBuildInfo {
+    pub fn instance_count(&self) -> u32 {
+        self.0.InstanceCount
+    }
+    pub fn hit_group_stride(&self) -> u32 {
+        self.0.HitGroupStride
+    }
+    pub fn binding_mode(&self) -> HitGroupBindingMode {
+        match self.0.BindingMode as _ {
+            diligent_sys::HIT_GROUP_BINDING_MODE_PER_GEOMETRY => HitGroupBindingMode::PerGeometry,
+            diligent_sys::HIT_GROUP_BINDING_MODE_PER_INSTANCE => HitGroupBindingMode::PerInstance,
+            diligent_sys::HIT_GROUP_BINDING_MODE_PER_TLAS => HitGroupBindingMode::PerTLAS,
+            diligent_sys::HIT_GROUP_BINDING_MODE_USER_DEFINED => HitGroupBindingMode::UserDefined,
+            _ => panic!("Unknown HIT_GROUP_BINDING_MODE value"),
+        }
+    }
+    pub fn first_contribution_to_hit_group_index(&self) -> u32 {
+        self.0.FirstContributionToHitGroupIndex
+    }
+    pub fn last_contribution_to_hit_group_index(&self) -> u32 {
+        self.0.LastContributionToHitGroupIndex
     }
 }
 
@@ -160,8 +201,22 @@ impl TopLevelAS {
         ))
     }
 
-    // TODO pub fn get_instance_desc(&self, name: impl AsRef<str>) -> TLASInstanceDesc {}
-    // TODO pub fn get_build_info(&self) -> TLASBuildInfo {}
+    pub fn get_instance_desc(&self, name: impl AsRef<str>) -> Option<TLASInstanceDesc> {
+        let name = CString::new(name.as_ref()).unwrap();
+        let desc = unsafe_member_call!(self, TopLevelAS, GetInstanceDesc, name.as_ptr());
+        if desc.InstanceIndex == diligent_sys::INVALID_INDEX
+            && desc.ContributionToHitGroupIndex == diligent_sys::INVALID_INDEX
+        {
+            None
+        } else {
+            Some(unsafe { transmute_copy(&desc) })
+        }
+    }
+
+    pub fn get_build_info(&self) -> TLASBuildInfo {
+        let desc = unsafe_member_call!(self, TopLevelAS, GetBuildInfo);
+        unsafe { transmute(desc) }
+    }
 
     pub fn get_scratch_buffer_sizes(&self) -> ScratchBufferSizes {
         let sbs = unsafe_member_call!(self, TopLevelAS, GetScratchBufferSizes);
