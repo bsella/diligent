@@ -1821,13 +1821,6 @@ impl DeviceContext {
         )
     }
 
-    pub fn set_user_data(&self, user_data: &Object) {
-        unsafe_member_call!(self, DeviceContext, SetUserData, user_data.sys_ptr)
-    }
-
-    // TODO
-    // pub fn get_user_data(&self);
-
     pub fn debug_group(
         &self,
         name: impl AsRef<str>,
