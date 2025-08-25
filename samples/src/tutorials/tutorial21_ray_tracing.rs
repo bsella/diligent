@@ -631,16 +631,21 @@ fn create_and_build_cube_blas(
 
     // Create & build bottom level acceleration structure
 
-    let geometry_name = "Cube";
+    let geometry_name = c"Cube";
+    let max_vertex_count = cube_geo_info.num_vertices;
+    let vertex_value_type = ValueType::Float32;
+    let vertex_component_count = 3;
+    let max_primitive_count = cube_geo_info.num_indices / 3;
+    let index_type = ValueType::Uint32;
 
     // Create BLAS
     let triangles = BLASTriangleDesc::builder()
         .geometry_name(geometry_name)
-        .max_vertex_count(cube_geo_info.num_vertices)
-        .vertex_value_type(ValueType::Float32)
-        .vertex_component_count(3)
-        .max_primitive_count(cube_geo_info.num_indices / 3)
-        .index_type(ValueType::Uint32)
+        .max_vertex_count(max_vertex_count)
+        .vertex_value_type(vertex_value_type)
+        .vertex_component_count(vertex_component_count)
+        .max_primitive_count(max_primitive_count)
+        .index_type(index_type)
         .build();
 
     let blas = device
@@ -648,7 +653,7 @@ fn create_and_build_cube_blas(
             &BottomLevelASDesc::builder()
                 .name("Cube BLAS")
                 .flags(RayTracingBuildAsFlags::PreferFastTrace)
-                .triangles([&triangles])
+                .triangles([triangles])
                 .build(),
         )
         .unwrap();
@@ -671,11 +676,11 @@ fn create_and_build_cube_blas(
         .vertex_buffer(&cube_vertex_buffer)
         .vertex_stride(std::mem::size_of::<float3>() as u32)
         .vertex_count(cube_geo_info.num_vertices)
-        .vertex_value_type(triangles.vertex_value_type)
-        .vertex_component_count(triangles.vertex_component_count)
+        .vertex_value_type(vertex_value_type)
+        .vertex_component_count(vertex_component_count)
         .index_buffer(&cube_index_buffer)
-        .primitive_count(triangles.max_primitive_count)
-        .index_type(triangles.index_type)
+        .primitive_count(max_primitive_count)
+        .index_type(index_type)
         .flags(RaytracingGeometryFlags::Opaque)
         .build();
 
@@ -683,7 +688,7 @@ fn create_and_build_cube_blas(
     {
         let attribs = BuildBLASAttribs::builder()
             .blas(&blas)
-            .triangle_data([triangle_data])
+            .triangle_data(&[triangle_data])
             // Scratch buffer will be used to store temporary data during BLAS build.
             // Previous content in the scratch buffer will be discarded.
             .scratch_buffer(&scratch_buffer)
@@ -765,7 +770,7 @@ fn create_and_build_procedural_blas(
     // Build BLAS
     {
         let box_data = BLASBuildBoundingBoxData::builder()
-            .geometry_name("Box")
+            .geometry_name(c"Box")
             .box_count(1)
             .box_buffer(&box_attribs_cb)
             .box_stride(std::mem::size_of_val(&BOXES[0]) as u32)
@@ -773,7 +778,7 @@ fn create_and_build_procedural_blas(
 
         let attribs = BuildBLASAttribs::builder()
             .blas(&procedural_blas)
-            .box_data([box_data])
+            .box_data(&[box_data])
             // Scratch buffer will be used to store temporary data during BLAS build.
             // Previous content in the scratch buffer will be discarded.
             .scratch_buffer(&scratch_buffer)
@@ -842,12 +847,12 @@ impl RayTracing {
 
         let instances = [
             TLASBuildInstanceData::builder()
-                .instance_name("Cube Instance 1")
+                .instance_name(c"Cube Instance 1")
                 .custom_id(0)
                 .blas(&self.cube_blas)
                 .mask(OPAQUE_GEOM_MASK as _)
                 .transform(
-                    *animate_opaque_cube(0)
+                    animate_opaque_cube(0)
                         .transpose()
                         .to_cols_array()
                         .split_first_chunk::<12>()
@@ -856,12 +861,12 @@ impl RayTracing {
                 )
                 .build(),
             TLASBuildInstanceData::builder()
-                .instance_name("Cube Instance 2")
+                .instance_name(c"Cube Instance 2")
                 .custom_id(1)
                 .blas(&self.cube_blas)
                 .mask(OPAQUE_GEOM_MASK as _)
                 .transform(
-                    *animate_opaque_cube(1)
+                    animate_opaque_cube(1)
                         .transpose()
                         .to_cols_array()
                         .split_first_chunk::<12>()
@@ -870,12 +875,12 @@ impl RayTracing {
                 )
                 .build(),
             TLASBuildInstanceData::builder()
-                .instance_name("Cube Instance 3")
+                .instance_name(c"Cube Instance 3")
                 .custom_id(2)
                 .blas(&self.cube_blas)
                 .mask(OPAQUE_GEOM_MASK as _)
                 .transform(
-                    *animate_opaque_cube(2)
+                    animate_opaque_cube(2)
                         .transpose()
                         .to_cols_array()
                         .split_first_chunk::<12>()
@@ -884,12 +889,12 @@ impl RayTracing {
                 )
                 .build(),
             TLASBuildInstanceData::builder()
-                .instance_name("Cube Instance 4")
+                .instance_name(c"Cube Instance 4")
                 .custom_id(3)
                 .blas(&self.cube_blas)
                 .mask(OPAQUE_GEOM_MASK as _)
                 .transform(
-                    *animate_opaque_cube(3)
+                    animate_opaque_cube(3)
                         .transpose()
                         .to_cols_array()
                         .split_first_chunk::<12>()
@@ -898,11 +903,11 @@ impl RayTracing {
                 )
                 .build(),
             TLASBuildInstanceData::builder()
-                .instance_name("Ground Instance")
+                .instance_name(c"Ground Instance")
                 .blas(&self.cube_blas)
                 .mask(OPAQUE_GEOM_MASK as _)
                 .transform(
-                    *(glam::Mat4::from_translation(glam::vec3(0.0, -6.0, 0.0))
+                    (glam::Mat4::from_translation(glam::vec3(0.0, -6.0, 0.0))
                         * glam::Mat4::from_scale(glam::vec3(100.0, 0.1, 100.0)))
                     .transpose()
                     .to_cols_array()
@@ -912,12 +917,12 @@ impl RayTracing {
                 )
                 .build(),
             TLASBuildInstanceData::builder()
-                .instance_name("Sphere Instance")
+                .instance_name(c"Sphere Instance")
                 .custom_id(0)
                 .blas(&self.procedural_blas)
                 .mask(OPAQUE_GEOM_MASK as _)
                 .transform(
-                    *glam::Mat4::from_translation(glam::vec3(-3.0, -3.0, -5.0))
+                    glam::Mat4::from_translation(glam::vec3(-3.0, -3.0, -5.0))
                         .transpose()
                         .to_cols_array()
                         .split_first_chunk::<12>()
@@ -926,11 +931,11 @@ impl RayTracing {
                 )
                 .build(),
             TLASBuildInstanceData::builder()
-                .instance_name("Glass Instance")
+                .instance_name(c"Glass Instance")
                 .blas(&self.cube_blas)
                 .mask(TRANSPARENT_GEOM_MASK as _)
                 .transform(
-                    *(glam::Mat4::from_translation(glam::vec3(3.0, -4.0, -5.0))
+                    (glam::Mat4::from_translation(glam::vec3(3.0, -4.0, -5.0))
                         * glam::Mat4::from_scale(glam::vec3(1.5, 1.5, 1.5))
                         * glam::Mat4::from_rotation_y(
                             self.animation_time as f32 * f32::consts::PI * 0.25,
@@ -955,7 +960,7 @@ impl RayTracing {
             // Previous content in the instance buffer will be discarded.
             .instance_buffer(&self.instance_buffer)
             // Instances will be converted to the format that is required by the graphics driver and copied to the instance buffer.
-            .instances(instances)
+            .instances(instances.as_slice())
             // Bind hit shaders per instance, it allows you to change the number of geometries in BLAS without invalidating the shader binding table.
             .binding_mode(HitGroupBindingMode::PerInstance)
             .hit_group_stride(HIT_GROUP_STRIDE)

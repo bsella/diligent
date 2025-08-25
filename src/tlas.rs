@@ -1,4 +1,8 @@
-use std::{ffi::CString, ops::Deref};
+use std::{
+    ffi::{CStr, CString},
+    marker::PhantomData,
+    ops::Deref,
+};
 
 use bitflags::bitflags;
 use bon::Builder;
@@ -50,60 +54,45 @@ impl Default for RayTracingInstanceFlags {
     }
 }
 
-#[derive(Builder)]
-pub struct TLASBuildInstanceData<'a> {
-    #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
-    instance_name: CString,
+#[repr(transparent)]
+pub struct TLASBuildInstanceData<'a>(diligent_sys::TLASBuildInstanceData, PhantomData<&'a ()>);
+#[bon::bon]
+impl TLASBuildInstanceData<'_> {
+    #[builder]
+    pub fn new(
+        instance_name: &CStr,
 
-    blas: &'a BottomLevelAS,
+        blas: &BottomLevelAS,
 
-    transform: [f32; 4 * 3],
+        transform: &[f32; 4 * 3],
 
-    #[builder(default = 0)]
-    custom_id: u32,
+        #[builder(default = 0)] custom_id: u32,
 
-    #[builder(default)]
-    flags: RayTracingInstanceFlags,
+        #[builder(default)] flags: RayTracingInstanceFlags,
 
-    #[builder(default = 0xff)]
-    mask: u8,
+        #[builder(default = 0xff)] mask: u8,
 
-    #[builder(default = diligent_sys::TLAS_INSTANCE_OFFSET_AUTO)]
-    contribution_to_hit_group_index: u32,
-}
-
-impl<'a> From<&TLASBuildInstanceData<'a>> for diligent_sys::TLASBuildInstanceData {
-    fn from(value: &TLASBuildInstanceData<'a>) -> Self {
-        Self {
-            InstanceName: value.instance_name.as_ptr(),
-            pBLAS: value.blas.sys_ptr as _,
-            Transform: diligent_sys::InstanceMatrix {
-                data: [
-                    [
-                        value.transform[0],
-                        value.transform[1],
-                        value.transform[2],
-                        value.transform[3],
+        #[builder(default = diligent_sys::TLAS_INSTANCE_OFFSET_AUTO)]
+        contribution_to_hit_group_index: u32,
+    ) -> Self {
+        Self(
+            diligent_sys::TLASBuildInstanceData {
+                InstanceName: instance_name.as_ptr(),
+                pBLAS: blas.sys_ptr as _,
+                Transform: diligent_sys::InstanceMatrix {
+                    data: [
+                        [transform[0], transform[1], transform[2], transform[3]],
+                        [transform[4], transform[5], transform[6], transform[7]],
+                        [transform[8], transform[9], transform[10], transform[11]],
                     ],
-                    [
-                        value.transform[4],
-                        value.transform[5],
-                        value.transform[6],
-                        value.transform[7],
-                    ],
-                    [
-                        value.transform[8],
-                        value.transform[9],
-                        value.transform[10],
-                        value.transform[11],
-                    ],
-                ],
+                },
+                CustomId: custom_id,
+                Flags: flags.bits(),
+                Mask: mask,
+                ContributionToHitGroupIndex: contribution_to_hit_group_index,
             },
-            CustomId: value.custom_id,
-            Flags: value.flags.bits(),
-            Mask: value.mask,
-            ContributionToHitGroupIndex: value.contribution_to_hit_group_index,
-        }
+            PhantomData,
+        )
     }
 }
 

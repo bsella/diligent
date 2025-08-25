@@ -1,7 +1,11 @@
-use std::{ffi::CString, ops::Deref};
+use std::{
+    ffi::{CStr, CString},
+    marker::PhantomData,
+    ops::Deref,
+};
 
 use bitflags::bitflags;
-use bon::Builder;
+use bon::{Builder, builder};
 use static_assertions::const_assert_eq;
 
 use crate::{
@@ -29,24 +33,44 @@ impl Default for RayTracingBuildAsFlags {
     }
 }
 
-#[derive(Builder)]
-pub struct BLASTriangleDesc {
-    #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
-    geometry_name: CString,
+#[repr(transparent)]
+pub struct BLASTriangleDesc<'a>(diligent_sys::BLASTriangleDesc, PhantomData<&'a ()>);
+#[bon::bon]
+impl BLASTriangleDesc<'_> {
+    #[builder]
+    pub fn new(
+        geometry_name: &CStr,
 
-    pub max_vertex_count: usize,
+        max_vertex_count: usize,
 
-    pub vertex_value_type: ValueType,
+        vertex_value_type: ValueType,
 
-    pub vertex_component_count: u8,
+        vertex_component_count: u8,
 
-    pub max_primitive_count: usize,
+        max_primitive_count: usize,
 
-    pub index_type: ValueType,
+        index_type: ValueType,
 
-    #[cfg(feature = "vulkan")]
-    #[builder(default = false)]
-    pub allows_transforms: bool,
+        #[cfg(feature = "vulkan")]
+        #[builder(default = false)]
+        allows_transforms: bool,
+    ) -> Self {
+        Self(
+            diligent_sys::BLASTriangleDesc {
+                GeometryName: geometry_name.as_ptr(),
+                MaxVertexCount: max_vertex_count as u32,
+                VertexValueType: vertex_value_type.into(),
+                VertexComponentCount: vertex_component_count,
+                MaxPrimitiveCount: max_primitive_count as u32,
+                IndexType: index_type.into(),
+                #[cfg(feature = "vulkan")]
+                AllowsTransforms: allows_transforms,
+                #[cfg(not(feature = "vulkan"))]
+                AllowsTransforms: false,
+            },
+            PhantomData,
+        )
+    }
 }
 
 #[derive(Builder)]
@@ -64,7 +88,7 @@ pub struct BottomLevelASDesc<'a> {
 
     #[builder(default = Vec::new())]
     #[builder(into)]
-    triangles: Vec<&'a BLASTriangleDesc>,
+    triangles: Vec<BLASTriangleDesc<'a>>,
 
     #[builder(default = Vec::new())]
     #[builder(into)]
@@ -81,7 +105,6 @@ pub struct BottomLevelASDesc<'a> {
 }
 
 pub(crate) struct BottomLevelASDescWrapper {
-    _triangles: Vec<diligent_sys::BLASTriangleDesc>,
     _boxes: Vec<diligent_sys::BLASBoundingBoxDesc>,
     desc: diligent_sys::BottomLevelASDesc,
 }
@@ -95,22 +118,7 @@ impl Deref for BottomLevelASDescWrapper {
 
 impl From<&BottomLevelASDesc<'_>> for BottomLevelASDescWrapper {
     fn from(value: &BottomLevelASDesc) -> Self {
-        let triangles = value
-            .triangles
-            .iter()
-            .map(|triangle| diligent_sys::BLASTriangleDesc {
-                #[cfg(feature = "vulkan")]
-                AllowsTransforms: triangle.allows_transforms,
-                #[cfg(not(feature = "vulkan"))]
-                AllowsTransforms: false,
-                GeometryName: triangle.geometry_name.as_ptr(),
-                IndexType: triangle.index_type.into(),
-                MaxPrimitiveCount: triangle.max_primitive_count as u32,
-                MaxVertexCount: triangle.max_vertex_count as u32,
-                VertexComponentCount: triangle.vertex_component_count,
-                VertexValueType: triangle.vertex_value_type.into(),
-            })
-            .collect::<Vec<_>>();
+        let triangles = &value.triangles;
 
         let boxes = value
             .boxes
@@ -131,7 +139,7 @@ impl From<&BottomLevelASDesc<'_>> for BottomLevelASDescWrapper {
             pTriangles: if triangles.is_empty() {
                 std::ptr::null()
             } else {
-                triangles.as_ptr()
+                triangles.as_ptr() as _
             },
             TriangleCount: triangles.len() as u32,
             pBoxes: if boxes.is_empty() {
@@ -145,7 +153,6 @@ impl From<&BottomLevelASDesc<'_>> for BottomLevelASDescWrapper {
             ImmediateContextMask: value.immediate_context_mask,
         };
         Self {
-            _triangles: triangles,
             _boxes: boxes,
             desc,
         }

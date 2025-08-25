@@ -1,7 +1,11 @@
-use std::{ffi::CString, marker::PhantomData, ops::Deref};
+use std::{
+    ffi::{CStr, CString},
+    marker::PhantomData,
+    ops::Deref,
+};
 
 use bitflags::bitflags;
-use bon::Builder;
+use bon::{Builder, builder};
 use static_assertions::const_assert_eq;
 
 use crate::{
@@ -455,131 +459,217 @@ impl Default for RaytracingGeometryFlags {
 
 const_assert_eq!(diligent_sys::RAYTRACING_GEOMETRY_FLAG_LAST, 2);
 
-#[derive(Builder)]
-pub struct BLASBuildBoundingBoxData<'a> {
-    #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
-    geometry_name: CString,
+#[repr(transparent)]
+pub struct BLASBuildBoundingBoxData<'a>(
+    diligent_sys::BLASBuildBoundingBoxData,
+    PhantomData<&'a ()>,
+);
+#[bon::bon]
+impl BLASBuildBoundingBoxData<'_> {
+    #[builder]
+    pub fn new(
+        geometry_name: &CStr,
 
-    box_buffer: &'a Buffer,
+        box_buffer: &Buffer,
 
-    #[builder(default = 0)]
-    box_offset: u64,
+        #[builder(default = 0)] box_offset: u64,
 
-    box_stride: u32,
+        box_stride: u32,
 
-    box_count: u32,
+        box_count: u32,
 
-    #[builder(default)]
-    flags: RaytracingGeometryFlags,
+        #[builder(default)] flags: RaytracingGeometryFlags,
+    ) -> Self {
+        Self(
+            diligent_sys::BLASBuildBoundingBoxData {
+                GeometryName: geometry_name.as_ptr(),
+                pBoxBuffer: box_buffer.sys_ptr as _,
+                BoxOffset: box_offset,
+                BoxStride: box_stride,
+                BoxCount: box_count,
+                Flags: flags.bits(),
+            },
+            PhantomData,
+        )
+    }
 }
 
-#[derive(Builder)]
-pub struct BLASBuildTriangleData<'a> {
-    #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
-    geometry_name: CString,
+#[repr(transparent)]
+pub struct BLASBuildTriangleData<'a>(diligent_sys::BLASBuildTriangleData, PhantomData<&'a ()>);
+#[bon::bon]
+impl BLASBuildTriangleData<'_> {
+    #[builder]
+    pub fn new(
+        geometry_name: &CStr,
 
-    vertex_buffer: &'a Buffer,
+        vertex_buffer: &Buffer,
 
-    #[builder(default = 0)]
-    vertex_offset: u64,
+        #[builder(default = 0)] vertex_offset: u64,
 
-    vertex_stride: u32,
+        vertex_stride: u32,
 
-    vertex_count: usize,
+        vertex_count: usize,
 
-    vertex_value_type: Option<ValueType>,
+        vertex_value_type: Option<ValueType>,
 
-    #[builder(default = 0)]
-    vertex_component_count: u8,
+        #[builder(default = 0)] vertex_component_count: u8,
 
-    primitive_count: usize,
+        primitive_count: usize,
 
-    index_buffer: Option<&'a Buffer>,
+        index_buffer: Option<&Buffer>,
 
-    #[builder(default = 0)]
-    index_offset: u64,
+        #[builder(default = 0)] index_offset: u64,
 
-    index_type: Option<ValueType>,
+        index_type: Option<ValueType>,
 
-    transform_buffer: Option<Buffer>,
+        transform_buffer: Option<Buffer>,
 
-    #[builder(default = 0)]
-    transform_buffer_offset: u64,
+        #[builder(default = 0)] transform_buffer_offset: u64,
 
-    #[builder(default)]
-    flags: RaytracingGeometryFlags,
+        #[builder(default)] flags: RaytracingGeometryFlags,
+    ) -> Self {
+        Self(
+            diligent_sys::BLASBuildTriangleData {
+                GeometryName: geometry_name.as_ptr(),
+                pVertexBuffer: vertex_buffer.sys_ptr as _,
+                VertexOffset: vertex_offset,
+                VertexStride: vertex_stride,
+                VertexCount: vertex_count as u32,
+                VertexValueType: vertex_value_type
+                    .map_or(diligent_sys::VT_UNDEFINED as _, |vt| vt.into()),
+                VertexComponentCount: vertex_component_count,
+                PrimitiveCount: primitive_count as u32,
+                pIndexBuffer: index_buffer.map_or(std::ptr::null_mut(), |ib| ib.sys_ptr as _),
+                IndexOffset: index_offset,
+                IndexType: index_type.map_or(diligent_sys::VT_UNDEFINED as _, |vt| vt.into()),
+                pTransformBuffer: transform_buffer
+                    .as_ref()
+                    .map_or(std::ptr::null_mut(), |tb| tb.sys_ptr as _),
+                TransformBufferOffset: transform_buffer_offset,
+                Flags: flags.bits(),
+            },
+            PhantomData,
+        )
+    }
 }
 
-#[derive(Builder)]
-pub struct BuildBLASAttribs<'a> {
-    blas: &'a BottomLevelAS,
+#[repr(transparent)]
+pub struct BuildBLASAttribs<'a>(diligent_sys::BuildBLASAttribs, PhantomData<&'a ()>);
+#[bon::bon]
+impl<'a> BuildBLASAttribs<'a> {
+    #[builder]
+    pub fn new(
+        blas: &'a BottomLevelAS,
 
-    #[builder(default = ResourceStateTransitionMode::None)]
-    blas_transition_mode: ResourceStateTransitionMode,
+        #[builder(default = ResourceStateTransitionMode::None)]
+        blas_transition_mode: ResourceStateTransitionMode,
 
-    #[builder(default = ResourceStateTransitionMode::None)]
-    geometry_transition_mode: ResourceStateTransitionMode,
+        #[builder(default = ResourceStateTransitionMode::None)]
+        geometry_transition_mode: ResourceStateTransitionMode,
 
-    #[builder(default)]
-    #[builder(into)]
-    triangle_data: Vec<BLASBuildTriangleData<'a>>,
+        #[builder(default)] triangle_data: &[BLASBuildTriangleData<'a>],
 
-    #[builder(default)]
-    #[builder(into)]
-    box_data: Vec<BLASBuildBoundingBoxData<'a>>,
+        #[builder(default)] box_data: &[BLASBuildBoundingBoxData<'a>],
 
-    scratch_buffer: &'a Buffer,
+        scratch_buffer: &'a Buffer,
 
-    #[builder(default = 0)]
-    scratch_buffer_offset: u64,
+        #[builder(default = 0)] scratch_buffer_offset: u64,
 
-    #[builder(default = ResourceStateTransitionMode::None)]
-    scratch_buffer_transition_mode: ResourceStateTransitionMode,
+        #[builder(default = ResourceStateTransitionMode::None)]
+        scratch_buffer_transition_mode: ResourceStateTransitionMode,
 
-    #[builder(default = false)]
-    update: bool,
+        #[builder(default = false)] update: bool,
+    ) -> Self {
+        Self(
+            diligent_sys::BuildBLASAttribs {
+                pBLAS: blas.sys_ptr as _,
+                BLASTransitionMode: blas_transition_mode.into(),
+                GeometryTransitionMode: geometry_transition_mode.into(),
+                pTriangleData: if triangle_data.is_empty() {
+                    std::ptr::null()
+                } else {
+                    triangle_data.as_ptr() as _
+                },
+                TriangleDataCount: triangle_data.len() as u32,
+                pBoxData: if box_data.is_empty() {
+                    std::ptr::null()
+                } else {
+                    box_data.as_ptr() as _
+                },
+                BoxDataCount: box_data.len() as u32,
+                pScratchBuffer: scratch_buffer.sys_ptr as _,
+                ScratchBufferOffset: scratch_buffer_offset,
+                ScratchBufferTransitionMode: scratch_buffer_transition_mode.into(),
+                Update: update,
+            },
+            PhantomData,
+        )
+    }
 }
 
-#[derive(Builder)]
-pub struct BuildTLASAttribs<'a> {
-    tlas: &'a TopLevelAS,
+#[repr(transparent)]
+pub struct BuildTLASAttribs<'a>(diligent_sys::BuildTLASAttribs, PhantomData<&'a ()>);
+#[bon::bon]
+impl<'a> BuildTLASAttribs<'a> {
+    #[builder]
+    pub fn new(
+        tlas: &TopLevelAS,
 
-    #[builder(default = ResourceStateTransitionMode::None)]
-    tlas_transition_mode: ResourceStateTransitionMode,
+        #[builder(default = ResourceStateTransitionMode::None)]
+        tlas_transition_mode: ResourceStateTransitionMode,
 
-    #[builder(default = ResourceStateTransitionMode::None)]
-    blas_transition_mode: ResourceStateTransitionMode,
+        #[builder(default = ResourceStateTransitionMode::None)]
+        blas_transition_mode: ResourceStateTransitionMode,
 
-    #[builder(into)]
-    instances: Vec<TLASBuildInstanceData<'a>>,
+        instances: &[TLASBuildInstanceData<'a>],
 
-    instance_buffer: &'a Buffer,
+        instance_buffer: &Buffer,
 
-    #[builder(default = 0)]
-    instance_buffer_offset: u64,
+        #[builder(default = 0)] instance_buffer_offset: u64,
 
-    #[builder(default = ResourceStateTransitionMode::None)]
-    instance_buffer_transition_mode: ResourceStateTransitionMode,
+        #[builder(default = ResourceStateTransitionMode::None)]
+        instance_buffer_transition_mode: ResourceStateTransitionMode,
 
-    #[builder(default = 1)]
-    hit_group_stride: u32,
+        #[builder(default = 1)] hit_group_stride: u32,
 
-    #[builder(default = 0)]
-    base_contribution_to_hit_group_index: u32,
+        #[builder(default = 0)] base_contribution_to_hit_group_index: u32,
 
-    #[builder(default = HitGroupBindingMode::PerGeometry)]
-    binding_mode: HitGroupBindingMode,
+        #[builder(default = HitGroupBindingMode::PerGeometry)] binding_mode: HitGroupBindingMode,
 
-    scratch_buffer: &'a Buffer,
+        scratch_buffer: &Buffer,
 
-    #[builder(default = 0)]
-    scratch_buffer_offset: u64,
+        #[builder(default = 0)] scratch_buffer_offset: u64,
 
-    #[builder(default = ResourceStateTransitionMode::None)]
-    scratch_buffer_transition_mode: ResourceStateTransitionMode,
+        #[builder(default = ResourceStateTransitionMode::None)]
+        scratch_buffer_transition_mode: ResourceStateTransitionMode,
 
-    #[builder(default = false)]
-    update: bool,
+        #[builder(default = false)] update: bool,
+    ) -> Self {
+        Self(
+            diligent_sys::BuildTLASAttribs {
+                pTLAS: tlas.sys_ptr as _,
+                TLASTransitionMode: tlas_transition_mode.into(),
+                BLASTransitionMode: blas_transition_mode.into(),
+                pInstances: if instances.is_empty() {
+                    std::ptr::null()
+                } else {
+                    instances.as_ptr() as _
+                },
+                InstanceCount: instances.len() as u32,
+                pInstanceBuffer: instance_buffer.sys_ptr as _,
+                InstanceBufferOffset: instance_buffer_offset,
+                InstanceBufferTransitionMode: instance_buffer_transition_mode.into(),
+                HitGroupStride: hit_group_stride,
+                BaseContributionToHitGroupIndex: base_contribution_to_hit_group_index,
+                BindingMode: binding_mode.into(),
+                pScratchBuffer: scratch_buffer.sys_ptr as _,
+                ScratchBufferOffset: scratch_buffer_offset,
+                ScratchBufferTransitionMode: scratch_buffer_transition_mode.into(),
+                Update: update,
+            },
+            PhantomData,
+        )
+    }
 }
 
 #[derive(Builder)]
@@ -593,28 +683,57 @@ pub struct UpdateIndirectRTBufferAttribs<'a> {
     transition_mode: ResourceStateTransitionMode,
 }
 
-#[derive(Builder)]
-pub struct TraceRaysAttribs<'a> {
-    sbt: &'a ShaderBindingTable,
+#[repr(transparent)]
+pub struct TraceRaysAttribs<'a>(diligent_sys::TraceRaysAttribs, PhantomData<&'a ()>);
+#[bon::bon]
+impl TraceRaysAttribs<'_> {
+    #[builder]
+    pub fn new(
+        sbt: &ShaderBindingTable,
 
-    #[builder(default = 1)]
-    dimension_x: u32,
+        #[builder(default = 1)] dimension_x: u32,
 
-    #[builder(default = 1)]
-    dimension_y: u32,
+        #[builder(default = 1)] dimension_y: u32,
 
-    #[builder(default = 1)]
-    dimension_z: u32,
+        #[builder(default = 1)] dimension_z: u32,
+    ) -> Self {
+        Self(
+            diligent_sys::TraceRaysAttribs {
+                pSBT: sbt.sys_ptr as _,
+                DimensionX: dimension_x,
+                DimensionY: dimension_y,
+                DimensionZ: dimension_z,
+            },
+            PhantomData,
+        )
+    }
 }
 
-#[derive(Builder)]
-pub struct TraceRaysIndirectAttribs<'a> {
-    sbt: &'a ShaderBindingTable,
-    attribs_buffer: &'a Buffer,
-    #[builder(default = ResourceStateTransitionMode::None)]
-    attribs_buffer_state_transition_mode: ResourceStateTransitionMode,
-    #[builder(default = 0)]
-    args_byte_offset: u64,
+#[repr(transparent)]
+pub struct TraceRaysIndirectAttribs<'a>(
+    diligent_sys::TraceRaysIndirectAttribs,
+    PhantomData<&'a ()>,
+);
+#[bon::bon]
+impl TraceRaysIndirectAttribs<'_> {
+    #[builder]
+    pub fn new(
+        sbt: &ShaderBindingTable,
+        attribs_buffer: &Buffer,
+        #[builder(default = ResourceStateTransitionMode::None)]
+        attribs_buffer_state_transition_mode: ResourceStateTransitionMode,
+        #[builder(default = 0)] args_byte_offset: u64,
+    ) -> Self {
+        Self(
+            diligent_sys::TraceRaysIndirectAttribs {
+                pSBT: sbt.sys_ptr as _,
+                pAttribsBuffer: attribs_buffer.sys_ptr as _,
+                AttribsBufferStateTransitionMode: attribs_buffer_state_transition_mode.into(),
+                ArgsByteOffset: args_byte_offset,
+            },
+            PhantomData,
+        )
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -1066,33 +1185,20 @@ pub struct RayTracingPipelineToken<'a> {
 
 impl<'a> RayTracingPipelineToken<'a> {
     pub fn trace_rays(&self, attribs: &TraceRaysAttribs) {
-        let attribs = diligent_sys::TraceRaysAttribs {
-            pSBT: attribs.sbt.sys_ptr as _,
-            DimensionX: attribs.dimension_x,
-            DimensionY: attribs.dimension_y,
-            DimensionZ: attribs.dimension_z,
-        };
-
         unsafe_member_call!(
             self.context,
             DeviceContext,
             TraceRays,
-            std::ptr::from_ref(&attribs)
+            std::ptr::from_ref(attribs) as _
         )
     }
 
     pub fn trace_rays_indirect(&self, attribs: &TraceRaysIndirectAttribs) {
-        let attribs = diligent_sys::TraceRaysIndirectAttribs {
-            pSBT: attribs.sbt.sys_ptr as _,
-            pAttribsBuffer: attribs.attribs_buffer.sys_ptr as _,
-            AttribsBufferStateTransitionMode: attribs.attribs_buffer_state_transition_mode.into(),
-            ArgsByteOffset: attribs.args_byte_offset,
-        };
         unsafe_member_call!(
             self.context,
             DeviceContext,
             TraceRaysIndirect,
-            std::ptr::from_ref(&attribs)
+            std::ptr::from_ref(attribs) as _
         )
     }
 }
@@ -1653,99 +1759,21 @@ impl DeviceContext {
     }
 
     pub fn build_blas(&self, attribs: &BuildBLASAttribs) {
-        let triangles = attribs
-            .triangle_data
-            .iter()
-            .map(|triangle| diligent_sys::BLASBuildTriangleData {
-                GeometryName: triangle.geometry_name.as_ptr(),
-                pVertexBuffer: triangle.vertex_buffer.sys_ptr as _,
-                VertexOffset: triangle.vertex_offset,
-                VertexStride: triangle.vertex_stride,
-                VertexCount: triangle.vertex_count as u32,
-                VertexValueType: triangle
-                    .vertex_value_type
-                    .map_or(diligent_sys::VT_UNDEFINED as _, |vt| vt.into()),
-                VertexComponentCount: triangle.vertex_component_count,
-                PrimitiveCount: triangle.primitive_count as u32,
-                pIndexBuffer: triangle
-                    .index_buffer
-                    .map_or(std::ptr::null_mut(), |ib| ib.sys_ptr as _),
-                IndexOffset: triangle.index_offset,
-                IndexType: triangle
-                    .index_type
-                    .map_or(diligent_sys::VT_UNDEFINED as _, |vt| vt.into()),
-                pTransformBuffer: triangle
-                    .transform_buffer
-                    .as_ref()
-                    .map_or(std::ptr::null_mut(), |tb| tb.sys_ptr as _),
-                TransformBufferOffset: triangle.transform_buffer_offset,
-                Flags: triangle.flags.bits(),
-            })
-            .collect::<Vec<_>>();
-
-        let boxes = attribs
-            .box_data
-            .iter()
-            .map(|box_data| diligent_sys::BLASBuildBoundingBoxData {
-                GeometryName: box_data.geometry_name.as_ptr(),
-                pBoxBuffer: box_data.box_buffer.sys_ptr as _,
-                BoxOffset: box_data.box_offset,
-                BoxStride: box_data.box_stride,
-                BoxCount: box_data.box_count,
-                Flags: box_data.flags.bits(),
-            })
-            .collect::<Vec<_>>();
-
-        let attribs = diligent_sys::BuildBLASAttribs {
-            pBLAS: attribs.blas.sys_ptr as _,
-            BLASTransitionMode: attribs.blas_transition_mode.into(),
-            GeometryTransitionMode: attribs.geometry_transition_mode.into(),
-            pTriangleData: if triangles.is_empty() {
-                std::ptr::null()
-            } else {
-                triangles.as_ptr()
-            },
-            TriangleDataCount: triangles.len() as u32,
-            pBoxData: if boxes.is_empty() {
-                std::ptr::null()
-            } else {
-                boxes.as_ptr()
-            },
-            BoxDataCount: boxes.len() as u32,
-            pScratchBuffer: attribs.scratch_buffer.sys_ptr as _,
-            ScratchBufferOffset: attribs.scratch_buffer_offset,
-            ScratchBufferTransitionMode: attribs.scratch_buffer_transition_mode.into(),
-            Update: attribs.update,
-        };
-
-        unsafe_member_call!(self, DeviceContext, BuildBLAS, std::ptr::from_ref(&attribs))
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            BuildBLAS,
+            std::ptr::from_ref(attribs) as _
+        )
     }
 
     pub fn build_tlas<'a>(&self, attribs: &BuildTLASAttribs<'a>) {
-        let instances = attribs
-            .instances
-            .iter()
-            .map(|instance| instance.into())
-            .collect::<Vec<_>>();
-        let attribs = diligent_sys::BuildTLASAttribs {
-            pTLAS: attribs.tlas.sys_ptr as _,
-            TLASTransitionMode: attribs.tlas_transition_mode.into(),
-            BLASTransitionMode: attribs.blas_transition_mode.into(),
-            pInstances: instances.as_ptr(),
-            InstanceCount: instances.len() as u32,
-            pInstanceBuffer: attribs.instance_buffer.sys_ptr as _,
-            InstanceBufferOffset: attribs.instance_buffer_offset,
-            InstanceBufferTransitionMode: attribs.instance_buffer_transition_mode.into(),
-            HitGroupStride: attribs.hit_group_stride,
-            BaseContributionToHitGroupIndex: attribs.base_contribution_to_hit_group_index,
-            BindingMode: attribs.binding_mode.into(),
-            pScratchBuffer: attribs.scratch_buffer.sys_ptr as _,
-            ScratchBufferOffset: attribs.scratch_buffer_offset,
-            ScratchBufferTransitionMode: attribs.scratch_buffer_transition_mode.into(),
-            Update: attribs.update,
-        };
-
-        unsafe_member_call!(self, DeviceContext, BuildTLAS, std::ptr::from_ref(&attribs))
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            BuildTLAS,
+            std::ptr::from_ref(attribs) as _
+        )
     }
 
     pub fn copy_blas(&self, attribs: &diligent_sys::CopyBLASAttribs) {
