@@ -2880,6 +2880,16 @@ pub enum StateTransitionType {
     End,
 }
 
+impl From<StateTransitionType> for diligent_sys::STATE_TRANSITION_TYPE {
+    fn from(value: StateTransitionType) -> Self {
+        (match value {
+            StateTransitionType::Immediate => diligent_sys::STATE_TRANSITION_TYPE_IMMEDIATE,
+            StateTransitionType::Begin => diligent_sys::STATE_TRANSITION_TYPE_BEGIN,
+            StateTransitionType::End => diligent_sys::STATE_TRANSITION_TYPE_END,
+        }) as _
+    }
+}
+
 bitflags! {
     #[derive(Clone,Copy)]
     pub struct AccessFlags : diligent_sys::ACCESS_FLAGS {

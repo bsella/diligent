@@ -1,4 +1,4 @@
-use std::{ffi::CString, ops::Deref};
+use std::{ffi::CString, marker::PhantomData, ops::Deref};
 
 use bitflags::bitflags;
 use bon::Builder;
@@ -62,152 +62,221 @@ impl Default for SetVertexBufferFlags {
     }
 }
 
-#[derive(Builder)]
-pub struct DrawAttribs {
-    num_vertices: u32,
+#[repr(transparent)]
+pub struct DrawAttribs(diligent_sys::DrawAttribs);
 
-    #[builder(default)]
-    flags: DrawFlags,
-
-    #[builder(default = 1)]
-    num_instances: u32,
-
-    #[builder(default = 0)]
-    start_vertex_location: u32,
-
-    #[builder(default = 0)]
-    first_instance_location: u32,
-}
-
-impl From<&DrawAttribs> for diligent_sys::DrawAttribs {
-    fn from(value: &DrawAttribs) -> Self {
-        diligent_sys::DrawAttribs {
-            NumVertices: value.num_vertices,
-            Flags: value.flags.bits(),
-            NumInstances: value.num_instances,
-            StartVertexLocation: value.start_vertex_location,
-            FirstInstanceLocation: value.first_instance_location,
-        }
+#[bon::bon]
+impl DrawAttribs {
+    #[builder]
+    pub fn new(
+        num_vertices: u32,
+        #[builder(default)] flags: DrawFlags,
+        #[builder(default = 1)] num_instances: u32,
+        #[builder(default = 0)] start_vertex_location: u32,
+        #[builder(default = 0)] first_instance_location: u32,
+    ) -> Self {
+        Self(diligent_sys::DrawAttribs {
+            NumVertices: num_vertices,
+            Flags: flags.bits(),
+            NumInstances: num_instances,
+            StartVertexLocation: start_vertex_location,
+            FirstInstanceLocation: first_instance_location,
+        })
     }
 }
 
-#[derive(Builder)]
-pub struct DrawIndexedAttribs {
-    num_indices: u32,
-    index_type: ValueType,
+#[repr(transparent)]
+pub struct DrawIndexedAttribs(diligent_sys::DrawIndexedAttribs);
 
-    #[builder(default)]
-    flags: DrawFlags,
+#[bon::bon]
+impl DrawIndexedAttribs {
+    #[builder]
+    pub fn new(
+        num_indices: u32,
+        index_type: ValueType,
 
-    #[builder(default = 1)]
-    num_instances: u32,
+        #[builder(default)] flags: DrawFlags,
 
-    #[builder(default = 0)]
-    first_index_location: u32,
+        #[builder(default = 1)] num_instances: u32,
 
-    #[builder(default = 0)]
-    base_vertex: u32,
+        #[builder(default = 0)] first_index_location: u32,
 
-    #[builder(default = 0)]
-    first_instance_location: u32,
+        #[builder(default = 0)] base_vertex: u32,
+
+        #[builder(default = 0)] first_instance_location: u32,
+    ) -> Self {
+        Self(diligent_sys::DrawIndexedAttribs {
+            NumIndices: num_indices,
+            IndexType: index_type.into(),
+            Flags: flags.bits(),
+            NumInstances: num_instances,
+            FirstIndexLocation: first_index_location,
+            BaseVertex: base_vertex,
+            FirstInstanceLocation: first_instance_location,
+        })
+    }
 }
 
-#[derive(Builder)]
-pub struct DrawIndirectAttribs<'a> {
-    attribs_buffer: &'a Buffer,
+#[repr(transparent)]
+pub struct DrawIndirectAttribs<'a>(diligent_sys::DrawIndirectAttribs, PhantomData<&'a ()>);
 
-    #[builder(default = 0)]
-    draw_args_offset: u64,
+#[bon::bon]
+impl DrawIndirectAttribs<'_> {
+    #[builder]
+    pub fn new(
+        attribs_buffer: &Buffer,
 
-    #[builder(default = DrawFlags::None)]
-    flags: DrawFlags,
+        #[builder(default = 0)] draw_args_offset: u64,
 
-    #[builder(default = 1)]
-    draw_count: u32,
+        #[builder(default = DrawFlags::None)] flags: DrawFlags,
 
-    #[builder(default = 16)]
-    draw_args_stride: u32,
+        #[builder(default = 1)] draw_count: u32,
 
-    #[builder(default = ResourceStateTransitionMode::None)]
-    attribs_buffer_state_transition_mode: ResourceStateTransitionMode,
+        #[builder(default = 16)] draw_args_stride: u32,
 
-    counter_buffer: Option<&'a Buffer>,
+        #[builder(default = ResourceStateTransitionMode::None)]
+        attribs_buffer_state_transition_mode: ResourceStateTransitionMode,
 
-    #[builder(default = 0)]
-    counter_offset: u64,
+        counter_buffer: Option<&Buffer>,
 
-    #[builder(default = ResourceStateTransitionMode::None)]
-    counter_buffer_state_transition_mode: ResourceStateTransitionMode,
+        #[builder(default = 0)] counter_offset: u64,
+
+        #[builder(default = ResourceStateTransitionMode::None)]
+        counter_buffer_state_transition_mode: ResourceStateTransitionMode,
+    ) -> Self {
+        Self(
+            diligent_sys::DrawIndirectAttribs {
+                pAttribsBuffer: attribs_buffer.sys_ptr as _,
+                DrawArgsOffset: draw_args_offset,
+                Flags: flags.bits(),
+                DrawCount: draw_count,
+                DrawArgsStride: draw_args_stride,
+                AttribsBufferStateTransitionMode: attribs_buffer_state_transition_mode.into(),
+                pCounterBuffer: counter_buffer
+                    .map_or(std::ptr::null_mut(), |buffer| buffer.sys_ptr as _),
+                CounterOffset: counter_offset,
+                CounterBufferStateTransitionMode: counter_buffer_state_transition_mode.into(),
+            },
+            PhantomData,
+        )
+    }
 }
 
-#[derive(Builder)]
-pub struct DrawIndexedIndirectAttribs<'a> {
-    index_type: ValueType,
+#[repr(transparent)]
+pub struct DrawIndexedIndirectAttribs<'a>(
+    diligent_sys::DrawIndexedIndirectAttribs,
+    PhantomData<&'a ()>,
+);
 
-    attribs_buffer: &'a Buffer,
+#[bon::bon]
+impl DrawIndexedIndirectAttribs<'_> {
+    #[builder]
+    pub fn new(
+        index_type: ValueType,
 
-    #[builder(default = 0)]
-    draw_args_offset: u64,
+        attribs_buffer: &Buffer,
 
-    #[builder(default = DrawFlags::None)]
-    flags: DrawFlags,
+        #[builder(default = 0)] draw_args_offset: u64,
 
-    #[builder(default = 1)]
-    draw_count: u32,
+        #[builder(default = DrawFlags::None)] flags: DrawFlags,
 
-    #[builder(default = 20)]
-    draw_args_stride: u32,
+        #[builder(default = 1)] draw_count: u32,
 
-    #[builder(default = ResourceStateTransitionMode::None)]
-    attribs_buffer_state_transition_mode: ResourceStateTransitionMode,
+        #[builder(default = 20)] draw_args_stride: u32,
 
-    counter_buffer: Option<&'a Buffer>,
+        #[builder(default = ResourceStateTransitionMode::None)]
+        attribs_buffer_state_transition_mode: ResourceStateTransitionMode,
 
-    #[builder(default = 0)]
-    counter_offset: u64,
+        counter_buffer: Option<&Buffer>,
 
-    #[builder(default = ResourceStateTransitionMode::None)]
-    counter_buffer_state_transition_mode: ResourceStateTransitionMode,
+        #[builder(default = 0)] counter_offset: u64,
+
+        #[builder(default = ResourceStateTransitionMode::None)]
+        counter_buffer_state_transition_mode: ResourceStateTransitionMode,
+    ) -> Self {
+        Self(
+            diligent_sys::DrawIndexedIndirectAttribs {
+                IndexType: index_type.into(),
+                pAttribsBuffer: attribs_buffer.sys_ptr as _,
+                DrawArgsOffset: draw_args_offset,
+                Flags: flags.bits(),
+                DrawCount: draw_count,
+                DrawArgsStride: draw_args_stride,
+                AttribsBufferStateTransitionMode: attribs_buffer_state_transition_mode.into(),
+                pCounterBuffer: counter_buffer
+                    .map_or(std::ptr::null_mut(), |buffer| buffer.sys_ptr as _),
+                CounterOffset: counter_offset,
+                CounterBufferStateTransitionMode: counter_buffer_state_transition_mode.into(),
+            },
+            PhantomData,
+        )
+    }
 }
 
-#[derive(Builder)]
-pub struct DrawMeshAttribs {
-    #[builder(default = 1)]
-    thread_group_count_x: u32,
+#[repr(transparent)]
+pub struct DrawMeshAttribs(diligent_sys::DrawMeshAttribs);
 
-    #[builder(default = 1)]
-    thread_group_count_y: u32,
+#[bon::bon]
+impl DrawMeshAttribs {
+    #[builder]
+    pub fn new(
+        #[builder(default = 1)] thread_group_count_x: u32,
 
-    #[builder(default = 1)]
-    thread_group_count_z: u32,
+        #[builder(default = 1)] thread_group_count_y: u32,
 
-    #[builder(default = DrawFlags::None)]
-    flags: DrawFlags,
+        #[builder(default = 1)] thread_group_count_z: u32,
+
+        #[builder(default = DrawFlags::None)] flags: DrawFlags,
+    ) -> Self {
+        Self(diligent_sys::DrawMeshAttribs {
+            ThreadGroupCountX: thread_group_count_x,
+            ThreadGroupCountY: thread_group_count_y,
+            ThreadGroupCountZ: thread_group_count_z,
+            Flags: flags.bits(),
+        })
+    }
 }
 
-#[derive(Builder)]
-pub struct DrawMeshIndirectAttribs<'a> {
-    attribs_buffer: &'a Buffer,
+#[repr(transparent)]
+pub struct DrawMeshIndirectAttribs<'a>(diligent_sys::DrawMeshIndirectAttribs, PhantomData<&'a ()>);
 
-    #[builder(default = 0)]
-    draw_args_offset: u64,
+#[bon::bon]
+impl DrawMeshIndirectAttribs<'_> {
+    #[builder]
+    pub fn new(
+        attribs_buffer: &Buffer,
 
-    #[builder(default = DrawFlags::None)]
-    flags: DrawFlags,
+        #[builder(default = 0)] draw_args_offset: u64,
 
-    #[builder(default = 1)]
-    command_count: u32,
+        #[builder(default = DrawFlags::None)] flags: DrawFlags,
 
-    #[builder(default = ResourceStateTransitionMode::None)]
-    attribs_buffer_state_transition_mode: ResourceStateTransitionMode,
+        #[builder(default = 1)] command_count: u32,
 
-    counter_buffer: Option<&'a Buffer>,
+        #[builder(default = ResourceStateTransitionMode::None)]
+        attribs_buffer_state_transition_mode: ResourceStateTransitionMode,
 
-    #[builder(default = 0)]
-    counter_offset: u64,
+        counter_buffer: Option<&Buffer>,
 
-    #[builder(default = ResourceStateTransitionMode::None)]
-    counter_buffer_state_transition_mode: ResourceStateTransitionMode,
+        #[builder(default = 0)] counter_offset: u64,
+
+        #[builder(default = ResourceStateTransitionMode::None)]
+        counter_buffer_state_transition_mode: ResourceStateTransitionMode,
+    ) -> Self {
+        Self(
+            diligent_sys::DrawMeshIndirectAttribs {
+                pAttribsBuffer: attribs_buffer.sys_ptr as _,
+                DrawArgsOffset: draw_args_offset,
+                Flags: flags.bits(),
+                CommandCount: command_count,
+                AttribsBufferStateTransitionMode: attribs_buffer_state_transition_mode.into(),
+                pCounterBuffer: counter_buffer
+                    .map_or(std::ptr::null_mut(), |buffer| buffer.sys_ptr as _),
+                CounterOffset: counter_offset,
+                CounterBufferStateTransitionMode: counter_buffer_state_transition_mode.into(),
+            },
+            PhantomData,
+        )
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -253,141 +322,119 @@ pub struct MultiDrawIndexedAttribs {
     first_instance_location: u32,
 }
 
-#[derive(Builder)]
-pub struct DispatchComputeAttribs {
-    #[builder(default = 1)]
-    thread_group_count_x: u32,
+#[repr(transparent)]
+pub struct DispatchComputeAttribs(diligent_sys::DispatchComputeAttribs);
+#[bon::bon]
+impl DispatchComputeAttribs {
+    #[builder]
+    pub fn new(
+        #[builder(default = 1)] thread_group_count_x: u32,
 
-    #[builder(default = 1)]
-    thread_group_count_y: u32,
+        #[builder(default = 1)] thread_group_count_y: u32,
 
-    #[builder(default = 1)]
-    thread_group_count_z: u32,
+        #[builder(default = 1)] thread_group_count_z: u32,
 
-    #[cfg(feature = "metal")]
-    #[builder(default = 0)]
-    mtl_thread_group_size_x: u32,
+        #[cfg(feature = "metal")]
+        #[builder(default = 0)]
+        mtl_thread_group_size_x: u32,
 
-    #[cfg(feature = "metal")]
-    #[builder(default = 0)]
-    mtl_thread_group_size_y: u32,
+        #[cfg(feature = "metal")]
+        #[builder(default = 0)]
+        mtl_thread_group_size_y: u32,
 
-    #[cfg(feature = "metal")]
-    #[builder(default = 0)]
-    mtl_thread_group_size_z: u32,
-}
-
-#[derive(Builder)]
-pub struct DispatchComputeIndirectAttribs<'a> {
-    attribs_buffer: &'a Buffer,
-
-    #[builder(default = ResourceStateTransitionMode::None)]
-    attribs_buffer_state_transition_mode: ResourceStateTransitionMode,
-
-    #[builder(default = 0)]
-    dispatch_args_byte_offset: u64,
-
-    #[cfg(feature = "metal")]
-    #[builder(default = 0)]
-    mtl_thread_group_size_x: u32,
-
-    #[cfg(feature = "metal")]
-    #[builder(default = 0)]
-    mtl_thread_group_size_y: u32,
-
-    #[cfg(feature = "metal")]
-    #[builder(default = 0)]
-    mtl_thread_group_size_z: u32,
-}
-
-#[derive(Builder)]
-pub struct DispatchTileAttribs {
-    #[builder(default = 1)]
-    threads_per_tile_x: u32,
-
-    #[builder(default = 1)]
-    threads_per_tile_y: u32,
-
-    #[builder(default = DrawFlags::None)]
-    flags: DrawFlags,
-}
-
-impl From<&DrawIndexedAttribs> for diligent_sys::DrawIndexedAttribs {
-    fn from(value: &DrawIndexedAttribs) -> Self {
-        Self {
-            BaseVertex: value.base_vertex,
-            FirstIndexLocation: value.first_index_location,
-            FirstInstanceLocation: value.first_instance_location,
-            Flags: value.flags.bits(),
-            IndexType: value.index_type.into(),
-            NumIndices: value.num_indices,
-            NumInstances: value.num_instances,
-        }
+        #[cfg(feature = "metal")]
+        #[builder(default = 0)]
+        mtl_thread_group_size_z: u32,
+    ) -> Self {
+        Self(diligent_sys::DispatchComputeAttribs {
+            ThreadGroupCountX: thread_group_count_x,
+            ThreadGroupCountY: thread_group_count_y,
+            ThreadGroupCountZ: thread_group_count_z,
+            #[cfg(feature = "metal")]
+            MtlThreadGroupSizeX: mtl_thread_group_size_x,
+            #[cfg(feature = "metal")]
+            MtlThreadGroupSizeY: mtl_thread_group_size_y,
+            #[cfg(feature = "metal")]
+            MtlThreadGroupSizeZ: mtl_thread_group_size_z,
+            #[cfg(not(feature = "metal"))]
+            MtlThreadGroupSizeX: 0,
+            #[cfg(not(feature = "metal"))]
+            MtlThreadGroupSizeY: 0,
+            #[cfg(not(feature = "metal"))]
+            MtlThreadGroupSizeZ: 0,
+        })
     }
 }
 
-impl<'a> From<&DrawIndirectAttribs<'a>> for diligent_sys::DrawIndirectAttribs {
-    fn from(value: &DrawIndirectAttribs) -> Self {
-        Self {
-            AttribsBufferStateTransitionMode: value.attribs_buffer_state_transition_mode.into(),
-            CounterBufferStateTransitionMode: value.counter_buffer_state_transition_mode.into(),
-            CounterOffset: value.counter_offset,
-            DrawArgsOffset: value.draw_args_offset,
-            DrawArgsStride: value.draw_args_stride,
-            DrawCount: value.draw_count,
-            Flags: value.flags.bits(),
-            pAttribsBuffer: value.attribs_buffer.sys_ptr as _,
-            pCounterBuffer: value
-                .counter_buffer
-                .map_or(std::ptr::null_mut(), |buffer| buffer.sys_ptr as _),
-        }
+#[repr(transparent)]
+pub struct DispatchComputeIndirectAttribs<'a>(
+    diligent_sys::DispatchComputeIndirectAttribs,
+    PhantomData<&'a ()>,
+);
+
+#[bon::bon]
+impl DispatchComputeIndirectAttribs<'_> {
+    #[builder]
+    pub fn new(
+        attribs_buffer: &Buffer,
+
+        #[builder(default = ResourceStateTransitionMode::None)]
+        attribs_buffer_state_transition_mode: ResourceStateTransitionMode,
+
+        #[builder(default = 0)] dispatch_args_byte_offset: u64,
+
+        #[cfg(feature = "metal")]
+        #[builder(default = 0)]
+        mtl_thread_group_size_x: u32,
+
+        #[cfg(feature = "metal")]
+        #[builder(default = 0)]
+        mtl_thread_group_size_y: u32,
+
+        #[cfg(feature = "metal")]
+        #[builder(default = 0)]
+        mtl_thread_group_size_z: u32,
+    ) -> Self {
+        Self(
+            diligent_sys::DispatchComputeIndirectAttribs {
+                pAttribsBuffer: attribs_buffer.sys_ptr as _,
+                AttribsBufferStateTransitionMode: attribs_buffer_state_transition_mode.into(),
+                DispatchArgsByteOffset: dispatch_args_byte_offset,
+                #[cfg(feature = "metal")]
+                MtlThreadGroupSizeX: mtl_thread_group_size_x,
+                #[cfg(feature = "metal")]
+                MtlThreadGroupSizeY: mtl_thread_group_size_y,
+                #[cfg(feature = "metal")]
+                MtlThreadGroupSizeZ: mtl_thread_group_size_z,
+                #[cfg(not(feature = "metal"))]
+                MtlThreadGroupSizeX: 0,
+                #[cfg(not(feature = "metal"))]
+                MtlThreadGroupSizeY: 0,
+                #[cfg(not(feature = "metal"))]
+                MtlThreadGroupSizeZ: 0,
+            },
+            PhantomData,
+        )
     }
 }
 
-impl<'a> From<&DrawIndexedIndirectAttribs<'a>> for diligent_sys::DrawIndexedIndirectAttribs {
-    fn from(value: &DrawIndexedIndirectAttribs) -> Self {
-        Self {
-            IndexType: value.index_type.into(),
-            pAttribsBuffer: value.attribs_buffer.sys_ptr as _,
-            DrawArgsOffset: value.draw_args_offset,
-            Flags: value.flags.bits(),
-            DrawCount: value.draw_count,
-            DrawArgsStride: value.draw_args_stride,
-            AttribsBufferStateTransitionMode: value.attribs_buffer_state_transition_mode.into(),
-            pCounterBuffer: value
-                .counter_buffer
-                .map_or(std::ptr::null_mut(), |buffer| buffer.sys_ptr as _),
-            CounterOffset: value.counter_offset,
-            CounterBufferStateTransitionMode: value.counter_buffer_state_transition_mode.into(),
-        }
-    }
-}
+#[repr(transparent)]
+pub struct DispatchTileAttribs(diligent_sys::DispatchTileAttribs);
+#[bon::bon]
+impl DispatchTileAttribs {
+    #[builder]
+    pub fn new(
+        #[builder(default = 1)] threads_per_tile_x: u32,
 
-impl From<&DrawMeshAttribs> for diligent_sys::DrawMeshAttribs {
-    fn from(value: &DrawMeshAttribs) -> Self {
-        Self {
-            ThreadGroupCountX: value.thread_group_count_x,
-            ThreadGroupCountY: value.thread_group_count_y,
-            ThreadGroupCountZ: value.thread_group_count_z,
-            Flags: value.flags.bits(),
-        }
-    }
-}
+        #[builder(default = 1)] threads_per_tile_y: u32,
 
-impl<'a> From<&DrawMeshIndirectAttribs<'a>> for diligent_sys::DrawMeshIndirectAttribs {
-    fn from(value: &DrawMeshIndirectAttribs) -> Self {
-        Self {
-            pAttribsBuffer: value.attribs_buffer.sys_ptr as _,
-            DrawArgsOffset: value.draw_args_offset,
-            Flags: value.flags.bits(),
-            CommandCount: value.command_count,
-            AttribsBufferStateTransitionMode: value.attribs_buffer_state_transition_mode.into(),
-            pCounterBuffer: value
-                .counter_buffer
-                .map_or(std::ptr::null_mut(), |buffer| buffer.sys_ptr as _),
-            CounterOffset: value.counter_offset,
-            CounterBufferStateTransitionMode: value.counter_buffer_state_transition_mode.into(),
-        }
+        #[builder(default = DrawFlags::None)] flags: DrawFlags,
+    ) -> Self {
+        Self(diligent_sys::DispatchTileAttribs {
+            ThreadsPerTileX: threads_per_tile_x,
+            ThreadsPerTileY: threads_per_tile_y,
+            Flags: flags.bits(),
+        })
     }
 }
 
@@ -699,56 +746,47 @@ impl Default for StateTransitionFlags {
     }
 }
 
-#[derive(Builder)]
-#[builder(derive(Clone))]
-pub struct StateTransitionDesc<'a> {
-    resource: &'a DeviceObject,
+#[repr(transparent)]
+pub struct StateTransitionDesc<'a>(diligent_sys::StateTransitionDesc, PhantomData<&'a ()>);
+#[bon::bon]
+impl StateTransitionDesc<'_> {
+    #[builder(derive(Clone))]
+    pub fn new(
+        resource: &DeviceObject,
 
-    new_state: ResourceState,
+        new_state: ResourceState,
 
-    #[builder(default = 0)]
-    first_mip_level: u32,
+        #[builder(default = 0)] first_mip_level: u32,
 
-    #[builder(default = diligent_sys::REMAINING_MIP_LEVELS)]
-    mip_levels_count: u32,
+        #[builder(default = diligent_sys::REMAINING_MIP_LEVELS)] mip_levels_count: u32,
 
-    #[builder(default = 0)]
-    first_array_slice: u32,
+        #[builder(default = 0)] first_array_slice: u32,
 
-    #[builder(default = diligent_sys::REMAINING_ARRAY_SLICES)]
-    array_slice_count: u32,
+        #[builder(default = diligent_sys::REMAINING_ARRAY_SLICES)] array_slice_count: u32,
 
-    old_state: Option<ResourceState>,
+        old_state: Option<ResourceState>,
 
-    #[builder(default = StateTransitionType::Immediate)]
-    transition_type: StateTransitionType,
+        #[builder(default = StateTransitionType::Immediate)] transition_type: StateTransitionType,
 
-    #[builder(default)]
-    flags: StateTransitionFlags,
-}
-
-impl<'a> From<&StateTransitionDesc<'a>> for diligent_sys::StateTransitionDesc {
-    fn from(value: &StateTransitionDesc) -> Self {
-        diligent_sys::StateTransitionDesc {
-            pResource: value.resource.sys_ptr as _,
-            NewState: value.new_state.bits(),
-            OldState: value.old_state.as_ref().map_or(
-                diligent_sys::RESOURCE_STATE_UNKNOWN as diligent_sys::RESOURCE_STATE,
-                |state| state.bits(),
-            ),
-            FirstArraySlice: value.first_array_slice,
-            ArraySliceCount: value.array_slice_count,
-            FirstMipLevel: value.first_mip_level,
-            MipLevelsCount: value.mip_levels_count,
-            TransitionType: match value.transition_type {
-                StateTransitionType::Immediate => diligent_sys::STATE_TRANSITION_TYPE_IMMEDIATE,
-                StateTransitionType::Begin => diligent_sys::STATE_TRANSITION_TYPE_BEGIN,
-                StateTransitionType::End => diligent_sys::STATE_TRANSITION_TYPE_END,
-            } as diligent_sys::STATE_TRANSITION_TYPE,
-            Flags: value.flags.bits(),
-            // TODO
-            pResourceBefore: std::ptr::null_mut(),
-        }
+        #[builder(default)] flags: StateTransitionFlags,
+    ) -> Self {
+        Self(
+            diligent_sys::StateTransitionDesc {
+                pResourceBefore: std::ptr::null_mut(), // TODO
+                pResource: resource.sys_ptr as _,
+                FirstMipLevel: first_mip_level,
+                MipLevelsCount: mip_levels_count,
+                FirstArraySlice: first_array_slice,
+                ArraySliceCount: array_slice_count,
+                OldState: old_state.map_or(diligent_sys::RESOURCE_STATE_UNKNOWN as _, |state| {
+                    state.bits()
+                }),
+                NewState: new_state.bits(),
+                TransitionType: transition_type.into(),
+                Flags: flags.bits(),
+            },
+            PhantomData,
+        )
     }
 }
 
@@ -873,42 +911,38 @@ pub struct GraphicsPipelineToken<'a> {
 
 impl<'a> GraphicsPipelineToken<'a> {
     pub fn draw(&self, attribs: &DrawAttribs) {
-        let attribs = attribs.into();
         unsafe_member_call!(
             self.context,
             DeviceContext,
             Draw,
-            std::ptr::from_ref(&attribs)
+            std::ptr::from_ref(attribs) as _
         )
     }
 
     pub fn draw_indexed(&self, attribs: &DrawIndexedAttribs) {
-        let attribs = attribs.into();
         unsafe_member_call!(
             self.context,
             DeviceContext,
             DrawIndexed,
-            std::ptr::from_ref(&attribs)
+            std::ptr::from_ref(attribs) as _
         )
     }
 
     pub fn draw_indirect(&self, attribs: &DrawIndirectAttribs) {
-        let attribs = attribs.into();
         unsafe_member_call!(
             self.context,
             DeviceContext,
             DrawIndirect,
-            std::ptr::from_ref(&attribs)
+            std::ptr::from_ref(attribs) as _
         )
     }
 
     pub fn draw_indexed_indirect(&self, attribs: &DrawIndexedIndirectAttribs) {
-        let attribs = attribs.into();
         unsafe_member_call!(
             self.context,
             DeviceContext,
             DrawIndexedIndirect,
-            std::ptr::from_ref(&attribs)
+            std::ptr::from_ref(attribs) as _
         )
     }
 
@@ -969,22 +1003,20 @@ pub struct MeshPipelineToken<'a> {
 
 impl<'a> MeshPipelineToken<'a> {
     pub fn draw_mesh(&self, attribs: &DrawMeshAttribs) {
-        let attribs = attribs.into();
         unsafe_member_call!(
             self.context,
             DeviceContext,
             DrawMesh,
-            std::ptr::from_ref(&attribs)
+            std::ptr::from_ref(attribs) as _
         )
     }
 
     pub fn draw_mesh_indirect(&self, attribs: &DrawMeshIndirectAttribs) {
-        let attribs = attribs.into();
         unsafe_member_call!(
             self.context,
             DeviceContext,
             DrawMeshIndirect,
-            std::ptr::from_ref(&attribs)
+            std::ptr::from_ref(attribs) as _
         )
     }
 }
@@ -995,56 +1027,20 @@ pub struct ComputePipelineToken<'a> {
 
 impl<'a> ComputePipelineToken<'a> {
     pub fn dispatch_compute(&self, attribs: &DispatchComputeAttribs) {
-        let attribs = diligent_sys::DispatchComputeAttribs {
-            ThreadGroupCountX: attribs.thread_group_count_x,
-            ThreadGroupCountY: attribs.thread_group_count_y,
-            ThreadGroupCountZ: attribs.thread_group_count_z,
-
-            #[cfg(feature = "metal")]
-            MtlThreadGroupSizeX: attribs.mtl_thread_group_size_x,
-            #[cfg(feature = "metal")]
-            MtlThreadGroupSizeY: attribs.mtl_thread_group_size_y,
-            #[cfg(feature = "metal")]
-            MtlThreadGroupSizeZ: attribs.mtl_thread_group_size_z,
-
-            #[cfg(not(feature = "metal"))]
-            MtlThreadGroupSizeX: 0,
-            #[cfg(not(feature = "metal"))]
-            MtlThreadGroupSizeY: 0,
-            #[cfg(not(feature = "metal"))]
-            MtlThreadGroupSizeZ: 0,
-        };
         unsafe_member_call!(
             self.context,
             DeviceContext,
             DispatchCompute,
-            std::ptr::from_ref(&attribs)
+            std::ptr::from_ref(attribs) as _
         )
     }
 
     pub fn dispatch_compute_indirect(&self, attribs: &DispatchComputeIndirectAttribs) {
-        let attribs = diligent_sys::DispatchComputeIndirectAttribs {
-            pAttribsBuffer: attribs.attribs_buffer.sys_ptr as _,
-            AttribsBufferStateTransitionMode: attribs.attribs_buffer_state_transition_mode.into(),
-            DispatchArgsByteOffset: attribs.dispatch_args_byte_offset,
-            #[cfg(feature = "metal")]
-            MtlThreadGroupSizeX: attribs.mtl_thread_group_size_x,
-            #[cfg(feature = "metal")]
-            MtlThreadGroupSizeY: attribs.mtl_thread_group_size_y,
-            #[cfg(feature = "metal")]
-            MtlThreadGroupSizeZ: attribs.mtl_thread_group_size_z,
-            #[cfg(not(feature = "metal"))]
-            MtlThreadGroupSizeX: 0,
-            #[cfg(not(feature = "metal"))]
-            MtlThreadGroupSizeY: 0,
-            #[cfg(not(feature = "metal"))]
-            MtlThreadGroupSizeZ: 0,
-        };
         unsafe_member_call!(
             self.context,
             DeviceContext,
             DispatchComputeIndirect,
-            std::ptr::from_ref(&attribs)
+            std::ptr::from_ref(attribs) as _
         )
     }
 }
@@ -1055,16 +1051,11 @@ pub struct TilePipelineToken<'a> {
 
 impl<'a> TilePipelineToken<'a> {
     pub fn dispatch_tile(&self, attribs: &DispatchTileAttribs) {
-        let attribs = diligent_sys::DispatchTileAttribs {
-            ThreadsPerTileX: attribs.threads_per_tile_x,
-            ThreadsPerTileY: attribs.threads_per_tile_y,
-            Flags: attribs.flags.bits(),
-        };
         unsafe_member_call!(
             self.context,
             DeviceContext,
             DispatchTile,
-            std::ptr::from_ref(&attribs)
+            std::ptr::from_ref(attribs) as _
         )
     }
 }
@@ -1635,18 +1626,13 @@ impl DeviceContext {
         unsafe_member_call!(self, DeviceContext, GetFrameNumber)
     }
 
-    pub fn transition_resource_states<'a>(&self, barriers: &[&StateTransitionDesc<'a>]) {
-        let barriers = barriers
-            .iter()
-            .map(|&state_transition_desc| state_transition_desc.into())
-            .collect::<Vec<_>>();
-
+    pub fn transition_resource_states<'a>(&self, barriers: &[StateTransitionDesc<'a>]) {
         unsafe_member_call!(
             self,
             DeviceContext,
             TransitionResourceStates,
             barriers.len() as u32,
-            barriers.as_ptr()
+            barriers.as_ptr() as _
         )
     }
 
@@ -1807,7 +1793,6 @@ impl DeviceContext {
         )
     }
 
-    #[allow(private_bounds)]
     pub fn set_user_data(&self, user_data: &Object) {
         unsafe_member_call!(self, DeviceContext, SetUserData, user_data.sys_ptr)
     }
@@ -1838,8 +1823,8 @@ impl DeviceContext {
     pub fn set_shading_rate(
         &self,
         base_rate: ShadingRate,
-        primitive_combiner: &ShadingRateCombiner,
-        texture_combiner: &ShadingRateCombiner,
+        primitive_combiner: ShadingRateCombiner,
+        texture_combiner: ShadingRateCombiner,
     ) {
         unsafe_member_call!(
             self,
