@@ -718,7 +718,7 @@ impl ImguiRenderer {
         device_context: &ImmediateDeviceContext,
         render_device: &RenderDevice,
     ) {
-        let _debug_group = device_context.debug_group("ImGui", None);
+        let _debug_group = device_context.debug_group(c"ImGui", None);
 
         let draw_data = self.context.render();
 

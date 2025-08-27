@@ -98,12 +98,12 @@ impl TLASBuildInfo {
 #[repr(transparent)]
 pub struct TLASBuildInstanceData<'a>(diligent_sys::TLASBuildInstanceData, PhantomData<&'a ()>);
 #[bon::bon]
-impl TLASBuildInstanceData<'_> {
+impl<'a> TLASBuildInstanceData<'a> {
     #[builder]
     pub fn new(
-        instance_name: &CStr,
+        instance_name: &'a CStr,
 
-        blas: &BottomLevelAS,
+        blas: &'a BottomLevelAS,
 
         transform: &[f32; 4 * 3],
 

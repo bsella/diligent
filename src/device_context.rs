@@ -1,8 +1,4 @@
-use std::{
-    ffi::{CStr, CString},
-    marker::PhantomData,
-    ops::Deref,
-};
+use std::{ffi::CStr, marker::PhantomData, ops::Deref};
 
 use bitflags::bitflags;
 use bon::{Builder, builder};
@@ -125,10 +121,10 @@ impl DrawIndexedAttribs {
 pub struct DrawIndirectAttribs<'a>(diligent_sys::DrawIndirectAttribs, PhantomData<&'a ()>);
 
 #[bon::bon]
-impl DrawIndirectAttribs<'_> {
+impl<'a> DrawIndirectAttribs<'a> {
     #[builder]
     pub fn new(
-        attribs_buffer: &Buffer,
+        attribs_buffer: &'a Buffer,
 
         #[builder(default = 0)] draw_args_offset: u64,
 
@@ -173,12 +169,12 @@ pub struct DrawIndexedIndirectAttribs<'a>(
 );
 
 #[bon::bon]
-impl DrawIndexedIndirectAttribs<'_> {
+impl<'a> DrawIndexedIndirectAttribs<'a> {
     #[builder]
     pub fn new(
         index_type: ValueType,
 
-        attribs_buffer: &Buffer,
+        attribs_buffer: &'a Buffer,
 
         #[builder(default = 0)] draw_args_offset: u64,
 
@@ -191,7 +187,7 @@ impl DrawIndexedIndirectAttribs<'_> {
         #[builder(default = ResourceStateTransitionMode::None)]
         attribs_buffer_state_transition_mode: ResourceStateTransitionMode,
 
-        counter_buffer: Option<&Buffer>,
+        counter_buffer: Option<&'a Buffer>,
 
         #[builder(default = 0)] counter_offset: u64,
 
@@ -245,10 +241,10 @@ impl DrawMeshAttribs {
 pub struct DrawMeshIndirectAttribs<'a>(diligent_sys::DrawMeshIndirectAttribs, PhantomData<&'a ()>);
 
 #[bon::bon]
-impl DrawMeshIndirectAttribs<'_> {
+impl<'a> DrawMeshIndirectAttribs<'a> {
     #[builder]
     pub fn new(
-        attribs_buffer: &Buffer,
+        attribs_buffer: &'a Buffer,
 
         #[builder(default = 0)] draw_args_offset: u64,
 
@@ -259,7 +255,7 @@ impl DrawMeshIndirectAttribs<'_> {
         #[builder(default = ResourceStateTransitionMode::None)]
         attribs_buffer_state_transition_mode: ResourceStateTransitionMode,
 
-        counter_buffer: Option<&Buffer>,
+        counter_buffer: Option<&'a Buffer>,
 
         #[builder(default = 0)] counter_offset: u64,
 
@@ -377,10 +373,10 @@ pub struct DispatchComputeIndirectAttribs<'a>(
 );
 
 #[bon::bon]
-impl DispatchComputeIndirectAttribs<'_> {
+impl<'a> DispatchComputeIndirectAttribs<'a> {
     #[builder]
     pub fn new(
-        attribs_buffer: &Buffer,
+        attribs_buffer: &'a Buffer,
 
         #[builder(default = ResourceStateTransitionMode::None)]
         attribs_buffer_state_transition_mode: ResourceStateTransitionMode,
@@ -465,12 +461,12 @@ pub struct BLASBuildBoundingBoxData<'a>(
     PhantomData<&'a ()>,
 );
 #[bon::bon]
-impl BLASBuildBoundingBoxData<'_> {
+impl<'a> BLASBuildBoundingBoxData<'a> {
     #[builder]
     pub fn new(
-        geometry_name: &CStr,
+        geometry_name: &'a CStr,
 
-        box_buffer: &Buffer,
+        box_buffer: &'a Buffer,
 
         #[builder(default = 0)] box_offset: u64,
 
@@ -497,12 +493,12 @@ impl BLASBuildBoundingBoxData<'_> {
 #[repr(transparent)]
 pub struct BLASBuildTriangleData<'a>(diligent_sys::BLASBuildTriangleData, PhantomData<&'a ()>);
 #[bon::bon]
-impl BLASBuildTriangleData<'_> {
+impl<'a> BLASBuildTriangleData<'a> {
     #[builder]
     pub fn new(
-        geometry_name: &CStr,
+        geometry_name: &'a CStr,
 
-        vertex_buffer: &Buffer,
+        vertex_buffer: &'a Buffer,
 
         #[builder(default = 0)] vertex_offset: u64,
 
@@ -516,13 +512,13 @@ impl BLASBuildTriangleData<'_> {
 
         primitive_count: usize,
 
-        index_buffer: Option<&Buffer>,
+        index_buffer: Option<&'a Buffer>,
 
         #[builder(default = 0)] index_offset: u64,
 
         index_type: Option<ValueType>,
 
-        transform_buffer: Option<Buffer>,
+        transform_buffer: Option<&'a Buffer>,
 
         #[builder(default = 0)] transform_buffer_offset: u64,
 
@@ -613,7 +609,7 @@ pub struct BuildTLASAttribs<'a>(diligent_sys::BuildTLASAttribs, PhantomData<&'a 
 impl<'a> BuildTLASAttribs<'a> {
     #[builder]
     pub fn new(
-        tlas: &TopLevelAS,
+        tlas: &'a TopLevelAS,
 
         #[builder(default = ResourceStateTransitionMode::None)]
         tlas_transition_mode: ResourceStateTransitionMode,
@@ -621,9 +617,9 @@ impl<'a> BuildTLASAttribs<'a> {
         #[builder(default = ResourceStateTransitionMode::None)]
         blas_transition_mode: ResourceStateTransitionMode,
 
-        instances: &[TLASBuildInstanceData<'a>],
+        instances: &'a [TLASBuildInstanceData<'a>],
 
-        instance_buffer: &Buffer,
+        instance_buffer: &'a Buffer,
 
         #[builder(default = 0)] instance_buffer_offset: u64,
 
@@ -636,7 +632,7 @@ impl<'a> BuildTLASAttribs<'a> {
 
         #[builder(default = HitGroupBindingMode::PerGeometry)] binding_mode: HitGroupBindingMode,
 
-        scratch_buffer: &Buffer,
+        scratch_buffer: &'a Buffer,
 
         #[builder(default = 0)] scratch_buffer_offset: u64,
 
@@ -686,10 +682,10 @@ pub struct UpdateIndirectRTBufferAttribs<'a> {
 #[repr(transparent)]
 pub struct TraceRaysAttribs<'a>(diligent_sys::TraceRaysAttribs, PhantomData<&'a ()>);
 #[bon::bon]
-impl TraceRaysAttribs<'_> {
+impl<'a> TraceRaysAttribs<'a> {
     #[builder]
     pub fn new(
-        sbt: &ShaderBindingTable,
+        sbt: &'a ShaderBindingTable,
 
         #[builder(default = 1)] dimension_x: u32,
 
@@ -715,11 +711,11 @@ pub struct TraceRaysIndirectAttribs<'a>(
     PhantomData<&'a ()>,
 );
 #[bon::bon]
-impl TraceRaysIndirectAttribs<'_> {
+impl<'a> TraceRaysIndirectAttribs<'a> {
     #[builder]
     pub fn new(
-        sbt: &ShaderBindingTable,
-        attribs_buffer: &Buffer,
+        sbt: &'a ShaderBindingTable,
+        attribs_buffer: &'a Buffer,
         #[builder(default = ResourceStateTransitionMode::None)]
         attribs_buffer_state_transition_mode: ResourceStateTransitionMode,
         #[builder(default = 0)] args_byte_offset: u64,
@@ -830,7 +826,7 @@ pub struct ScopedDebugGroup<'a> {
 }
 
 impl<'a> ScopedDebugGroup<'a> {
-    fn new(device_context: &'a DeviceContext, name: &CString, color: Option<[f32; 4]>) -> Self {
+    fn new(device_context: &'a DeviceContext, name: &CStr, color: Option<[f32; 4]>) -> Self {
         unsafe_member_call!(
             device_context,
             DeviceContext,
@@ -868,10 +864,10 @@ impl Default for StateTransitionFlags {
 #[repr(transparent)]
 pub struct StateTransitionDesc<'a>(diligent_sys::StateTransitionDesc, PhantomData<&'a ()>);
 #[bon::bon]
-impl StateTransitionDesc<'_> {
+impl<'a> StateTransitionDesc<'a> {
     #[builder(derive(Clone))]
     pub fn new(
-        resource: &DeviceObject,
+        resource: &'a DeviceObject,
 
         new_state: ResourceState,
 
@@ -1821,17 +1817,11 @@ impl DeviceContext {
         )
     }
 
-    pub fn debug_group(
-        &self,
-        name: impl AsRef<str>,
-        color: Option<[f32; 4]>,
-    ) -> ScopedDebugGroup<'_> {
-        let name = CString::new(name.as_ref()).unwrap();
-        ScopedDebugGroup::new(self, &name, color)
+    pub fn debug_group(&self, name: &CStr, color: Option<[f32; 4]>) -> ScopedDebugGroup<'_> {
+        ScopedDebugGroup::new(self, name, color)
     }
 
-    pub fn insert_debug_label(&self, label: impl AsRef<str>, color: Option<[f32; 4]>) {
-        let label = CString::new(label.as_ref()).unwrap();
+    pub fn insert_debug_label(&self, label: &CStr, color: Option<[f32; 4]>) {
         unsafe_member_call!(
             self,
             DeviceContext,
