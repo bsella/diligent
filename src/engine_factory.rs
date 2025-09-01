@@ -6,6 +6,7 @@ use crate::{
     APIInfo,
     data_blob::DataBlob,
     graphics_types::{DeviceFeatures, GraphicsAdapterInfo, Version},
+    memory_allocator::MemoryAllocator,
     object::Object,
     shader::ShaderSourceInputStreamFactory,
 };
@@ -27,7 +28,6 @@ pub struct EngineCreateInfo {
     pub validation_flags: diligent_sys::VALIDATION_FLAGS,
 
     // TODO
-    //struct IMemoryAllocator* pRawMemAllocator       DEFAULT_INITIALIZER(nullptr);
     //IThreadPool* pAsyncShaderCompilationThreadPool DEFAULT_INITIALIZER(nullptr);
     pub num_async_shader_compilation_threads: u32,
     // TODO
@@ -75,7 +75,6 @@ impl From<&EngineCreateInfo> for diligent_sys::EngineCreateInfo {
             Features: value.features.0,
             EnableValidation: value.enable_validation,
             ValidationFlags: value.validation_flags,
-            pRawMemAllocator: std::ptr::null_mut(),
             pAsyncShaderCompilationThreadPool: std::ptr::null_mut(),
             NumAsyncShaderCompilationThreads: value.num_async_shader_compilation_threads,
             Padding: 0,
@@ -86,7 +85,7 @@ impl From<&EngineCreateInfo> for diligent_sys::EngineCreateInfo {
 
 const_assert_eq!(
     std::mem::size_of::<diligent_sys::IEngineFactoryMethods>(),
-    7 * std::mem::size_of::<*const ()>()
+    8 * std::mem::size_of::<*const ()>()
 );
 
 #[repr(transparent)]
@@ -232,5 +231,14 @@ impl EngineFactory {
 
     pub fn set_break_on_error(&self, break_on_error: bool) {
         unsafe_member_call!(self, EngineFactory, SetBreakOnError, break_on_error)
+    }
+
+    pub fn set_memory_allocator(&self, allocator: &MemoryAllocator) {
+        unsafe_member_call!(
+            &self,
+            EngineFactory,
+            SetMemoryAllocator,
+            std::ptr::from_ref(allocator) as _
+        );
     }
 }
