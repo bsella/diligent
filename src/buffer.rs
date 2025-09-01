@@ -8,7 +8,7 @@ use crate::{
     buffer_view::{BufferView, BufferViewType},
     device_context::DeviceContext,
     device_object::DeviceObject,
-    graphics_types::{BindFlags, CpuAccessFlags, ResourceState, Usage},
+    graphics_types::{BindFlags, CpuAccessFlags, MemoryProperty, ResourceState, Usage},
 };
 
 #[derive(Clone, Copy)]
@@ -167,9 +167,13 @@ impl Buffer {
         ResourceState::from_bits_retain(state)
     }
 
-    pub fn get_memory_properties(&self) -> diligent_sys::MEMORY_PROPERTIES {
-        // TODO
-        unsafe_member_call!(self, Buffer, GetMemoryProperties)
+    pub fn get_memory_properties(&self) -> Option<MemoryProperty> {
+        let prop = unsafe_member_call!(self, Buffer, GetMemoryProperties);
+        match prop as _ {
+            diligent_sys::MEMORY_PROPERTY_UNKNOWN => None,
+            diligent_sys::MEMORY_PROPERTY_HOST_COHERENT => Some(MemoryProperty::HostCoherent),
+            _ => panic!("Unknown MEMORY_PROPERTY value"),
+        }
     }
 
     pub fn flush_mapped_range(&mut self, start_offset: u64, size: u64) {

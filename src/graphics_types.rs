@@ -2950,6 +2950,11 @@ bitflags! {
     }
 }
 
+#[derive(Clone, Copy)]
+pub enum MemoryProperty {
+    HostCoherent,
+}
+
 //pub struct ImmediateContextCreateInfo<'a> {
 //    name: &'a CStr,
 //    queue_id: u8,
