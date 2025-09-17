@@ -5,7 +5,7 @@ use bon::Builder;
 use static_assertions::const_assert_eq;
 
 use crate::{
-    buffer_view::{BufferView, BufferViewType},
+    buffer_view::{BufferView, BufferViewDesc, BufferViewType},
     device_context::DeviceContext,
     device_object::DeviceObject,
     graphics_types::{BindFlags, CpuAccessFlags, MemoryProperty, ResourceState, Usage},
@@ -122,16 +122,14 @@ impl Buffer {
         ))
     }
 
-    pub fn create_view(
-        &self,
-        view_desc: &diligent_sys::BufferViewDesc,
-    ) -> Result<BufferView<'_>, ()> {
+    pub fn create_view(&self, view_desc: &BufferViewDesc) -> Result<BufferView<'_>, ()> {
         let mut buffer_view_ptr = std::ptr::null_mut();
+        let view_desc = view_desc.into();
         unsafe_member_call!(
             self,
             Buffer,
             CreateView,
-            view_desc,
+            std::ptr::from_ref(&view_desc),
             std::ptr::addr_of_mut!(buffer_view_ptr)
         );
 
