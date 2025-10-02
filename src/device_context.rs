@@ -19,7 +19,7 @@ use crate::{
     pipeline_state::{
         ComputePipelineState, GraphicsPipelineState, RayTracingPipelineState, TilePipelineState,
     },
-    query::{GetSysQueryType, Query},
+    query::{DurationQueryHelper, GetSysQueryType, Query, ScopedQueryToken, TimeStampQueryToken},
     render_pass::RenderPass,
     shader_binding_table::ShaderBindingTable,
     shader_resource_binding::ShaderResourceBinding,
@@ -996,30 +996,6 @@ impl Drop for RenderPassToken<'_> {
     }
 }
 
-pub struct ScopedQueryToken<'a, QueryDataType: GetSysQueryType + Default> {
-    query: &'a Query<QueryDataType>,
-    context: &'a DeviceContext,
-}
-
-impl<'a, QueryDataType: GetSysQueryType + Default> ScopedQueryToken<'a, QueryDataType> {
-    pub fn new(context: &'a DeviceContext, query: &'a Query<QueryDataType>) -> Self {
-        unsafe_member_call!(context, DeviceContext, BeginQuery, query.sys_ptr as _);
-
-        Self { query, context }
-    }
-}
-
-impl<'a, QueryDataType: GetSysQueryType + Default> Drop for ScopedQueryToken<'a, QueryDataType> {
-    fn drop(&mut self) {
-        unsafe_member_call!(
-            self.context,
-            DeviceContext,
-            EndQuery,
-            self.query.sys_ptr as _
-        );
-    }
-}
-
 pub struct GraphicsPipelineToken<'a> {
     context: &'a DeviceContext,
 }
@@ -1903,11 +1879,18 @@ impl ImmediateDeviceContext {
         CommandQueue::new(self)
     }
 
-    pub fn begin_query<'a, QueryDataType: GetSysQueryType + Default>(
+    pub fn begin_query<'a, QueryDataType: GetSysQueryType>(
         &'a self,
         query: &'a Query<QueryDataType>,
     ) -> ScopedQueryToken<'a, QueryDataType> {
         ScopedQueryToken::<QueryDataType>::new(self, query)
+    }
+
+    pub fn query_timestamp<'a>(
+        &'a self,
+        query: &'a DurationQueryHelper,
+    ) -> TimeStampQueryToken<'a> {
+        TimeStampQueryToken::new(query, self)
     }
 
     pub fn bind_sparse_resource_memory(

@@ -1,4 +1,4 @@
-use std::{ffi::CString, ops::Deref, os::raw::c_void, str::FromStr};
+use std::{ffi::CStr, ops::Deref, os::raw::c_void};
 
 use static_assertions::const_assert_eq;
 
@@ -373,14 +373,13 @@ impl RenderDevice {
         }
     }
 
-    fn create_query<QueryDataType: GetSysQueryType + Default>(
+    fn create_query<QueryDataType: GetSysQueryType>(
         &self,
-        name: Option<impl AsRef<str>>,
+        name: Option<&CStr>,
     ) -> Result<Query<QueryDataType>, ()> {
-        let name = name.map(|name| CString::from_str(name.as_ref()).unwrap());
         let query_desc = diligent_sys::QueryDesc {
             _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                Name: name.as_ref().map_or(std::ptr::null(), |name| name.as_ptr()),
+                Name: name.map_or(std::ptr::null(), |name| name.as_ptr()),
             },
             Type: QueryDataType::QUERY_TYPE,
         };
@@ -404,35 +403,35 @@ impl RenderDevice {
 
     pub fn create_query_occlusion(
         &self,
-        name: Option<impl AsRef<str>>,
+        name: Option<&CStr>,
     ) -> Result<Query<QueryDataOcclusion>, ()> {
         self.create_query(name)
     }
 
     pub fn create_query_binary_occlusion(
         &self,
-        name: Option<impl AsRef<str>>,
+        name: Option<&CStr>,
     ) -> Result<Query<QueryDataBinaryOcclusion>, ()> {
         self.create_query(name)
     }
 
     pub fn create_query_timestamp(
         &self,
-        name: Option<impl AsRef<str>>,
+        name: Option<&CStr>,
     ) -> Result<Query<QueryDataTimestamp>, ()> {
         self.create_query(name)
     }
 
     pub fn create_query_pipeline_statistics(
         &self,
-        name: Option<impl AsRef<str>>,
+        name: Option<&CStr>,
     ) -> Result<Query<QueryDataPipelineStatistics>, ()> {
         self.create_query(name)
     }
 
     pub fn create_query_duration(
         &self,
-        name: Option<impl AsRef<str>>,
+        name: Option<&CStr>,
     ) -> Result<Query<QueryDataDuration>, ()> {
         self.create_query(name)
     }
