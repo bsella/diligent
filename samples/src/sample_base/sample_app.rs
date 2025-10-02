@@ -342,6 +342,10 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             .features
             .set_all(DeviceFeatureState::Optional);
 
+        engine_create_info
+            .features
+            .set_transfer_queue_timestamp_queries(DeviceFeatureState::Disabled);
+
         let (device, immediate_contexts, deferred_contexts, swap_chain, display_modes) =
             match &engine_factory {
                 #[cfg(feature = "vulkan")]
