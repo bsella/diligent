@@ -43,7 +43,7 @@ impl Default for MiscBufferFlags {
     }
 }
 
-#[derive(Builder)]
+#[derive(Builder, Clone)]
 #[builder(derive(Clone))]
 pub struct BufferDesc {
     #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]

@@ -1451,7 +1451,8 @@ impl TilePipelineState {
     }
 }
 
-#[derive(Builder)]
+#[derive(Builder, Clone)]
+#[builder(derive(Clone))]
 pub struct ComputePipelineStateCreateInfo<'a> {
     #[builder(setters(vis = ""))]
     pipeline_state_create_info: PipelineStateCreateInfo<'a>,
