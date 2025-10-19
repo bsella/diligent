@@ -1,4 +1,4 @@
-use diligent::{engine_factory::EngineCreateInfo, platforms::native_window::NativeWindow};
+use diligent::{platforms::native_window::NativeWindow, EngineCreateInfo};
 
 use xcb::{x, Xid};
 use xkbcommon::xkb;

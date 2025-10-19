@@ -1,29 +1,6 @@
 use std::{ops::Div, path::Path};
 
-use diligent::{
-    buffer::{Buffer, BufferDesc, BufferMode},
-    buffer_view::BufferViewType,
-    device_context::{
-        DeferredDeviceContext, DispatchComputeAttribs, DrawAttribs, ImmediateDeviceContext,
-        ResourceStateTransitionMode,
-    },
-    engine_factory::EngineFactory,
-    graphics_types::{
-        BindFlags, CpuAccessFlags, DeviceFeatureState, MapFlags, PrimitiveTopology,
-        SetShaderResourceFlags, ShaderType, ShaderTypes, TextureFormat, Usage,
-    },
-    graphics_utilities::linear_to_srgba,
-    pipeline_state::{
-        BlendFactor, BlendStateDesc, ComputePipelineState, CullMode, DepthStencilStateDesc,
-        GraphicsPipelineDesc, GraphicsPipelineRenderTargets, GraphicsPipelineState,
-        PipelineStateCreateInfo, RasterizerStateDesc, RenderTargetBlendDesc,
-    },
-    render_device::RenderDevice,
-    shader::{ShaderCompileFlags, ShaderCompiler, ShaderCreateInfo, ShaderLanguage, ShaderSource},
-    shader_resource_binding::ShaderResourceBinding,
-    shader_resource_variable::{ShaderResourceVariableDesc, ShaderResourceVariableType},
-    swap_chain::{SwapChain, SwapChainDesc},
-};
+use diligent::{graphics_utilities::linear_to_srgba, *};
 
 use diligent_samples::sample_base::{sample::SampleBase, sample_app::SampleApp};
 use diligent_tools::native_app;

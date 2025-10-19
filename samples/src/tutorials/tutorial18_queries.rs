@@ -1,28 +1,9 @@
 use std::cell::RefCell;
 
 use diligent::{
-    buffer::Buffer,
-    device_context::{
-        DeferredDeviceContext, DrawFlags, DrawIndexedAttribs, ImmediateDeviceContext,
-        ResourceStateTransitionMode, SetVertexBufferFlags,
-    },
-    engine_factory::EngineFactory,
     geometry_primitives::GeometryPrimitiveVertexFlags,
-    graphics_types::{
-        BindFlags, CpuAccessFlags, DeviceFeatureState, MapFlags, SetShaderResourceFlags,
-        ShaderType, ShaderTypes, TextureFormat, Usage, ValueType,
-    },
     graphics_utilities::{create_uniform_buffer, linear_to_srgba},
-    pipeline_state::GraphicsPipelineState,
-    query::{
-        DurationQueryHelper, Query, QueryDataDuration, QueryDataOcclusion,
-        QueryDataPipelineStatistics,
-    },
-    render_device::RenderDevice,
-    shader_resource_binding::ShaderResourceBinding,
-    swap_chain::SwapChain,
-    texture::{TextureDesc, TextureDimension, TextureSubResource},
-    texture_view::{TextureView, TextureViewType},
+    *,
 };
 use diligent_samples::{
     sample_base::{

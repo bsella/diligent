@@ -1,20 +1,6 @@
 use std::ops::Deref;
 
-use diligent::{
-    device_context::ResourceStateTransitionMode,
-    engine_factory::EngineCreateInfo,
-    graphics_types::{
-        AdapterType, DisplayModeAttribs, GraphicsAdapterInfo, RenderDeviceType, ScalingMode,
-        SurfaceTransform,
-    },
-    platforms::native_window::NativeWindow,
-    render_device::RenderDevice,
-    swap_chain::{SwapChain, SwapChainCreateInfo},
-    API_VERSION,
-};
-
-#[allow(unused_imports)]
-use diligent::graphics_types::{DeviceFeatureState, FullScreenModeDesc, TextureFormat, Version};
+use diligent::{platforms::native_window::NativeWindow, *};
 
 use diligent_tools::{
     imgui::{
@@ -90,7 +76,7 @@ enum EngineFactory {
 }
 
 impl Deref for EngineFactory {
-    type Target = diligent::engine_factory::EngineFactory;
+    type Target = diligent::EngineFactory;
     fn deref(&self) -> &Self::Target {
         match self {
             #[cfg(feature = "vulkan")]

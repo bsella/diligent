@@ -18,45 +18,74 @@ macro_rules! unsafe_member_call {
     );
 }
 
-mod device_object;
-mod object;
-
 pub mod geometry_primitives;
 
 pub mod graphics_utilities;
 
 pub mod platforms;
 
-pub mod blas;
-pub mod buffer;
-pub mod buffer_view;
-pub mod command_queue;
-pub mod data_blob;
-pub mod device_context;
-pub mod device_memory;
-pub mod engine_factory;
-pub mod fence;
-pub mod frame_buffer;
-pub mod graphics_types;
-pub mod input_layout;
-pub mod pipeline_resource_signature;
-pub mod pipeline_state;
-pub mod pipeline_state_cache;
-pub mod query;
-pub mod render_device;
-pub mod render_pass;
-pub mod resource_mapping;
-pub mod sampler;
-pub mod shader;
-pub mod shader_binding_table;
-pub mod shader_resource_binding;
-pub mod shader_resource_variable;
-pub mod swap_chain;
-pub mod texture;
-pub mod texture_view;
-pub mod tlas;
+mod device_object;
+mod object;
 
-pub mod memory_allocator;
+mod blas;
+mod buffer;
+mod buffer_view;
+mod command_queue;
+mod data_blob;
+mod device_context;
+mod device_memory;
+mod engine_factory;
+mod fence;
+mod frame_buffer;
+mod graphics_types;
+mod input_layout;
+mod memory_allocator;
+mod pipeline_resource_signature;
+mod pipeline_state;
+mod pipeline_state_cache;
+mod query;
+mod render_device;
+mod render_pass;
+mod resource_mapping;
+mod sampler;
+mod shader;
+mod shader_binding_table;
+mod shader_resource_binding;
+mod shader_resource_variable;
+mod swap_chain;
+mod texture;
+mod texture_view;
+mod tlas;
+
+pub use self::blas::*;
+pub use self::buffer::*;
+pub use self::buffer_view::*;
+pub use self::command_queue::*;
+pub use self::data_blob::*;
+pub use self::device_context::*;
+pub use self::device_memory::*;
+pub use self::engine_factory::*;
+pub use self::fence::*;
+pub use self::frame_buffer::*;
+pub use self::graphics_types::*;
+pub use self::input_layout::*;
+pub use self::memory_allocator::*;
+pub use self::pipeline_resource_signature::*;
+pub use self::pipeline_state::*;
+pub use self::pipeline_state_cache::*;
+pub use self::query::*;
+pub use self::render_device::*;
+pub use self::render_pass::*;
+pub use self::resource_mapping::*;
+pub use self::sampler::*;
+pub use self::shader::*;
+pub use self::shader_binding_table::*;
+pub use self::shader_resource_binding::*;
+pub use self::shader_resource_variable::*;
+pub use self::swap_chain::*;
+pub use self::texture::*;
+pub use self::texture_view::*;
+pub use self::tlas::*;
 
 #[cfg(feature = "vulkan")]
 pub mod vk;

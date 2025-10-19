@@ -1,32 +1,5 @@
 use bon::Builder;
-use diligent::{
-    buffer::{Buffer, BufferDesc},
-    device_context::{
-        DrawFlags, DrawIndexedAttribs, ImmediateDeviceContext, Rect, ResourceStateTransitionMode,
-        SetVertexBufferFlags, Viewport,
-    },
-    graphics_types::{
-        BindFlags, ComponentType, CpuAccessFlags, DrawCommandCapFlags, MapFlags, PrimitiveTopology,
-        RenderDeviceType, SetShaderResourceFlags, ShaderType, ShaderTypes, TextureAddressMode,
-        TextureFormat, Usage, ValueType,
-    },
-    input_layout::LayoutElement,
-    pipeline_resource_signature::ImmutableSamplerDesc,
-    pipeline_state::{
-        BlendFactor, BlendOperation, BlendStateDesc, ColorMask, CullMode, DepthStencilStateDesc,
-        GraphicsPipelineDesc, GraphicsPipelineRenderTargets, GraphicsPipelineState,
-        PipelineStateCreateInfo, RasterizerStateDesc, RenderTargetBlendDesc,
-    },
-    render_device::RenderDevice,
-    sampler::SamplerDesc,
-    shader::{ShaderCreateInfo, ShaderSource},
-    shader_resource_binding::ShaderResourceBinding,
-    shader_resource_variable::{
-        ShaderResourceVariable, ShaderResourceVariableDesc, ShaderResourceVariableType,
-    },
-    texture::{TextureDesc, TextureDimension, TextureSubResource},
-    texture_view::{TextureView, TextureViewType},
-};
+use diligent::*;
 
 use imgui::{
     internal::RawWrapper,

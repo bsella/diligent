@@ -1,17 +1,4 @@
-use diligent::{
-    device_context::{
-        DeferredDeviceContext, DrawAttribs, ImmediateDeviceContext, ResourceStateTransitionMode,
-    },
-    engine_factory::EngineFactory,
-    graphics_types::{PrimitiveTopology, ShaderType},
-    pipeline_state::{
-        CullMode, DepthStencilStateDesc, GraphicsPipelineDesc, GraphicsPipelineRenderTargets,
-        GraphicsPipelineState, PipelineStateCreateInfo, RasterizerStateDesc,
-    },
-    render_device::RenderDevice,
-    shader::{ShaderCreateInfo, ShaderLanguage, ShaderSource},
-    swap_chain::SwapChain,
-};
+use diligent::*;
 
 use diligent_samples::sample_base::{sample::SampleBase, sample_app::SampleApp};
 use diligent_tools::native_app;

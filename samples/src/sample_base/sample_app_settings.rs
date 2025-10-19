@@ -1,4 +1,4 @@
-use diligent::graphics_types::{get_prefered_device_type, AdapterType, RenderDeviceType};
+use diligent::{get_prefered_device_type, AdapterType, RenderDeviceType};
 
 use clap::{command, value_parser, Arg};
 use diligent_tools::native_app::app_settings::AppSettings;

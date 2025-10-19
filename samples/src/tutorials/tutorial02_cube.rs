@@ -1,28 +1,6 @@
 use std::path::Path;
 
-use diligent::{
-    buffer::{Buffer, BufferDesc},
-    device_context::{
-        DeferredDeviceContext, DrawFlags, DrawIndexedAttribs, ImmediateDeviceContext,
-        ResourceStateTransitionMode, SetVertexBufferFlags,
-    },
-    engine_factory::EngineFactory,
-    graphics_types::{
-        BindFlags, CpuAccessFlags, MapFlags, PrimitiveTopology, SetShaderResourceFlags, ShaderType,
-        TextureFormat, Usage, ValueType,
-    },
-    graphics_utilities::linear_to_srgba,
-    input_layout::LayoutElement,
-    pipeline_state::{
-        CullMode, DepthStencilStateDesc, GraphicsPipelineDesc, GraphicsPipelineRenderTargets,
-        GraphicsPipelineState, PipelineStateCreateInfo, RasterizerStateDesc,
-    },
-    render_device::RenderDevice,
-    shader::{ShaderCompileFlags, ShaderCreateInfo, ShaderLanguage, ShaderSource},
-    shader_resource_binding::ShaderResourceBinding,
-    shader_resource_variable::ShaderResourceVariableType,
-    swap_chain::SwapChain,
-};
+use diligent::{graphics_utilities::linear_to_srgba, *};
 
 use diligent_tools::native_app;
 

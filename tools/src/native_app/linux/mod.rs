@@ -1,4 +1,4 @@
-use diligent::graphics_types::RenderDeviceType;
+use diligent::RenderDeviceType;
 use std::io::Error;
 
 use super::{app::App, app_settings::AppSettings};

@@ -1,4 +1,4 @@
-use diligent::graphics_types::RenderDeviceType;
+use diligent::RenderDeviceType;
 
 pub trait AppSettings {
     fn get_render_device_type(&self) -> RenderDeviceType;

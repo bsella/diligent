@@ -1,12 +1,6 @@
 use std::ops::{Deref, DerefMut};
 
-use diligent::{
-    device_context::{DeferredDeviceContext, ImmediateDeviceContext},
-    engine_factory::EngineFactory,
-    graphics_types::SurfaceTransform,
-    render_device::RenderDevice,
-    swap_chain::{SwapChain, SwapChainDesc},
-};
+use diligent::*;
 
 #[cfg(feature = "vulkan")]
 use diligent::vk::engine_factory_vk::EngineVkCreateInfo;
@@ -91,7 +85,7 @@ pub enum EngineCreateInfo<'a> {
 }
 
 impl Deref for EngineCreateInfo<'_> {
-    type Target = diligent::engine_factory::EngineCreateInfo;
+    type Target = diligent::EngineCreateInfo;
     fn deref(&self) -> &Self::Target {
         match self {
             #[cfg(feature = "vulkan")]

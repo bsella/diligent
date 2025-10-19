@@ -1,6 +1,6 @@
 use core::f32;
 
-use diligent::graphics_types::SurfaceTransform;
+use diligent::SurfaceTransform;
 use diligent_tools::native_app::events::{Event, Key, MouseButton};
 use glam::Vec4Swizzles;
 

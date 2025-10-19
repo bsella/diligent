@@ -1,23 +1,7 @@
 use diligent::{
-    buffer::{Buffer, BufferDesc},
-    device_context::{
-        DeferredDeviceContext, DrawFlags, DrawIndexedAttribs, ImmediateDeviceContext,
-        ResourceStateTransitionMode, SetVertexBufferFlags,
-    },
-    engine_factory::EngineFactory,
     geometry_primitives::GeometryPrimitiveVertexFlags,
-    graphics_types::{
-        BindFlags, CpuAccessFlags, MapFlags, SetShaderResourceFlags, ShaderType, ShaderTypes,
-        TextureFormat, Usage, ValueType,
-    },
     graphics_utilities::{create_uniform_buffer, linear_to_srgba},
-    input_layout::{InputElementFrequency, LayoutElement},
-    pipeline_state::GraphicsPipelineState,
-    render_device::RenderDevice,
-    shader_resource_binding::ShaderResourceBinding,
-    swap_chain::SwapChain,
-    texture::{TextureDesc, TextureDimension, TextureSubResource},
-    texture_view::{TextureView, TextureViewType},
+    *,
 };
 
 use diligent_tools::native_app;

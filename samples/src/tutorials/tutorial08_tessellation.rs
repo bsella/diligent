@@ -1,30 +1,8 @@
 use std::path::Path;
 
 use diligent::{
-    buffer::Buffer,
-    device_context::{
-        DeferredDeviceContext, DrawAttribs, DrawFlags, ImmediateDeviceContext,
-        ResourceStateTransitionMode,
-    },
-    engine_factory::EngineFactory,
-    graphics_types::{
-        BindFlags, CpuAccessFlags, DeviceFeatureState, FilterType, MapFlags, PrimitiveTopology,
-        SetShaderResourceFlags, ShaderType, ShaderTypes, TextureAddressMode, TextureFormat, Usage,
-    },
     graphics_utilities::{create_uniform_buffer, linear_to_srgba},
-    pipeline_resource_signature::ImmutableSamplerDesc,
-    pipeline_state::{
-        CullMode, DepthStencilStateDesc, GraphicsPipelineDesc, GraphicsPipelineRenderTargets,
-        GraphicsPipelineState, PipelineStateCreateInfo, RasterizerStateDesc,
-    },
-    render_device::RenderDevice,
-    sampler::SamplerDesc,
-    shader::{ShaderCompileFlags, ShaderCreateInfo, ShaderLanguage, ShaderSource},
-    shader_resource_binding::ShaderResourceBinding,
-    shader_resource_variable::{ShaderResourceVariableDesc, ShaderResourceVariableType},
-    swap_chain::SwapChain,
-    texture::{TextureDesc, TextureDimension, TextureSubResource},
-    texture_view::{TextureView, TextureViewType},
+    *,
 };
 use diligent_samples::sample_base::{
     sample::{get_adjusted_projection_matrix, get_surface_pretransform_matrix, SampleBase},
