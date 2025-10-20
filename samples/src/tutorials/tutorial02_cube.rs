@@ -10,6 +10,7 @@ use diligent_samples::sample_base::{
 };
 
 struct Cube {
+    device: RenderDevice,
     immediate_context: ImmediateDeviceContext,
 
     convert_ps_output_to_gamma: bool,
@@ -24,13 +25,16 @@ struct Cube {
 }
 
 impl SampleBase for Cube {
+    fn get_render_device(&self) -> &RenderDevice {
+        &self.device
+    }
     fn get_immediate_context(&self) -> &ImmediateDeviceContext {
         &self.immediate_context
     }
 
     fn new(
         engine_factory: &EngineFactory,
-        device: &RenderDevice,
+        device: RenderDevice,
         immediate_contexts: Vec<ImmediateDeviceContext>,
         _deferred_contexts: Vec<DeferredDeviceContext>,
         swap_chain: &SwapChain,
@@ -243,6 +247,7 @@ impl SampleBase for Cube {
         };
 
         Cube {
+            device,
             convert_ps_output_to_gamma,
             pipeline_state,
             cube_vertex_buffer,

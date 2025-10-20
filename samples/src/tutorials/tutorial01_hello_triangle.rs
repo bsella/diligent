@@ -4,19 +4,24 @@ use diligent_samples::sample_base::{sample::SampleBase, sample_app::SampleApp};
 use diligent_tools::native_app;
 
 struct HelloTriangle {
+    device: RenderDevice,
     immediate_context: ImmediateDeviceContext,
 
     pipeline_state: GraphicsPipelineState,
 }
 
 impl SampleBase for HelloTriangle {
+    fn get_render_device(&self) -> &RenderDevice {
+        &self.device
+    }
+
     fn get_immediate_context(&self) -> &ImmediateDeviceContext {
         &self.immediate_context
     }
 
     fn new(
         _engine_factory: &EngineFactory,
-        device: &RenderDevice,
+        device: RenderDevice,
         immediate_contexts: Vec<ImmediateDeviceContext>,
         _deferred_contexts: Vec<DeferredDeviceContext>,
         swap_chain: &SwapChain,
@@ -141,6 +146,7 @@ void main(in PSInput PSIn, out PSOutput PSOut)
             .unwrap();
 
         HelloTriangle {
+            device,
             immediate_context: immediate_contexts.into_iter().nth(0).unwrap(),
             pipeline_state,
         }

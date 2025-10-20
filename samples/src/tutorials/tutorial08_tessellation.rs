@@ -11,6 +11,7 @@ use diligent_samples::sample_base::{
 use diligent_tools::native_app;
 
 struct Tessellation {
+    device: RenderDevice,
     immediate_context: ImmediateDeviceContext,
 
     main_pipeline: (GraphicsPipelineState, ShaderResourceBinding),
@@ -59,9 +60,13 @@ struct GlobalConstants {
 }
 
 impl SampleBase for Tessellation {
+    fn get_render_device(&self) -> &RenderDevice {
+        &self.device
+    }
+
     fn new(
         engine_factory: &EngineFactory,
-        device: &RenderDevice,
+        device: RenderDevice,
         immediate_contexts: Vec<ImmediateDeviceContext>,
         _deferred_contexts: Vec<DeferredDeviceContext>,
         swap_chain: &SwapChain,
@@ -151,7 +156,7 @@ impl SampleBase for Tessellation {
             );
 
         let shader_constants = create_uniform_buffer(
-            device,
+            &device,
             std::mem::size_of::<GlobalConstants>() as u64,
             "Global shader constants CB",
             Usage::Dynamic,
@@ -414,6 +419,7 @@ impl SampleBase for Tessellation {
         );
 
         Tessellation {
+            device,
             animate: true,
             wireframe: false,
             tess_density: 32.0,

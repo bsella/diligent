@@ -15,6 +15,7 @@ use diligent_samples::{
 use diligent_tools::native_app;
 
 struct Queries {
+    device: RenderDevice,
     immediate_context: ImmediateDeviceContext,
 
     textured_cube: TexturedCube,
@@ -39,13 +40,16 @@ struct Queries {
 }
 
 impl SampleBase for Queries {
+    fn get_render_device(&self) -> &RenderDevice {
+        &self.device
+    }
     fn get_immediate_context(&self) -> &ImmediateDeviceContext {
         &self.immediate_context
     }
 
     fn new(
         engine_factory: &EngineFactory,
-        device: &RenderDevice,
+        device: RenderDevice,
         immediate_contexts: Vec<ImmediateDeviceContext>,
         _deferred_contexts: Vec<DeferredDeviceContext>,
         swap_chain: &SwapChain,
@@ -67,7 +71,7 @@ impl SampleBase for Queries {
         // Create dynamic uniform buffer that will store our transformation matrix
         // Dynamic buffers can be frequently updated by the CPU
         let cube_vs_constants = create_uniform_buffer(
-            device,
+            &device,
             std::mem::size_of::<glam::Mat4>() as u64,
             "VS constants CB",
             Usage::Dynamic,
@@ -77,7 +81,7 @@ impl SampleBase for Queries {
         .unwrap();
 
         let cube_pso_ci = textured_cube::CreatePSOInfo::new(
-            device,
+            &device,
             swap_chain_desc.color_buffer_format(),
             swap_chain_desc.depth_buffer_format(),
             &shader_source_factory,
@@ -144,53 +148,63 @@ impl SampleBase for Queries {
         let device_info = device.get_device_info();
         let device_features = device_info.features();
 
+        let textured_cube = TexturedCube::new(
+            &device,
+            GeometryPrimitiveVertexFlags::PosTex,
+            BindFlags::VertexBuffer,
+            None,
+            BindFlags::IndexBuffer,
+            None,
+        )
+        .unwrap();
+
+        let query_pipeline_stats = if !matches!(
+            device_features.pipeline_statistics_queries(),
+            DeviceFeatureState::Disabled
+        ) {
+            device
+                .create_query_pipeline_statistics(Some(c"Pipeline statistics query"))
+                .ok()
+        } else {
+            None
+        };
+        let query_occlusion = if !matches!(
+            device_features.occlusion_queries(),
+            DeviceFeatureState::Disabled
+        ) {
+            device.create_query_occlusion(Some(c"Occlusion query")).ok()
+        } else {
+            None
+        };
+
+        let query_duration = if !matches!(
+            device_features.duration_queries(),
+            DeviceFeatureState::Disabled
+        ) {
+            device.create_query_duration(Some(c"Duration query")).ok()
+        } else {
+            None
+        };
+
+        let query_duration_from_timestamps = if !matches!(
+            device_features.timestamp_queries(),
+            DeviceFeatureState::Disabled
+        ) {
+            DurationQueryHelper::new(&device).ok()
+        } else {
+            None
+        };
+
         let sample = Queries {
-            textured_cube: TexturedCube::new(
-                device,
-                GeometryPrimitiveVertexFlags::PosTex,
-                BindFlags::VertexBuffer,
-                None,
-                BindFlags::IndexBuffer,
-                None,
-            )
-            .unwrap(),
+            device,
+            immediate_context: immediate_contexts.into_iter().nth(0).unwrap(),
 
-            query_pipeline_stats: if !matches!(
-                device_features.pipeline_statistics_queries(),
-                DeviceFeatureState::Disabled
-            ) {
-                device
-                    .create_query_pipeline_statistics(Some(c"Pipeline statistics query"))
-                    .ok()
-            } else {
-                None
-            },
+            textured_cube,
 
-            query_occlusion: if !matches!(
-                device_features.occlusion_queries(),
-                DeviceFeatureState::Disabled
-            ) {
-                device.create_query_occlusion(Some(c"Occlusion query")).ok()
-            } else {
-                None
-            },
-
-            query_duration: if !matches!(
-                device_features.duration_queries(),
-                DeviceFeatureState::Disabled
-            ) {
-                device.create_query_duration(Some(c"Duration query")).ok()
-            } else {
-                None
-            },
-            query_duration_from_timestamps: if !matches!(
-                device_features.timestamp_queries(),
-                DeviceFeatureState::Disabled
-            ) {
-                DurationQueryHelper::new(device).ok()
-            } else {
-                None
-            },
+            query_pipeline_stats,
+            query_occlusion,
+            query_duration,
+            query_duration_from_timestamps,
 
             pipeline_statistics: RefCell::new(None),
             occlusion: RefCell::new(None),
@@ -202,7 +216,6 @@ impl SampleBase for Queries {
             cube_srb,
             cube_pso,
             _cube_texture_srv: cube_texture_srv,
-            immediate_context: immediate_contexts.into_iter().nth(0).unwrap(),
             rotation_matrix: glam::Mat4::IDENTITY,
         };
 

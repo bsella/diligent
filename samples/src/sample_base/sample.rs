@@ -118,12 +118,13 @@ impl DerefMut for EngineCreateInfo<'_> {
 pub trait SampleBase {
     fn new(
         engine_factory: &EngineFactory,
-        render_device: &RenderDevice,
+        render_device: RenderDevice,
         immediate_contexts: Vec<ImmediateDeviceContext>,
         deferred_contexts: Vec<DeferredDeviceContext>,
         swap_chain: &SwapChain,
     ) -> Self;
 
+    fn get_render_device(&self) -> &RenderDevice;
     fn get_immediate_context(&self) -> &ImmediateDeviceContext;
 
     fn render(&self, _swap_chain: &SwapChain) {}
@@ -136,7 +137,7 @@ pub trait SampleBase {
 
     fn pre_window_resize(&mut self) {}
 
-    fn window_resize(&mut self, _device: &RenderDevice, _new_swap_chain: &SwapChainDesc) {}
+    fn window_resize(&mut self, _new_swap_chain: &SwapChainDesc) {}
 
     fn handle_event(&mut self, _event: Event) {}
 

@@ -10,6 +10,7 @@ use diligent_samples::sample_base::{
 };
 
 struct Texturing {
+    device: RenderDevice,
     immediate_context: ImmediateDeviceContext,
 
     convert_ps_output_to_gamma: bool,
@@ -26,13 +27,16 @@ struct Texturing {
 }
 
 impl SampleBase for Texturing {
+    fn get_render_device(&self) -> &RenderDevice {
+        &self.device
+    }
     fn get_immediate_context(&self) -> &ImmediateDeviceContext {
         &self.immediate_context
     }
 
     fn new(
         engine_factory: &EngineFactory,
-        device: &RenderDevice,
+        device: RenderDevice,
         immediate_contexts: Vec<ImmediateDeviceContext>,
         _deferred_contexts: Vec<DeferredDeviceContext>,
         swap_chain: &SwapChain,
@@ -328,6 +332,7 @@ impl SampleBase for Texturing {
             .set(&texture_srv, SetShaderResourceFlags::None);
 
         Texturing {
+            device,
             convert_ps_output_to_gamma,
             pipeline_state,
             cube_vertex_buffer,

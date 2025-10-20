@@ -24,6 +24,7 @@ struct Constants {
 }
 
 struct GeometryShader {
+    device: RenderDevice,
     immediate_context: ImmediateDeviceContext,
 
     textured_cube: TexturedCube,
@@ -43,6 +44,9 @@ struct GeometryShader {
 }
 
 impl SampleBase for GeometryShader {
+    fn get_render_device(&self) -> &RenderDevice {
+        &self.device
+    }
     fn get_immediate_context(&self) -> &ImmediateDeviceContext {
         &self.immediate_context
     }
@@ -57,7 +61,7 @@ impl SampleBase for GeometryShader {
 
     fn new(
         engine_factory: &EngineFactory,
-        device: &RenderDevice,
+        device: RenderDevice,
         immediate_contexts: Vec<ImmediateDeviceContext>,
         _deferred_contexts: Vec<DeferredDeviceContext>,
         swap_chain: &SwapChain,
@@ -215,7 +219,7 @@ impl SampleBase for GeometryShader {
 
         // Create dynamic uniform buffer that will store shader constants
         let shader_constants = create_uniform_buffer(
-            device,
+            &device,
             std::mem::size_of::<Constants>() as u64,
             "Shader constants CB",
             Usage::Dynamic,
@@ -279,7 +283,7 @@ impl SampleBase for GeometryShader {
             .set(&texture_srv, SetShaderResourceFlags::None);
 
         let textured_cube = TexturedCube::new(
-            device,
+            &device,
             GeometryPrimitiveVertexFlags::PosTex,
             BindFlags::VertexBuffer,
             None,
@@ -289,6 +293,7 @@ impl SampleBase for GeometryShader {
         .unwrap();
 
         GeometryShader {
+            device,
             convert_ps_output_to_gamma,
             pipeline_state: pso,
             immediate_context: immediate_contexts.into_iter().nth(0).unwrap(),

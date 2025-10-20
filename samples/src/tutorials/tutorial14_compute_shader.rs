@@ -345,6 +345,7 @@ fn create_constant_buffer(device: &RenderDevice) -> Buffer {
 }
 
 struct ComputeShader {
+    device: RenderDevice,
     immediate_context: ImmediateDeviceContext,
 
     render_particle_pso: GraphicsPipelineState,
@@ -378,13 +379,16 @@ struct ComputeShader {
 }
 
 impl SampleBase for ComputeShader {
+    fn get_render_device(&self) -> &RenderDevice {
+        &self.device
+    }
     fn get_immediate_context(&self) -> &ImmediateDeviceContext {
         &self.immediate_context
     }
 
     fn new(
         engine_factory: &EngineFactory,
-        device: &RenderDevice,
+        device: RenderDevice,
         immediate_contexts: Vec<ImmediateDeviceContext>,
         _deferred_contexts: Vec<DeferredDeviceContext>,
         swap_chain: &SwapChain,
@@ -404,7 +408,7 @@ impl SampleBase for ComputeShader {
 
         let render_particle_pso = create_render_particle_pso(
             engine_factory,
-            device,
+            &device,
             swap_chain_desc,
             convert_ps_output_to_gamma,
         );
@@ -416,9 +420,9 @@ impl SampleBase for ComputeShader {
             move_particles_pso,
             collide_particles_pso,
             update_particle_speed_pso,
-        ) = create_update_particle_pso(engine_factory, device, thread_group_size);
+        ) = create_update_particle_pso(engine_factory, &device, thread_group_size);
 
-        let constants = create_constant_buffer(device);
+        let constants = create_constant_buffer(&device);
 
         reset_particle_lists_pso
             .get_static_variable_by_name(ShaderType::Compute, "Constants")
@@ -444,7 +448,7 @@ impl SampleBase for ComputeShader {
         let num_particles = 2000;
 
         let (attribs_buffer, list_heads_buffer, lists_buffer) =
-            create_particle_buffers(num_particles, device);
+            create_particle_buffers(num_particles, &device);
 
         let attribs_buffer_srv = attribs_buffer
             .get_default_view(BufferViewType::ShaderResource)
@@ -517,6 +521,7 @@ impl SampleBase for ComputeShader {
             .set(&lists_buffer_srv, SetShaderResourceFlags::None);
 
         ComputeShader {
+            device,
             immediate_context: immediate_contexts.into_iter().nth(0).unwrap(),
 
             render_particle_pso,

@@ -88,7 +88,9 @@ struct BoxAttribs {
 }
 
 struct RayTracing {
+    device: RenderDevice,
     immediate_context: ImmediateDeviceContext,
+
     camera: FirstPersonCamera,
     constants: Constants,
     max_recursion_depth: i32,
@@ -941,9 +943,13 @@ impl RayTracing {
 }
 
 impl SampleBase for RayTracing {
+    fn get_render_device(&self) -> &RenderDevice {
+        &self.device
+    }
+
     fn new(
         engine_factory: &EngineFactory,
-        device: &RenderDevice,
+        device: RenderDevice,
         immediate_contexts: Vec<ImmediateDeviceContext>,
         _deferred_contexts: Vec<DeferredDeviceContext>,
         swap_chain: &SwapChain,
@@ -969,10 +975,10 @@ impl SampleBase for RayTracing {
 
         let swap_chain_desc = swap_chain.get_desc();
 
-        let image_blit_pso = create_graphics_pso(engine_factory, device, swap_chain_desc);
+        let image_blit_pso = create_graphics_pso(engine_factory, &device, swap_chain_desc);
         let image_blit_srb = image_blit_pso.create_shader_resource_binding(true).unwrap();
 
-        let ray_tracing_pso = create_ray_tracing_pso(engine_factory, device);
+        let ray_tracing_pso = create_ray_tracing_pso(engine_factory, &device);
 
         ray_tracing_pso
             .get_static_variable_by_name(ShaderType::RayGen, "g_ConstantsCB")
@@ -992,7 +998,7 @@ impl SampleBase for RayTracing {
             .unwrap();
 
         {
-            let (logos, ground) = load_textures(device);
+            let (logos, ground) = load_textures(&device);
 
             // Get shader resource view from the texture array
             let logo_srvs = logos.map(|texture| {
@@ -1019,7 +1025,7 @@ impl SampleBase for RayTracing {
         }
 
         let (cube_blas, cube_attribs_buffer) =
-            create_and_build_cube_blas(device, &immediate_contexts[0]);
+            create_and_build_cube_blas(&device, &immediate_contexts[0]);
 
         ray_tracing_srb
             .get_variable_by_name("g_CubeAttribsCB", ShaderTypes::RayClosestHit)
@@ -1027,7 +1033,7 @@ impl SampleBase for RayTracing {
             .set(&cube_attribs_buffer, SetShaderResourceFlags::None);
 
         let (procedural_blas, box_attribs_cb) =
-            create_and_build_procedural_blas(device, &immediate_contexts[0]);
+            create_and_build_procedural_blas(&device, &immediate_contexts[0]);
 
         ray_tracing_srb
             .get_variable_by_name("g_BoxAttribs", ShaderTypes::RayIntersection)
@@ -1039,7 +1045,7 @@ impl SampleBase for RayTracing {
                 SetShaderResourceFlags::None,
             );
 
-        let (tlas, scratch_buffer, instance_buffer) = create_tlas(device);
+        let (tlas, scratch_buffer, instance_buffer) = create_tlas(&device);
         ray_tracing_srb
             .get_variable_by_name("g_TLAS", ShaderTypes::RayGen)
             .unwrap()
@@ -1049,7 +1055,7 @@ impl SampleBase for RayTracing {
             .unwrap()
             .set(&tlas, SetShaderResourceFlags::None);
 
-        let sbt = create_sbt(device, &ray_tracing_pso);
+        let sbt = create_sbt(&device, &ray_tracing_pso);
         {
             sbt.bind_ray_gen_shader("Main");
             sbt.bind_miss_shader("PrimaryMiss", PRIMARY_RAY_INDEX);
@@ -1093,8 +1099,12 @@ impl SampleBase for RayTracing {
             .format(COLOR_BUFFER_FORMAT)
             .build();
 
+        let color_rt = device.create_texture(&texture_desc, &[], None).unwrap();
+
         let mut sample = Self {
+            device,
             immediate_context: immediate_contexts.into_iter().nth(0).unwrap(),
+
             animate: true,
             camera,
             enabled_cubes: [true, true, true, true],
@@ -1180,7 +1190,7 @@ impl SampleBase for RayTracing {
             cube_blas,
             procedural_blas,
 
-            color_rt: device.create_texture(&texture_desc, &[], None).unwrap(),
+            color_rt,
 
             dispersion_factor: 0.1,
         };
@@ -1466,7 +1476,7 @@ impl SampleBase for RayTracing {
         }
     }
 
-    fn window_resize(&mut self, device: &RenderDevice, new_swap_chain: &SwapChainDesc) {
+    fn window_resize(&mut self, new_swap_chain: &SwapChainDesc) {
         let aspect_ratio = new_swap_chain.width() as f32 / new_swap_chain.height() as f32;
         self.camera.set_projection_attribs(
             self.constants.clip_planes[0],
@@ -1485,7 +1495,10 @@ impl SampleBase for RayTracing {
             .format(COLOR_BUFFER_FORMAT)
             .build();
 
-        self.color_rt = device.create_texture(&texture_desc, &[], None).unwrap();
+        self.color_rt = self
+            .device
+            .create_texture(&texture_desc, &[], None)
+            .unwrap();
     }
 
     fn handle_event(&mut self, event: native_app::events::Event) {

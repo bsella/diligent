@@ -28,6 +28,7 @@ struct InstanceData {
 }
 
 struct TextureArray {
+    device: RenderDevice,
     immediate_context: ImmediateDeviceContext,
 
     textured_cube: TexturedCube,
@@ -119,13 +120,16 @@ impl TextureArray {
 }
 
 impl SampleBase for TextureArray {
+    fn get_render_device(&self) -> &RenderDevice {
+        &self.device
+    }
     fn get_immediate_context(&self) -> &ImmediateDeviceContext {
         &self.immediate_context
     }
 
     fn new(
         engine_factory: &EngineFactory,
-        device: &RenderDevice,
+        device: RenderDevice,
         immediate_contexts: Vec<ImmediateDeviceContext>,
         _deferred_contexts: Vec<DeferredDeviceContext>,
         swap_chain: &SwapChain,
@@ -169,7 +173,7 @@ impl SampleBase for TextureArray {
         ];
 
         let cube_pso_ci = CreatePSOInfo::new(
-            device,
+            &device,
             swap_chain_desc.color_buffer_format(),
             swap_chain_desc.depth_buffer_format(),
             &shader_source_factory,
@@ -186,7 +190,7 @@ impl SampleBase for TextureArray {
         // Create dynamic uniform buffer that will store our transformation matrix
         // Dynamic buffers can be frequently updated by the CPU
         let vs_constants = create_uniform_buffer(
-            device,
+            &device,
             std::mem::size_of::<glam::Mat4>() as u64 * 2,
             "VS constants CB",
             Usage::Dynamic,
@@ -208,7 +212,7 @@ impl SampleBase for TextureArray {
         let srb = pipeline_state.create_shader_resource_binding(true).unwrap();
 
         let textured_cube = TexturedCube::new(
-            device,
+            &device,
             GeometryPrimitiveVertexFlags::PosTex,
             BindFlags::VertexBuffer,
             None,
@@ -271,6 +275,7 @@ impl SampleBase for TextureArray {
         let inst_buff = device.create_buffer(&inst_buff_desc).unwrap();
 
         let mut sample = TextureArray {
+            device,
             convert_ps_output_to_gamma,
             pipeline_state,
             immediate_context: immediate_contexts.into_iter().nth(0).unwrap(),

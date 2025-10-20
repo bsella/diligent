@@ -42,8 +42,6 @@ use super::{
 };
 
 pub struct SampleApp<Sample: SampleBase> {
-    device: RenderDevice,
-
     swap_chain: SwapChain,
 
     _golden_image_mode: GoldenImageMode,
@@ -100,7 +98,7 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
 
         let swap_chain_desc = self.swap_chain.get_desc();
 
-        self.sample.window_resize(&self.device, swap_chain_desc);
+        self.sample.window_resize(swap_chain_desc);
     }
 
     fn update(&mut self, current_time: f64, elapsed_time: f64) {
@@ -505,7 +503,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
 
         let sample = GenericSample::new(
             &engine_factory,
-            &device,
+            device,
             immediate_contexts,
             deferred_contexts,
             &swap_chain,
@@ -515,7 +513,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
 
         let imgui_renderer = ImguiRenderer::new(
             &ImguiRendererCreateInfo::builder()
-                .device(&device)
+                .device(sample.get_render_device())
                 .back_buffer_format(swap_chain_desc.color_buffer_format())
                 .depth_buffer_format(swap_chain_desc.depth_buffer_format())
                 .initial_width(app_settings.width as f32)
@@ -543,7 +541,6 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             .collect();
 
         SampleApp::<GenericSample> {
-            device,
             swap_chain,
 
             _golden_image_mode: GoldenImageMode::None,
@@ -619,8 +616,10 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
 
             if self.app_settings.show_ui {
                 self.update_ui();
-                self.imgui_renderer
-                    .render(self.sample.get_immediate_context(), &self.device);
+                self.imgui_renderer.render(
+                    self.sample.get_immediate_context(),
+                    self.sample.get_render_device(),
+                );
             }
 
             self.present();
