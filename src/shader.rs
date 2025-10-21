@@ -36,6 +36,7 @@ pub enum ShaderLanguage {
     MSLVerbatim,
     MTLB,
     WGSL,
+    ByteCode,
 }
 
 impl From<ShaderLanguage> for diligent_sys::SHADER_SOURCE_LANGUAGE {
@@ -49,9 +50,11 @@ impl From<ShaderLanguage> for diligent_sys::SHADER_SOURCE_LANGUAGE {
             ShaderLanguage::MSLVerbatim => diligent_sys::SHADER_SOURCE_LANGUAGE_MSL_VERBATIM,
             ShaderLanguage::MTLB => diligent_sys::SHADER_SOURCE_LANGUAGE_MTLB,
             ShaderLanguage::WGSL => diligent_sys::SHADER_SOURCE_LANGUAGE_WGSL,
+            ShaderLanguage::ByteCode => diligent_sys::SHADER_SOURCE_LANGUAGE_BYTECODE,
         }) as _
     }
 }
+const_assert_eq!(diligent_sys::SHADER_SOURCE_LANGUAGE_COUNT, 9);
 
 #[derive(Clone, Copy, Default)]
 pub enum ShaderCompiler {
@@ -72,6 +75,7 @@ impl From<ShaderCompiler> for diligent_sys::SHADER_COMPILER {
         }) as _
     }
 }
+const_assert_eq!(diligent_sys::SHADER_COMPILER_COUNT, 4);
 
 #[derive(Clone, Copy)]
 pub enum ShaderResourceType {
