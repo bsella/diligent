@@ -6,7 +6,7 @@ use super::{
     events::{Event, EventHandler, Key},
 };
 
-use diligent::{engine_factory::EngineCreateInfo, platforms::native_window::NativeWindow};
+use diligent::{platforms::native_window::NativeWindow, EngineCreateInfo};
 
 use windows::{
     core::*,
