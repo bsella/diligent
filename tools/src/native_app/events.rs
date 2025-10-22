@@ -1,9 +1,11 @@
+#[derive(Clone, Copy)]
 pub enum MouseButton {
     Left,
     Right,
     Middle,
 }
 
+#[derive(Clone, Copy)]
 pub enum Key {
     A,
     B,
@@ -53,8 +55,7 @@ pub enum Key {
     Period,
     Slash,
     Semicolon,
-    Quote,
-    Asterisk,
+    Apostrophe,
 
     Backslash,
     Enter,
@@ -98,6 +99,24 @@ pub enum Key {
     Esc,
     Tab,
     Space,
+
+    Keypad0,
+    Keypad1,
+    Keypad2,
+    Keypad3,
+    Keypad4,
+    Keypad5,
+    Keypad6,
+    Keypad7,
+    Keypad8,
+    Keypad9,
+    KeypadDecimal,
+    KeypadDivide,
+    KeypadMultiply,
+    KeypadSubtract,
+    KeypadAdd,
+    KeypadEnter,
+    KeypadEqual,
 
     Unknown,
 }
