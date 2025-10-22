@@ -267,7 +267,6 @@ fn create_update_particle_pso(
 
 fn create_particle_buffers(num_particles: u32, device: &RenderDevice) -> (Buffer, Buffer, Buffer) {
     let buffer_desc = BufferDesc::builder()
-        .name("Particle attribs buffer")
         .bind_flags(BindFlags::ShaderResource | BindFlags::UnorderedAccess)
         .mode(BufferMode::Structured)
         .usage(Usage::Default);
@@ -307,6 +306,7 @@ fn create_particle_buffers(num_particles: u32, device: &RenderDevice) -> (Buffer
         .create_buffer_with_data(
             &buffer_desc
                 .clone()
+                .name("Particle attribs buffer")
                 .element_byte_stride(std::mem::size_of::<ParticleAttribs>() as u32)
                 .size(std::mem::size_of::<ParticleAttribs>() as u64 * num_particles as u64)
                 .build(),
@@ -317,11 +317,14 @@ fn create_particle_buffers(num_particles: u32, device: &RenderDevice) -> (Buffer
 
     let buffer_desc = buffer_desc
         .element_byte_stride(std::mem::size_of::<i32>() as u32)
-        .size(std::mem::size_of::<i32>() as u64 * num_particles as u64)
-        .build();
+        .size(std::mem::size_of::<i32>() as u64 * num_particles as u64);
 
-    let particle_list_heads_buffer = device.create_buffer(&buffer_desc).unwrap();
-    let particle_lists_buffer = device.create_buffer(&buffer_desc).unwrap();
+    let particle_list_heads_buffer = device
+        .create_buffer(&buffer_desc.clone().name("Particle list heads").build())
+        .unwrap();
+    let particle_lists_buffer = device
+        .create_buffer(&buffer_desc.name("Particle lists").build())
+        .unwrap();
 
     (
         particle_attribs_buffer,
@@ -344,6 +347,72 @@ fn create_constant_buffer(device: &RenderDevice) -> Buffer {
         .unwrap()
 }
 
+fn bind_buffers(
+    attribs_buffer: &Buffer,
+    list_heads_buffer: &Buffer,
+    lists_buffer: &Buffer,
+
+    render_particle_srb: &ShaderResourceBinding,
+    reset_particle_lists_srb: &ShaderResourceBinding,
+    move_particles_srb: &ShaderResourceBinding,
+    collide_particles_srb: &ShaderResourceBinding,
+) {
+    let attribs_buffer_srv = attribs_buffer
+        .get_default_view(BufferViewType::ShaderResource)
+        .unwrap();
+    let attribs_buffer_uav = attribs_buffer
+        .get_default_view(BufferViewType::UnorderedAccess)
+        .unwrap();
+
+    let list_heads_buffer_uav = list_heads_buffer
+        .get_default_view(BufferViewType::UnorderedAccess)
+        .unwrap();
+    let lists_buffer_uav = lists_buffer
+        .get_default_view(BufferViewType::UnorderedAccess)
+        .unwrap();
+    let list_heads_buffer_srv = list_heads_buffer
+        .get_default_view(BufferViewType::ShaderResource)
+        .unwrap();
+    let lists_buffer_srv = lists_buffer
+        .get_default_view(BufferViewType::ShaderResource)
+        .unwrap();
+
+    reset_particle_lists_srb
+        .get_variable_by_name("g_ParticleListHead", ShaderTypes::Compute)
+        .unwrap()
+        .set(&list_heads_buffer_uav, SetShaderResourceFlags::None);
+    render_particle_srb
+        .get_variable_by_name("g_Particles", ShaderTypes::Vertex)
+        .unwrap()
+        .set(&attribs_buffer_srv, SetShaderResourceFlags::None);
+
+    move_particles_srb
+        .get_variable_by_name("g_Particles", ShaderTypes::Compute)
+        .unwrap()
+        .set(&attribs_buffer_uav, SetShaderResourceFlags::None);
+    move_particles_srb
+        .get_variable_by_name("g_ParticleListHead", ShaderTypes::Compute)
+        .unwrap()
+        .set(&list_heads_buffer_uav, SetShaderResourceFlags::None);
+    move_particles_srb
+        .get_variable_by_name("g_ParticleLists", ShaderTypes::Compute)
+        .unwrap()
+        .set(&lists_buffer_uav, SetShaderResourceFlags::None);
+
+    collide_particles_srb
+        .get_variable_by_name("g_Particles", ShaderTypes::Compute)
+        .unwrap()
+        .set(&attribs_buffer_uav, SetShaderResourceFlags::None);
+    collide_particles_srb
+        .get_variable_by_name("g_ParticleListHead", ShaderTypes::Compute)
+        .unwrap()
+        .set(&list_heads_buffer_srv, SetShaderResourceFlags::None);
+    collide_particles_srb
+        .get_variable_by_name("g_ParticleLists", ShaderTypes::Compute)
+        .unwrap()
+        .set(&lists_buffer_srv, SetShaderResourceFlags::None);
+}
+
 struct ComputeShader {
     device: RenderDevice,
     immediate_context: ImmediateDeviceContext,
@@ -363,9 +432,9 @@ struct ComputeShader {
     update_particle_speed_pso: ComputePipelineState,
 
     constants: Buffer,
-    _particle_attribs_buffer: Buffer,
-    _particle_list_heads_buffer: Buffer,
-    _particle_lists_buffer: Buffer,
+    particle_attribs_buffer: Buffer,
+    particle_list_heads_buffer: Buffer,
+    particle_lists_buffer: Buffer,
 
     num_particles: i32,
 
@@ -450,75 +519,31 @@ impl SampleBase for ComputeShader {
         let (attribs_buffer, list_heads_buffer, lists_buffer) =
             create_particle_buffers(num_particles, &device);
 
-        let attribs_buffer_srv = attribs_buffer
-            .get_default_view(BufferViewType::ShaderResource)
-            .unwrap();
-        let attribs_buffer_uav = attribs_buffer
-            .get_default_view(BufferViewType::UnorderedAccess)
-            .unwrap();
-
-        let list_heads_buffer_uav = list_heads_buffer
-            .get_default_view(BufferViewType::UnorderedAccess)
-            .unwrap();
-        let lists_buffer_uav = lists_buffer
-            .get_default_view(BufferViewType::UnorderedAccess)
-            .unwrap();
-        let list_heads_buffer_srv = list_heads_buffer
-            .get_default_view(BufferViewType::ShaderResource)
-            .unwrap();
-        let lists_buffer_srv = lists_buffer
-            .get_default_view(BufferViewType::ShaderResource)
-            .unwrap();
-
         let reset_particle_lists_srb = reset_particle_lists_pso
             .create_shader_resource_binding(true)
             .unwrap();
-
-        reset_particle_lists_srb
-            .get_variable_by_name("g_ParticleListHead", ShaderTypes::Compute)
-            .unwrap()
-            .set(&list_heads_buffer_uav, SetShaderResourceFlags::None);
 
         let render_particle_srb = render_particle_pso
             .create_shader_resource_binding(true)
             .unwrap();
 
-        render_particle_srb
-            .get_variable_by_name("g_Particles", ShaderTypes::Vertex)
-            .unwrap()
-            .set(&attribs_buffer_srv, SetShaderResourceFlags::None);
-
         let move_particles_srb = move_particles_pso
             .create_shader_resource_binding(true)
             .unwrap();
-        move_particles_srb
-            .get_variable_by_name("g_Particles", ShaderTypes::Compute)
-            .unwrap()
-            .set(&attribs_buffer_uav, SetShaderResourceFlags::None);
-        move_particles_srb
-            .get_variable_by_name("g_ParticleListHead", ShaderTypes::Compute)
-            .unwrap()
-            .set(&list_heads_buffer_uav, SetShaderResourceFlags::None);
-        move_particles_srb
-            .get_variable_by_name("g_ParticleLists", ShaderTypes::Compute)
-            .unwrap()
-            .set(&lists_buffer_uav, SetShaderResourceFlags::None);
 
         let collide_particles_srb = collide_particles_pso
             .create_shader_resource_binding(true)
             .unwrap();
-        collide_particles_srb
-            .get_variable_by_name("g_Particles", ShaderTypes::Compute)
-            .unwrap()
-            .set(&attribs_buffer_uav, SetShaderResourceFlags::None);
-        collide_particles_srb
-            .get_variable_by_name("g_ParticleListHead", ShaderTypes::Compute)
-            .unwrap()
-            .set(&list_heads_buffer_srv, SetShaderResourceFlags::None);
-        collide_particles_srb
-            .get_variable_by_name("g_ParticleLists", ShaderTypes::Compute)
-            .unwrap()
-            .set(&lists_buffer_srv, SetShaderResourceFlags::None);
+
+        bind_buffers(
+            &attribs_buffer,
+            &list_heads_buffer,
+            &lists_buffer,
+            &render_particle_srb,
+            &reset_particle_lists_srb,
+            &move_particles_srb,
+            &collide_particles_srb,
+        );
 
         ComputeShader {
             device,
@@ -540,9 +565,9 @@ impl SampleBase for ComputeShader {
             simulation_speed: 1.0,
 
             constants,
-            _particle_attribs_buffer: attribs_buffer,
-            _particle_list_heads_buffer: list_heads_buffer,
-            _particle_lists_buffer: lists_buffer,
+            particle_attribs_buffer: attribs_buffer,
+            particle_list_heads_buffer: list_heads_buffer,
+            particle_lists_buffer: lists_buffer,
 
             time_delta: 0.0,
             thread_group_size,
@@ -675,9 +700,46 @@ impl SampleBase for ComputeShader {
         {
             if ui
                 .input_int("Num Particles", &mut self.num_particles)
+                .step(100)
                 .build()
             {
                 self.num_particles = self.num_particles.clamp(100, 100000);
+
+                (
+                    self.particle_attribs_buffer,
+                    self.particle_list_heads_buffer,
+                    self.particle_lists_buffer,
+                ) = create_particle_buffers(self.num_particles as u32, &self.device);
+
+                self.reset_particle_lists_srb = self
+                    .reset_particle_lists_pso
+                    .create_shader_resource_binding(true)
+                    .unwrap();
+
+                self.render_particle_srb = self
+                    .render_particle_pso
+                    .create_shader_resource_binding(true)
+                    .unwrap();
+
+                self.move_particles_srb = self
+                    .move_particles_pso
+                    .create_shader_resource_binding(true)
+                    .unwrap();
+
+                self.collide_particles_srb = self
+                    .collide_particles_pso
+                    .create_shader_resource_binding(true)
+                    .unwrap();
+
+                bind_buffers(
+                    &self.particle_attribs_buffer,
+                    &self.particle_list_heads_buffer,
+                    &self.particle_lists_buffer,
+                    &self.render_particle_srb,
+                    &self.reset_particle_lists_srb,
+                    &self.move_particles_srb,
+                    &self.collide_particles_srb,
+                );
             }
 
             ui.slider("Simulation Speed", 0.1, 5.0, &mut self.simulation_speed);
