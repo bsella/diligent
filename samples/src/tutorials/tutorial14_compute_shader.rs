@@ -4,6 +4,7 @@ use diligent::{graphics_utilities::linear_to_srgba, *};
 
 use diligent_samples::sample_base::{sample::SampleBase, sample_app::SampleApp};
 use diligent_tools::native_app;
+use imgui::InputTextFlags;
 use rand::distr::uniform::{UniformFloat, UniformSampler};
 
 #[repr(C)]
@@ -701,6 +702,8 @@ impl SampleBase for ComputeShader {
             if ui
                 .input_int("Num Particles", &mut self.num_particles)
                 .step(100)
+                .step_fast(1000)
+                .flags(InputTextFlags::ENTER_RETURNS_TRUE)
                 .build()
             {
                 self.num_particles = self.num_particles.clamp(100, 100000);
