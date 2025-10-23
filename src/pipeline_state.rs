@@ -1272,9 +1272,7 @@ impl PipelineState {
         if shader_resource_binding_ptr.is_null() {
             Err(())
         } else {
-            let srb = ShaderResourceBinding::new(shader_resource_binding_ptr);
-            srb.add_ref();
-            Ok(srb)
+            Ok(ShaderResourceBinding::new(shader_resource_binding_ptr))
         }
     }
 
