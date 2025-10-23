@@ -1,4 +1,4 @@
-use std::{ffi::CString, ops::Deref};
+use std::{ffi::CString, marker::PhantomData, ops::Deref};
 
 use bon::Builder;
 use static_assertions::const_assert_eq;
@@ -70,16 +70,13 @@ impl From<&BufferViewDesc> for diligent_sys::BufferViewDesc {
     }
 }
 
-pub struct BufferView<'a> {
-    buffer: &'a Buffer,
-
-    device_object: DeviceObject,
-}
+#[repr(transparent)]
+pub struct BufferView<'buffer>(DeviceObject, PhantomData<&'buffer Buffer>);
 
 impl Deref for BufferView<'_> {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
-        &self.device_object
+        &self.0
     }
 }
 
@@ -88,8 +85,8 @@ const_assert_eq!(
     std::mem::size_of::<*const ()>()
 );
 
-impl<'a> BufferView<'a> {
-    pub(crate) fn new(buffer_view_ptr: *mut diligent_sys::IBufferView, buffer: &'a Buffer) -> Self {
+impl BufferView<'_> {
+    pub(crate) fn new(buffer_view_ptr: *mut diligent_sys::IBufferView) -> Self {
         // Both base and derived classes have exactly the same size.
         // This means that we can up-cast to the base class without worrying about layout offset between both classes
         const_assert_eq!(
@@ -97,14 +94,15 @@ impl<'a> BufferView<'a> {
             std::mem::size_of::<diligent_sys::IBufferView>()
         );
 
-        BufferView {
-            buffer,
-            device_object: DeviceObject::new(buffer_view_ptr as *mut diligent_sys::IDeviceObject),
-        }
+        BufferView(
+            DeviceObject::new(buffer_view_ptr as *mut diligent_sys::IDeviceObject),
+            PhantomData,
+        )
     }
 
-    #[inline]
     pub fn get_buffer(&self) -> &Buffer {
-        self.buffer
+        let buffer_ptr = unsafe_member_call!(self, BufferView, GetBuffer);
+
+        unsafe { &*(buffer_ptr as *const Buffer) }
     }
 }

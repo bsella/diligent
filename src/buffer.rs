@@ -122,7 +122,10 @@ impl Buffer {
         ))
     }
 
-    pub fn create_view(&self, view_desc: &BufferViewDesc) -> Result<BufferView<'_>, ()> {
+    pub fn create_view<'buffer>(
+        &'buffer self,
+        view_desc: &BufferViewDesc,
+    ) -> Result<BufferView<'buffer>, ()> {
         let mut buffer_view_ptr = std::ptr::null_mut();
         let view_desc = view_desc.into();
         unsafe_member_call!(
@@ -136,19 +139,22 @@ impl Buffer {
         if buffer_view_ptr.is_null() {
             Err(())
         } else {
-            Ok(BufferView::new(buffer_view_ptr, self))
+            Ok(BufferView::new(buffer_view_ptr))
         }
     }
 
-    pub fn get_default_view(&self, view_type: BufferViewType) -> Option<BufferView<'_>> {
+    pub fn get_default_view<'buffer>(
+        &self,
+        view_type: BufferViewType,
+    ) -> Option<BufferView<'buffer>> {
         let buffer_view_ptr = unsafe_member_call!(self, Buffer, GetDefaultView, view_type.into());
 
         if buffer_view_ptr.is_null() {
             None
         } else {
-            let view = BufferView::new(buffer_view_ptr, self);
-            view.add_ref();
-            Some(view)
+            let buffer_view = BufferView::new(buffer_view_ptr);
+            buffer_view.add_ref();
+            Some(buffer_view)
         }
     }
 
