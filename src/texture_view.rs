@@ -123,55 +123,46 @@ impl From<&TextureComponentMapping> for diligent_sys::TextureComponentMapping {
     }
 }
 
-#[derive(Builder)]
-pub struct TextureViewDesc {
-    #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
-    name: Option<CString>,
-    view_type: TextureViewType,
-    dimension: Option<TextureDimension>,
-    num_array_or_depth_slices: usize,
-    first_array_or_depth_slice: usize,
-    format: Option<TextureFormat>,
-    #[builder(default = 0)]
-    most_detailed_mip: usize,
-    #[builder(default = 0)]
-    num_mip_levels: usize,
-    #[builder(default = UavAccessFlags::Unspecified)]
-    access_flags: UavAccessFlags,
-    #[builder(default = TextureViewFlags::None)]
-    flags: TextureViewFlags,
-    #[builder(default)]
-    swizzle: TextureComponentMapping,
-}
+#[repr(transparent)]
+pub struct TextureViewDesc(diligent_sys::TextureViewDesc);
 
-impl From<&TextureViewDesc> for diligent_sys::TextureViewDesc {
-    fn from(value: &TextureViewDesc) -> Self {
-        Self {
+#[bon::bon]
+impl TextureViewDesc {
+    #[builder]
+    pub fn new(
+        #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
+        name: Option<CString>,
+        view_type: TextureViewType,
+        dimension: Option<TextureDimension>,
+        num_array_or_depth_slices: usize,
+        first_array_or_depth_slice: usize,
+        format: Option<TextureFormat>,
+        #[builder(default = 0)] most_detailed_mip: usize,
+        #[builder(default = 0)] num_mip_levels: usize,
+        #[builder(default = UavAccessFlags::Unspecified)] access_flags: UavAccessFlags,
+        #[builder(default = TextureViewFlags::None)] flags: TextureViewFlags,
+        #[builder(default)] swizzle: TextureComponentMapping,
+    ) -> Self {
+        Self(diligent_sys::TextureViewDesc {
             _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                Name: value
-                    .name
-                    .as_ref()
-                    .map_or(std::ptr::null(), |name| name.as_ptr()),
+                Name: name.as_ref().map_or(std::ptr::null(), |name| name.as_ptr()),
             },
-            ViewType: value.view_type.into(),
-            TextureDim: value
-                .dimension
+            ViewType: view_type.into(),
+            TextureDim: dimension
                 .map_or(diligent_sys::RESOURCE_DIM_UNDEFINED as _, |dim| dim.into()),
-            Format: value
-                .format
-                .map_or(diligent_sys::TEX_FORMAT_UNKNOWN as _, |dim| dim.into()),
-            MostDetailedMip: value.most_detailed_mip as u32,
-            NumMipLevels: value.num_mip_levels as u32,
+            Format: format.map_or(diligent_sys::TEX_FORMAT_UNKNOWN as _, |dim| dim.into()),
+            MostDetailedMip: most_detailed_mip as u32,
+            NumMipLevels: num_mip_levels as u32,
             __bindgen_anon_1: diligent_sys::TextureViewDesc__bindgen_ty_1 {
-                FirstArraySlice: value.first_array_or_depth_slice as u32,
+                FirstArraySlice: first_array_or_depth_slice as u32,
             },
             __bindgen_anon_2: diligent_sys::TextureViewDesc__bindgen_ty_2 {
-                NumArraySlices: value.num_array_or_depth_slices as u32,
+                NumArraySlices: num_array_or_depth_slices as u32,
             },
-            AccessFlags: value.access_flags.bits(),
-            Flags: value.flags.bits(),
-            Swizzle: (&value.swizzle).into(),
-        }
+            AccessFlags: access_flags.bits(),
+            Flags: flags.bits(),
+            Swizzle: (&swizzle).into(),
+        })
     }
 }
 

@@ -259,12 +259,11 @@ impl Texture {
 
     pub fn create_view(&self, texture_view_desc: &TextureViewDesc) -> Result<TextureView, ()> {
         let mut texture_view_ptr = std::ptr::null_mut();
-        let texture_view_desc = texture_view_desc.into();
         unsafe_member_call!(
             self,
             Texture,
             CreateView,
-            std::ptr::from_ref(&texture_view_desc),
+            std::ptr::from_ref(&texture_view_desc) as _,
             std::ptr::addr_of_mut!(texture_view_ptr)
         );
 
