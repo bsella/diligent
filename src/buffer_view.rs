@@ -36,6 +36,7 @@ pub struct BufferViewDesc(diligent_sys::BufferViewDesc);
 impl BufferViewDesc {
     #[builder]
     pub fn new(
+        #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
         name: Option<CString>,
         view_type: BufferViewType,
         format: Option<BufferFormat>,
