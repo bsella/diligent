@@ -127,12 +127,11 @@ impl Buffer {
         view_desc: &BufferViewDesc,
     ) -> Result<BufferView<'buffer>, ()> {
         let mut buffer_view_ptr = std::ptr::null_mut();
-        let view_desc = view_desc.into();
         unsafe_member_call!(
             self,
             Buffer,
             CreateView,
-            std::ptr::from_ref(&view_desc),
+            std::ptr::from_ref(&view_desc) as _,
             std::ptr::addr_of_mut!(buffer_view_ptr)
         );
 

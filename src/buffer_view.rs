@@ -29,28 +29,25 @@ pub struct BufferFormat {
     is_normalized: bool,
 }
 
-#[derive(Builder)]
-pub struct BufferViewDesc {
-    name: Option<CString>,
-    view_type: BufferViewType,
-    format: Option<BufferFormat>,
-    #[builder(default = 0)]
-    byte_offset: u64,
-    #[builder(default = 0)]
-    byte_width: u64,
-}
+#[repr(transparent)]
+pub struct BufferViewDesc(diligent_sys::BufferViewDesc);
 
-impl From<&BufferViewDesc> for diligent_sys::BufferViewDesc {
-    fn from(value: &BufferViewDesc) -> Self {
-        Self {
+#[bon::bon]
+impl BufferViewDesc {
+    #[builder]
+    pub fn new(
+        name: Option<CString>,
+        view_type: BufferViewType,
+        format: Option<BufferFormat>,
+        #[builder(default = 0)] byte_offset: u64,
+        #[builder(default = 0)] byte_width: u64,
+    ) -> Self {
+        Self(diligent_sys::BufferViewDesc {
             _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                Name: value
-                    .name
-                    .as_ref()
-                    .map_or(std::ptr::null(), |name| name.as_ptr()),
+                Name: name.map_or(std::ptr::null(), |name| name.as_ptr()),
             },
-            ViewType: value.view_type.into(),
-            Format: value.format.as_ref().map_or(
+            ViewType: view_type.into(),
+            Format: format.as_ref().map_or(
                 diligent_sys::BufferFormat {
                     ValueType: diligent_sys::VT_UNDEFINED as _,
                     NumComponents: 1,
@@ -64,9 +61,9 @@ impl From<&BufferViewDesc> for diligent_sys::BufferViewDesc {
                     IsNormalized: format.is_normalized,
                 },
             ),
-            ByteOffset: value.byte_offset,
-            ByteWidth: value.byte_width,
-        }
+            ByteOffset: byte_offset,
+            ByteWidth: byte_width,
+        })
     }
 }
 
