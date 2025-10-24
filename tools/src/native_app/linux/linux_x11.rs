@@ -9,7 +9,7 @@ use crate::native_app::{
     events::{Event, EventHandler, Key, MouseButton},
 };
 
-use diligent::{engine_factory::EngineCreateInfo, platforms::native_window::NativeWindow};
+use diligent::{platforms::native_window::NativeWindow, EngineCreateInfo};
 use x11::{keysym::*, xlib::*};
 
 struct X11EventHandler {
@@ -158,8 +158,8 @@ impl EventHandler for X11EventHandler {
                     XK_period => Event::KeyPress(Key::Period),
                     XK_slash => Event::KeyPress(Key::Slash),
                     XK_semicolon => Event::KeyPress(Key::Semicolon),
-                    XK_quotedbl => Event::KeyPress(Key::Quote),
-                    XK_asterisk => Event::KeyPress(Key::Asterisk),
+                    XK_quotedbl => Event::KeyPress(Key::Apostrophe),
+                    XK_asterisk => Event::KeyPress(Key::KeypadMultiply),
                     XK_backslash => Event::KeyPress(Key::Backslash),
                     XK_Return => Event::KeyPress(Key::Enter),
                     XK_BackSpace => Event::KeyPress(Key::Backspace),
@@ -249,8 +249,8 @@ impl EventHandler for X11EventHandler {
                     XK_period => Event::KeyRelease(Key::Period),
                     XK_slash => Event::KeyRelease(Key::Slash),
                     XK_semicolon => Event::KeyRelease(Key::Semicolon),
-                    XK_quotedbl => Event::KeyRelease(Key::Quote),
-                    XK_asterisk => Event::KeyRelease(Key::Asterisk),
+                    XK_quotedbl => Event::KeyRelease(Key::Apostrophe),
+                    XK_asterisk => Event::KeyRelease(Key::KeypadMultiply),
                     XK_backslash => Event::KeyRelease(Key::Backslash),
                     XK_Return => Event::KeyRelease(Key::Enter),
                     XK_BackSpace => Event::KeyRelease(Key::Backspace),

@@ -84,7 +84,7 @@ impl SampleBase for Tessellation {
             {
                 matches!(
                     device.get_device_info().device_type(),
-                    diligent::graphics_types::RenderDeviceType::GL
+                    diligent::RenderDeviceType::GL
                 )
             }
 
