@@ -3,23 +3,15 @@ pub mod engine_factory_gl;
 #[cfg(feature = "opengl_interop")]
 #[path = ""]
 mod gl_interop_modules {
-    // TODO
-    // BaseInterfacesGL
-    // BufferGL
-    // BufferViewGL
-    // DeviceContextGL
-    // EngineFactoryOpenGL
-    // FenceGL
-    // PipelineStateGL
-    // QueryGL
-    // RenderDeviceGL
-    // RenderDeviceGLES
-    // SamplerGL
-    // ShaderGL
-    // ShaderResourceBindingGL
-    // SwapChainGL
-    // TextureGL
-    // TextureViewG
+    pub mod buffer_gl;
+    pub mod device_context_gl;
+    pub mod pipeline_state_gl;
+    pub mod query_gl;
+    pub mod render_device_gl;
+    // TODO : RenderDeviceGLES
+    pub mod shader_gl;
+    pub mod swap_chain_gl;
+    pub mod texture_gl;
 }
 
 #[cfg(feature = "opengl_interop")]

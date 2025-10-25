@@ -40,9 +40,27 @@ extern void Diligent_CreateGeometryPrimitive(const GeometryPrimitiveAttributes* 
 #endif
 
 #ifdef OPENGL_SUPPORTED
+
 #include <DiligentCore/Graphics/GraphicsEngineOpenGL/interface/EngineFactoryOpenGL.h>
+
 #ifdef OPENGL_INTEROP
-    // TODO
+#   include <GL/gl.h>
+
+#   include <DiligentCore/Graphics/GraphicsEngineOpenGL/interface/BaseInterfacesGL.h>
+#   include <DiligentCore/Graphics/GraphicsEngineOpenGL/interface/BufferGL.h>
+#   include <DiligentCore/Graphics/GraphicsEngineOpenGL/interface/BufferViewGL.h>
+#   include <DiligentCore/Graphics/GraphicsEngineOpenGL/interface/DeviceContextGL.h>
+#   include <DiligentCore/Graphics/GraphicsEngineOpenGL/interface/FenceGL.h>
+#   include <DiligentCore/Graphics/GraphicsEngineOpenGL/interface/PipelineStateGL.h>
+#   include <DiligentCore/Graphics/GraphicsEngineOpenGL/interface/QueryGL.h>
+// TODO #   include <DiligentCore/Graphics/GraphicsEngineOpenGL/interface/RenderDeviceGLES.h>
+#   include <DiligentCore/Graphics/GraphicsEngineOpenGL/interface/RenderDeviceGL.h>
+#   include <DiligentCore/Graphics/GraphicsEngineOpenGL/interface/SamplerGL.h>
+#   include <DiligentCore/Graphics/GraphicsEngineOpenGL/interface/ShaderGL.h>
+#   include <DiligentCore/Graphics/GraphicsEngineOpenGL/interface/ShaderResourceBindingGL.h>
+#   include <DiligentCore/Graphics/GraphicsEngineOpenGL/interface/SwapChainGL.h>
+#   include <DiligentCore/Graphics/GraphicsEngineOpenGL/interface/TextureGL.h>
+#   include <DiligentCore/Graphics/GraphicsEngineOpenGL/interface/TextureViewGL.h>
 #endif
 
 #endif
