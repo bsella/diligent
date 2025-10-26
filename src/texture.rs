@@ -228,6 +228,46 @@ impl From<&TextureDesc> for diligent_sys::TextureDesc {
     }
 }
 
+bitflags! {
+    #[derive(Clone, Copy)]
+    pub struct SparseTextureFlags: diligent_sys::SPARSE_TEXTURE_FLAGS {
+        const None                 = diligent_sys::SPARSE_TEXTURE_FLAG_NONE as diligent_sys::SPARSE_TEXTURE_FLAGS;
+        const SingleMiptail        = diligent_sys::SPARSE_TEXTURE_FLAG_SINGLE_MIPTAIL as diligent_sys::SPARSE_TEXTURE_FLAGS;
+        const AlignedMipSize       = diligent_sys::SPARSE_TEXTURE_FLAG_ALIGNED_MIP_SIZE as diligent_sys::SPARSE_TEXTURE_FLAGS;
+        const NonStandardBlockSize = diligent_sys::SPARSE_TEXTURE_FLAG_NONSTANDARD_BLOCK_SIZE as diligent_sys::SPARSE_TEXTURE_FLAGS;
+    }
+}
+const_assert_eq!(diligent_sys::SPARSE_TEXTURE_FLAG_LAST, 4);
+
+#[repr(transparent)]
+pub struct SparseTextureProperties(diligent_sys::SparseTextureProperties);
+
+#[bon::bon]
+impl SparseTextureProperties {
+    #[builder]
+    pub fn new(
+        #[builder(default = 0)] address_space_size: u64,
+        #[builder(default = 0)] mip_tail_offset: u64,
+        #[builder(default = 0)] mip_tail_stride: u64,
+        #[builder(default = 0)] mip_tail_size: u64,
+        #[builder(default = !0)] first_mip_in_tail: u32,
+        #[builder(default = [0;_])] tile_size: [u32; 3usize],
+        #[builder(default = 0)] block_size: u32,
+        #[builder(default = SparseTextureFlags::None)] flags: SparseTextureFlags,
+    ) -> Self {
+        Self(diligent_sys::SparseTextureProperties {
+            AddressSpaceSize: address_space_size,
+            MipTailOffset: mip_tail_offset,
+            MipTailStride: mip_tail_stride,
+            MipTailSize: mip_tail_size,
+            FirstMipInTail: first_mip_in_tail,
+            TileSize: tile_size,
+            BlockSize: block_size,
+            Flags: flags.bits(),
+        })
+    }
+}
+
 const_assert_eq!(
     std::mem::size_of::<diligent_sys::ITextureMethods>(),
     6 * std::mem::size_of::<*const ()>()
@@ -300,10 +340,9 @@ impl Texture {
         ResourceState::from_bits_retain(state)
     }
 
-    pub fn get_sparse_properties(&self) -> &diligent_sys::SparseTextureProperties {
-        // TODO
-        let properties = unsafe_member_call!(self, Texture, GetSparseProperties);
-        unsafe { properties.as_ref().unwrap_unchecked() }
+    pub fn get_sparse_properties(&self) -> &SparseTextureProperties {
+        let properties_ptr = unsafe_member_call!(self, Texture, GetSparseProperties);
+        unsafe { &*(properties_ptr as *const &SparseTextureProperties) }
     }
 }
 

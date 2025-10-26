@@ -3,6 +3,7 @@ use std::{ffi::CStr, ops::Deref, os::raw::c_void};
 use static_assertions::const_assert_eq;
 
 use crate::{
+    SparseTextureFormatInfo,
     blas::{BottomLevelAS, BottomLevelASDesc, BottomLevelASDescWrapper},
     buffer::{Buffer, BufferDesc},
     data_blob::DataBlob,
@@ -795,15 +796,15 @@ impl RenderDevice {
         format: TextureFormat,
         dimension: TextureDimension,
         sample_count: u32,
-    ) -> diligent_sys::SparseTextureFormatInfo {
-        unsafe_member_call!(
+    ) -> SparseTextureFormatInfo {
+        SparseTextureFormatInfo::new(unsafe_member_call!(
             self,
             RenderDevice,
             GetSparseTextureFormatInfo,
             format.into(),
             dimension.into(),
             sample_count
-        )
+        ))
     }
 
     pub fn release_stale_resources(&self, force_release: bool) {

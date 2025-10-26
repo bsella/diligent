@@ -194,8 +194,16 @@ impl TextureView {
         unsafe_member_call!(self, TextureView, SetSampler, sampler.sys_ptr as _);
     }
 
-    pub fn get_sampler(&self) -> Option<&Sampler> {
-        todo!()
+    pub fn get_sampler(&self) -> Option<Sampler> {
+        let sampler_ptr = unsafe_member_call!(self, TextureView, GetSampler);
+
+        if sampler_ptr.is_null() {
+            None
+        } else {
+            let sampler = Sampler::new(sampler_ptr);
+            sampler.add_ref();
+            Some(sampler)
+        }
     }
 
     #[inline]

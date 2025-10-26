@@ -4,6 +4,8 @@ use bitflags::bitflags;
 use bon::Builder;
 use static_assertions::{const_assert, const_assert_eq};
 
+use crate::SparseTextureFlags;
+
 bitflags! {
     #[derive(Clone, Copy)]
     pub struct ShaderTypes: diligent_sys::SHADER_TYPE {
@@ -2732,6 +2734,24 @@ impl TextureFormat {
             | TextureFormat::ETC2_RGBA8_UNORM
             | TextureFormat::ETC2_RGBA8_UNORM_SRGB => 4,
         }
+    }
+}
+
+#[repr(transparent)]
+pub struct SparseTextureFormatInfo(diligent_sys::SparseTextureFormatInfo);
+
+impl SparseTextureFormatInfo {
+    pub(crate) fn new(sys: diligent_sys::SparseTextureFormatInfo) -> Self {
+        Self(sys)
+    }
+    pub fn bind_flags(&self) -> BindFlags {
+        BindFlags::from_bits_retain(self.0.BindFlags)
+    }
+    pub fn tile_size(&self) -> &[u32; 3usize] {
+        &self.0.TileSize
+    }
+    pub fn flags(&self) -> SparseTextureFlags {
+        SparseTextureFlags::from_bits_retain(self.0.Flags)
     }
 }
 
