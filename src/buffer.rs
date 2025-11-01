@@ -117,10 +117,7 @@ impl Buffer {
         std::ptr::addr_of!(self.0) as _
     }
 
-    pub fn create_view<'buffer>(
-        &'buffer self,
-        view_desc: &BufferViewDesc,
-    ) -> Result<Boxed<BufferView<'buffer>>, ()> {
+    pub fn create_view(&self, view_desc: &BufferViewDesc) -> Result<Boxed<BufferView>, ()> {
         let mut buffer_view_ptr = std::ptr::null_mut();
 
         unsafe_member_call!(
@@ -138,10 +135,7 @@ impl Buffer {
         }
     }
 
-    pub fn get_default_view<'buffer>(
-        &self,
-        view_type: BufferViewType,
-    ) -> Option<&BufferView<'buffer>> {
+    pub fn get_default_view(&self, view_type: BufferViewType) -> Option<&BufferView> {
         let buffer_view_ptr = unsafe_member_call!(self, Buffer, GetDefaultView, view_type.into());
 
         if buffer_view_ptr.is_null() {

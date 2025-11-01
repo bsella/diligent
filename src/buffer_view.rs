@@ -1,4 +1,4 @@
-use std::{ffi::CString, marker::PhantomData, ops::Deref};
+use std::{ffi::CString, ops::Deref};
 
 use bon::Builder;
 use static_assertions::const_assert_eq;
@@ -69,9 +69,9 @@ impl BufferViewDesc {
 }
 
 #[repr(transparent)]
-pub struct BufferView<'buffer>(diligent_sys::IBufferView, PhantomData<&'buffer Buffer>);
+pub struct BufferView(diligent_sys::IBufferView);
 
-impl Deref for BufferView<'_> {
+impl Deref for BufferView {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
         unsafe {
@@ -86,7 +86,7 @@ const_assert_eq!(
     std::mem::size_of::<*const ()>()
 );
 
-impl BufferView<'_> {
+impl BufferView {
     pub fn get_buffer(&self) -> &Buffer {
         let buffer_ptr = unsafe_member_call!(self, BufferView, GetBuffer);
 
