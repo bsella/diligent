@@ -5,6 +5,7 @@ use bon::{Builder, builder};
 use static_assertions::const_assert_eq;
 
 use crate::{
+    Boxed,
     blas::BottomLevelAS,
     buffer::{Buffer, BufferMapReadToken, BufferMapReadWriteToken, BufferMapWriteToken},
     command_queue::CommandQueue,
@@ -146,14 +147,14 @@ impl<'a> DrawIndirectAttribs<'a> {
     ) -> Self {
         Self(
             diligent_sys::DrawIndirectAttribs {
-                pAttribsBuffer: attribs_buffer.sys_ptr as _,
+                pAttribsBuffer: attribs_buffer.sys_ptr(),
                 DrawArgsOffset: draw_args_offset,
                 Flags: flags.bits(),
                 DrawCount: draw_count,
                 DrawArgsStride: draw_args_stride,
                 AttribsBufferStateTransitionMode: attribs_buffer_state_transition_mode.into(),
                 pCounterBuffer: counter_buffer
-                    .map_or(std::ptr::null_mut(), |buffer| buffer.sys_ptr as _),
+                    .map_or(std::ptr::null_mut(), |buffer| buffer.sys_ptr()),
                 CounterOffset: counter_offset,
                 CounterBufferStateTransitionMode: counter_buffer_state_transition_mode.into(),
             },
@@ -197,14 +198,14 @@ impl<'a> DrawIndexedIndirectAttribs<'a> {
         Self(
             diligent_sys::DrawIndexedIndirectAttribs {
                 IndexType: index_type.into(),
-                pAttribsBuffer: attribs_buffer.sys_ptr as _,
+                pAttribsBuffer: attribs_buffer.sys_ptr(),
                 DrawArgsOffset: draw_args_offset,
                 Flags: flags.bits(),
                 DrawCount: draw_count,
                 DrawArgsStride: draw_args_stride,
                 AttribsBufferStateTransitionMode: attribs_buffer_state_transition_mode.into(),
                 pCounterBuffer: counter_buffer
-                    .map_or(std::ptr::null_mut(), |buffer| buffer.sys_ptr as _),
+                    .map_or(std::ptr::null_mut(), |buffer| buffer.sys_ptr()),
                 CounterOffset: counter_offset,
                 CounterBufferStateTransitionMode: counter_buffer_state_transition_mode.into(),
             },
@@ -264,13 +265,13 @@ impl<'a> DrawMeshIndirectAttribs<'a> {
     ) -> Self {
         Self(
             diligent_sys::DrawMeshIndirectAttribs {
-                pAttribsBuffer: attribs_buffer.sys_ptr as _,
+                pAttribsBuffer: attribs_buffer.sys_ptr(),
                 DrawArgsOffset: draw_args_offset,
                 Flags: flags.bits(),
                 CommandCount: command_count,
                 AttribsBufferStateTransitionMode: attribs_buffer_state_transition_mode.into(),
                 pCounterBuffer: counter_buffer
-                    .map_or(std::ptr::null_mut(), |buffer| buffer.sys_ptr as _),
+                    .map_or(std::ptr::null_mut(), |buffer| buffer.sys_ptr()),
                 CounterOffset: counter_offset,
                 CounterBufferStateTransitionMode: counter_buffer_state_transition_mode.into(),
             },
@@ -397,7 +398,7 @@ impl<'a> DispatchComputeIndirectAttribs<'a> {
     ) -> Self {
         Self(
             diligent_sys::DispatchComputeIndirectAttribs {
-                pAttribsBuffer: attribs_buffer.sys_ptr as _,
+                pAttribsBuffer: attribs_buffer.sys_ptr(),
                 AttribsBufferStateTransitionMode: attribs_buffer_state_transition_mode.into(),
                 DispatchArgsByteOffset: dispatch_args_byte_offset,
                 #[cfg(feature = "metal")]
@@ -479,7 +480,7 @@ impl<'a> BLASBuildBoundingBoxData<'a> {
         Self(
             diligent_sys::BLASBuildBoundingBoxData {
                 GeometryName: geometry_name.as_ptr(),
-                pBoxBuffer: box_buffer.sys_ptr as _,
+                pBoxBuffer: box_buffer.sys_ptr(),
                 BoxOffset: box_offset,
                 BoxStride: box_stride,
                 BoxCount: box_count,
@@ -527,7 +528,7 @@ impl<'a> BLASBuildTriangleData<'a> {
         Self(
             diligent_sys::BLASBuildTriangleData {
                 GeometryName: geometry_name.as_ptr(),
-                pVertexBuffer: vertex_buffer.sys_ptr as _,
+                pVertexBuffer: vertex_buffer.sys_ptr(),
                 VertexOffset: vertex_offset,
                 VertexStride: vertex_stride,
                 VertexCount: vertex_count as u32,
@@ -535,12 +536,12 @@ impl<'a> BLASBuildTriangleData<'a> {
                     .map_or(diligent_sys::VT_UNDEFINED as _, |vt| vt.into()),
                 VertexComponentCount: vertex_component_count,
                 PrimitiveCount: primitive_count as u32,
-                pIndexBuffer: index_buffer.map_or(std::ptr::null_mut(), |ib| ib.sys_ptr as _),
+                pIndexBuffer: index_buffer.map_or(std::ptr::null_mut(), |ib| ib.sys_ptr()),
                 IndexOffset: index_offset,
                 IndexType: index_type.map_or(diligent_sys::VT_UNDEFINED as _, |vt| vt.into()),
                 pTransformBuffer: transform_buffer
                     .as_ref()
-                    .map_or(std::ptr::null_mut(), |tb| tb.sys_ptr as _),
+                    .map_or(std::ptr::null_mut(), |tb| tb.sys_ptr()),
                 TransformBufferOffset: transform_buffer_offset,
                 Flags: flags.bits(),
             },
@@ -578,7 +579,7 @@ impl<'a> BuildBLASAttribs<'a> {
     ) -> Self {
         Self(
             diligent_sys::BuildBLASAttribs {
-                pBLAS: blas.sys_ptr as _,
+                pBLAS: blas.sys_ptr(),
                 BLASTransitionMode: blas_transition_mode.into(),
                 GeometryTransitionMode: geometry_transition_mode.into(),
                 pTriangleData: if triangle_data.is_empty() {
@@ -593,7 +594,7 @@ impl<'a> BuildBLASAttribs<'a> {
                     box_data.as_ptr() as _
                 },
                 BoxDataCount: box_data.len() as u32,
-                pScratchBuffer: scratch_buffer.sys_ptr as _,
+                pScratchBuffer: scratch_buffer.sys_ptr(),
                 ScratchBufferOffset: scratch_buffer_offset,
                 ScratchBufferTransitionMode: scratch_buffer_transition_mode.into(),
                 Update: update,
@@ -643,7 +644,7 @@ impl<'a> BuildTLASAttribs<'a> {
     ) -> Self {
         Self(
             diligent_sys::BuildTLASAttribs {
-                pTLAS: tlas.sys_ptr as _,
+                pTLAS: tlas.sys_ptr(),
                 TLASTransitionMode: tlas_transition_mode.into(),
                 BLASTransitionMode: blas_transition_mode.into(),
                 pInstances: if instances.is_empty() {
@@ -652,13 +653,13 @@ impl<'a> BuildTLASAttribs<'a> {
                     instances.as_ptr() as _
                 },
                 InstanceCount: instances.len() as u32,
-                pInstanceBuffer: instance_buffer.sys_ptr as _,
+                pInstanceBuffer: instance_buffer.sys_ptr(),
                 InstanceBufferOffset: instance_buffer_offset,
                 InstanceBufferTransitionMode: instance_buffer_transition_mode.into(),
                 HitGroupStride: hit_group_stride,
                 BaseContributionToHitGroupIndex: base_contribution_to_hit_group_index,
                 BindingMode: binding_mode.into(),
-                pScratchBuffer: scratch_buffer.sys_ptr as _,
+                pScratchBuffer: scratch_buffer.sys_ptr(),
                 ScratchBufferOffset: scratch_buffer_offset,
                 ScratchBufferTransitionMode: scratch_buffer_transition_mode.into(),
                 Update: update,
@@ -695,7 +696,7 @@ impl<'a> TraceRaysAttribs<'a> {
     ) -> Self {
         Self(
             diligent_sys::TraceRaysAttribs {
-                pSBT: sbt.sys_ptr as _,
+                pSBT: sbt.sys_ptr(),
                 DimensionX: dimension_x,
                 DimensionY: dimension_y,
                 DimensionZ: dimension_z,
@@ -722,8 +723,8 @@ impl<'a> TraceRaysIndirectAttribs<'a> {
     ) -> Self {
         Self(
             diligent_sys::TraceRaysIndirectAttribs {
-                pSBT: sbt.sys_ptr as _,
-                pAttribsBuffer: attribs_buffer.sys_ptr as _,
+                pSBT: sbt.sys_ptr(),
+                pAttribsBuffer: attribs_buffer.sys_ptr(),
                 AttribsBufferStateTransitionMode: attribs_buffer_state_transition_mode.into(),
                 ArgsByteOffset: args_byte_offset,
             },
@@ -888,7 +889,7 @@ impl<'a> StateTransitionDesc<'a> {
         Self(
             diligent_sys::StateTransitionDesc {
                 pResourceBefore: std::ptr::null_mut(), // TODO
-                pResource: resource.sys_ptr as _,
+                pResource: resource.sys_ptr(),
                 FirstMipLevel: first_mip_level,
                 MipLevelsCount: mip_levels_count,
                 FirstArraySlice: first_array_slice,
@@ -906,29 +907,7 @@ impl<'a> StateTransitionDesc<'a> {
 }
 
 #[repr(transparent)]
-pub struct CommandList(DeviceObject);
-
-impl Deref for CommandList {
-    type Target = DeviceObject;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl CommandList {
-    pub(crate) fn new(sys_ptr: *mut diligent_sys::ICommandList) -> Self {
-        // Both base and derived classes have exactly the same size.
-        // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert_eq!(
-            std::mem::size_of::<diligent_sys::IDeviceObject>(),
-            std::mem::size_of::<diligent_sys::ICommandList>()
-        );
-
-        Self(DeviceObject::new(
-            sys_ptr as *mut diligent_sys::IDeviceObject,
-        ))
-    }
-}
+pub struct CommandList(diligent_sys::ICommandList);
 
 pub struct DepthStencilClearValue {
     pub depth: f32,
@@ -968,11 +947,11 @@ impl<'a> RenderPassToken<'a> {
             .collect::<Vec<_>>();
 
         let attribs = diligent_sys::BeginRenderPassAttribs {
-            pRenderPass: attribs.render_pass.sys_ptr as _,
+            pRenderPass: attribs.render_pass.sys_ptr(),
             ClearValueCount: attribs.clear_values.len() as u32,
             pClearValues: clear_values.as_ptr() as *mut diligent_sys::OptimizedClearValue,
             StateTransitionMode: attribs.state_transition_mode.into(),
-            pFramebuffer: attribs.frame_buffer.sys_ptr as _,
+            pFramebuffer: attribs.frame_buffer.sys_ptr(),
         };
 
         unsafe_member_call!(
@@ -1181,19 +1160,18 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct DeviceContext(Object);
+pub struct DeviceContext(pub(crate) diligent_sys::IDeviceContext);
+
+impl Deref for DeviceContext {
+    type Target = Object;
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IObject as *const Object) }
+    }
+}
 
 impl DeviceContext {
-    pub(crate) fn new(device_context_ptr: *mut diligent_sys::IDeviceContext) -> Self {
-        // Both base and derived classes have exactly the same size.
-        // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert_eq!(
-            std::mem::size_of::<diligent_sys::IObject>(),
-            std::mem::size_of::<diligent_sys::IDeviceContext>()
-        );
-        Self(Object::new(
-            device_context_ptr as *mut diligent_sys::IObject,
-        ))
+    pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IDeviceContext {
+        std::ptr::addr_of!(self.0) as _
     }
 
     pub fn set_graphics_pipeline_state(
@@ -1204,7 +1182,7 @@ impl DeviceContext {
             self,
             DeviceContext,
             SetPipelineState,
-            pipeline_state.sys_ptr as _
+            pipeline_state.sys_ptr()
         );
 
         GraphicsPipelineToken { context: self }
@@ -1218,7 +1196,7 @@ impl DeviceContext {
             self,
             DeviceContext,
             SetPipelineState,
-            pipeline_state.sys_ptr as _
+            pipeline_state.sys_ptr()
         );
 
         GraphicsPipelineToken { context: self }
@@ -1232,7 +1210,7 @@ impl DeviceContext {
             self,
             DeviceContext,
             SetPipelineState,
-            pipeline_state.sys_ptr as _
+            pipeline_state.sys_ptr()
         );
 
         ComputePipelineToken { context: self }
@@ -1246,7 +1224,7 @@ impl DeviceContext {
             self,
             DeviceContext,
             SetPipelineState,
-            pipeline_state.sys_ptr as _
+            pipeline_state.sys_ptr()
         );
 
         TilePipelineToken { context: self }
@@ -1260,7 +1238,7 @@ impl DeviceContext {
             self,
             DeviceContext,
             SetPipelineState,
-            pipeline_state.sys_ptr as _
+            pipeline_state.sys_ptr()
         );
 
         RayTracingPipelineToken { context: self }
@@ -1271,7 +1249,7 @@ impl DeviceContext {
             self,
             DeviceContext,
             TransitionShaderResources,
-            shader_resource_binding.sys_ptr as _
+            shader_resource_binding.sys_ptr()
         )
     }
 
@@ -1284,7 +1262,7 @@ impl DeviceContext {
             self,
             DeviceContext,
             CommitShaderResources,
-            shader_resource_binding.sys_ptr as _,
+            shader_resource_binding.sys_ptr(),
             state_transition_mode.into()
         )
     }
@@ -1302,9 +1280,9 @@ impl DeviceContext {
         );
     }
 
-    pub fn set_vertex_buffers<'a>(
+    pub fn set_vertex_buffers(
         &self,
-        buffers: &impl AsRef<[(&'a Buffer, u64)]>,
+        buffers: &[(&Buffer, u64)],
         state_transition_mode: ResourceStateTransitionMode,
         flags: SetVertexBufferFlags,
     ) {
@@ -1312,7 +1290,7 @@ impl DeviceContext {
         let (buffer_pointers, offsets): (Vec<_>, Vec<_>) = buffers
             .as_ref()
             .iter()
-            .map(|&(buffer, offset)| (buffer.sys_ptr, offset))
+            .map(|&(buffer, offset)| (buffer.sys_ptr(), offset))
             .unzip();
 
         unsafe_member_call!(
@@ -1342,7 +1320,7 @@ impl DeviceContext {
             self,
             DeviceContext,
             SetIndexBuffer,
-            index_buffer.sys_ptr as _,
+            index_buffer.sys_ptr(),
             offset,
             state_transition_mode.into()
         )
@@ -1395,7 +1373,7 @@ impl DeviceContext {
         let mut render_target_pointers = Vec::from_iter(
             render_targets
                 .iter()
-                .map(|render_targets| render_targets.sys_ptr),
+                .map(|render_target| render_target.sys_ptr()),
         );
 
         unsafe_member_call!(
@@ -1404,7 +1382,7 @@ impl DeviceContext {
             SetRenderTargets,
             num_render_targets as u32,
             render_target_pointers.as_mut_ptr() as _,
-            depth_stencil.map_or(std::ptr::null_mut(), |v| v.sys_ptr as _),
+            depth_stencil.map_or(std::ptr::null_mut(), |v| v.sys_ptr()),
             state_transition_mode.into()
         )
     }
@@ -1428,7 +1406,7 @@ impl DeviceContext {
 
     pub fn clear_depth(
         &self,
-        view: &mut TextureView,
+        view: &TextureView,
         depth: f32,
         state_transition_mode: ResourceStateTransitionMode,
     ) {
@@ -1436,7 +1414,7 @@ impl DeviceContext {
             self,
             DeviceContext,
             ClearDepthStencil,
-            view.sys_ptr as _,
+            view.sys_ptr(),
             diligent_sys::CLEAR_DEPTH_FLAG as diligent_sys::CLEAR_DEPTH_STENCIL_FLAGS,
             depth,
             0,
@@ -1454,7 +1432,7 @@ impl DeviceContext {
             self,
             DeviceContext,
             ClearDepthStencil,
-            view.sys_ptr as _,
+            view.sys_ptr(),
             diligent_sys::CLEAR_STENCIL_FLAG as diligent_sys::CLEAR_DEPTH_STENCIL_FLAGS,
             0.0,
             stencil,
@@ -1473,7 +1451,7 @@ impl DeviceContext {
             self,
             DeviceContext,
             ClearDepthStencil,
-            view.sys_ptr as _,
+            view.sys_ptr(),
             diligent_sys::CLEAR_STENCIL_FLAG as diligent_sys::CLEAR_DEPTH_STENCIL_FLAGS
                 | diligent_sys::CLEAR_DEPTH_FLAG as diligent_sys::CLEAR_DEPTH_STENCIL_FLAGS,
             depth,
@@ -1484,7 +1462,7 @@ impl DeviceContext {
 
     pub fn clear_render_target<T>(
         &self,
-        view: &mut TextureView,
+        view: &TextureView,
         rgba: &[T; 4],
         state_transition_mode: ResourceStateTransitionMode,
     ) {
@@ -1492,20 +1470,14 @@ impl DeviceContext {
             self,
             DeviceContext,
             ClearRenderTarget,
-            view.sys_ptr as _,
+            view.sys_ptr(),
             (*rgba).as_ptr() as *const std::os::raw::c_void,
             state_transition_mode.into()
         )
     }
 
     pub fn enqueue_signal(&self, fence: &Fence, value: u64) {
-        unsafe_member_call!(
-            self,
-            DeviceContext,
-            EnqueueSignal,
-            fence.sys_ptr as _,
-            value
-        );
+        unsafe_member_call!(self, DeviceContext, EnqueueSignal, fence.sys_ptr(), value);
     }
 
     pub fn update_buffer<T>(
@@ -1520,7 +1492,7 @@ impl DeviceContext {
             self,
             DeviceContext,
             UpdateBuffer,
-            buffer.sys_ptr as _,
+            buffer.sys_ptr(),
             offset,
             size,
             std::ptr::from_ref(data) as *const std::os::raw::c_void,
@@ -1538,7 +1510,7 @@ impl DeviceContext {
             self,
             DeviceContext,
             UpdateBuffer,
-            buffer.sys_ptr as _,
+            buffer.sys_ptr(),
             0,
             data.len() as u64 * std::mem::size_of::<T>() as u64,
             data.as_ptr() as *const std::os::raw::c_void,
@@ -1560,10 +1532,10 @@ impl DeviceContext {
             self,
             DeviceContext,
             CopyBuffer,
-            src_buffer.sys_ptr as _,
+            src_buffer.sys_ptr(),
             src_offset,
             src_buffer_transition_mode.into(),
-            dst_buffer.sys_ptr as _,
+            dst_buffer.sys_ptr(),
             dst_offset,
             size,
             dst_buffer_transition_mode.into()
@@ -1619,7 +1591,7 @@ impl DeviceContext {
             self,
             DeviceContext,
             UpdateTexture,
-            texture.sys_ptr as _,
+            texture.sys_ptr(),
             mip_level,
             slice,
             std::ptr::from_ref(dst_box),
@@ -1693,7 +1665,7 @@ impl DeviceContext {
     }
 
     pub fn generate_mips(&self, texture_view: &mut TextureView) {
-        unsafe_member_call!(self, DeviceContext, GenerateMips, texture_view.sys_ptr as _)
+        unsafe_member_call!(self, DeviceContext, GenerateMips, texture_view.sys_ptr())
     }
 
     pub fn finish_frame(&self) {
@@ -1724,8 +1696,8 @@ impl DeviceContext {
             self,
             DeviceContext,
             ResolveTextureSubresource,
-            src_texture.sys_ptr as _,
-            dst_texture.sys_ptr as _,
+            src_texture.sys_ptr(),
+            dst_texture.sys_ptr(),
             std::ptr::from_ref(resolve_attribs)
         )
     }
@@ -1780,7 +1752,7 @@ impl DeviceContext {
         attribs: Option<&UpdateIndirectRTBufferAttribs>,
     ) {
         let attribs = attribs.map(|attribs| diligent_sys::UpdateIndirectRTBufferAttribs {
-            pAttribsBuffer: attribs.attribs_buffer.sys_ptr as _,
+            pAttribsBuffer: attribs.attribs_buffer.sys_ptr(),
             AttribsBufferOffset: attribs.attribs_buffer_offset,
             TransitionMode: attribs.transition_mode.into(),
         });
@@ -1788,7 +1760,7 @@ impl DeviceContext {
             self,
             DeviceContext,
             UpdateSBT,
-            sbt.sys_ptr as _,
+            sbt.sys_ptr(),
             attribs.map_or(std::ptr::null_mut(), |attribs| std::ptr::from_ref(&attribs))
         )
     }
@@ -1835,13 +1807,6 @@ impl DeviceContext {
     }
 }
 
-impl Deref for DeviceContext {
-    type Target = Object;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
 #[repr(transparent)]
 pub struct ImmediateDeviceContext(DeviceContext);
 
@@ -1853,17 +1818,13 @@ impl Deref for ImmediateDeviceContext {
 }
 
 impl ImmediateDeviceContext {
-    pub(crate) fn new(device_context_ptr: *mut diligent_sys::IDeviceContext) -> Self {
-        Self(DeviceContext::new(device_context_ptr))
-    }
-
     pub fn flush(&self) {
-        unsafe_member_call!(self, DeviceContext, Flush)
+        unsafe_member_call!(self.0, DeviceContext, Flush)
     }
 
     pub fn execute_command_lists(&self, command_lists: &[CommandList]) {
         unsafe_member_call!(
-            self,
+            self.0,
             DeviceContext,
             ExecuteCommandLists,
             command_lists.len() as u32,
@@ -1875,8 +1836,18 @@ impl ImmediateDeviceContext {
         unsafe_member_call!(self.0, DeviceContext, WaitForIdle)
     }
 
-    pub fn lock_command_queue(&self) -> Result<CommandQueue<'_>, ()> {
-        CommandQueue::new(self)
+    // TODO : make command queue locking RAII
+    pub fn lock_command_queue(&self) -> Result<Boxed<CommandQueue>, ()> {
+        let command_queue_ptr = unsafe_member_call!(self.0, DeviceContext, LockCommandQueue);
+        if command_queue_ptr.is_null() {
+            Err(())
+        } else {
+            Ok(Boxed::<CommandQueue>::new(command_queue_ptr as _))
+        }
+    }
+
+    pub fn unlock_command_queue(&self) {
+        unsafe_member_call!(self.0, DeviceContext, UnlockCommandQueue);
     }
 
     pub fn begin_query<'a, QueryDataType: GetSysQueryType>(
@@ -1898,7 +1869,7 @@ impl ImmediateDeviceContext {
         attribs: &diligent_sys::BindSparseResourceMemoryAttribs,
     ) {
         unsafe_member_call!(
-            self,
+            self.0,
             DeviceContext,
             BindSparseResourceMemory,
             std::ptr::from_ref(attribs)
@@ -1907,10 +1878,10 @@ impl ImmediateDeviceContext {
 
     pub fn device_wait_for_fence(&self, fence: &Fence, value: u64) {
         unsafe_member_call!(
-            self,
+            self.0,
             DeviceContext,
             DeviceWaitForFence,
-            fence.sys_ptr as _,
+            fence.sys_ptr(),
             value
         )
     }
@@ -1927,18 +1898,14 @@ impl Deref for DeferredDeviceContext {
 }
 
 impl DeferredDeviceContext {
-    pub(crate) fn new(device_context_ptr: *mut diligent_sys::IDeviceContext) -> Self {
-        Self(DeviceContext::new(device_context_ptr))
-    }
-
     pub fn begin(&self, immediate_context_id: u32) {
-        unsafe_member_call!(self, DeviceContext, Begin, immediate_context_id)
+        unsafe_member_call!(self.0, DeviceContext, Begin, immediate_context_id)
     }
 
-    pub fn finish_command_list(&self) -> Result<CommandList, ()> {
+    pub fn finish_command_list(&self) -> Result<Boxed<CommandList>, ()> {
         let mut command_list_ptr = std::ptr::null_mut();
         unsafe_member_call!(
-            self,
+            self.0,
             DeviceContext,
             FinishCommandList,
             std::ptr::addr_of_mut!(command_list_ptr)
@@ -1947,7 +1914,7 @@ impl DeferredDeviceContext {
         if command_list_ptr.is_null() {
             Err(())
         } else {
-            Ok(CommandList::new(command_list_ptr))
+            Ok(Boxed::<CommandList>::new(command_list_ptr as _))
         }
     }
 }

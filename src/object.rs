@@ -6,22 +6,13 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct Object {
-    pub(crate) sys_ptr: *mut diligent_sys::IObject,
-}
+pub struct Object(diligent_sys::IObject);
 
 impl Object {
-    pub(crate) fn new(sys_ptr: *mut diligent_sys::IObject) -> Self {
-        Object { sys_ptr }
-    }
-
     pub(crate) fn add_ref(&self) {
         unsafe_member_call!(self, Object, AddRef);
     }
-}
-
-impl Drop for Object {
-    fn drop(&mut self) {
-        unsafe_member_call!(self, Object, Release);
+    pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IObject {
+        std::ptr::addr_of!(self.0) as _
     }
 }

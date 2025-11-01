@@ -15,20 +15,20 @@ use diligent_samples::{
 use diligent_tools::native_app;
 
 struct Queries {
-    device: RenderDevice,
-    immediate_context: ImmediateDeviceContext,
+    device: Boxed<RenderDevice>,
+    immediate_context: Boxed<ImmediateDeviceContext>,
 
     textured_cube: TexturedCube,
     rotation_matrix: glam::Mat4,
 
-    cube_pso: GraphicsPipelineState,
-    cube_srb: ShaderResourceBinding,
-    cube_vs_constants: Buffer,
-    _cube_texture_srv: TextureView,
+    cube_pso: Boxed<GraphicsPipelineState>,
+    cube_srb: Boxed<ShaderResourceBinding>,
+    cube_vs_constants: Boxed<Buffer>,
+    _cube_texture_srv: Boxed<TextureView>,
 
-    query_pipeline_stats: Option<Query<QueryDataPipelineStatistics>>,
-    query_occlusion: Option<Query<QueryDataOcclusion>>,
-    query_duration: Option<Query<QueryDataDuration>>,
+    query_pipeline_stats: Option<Boxed<Query<QueryDataPipelineStatistics>>>,
+    query_occlusion: Option<Boxed<Query<QueryDataOcclusion>>>,
+    query_duration: Option<Boxed<Query<QueryDataDuration>>>,
     query_duration_from_timestamps: Option<DurationQueryHelper>,
 
     pipeline_statistics: RefCell<Option<QueryDataPipelineStatistics>>,
@@ -49,9 +49,9 @@ impl SampleBase for Queries {
 
     fn new(
         engine_factory: &EngineFactory,
-        device: RenderDevice,
-        immediate_contexts: Vec<ImmediateDeviceContext>,
-        _deferred_contexts: Vec<DeferredDeviceContext>,
+        device: Boxed<RenderDevice>,
+        immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
+        _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
         swap_chain: &SwapChain,
     ) -> Self {
         let swap_chain_desc = swap_chain.get_desc();
@@ -135,9 +135,11 @@ impl SampleBase for Queries {
                 .unwrap();
 
             // Get shader resource view from the texture
-            texture
-                .get_default_view(TextureViewType::ShaderResource)
-                .unwrap()
+            Boxed::<TextureView>::from_ref(
+                texture
+                    .get_default_view(TextureViewType::ShaderResource)
+                    .unwrap(),
+            )
         };
 
         cube_srb
@@ -269,8 +271,8 @@ impl SampleBase for Queries {
             *unsafe { constant_buffer_data.as_mut() } = view_proj_matrix * self.rotation_matrix;
         }
 
-        let mut rtv = swap_chain.get_current_back_buffer_rtv();
-        let mut dsv = swap_chain.get_depth_buffer_dsv();
+        let rtv = swap_chain.get_current_back_buffer_rtv().unwrap();
+        let dsv = swap_chain.get_depth_buffer_dsv().unwrap();
 
         // Clear the back buffer
         {
@@ -286,13 +288,13 @@ impl SampleBase for Queries {
             };
 
             immediate_context.clear_render_target::<f32>(
-                &mut rtv,
+                rtv,
                 &clear_color,
                 ResourceStateTransitionMode::Transition,
             );
         }
 
-        immediate_context.clear_depth(&mut dsv, 1.0, ResourceStateTransitionMode::Transition);
+        immediate_context.clear_depth(dsv, 1.0, ResourceStateTransitionMode::Transition);
 
         {
             // Bind vertex and index buffers

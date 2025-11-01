@@ -1,3 +1,6 @@
+use std::ops::Deref;
+use std::ops::DerefMut;
+
 use static_assertions::const_assert_eq;
 
 pub const API_VERSION: u32 = diligent_sys::DILIGENT_API_VERSION;
@@ -7,11 +10,11 @@ const_assert_eq!(API_VERSION, 256012);
 macro_rules! unsafe_member_call {
     ($instance:expr, $type_name: ident, $func_name:ident $(, $arg:expr) *) => (
         unsafe {
-            (*(*($instance.sys_ptr as *mut paste::paste! {diligent_sys::[<I $type_name>]})).pVtbl)
+            (*$instance.0.pVtbl)
                 .$type_name
                 .$func_name
                 .unwrap_unchecked()(
-                $instance.sys_ptr as _,
+                std::ptr::addr_of!($instance.0) as _,
                 $($arg), *
             )
         }
@@ -56,6 +59,8 @@ mod swap_chain;
 mod texture;
 mod texture_view;
 mod tlas;
+
+use crate::object::Object;
 
 pub use self::blas::*;
 pub use self::buffer::*;
@@ -291,5 +296,44 @@ impl APIInfo {
     }
     pub fn texture_view_desc_size(&self) -> usize {
         self.0.TextureViewDescSize
+    }
+}
+
+pub struct Boxed<T> {
+    ptr: *mut T,
+}
+
+impl<T> Boxed<T> {
+    pub(crate) fn new(ptr: *mut T) -> Self {
+        Self { ptr }
+    }
+
+    pub fn from_ref(object: &Object) -> Self {
+        object.add_ref();
+        Self {
+            ptr: object.sys_ptr() as *mut T,
+        }
+    }
+}
+
+impl<T> Deref for Boxed<T> {
+    type Target = T;
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*self.ptr }
+    }
+}
+
+impl<T> DerefMut for Boxed<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        unsafe { &mut *self.ptr }
+    }
+}
+
+impl<T> Drop for Boxed<T> {
+    fn drop(&mut self) {
+        let object_ptr = self.ptr as *mut diligent_sys::IObject;
+        unsafe {
+            (*(*object_ptr).pVtbl).Object.Release.unwrap_unchecked()(object_ptr);
+        }
     }
 }

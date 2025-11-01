@@ -4,8 +4,9 @@ use bitflags::bitflags;
 use bon::Builder;
 use static_assertions::const_assert_eq;
 
+use crate::device_object::DeviceObject;
+
 use super::{
-    device_object::DeviceObject,
     graphics_types::{FilterType, TextureAddressMode},
     pipeline_state::ComparisonFunction,
 };
@@ -102,26 +103,20 @@ impl From<&SamplerDesc> for diligent_sys::SamplerDesc {
 }
 
 #[repr(transparent)]
-pub struct Sampler(DeviceObject);
+pub struct Sampler(diligent_sys::ISampler);
 
 impl Deref for Sampler {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
-        &self.0
+        unsafe {
+            &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IDeviceObject
+                as *const DeviceObject)
+        }
     }
 }
 
 impl Sampler {
-    pub(crate) fn new(sampler_ptr: *mut diligent_sys::ISampler) -> Self {
-        // Both base and derived classes have exactly the same size.
-        // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert_eq!(
-            std::mem::size_of::<diligent_sys::IDeviceObject>(),
-            std::mem::size_of::<diligent_sys::ISampler>()
-        );
-
-        Self(DeviceObject::new(
-            sampler_ptr as *mut diligent_sys::IDeviceObject,
-        ))
+    pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::ISampler {
+        std::ptr::addr_of!(self.0) as _
     }
 }

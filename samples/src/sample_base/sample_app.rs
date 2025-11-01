@@ -42,7 +42,7 @@ use super::{
 };
 
 pub struct SampleApp<Sample: SampleBase> {
-    swap_chain: SwapChain,
+    swap_chain: Boxed<SwapChain>,
 
     _golden_image_mode: GoldenImageMode,
     _golden_pixel_tolerance: u32,
@@ -64,13 +64,13 @@ pub struct SampleApp<Sample: SampleBase> {
 
 enum EngineFactory {
     #[cfg(feature = "vulkan")]
-    Vulkan(EngineFactoryVk),
+    Vulkan(Boxed<EngineFactoryVk>),
     #[cfg(feature = "opengl")]
-    OpenGL(EngineFactoryOpenGL),
+    OpenGL(Boxed<EngineFactoryOpenGL>),
     #[cfg(feature = "d3d11")]
-    D3D11(EngineFactoryD3D11),
+    D3D11(Boxed<EngineFactoryD3D11>),
     #[cfg(feature = "d3d12")]
-    D3D12(EngineFactoryD3D12),
+    D3D12(Boxed<EngineFactoryD3D12>),
 }
 
 impl Deref for EngineFactory {
@@ -175,10 +175,10 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
         let context = self.sample.get_immediate_context();
         context.clear_stats();
 
-        let rtv = self.swap_chain.get_current_back_buffer_rtv();
-        let dsv = self.swap_chain.get_depth_buffer_dsv();
+        let rtv = self.swap_chain.get_current_back_buffer_rtv().unwrap();
+        let dsv = self.swap_chain.get_depth_buffer_dsv().unwrap();
 
-        context.set_render_targets(&[&rtv], Some(&dsv), ResourceStateTransitionMode::Transition);
+        context.set_render_targets(&[rtv], Some(&dsv), ResourceStateTransitionMode::Transition);
 
         self.sample.render(&self.swap_chain);
 
@@ -506,7 +506,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             device,
             immediate_contexts,
             deferred_contexts,
-            &swap_chain,
+            &*swap_chain,
         );
 
         let swap_chain_desc = swap_chain.get_desc();

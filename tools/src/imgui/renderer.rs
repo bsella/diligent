@@ -375,18 +375,18 @@ const PIXEL_SHADER_GAMMA_SPIRV: &[u32] = &[
 
 pub struct ImguiRenderer {
     context: imgui::Context,
-    pipeline_state: GraphicsPipelineState,
-    _font_texture_view: Box<TextureView>,
-    texture_var: ShaderResourceVariable,
-    shader_resource_binding: ShaderResourceBinding,
+    pipeline_state: Boxed<GraphicsPipelineState>,
+    _font_texture_view: Boxed<TextureView>,
+    texture_var: Boxed<ShaderResourceVariable>,
+    shader_resource_binding: Boxed<ShaderResourceBinding>,
 
-    vertex_constant_buffer: Buffer,
+    vertex_constant_buffer: Boxed<Buffer>,
 
     base_vertex_supported: bool,
 
-    vertex_buffer: Option<Buffer>,
+    vertex_buffer: Option<Boxed<Buffer>>,
     vertex_buffer_size: u32,
-    index_buffer: Option<Buffer>,
+    index_buffer: Option<Boxed<Buffer>>,
     index_buffer_size: u32,
 }
 
@@ -639,21 +639,21 @@ impl ImguiRenderer {
             .create_texture(&font_texture_desc, &[&subresource], None)
             .unwrap();
 
-        let font_texture_view = Box::new(
-            font_texture
-                .get_default_view(TextureViewType::ShaderResource)
-                .unwrap(),
-        );
+        let font_texture_view = font_texture
+            .get_default_view(TextureViewType::ShaderResource)
+            .unwrap();
 
         let shader_resource_binding = pipeline_state.create_shader_resource_binding(true).unwrap();
 
-        let texture_var = shader_resource_binding
-            .get_variable_by_name("Texture", ShaderTypes::Pixel)
-            .unwrap();
+        let texture_var = Boxed::from_ref(
+            shader_resource_binding
+                .get_variable_by_name("Texture", ShaderTypes::Pixel)
+                .unwrap(),
+        );
 
         // Store our identifier
         imgui_context.fonts().tex_id =
-            TextureId::new(&*font_texture_view as *const TextureView as usize);
+            TextureId::new(font_texture_view as *const TextureView as usize);
 
         imgui_context.io_mut().display_size =
             [create_info.initial_width, create_info.initial_height];
@@ -667,7 +667,7 @@ impl ImguiRenderer {
                 .contains(DrawCommandCapFlags::BaseVertex),
             context: imgui_context,
             pipeline_state,
-            _font_texture_view: font_texture_view,
+            _font_texture_view: Boxed::from_ref(font_texture_view),
             shader_resource_binding,
             texture_var,
             vertex_buffer: None,
@@ -889,8 +889,10 @@ impl ImguiRenderer {
                         if texture_view != last_texture_view {
                             last_texture_view = texture_view;
 
+                            let texture_view = unsafe { texture_view.as_ref().unwrap() };
+
                             self.texture_var
-                                .set(unsafe { &*texture_view }, SetShaderResourceFlags::None);
+                                .set(texture_view, SetShaderResourceFlags::None);
 
                             device_context.commit_shader_resources(
                                 &self.shader_resource_binding,

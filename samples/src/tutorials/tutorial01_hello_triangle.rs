@@ -4,10 +4,10 @@ use diligent_samples::sample_base::{sample::SampleBase, sample_app::SampleApp};
 use diligent_tools::native_app;
 
 struct HelloTriangle {
-    device: RenderDevice,
-    immediate_context: ImmediateDeviceContext,
+    device: Boxed<RenderDevice>,
+    immediate_context: Boxed<ImmediateDeviceContext>,
 
-    pipeline_state: GraphicsPipelineState,
+    pipeline_state: Boxed<GraphicsPipelineState>,
 }
 
 impl SampleBase for HelloTriangle {
@@ -21,9 +21,9 @@ impl SampleBase for HelloTriangle {
 
     fn new(
         _engine_factory: &EngineFactory,
-        device: RenderDevice,
-        immediate_contexts: Vec<ImmediateDeviceContext>,
-        _deferred_contexts: Vec<DeferredDeviceContext>,
+        device: Boxed<RenderDevice>,
+        immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
+        _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
         swap_chain: &SwapChain,
     ) -> Self {
         let swap_chain_desc = swap_chain.get_desc();
@@ -155,18 +155,18 @@ void main(in PSInput PSIn, out PSOutput PSOut)
     fn render(&self, swap_chain: &SwapChain) {
         let immediate_context = self.get_immediate_context();
 
-        let mut rtv = swap_chain.get_current_back_buffer_rtv();
-        let mut dsv = swap_chain.get_depth_buffer_dsv();
+        let rtv = swap_chain.get_current_back_buffer_rtv().unwrap();
+        let dsv = swap_chain.get_depth_buffer_dsv().unwrap();
 
         // Clear the back buffer
         // Let the engine perform required state transitions
         immediate_context.clear_render_target::<f32>(
-            &mut rtv,
+            rtv,
             &[0.350, 0.350, 0.350, 1.0],
             ResourceStateTransitionMode::Transition,
         );
 
-        immediate_context.clear_depth(&mut dsv, 1.0, ResourceStateTransitionMode::Transition);
+        immediate_context.clear_depth(dsv, 1.0, ResourceStateTransitionMode::Transition);
 
         // Set the pipeline state in the immediate context
         let graphics = immediate_context.set_graphics_pipeline_state(&self.pipeline_state);

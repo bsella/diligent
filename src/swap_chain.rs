@@ -118,27 +118,16 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct SwapChain(Object);
+pub struct SwapChain(diligent_sys::ISwapChain);
 
 impl Deref for SwapChain {
     type Target = Object;
     fn deref(&self) -> &Self::Target {
-        &self.0
+        unsafe { &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IObject as *const Object) }
     }
 }
 
 impl SwapChain {
-    pub(crate) fn new(swap_chain_ptr: *mut diligent_sys::ISwapChain) -> Self {
-        // Both base and derived classes have exactly the same size.
-        // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert_eq!(
-            std::mem::size_of::<diligent_sys::IObject>(),
-            std::mem::size_of::<diligent_sys::ISwapChain>()
-        );
-
-        Self(Object::new(swap_chain_ptr as *mut diligent_sys::IObject))
-    }
-
     pub fn present(&self, sync_interval: u32) {
         unsafe_member_call!(self, SwapChain, Present, sync_interval)
     }
@@ -176,23 +165,23 @@ impl SwapChain {
         unsafe_member_call!(self, SwapChain, SetMaximumFrameLatency, max_latency)
     }
 
-    pub fn get_current_back_buffer_rtv(&self) -> TextureView {
+    pub fn get_current_back_buffer_rtv(&self) -> Option<&TextureView> {
         let texture_view_ptr = unsafe_member_call!(self, SwapChain, GetCurrentBackBufferRTV);
 
-        let view = TextureView::new(texture_view_ptr);
-
-        view.add_ref();
-
-        view
+        if texture_view_ptr.is_null() {
+            None
+        } else {
+            Some(unsafe { &*(texture_view_ptr as *const TextureView) })
+        }
     }
 
-    pub fn get_depth_buffer_dsv(&self) -> TextureView {
+    pub fn get_depth_buffer_dsv(&self) -> Option<&TextureView> {
         let texture_view_ptr = unsafe_member_call!(self, SwapChain, GetDepthBufferDSV);
 
-        let view = TextureView::new(texture_view_ptr);
-
-        view.add_ref();
-
-        view
+        if texture_view_ptr.is_null() {
+            None
+        } else {
+            Some(unsafe { &*(texture_view_ptr as *const TextureView) })
+        }
     }
 }

@@ -5,6 +5,7 @@ use bon::Builder;
 use static_assertions::const_assert_eq;
 
 use crate::{
+    Boxed,
     buffer_view::{BufferView, BufferViewDesc, BufferViewType},
     device_context::DeviceContext,
     device_object::DeviceObject,
@@ -99,34 +100,29 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct Buffer(DeviceObject);
+pub struct Buffer(pub(crate) diligent_sys::IBuffer);
 
 impl Deref for Buffer {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
-        &self.0
+        unsafe {
+            &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IDeviceObject
+                as *const DeviceObject)
+        }
     }
 }
 
 impl Buffer {
-    pub(crate) fn new(buffer_ptr: *mut diligent_sys::IBuffer) -> Self {
-        // Both base and derived classes have exactly the same size.
-        // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert_eq!(
-            std::mem::size_of::<diligent_sys::IDeviceObject>(),
-            std::mem::size_of::<diligent_sys::IBuffer>()
-        );
-
-        Buffer(DeviceObject::new(
-            buffer_ptr as *mut diligent_sys::IDeviceObject,
-        ))
+    pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IBuffer {
+        std::ptr::addr_of!(self.0) as _
     }
 
     pub fn create_view<'buffer>(
         &'buffer self,
         view_desc: &BufferViewDesc,
-    ) -> Result<BufferView<'buffer>, ()> {
+    ) -> Result<Boxed<BufferView<'buffer>>, ()> {
         let mut buffer_view_ptr = std::ptr::null_mut();
+
         unsafe_member_call!(
             self,
             Buffer,
@@ -138,22 +134,20 @@ impl Buffer {
         if buffer_view_ptr.is_null() {
             Err(())
         } else {
-            Ok(BufferView::new(buffer_view_ptr))
+            Ok(Boxed::<BufferView>::new(buffer_view_ptr as _))
         }
     }
 
     pub fn get_default_view<'buffer>(
         &self,
         view_type: BufferViewType,
-    ) -> Option<BufferView<'buffer>> {
+    ) -> Option<&BufferView<'buffer>> {
         let buffer_view_ptr = unsafe_member_call!(self, Buffer, GetDefaultView, view_type.into());
 
         if buffer_view_ptr.is_null() {
             None
         } else {
-            let buffer_view = BufferView::new(buffer_view_ptr);
-            buffer_view.add_ref();
-            Some(buffer_view)
+            Some(unsafe { &*(buffer_view_ptr as *const BufferView) })
         }
     }
 
@@ -209,7 +203,7 @@ impl<'a, T> BufferMapReadToken<'a, T> {
             device_context,
             DeviceContext,
             MapBuffer,
-            buffer.sys_ptr as _,
+            std::ptr::addr_of!(buffer.0) as _,
             diligent_sys::MAP_READ as diligent_sys::MAP_TYPE,
             map_flags,
             std::ptr::addr_of_mut!(ptr)
@@ -237,7 +231,7 @@ impl<T> Drop for BufferMapReadToken<'_, T> {
             self.device_context,
             DeviceContext,
             UnmapBuffer,
-            self.buffer.sys_ptr as _,
+            std::ptr::addr_of!(self.buffer.0) as _,
             diligent_sys::MAP_READ as diligent_sys::MAP_TYPE
         )
     }
@@ -260,7 +254,7 @@ impl<'a, T> BufferMapWriteToken<'a, T> {
             device_context,
             DeviceContext,
             MapBuffer,
-            buffer.sys_ptr as _,
+            std::ptr::addr_of!(buffer.0) as _,
             diligent_sys::MAP_WRITE as diligent_sys::MAP_TYPE,
             map_flags,
             std::ptr::addr_of_mut!(ptr)
@@ -288,7 +282,7 @@ impl<T> Drop for BufferMapWriteToken<'_, T> {
             self.device_context,
             DeviceContext,
             UnmapBuffer,
-            self.buffer.sys_ptr as _,
+            std::ptr::addr_of!(self.buffer.0) as _,
             diligent_sys::MAP_WRITE as diligent_sys::MAP_TYPE
         )
     }
@@ -311,7 +305,7 @@ impl<'a, T> BufferMapReadWriteToken<'a, T> {
             device_context,
             DeviceContext,
             MapBuffer,
-            buffer.sys_ptr as _,
+            std::ptr::addr_of!(buffer.0) as _,
             diligent_sys::MAP_READ_WRITE as diligent_sys::MAP_TYPE,
             map_flags,
             std::ptr::addr_of_mut!(ptr)
@@ -346,7 +340,7 @@ impl<T> Drop for BufferMapReadWriteToken<'_, T> {
             self.device_context,
             DeviceContext,
             UnmapBuffer,
-            self.buffer.sys_ptr as _,
+            std::ptr::addr_of!(self.buffer.0) as _,
             diligent_sys::MAP_READ_WRITE as diligent_sys::MAP_TYPE
         )
     }

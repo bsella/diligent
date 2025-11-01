@@ -119,7 +119,7 @@ impl<'a> TLASBuildInstanceData<'a> {
         Self(
             diligent_sys::TLASBuildInstanceData {
                 InstanceName: instance_name.as_ptr(),
-                pBLAS: blas.sys_ptr as _,
+                pBLAS: blas.sys_ptr() as _,
                 Transform: diligent_sys::InstanceMatrix {
                     data: [
                         [transform[0], transform[1], transform[2], transform[3]],
@@ -178,27 +178,21 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct TopLevelAS(DeviceObject);
+pub struct TopLevelAS(diligent_sys::ITopLevelAS);
 
 impl Deref for TopLevelAS {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
-        &self.0
+        unsafe {
+            &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IDeviceObject
+                as *const DeviceObject)
+        }
     }
 }
 
 impl TopLevelAS {
-    pub(crate) fn new(sys_ptr: *mut diligent_sys::ITopLevelAS) -> Self {
-        // Both base and derived classes have exactly the same size.
-        // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert_eq!(
-            std::mem::size_of::<diligent_sys::IDeviceObject>(),
-            std::mem::size_of::<diligent_sys::ITopLevelAS>()
-        );
-
-        Self(DeviceObject::new(
-            sys_ptr as *mut diligent_sys::IDeviceObject,
-        ))
+    pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::ITopLevelAS {
+        std::ptr::addr_of!(self.0) as _
     }
 
     pub fn get_instance_desc(&self, name: impl AsRef<str>) -> Option<TLASInstanceDesc> {

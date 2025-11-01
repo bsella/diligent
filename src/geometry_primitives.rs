@@ -2,7 +2,7 @@ use bitflags::bitflags;
 use bon::Builder;
 use static_assertions::const_assert_eq;
 
-use crate::data_blob::DataBlob;
+use crate::{Boxed, data_blob::DataBlob};
 
 bitflags! {
     #[derive(Clone, Copy)]
@@ -45,7 +45,7 @@ pub struct GeometryPrimitiveInfo {
 
 pub fn create_geometry_primitive(
     attribs: &GeometryPrimitiveAttributes,
-) -> Result<(DataBlob, DataBlob, GeometryPrimitiveInfo), ()> {
+) -> Result<(Boxed<DataBlob>, Boxed<DataBlob>, GeometryPrimitiveInfo), ()> {
     enum GeometryPrimitiveType {
         Cube(diligent_sys::CubeGeometryPrimitiveAttributes),
         Sphere(diligent_sys::SphereGeometryPrimitiveAttributes),
@@ -101,8 +101,8 @@ pub fn create_geometry_primitive(
         Err(())
     } else {
         Ok((
-            DataBlob::new(vertices),
-            DataBlob::new(indices),
+            Boxed::<DataBlob>::new(vertices as _),
+            Boxed::<DataBlob>::new(indices as _),
             GeometryPrimitiveInfo {
                 num_indices: info.NumIndices as usize,
                 num_vertices: info.NumVertices as usize,

@@ -88,39 +88,39 @@ struct BoxAttribs {
 }
 
 struct RayTracing {
-    device: RenderDevice,
-    immediate_context: ImmediateDeviceContext,
+    device: Boxed<RenderDevice>,
+    immediate_context: Boxed<ImmediateDeviceContext>,
 
     camera: FirstPersonCamera,
     constants: Constants,
     max_recursion_depth: i32,
 
-    image_blit_pso: GraphicsPipelineState,
-    image_blit_srb: ShaderResourceBinding,
+    image_blit_pso: Boxed<GraphicsPipelineState>,
+    image_blit_srb: Boxed<ShaderResourceBinding>,
 
-    ray_tracing_pso: RayTracingPipelineState,
-    ray_tracing_srb: ShaderResourceBinding,
+    ray_tracing_pso: Boxed<RayTracingPipelineState>,
+    ray_tracing_srb: Boxed<ShaderResourceBinding>,
 
-    constant_buffer: Buffer,
-    _cube_attribs_buffer: Buffer,
-    _box_attribs_cb: Buffer,
+    constant_buffer: Boxed<Buffer>,
+    _cube_attribs_buffer: Boxed<Buffer>,
+    _box_attribs_cb: Boxed<Buffer>,
 
-    cube_blas: BottomLevelAS,
-    procedural_blas: BottomLevelAS,
+    cube_blas: Boxed<BottomLevelAS>,
+    procedural_blas: Boxed<BottomLevelAS>,
 
-    tlas: TopLevelAS,
+    tlas: Boxed<TopLevelAS>,
 
-    scratch_buffer: Buffer,
-    instance_buffer: Buffer,
+    scratch_buffer: Boxed<Buffer>,
+    instance_buffer: Boxed<Buffer>,
 
-    sbt: ShaderBindingTable,
+    sbt: Boxed<ShaderBindingTable>,
 
     animate: bool,
     enabled_cubes: [bool; 4],
 
     animation_time: f64,
 
-    color_rt: Texture,
+    color_rt: Boxed<Texture>,
 
     dispersion_factor: f32,
 }
@@ -129,7 +129,7 @@ fn create_graphics_pso(
     factory: &EngineFactory,
     device: &RenderDevice,
     swap_chain_desc: &SwapChainDesc,
-) -> GraphicsPipelineState {
+) -> Boxed<GraphicsPipelineState> {
     // Create graphics pipeline to blit render target into swapchain image.
 
     let mut rtv_formats = std::array::from_fn(|_| None);
@@ -200,7 +200,7 @@ fn create_graphics_pso(
 fn create_ray_tracing_pso(
     engine_factory: &EngineFactory,
     device: &RenderDevice,
-) -> RayTracingPipelineState {
+) -> Boxed<RayTracingPipelineState> {
     // Create a shader source stream factory to load shaders from files.
     let shader_source_factory = engine_factory
         .create_default_shader_source_stream_factory(&[])
@@ -417,7 +417,7 @@ fn create_ray_tracing_pso(
         .unwrap()
 }
 
-fn load_textures(device: &RenderDevice) -> ([Texture; NUM_TEXTURES], Texture) {
+fn load_textures(device: &RenderDevice) -> ([Boxed<Texture>; NUM_TEXTURES], Boxed<Texture>) {
     let textures = std::array::from_fn(|i| i).map(|tex_id| {
         let image_name = format!("DGLogo{tex_id}");
         let image = image::ImageReader::open(format!("assets/{image_name}.png"))
@@ -480,7 +480,7 @@ fn load_textures(device: &RenderDevice) -> ([Texture; NUM_TEXTURES], Texture) {
     (textures, ground)
 }
 
-fn create_tlas(device: &RenderDevice) -> (TopLevelAS, Buffer, Buffer) {
+fn create_tlas(device: &RenderDevice) -> (Boxed<TopLevelAS>, Boxed<Buffer>, Boxed<Buffer>) {
     const NUM_INSTANCES: usize = NUM_CUBES + 3;
 
     let tlas = {
@@ -522,7 +522,7 @@ fn create_tlas(device: &RenderDevice) -> (TopLevelAS, Buffer, Buffer) {
 fn create_and_build_cube_blas(
     device: &RenderDevice,
     immediate_context: &ImmediateDeviceContext,
-) -> (BottomLevelAS, Buffer) {
+) -> (Boxed<BottomLevelAS>, Boxed<Buffer>) {
     let (cube_verts, cube_indices, cube_geo_info) = create_geometry_primitive(
         &GeometryPrimitiveAttributes::builder()
             .geometry_type(GeometryPrimitive::Cube { size: 2.0 })
@@ -674,7 +674,7 @@ fn create_and_build_cube_blas(
 fn create_and_build_procedural_blas(
     device: &RenderDevice,
     immediate_context: &ImmediateDeviceContext,
-) -> (BottomLevelAS, Buffer) {
+) -> (Boxed<BottomLevelAS>, Boxed<Buffer>) {
     //static_assert(sizeof(HLSL::BoxAttribs) % 16 == 0, "BoxAttribs must be aligned by 16 bytes");
 
     const BOXES: [BoxAttribs; 1] = [BoxAttribs {
@@ -764,7 +764,7 @@ fn create_and_build_procedural_blas(
 fn create_sbt(
     device: &RenderDevice,
     raytracing_pso: &RayTracingPipelineState,
-) -> ShaderBindingTable {
+) -> Boxed<ShaderBindingTable> {
     device
         .create_sbt(
             &ShaderBindingTableDesc::builder()
@@ -949,9 +949,9 @@ impl SampleBase for RayTracing {
 
     fn new(
         engine_factory: &EngineFactory,
-        device: RenderDevice,
-        immediate_contexts: Vec<ImmediateDeviceContext>,
-        _deferred_contexts: Vec<DeferredDeviceContext>,
+        device: Boxed<RenderDevice>,
+        immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
+        _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
         swap_chain: &SwapChain,
     ) -> Self {
         if !device
@@ -1001,7 +1001,7 @@ impl SampleBase for RayTracing {
             let (logos, ground) = load_textures(&device);
 
             // Get shader resource view from the texture array
-            let logo_srvs = logos.map(|texture| {
+            let logo_srvs = logos.each_ref().map(|texture| {
                 texture
                     .get_default_view(TextureViewType::ShaderResource)
                     .unwrap()
@@ -1011,17 +1011,18 @@ impl SampleBase for RayTracing {
                 .get_default_view(TextureViewType::ShaderResource)
                 .unwrap();
 
-            let logo_srvs = logo_srvs.each_ref().map(|srv| srv.deref());
-
             ray_tracing_srb
                 .get_variable_by_name("g_CubeTextures", ShaderTypes::RayClosestHit)
                 .unwrap()
-                .set_array(logo_srvs.as_slice(), SetShaderResourceFlags::None);
+                .set_array(
+                    logo_srvs.map(|srv| srv.deref()).as_slice(),
+                    SetShaderResourceFlags::None,
+                );
 
             ray_tracing_srb
                 .get_variable_by_name("g_GroundTexture", ShaderTypes::RayClosestHit)
                 .unwrap()
-                .set(&ground_srv, SetShaderResourceFlags::None);
+                .set(ground_srv, SetShaderResourceFlags::None);
         }
 
         let (cube_blas, cube_attribs_buffer) =
@@ -1039,7 +1040,7 @@ impl SampleBase for RayTracing {
             .get_variable_by_name("g_BoxAttribs", ShaderTypes::RayIntersection)
             .unwrap()
             .set(
-                &box_attribs_cb
+                box_attribs_cb
                     .get_default_view(BufferViewType::ShaderResource)
                     .unwrap(),
                 SetShaderResourceFlags::None,
@@ -1288,8 +1289,7 @@ impl SampleBase for RayTracing {
                 .get_variable_by_name("g_ColorBuffer", ShaderTypes::RayGen)
                 .unwrap()
                 .set(
-                    &self
-                        .color_rt
+                    self.color_rt
                         .get_default_view(TextureViewType::UnorderedAccess)
                         .unwrap(),
                     SetShaderResourceFlags::None,
@@ -1321,16 +1321,15 @@ impl SampleBase for RayTracing {
                 .get_variable_by_name("g_Texture", ShaderTypes::Pixel)
                 .unwrap()
                 .set(
-                    &self
-                        .color_rt
+                    self.color_rt
                         .get_default_view(TextureViewType::ShaderResource)
                         .unwrap(),
                     SetShaderResourceFlags::None,
                 );
 
-            let rtv = swap_chain.get_current_back_buffer_rtv();
+            let rtv = swap_chain.get_current_back_buffer_rtv().unwrap();
             self.immediate_context.set_render_targets(
-                &[&rtv],
+                &[rtv],
                 None,
                 ResourceStateTransitionMode::Transition,
             );

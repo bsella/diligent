@@ -3,7 +3,7 @@ use std::{ops::Deref, os::raw::c_void, path::Path};
 use static_assertions::const_assert_eq;
 
 use crate::{
-    APIInfo,
+    APIInfo, Boxed,
     data_blob::DataBlob,
     graphics_types::{DeviceFeatures, GraphicsAdapterInfo, Version},
     memory_allocator::MemoryAllocator,
@@ -89,29 +89,16 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct EngineFactory(Object);
+pub struct EngineFactory(diligent_sys::IEngineFactory);
 
 impl Deref for EngineFactory {
     type Target = Object;
     fn deref(&self) -> &Self::Target {
-        &self.0
+        unsafe { &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IObject as *const Object) }
     }
 }
 
 impl EngineFactory {
-    pub(crate) fn new(engine_factory_ptr: *mut diligent_sys::IEngineFactory) -> Self {
-        // Both base and derived classes have exactly the same size.
-        // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert_eq!(
-            std::mem::size_of::<diligent_sys::IObject>(),
-            std::mem::size_of::<diligent_sys::IEngineFactory>()
-        );
-
-        Self(Object::new(
-            engine_factory_ptr as *mut diligent_sys::IObject,
-        ))
-    }
-
     pub fn get_api_info(&self) -> &APIInfo {
         let api_info_ptr = unsafe_member_call!(self, EngineFactory, GetAPIInfo);
         unsafe { &*(api_info_ptr as *const APIInfo) }
@@ -120,7 +107,7 @@ impl EngineFactory {
     pub fn create_default_shader_source_stream_factory(
         &self,
         search_directories: &[&Path],
-    ) -> Result<ShaderSourceInputStreamFactory, ()> {
+    ) -> Result<Boxed<ShaderSourceInputStreamFactory>, ()> {
         let mut search = String::new();
 
         search_directories.iter().for_each(|&dir| {
@@ -143,11 +130,13 @@ impl EngineFactory {
         if stream_factory_ptr.is_null() {
             Err(())
         } else {
-            Ok(ShaderSourceInputStreamFactory::new(stream_factory_ptr))
+            Ok(Boxed::<ShaderSourceInputStreamFactory>::new(
+                stream_factory_ptr as _,
+            ))
         }
     }
 
-    pub fn create_empty_data_blob(&self, initial_size: usize) -> Result<DataBlob, ()> {
+    pub fn create_empty_data_blob(&self, initial_size: usize) -> Result<Boxed<DataBlob>, ()> {
         let mut data_blob_ptr: *mut diligent_sys::IDataBlob = std::ptr::null_mut();
         unsafe_member_call!(
             self,
@@ -161,11 +150,11 @@ impl EngineFactory {
         if data_blob_ptr.is_null() {
             Err(())
         } else {
-            Ok(DataBlob::new(data_blob_ptr))
+            Ok(Boxed::<DataBlob>::new(data_blob_ptr as _))
         }
     }
 
-    pub fn create_data_blob<T>(&self, data: &T) -> Result<DataBlob, ()> {
+    pub fn create_data_blob<T>(&self, data: &T) -> Result<Boxed<DataBlob>, ()> {
         let mut data_blob_ptr: *mut diligent_sys::IDataBlob = std::ptr::null_mut();
         unsafe_member_call!(
             self,
@@ -179,7 +168,7 @@ impl EngineFactory {
         if data_blob_ptr.is_null() {
             Err(())
         } else {
-            Ok(DataBlob::new(data_blob_ptr))
+            Ok(Boxed::<DataBlob>::new(data_blob_ptr as _))
         }
     }
 

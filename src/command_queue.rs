@@ -2,24 +2,15 @@ use std::ops::Deref;
 
 use static_assertions::const_assert_eq;
 
-use crate::{device_context::DeviceContext, object::Object};
+use crate::object::Object;
 
-pub struct CommandQueue<'a> {
-    context: &'a DeviceContext,
+#[repr(transparent)]
+pub struct CommandQueue(diligent_sys::ICommandQueue);
 
-    object: Object,
-}
-
-impl Deref for CommandQueue<'_> {
+impl Deref for CommandQueue {
     type Target = Object;
     fn deref(&self) -> &Self::Target {
-        &self.object
-    }
-}
-
-impl Drop for CommandQueue<'_> {
-    fn drop(&mut self) {
-        unsafe_member_call!(self.context, DeviceContext, UnlockCommandQueue)
+        unsafe { &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IObject as *const Object) }
     }
 }
 
@@ -28,27 +19,7 @@ const_assert_eq!(
     3 * std::mem::size_of::<*const ()>()
 );
 
-impl<'a> CommandQueue<'a> {
-    pub(crate) fn new(context: &'a DeviceContext) -> Result<Self, ()> {
-        let command_queue_ptr = unsafe_member_call!(context, DeviceContext, LockCommandQueue);
-
-        // Both base and derived classes have exactly the same size.
-        // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert_eq!(
-            std::mem::size_of::<diligent_sys::IObject>(),
-            std::mem::size_of::<diligent_sys::ICommandQueue>()
-        );
-
-        if command_queue_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(CommandQueue {
-                context,
-                object: Object::new(command_queue_ptr as *mut diligent_sys::IObject),
-            })
-        }
-    }
-
+impl CommandQueue {
     pub fn get_next_fence_value(&self) -> u64 {
         unsafe_member_call!(self, CommandQueue, GetNextFenceValue)
     }

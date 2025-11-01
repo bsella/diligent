@@ -9,9 +9,9 @@ use diligent::{
 };
 
 pub struct TexturedCube {
-    vertex_buffer: Buffer,
-    index_buffer: Buffer,
-    //texture: Option<Texture>,
+    vertex_buffer: Boxed<Buffer>,
+    index_buffer: Boxed<Buffer>,
+    //texture: Option<Boxed<Texture>>,
 }
 
 pub struct CreatePSOInfo<'a> {
@@ -90,7 +90,7 @@ impl TexturedCube {
     pub fn create_pipeline_state(
         create_info: CreatePSOInfo,
         convert_output_to_gamma: bool,
-    ) -> Result<GraphicsPipelineState, ()> {
+    ) -> Result<Boxed<GraphicsPipelineState>, ()> {
         let mut input_layouts = Vec::new();
 
         if create_info

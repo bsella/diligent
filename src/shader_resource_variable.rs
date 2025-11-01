@@ -4,11 +4,10 @@ use bitflags::bitflags;
 use bon::Builder;
 use static_assertions::const_assert_eq;
 
-use crate::device_object::DeviceObject;
+use crate::{device_object::DeviceObject, object::Object};
 
 use super::{
     graphics_types::{SetShaderResourceFlags, ShaderTypes},
-    object::Object,
     pipeline_state::ShaderVariableFlags,
     shader::ShaderResourceDesc,
 };
@@ -113,43 +112,28 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct ShaderResourceVariable(Object);
+pub struct ShaderResourceVariable(diligent_sys::IShaderResourceVariable);
 
 impl Deref for ShaderResourceVariable {
     type Target = Object;
     fn deref(&self) -> &Self::Target {
-        &self.0
+        unsafe { &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IObject as *const Object) }
     }
 }
 
 impl ShaderResourceVariable {
-    pub(crate) fn new(
-        shader_resource_variable_ptr: *mut diligent_sys::IShaderResourceVariable,
-    ) -> Self {
-        // Both base and derived classes have exactly the same size.
-        // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert_eq!(
-            std::mem::size_of::<diligent_sys::IObject>(),
-            std::mem::size_of::<diligent_sys::IShaderResourceVariable>()
-        );
-
-        Self(Object::new(
-            shader_resource_variable_ptr as *mut diligent_sys::IObject,
-        ))
-    }
-
     pub fn set(&self, device_object: &DeviceObject, flags: SetShaderResourceFlags) {
         unsafe_member_call!(
             self,
             ShaderResourceVariable,
             Set,
-            device_object.sys_ptr as _,
+            device_object.sys_ptr(),
             flags.bits()
         )
     }
 
     pub fn set_array(&self, device_objects: &[&DeviceObject], flags: SetShaderResourceFlags) {
-        let object_ptrs = Vec::from_iter(device_objects.iter().map(|object| object.sys_ptr));
+        let object_ptrs = Vec::from_iter(device_objects.iter().map(|object| object.sys_ptr()));
         unsafe_member_call!(
             self,
             ShaderResourceVariable,
@@ -173,7 +157,7 @@ impl ShaderResourceVariable {
             self,
             ShaderResourceVariable,
             SetBufferRange,
-            device_object.sys_ptr as _,
+            device_object.sys_ptr(),
             offset,
             size,
             array_index.unwrap_or(0),

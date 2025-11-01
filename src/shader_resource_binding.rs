@@ -18,37 +18,28 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct ShaderResourceBinding(Object);
+pub struct ShaderResourceBinding(diligent_sys::IShaderResourceBinding);
 
 impl Deref for ShaderResourceBinding {
     type Target = Object;
     fn deref(&self) -> &Self::Target {
-        &self.0
+        unsafe { &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IObject as *const Object) }
     }
 }
 
 impl ShaderResourceBinding {
-    pub(crate) fn new(srb_ptr: *mut diligent_sys::IShaderResourceBinding) -> Self {
-        // Both base and derived classes have exactly the same size.
-        // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert_eq!(
-            std::mem::size_of::<diligent_sys::IObject>(),
-            std::mem::size_of::<diligent_sys::IShaderResourceBinding>()
-        );
-
-        Self(Object::new(srb_ptr as *mut diligent_sys::IObject))
+    pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IShaderResourceBinding {
+        std::ptr::addr_of!(self.0) as _
     }
 
-    pub fn get_pipeline_resource_signature(&self) -> Option<PipelineResourceSignature> {
+    pub fn get_pipeline_resource_signature(&self) -> Option<&PipelineResourceSignature> {
         let prs_ptr =
             unsafe_member_call!(self, ShaderResourceBinding, GetPipelineResourceSignature);
 
         if prs_ptr.is_null() {
             None
         } else {
-            let prs = PipelineResourceSignature::new(prs_ptr);
-            prs.add_ref();
-            Some(prs)
+            Some(unsafe { &*(prs_ptr as *const PipelineResourceSignature) })
         }
     }
 
@@ -63,7 +54,7 @@ impl ShaderResourceBinding {
             ShaderResourceBinding,
             BindResources,
             shader_stages.bits(),
-            resource_mapping.sys_ptr as _,
+            resource_mapping.sys_ptr(),
             flags.bits()
         )
     }
@@ -79,7 +70,7 @@ impl ShaderResourceBinding {
             ShaderResourceBinding,
             CheckResources,
             shader_stages.bits(),
-            resource_mapping.sys_ptr as _,
+            resource_mapping.sys_ptr(),
             flags.bits()
         );
 
@@ -90,10 +81,10 @@ impl ShaderResourceBinding {
         &self,
         name: impl AsRef<str>,
         shader_stages: ShaderTypes,
-    ) -> Option<ShaderResourceVariable> {
+    ) -> Option<&ShaderResourceVariable> {
         let name = CString::from_str(name.as_ref()).unwrap();
 
-        let variable = unsafe_member_call!(
+        let variable_ptr = unsafe_member_call!(
             self,
             ShaderResourceBinding,
             GetVariableByName,
@@ -101,12 +92,10 @@ impl ShaderResourceBinding {
             name.as_ptr()
         );
 
-        if variable.is_null() {
+        if variable_ptr.is_null() {
             None
         } else {
-            let srv = ShaderResourceVariable::new(variable);
-            srv.add_ref();
-            Some(srv)
+            Some(unsafe { &*(variable_ptr as *const ShaderResourceVariable) })
         }
     }
 

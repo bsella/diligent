@@ -9,12 +9,15 @@ use crate::{
 };
 
 #[repr(transparent)]
-pub struct RenderPass(DeviceObject);
+pub struct RenderPass(diligent_sys::IRenderPass);
 
 impl Deref for RenderPass {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
-        &self.0
+        unsafe {
+            &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IDeviceObject
+                as *const DeviceObject)
+        }
     }
 }
 
@@ -156,15 +159,7 @@ pub struct RenderPassDesc {
 }
 
 impl RenderPass {
-    pub(crate) fn new(sys_ptr: *mut diligent_sys::IRenderPass) -> Self {
-        // Both base and derived classes have exactly the same size.
-        // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert_eq!(
-            std::mem::size_of::<diligent_sys::IObject>(),
-            std::mem::size_of::<diligent_sys::IRenderPass>()
-        );
-        Self(DeviceObject::new(
-            sys_ptr as *mut diligent_sys::IDeviceObject,
-        ))
+    pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IRenderPass {
+        std::ptr::addr_of!(self.0) as _
     }
 }

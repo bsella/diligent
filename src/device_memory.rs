@@ -11,12 +11,15 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct DeviceMemory(DeviceObject);
+pub struct DeviceMemory(diligent_sys::IDeviceMemory);
 
 impl Deref for DeviceMemory {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
-        &self.0
+        unsafe {
+            &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IDeviceObject
+                as *const DeviceObject)
+        }
     }
 }
 
@@ -72,18 +75,6 @@ impl From<&DeviceMemoryDesc> for diligent_sys::DeviceMemoryDesc {
 }
 
 impl DeviceMemory {
-    pub(crate) fn new(fence_ptr: *mut diligent_sys::IDeviceMemory) -> Self {
-        // Both base and derived classes have exactly the same size.
-        // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert_eq!(
-            std::mem::size_of::<diligent_sys::IDeviceObject>(),
-            std::mem::size_of::<diligent_sys::IDeviceMemory>()
-        );
-        Self(DeviceObject::new(
-            fence_ptr as *mut diligent_sys::IDeviceObject,
-        ))
-    }
-
     pub fn resize(&self, new_size: u64) -> bool {
         unsafe_member_call!(self, DeviceMemory, Resize, new_size)
     }
@@ -93,6 +84,6 @@ impl DeviceMemory {
     }
 
     pub fn is_compatible(&self, device_objet: &DeviceObject) -> bool {
-        unsafe_member_call!(self, DeviceMemory, IsCompatible, device_objet.sys_ptr as _)
+        unsafe_member_call!(self, DeviceMemory, IsCompatible, device_objet.sys_ptr())
     }
 }

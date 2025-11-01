@@ -15,7 +15,6 @@ use static_assertions::const_assert_eq;
 use crate::{
     device_object::DeviceObject,
     graphics_types::{ShaderType, Version},
-    object::Object,
 };
 
 #[derive(Clone, Copy)]
@@ -273,7 +272,7 @@ impl From<&ShaderCreateInfo<'_>> for ShaderCreateInfoWrapper {
             pShaderSourceStreamFactory: value
                 .shader_source_input_stream_factory
                 .map_or(std::ptr::null_mut(), |stream_factory| {
-                    stream_factory.sys_ptr as _
+                    stream_factory.sys_ptr()
                 }),
             Source: match value.source {
                 ShaderSource::SourceCode(code) => code.as_ptr() as *const i8,
@@ -507,27 +506,21 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct Shader(DeviceObject);
+pub struct Shader(diligent_sys::IShader);
 
 impl Deref for Shader {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
-        &self.0
+        unsafe {
+            &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IDeviceObject
+                as *const DeviceObject)
+        }
     }
 }
 
 impl Shader {
-    pub(crate) fn new(shader_ptr: *mut diligent_sys::IShader) -> Self {
-        // Both base and derived classes have exactly the same size.
-        // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert_eq!(
-            std::mem::size_of::<diligent_sys::IDeviceObject>(),
-            std::mem::size_of::<diligent_sys::IShader>()
-        );
-
-        Self(DeviceObject::new(
-            shader_ptr as *mut diligent_sys::IDeviceObject,
-        ))
+    pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IShader {
+        std::ptr::addr_of!(self.0) as _
     }
 
     pub fn get_resources(&self) -> Vec<ShaderResourceDesc> {
@@ -592,20 +585,12 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct ShaderSourceInputStreamFactory(Object);
-
-impl Deref for ShaderSourceInputStreamFactory {
-    type Target = Object;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
+pub struct ShaderSourceInputStreamFactory(diligent_sys::IShaderSourceInputStreamFactory);
 
 impl ShaderSourceInputStreamFactory {
-    pub(crate) fn new(factory_ptr: *mut diligent_sys::IShaderSourceInputStreamFactory) -> Self {
-        Self(Object::new(factory_ptr as *mut diligent_sys::IObject))
+    pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IShaderSourceInputStreamFactory {
+        std::ptr::addr_of!(self.0) as _
     }
-
     //pub fn create_input_stream(&self, name : impl AsRef<str>, IFileStream** ppStream);
 
     //pub fn create_input_stream2(&self, name : impl AsRef<str>, CREATE_SHADER_SOURCE_INPUT_STREAM_FLAGS Flags, IFileStream** ppStream);

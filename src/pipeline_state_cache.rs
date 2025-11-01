@@ -12,12 +12,15 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct PipelineStateCache(DeviceObject);
+pub struct PipelineStateCache(diligent_sys::IPipelineStateCache);
 
 impl Deref for PipelineStateCache {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
-        &self.0
+        unsafe {
+            &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IDeviceObject
+                as *const DeviceObject)
+        }
     }
 }
 
@@ -70,19 +73,11 @@ impl<T> From<&PipelineStateCacheCreateInfo<T>> for diligent_sys::PipelineStateCa
 }
 
 impl PipelineStateCache {
-    pub(crate) fn new(fence_ptr: *mut diligent_sys::IPipelineStateCache) -> Self {
-        // Both base and derived classes have exactly the same size.
-        // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert_eq!(
-            std::mem::size_of::<diligent_sys::IObject>(),
-            std::mem::size_of::<diligent_sys::IPipelineStateCache>()
-        );
-        Self(DeviceObject::new(
-            fence_ptr as *mut diligent_sys::IDeviceObject,
-        ))
+    pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IPipelineStateCache {
+        std::ptr::addr_of!(self.0) as _
     }
 
-    pub fn get_data(&self) -> Option<DataBlob> {
+    pub fn get_data(&self) -> Option<&DataBlob> {
         let mut data_blob_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
@@ -94,9 +89,7 @@ impl PipelineStateCache {
         if data_blob_ptr.is_null() {
             None
         } else {
-            let data = DataBlob::new(data_blob_ptr);
-            data.add_ref();
-            Some(data)
+            Some(unsafe { &*(data_blob_ptr as *const DataBlob) })
         }
     }
 }

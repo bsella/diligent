@@ -11,12 +11,15 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct Fence(DeviceObject);
+pub struct Fence(diligent_sys::IFence);
 
 impl Deref for Fence {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
-        &self.0
+        unsafe {
+            &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IDeviceObject
+                as *const DeviceObject)
+        }
     }
 }
 
@@ -55,16 +58,8 @@ impl From<&FenceDesc> for diligent_sys::FenceDesc {
 }
 
 impl Fence {
-    pub(crate) fn new(fence_ptr: *mut diligent_sys::IFence) -> Self {
-        // Both base and derived classes have exactly the same size.
-        // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert_eq!(
-            std::mem::size_of::<diligent_sys::IDeviceObject>(),
-            std::mem::size_of::<diligent_sys::IFence>()
-        );
-        Self(DeviceObject::new(
-            fence_ptr as *mut diligent_sys::IDeviceObject,
-        ))
+    pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IFence {
+        std::ptr::addr_of!(self.0) as _
     }
 
     pub fn get_completed_value(&self) -> u64 {

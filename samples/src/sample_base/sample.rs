@@ -118,9 +118,9 @@ impl DerefMut for EngineCreateInfo<'_> {
 pub trait SampleBase {
     fn new(
         engine_factory: &EngineFactory,
-        render_device: RenderDevice,
-        immediate_contexts: Vec<ImmediateDeviceContext>,
-        deferred_contexts: Vec<DeferredDeviceContext>,
+        render_device: Boxed<RenderDevice>,
+        immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
+        deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
         swap_chain: &SwapChain,
     ) -> Self;
 

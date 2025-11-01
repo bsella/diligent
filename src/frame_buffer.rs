@@ -1,16 +1,17 @@
 use std::{ffi::CString, ops::Deref};
 
-use static_assertions::const_assert_eq;
-
 use crate::{device_object::DeviceObject, render_pass::RenderPass, texture_view::TextureView};
 
 #[repr(transparent)]
-pub struct Framebuffer(DeviceObject);
+pub struct Framebuffer(diligent_sys::IFramebuffer);
 
 impl Deref for Framebuffer {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
-        &self.0
+        unsafe {
+            &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IDeviceObject
+                as *const DeviceObject)
+        }
     }
 }
 
@@ -26,15 +27,7 @@ pub struct FramebufferDesc<'a> {
 }
 
 impl Framebuffer {
-    pub(crate) fn new(sys_ptr: *mut diligent_sys::IFramebuffer) -> Self {
-        // Both base and derived classes have exactly the same size.
-        // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert_eq!(
-            std::mem::size_of::<diligent_sys::IDeviceObject>(),
-            std::mem::size_of::<diligent_sys::IFramebuffer>()
-        );
-        Self(DeviceObject::new(
-            sys_ptr as *mut diligent_sys::IDeviceObject,
-        ))
+    pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IFramebuffer {
+        std::ptr::addr_of!(self.0) as _
     }
 }

@@ -4,6 +4,7 @@ use bitflags::bitflags;
 use static_assertions::const_assert_eq;
 
 use crate::{
+    Boxed,
     device_object::DeviceObject,
     graphics_types::{ShaderType, ShaderTypes},
     resource_mapping::ResourceMapping,
@@ -52,12 +53,15 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct PipelineResourceSignature(DeviceObject);
+pub struct PipelineResourceSignature(diligent_sys::IPipelineResourceSignature);
 
 impl Deref for PipelineResourceSignature {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
-        &self.0
+        unsafe {
+            &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IDeviceObject
+                as *const DeviceObject)
+        }
     }
 }
 
@@ -166,25 +170,14 @@ impl From<&PipelineResourceSignatureDesc<'_>> for PipelineResourceSignatureDescW
 }
 
 impl PipelineResourceSignature {
-    pub(crate) fn new(
-        pipeline_resource_signature_ptr: *mut diligent_sys::IPipelineResourceSignature,
-    ) -> Self {
-        // Both base and derived classes have exactly the same size.
-        // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert_eq!(
-            std::mem::size_of::<diligent_sys::IDeviceObject>(),
-            std::mem::size_of::<diligent_sys::IPipelineResourceSignature>()
-        );
-
-        Self(DeviceObject::new(
-            pipeline_resource_signature_ptr as *mut diligent_sys::IDeviceObject,
-        ))
+    pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IPipelineResourceSignature {
+        std::ptr::addr_of!(self.0) as _
     }
 
     pub fn create_shader_resource_binding(
         &self,
         init_static_resources: bool,
-    ) -> Result<ShaderResourceBinding, ()> {
+    ) -> Result<Boxed<ShaderResourceBinding>, ()> {
         let mut shader_resource_binding_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
@@ -197,7 +190,9 @@ impl PipelineResourceSignature {
         if shader_resource_binding_ptr.is_null() {
             Err(())
         } else {
-            Ok(ShaderResourceBinding::new(shader_resource_binding_ptr))
+            Ok(Boxed::<ShaderResourceBinding>::new(
+                shader_resource_binding_ptr as _,
+            ))
         }
     }
 
@@ -212,7 +207,7 @@ impl PipelineResourceSignature {
             PipelineResourceSignature,
             BindStaticResources,
             shader_stages.bits(),
-            resource_mapping.sys_ptr as _,
+            resource_mapping.sys_ptr(),
             flags.bits()
         )
     }
@@ -221,7 +216,7 @@ impl PipelineResourceSignature {
         &self,
         shader_type: ShaderType,
         name: impl AsRef<str>,
-    ) -> Option<ShaderResourceVariable> {
+    ) -> Option<&ShaderResourceVariable> {
         let name = CString::from_str(name.as_ref()).unwrap();
 
         let shader_resource_variable = unsafe_member_call!(
@@ -235,9 +230,7 @@ impl PipelineResourceSignature {
         if shader_resource_variable.is_null() {
             None
         } else {
-            let srv = ShaderResourceVariable::new(shader_resource_variable);
-            srv.add_ref();
-            Some(srv)
+            Some(unsafe { &*(shader_resource_variable as *const ShaderResourceVariable) })
         }
     }
 
@@ -246,7 +239,7 @@ impl PipelineResourceSignature {
             self,
             PipelineResourceSignature,
             InitializeStaticSRBResources,
-            shader_resource_binding.sys_ptr as _
+            shader_resource_binding.sys_ptr()
         )
     }
 
@@ -255,7 +248,7 @@ impl PipelineResourceSignature {
             self,
             PipelineResourceSignature,
             CopyStaticResources,
-            signature.sys_ptr as _
+            signature.sys_ptr()
         )
     }
 
@@ -264,7 +257,7 @@ impl PipelineResourceSignature {
             self,
             PipelineResourceSignature,
             IsCompatibleWith,
-            signature.sys_ptr as _
+            signature.sys_ptr()
         )
     }
 }

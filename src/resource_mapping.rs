@@ -10,27 +10,18 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct ResourceMapping(Object);
+pub struct ResourceMapping(diligent_sys::IResourceMapping);
 
 impl Deref for ResourceMapping {
     type Target = Object;
     fn deref(&self) -> &Self::Target {
-        &self.0
+        unsafe { &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IObject as *const Object) }
     }
 }
 
 impl ResourceMapping {
-    pub(crate) fn new(resource_mapping_ptr: *mut diligent_sys::IResourceMapping) -> Self {
-        // Both base and derived classes have exactly the same size.
-        // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert_eq!(
-            std::mem::size_of::<diligent_sys::IObject>(),
-            std::mem::size_of::<diligent_sys::IResourceMapping>()
-        );
-
-        Self(Object::new(
-            resource_mapping_ptr as *mut diligent_sys::IObject,
-        ))
+    pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IResourceMapping {
+        std::ptr::addr_of!(self.0) as _
     }
 
     pub fn add_resource(&mut self, name: impl AsRef<str>, object: &DeviceObject, is_unique: bool) {
@@ -40,7 +31,7 @@ impl ResourceMapping {
             ResourceMapping,
             AddResource,
             name.as_ptr(),
-            object.sys_ptr as _,
+            object.sys_ptr() as _,
             is_unique
         );
     }
@@ -51,7 +42,7 @@ impl ResourceMapping {
         device_objects: &[&DeviceObject],
         is_unique: bool,
     ) {
-        let object_ptrs = Vec::from_iter(device_objects.iter().map(|object| object.sys_ptr));
+        let object_ptrs = Vec::from_iter(device_objects.iter().map(|object| object.sys_ptr()));
 
         {
             let name = std::ffi::CString::new(name.as_ref()).unwrap();
@@ -87,7 +78,7 @@ impl ResourceMapping {
         &self,
         name: impl AsRef<str>,
         array_index: Option<u32>,
-    ) -> Option<DeviceObject> {
+    ) -> Option<&DeviceObject> {
         let array_index = array_index.unwrap_or(0);
 
         let name = std::ffi::CString::new(name.as_ref()).unwrap();
@@ -103,9 +94,7 @@ impl ResourceMapping {
         if resource_ptr.is_null() {
             None
         } else {
-            let object = DeviceObject::new(resource_ptr);
-            object.add_ref();
-            Some(object)
+            Some(unsafe { &*(resource_ptr as *const DeviceObject) })
         }
     }
 

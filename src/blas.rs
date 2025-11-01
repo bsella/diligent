@@ -160,12 +160,15 @@ impl From<&BottomLevelASDesc<'_>> for BottomLevelASDescWrapper {
 }
 
 #[repr(transparent)]
-pub struct BottomLevelAS(DeviceObject);
+pub struct BottomLevelAS(diligent_sys::IBottomLevelAS);
 
 impl Deref for BottomLevelAS {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
-        &self.0
+        unsafe {
+            &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IDeviceObject
+                as *const DeviceObject)
+        }
     }
 }
 
@@ -180,17 +183,8 @@ const_assert_eq!(
 );
 
 impl BottomLevelAS {
-    pub(crate) fn new(sys_ptr: *mut diligent_sys::IBottomLevelAS) -> Self {
-        // Both base and derived classes have exactly the same size.
-        // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert_eq!(
-            std::mem::size_of::<diligent_sys::IDeviceObject>(),
-            std::mem::size_of::<diligent_sys::IBottomLevelAS>()
-        );
-
-        Self(DeviceObject::new(
-            sys_ptr as *mut diligent_sys::IDeviceObject,
-        ))
+    pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IBottomLevelAS {
+        std::ptr::addr_of!(self.0) as _
     }
 
     pub fn get_geometry_desc_index(&self, name: impl AsRef<str>) -> u32 {

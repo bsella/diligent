@@ -1,6 +1,7 @@
 use bon::Builder;
 
 use crate::{
+    Boxed,
     buffer::{Buffer, BufferDesc, BufferMode},
     geometry_primitives::{
         GeometryPrimitive, GeometryPrimitiveAttributes, GeometryPrimitiveInfo,
@@ -54,7 +55,7 @@ pub fn create_geometry_primitive_buffers(
     device: &RenderDevice,
     attribs: &GeometryPrimitiveAttributes,
     buffer_ci: &GeometryPrimitiveBuffersCreateInfo,
-) -> Result<(Buffer, Buffer, GeometryPrimitiveInfo), ()> {
+) -> Result<(Boxed<Buffer>, Boxed<Buffer>, GeometryPrimitiveInfo), ()> {
     let (vertices, indices, info) = create_geometry_primitive(attribs)?;
 
     let primitive_id = PRIMITIVE_COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
@@ -123,7 +124,7 @@ pub fn create_uniform_buffer(
     usage: Usage,
     bind_flags: BindFlags,
     cpu_access_flags: CpuAccessFlags,
-) -> Result<Buffer, ()> {
+) -> Result<Boxed<Buffer>, ()> {
     let cpu_access_flags = match usage {
         Usage::Default | Usage::Immutable => CpuAccessFlags::None,
         _ => cpu_access_flags,
@@ -148,7 +149,7 @@ pub fn create_uniform_buffer_with_data<T>(
     bind_flags: BindFlags,
     cpu_access_flags: CpuAccessFlags,
     data: &T,
-) -> Result<Buffer, ()> {
+) -> Result<Boxed<Buffer>, ()> {
     let cpu_access_flags = match usage {
         Usage::Default | Usage::Immutable => CpuAccessFlags::None,
         _ => cpu_access_flags,

@@ -167,49 +167,39 @@ impl TextureViewDesc {
 }
 
 #[repr(transparent)]
-pub struct TextureView(DeviceObject);
+pub struct TextureView(diligent_sys::ITextureView);
 
 impl Deref for TextureView {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
-        &self.0
+        unsafe {
+            &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IDeviceObject
+                as *const DeviceObject)
+        }
     }
 }
 
 impl TextureView {
-    pub(crate) fn new(texture_view_ptr: *mut diligent_sys::ITextureView) -> Self {
-        // Both base and derived classes have exactly the same size.
-        // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert_eq!(
-            std::mem::size_of::<diligent_sys::IDeviceObject>(),
-            std::mem::size_of::<diligent_sys::ITextureView>()
-        );
-
-        Self(DeviceObject::new(
-            texture_view_ptr as *mut diligent_sys::IDeviceObject,
-        ))
+    pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::ITextureView {
+        std::ptr::addr_of!(self.0) as _
     }
 
     pub fn set_sampler(&mut self, sampler: &Sampler) {
-        unsafe_member_call!(self, TextureView, SetSampler, sampler.sys_ptr as _);
+        unsafe_member_call!(self, TextureView, SetSampler, sampler.sys_ptr());
     }
 
-    pub fn get_sampler(&self) -> Option<Sampler> {
+    pub fn get_sampler(&self) -> Option<&Sampler> {
         let sampler_ptr = unsafe_member_call!(self, TextureView, GetSampler);
 
         if sampler_ptr.is_null() {
             None
         } else {
-            let sampler = Sampler::new(sampler_ptr);
-            sampler.add_ref();
-            Some(sampler)
+            unsafe { Some(&*(sampler_ptr as *const Sampler)) }
         }
     }
 
-    #[inline]
-    pub fn get_texture(&self) -> Texture {
-        let texture = Texture::new(unsafe_member_call!(self, TextureView, GetTexture));
-        texture.add_ref();
-        texture
+    pub fn get_texture(&self) -> &Texture {
+        let texture_ptr = unsafe_member_call!(self, TextureView, GetTexture);
+        unsafe { &*(texture_ptr as *const Texture) }
     }
 }

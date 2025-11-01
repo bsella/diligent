@@ -5,6 +5,7 @@ use bon::Builder;
 use static_assertions::const_assert_eq;
 
 use crate::{
+    Boxed,
     buffer::Buffer,
     device_context::DeviceContext,
     device_object::DeviceObject,
@@ -126,7 +127,7 @@ impl From<&TextureSubResource<'_>> for diligent_sys::TextureSubResData {
                 std::ptr::null()
             },
             pSrcBuffer: if let TextureSubResData::GPU(buffer) = value.source {
-                buffer.sys_ptr as _
+                buffer.sys_ptr() as _
             } else {
                 std::ptr::null_mut()
             },
@@ -274,30 +275,27 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct Texture(DeviceObject);
+pub struct Texture(diligent_sys::ITexture);
 
 impl Deref for Texture {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
-        &self.0
+        unsafe {
+            &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IDeviceObject
+                as *const DeviceObject)
+        }
     }
 }
 
 impl Texture {
-    pub(crate) fn new(texture_ptr: *mut diligent_sys::ITexture) -> Self {
-        // Both base and derived classes have exactly the same size.
-        // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert_eq!(
-            std::mem::size_of::<diligent_sys::IDeviceObject>(),
-            std::mem::size_of::<diligent_sys::ITexture>()
-        );
-
-        Self(DeviceObject::new(
-            texture_ptr as *mut diligent_sys::IDeviceObject,
-        ))
+    pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::ITexture {
+        std::ptr::addr_of!(self.0) as _
     }
 
-    pub fn create_view(&self, texture_view_desc: &TextureViewDesc) -> Result<TextureView, ()> {
+    pub fn create_view(
+        &self,
+        texture_view_desc: &TextureViewDesc,
+    ) -> Result<Boxed<TextureView>, ()> {
         let mut texture_view_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
@@ -310,20 +308,17 @@ impl Texture {
         if texture_view_ptr.is_null() {
             Err(())
         } else {
-            Ok(TextureView::new(texture_view_ptr))
+            Ok(Boxed::<TextureView>::new(texture_view_ptr as _))
         }
     }
 
-    pub fn get_default_view(&self, texture_view_type: TextureViewType) -> Option<TextureView> {
+    pub fn get_default_view(&self, texture_view_type: TextureViewType) -> Option<&TextureView> {
         let texture_view_ptr =
             unsafe_member_call!(self, Texture, GetDefaultView, texture_view_type.into());
         if texture_view_ptr.is_null() {
             None
         } else {
-            let texture_view = TextureView::new(texture_view_ptr);
-            texture_view.add_ref();
-
-            Some(texture_view)
+            Some(unsafe { &*(texture_view_ptr as *const TextureView) })
         }
     }
 
@@ -368,7 +363,7 @@ impl<'a, T> TextureSubresourceReadMapToken<'a, T> {
             device_context,
             DeviceContext,
             MapTextureSubresource,
-            texture.sys_ptr as _,
+            texture.sys_ptr(),
             mip_level,
             array_slice,
             diligent_sys::MAP_READ as diligent_sys::MAP_TYPE,
@@ -403,7 +398,7 @@ impl<T> Drop for TextureSubresourceReadMapToken<'_, T> {
             self.device_context,
             DeviceContext,
             UnmapTextureSubresource,
-            self.texture.sys_ptr as _,
+            self.texture.sys_ptr(),
             self.mip_level,
             self.array_slice
         )
@@ -432,7 +427,7 @@ impl<'a, T> TextureSubresourceWriteMapToken<'a, T> {
             device_context,
             DeviceContext,
             MapTextureSubresource,
-            texture.sys_ptr as _,
+            texture.sys_ptr(),
             mip_level,
             array_slice,
             diligent_sys::MAP_WRITE as diligent_sys::MAP_TYPE,
@@ -467,7 +462,7 @@ impl<T> Drop for TextureSubresourceWriteMapToken<'_, T> {
             self.device_context,
             DeviceContext,
             UnmapTextureSubresource,
-            self.texture.sys_ptr as _,
+            self.texture.sys_ptr(),
             self.mip_level,
             self.array_slice
         )
@@ -496,7 +491,7 @@ impl<'a, T> TextureSubresourceReadWriteMapToken<'a, T> {
             device_context,
             DeviceContext,
             MapTextureSubresource,
-            texture.sys_ptr as _,
+            texture.sys_ptr(),
             mip_level,
             array_slice,
             diligent_sys::MAP_READ_WRITE as diligent_sys::MAP_TYPE,
@@ -539,7 +534,7 @@ impl<T> Drop for TextureSubresourceReadWriteMapToken<'_, T> {
             self.device_context,
             DeviceContext,
             UnmapTextureSubresource,
-            self.texture.sys_ptr as _,
+            self.texture.sys_ptr(),
             self.mip_level,
             self.array_slice
         )

@@ -28,25 +28,25 @@ struct InstanceData {
 }
 
 struct TextureArray {
-    device: RenderDevice,
-    immediate_context: ImmediateDeviceContext,
+    device: Boxed<RenderDevice>,
+    immediate_context: Boxed<ImmediateDeviceContext>,
 
     textured_cube: TexturedCube,
 
     convert_ps_output_to_gamma: bool,
 
-    pipeline_state: GraphicsPipelineState,
-    srb: ShaderResourceBinding,
+    pipeline_state: Boxed<GraphicsPipelineState>,
+    srb: Boxed<ShaderResourceBinding>,
 
-    _texture_view: TextureView,
+    _texture_view: Boxed<TextureView>,
 
     rotation_matrix: glam::Mat4,
 
     grid_size: u32,
 
-    instance_buffer: Buffer,
+    instance_buffer: Boxed<Buffer>,
 
-    vertex_shader_constants: Buffer,
+    vertex_shader_constants: Boxed<Buffer>,
 }
 
 impl TextureArray {
@@ -129,9 +129,9 @@ impl SampleBase for TextureArray {
 
     fn new(
         engine_factory: &EngineFactory,
-        device: RenderDevice,
-        immediate_contexts: Vec<ImmediateDeviceContext>,
-        _deferred_contexts: Vec<DeferredDeviceContext>,
+        device: Boxed<RenderDevice>,
+        immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
+        _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
         swap_chain: &SwapChain,
     ) -> Self {
         let swap_chain_desc = swap_chain.get_desc();
@@ -255,9 +255,11 @@ impl SampleBase for TextureArray {
                 .unwrap();
 
             // Get shader resource view from the texture array
-            texture
-                .get_default_view(TextureViewType::ShaderResource)
-                .unwrap()
+            Boxed::<TextureView>::from_ref(
+                texture
+                    .get_default_view(TextureViewType::ShaderResource)
+                    .unwrap(),
+            )
         };
 
         srb.get_variable_by_name("g_Texture", ShaderTypes::Pixel)
@@ -339,8 +341,8 @@ impl SampleBase for TextureArray {
             proj * srf_pre_transform * view
         };
 
-        let mut rtv = swap_chain.get_current_back_buffer_rtv();
-        let mut dsv = swap_chain.get_depth_buffer_dsv();
+        let rtv = swap_chain.get_current_back_buffer_rtv().unwrap();
+        let dsv = swap_chain.get_depth_buffer_dsv().unwrap();
 
         // Clear the back buffer
         {
@@ -356,13 +358,13 @@ impl SampleBase for TextureArray {
             };
 
             immediate_context.clear_render_target::<f32>(
-                &mut rtv,
+                rtv,
                 &clear_color,
                 ResourceStateTransitionMode::Transition,
             );
         }
 
-        immediate_context.clear_depth(&mut dsv, 1.0, ResourceStateTransitionMode::Transition);
+        immediate_context.clear_depth(dsv, 1.0, ResourceStateTransitionMode::Transition);
 
         {
             // Map the buffer and write current world-view-projection matrix

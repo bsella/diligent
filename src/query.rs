@@ -3,7 +3,7 @@ use std::{cell::RefCell, marker::PhantomData, mem::MaybeUninit, ops::Deref};
 use static_assertions::const_assert_eq;
 
 use crate::{
-    device_context::DeviceContext, device_object::DeviceObject, render_device::RenderDevice,
+    Boxed, device_context::DeviceContext, device_object::DeviceObject, render_device::RenderDevice,
 };
 
 const_assert_eq!(diligent_sys::QUERY_TYPE_NUM_TYPES, 6);
@@ -89,27 +89,21 @@ const_assert_eq!(
     2 * std::mem::size_of::<*const ()>()
 );
 
-pub struct Query<QueryDataType: GetSysQueryType>(DeviceObject, PhantomData<QueryDataType>);
+pub struct Query<QueryDataType: GetSysQueryType>(diligent_sys::IQuery, PhantomData<QueryDataType>);
 
 impl<QueryDataType: GetSysQueryType> Deref for Query<QueryDataType> {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
-        &self.0
+        unsafe {
+            &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IDeviceObject
+                as *const DeviceObject)
+        }
     }
 }
 
 impl<QueryDataType: GetSysQueryType> Query<QueryDataType> {
-    pub(crate) fn new(query_ptr: *mut diligent_sys::IQuery) -> Self {
-        // Both base and derived classes have exactly the same size.
-        // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert_eq!(
-            std::mem::size_of::<diligent_sys::IDeviceObject>(),
-            std::mem::size_of::<diligent_sys::IQuery>()
-        );
-        Query::<QueryDataType>(
-            DeviceObject::new(query_ptr as *mut diligent_sys::IDeviceObject),
-            PhantomData,
-        )
+    pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IQuery {
+        std::ptr::addr_of!(self.0) as _
     }
 
     pub fn invalidate(&self) {
@@ -135,18 +129,13 @@ pub struct ScopedQueryToken<'a, QueryDataType: GetSysQueryType> {
 
 impl<'a, QueryDataType: GetSysQueryType> ScopedQueryToken<'a, QueryDataType> {
     pub(crate) fn new(context: &'a DeviceContext, query: &'a Query<QueryDataType>) -> Self {
-        unsafe_member_call!(context, DeviceContext, BeginQuery, query.sys_ptr as _);
+        unsafe_member_call!(context, DeviceContext, BeginQuery, query.sys_ptr());
 
         Self { query, context }
     }
 
     pub fn data(self, invalidate: bool) -> Option<QueryDataType> {
-        unsafe_member_call!(
-            self.context,
-            DeviceContext,
-            EndQuery,
-            self.query.sys_ptr as _
-        );
+        unsafe_member_call!(self.context, DeviceContext, EndQuery, self.query.sys_ptr());
 
         let mut data = MaybeUninit::<QueryDataType>::uninit();
 
@@ -171,9 +160,9 @@ impl<'a, QueryDataType: GetSysQueryType> ScopedQueryToken<'a, QueryDataType> {
 }
 
 pub struct DurationQueryHelper {
-    start: Query<QueryDataTimestamp>,
+    start: Boxed<Query<QueryDataTimestamp>>,
     start_timestamp: RefCell<QueryDataTimestamp>,
-    end: Query<QueryDataTimestamp>,
+    end: Boxed<Query<QueryDataTimestamp>>,
     end_timestamp: RefCell<QueryDataTimestamp>,
 }
 
@@ -187,7 +176,7 @@ impl TimeStampQueryToken<'_> {
         helper: &'a DurationQueryHelper,
         context: &'a DeviceContext,
     ) -> TimeStampQueryToken<'a> {
-        unsafe_member_call!(context, DeviceContext, EndQuery, helper.start.sys_ptr as _);
+        unsafe_member_call!(context, DeviceContext, EndQuery, helper.start.sys_ptr());
 
         TimeStampQueryToken {
             context,
@@ -200,7 +189,7 @@ impl TimeStampQueryToken<'_> {
             self.context,
             DeviceContext,
             EndQuery,
-            self.query.end.sys_ptr as _
+            self.query.end.sys_ptr()
         );
 
         let mut start_timestamp = self.query.start_timestamp.borrow_mut();

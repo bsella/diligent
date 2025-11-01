@@ -5,13 +5,14 @@ use std::path::PathBuf;
 
 use static_assertions::const_assert_eq;
 
+use crate::Boxed;
+use crate::EngineFactory;
 use crate::graphics_types::Version;
 use crate::swap_chain::SwapChainCreateInfo;
 use crate::{
     device_context::DeferredDeviceContext, device_context::ImmediateDeviceContext,
-    engine_factory::EngineCreateInfo, engine_factory::EngineFactory,
-    graphics_types::DeviceFeatureState, platforms::native_window::NativeWindow,
-    render_device::RenderDevice, swap_chain::SwapChain,
+    engine_factory::EngineCreateInfo, graphics_types::DeviceFeatureState,
+    platforms::native_window::NativeWindow, render_device::RenderDevice, swap_chain::SwapChain,
 };
 
 pub struct DeviceFeaturesVk {
@@ -145,28 +146,22 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct EngineFactoryVk(EngineFactory);
+pub struct EngineFactoryVk(pub(crate) diligent_sys::IEngineFactoryVk);
 
 impl Deref for EngineFactoryVk {
     type Target = EngineFactory;
     fn deref(&self) -> &Self::Target {
-        &self.0
+        unsafe {
+            &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IEngineFactory
+                as *const EngineFactory)
+        }
     }
 }
 
-pub fn get_engine_factory_vk() -> EngineFactoryVk {
+pub fn get_engine_factory_vk() -> Boxed<EngineFactoryVk> {
     let engine_factory_vk = unsafe { diligent_sys::Diligent_GetEngineFactoryVk() };
 
-    // Both base and derived classes have exactly the same size.
-    // This means that we can up-cast to the base class without worrying about layout offset between both classes
-    const_assert_eq!(
-        std::mem::size_of::<diligent_sys::IEngineFactory>(),
-        std::mem::size_of::<diligent_sys::IEngineFactoryVk>()
-    );
-
-    EngineFactoryVk(EngineFactory::new(
-        engine_factory_vk as *mut diligent_sys::IEngineFactory,
-    ))
+    Boxed::new(engine_factory_vk as _)
 }
 
 impl EngineFactoryVk {
@@ -175,9 +170,9 @@ impl EngineFactoryVk {
         create_info: &EngineVkCreateInfo,
     ) -> Result<
         (
-            RenderDevice,
-            Vec<ImmediateDeviceContext>,
-            Vec<DeferredDeviceContext>,
+            Boxed<RenderDevice>,
+            Vec<Boxed<ImmediateDeviceContext>>,
+            Vec<Boxed<DeferredDeviceContext>>,
         ),
         (),
     > {
@@ -290,19 +285,19 @@ impl EngineFactoryVk {
             Err(())
         } else {
             Ok((
-                RenderDevice::new(render_device_ptr),
+                Boxed::<RenderDevice>::new(render_device_ptr as _),
                 Vec::from_iter(
                     device_context_ptrs
                         .iter()
                         .take(num_immediate_contexts)
-                        .map(|dc_ptr| ImmediateDeviceContext::new(*dc_ptr)),
+                        .map(|dc_ptr| Boxed::<ImmediateDeviceContext>::new(*dc_ptr as _)),
                 ),
                 Vec::from_iter(
                     device_context_ptrs
                         .iter()
                         .rev()
                         .take(num_deferred_contexts)
-                        .map(|dc_ptr| DeferredDeviceContext::new(*dc_ptr)),
+                        .map(|dc_ptr| Boxed::<DeferredDeviceContext>::new(*dc_ptr as _)),
                 ),
             ))
         }
@@ -314,7 +309,7 @@ impl EngineFactoryVk {
         immediate_context: &ImmediateDeviceContext,
         swapchain_ci: &SwapChainCreateInfo,
         window: Option<&NativeWindow>,
-    ) -> Result<SwapChain, ()> {
+    ) -> Result<Boxed<SwapChain>, ()> {
         let swapchain_desc = swapchain_ci.into();
         let mut swap_chain_ptr = std::ptr::null_mut();
 
@@ -324,8 +319,8 @@ impl EngineFactoryVk {
             self,
             EngineFactoryVk,
             CreateSwapChainVk,
-            device.sys_ptr as _,
-            immediate_context.sys_ptr as _,
+            device.sys_ptr(),
+            immediate_context.sys_ptr(),
             std::ptr::from_ref(&swapchain_desc),
             window.as_ref().map_or(std::ptr::null(), std::ptr::from_ref),
             std::ptr::addr_of_mut!(swap_chain_ptr)
@@ -334,7 +329,7 @@ impl EngineFactoryVk {
         if swap_chain_ptr.is_null() {
             Err(())
         } else {
-            Ok(SwapChain::new(swap_chain_ptr))
+            Ok(Boxed::<SwapChain>::new(swap_chain_ptr as _))
         }
     }
 

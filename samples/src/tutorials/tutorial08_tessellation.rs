@@ -11,19 +11,19 @@ use diligent_samples::sample_base::{
 use diligent_tools::native_app;
 
 struct Tessellation {
-    device: RenderDevice,
-    immediate_context: ImmediateDeviceContext,
+    device: Boxed<RenderDevice>,
+    immediate_context: Boxed<ImmediateDeviceContext>,
 
-    main_pipeline: (GraphicsPipelineState, ShaderResourceBinding),
-    wireframe_pipeline: Option<(GraphicsPipelineState, ShaderResourceBinding)>,
+    main_pipeline: (Boxed<GraphicsPipelineState>, Boxed<ShaderResourceBinding>),
+    wireframe_pipeline: Option<(Boxed<GraphicsPipelineState>, Boxed<ShaderResourceBinding>)>,
 
     animate: bool,
     wireframe: bool,
     tess_density: f32,
     distance: f32,
 
-    _height_map_srv: TextureView,
-    _color_map_srv: TextureView,
+    _height_map_srv: Boxed<TextureView>,
+    _color_map_srv: Boxed<TextureView>,
 
     rotation_angle: f32,
 
@@ -33,7 +33,7 @@ struct Tessellation {
     height_map_height: u32,
     block_size: u32,
 
-    shader_constants: Buffer,
+    shader_constants: Boxed<Buffer>,
 
     adaptive_tessellation: bool,
 }
@@ -66,9 +66,9 @@ impl SampleBase for Tessellation {
 
     fn new(
         engine_factory: &EngineFactory,
-        device: RenderDevice,
-        immediate_contexts: Vec<ImmediateDeviceContext>,
-        _deferred_contexts: Vec<DeferredDeviceContext>,
+        device: Boxed<RenderDevice>,
+        immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
+        _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
         swap_chain: &SwapChain,
     ) -> Self {
         let wireframe_supported = !matches!(
@@ -325,9 +325,11 @@ impl SampleBase for Tessellation {
 
             // Get shader resource view from the texture
             (
-                texture
-                    .get_default_view(TextureViewType::ShaderResource)
-                    .unwrap(),
+                Boxed::<TextureView>::from_ref(
+                    texture
+                        .get_default_view(TextureViewType::ShaderResource)
+                        .unwrap(),
+                ),
                 image.width(),
                 image.height(),
             )
@@ -361,15 +363,17 @@ impl SampleBase for Tessellation {
                 .unwrap();
 
             // Get shader resource view from the texture
-            texture
-                .get_default_view(TextureViewType::ShaderResource)
-                .unwrap()
+            Boxed::<TextureView>::from_ref(
+                texture
+                    .get_default_view(TextureViewType::ShaderResource)
+                    .unwrap(),
+            )
         };
 
         fn apply_to_pipelines(
             f: impl Fn(&GraphicsPipelineState),
             main_pipeline: &GraphicsPipelineState,
-            wireframe_pipeline: &Option<GraphicsPipelineState>,
+            wireframe_pipeline: &Option<Boxed<GraphicsPipelineState>>,
         ) {
             f(main_pipeline);
             if let Some(wireframe_pipeline) = &wireframe_pipeline {
@@ -397,9 +401,12 @@ impl SampleBase for Tessellation {
         });
 
         fn apply_to_srb(
-            f: impl Fn(&(GraphicsPipelineState, ShaderResourceBinding)),
-            main_pipeline: &(GraphicsPipelineState, ShaderResourceBinding),
-            wireframe_pipeline: &Option<(GraphicsPipelineState, ShaderResourceBinding)>,
+            f: impl Fn(&(Boxed<GraphicsPipelineState>, Boxed<ShaderResourceBinding>)),
+            main_pipeline: &(Boxed<GraphicsPipelineState>, Boxed<ShaderResourceBinding>),
+            wireframe_pipeline: &Option<(
+                Boxed<GraphicsPipelineState>,
+                Boxed<ShaderResourceBinding>,
+            )>,
         ) {
             f(main_pipeline);
             if let Some(wireframe_pipeline) = &wireframe_pipeline {
@@ -525,8 +532,8 @@ impl SampleBase for Tessellation {
             view_matrix * model_matrix
         };
 
-        let mut rtv = swap_chain.get_current_back_buffer_rtv();
-        let mut dsv = swap_chain.get_depth_buffer_dsv();
+        let rtv = swap_chain.get_current_back_buffer_rtv().unwrap();
+        let dsv = swap_chain.get_depth_buffer_dsv().unwrap();
 
         // Clear the back buffer
         {
@@ -542,13 +549,13 @@ impl SampleBase for Tessellation {
             };
 
             immediate_context.clear_render_target::<f32>(
-                &mut rtv,
+                rtv,
                 &clear_color,
                 ResourceStateTransitionMode::Transition,
             );
         }
 
-        immediate_context.clear_depth(&mut dsv, 1.0, ResourceStateTransitionMode::Transition);
+        immediate_context.clear_depth(dsv, 1.0, ResourceStateTransitionMode::Transition);
 
         let num_horz_blocks = self.height_map_width / self.block_size;
         let num_vert_blocks = self.height_map_height / self.block_size;

@@ -1,9 +1,9 @@
 use core::fmt;
-use std::ops::Deref;
+use std::{fmt::Debug, ops::Deref};
 
 use static_assertions::const_assert_eq;
 
-use super::object::Object;
+use crate::{Boxed, object::Object};
 
 const_assert_eq!(
     std::mem::size_of::<diligent_sys::IDataBlobMethods>(),
@@ -11,12 +11,12 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct DataBlob(Object);
+pub struct DataBlob(diligent_sys::IDataBlob);
 
 impl Deref for DataBlob {
     type Target = Object;
     fn deref(&self) -> &Self::Target {
-        &self.0
+        unsafe { &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IObject as *const Object) }
     }
 }
 
@@ -39,18 +39,13 @@ impl fmt::Debug for DataBlob {
     }
 }
 
-impl DataBlob {
-    pub(crate) fn new(data_blob_ptr: *mut diligent_sys::IDataBlob) -> Self {
-        // Both base and derived classes have exactly the same size.
-        // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert_eq!(
-            std::mem::size_of::<diligent_sys::IDeviceObject>(),
-            std::mem::size_of::<diligent_sys::IDataBlob>()
-        );
-
-        Self(Object::new(data_blob_ptr as *mut diligent_sys::IObject))
+impl Debug for Boxed<DataBlob> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.deref().fmt(f)
     }
+}
 
+impl DataBlob {
     pub fn resize(&mut self, new_size: usize) {
         unsafe_member_call!(self, DataBlob, Resize, new_size)
     }

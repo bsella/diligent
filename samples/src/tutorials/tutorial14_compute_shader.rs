@@ -26,7 +26,7 @@ fn create_render_particle_pso(
     device: &RenderDevice,
     swap_chain_desc: &SwapChainDesc,
     convert_ps_output_to_gamma: bool,
-) -> GraphicsPipelineState {
+) -> Boxed<GraphicsPipelineState> {
     let mut rtv_formats = std::array::from_fn(|_| None);
     rtv_formats[0] = Some(swap_chain_desc.color_buffer_format());
 
@@ -136,10 +136,10 @@ fn create_update_particle_pso(
     device: &RenderDevice,
     thread_group_size: u32,
 ) -> (
-    ComputePipelineState,
-    ComputePipelineState,
-    ComputePipelineState,
-    ComputePipelineState,
+    Boxed<ComputePipelineState>,
+    Boxed<ComputePipelineState>,
+    Boxed<ComputePipelineState>,
+    Boxed<ComputePipelineState>,
 ) {
     // Create a shader source stream factory to load shaders from files.
     let shader_source_factory = factory
@@ -266,7 +266,10 @@ fn create_update_particle_pso(
     )
 }
 
-fn create_particle_buffers(num_particles: u32, device: &RenderDevice) -> (Buffer, Buffer, Buffer) {
+fn create_particle_buffers(
+    num_particles: u32,
+    device: &RenderDevice,
+) -> (Boxed<Buffer>, Boxed<Buffer>, Boxed<Buffer>) {
     let buffer_desc = BufferDesc::builder()
         .bind_flags(BindFlags::ShaderResource | BindFlags::UnorderedAccess)
         .mode(BufferMode::Structured)
@@ -334,7 +337,7 @@ fn create_particle_buffers(num_particles: u32, device: &RenderDevice) -> (Buffer
     )
 }
 
-fn create_constant_buffer(device: &RenderDevice) -> Buffer {
+fn create_constant_buffer(device: &RenderDevice) -> Boxed<Buffer> {
     device
         .create_buffer(
             &BufferDesc::builder()
@@ -381,61 +384,61 @@ fn bind_buffers(
     reset_particle_lists_srb
         .get_variable_by_name("g_ParticleListHead", ShaderTypes::Compute)
         .unwrap()
-        .set(&list_heads_buffer_uav, SetShaderResourceFlags::None);
+        .set(list_heads_buffer_uav, SetShaderResourceFlags::None);
     render_particle_srb
         .get_variable_by_name("g_Particles", ShaderTypes::Vertex)
         .unwrap()
-        .set(&attribs_buffer_srv, SetShaderResourceFlags::None);
+        .set(attribs_buffer_srv, SetShaderResourceFlags::None);
 
     move_particles_srb
         .get_variable_by_name("g_Particles", ShaderTypes::Compute)
         .unwrap()
-        .set(&attribs_buffer_uav, SetShaderResourceFlags::None);
+        .set(attribs_buffer_uav, SetShaderResourceFlags::None);
     move_particles_srb
         .get_variable_by_name("g_ParticleListHead", ShaderTypes::Compute)
         .unwrap()
-        .set(&list_heads_buffer_uav, SetShaderResourceFlags::None);
+        .set(list_heads_buffer_uav, SetShaderResourceFlags::None);
     move_particles_srb
         .get_variable_by_name("g_ParticleLists", ShaderTypes::Compute)
         .unwrap()
-        .set(&lists_buffer_uav, SetShaderResourceFlags::None);
+        .set(lists_buffer_uav, SetShaderResourceFlags::None);
 
     collide_particles_srb
         .get_variable_by_name("g_Particles", ShaderTypes::Compute)
         .unwrap()
-        .set(&attribs_buffer_uav, SetShaderResourceFlags::None);
+        .set(attribs_buffer_uav, SetShaderResourceFlags::None);
     collide_particles_srb
         .get_variable_by_name("g_ParticleListHead", ShaderTypes::Compute)
         .unwrap()
-        .set(&list_heads_buffer_srv, SetShaderResourceFlags::None);
+        .set(list_heads_buffer_srv, SetShaderResourceFlags::None);
     collide_particles_srb
         .get_variable_by_name("g_ParticleLists", ShaderTypes::Compute)
         .unwrap()
-        .set(&lists_buffer_srv, SetShaderResourceFlags::None);
+        .set(lists_buffer_srv, SetShaderResourceFlags::None);
 }
 
 struct ComputeShader {
-    device: RenderDevice,
-    immediate_context: ImmediateDeviceContext,
+    device: Boxed<RenderDevice>,
+    immediate_context: Boxed<ImmediateDeviceContext>,
 
-    render_particle_pso: GraphicsPipelineState,
-    render_particle_srb: ShaderResourceBinding,
+    render_particle_pso: Boxed<GraphicsPipelineState>,
+    render_particle_srb: Boxed<ShaderResourceBinding>,
 
-    reset_particle_lists_pso: ComputePipelineState,
-    reset_particle_lists_srb: ShaderResourceBinding,
+    reset_particle_lists_pso: Boxed<ComputePipelineState>,
+    reset_particle_lists_srb: Boxed<ShaderResourceBinding>,
 
-    move_particles_pso: ComputePipelineState,
-    move_particles_srb: ShaderResourceBinding,
+    move_particles_pso: Boxed<ComputePipelineState>,
+    move_particles_srb: Boxed<ShaderResourceBinding>,
 
-    collide_particles_pso: ComputePipelineState,
-    collide_particles_srb: ShaderResourceBinding,
+    collide_particles_pso: Boxed<ComputePipelineState>,
+    collide_particles_srb: Boxed<ShaderResourceBinding>,
 
-    update_particle_speed_pso: ComputePipelineState,
+    update_particle_speed_pso: Boxed<ComputePipelineState>,
 
-    constants: Buffer,
-    particle_attribs_buffer: Buffer,
-    particle_list_heads_buffer: Buffer,
-    particle_lists_buffer: Buffer,
+    constants: Boxed<Buffer>,
+    particle_attribs_buffer: Boxed<Buffer>,
+    particle_list_heads_buffer: Boxed<Buffer>,
+    particle_lists_buffer: Boxed<Buffer>,
 
     num_particles: i32,
 
@@ -458,9 +461,9 @@ impl SampleBase for ComputeShader {
 
     fn new(
         engine_factory: &EngineFactory,
-        device: RenderDevice,
-        immediate_contexts: Vec<ImmediateDeviceContext>,
-        _deferred_contexts: Vec<DeferredDeviceContext>,
+        device: Boxed<RenderDevice>,
+        immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
+        _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
         swap_chain: &SwapChain,
     ) -> Self {
         let swap_chain_desc = swap_chain.get_desc();
@@ -586,18 +589,18 @@ impl SampleBase for ComputeShader {
     fn render(&self, swap_chain: &SwapChain) {
         let immediate_context = self.get_immediate_context();
 
-        let mut rtv = swap_chain.get_current_back_buffer_rtv();
-        let mut dsv = swap_chain.get_depth_buffer_dsv();
+        let rtv = swap_chain.get_current_back_buffer_rtv().unwrap();
+        let dsv = swap_chain.get_depth_buffer_dsv().unwrap();
 
         // Clear the back buffer
         // Let the engine perform required state transitions
         immediate_context.clear_render_target(
-            &mut rtv,
+            rtv,
             &self.clear_color,
             ResourceStateTransitionMode::Transition,
         );
 
-        immediate_context.clear_depth(&mut dsv, 1.0, ResourceStateTransitionMode::Transition);
+        immediate_context.clear_depth(dsv, 1.0, ResourceStateTransitionMode::Transition);
 
         let swap_chain_desc = swap_chain.get_desc();
 

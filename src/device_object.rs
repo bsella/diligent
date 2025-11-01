@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use static_assertions::const_assert_eq;
 
-use super::object::Object;
+use crate::object::Object;
 
 const_assert_eq!(
     std::mem::size_of::<diligent_sys::IDeviceObjectMethods>(),
@@ -10,25 +10,18 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct DeviceObject(Object);
+pub struct DeviceObject(diligent_sys::IDeviceObject);
 
 impl Deref for DeviceObject {
     type Target = Object;
-
     fn deref(&self) -> &Self::Target {
-        &self.0
+        unsafe { &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IObject as *const Object) }
     }
 }
 
 impl DeviceObject {
-    pub(crate) fn new(device_object_ptr: *mut diligent_sys::IDeviceObject) -> Self {
-        // Both base and derived classes have exactly the same size.
-        // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert_eq!(
-            std::mem::size_of::<diligent_sys::IObject>(),
-            std::mem::size_of::<diligent_sys::IDeviceObject>()
-        );
-        Self(Object::new(device_object_ptr as *mut diligent_sys::IObject))
+    pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IDeviceObject {
+        std::ptr::addr_of!(self.0) as _
     }
 
     pub fn get_unique_id(&self) -> i32 {

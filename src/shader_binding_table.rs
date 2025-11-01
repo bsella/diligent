@@ -33,7 +33,7 @@ impl From<&ShaderBindingTableDesc<'_>> for diligent_sys::ShaderBindingTableDesc 
                     .as_ref()
                     .map_or(std::ptr::null(), |name| name.as_ptr()),
             },
-            pPSO: value.raytracing_pso.sys_ptr as _,
+            pPSO: value.raytracing_pso.sys_ptr(),
         }
     }
 }
@@ -44,27 +44,21 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct ShaderBindingTable(DeviceObject);
+pub struct ShaderBindingTable(diligent_sys::IShaderBindingTable);
 
 impl Deref for ShaderBindingTable {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
-        &self.0
+        unsafe {
+            &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IDeviceObject
+                as *const DeviceObject)
+        }
     }
 }
 
 impl ShaderBindingTable {
-    pub(crate) fn new(sys_ptr: *mut diligent_sys::IShaderBindingTable) -> Self {
-        // Both base and derived classes have exactly the same size.
-        // This means that we can up-cast to the base class without worrying about layout offset between both classes
-        const_assert_eq!(
-            std::mem::size_of::<diligent_sys::IDeviceObject>(),
-            std::mem::size_of::<diligent_sys::IShaderBindingTable>()
-        );
-
-        Self(DeviceObject::new(
-            sys_ptr as *mut diligent_sys::IDeviceObject,
-        ))
+    pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IShaderBindingTable {
+        std::ptr::addr_of!(self.0) as _
     }
 
     //TODO pub fn GetDesc() -> ShaderBindingTableDesc{}
@@ -73,7 +67,7 @@ impl ShaderBindingTable {
         unsafe_member_call!(self, ShaderBindingTable, Verify, flags.bits())
     }
     pub fn reset(&self, pso: &PipelineState) {
-        unsafe_member_call!(self, ShaderBindingTable, Reset, pso.sys_ptr as _)
+        unsafe_member_call!(self, ShaderBindingTable, Reset, pso.sys_ptr())
     }
     pub fn reset_hit_groups(&self) {
         unsafe_member_call!(self, ShaderBindingTable, ResetHitGroups)
@@ -149,7 +143,7 @@ impl ShaderBindingTable {
             self,
             ShaderBindingTable,
             BindHitGroupForGeometry,
-            tlas.sys_ptr as _,
+            tlas.sys_ptr(),
             instance_name.as_ptr(),
             geometry_name.as_ptr(),
             ray_offset_in_hit_group_index,
@@ -175,7 +169,7 @@ impl ShaderBindingTable {
             self,
             ShaderBindingTable,
             BindHitGroupForGeometry,
-            tlas.sys_ptr as _,
+            tlas.sys_ptr(),
             instance_name.as_ptr(),
             geometry_name.as_ptr(),
             ray_offset_in_hit_group_index,
@@ -229,7 +223,7 @@ impl ShaderBindingTable {
             self,
             ShaderBindingTable,
             BindHitGroupForInstance,
-            tlas.sys_ptr as _,
+            tlas.sys_ptr(),
             instance_name.as_ptr(),
             ray_offset_in_hit_group_index,
             shader_group_name
@@ -254,7 +248,7 @@ impl ShaderBindingTable {
             self,
             ShaderBindingTable,
             BindHitGroupForInstance,
-            tlas.sys_ptr as _,
+            tlas.sys_ptr(),
             instance_name.as_ptr(),
             ray_offset_in_hit_group_index,
             shader_group_name.as_ptr(),
@@ -274,7 +268,7 @@ impl ShaderBindingTable {
             self,
             ShaderBindingTable,
             BindHitGroupForTLAS,
-            tlas.sys_ptr as _,
+            tlas.sys_ptr(),
             ray_offset_in_hit_group_index,
             shader_group_name
                 .as_ref()
@@ -296,7 +290,7 @@ impl ShaderBindingTable {
             self,
             ShaderBindingTable,
             BindHitGroupForTLAS,
-            tlas.sys_ptr as _,
+            tlas.sys_ptr(),
             ray_offset_in_hit_group_index,
             shader_group_name.as_ptr(),
             std::ptr::from_ref(data) as _,
