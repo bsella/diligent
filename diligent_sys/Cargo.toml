@@ -9,7 +9,7 @@ build = "build.rs"
 exclude = ["/DiligentEngine"]
 
 [build-dependencies]
-bindgen = "0.72.0"
+bindgen = "0.72.1"
 
 [features]
 vulkan = []
