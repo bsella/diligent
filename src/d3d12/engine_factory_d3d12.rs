@@ -5,9 +5,9 @@ use std::{
 };
 
 use bitflags::bitflags;
-use static_assertions::const_assert_eq;
 
 use crate::{
+    Boxed,
     device_context::{DeferredDeviceContext, ImmediateDeviceContext},
     engine_factory::{EngineCreateInfo, EngineFactory},
     graphics_types::{DisplayModeAttribs, FullScreenModeDesc, TextureFormat, Version},
@@ -17,27 +17,22 @@ use crate::{
 };
 
 #[repr(transparent)]
-pub struct EngineFactoryD3D12(EngineFactory);
+pub struct EngineFactoryD3D12(diligent_sys::IEngineFactoryD3D12);
 
 impl Deref for EngineFactoryD3D12 {
     type Target = EngineFactory;
     fn deref(&self) -> &Self::Target {
-        &self.0
+        unsafe {
+            &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IEngineFactory
+                as *const EngineFactory)
+        }
     }
 }
-pub fn get_engine_factory_d3d12() -> EngineFactoryD3D12 {
+
+pub fn get_engine_factory_d3d12() -> Boxed<EngineFactoryD3D12> {
     let engine_factory_d3d12 = unsafe { diligent_sys::Diligent_GetEngineFactoryD3D12() };
 
-    // Both base and derived classes have exactly the same size.
-    // This means that we can up-cast to the base class without worrying about layout offset between both classes
-    const_assert_eq!(
-        std::mem::size_of::<diligent_sys::IEngineFactory>(),
-        std::mem::size_of::<diligent_sys::IEngineFactoryD3D12>()
-    );
-
-    EngineFactoryD3D12(EngineFactory::new(
-        engine_factory_d3d12 as *mut diligent_sys::IEngineFactory,
-    ))
+    Boxed::new(engine_factory_d3d12 as _)
 }
 
 bitflags! {
@@ -151,9 +146,9 @@ impl EngineFactoryD3D12 {
         engine_ci: &EngineD3D12CreateInfo,
     ) -> Result<
         (
-            RenderDevice,
-            Vec<ImmediateDeviceContext>,
-            Vec<DeferredDeviceContext>,
+            Boxed<RenderDevice>,
+            Vec<Boxed<ImmediateDeviceContext>>,
+            Vec<Boxed<DeferredDeviceContext>>,
         ),
         (),
     > {
@@ -163,15 +158,15 @@ impl EngineFactoryD3D12 {
             .len()
             .max(1);
 
-        let num_deferred_contexts = engine_ci.engine_create_info.num_deferred_contexts as usize;
+        let num_deferred_contexts = engine_ci.engine_create_info.num_deferred_contexts;
 
         let engine_ci = engine_ci.into();
 
         let mut render_device_ptr = std::ptr::null_mut();
-        let mut device_context_ptrs = Vec::from_iter(
-            std::iter::repeat(std::ptr::null_mut())
-                .take(num_immediate_contexts + num_deferred_contexts),
-        );
+        let mut device_context_ptrs = Vec::from_iter(std::iter::repeat_n(
+            std::ptr::null_mut(),
+            num_immediate_contexts + num_deferred_contexts,
+        ));
 
         unsafe_member_call!(
             self,
@@ -186,19 +181,19 @@ impl EngineFactoryD3D12 {
             Err(())
         } else {
             Ok((
-                RenderDevice::new(render_device_ptr),
+                Boxed::new(render_device_ptr as _),
                 Vec::from_iter(
                     device_context_ptrs
                         .iter()
                         .take(num_immediate_contexts)
-                        .map(|dc_ptr| ImmediateDeviceContext::new(*dc_ptr)),
+                        .map(|&dc_ptr| Boxed::new(dc_ptr as _)),
                 ),
                 Vec::from_iter(
                     device_context_ptrs
                         .iter()
                         .rev()
                         .take(num_deferred_contexts)
-                        .map(|dc_ptr| DeferredDeviceContext::new(*dc_ptr)),
+                        .map(|&dc_ptr| Boxed::new(dc_ptr as _)),
                 ),
             ))
         }
@@ -232,7 +227,7 @@ impl EngineFactoryD3D12 {
         swapchain_desc: &SwapChainCreateInfo,
         fs_desc: &FullScreenModeDesc,
         window: Option<&NativeWindow>,
-    ) -> Result<SwapChain, ()> {
+    ) -> Result<Boxed<SwapChain>, ()> {
         let swapchain_desc = swapchain_desc.into();
         let window = window.map(|window| window.into());
         let mut swap_chain_ptr = std::ptr::null_mut();
@@ -242,20 +237,18 @@ impl EngineFactoryD3D12 {
             self,
             EngineFactoryD3D12,
             CreateSwapChainD3D12,
-            device.sys_ptr as _,
-            context.sys_ptr as _,
+            device.sys_ptr(),
+            context.sys_ptr(),
             std::ptr::from_ref(&swapchain_desc),
             std::ptr::from_ref(&fs_desc),
-            window
-                .as_ref()
-                .map_or(std::ptr::null(), |window| std::ptr::from_ref(window)),
+            window.as_ref().map_or(std::ptr::null(), std::ptr::from_ref),
             std::ptr::addr_of_mut!(swap_chain_ptr)
         );
 
         if swap_chain_ptr.is_null() {
             Err(())
         } else {
-            Ok(SwapChain::new(swap_chain_ptr))
+            Ok(Boxed::new(swap_chain_ptr as _))
         }
     }
 

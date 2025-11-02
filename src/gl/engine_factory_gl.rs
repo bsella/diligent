@@ -1,8 +1,7 @@
 use std::ops::{Deref, DerefMut};
 
-use static_assertions::const_assert_eq;
-
 use crate::{
+    Boxed,
     device_context::ImmediateDeviceContext,
     engine_factory::{EngineCreateInfo, EngineFactory},
     graphics_types::AdapterType,
@@ -55,14 +54,16 @@ impl From<&EngineGLCreateInfo> for diligent_sys::EngineGLCreateInfo {
     }
 }
 
-pub struct EngineFactoryOpenGL {
-    engine_factory: EngineFactory,
-}
+#[repr(transparent)]
+pub struct EngineFactoryOpenGL(diligent_sys::IEngineFactoryOpenGL);
 
 impl Deref for EngineFactoryOpenGL {
     type Target = EngineFactory;
     fn deref(&self) -> &Self::Target {
-        &self.engine_factory
+        unsafe {
+            &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IEngineFactory
+                as *const EngineFactory)
+        }
     }
 }
 
@@ -71,7 +72,14 @@ impl EngineFactoryOpenGL {
         &self,
         engine_ci: &EngineGLCreateInfo,
         sc_desc: &SwapChainCreateInfo,
-    ) -> Result<(RenderDevice, ImmediateDeviceContext, SwapChain), ()> {
+    ) -> Result<
+        (
+            Boxed<RenderDevice>,
+            Boxed<ImmediateDeviceContext>,
+            Boxed<SwapChain>,
+        ),
+        (),
+    > {
         let engine_ci = engine_ci.into();
 
         let mut render_device_ptr: *mut diligent_sys::IRenderDevice = std::ptr::null_mut();
@@ -95,19 +103,19 @@ impl EngineFactoryOpenGL {
             Err(())
         } else {
             Ok((
-                RenderDevice::new(render_device_ptr),
-                ImmediateDeviceContext::new(device_context_ptr),
-                SwapChain::new(swap_chain_ptr),
+                Boxed::<RenderDevice>::new(render_device_ptr as _),
+                Boxed::<ImmediateDeviceContext>::new(device_context_ptr as _),
+                Boxed::<SwapChain>::new(swap_chain_ptr as _),
             ))
         }
     }
 
-    //pub fn create_hlsl2glsl_converter(&self) -> Result<HLSL2GLSLConverter, ()>{}
+    //TODO pub fn create_hlsl2glsl_converter(&self) -> Result<HLSL2GLSLConverter, ()>{}
 
     pub fn attach_to_active_gl_context(
         &self,
         engine_ci: &EngineGLCreateInfo,
-    ) -> Result<(RenderDevice, ImmediateDeviceContext), ()> {
+    ) -> Result<(Boxed<RenderDevice>, Boxed<ImmediateDeviceContext>), ()> {
         let engine_ci = engine_ci.into();
 
         let mut render_device_ptr = std::ptr::null_mut();
@@ -126,24 +134,15 @@ impl EngineFactoryOpenGL {
             Err(())
         } else {
             Ok((
-                RenderDevice::new(render_device_ptr),
-                ImmediateDeviceContext::new(device_context_ptr),
+                Boxed::<RenderDevice>::new(render_device_ptr as _),
+                Boxed::<ImmediateDeviceContext>::new(device_context_ptr as _),
             ))
         }
     }
 }
 
-pub fn get_engine_factory_gl() -> EngineFactoryOpenGL {
+pub fn get_engine_factory_gl() -> Boxed<EngineFactoryOpenGL> {
     let engine_factory_gl = unsafe { diligent_sys::Diligent_GetEngineFactoryOpenGL() };
 
-    // Both base and derived classes have exactly the same size.
-    // This means that we can up-cast to the base class without worrying about layout offset between both classes
-    const_assert_eq!(
-        std::mem::size_of::<diligent_sys::IEngineFactory>(),
-        std::mem::size_of::<diligent_sys::IEngineFactoryOpenGL>()
-    );
-
-    EngineFactoryOpenGL {
-        engine_factory: EngineFactory::new(engine_factory_gl as _),
-    }
+    Boxed::new(engine_factory_gl as _)
 }
