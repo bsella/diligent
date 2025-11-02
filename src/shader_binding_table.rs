@@ -4,7 +4,10 @@ use bitflags::bitflags;
 use bon::Builder;
 use static_assertions::const_assert_eq;
 
-use crate::{device_object::DeviceObject, pipeline_state::PipelineState, tlas::TopLevelAS};
+use crate::{
+    RayTracingPipelineState, device_object::DeviceObject, pipeline_state::PipelineState,
+    tlas::TopLevelAS,
+};
 
 bitflags! {
     #[derive(Clone, Copy)]
@@ -21,7 +24,7 @@ bitflags! {
 pub struct ShaderBindingTableDesc<'a> {
     #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
     name: Option<CString>,
-    raytracing_pso: &'a PipelineState,
+    raytracing_pso: &'a RayTracingPipelineState,
 }
 
 impl From<&ShaderBindingTableDesc<'_>> for diligent_sys::ShaderBindingTableDesc {

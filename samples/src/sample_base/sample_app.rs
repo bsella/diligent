@@ -178,12 +178,12 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
         let rtv = self.swap_chain.get_current_back_buffer_rtv().unwrap();
         let dsv = self.swap_chain.get_depth_buffer_dsv().unwrap();
 
-        context.set_render_targets(&[rtv], Some(&dsv), ResourceStateTransitionMode::Transition);
+        context.set_render_targets(&[rtv], Some(dsv), ResourceStateTransitionMode::Transition);
 
         self.sample.render(&self.swap_chain);
 
         // Restore default render target in case the sample has changed it
-        context.set_render_targets(&[&rtv], Some(&dsv), ResourceStateTransitionMode::Transition);
+        context.set_render_targets(&[rtv], Some(dsv), ResourceStateTransitionMode::Transition);
     }
 
     fn present(&mut self) {
@@ -506,7 +506,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             device,
             immediate_contexts,
             deferred_contexts,
-            &*swap_chain,
+            &swap_chain,
         );
 
         let swap_chain_desc = swap_chain.get_desc();

@@ -1,4 +1,7 @@
-use std::{ffi::CStr, fmt::Display};
+use std::{
+    ffi::{CStr, CString},
+    fmt::Display,
+};
 
 use bitflags::bitflags;
 use bon::Builder;
@@ -2975,8 +2978,37 @@ pub enum MemoryProperty {
     HostCoherent,
 }
 
-//pub struct ImmediateContextCreateInfo<'a> {
-//    name: &'a CStr,
-//    queue_id: u8,
-//    priority: QueuePriority,
-//}
+#[repr(transparent)]
+pub struct ImmediateContextCreateInfo(diligent_sys::ImmediateContextCreateInfo);
+
+#[bon::bon]
+impl ImmediateContextCreateInfo {
+    #[builder]
+    pub fn new(
+        #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
+        name: Option<CString>,
+        queue_id: u8,
+        priority: Option<QueuePriority>,
+    ) -> Self {
+        Self(diligent_sys::ImmediateContextCreateInfo {
+            Name: name.map_or(std::ptr::null(), |name| name.as_ptr()),
+            QueueId: queue_id,
+            Priority: priority.map_or(diligent_sys::QUEUE_PRIORITY_UNKNOWN, |priority| {
+                match priority {
+                    QueuePriority::Low => diligent_sys::QUEUE_PRIORITY_LOW,
+                    QueuePriority::Medium => diligent_sys::QUEUE_PRIORITY_MEDIUM,
+                    QueuePriority::High => diligent_sys::QUEUE_PRIORITY_HIGH,
+                    QueuePriority::RealTime => diligent_sys::QUEUE_PRIORITY_REALTIME,
+                }
+            }) as _,
+        })
+    }
+}
+
+bitflags! {
+    #[derive(Clone,Copy)]
+    pub struct ValidationFlags : diligent_sys::VALIDATION_FLAGS {
+        const None                  = diligent_sys::VALIDATION_FLAG_NONE                     as diligent_sys::VALIDATION_FLAGS;
+        const CheckShaderBufferSize = diligent_sys::VALIDATION_FLAG_CHECK_SHADER_BUFFER_SIZE as diligent_sys::VALIDATION_FLAGS;
+    }
+}

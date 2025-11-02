@@ -3,7 +3,7 @@ use std::{ops::Deref, os::raw::c_void, path::Path};
 use static_assertions::const_assert_eq;
 
 use crate::{
-    APIInfo, Boxed,
+    APIInfo, Boxed, ImmediateContextCreateInfo, ValidationFlags,
     data_blob::DataBlob,
     graphics_types::{DeviceFeatures, GraphicsAdapterInfo, Version},
     memory_allocator::MemoryAllocator,
@@ -17,7 +17,7 @@ pub struct EngineCreateInfo {
     pub adapter_index: Option<usize>,
     pub graphics_api_version: Version,
 
-    pub immediate_context_info: Vec<diligent_sys::ImmediateContextCreateInfo>, // TODO
+    pub immediate_context_info: Vec<ImmediateContextCreateInfo>,
 
     pub num_deferred_contexts: usize,
 
@@ -25,7 +25,7 @@ pub struct EngineCreateInfo {
 
     pub enable_validation: bool,
 
-    pub validation_flags: diligent_sys::VALIDATION_FLAGS,
+    pub validation_flags: ValidationFlags,
 
     // TODO
     //IThreadPool* pAsyncShaderCompilationThreadPool DEFAULT_INITIALIZER(nullptr);
@@ -51,7 +51,7 @@ impl Default for EngineCreateInfo {
             #[cfg(not(debug_assertions))]
             enable_validation: false,
 
-            validation_flags: diligent_sys::VALIDATION_FLAG_NONE as diligent_sys::VALIDATION_FLAGS,
+            validation_flags: ValidationFlags::None,
 
             num_async_shader_compilation_threads: 0xFFFFFFFF,
         }
@@ -69,12 +69,16 @@ impl From<&EngineCreateInfo> for diligent_sys::EngineCreateInfo {
                 Major: value.graphics_api_version.minor,
                 Minor: value.graphics_api_version.minor,
             },
-            pImmediateContextInfo: std::ptr::null(),
+            pImmediateContextInfo: if value.immediate_context_info.is_empty() {
+                std::ptr::null()
+            } else {
+                value.immediate_context_info.as_ptr() as _
+            },
             NumImmediateContexts: value.immediate_context_info.len() as u32,
             NumDeferredContexts: value.num_deferred_contexts as u32,
             Features: value.features.0,
             EnableValidation: value.enable_validation,
-            ValidationFlags: value.validation_flags,
+            ValidationFlags: value.validation_flags.bits(),
             pAsyncShaderCompilationThreadPool: std::ptr::null_mut(),
             NumAsyncShaderCompilationThreads: value.num_async_shader_compilation_threads,
             Padding: 0,
@@ -100,8 +104,8 @@ impl Deref for EngineFactory {
 
 impl EngineFactory {
     pub fn get_api_info(&self) -> &APIInfo {
-        let api_info_ptr = unsafe_member_call!(self, EngineFactory, GetAPIInfo);
-        unsafe { &*(api_info_ptr as *const APIInfo) }
+        let api_info_ptr = unsafe_member_call!(self, EngineFactory, GetAPIInfo) as *const APIInfo;
+        unsafe { api_info_ptr.as_ref().unwrap_unchecked() }
     }
 
     pub fn create_default_shader_source_stream_factory(
