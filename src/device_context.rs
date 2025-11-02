@@ -1369,19 +1369,12 @@ impl DeviceContext {
         depth_stencil: Option<&TextureView>,
         state_transition_mode: ResourceStateTransitionMode,
     ) {
-        let num_render_targets = render_targets.len();
-        let mut render_target_pointers = Vec::from_iter(
-            render_targets
-                .iter()
-                .map(|render_target| render_target.sys_ptr()),
-        );
-
         unsafe_member_call!(
             self,
             DeviceContext,
             SetRenderTargets,
-            num_render_targets as u32,
-            render_target_pointers.as_mut_ptr() as _,
+            render_targets.len() as u32,
+            render_targets.as_ptr() as _,
             depth_stencil.map_or(std::ptr::null_mut(), |v| v.sys_ptr()),
             state_transition_mode.into()
         )

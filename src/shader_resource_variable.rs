@@ -133,14 +133,13 @@ impl ShaderResourceVariable {
     }
 
     pub fn set_array(&self, device_objects: &[&DeviceObject], flags: SetShaderResourceFlags) {
-        let object_ptrs = Vec::from_iter(device_objects.iter().map(|object| object.sys_ptr()));
         unsafe_member_call!(
             self,
             ShaderResourceVariable,
             SetArray,
-            object_ptrs.as_ptr() as _,
+            device_objects.as_ptr() as _,
             0,
-            object_ptrs.len() as u32,
+            device_objects.len() as u32,
             flags.bits()
         )
     }

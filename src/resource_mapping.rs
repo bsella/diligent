@@ -42,22 +42,18 @@ impl ResourceMapping {
         device_objects: &[&DeviceObject],
         is_unique: bool,
     ) {
-        let object_ptrs = Vec::from_iter(device_objects.iter().map(|object| object.sys_ptr()));
+        let name = std::ffi::CString::new(name.as_ref()).unwrap();
 
-        {
-            let name = std::ffi::CString::new(name.as_ref()).unwrap();
-
-            unsafe_member_call!(
-                self,
-                ResourceMapping,
-                AddResourceArray,
-                name.as_ptr(),
-                0,
-                object_ptrs.as_ptr() as _,
-                device_objects.len() as u32,
-                is_unique
-            );
-        }
+        unsafe_member_call!(
+            self,
+            ResourceMapping,
+            AddResourceArray,
+            name.as_ptr(),
+            0,
+            device_objects.as_ptr() as _,
+            device_objects.len() as u32,
+            is_unique
+        );
     }
 
     pub fn remove_resource_by_name(&mut self, name: impl AsRef<str>, array_index: Option<u32>) {
