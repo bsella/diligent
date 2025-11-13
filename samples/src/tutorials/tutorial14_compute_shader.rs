@@ -110,8 +110,8 @@ fn create_render_particle_pso(
         .unwrap();
 
     let pso_ci = PipelineStateCreateInfo::builder()
-        .shader_resource_variables([ShaderResourceVariableDesc::builder()
-            .name("g_Particles")
+        .shader_resource_variables(&[ShaderResourceVariableDesc::builder()
+            .name(c"g_Particles")
             // Shader variables should typically be mutable, which means they are expected
             // to change on a per-instance basis
             .variable_type(ShaderResourceVariableType::Mutable)
@@ -120,7 +120,7 @@ fn create_render_particle_pso(
         // Define variable type that will be used by default
         .default_variable_type(ShaderResourceVariableType::Static)
         // Pipeline state name is used by the engine to report issues.
-        .name("Render particles PSO")
+        .name(c"Render particles PSO")
         // This is a graphics pipeline
         .graphics()
         .graphics_pipeline_desc(graphics_pso_desc)
@@ -214,20 +214,22 @@ fn create_update_particle_pso(
         )
         .unwrap();
 
+    let binding = [ShaderResourceVariableDesc::builder()
+        .name(c"Constants")
+        .variable_type(ShaderResourceVariableType::Static)
+        .shader_stages(ShaderTypes::Compute)
+        .build()];
+
     let compute_pso_create_info = PipelineStateCreateInfo::builder()
         .default_variable_type(ShaderResourceVariableType::Mutable)
-        .shader_resource_variables([ShaderResourceVariableDesc::builder()
-            .name("Constants")
-            .variable_type(ShaderResourceVariableType::Static)
-            .shader_stages(ShaderTypes::Compute)
-            .build()]);
+        .shader_resource_variables(&binding);
 
     (
         device
             .create_compute_pipeline_state(
                 &compute_pso_create_info
                     .clone()
-                    .name("Reset particle lists PSO")
+                    .name(c"Reset particle lists PSO")
                     .compute()
                     .shader(&reset_particle_lists_cs)
                     .build(),
@@ -237,7 +239,7 @@ fn create_update_particle_pso(
             .create_compute_pipeline_state(
                 &compute_pso_create_info
                     .clone()
-                    .name("Move particles PSO")
+                    .name(c"Move particles PSO")
                     .compute()
                     .shader(&move_particles_cs)
                     .build(),
@@ -247,7 +249,7 @@ fn create_update_particle_pso(
             .create_compute_pipeline_state(
                 &compute_pso_create_info
                     .clone()
-                    .name("Collidse particles PSO")
+                    .name(c"Collidse particles PSO")
                     .compute()
                     .shader(&collide_particles_cs)
                     .build(),
@@ -257,7 +259,7 @@ fn create_update_particle_pso(
             .create_compute_pipeline_state(
                 &compute_pso_create_info
                     .clone()
-                    .name("Update particle speed PSO")
+                    .name(c"Update particle speed PSO")
                     .compute()
                     .shader(&updated_speed_cs)
                     .build(),

@@ -154,22 +154,22 @@ impl SampleBase for TextureArray {
         let layout_elements = [
             // Per-vertex data - first buffer slot
             // Attribute 0 - vertex position
-            LayoutElement::builder().slot(0).f32_3().build(),
+            LayoutElement::builder().input_index(0).slot(0).f32_3().build(),
             // Attribute 1 - texture coordinates
-            LayoutElement::builder().slot(0).f32_2().build(),
+            LayoutElement::builder().input_index(1).slot(0).f32_2().build(),
 
             // Per-instance data - second buffer slot
             // We will use four attributes to encode instance-specific 4x4 transformation matrix
             // Attribute 2 - first row
-            LayoutElement::builder().slot(1).f32_4().frequency(InputElementFrequency::PerInstance).build(),
+            LayoutElement::builder().input_index(2).slot(1).f32_4().frequency(InputElementFrequency::PerInstance).build(),
             // Attribute 3 - second row
-            LayoutElement::builder().slot(1).f32_4().frequency(InputElementFrequency::PerInstance).build(),
+            LayoutElement::builder().input_index(3).slot(1).f32_4().frequency(InputElementFrequency::PerInstance).build(),
             // Attribute 4 - third row
-            LayoutElement::builder().slot(1).f32_4().frequency(InputElementFrequency::PerInstance).build(),
+            LayoutElement::builder().input_index(4).slot(1).f32_4().frequency(InputElementFrequency::PerInstance).build(),
             // Attribute 5 - fourth row
-            LayoutElement::builder().slot(1).f32_4().frequency(InputElementFrequency::PerInstance).build(),
+            LayoutElement::builder().input_index(5).slot(1).f32_4().frequency(InputElementFrequency::PerInstance).build(),
             // Attribute 6 - texture array index
-            LayoutElement::builder().slot(1).f32().frequency(InputElementFrequency::PerInstance).build(),
+            LayoutElement::builder().input_index(6).slot(1).f32().frequency(InputElementFrequency::PerInstance).build(),
         ];
 
         let cube_pso_ci = CreatePSOInfo::new(

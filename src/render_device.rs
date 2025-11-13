@@ -3,8 +3,8 @@ use std::{ffi::CStr, ops::Deref, os::raw::c_void};
 use static_assertions::const_assert_eq;
 
 use crate::{
-    Boxed, SparseTextureFormatInfo,
-    blas::{BottomLevelAS, BottomLevelASDesc, BottomLevelASDescWrapper},
+    Boxed, SparseTextureFormatInfo, TilePipelineStateCreateInfo,
+    blas::{BottomLevelAS, BottomLevelASDesc},
     buffer::{Buffer, BufferDesc},
     data_blob::DataBlob,
     device_context::{DeferredDeviceContext, DeviceContext},
@@ -16,17 +16,11 @@ use crate::{
         DeviceFeatures, GraphicsAdapterInfo, RenderDeviceType, TextureFormat, Version,
     },
     object::Object,
-    pipeline_resource_signature::{
-        PipelineResourceSignature, PipelineResourceSignatureDesc,
-        PipelineResourceSignatureDescWrapper,
-    },
+    pipeline_resource_signature::{PipelineResourceSignature, PipelineResourceSignatureDesc},
     pipeline_state::{
-        ComputePipelineState, ComputePipelineStateCreateInfo,
-        ComputePipelineStateCreateInfoWrapper, GraphicsPipelineState,
-        GraphicsPipelineStateCreateInfo, GraphicsPipelineStateCreateInfoWrapper,
-        RayTracingPipelineState, RayTracingPipelineStateCreateInfo,
-        RayTracingPipelineStateCreateInfoWrapper, TilePipelineState, TilePipelineStateCreateInfo,
-        TilePipelineStateCreateInfoWrapper,
+        ComputePipelineState, ComputePipelineStateCreateInfo, GraphicsPipelineState,
+        GraphicsPipelineStateCreateInfo, RayTracingPipelineState,
+        RayTracingPipelineStateCreateInfo, TilePipelineState,
     },
     pipeline_state_cache::{PipelineStateCache, PipelineStateCacheCreateInfo},
     query::{
@@ -265,13 +259,11 @@ impl RenderDevice {
     ) -> Result<Boxed<GraphicsPipelineState>, ()> {
         let mut pipeline_state_ptr = std::ptr::null_mut();
 
-        let pipeline_ci_wrapper = GraphicsPipelineStateCreateInfoWrapper::from(pipeline_ci);
-
         unsafe_member_call!(
             self,
             RenderDevice,
             CreateGraphicsPipelineState,
-            std::ptr::from_ref(&pipeline_ci_wrapper),
+            std::ptr::from_ref(&pipeline_ci.0),
             std::ptr::addr_of_mut!(pipeline_state_ptr)
         );
 
@@ -288,13 +280,11 @@ impl RenderDevice {
     ) -> Result<Boxed<ComputePipelineState>, ()> {
         let mut pipeline_state_ptr = std::ptr::null_mut();
 
-        let pipeline_ci_wrapper = ComputePipelineStateCreateInfoWrapper::from(pipeline_ci);
-
         unsafe_member_call!(
             self,
             RenderDevice,
             CreateComputePipelineState,
-            std::ptr::from_ref(&pipeline_ci_wrapper),
+            std::ptr::from_ref(&pipeline_ci.0),
             std::ptr::addr_of_mut!(pipeline_state_ptr)
         );
 
@@ -311,13 +301,11 @@ impl RenderDevice {
     ) -> Result<Boxed<RayTracingPipelineState>, ()> {
         let mut pipeline_state_ptr = std::ptr::null_mut();
 
-        let pipeline_ci = RayTracingPipelineStateCreateInfoWrapper::from(pipeline_ci);
-
         unsafe_member_call!(
             self,
             RenderDevice,
             CreateRayTracingPipelineState,
-            std::ptr::from_ref(&pipeline_ci),
+            std::ptr::from_ref(&pipeline_ci.0),
             std::ptr::addr_of_mut!(pipeline_state_ptr)
         );
 
@@ -336,13 +324,11 @@ impl RenderDevice {
     ) -> Result<Boxed<TilePipelineState>, ()> {
         let mut pipeline_state_ptr = std::ptr::null_mut();
 
-        let pipeline_ci = TilePipelineStateCreateInfoWrapper::from(pipeline_ci);
-
         unsafe_member_call!(
             self,
             RenderDevice,
             CreateTilePipelineState,
-            std::ptr::from_ref(&pipeline_ci),
+            std::ptr::from_ref(&pipeline_ci.0),
             std::ptr::addr_of_mut!(pipeline_state_ptr)
         );
 
@@ -619,14 +605,12 @@ impl RenderDevice {
     }
 
     pub fn create_blas(&self, desc: &BottomLevelASDesc) -> Result<Boxed<BottomLevelAS>, ()> {
-        let desc = BottomLevelASDescWrapper::from(desc);
-        let desc = *desc;
         let mut blas_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
             RenderDevice,
             CreateBLAS,
-            std::ptr::from_ref(&desc),
+            std::ptr::from_ref(desc) as _,
             std::ptr::addr_of_mut!(blas_ptr)
         );
 
@@ -680,14 +664,12 @@ impl RenderDevice {
         &self,
         desc: &PipelineResourceSignatureDesc,
     ) -> Result<Boxed<PipelineResourceSignature>, ()> {
-        let desc = PipelineResourceSignatureDescWrapper::from(desc);
-
         let mut prs_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
             RenderDevice,
             CreatePipelineResourceSignature,
-            std::ptr::from_ref(&desc),
+            std::ptr::from_ref(&desc.0),
             std::ptr::addr_of_mut!(prs_ptr)
         );
 

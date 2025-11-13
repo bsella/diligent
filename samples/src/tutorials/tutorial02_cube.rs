@@ -138,7 +138,7 @@ impl SampleBase for Cube {
             // Define variable type that will be used by default
             .default_variable_type(ShaderResourceVariableType::Static)
             // Pipeline state name is used by the engine to report issues.
-            .name("Cube PSO")
+            .name(c"Cube PSO")
             .graphics()
             .graphics_pipeline_desc(
                 GraphicsPipelineDesc::builder()
@@ -148,11 +148,19 @@ impl SampleBase for Cube {
                     // Primitive topology defines what kind of primitives will be rendered by this pipeline state
                     .primitive_topology(PrimitiveTopology::TriangleList)
                     // Define vertex shader input layout
-                    .input_layouts([
+                    .input_layouts(&[
                         // Attribute 0 - vertex position
-                        LayoutElement::builder().slot(0).f32_3().build(),
+                        LayoutElement::builder()
+                            .input_index(0)
+                            .slot(0)
+                            .f32_3()
+                            .build(),
                         // Attribute 1 - vertex color
-                        LayoutElement::builder().slot(0).f32_4().build(),
+                        LayoutElement::builder()
+                            .input_index(1)
+                            .slot(0)
+                            .f32_4()
+                            .build(),
                     ])
                     .build(),
             )

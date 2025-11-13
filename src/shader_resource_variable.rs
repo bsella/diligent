@@ -1,7 +1,6 @@
-use std::{ffi::CString, mem::MaybeUninit, ops::Deref};
+use std::{ffi::CStr, marker::PhantomData, mem::MaybeUninit, ops::Deref};
 
 use bitflags::bitflags;
-use bon::Builder;
 use static_assertions::const_assert_eq;
 
 use crate::{device_object::DeviceObject, object::Object};
@@ -78,31 +77,33 @@ bitflags! {
     }
 }
 
-#[derive(Builder, Clone)]
-#[builder(derive(Clone))]
-pub struct ShaderResourceVariableDesc {
-    #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
-    name: Option<CString>,
+#[repr(transparent)]
+pub struct ShaderResourceVariableDesc<'a>(
+    pub(crate) diligent_sys::ShaderResourceVariableDesc,
+    PhantomData<&'a ()>,
+);
 
-    variable_type: ShaderResourceVariableType,
+#[bon::bon]
+impl<'a> ShaderResourceVariableDesc<'a> {
+    #[builder]
+    pub fn new(
+        name: Option<&'a CStr>,
 
-    shader_stages: ShaderTypes,
+        variable_type: ShaderResourceVariableType,
 
-    #[builder(default)]
-    flags: ShaderVariableFlags,
-}
+        shader_stages: ShaderTypes,
 
-impl From<&ShaderResourceVariableDesc> for diligent_sys::ShaderResourceVariableDesc {
-    fn from(value: &ShaderResourceVariableDesc) -> Self {
-        diligent_sys::ShaderResourceVariableDesc {
-            Name: value
-                .name
-                .as_ref()
-                .map_or(std::ptr::null(), |name| name.as_ptr()),
-            ShaderStages: value.shader_stages.bits(),
-            Type: value.variable_type.into(),
-            Flags: value.flags.bits(),
-        }
+        #[builder(default)] flags: ShaderVariableFlags,
+    ) -> Self {
+        Self(
+            diligent_sys::ShaderResourceVariableDesc {
+                Name: name.map_or(std::ptr::null(), |name| name.as_ptr()),
+                ShaderStages: shader_stages.bits(),
+                Type: variable_type.into(),
+                Flags: flags.bits(),
+            },
+            PhantomData,
+        )
     }
 }
 

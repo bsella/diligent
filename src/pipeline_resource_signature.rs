@@ -1,4 +1,9 @@
-use std::{ffi::CString, ops::Deref, str::FromStr};
+use std::{
+    ffi::{CStr, CString},
+    marker::PhantomData,
+    ops::Deref,
+    str::FromStr,
+};
 
 use bitflags::bitflags;
 use static_assertions::const_assert_eq;
@@ -16,34 +21,28 @@ use crate::{
     },
 };
 
-#[derive(Clone)]
-pub struct ImmutableSamplerDesc<'a> {
-    shader_stages: ShaderTypes,
-    sampler_or_texture_name: CString,
-    sampler_desc: &'a SamplerDesc,
-}
+#[repr(transparent)]
+pub struct ImmutableSamplerDesc<'a>(
+    pub(crate) diligent_sys::ImmutableSamplerDesc,
+    PhantomData<&'a ()>,
+);
 
+#[bon::bon]
 impl<'a> ImmutableSamplerDesc<'a> {
+    #[builder]
     pub fn new(
         shader_stages: ShaderTypes,
-        sampler_or_texture_name: impl AsRef<str>,
+        sampler_or_texture_name: &'a CStr,
         sampler_desc: &'a SamplerDesc,
     ) -> Self {
-        ImmutableSamplerDesc {
-            shader_stages,
-            sampler_or_texture_name: CString::new(sampler_or_texture_name.as_ref()).unwrap(),
-            sampler_desc,
-        }
-    }
-}
-
-impl From<&ImmutableSamplerDesc<'_>> for diligent_sys::ImmutableSamplerDesc {
-    fn from(value: &ImmutableSamplerDesc<'_>) -> Self {
-        diligent_sys::ImmutableSamplerDesc {
-            ShaderStages: value.shader_stages.bits(),
-            SamplerOrTextureName: value.sampler_or_texture_name.as_ptr(),
-            Desc: (value.sampler_desc).into(),
-        }
+        ImmutableSamplerDesc(
+            diligent_sys::ImmutableSamplerDesc {
+                ShaderStages: shader_stages.bits(),
+                SamplerOrTextureName: sampler_or_texture_name.as_ptr(),
+                Desc: (sampler_desc).into(),
+            },
+            PhantomData,
+        )
     }
 }
 
@@ -78,94 +77,87 @@ bitflags! {
 }
 const_assert_eq!(diligent_sys::PIPELINE_RESOURCE_FLAG_LAST, 16);
 
-pub struct PipelineResourceDesc {
-    name: CString,
-    shader_stages: ShaderTypes,
-    array_size: u32,
-    resource_type: Option<ShaderResourceType>,
-    var_type: ShaderResourceVariableType,
-    flags: PipelineResourceFlags,
-    // TODO WebGPUResourceAttribs 	       WebGPUAttribs DEFAULT_INITIALIZER({});
-}
+#[repr(transparent)]
+pub struct PipelineResourceDesc<'a>(diligent_sys::PipelineResourceDesc, PhantomData<&'a ()>);
 
-impl From<&PipelineResourceDesc> for diligent_sys::PipelineResourceDesc {
-    fn from(value: &PipelineResourceDesc) -> Self {
-        diligent_sys::PipelineResourceDesc {
-            Name: value.name.as_ptr(),
-            ArraySize: value.array_size,
-            Flags: value.flags.bits(),
-            ResourceType: value.resource_type.map_or(
-                diligent_sys::SHADER_RESOURCE_TYPE_UNKNOWN as diligent_sys::SHADER_RESOURCE_TYPE,
-                |resource_type| resource_type.into(),
-            ),
-            ShaderStages: value.shader_stages.bits(),
-            VarType: value.var_type.into(),
-            // TODO
-            WebGPUAttribs: diligent_sys::WebGPUResourceAttribs {
-                BindingType: diligent_sys::WEB_GPU_BINDING_TYPE_DEFAULT as _,
-                TextureViewDim: diligent_sys::RESOURCE_DIM_TEX_2D as _,
-                UAVTextureFormat: diligent_sys::TEX_FORMAT_UNKNOWN as _,
+#[bon::bon]
+impl<'a> PipelineResourceDesc<'a> {
+    #[builder]
+    pub fn new(
+        name: &'a CStr,
+        shader_stages: ShaderTypes,
+        array_size: u32,
+        resource_type: Option<ShaderResourceType>,
+        var_type: ShaderResourceVariableType,
+        flags: PipelineResourceFlags,
+        // TODO WebGPUResourceAttribs 	       WebGPUAttribs DEFAULT_INITIALIZER({});
+    ) -> Self {
+        PipelineResourceDesc(
+            diligent_sys::PipelineResourceDesc {
+                Name: name.as_ptr(),
+                ArraySize: array_size,
+                Flags: flags.bits(),
+                ResourceType: resource_type.map_or(
+                    diligent_sys::SHADER_RESOURCE_TYPE_UNKNOWN
+                        as diligent_sys::SHADER_RESOURCE_TYPE,
+                    |resource_type| resource_type.into(),
+                ),
+                ShaderStages: shader_stages.bits(),
+                VarType: var_type.into(),
+                // TODO
+                WebGPUAttribs: diligent_sys::WebGPUResourceAttribs {
+                    BindingType: diligent_sys::WEB_GPU_BINDING_TYPE_DEFAULT as _,
+                    TextureViewDim: diligent_sys::RESOURCE_DIM_TEX_2D as _,
+                    UAVTextureFormat: diligent_sys::TEX_FORMAT_UNKNOWN as _,
+                },
             },
-        }
+            PhantomData,
+        )
     }
 }
 
-pub struct PipelineResourceSignatureDesc<'a> {
-    name: CString,
-    resources: Vec<PipelineResourceDesc>,
-    immutable_samplers: Vec<ImmutableSamplerDesc<'a>>,
-    binding_index: u8,
-    use_combined_texture_samplers: bool,
-    combined_sampler_suffix: CString,
-    srb_allocation_granularity: u32,
-}
+#[repr(transparent)]
+pub struct PipelineResourceSignatureDesc<'a>(
+    pub(crate) diligent_sys::PipelineResourceSignatureDesc,
+    PhantomData<&'a ()>,
+);
 
-pub(crate) struct PipelineResourceSignatureDescWrapper {
-    _resources: Vec<diligent_sys::PipelineResourceDesc>,
-    _immutable_samplers: Vec<diligent_sys::ImmutableSamplerDesc>,
-    desc: diligent_sys::PipelineResourceSignatureDesc,
-}
-
-impl Deref for PipelineResourceSignatureDescWrapper {
-    type Target = diligent_sys::PipelineResourceSignatureDesc;
-    fn deref(&self) -> &Self::Target {
-        &self.desc
-    }
-}
-
-impl From<&PipelineResourceSignatureDesc<'_>> for PipelineResourceSignatureDescWrapper {
-    fn from(value: &PipelineResourceSignatureDesc<'_>) -> Self {
-        let resources: Vec<_> = value
-            .resources
-            .iter()
-            .map(|resource| resource.into())
-            .collect();
-
-        let immutable_samplers: Vec<_> = value
-            .immutable_samplers
-            .iter()
-            .map(|sampler| sampler.into())
-            .collect();
-
-        let desc = diligent_sys::PipelineResourceSignatureDesc {
-            _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                Name: value.name.as_ptr(),
+#[bon::bon]
+impl<'a> PipelineResourceSignatureDesc<'a> {
+    #[builder]
+    pub fn new(
+        name: &'a CStr,
+        resources: &'a [PipelineResourceDesc<'a>],
+        immutable_samplers: &'a [ImmutableSamplerDesc<'a>],
+        binding_index: u8,
+        use_combined_texture_samplers: bool,
+        combined_sampler_suffix: CString,
+        srb_allocation_granularity: u32,
+    ) -> Self {
+        PipelineResourceSignatureDesc(
+            diligent_sys::PipelineResourceSignatureDesc {
+                _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
+                    Name: name.as_ptr(),
+                },
+                BindingIndex: binding_index,
+                CombinedSamplerSuffix: combined_sampler_suffix.as_ptr(),
+                NumImmutableSamplers: immutable_samplers.len() as u32,
+                ImmutableSamplers: if immutable_samplers.is_empty() {
+                    std::ptr::null()
+                } else {
+                    immutable_samplers.as_ptr() as _
+                },
+                SRBAllocationGranularity: srb_allocation_granularity,
+                UseCombinedTextureSamplers: use_combined_texture_samplers,
+                NumResources: resources.len() as u32,
+                Resources: if resources.is_empty() {
+                    std::ptr::null()
+                } else {
+                    resources.as_ptr() as _
+                },
             },
-            BindingIndex: value.binding_index,
-            CombinedSamplerSuffix: value.combined_sampler_suffix.as_ptr(),
-            NumImmutableSamplers: immutable_samplers.len() as u32,
-            ImmutableSamplers: immutable_samplers.as_ptr(),
-            SRBAllocationGranularity: value.srb_allocation_granularity,
-            UseCombinedTextureSamplers: value.use_combined_texture_samplers,
-            NumResources: resources.len() as u32,
-            Resources: resources.as_ptr(),
-        };
-
-        PipelineResourceSignatureDescWrapper {
-            _resources: resources,
-            _immutable_samplers: immutable_samplers,
-            desc,
-        }
+            PhantomData,
+        )
     }
 }
 

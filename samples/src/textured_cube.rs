@@ -97,19 +97,37 @@ impl TexturedCube {
             .components
             .contains(GeometryPrimitiveVertexFlags::Position)
         {
-            input_layouts.push(LayoutElement::builder().slot(0).f32_3().build());
+            input_layouts.push(
+                LayoutElement::builder()
+                    .input_index(input_layouts.len() as u32)
+                    .slot(0)
+                    .f32_3()
+                    .build(),
+            );
         }
         if create_info
             .components
             .contains(GeometryPrimitiveVertexFlags::Normal)
         {
-            input_layouts.push(LayoutElement::builder().slot(0).f32_3().build());
+            input_layouts.push(
+                LayoutElement::builder()
+                    .input_index(input_layouts.len() as u32)
+                    .slot(0)
+                    .f32_3()
+                    .build(),
+            );
         }
         if create_info
             .components
             .contains(GeometryPrimitiveVertexFlags::TexCoord)
         {
-            input_layouts.push(LayoutElement::builder().slot(0).f32_2().build());
+            input_layouts.push(
+                LayoutElement::builder()
+                    .input_index(input_layouts.len() as u32)
+                    .slot(0)
+                    .f32_2()
+                    .build(),
+            );
         }
 
         input_layouts.extend(create_info.extra_layout_elements);
@@ -143,7 +161,7 @@ impl TexturedCube {
             .sample_count(create_info.sample_count)
             // Primitive topology defines what kind of primitives will be rendered by this pipeline state
             .primitive_topology(PrimitiveTopology::TriangleList)
-            .input_layouts(input_layouts)
+            .input_layouts(input_layouts.as_slice())
             .build();
 
         let shader_ci = ShaderCreateInfo::builder()
@@ -208,18 +226,18 @@ impl TexturedCube {
             .default_variable_type(ShaderResourceVariableType::Static)
             // Shader variables should typically be mutable, which means they are expected
             // to change on a per-instance basis
-            .shader_resource_variables([ShaderResourceVariableDesc::builder()
-                .name("g_Texture")
+            .shader_resource_variables(&[ShaderResourceVariableDesc::builder()
+                .name(c"g_Texture")
                 .variable_type(ShaderResourceVariableType::Mutable)
                 .shader_stages(ShaderTypes::Pixel)
                 .build()])
             // Define immutable sampler for g_Texture. Immutable samplers should be used whenever possible
-            .immutable_samplers([ImmutableSamplerDesc::new(
-                ShaderTypes::Pixel,
-                "g_Texture",
-                &sampler_desc,
-            )])
-            .name("Cube PSO")
+            .immutable_samplers(&[ImmutableSamplerDesc::builder()
+                .shader_stages(ShaderTypes::Pixel)
+                .sampler_or_texture_name(c"g_Texture")
+                .sampler_desc(&sampler_desc)
+                .build()])
+            .name(c"Cube PSO")
             .graphics()
             .graphics_pipeline_desc(graphics_pipeline_desc)
             .vertex_shader(&vertex_shader)

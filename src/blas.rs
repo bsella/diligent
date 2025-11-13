@@ -5,7 +5,6 @@ use std::{
 };
 
 use bitflags::bitflags;
-use bon::{Builder, builder};
 use static_assertions::const_assert_eq;
 
 use crate::{
@@ -73,89 +72,62 @@ impl BLASTriangleDesc<'_> {
     }
 }
 
-#[derive(Builder)]
-pub struct BLASBoundingBoxDesc {
-    #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
-    geometry_name: CString,
+#[repr(transparent)]
+pub struct BLASBoundingBoxDesc(diligent_sys::BLASBoundingBoxDesc);
 
-    max_box_count: usize,
-}
-
-#[derive(Builder)]
-pub struct BottomLevelASDesc<'a> {
-    #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
-    name: Option<CString>,
-
-    #[builder(default = Vec::new())]
-    #[builder(into)]
-    triangles: Vec<BLASTriangleDesc<'a>>,
-
-    #[builder(default = Vec::new())]
-    #[builder(into)]
-    boxes: Vec<BLASBoundingBoxDesc>,
-
-    #[builder(default)]
-    flags: RayTracingBuildAsFlags,
-
-    #[builder(default = 0)]
-    compacted_size: u64,
-
-    #[builder(default = 1)]
-    immediate_context_mask: u64,
-}
-
-pub(crate) struct BottomLevelASDescWrapper {
-    _boxes: Vec<diligent_sys::BLASBoundingBoxDesc>,
-    desc: diligent_sys::BottomLevelASDesc,
-}
-
-impl Deref for BottomLevelASDescWrapper {
-    type Target = diligent_sys::BottomLevelASDesc;
-    fn deref(&self) -> &Self::Target {
-        &self.desc
+#[bon::bon]
+impl BLASBoundingBoxDesc {
+    #[builder]
+    pub fn new(geometry_name: &CStr, max_box_count: usize) -> Self {
+        BLASBoundingBoxDesc(diligent_sys::BLASBoundingBoxDesc {
+            GeometryName: geometry_name.as_ptr(),
+            MaxBoxCount: max_box_count as u32,
+        })
     }
 }
 
-impl From<&BottomLevelASDesc<'_>> for BottomLevelASDescWrapper {
-    fn from(value: &BottomLevelASDesc) -> Self {
-        let triangles = &value.triangles;
+#[repr(transparent)]
+pub struct BottomLevelASDesc<'a>(diligent_sys::BottomLevelASDesc, PhantomData<&'a ()>);
 
-        let boxes = value
-            .boxes
-            .iter()
-            .map(|bx| diligent_sys::BLASBoundingBoxDesc {
-                GeometryName: bx.geometry_name.as_ptr(),
-                MaxBoxCount: bx.max_box_count as u32,
-            })
-            .collect::<Vec<_>>();
+#[bon::bon]
+impl<'a> BottomLevelASDesc<'a> {
+    #[builder]
+    pub fn new(
+        name: Option<&CStr>,
 
-        let desc = diligent_sys::BottomLevelASDesc {
-            _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                Name: value
-                    .name
-                    .as_ref()
-                    .map_or(std::ptr::null(), |name| name.as_ptr()),
+        #[builder(default = &[])] triangles: &[BLASTriangleDesc<'a>],
+
+        #[builder(default = &[])] boxes: &[BLASBoundingBoxDesc],
+
+        #[builder(default)] flags: RayTracingBuildAsFlags,
+
+        #[builder(default = 0)] compacted_size: u64,
+
+        #[builder(default = 1)] immediate_context_mask: u64,
+    ) -> Self {
+        BottomLevelASDesc(
+            diligent_sys::BottomLevelASDesc {
+                _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
+                    Name: name.as_ref().map_or(std::ptr::null(), |name| name.as_ptr()),
+                },
+                pTriangles: if triangles.is_empty() {
+                    std::ptr::null()
+                } else {
+                    triangles.as_ptr() as _
+                },
+                TriangleCount: triangles.len() as u32,
+                pBoxes: if boxes.is_empty() {
+                    std::ptr::null()
+                } else {
+                    boxes.as_ptr() as _
+                },
+                BoxCount: boxes.len() as u32,
+                Flags: flags.bits(),
+                CompactedSize: compacted_size,
+                ImmediateContextMask: immediate_context_mask,
             },
-            pTriangles: if triangles.is_empty() {
-                std::ptr::null()
-            } else {
-                triangles.as_ptr() as _
-            },
-            TriangleCount: triangles.len() as u32,
-            pBoxes: if boxes.is_empty() {
-                std::ptr::null()
-            } else {
-                boxes.as_ptr()
-            },
-            BoxCount: boxes.len() as u32,
-            Flags: value.flags.bits(),
-            CompactedSize: value.compacted_size,
-            ImmediateContextMask: value.immediate_context_mask,
-        };
-        Self {
-            _boxes: boxes,
-            desc,
-        }
+            PhantomData,
+        )
     }
 }
 

@@ -114,31 +114,35 @@ impl SampleBase for Tessellation {
             .build();
 
         let samplers = [
-            ImmutableSamplerDesc::new(
-                ShaderTypes::Hull | ShaderTypes::Domain,
-                "g_HeightMap",
-                &linear_clamp_sampler,
-            ),
-            ImmutableSamplerDesc::new(ShaderTypes::Pixel, "g_Texture", &linear_clamp_sampler),
+            ImmutableSamplerDesc::builder()
+                .shader_stages(ShaderTypes::Hull | ShaderTypes::Domain)
+                .sampler_or_texture_name(c"g_HeightMap")
+                .sampler_desc(&linear_clamp_sampler)
+                .build(),
+            ImmutableSamplerDesc::builder()
+                .shader_stages(ShaderTypes::Pixel)
+                .sampler_or_texture_name(c"g_Texture")
+                .sampler_desc(&linear_clamp_sampler)
+                .build(),
         ];
 
         // Pipeline state object encompasses configuration of all GPU stages
         let pso_create_info = PipelineStateCreateInfo::builder()
             .default_variable_type(ShaderResourceVariableType::Static)
-            .shader_resource_variables([
+            .shader_resource_variables(&[
                 ShaderResourceVariableDesc::builder()
-                    .name("g_HeightMap")
+                    .name(c"g_HeightMap")
                     .variable_type(ShaderResourceVariableType::Mutable)
                     .shader_stages(ShaderTypes::Hull | ShaderTypes::Domain)
                     .build(),
                 ShaderResourceVariableDesc::builder()
-                    .name("g_Texture")
+                    .name(c"g_Texture")
                     .variable_type(ShaderResourceVariableType::Mutable)
                     .shader_stages(ShaderTypes::Pixel)
                     .build(),
             ])
-            .immutable_samplers(samplers)
-            .name("Terrain PSO")
+            .immutable_samplers(&samplers)
+            .name(c"Terrain PSO")
             .graphics()
             .graphics_pipeline_desc(
                 GraphicsPipelineDesc::builder()

@@ -1,5 +1,7 @@
+use std::ffi::CString;
+use std::marker::PhantomData;
 use std::str::FromStr;
-use std::{ffi::CString, ops::Deref};
+use std::{ffi::CStr, ops::Deref};
 
 use bitflags::bitflags;
 use bon::Builder;
@@ -10,7 +12,7 @@ use crate::device_object::DeviceObject;
 use crate::pipeline_state_cache::PipelineStateCache;
 use crate::{
     graphics_types::{PrimitiveTopology, ShaderType, ShaderTypes, TextureFormat},
-    input_layout::{InputLayoutDescWrapper, LayoutElement},
+    input_layout::LayoutElement,
     pipeline_resource_signature::{ImmutableSamplerDesc, PipelineResourceSignature},
     render_pass::RenderPass,
     resource_mapping::ResourceMapping,
@@ -303,57 +305,98 @@ impl Default for PipelineShadingRateFlags {
     }
 }
 
-pub(crate) struct PipelineStateDescWrapper {
-    _variables: Vec<diligent_sys::ShaderResourceVariableDesc>,
-    _immutable_samplers: Vec<diligent_sys::ImmutableSamplerDesc>,
-    psd: diligent_sys::PipelineStateDesc,
-}
+#[repr(transparent)]
+#[derive(Clone)]
+pub struct PipelineStateCreateInfo<'a>(
+    pub(crate) diligent_sys::PipelineStateCreateInfo,
+    PhantomData<&'a ()>,
+);
 
-impl Deref for PipelineStateDescWrapper {
-    type Target = diligent_sys::PipelineStateDesc;
-    fn deref(&self) -> &Self::Target {
-        &self.psd
+#[bon::bon]
+impl<'a> PipelineStateCreateInfo<'a> {
+    #[builder(derive(Clone))]
+    pub fn new(
+        #[builder(setters(vis = ""))] pipeline_type: diligent_sys::PIPELINE_TYPE,
+
+        name: Option<&'a CStr>,
+
+        #[builder(default = 1)] srb_allocation_granularity: u32,
+
+        #[builder(default = 1)] immediate_context_mask: u64,
+
+        #[builder(default = ShaderResourceVariableType::Static)]
+        default_variable_type: ShaderResourceVariableType,
+
+        default_variable_merge_stages: Option<ShaderTypes>,
+
+        #[builder(default = &[])] shader_resource_variables: &[ShaderResourceVariableDesc<'a>],
+
+        #[builder(default = &[])] immutable_samplers: &[ImmutableSamplerDesc<'a>],
+
+        #[builder(default)] flags: PipelineStateObjectCreateFlags,
+
+        #[builder(default = &[])] resource_signatures: &[&'a PipelineResourceSignature],
+
+        pso_cache: Option<&'a PipelineStateCache>,
+    ) -> Self {
+        PipelineStateCreateInfo(
+            diligent_sys::PipelineStateCreateInfo {
+                PSODesc: diligent_sys::PipelineStateDesc {
+                    _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
+                        Name: name.map_or(std::ptr::null(), |name| name.as_ptr()),
+                    },
+                    ResourceLayout: diligent_sys::PipelineResourceLayoutDesc {
+                        DefaultVariableType: default_variable_type.into(),
+                        DefaultVariableMergeStages: default_variable_merge_stages
+                            .map_or(diligent_sys::SHADER_TYPE_UNKNOWN as _, |stages| {
+                                stages.bits()
+                            }),
+                        NumVariables: shader_resource_variables.len() as u32,
+                        Variables: shader_resource_variables
+                            .first()
+                            .map_or(std::ptr::null(), |v| std::ptr::from_ref(&v.0)),
+                        NumImmutableSamplers: immutable_samplers.len() as u32,
+                        ImmutableSamplers: immutable_samplers
+                            .first()
+                            .map_or(std::ptr::null(), |sampler| std::ptr::from_ref(&sampler.0)),
+                    },
+                    ImmediateContextMask: immediate_context_mask,
+                    PipelineType: pipeline_type,
+                    SRBAllocationGranularity: srb_allocation_granularity,
+                },
+                Flags: flags.bits(),
+                ResourceSignaturesCount: resource_signatures.len() as u32,
+                ppResourceSignatures: if resource_signatures.is_empty() {
+                    std::ptr::null_mut()
+                } else {
+                    resource_signatures.as_ptr() as _
+                },
+                pPSOCache: if let Some(pso_cache) = pso_cache {
+                    pso_cache.sys_ptr()
+                } else {
+                    std::ptr::null_mut()
+                },
+                pInternalData: std::ptr::null_mut(),
+            },
+            PhantomData,
+        )
     }
 }
 
-#[derive(Builder, Clone)]
-#[builder(derive(Clone))]
-pub struct PipelineStateCreateInfo<'a> {
-    pipeline_type: diligent_sys::PIPELINE_TYPE,
-
-    #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
-    name: Option<CString>,
-
-    #[builder(default = 1)]
-    srb_allocation_granularity: u32,
-
-    #[builder(default = 1)]
-    immediate_context_mask: u64,
-
-    #[builder(default = ShaderResourceVariableType::Static)]
-    default_variable_type: ShaderResourceVariableType,
-
-    default_variable_merge_stages: Option<ShaderTypes>,
-
-    #[builder(default)]
-    #[builder(into)]
-    shader_resource_variables: Vec<ShaderResourceVariableDesc>,
-
-    #[builder(default)]
-    #[builder(into)]
-    immutable_samplers: Vec<ImmutableSamplerDesc<'a>>,
-
-    #[builder(default)]
-    flags: PipelineStateObjectCreateFlags,
-
-    #[builder(default)]
-    #[builder(into)]
-    resource_signatures: Vec<&'a PipelineResourceSignature>,
-
-    pso_cache: Option<&'a PipelineStateCache>,
-}
-
-impl<'a, S: pipeline_state_create_info_builder::State> PipelineStateCreateInfoBuilder<'a, S>
+impl<
+    'a,
+    'shader_resource_variables,
+    'immutable_samplers,
+    'resource_signatures,
+    S: pipeline_state_create_info_builder::State,
+>
+    PipelineStateCreateInfoBuilder<
+        'a,
+        'shader_resource_variables,
+        'immutable_samplers,
+        'resource_signatures,
+        S,
+    >
 where
     S::PipelineType: pipeline_state_create_info_builder::IsUnset,
 {
@@ -381,10 +424,13 @@ where
         )
     }
 
-    pub fn raytracing(
+    pub fn raytracing<'general_shaders, 'triangle_hit_shaders, 'procedural_hit_shaders>(
         self,
     ) -> RayTracingPipelineStateCreateInfoBuilder<
         'a,
+        'general_shaders,
+        'triangle_hit_shaders,
+        'procedural_hit_shaders,
         ray_tracing_pipeline_state_create_info_builder::SetPipelineStateCreateInfo,
     > {
         RayTracingPipelineStateCreateInfo::builder().pipeline_state_create_info(
@@ -405,101 +451,17 @@ where
         )
     }
 
-    pub fn compute(
+    pub fn compute<'shader>(
         self,
     ) -> ComputePipelineStateCreateInfoBuilder<
         'a,
+        'shader,
         compute_pipeline_state_create_info_builder::SetPipelineStateCreateInfo,
     > {
         ComputePipelineStateCreateInfo::builder().pipeline_state_create_info(
             self.pipeline_type(diligent_sys::PIPELINE_TYPE_COMPUTE as _)
                 .build(),
         )
-    }
-}
-
-pub(crate) struct PipelineStateCreateInfoWrapper {
-    _psd: PipelineStateDescWrapper,
-    ci: diligent_sys::PipelineStateCreateInfo,
-}
-
-impl Deref for PipelineStateCreateInfoWrapper {
-    type Target = diligent_sys::PipelineStateCreateInfo;
-    fn deref(&self) -> &Self::Target {
-        &self.ci
-    }
-}
-
-impl From<&PipelineStateCreateInfo<'_>> for PipelineStateCreateInfoWrapper {
-    fn from(value: &PipelineStateCreateInfo<'_>) -> Self {
-        let variables: Vec<_> = value
-            .shader_resource_variables
-            .iter()
-            .map(|var| var.into())
-            .collect();
-
-        let immutable_samplers: Vec<_> = value
-            .immutable_samplers
-            .iter()
-            .map(|var| var.into())
-            .collect();
-
-        let prld = diligent_sys::PipelineResourceLayoutDesc {
-            DefaultVariableType: value.default_variable_type.into(),
-            DefaultVariableMergeStages: value
-                .default_variable_merge_stages
-                .map_or(diligent_sys::SHADER_TYPE_UNKNOWN as _, |stages| {
-                    stages.bits()
-                }),
-            NumVariables: variables.len() as u32,
-            Variables: if variables.is_empty() {
-                std::ptr::null()
-            } else {
-                variables.as_ptr()
-            },
-            NumImmutableSamplers: immutable_samplers.len() as u32,
-            ImmutableSamplers: if immutable_samplers.is_empty() {
-                std::ptr::null()
-            } else {
-                immutable_samplers.as_ptr()
-            },
-        };
-
-        let psd = PipelineStateDescWrapper {
-            _variables: variables,
-            _immutable_samplers: immutable_samplers,
-            psd: diligent_sys::PipelineStateDesc {
-                _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                    Name: value
-                        .name
-                        .as_ref()
-                        .map_or(std::ptr::null(), |name| name.as_ptr()),
-                },
-                ImmediateContextMask: value.immediate_context_mask,
-                PipelineType: value.pipeline_type as _,
-                ResourceLayout: prld,
-                SRBAllocationGranularity: value.srb_allocation_granularity,
-            },
-        };
-
-        let ci = diligent_sys::PipelineStateCreateInfo {
-            PSODesc: *psd,
-            Flags: value.flags.bits(),
-            ResourceSignaturesCount: value.resource_signatures.len() as u32,
-            ppResourceSignatures: if value.resource_signatures.is_empty() {
-                std::ptr::null_mut()
-            } else {
-                value.resource_signatures.as_ptr() as _
-            },
-            pPSOCache: if let Some(pso_cache) = &value.pso_cache {
-                pso_cache.sys_ptr()
-            } else {
-                std::ptr::null_mut()
-            },
-            pInternalData: std::ptr::null_mut(),
-        };
-
-        PipelineStateCreateInfoWrapper { _psd: psd, ci }
     }
 }
 
@@ -570,191 +532,131 @@ impl Default for RenderTargetBlendDesc {
     }
 }
 
-#[derive(Builder, Clone)]
-pub struct BlendStateDesc {
-    #[builder(default = false)]
-    alpha_to_coverage_enable: bool,
+#[derive(Clone, Copy)]
+#[repr(transparent)]
+pub struct BlendStateDesc(pub(crate) diligent_sys::BlendStateDesc);
 
-    #[builder(default = false)]
-    independent_blend_enable: bool,
+#[bon::bon]
+impl BlendStateDesc {
+    #[builder]
+    pub fn new(
+        #[builder(default = false)] alpha_to_coverage_enable: bool,
 
-    #[builder(default = std::array::from_fn(|_| RenderTargetBlendDesc::default()))]
-    render_targets: [RenderTargetBlendDesc; diligent_sys::DILIGENT_MAX_RENDER_TARGETS as usize],
-}
+        #[builder(default = false)] independent_blend_enable: bool,
 
-impl From<&BlendStateDesc> for diligent_sys::BlendStateDesc {
-    fn from(value: &BlendStateDesc) -> Self {
-        diligent_sys::BlendStateDesc {
-            AlphaToCoverageEnable: value.alpha_to_coverage_enable,
-            IndependentBlendEnable: value.independent_blend_enable,
-            RenderTargets: value.render_targets.each_ref().map(|rt| rt.into()),
-        }
+        #[builder(default = std::array::from_fn(|_| RenderTargetBlendDesc::default()))]
+        render_targets: [RenderTargetBlendDesc;
+            diligent_sys::DILIGENT_MAX_RENDER_TARGETS as usize],
+    ) -> Self {
+        BlendStateDesc(diligent_sys::BlendStateDesc {
+            AlphaToCoverageEnable: alpha_to_coverage_enable,
+            IndependentBlendEnable: independent_blend_enable,
+            RenderTargets: render_targets.each_ref().map(|rt| rt.into()),
+        })
     }
 }
 
-impl Default for BlendStateDesc {
-    fn default() -> Self {
-        BlendStateDesc {
-            alpha_to_coverage_enable: false,
-            independent_blend_enable: false,
-            render_targets: std::array::from_fn(|_| RenderTargetBlendDesc::default()),
-        }
+#[derive(Clone, Copy)]
+#[repr(transparent)]
+pub struct RasterizerStateDesc(pub(crate) diligent_sys::RasterizerStateDesc);
+
+#[bon::bon]
+impl RasterizerStateDesc {
+    #[builder]
+    pub fn new(
+        #[builder(default = FillMode::Solid)] fill_mode: FillMode,
+
+        #[builder(default = CullMode::Back)] cull_mode: CullMode,
+
+        #[builder(default = false)] front_counter_clockwise: bool,
+
+        #[builder(default = true)] depth_clip_enable: bool,
+
+        #[builder(default = false)] scissor_enable: bool,
+
+        #[builder(default = false)] antialiased_line_enable: bool,
+
+        #[builder(default = 0)] depth_bias: i32,
+
+        #[builder(default = 0.0)] depth_bias_clamp: f32,
+
+        #[builder(default = 0.0)] slope_scaled_depth_bias: f32,
+    ) -> Self {
+        RasterizerStateDesc(diligent_sys::RasterizerStateDesc {
+            FillMode: fill_mode.into(),
+            CullMode: cull_mode.into(),
+            FrontCounterClockwise: front_counter_clockwise,
+            DepthClipEnable: depth_clip_enable,
+            ScissorEnable: scissor_enable,
+            AntialiasedLineEnable: antialiased_line_enable,
+            DepthBias: depth_bias,
+            DepthBiasClamp: depth_bias_clamp,
+            SlopeScaledDepthBias: slope_scaled_depth_bias,
+        })
     }
 }
 
-#[derive(Builder, Clone)]
-pub struct RasterizerStateDesc {
-    #[builder(default = FillMode::Solid)]
-    fill_mode: FillMode,
+#[derive(Clone, Copy)]
+#[repr(transparent)]
+pub struct StencilOperationsDesc(diligent_sys::StencilOpDesc);
 
-    #[builder(default = CullMode::Back)]
-    cull_mode: CullMode,
+#[bon::bon]
+impl StencilOperationsDesc {
+    #[builder]
+    pub fn new(
+        #[builder(default = StencilOperation::Keep)] stencil_fail_op: StencilOperation,
 
-    #[builder(default = false)]
-    front_counter_clockwise: bool,
+        #[builder(default = StencilOperation::Keep)] stencil_depth_fail_op: StencilOperation,
 
-    #[builder(default = true)]
-    depth_clip_enable: bool,
+        #[builder(default = StencilOperation::Keep)] stencil_pass_op: StencilOperation,
 
-    #[builder(default = false)]
-    scissor_enable: bool,
-
-    #[builder(default = false)]
-    antialiased_line_enable: bool,
-
-    #[builder(default = 0)]
-    depth_bias: i32,
-
-    #[builder(default = 0.0)]
-    depth_bias_clamp: f32,
-
-    #[builder(default = 0.0)]
-    slope_scaled_depth_bias: f32,
-}
-
-impl From<&RasterizerStateDesc> for diligent_sys::RasterizerStateDesc {
-    fn from(value: &RasterizerStateDesc) -> Self {
-        diligent_sys::RasterizerStateDesc {
-            FillMode: value.fill_mode.into(),
-            CullMode: value.cull_mode.into(),
-            FrontCounterClockwise: value.front_counter_clockwise,
-            DepthClipEnable: value.depth_clip_enable,
-            ScissorEnable: value.scissor_enable,
-            AntialiasedLineEnable: value.antialiased_line_enable,
-            DepthBias: value.depth_bias,
-            DepthBiasClamp: value.depth_bias_clamp,
-            SlopeScaledDepthBias: value.slope_scaled_depth_bias,
-        }
+        #[builder(default = ComparisonFunction::Always)] stencil_func: ComparisonFunction,
+    ) -> Self {
+        Self(diligent_sys::StencilOpDesc {
+            StencilFailOp: stencil_fail_op.into(),
+            StencilDepthFailOp: stencil_depth_fail_op.into(),
+            StencilPassOp: stencil_pass_op.into(),
+            StencilFunc: stencil_func.into(),
+        })
     }
 }
 
-impl Default for RasterizerStateDesc {
-    fn default() -> Self {
-        RasterizerStateDesc {
-            fill_mode: FillMode::Solid,
-            cull_mode: CullMode::Back,
-            front_counter_clockwise: false,
-            depth_clip_enable: true,
-            scissor_enable: false,
-            antialiased_line_enable: false,
-            depth_bias: 0,
-            depth_bias_clamp: 0.0,
-            slope_scaled_depth_bias: 0.0,
-        }
-    }
-}
+#[derive(Clone, Copy)]
+#[repr(transparent)]
+pub struct DepthStencilStateDesc(pub(crate) diligent_sys::DepthStencilStateDesc);
 
-#[derive(Builder, Clone)]
-pub struct StencilOperationsDesc {
-    #[builder(default = StencilOperation::Keep)]
-    stencil_fail_op: StencilOperation,
+#[bon::bon]
+impl DepthStencilStateDesc {
+    #[builder]
+    pub fn new(
+        #[builder(default = true)] depth_enable: bool,
 
-    #[builder(default = StencilOperation::Keep)]
-    stencil_depth_fail_op: StencilOperation,
+        #[builder(default = true)] depth_write_enable: bool,
 
-    #[builder(default = StencilOperation::Keep)]
-    stencil_pass_op: StencilOperation,
+        #[builder(default = ComparisonFunction::Less)] depth_func: ComparisonFunction,
 
-    #[builder(default = ComparisonFunction::Always)]
-    stencil_func: ComparisonFunction,
-}
+        #[builder(default = false)] stencil_enable: bool,
 
-impl From<&StencilOperationsDesc> for diligent_sys::StencilOpDesc {
-    fn from(value: &StencilOperationsDesc) -> Self {
-        diligent_sys::StencilOpDesc {
-            StencilFailOp: value.stencil_fail_op.into(),
-            StencilDepthFailOp: value.stencil_depth_fail_op.into(),
-            StencilPassOp: value.stencil_pass_op.into(),
-            StencilFunc: value.stencil_func.into(),
-        }
-    }
-}
+        #[builder(default = 0xff)] stencil_read_mask: u8,
 
-impl Default for StencilOperationsDesc {
-    fn default() -> Self {
-        StencilOperationsDesc {
-            stencil_fail_op: StencilOperation::Keep,
-            stencil_depth_fail_op: StencilOperation::Keep,
-            stencil_pass_op: StencilOperation::Keep,
-            stencil_func: ComparisonFunction::Always,
-        }
-    }
-}
+        #[builder(default = 0xff)] stencil_write_mask: u8,
 
-#[derive(Builder, Clone)]
-pub struct DepthStencilStateDesc {
-    #[builder(default = true)]
-    depth_enable: bool,
+        #[builder(default = StencilOperationsDesc::builder().build())]
+        front_face: StencilOperationsDesc,
 
-    #[builder(default = true)]
-    depth_write_enable: bool,
-
-    #[builder(default = ComparisonFunction::Less)]
-    depth_func: ComparisonFunction,
-
-    #[builder(default = false)]
-    stencil_enable: bool,
-
-    #[builder(default = 0xff)]
-    stencil_read_mask: u8,
-
-    #[builder(default = 0xff)]
-    stencil_write_mask: u8,
-
-    #[builder(default)]
-    front_face: StencilOperationsDesc,
-
-    #[builder(default)]
-    back_face: StencilOperationsDesc,
-}
-
-impl From<&DepthStencilStateDesc> for diligent_sys::DepthStencilStateDesc {
-    fn from(value: &DepthStencilStateDesc) -> Self {
-        diligent_sys::DepthStencilStateDesc {
-            DepthEnable: value.depth_enable,
-            DepthWriteEnable: value.depth_write_enable,
-            DepthFunc: value.depth_func.into(),
-            StencilEnable: value.stencil_enable,
-            StencilReadMask: value.stencil_read_mask,
-            StencilWriteMask: value.stencil_write_mask,
-            FrontFace: (&value.front_face).into(),
-            BackFace: (&value.back_face).into(),
-        }
-    }
-}
-
-impl Default for DepthStencilStateDesc {
-    fn default() -> Self {
-        DepthStencilStateDesc {
-            depth_enable: true,
-            depth_write_enable: true,
-            depth_func: ComparisonFunction::Less,
-            stencil_enable: false,
-            stencil_read_mask: 0xff,
-            stencil_write_mask: 0xff,
-            front_face: StencilOperationsDesc::default(),
-            back_face: StencilOperationsDesc::default(),
-        }
+        #[builder(default = StencilOperationsDesc::builder().build())]
+        back_face: StencilOperationsDesc,
+    ) -> Self {
+        DepthStencilStateDesc(diligent_sys::DepthStencilStateDesc {
+            DepthEnable: depth_enable,
+            DepthWriteEnable: depth_write_enable,
+            DepthFunc: depth_func.into(),
+            StencilEnable: stencil_enable,
+            StencilReadMask: stencil_read_mask,
+            StencilWriteMask: stencil_write_mask,
+            FrontFace: front_face.0,
+            BackFace: back_face.0,
+        })
     }
 }
 
@@ -822,369 +724,309 @@ impl Default for GraphicsPipelineOutput<'_> {
     }
 }
 
-#[derive(Builder, Clone)]
-#[builder(derive(Clone))]
-pub struct GraphicsPipelineDesc<'a> {
-    #[builder(default)]
-    blend_desc: BlendStateDesc,
+#[repr(transparent)]
+#[derive(Clone, Copy)]
+pub struct GraphicsPipelineDesc<'a>(
+    pub(crate) diligent_sys::GraphicsPipelineDesc,
+    PhantomData<&'a ()>,
+);
 
-    #[builder(default)]
-    rasterizer_desc: RasterizerStateDesc,
+#[bon::bon]
+impl<'a> GraphicsPipelineDesc<'a> {
+    #[builder]
+    pub fn new(
+        #[builder(default = BlendStateDesc::builder().build())] blend_desc: BlendStateDesc,
 
-    #[builder(default)]
-    depth_stencil_desc: DepthStencilStateDesc,
+        #[builder(default = RasterizerStateDesc::builder().build())]
+        rasterizer_desc: RasterizerStateDesc,
 
-    #[builder(into)]
-    #[builder(default)]
-    output: GraphicsPipelineOutput<'a>,
+        #[builder(default = DepthStencilStateDesc::builder().build())]
+        depth_stencil_desc: DepthStencilStateDesc,
 
-    #[builder(default = 0xFFFFFFFF)]
-    sample_mask: u32,
+        #[builder(into)]
+        #[builder(default)]
+        output: GraphicsPipelineOutput<'a>,
 
-    #[builder(into)]
-    #[builder(default)]
-    input_layouts: Vec<LayoutElement>,
+        #[builder(default = 0xFFFFFFFF)] sample_mask: u32,
 
-    #[builder(default = PrimitiveTopology::TriangleList)]
-    primitive_topology: PrimitiveTopology,
+        #[builder(default = &[])] input_layouts: &[LayoutElement],
 
-    #[builder(default = 1)]
-    num_viewports: u8,
+        #[builder(default = PrimitiveTopology::TriangleList)] primitive_topology: PrimitiveTopology,
 
-    #[builder(default)]
-    shading_rate_flags: PipelineShadingRateFlags,
+        #[builder(default = 1)] num_viewports: u8,
 
-    #[builder(default = 1)]
-    sample_count: u8,
+        #[builder(default)] shading_rate_flags: PipelineShadingRateFlags,
 
-    #[builder(default = 0)]
-    sample_quality: u8,
+        #[builder(default = 1)] sample_count: u8,
 
-    #[builder(default = 0)]
-    node_mask: u32,
-}
+        #[builder(default = 0)] sample_quality: u8,
 
-impl Default for GraphicsPipelineDesc<'_> {
-    fn default() -> Self {
-        GraphicsPipelineDesc::builder().build()
-    }
-}
-
-pub(crate) struct GraphicsPipelineDescWrapper {
-    _input_layouts: InputLayoutDescWrapper,
-    desc: diligent_sys::GraphicsPipelineDesc,
-}
-
-impl Deref for GraphicsPipelineDescWrapper {
-    type Target = diligent_sys::GraphicsPipelineDesc;
-    fn deref(&self) -> &Self::Target {
-        &self.desc
-    }
-}
-
-impl<'a> From<&GraphicsPipelineDesc<'a>> for GraphicsPipelineDescWrapper {
-    fn from(value: &GraphicsPipelineDesc) -> Self {
-        let input_layouts = InputLayoutDescWrapper::from(&value.input_layouts);
-
-        let desc = diligent_sys::GraphicsPipelineDesc {
-            BlendDesc: (&value.blend_desc).into(),
-            SampleMask: value.sample_mask,
-            RasterizerDesc: (&value.rasterizer_desc).into(),
-            DepthStencilDesc: (&value.depth_stencil_desc).into(),
-            InputLayout: diligent_sys::InputLayoutDesc {
-                LayoutElements: if input_layouts.is_empty() {
-                    std::ptr::null()
-                } else {
-                    input_layouts.as_ptr()
+        #[builder(default = 0)] node_mask: u32,
+    ) -> Self {
+        GraphicsPipelineDesc(
+            diligent_sys::GraphicsPipelineDesc {
+                BlendDesc: blend_desc.0,
+                SampleMask: sample_mask,
+                RasterizerDesc: rasterizer_desc.0,
+                DepthStencilDesc: depth_stencil_desc.0,
+                InputLayout: diligent_sys::InputLayoutDesc {
+                    LayoutElements: input_layouts
+                        .first()
+                        .map_or(std::ptr::null(), |layout| std::ptr::from_ref(&layout.0)),
+                    NumElements: input_layouts.len() as u32,
                 },
-                NumElements: input_layouts.len() as u32,
-            },
-            PrimitiveTopology: value.primitive_topology.into(),
-            NumViewports: value.num_viewports,
-            NumRenderTargets: match &value.output {
-                GraphicsPipelineOutput::RenderPass(_) => 0,
-                GraphicsPipelineOutput::RenderTargets(render_targets) => {
-                    render_targets.num_render_targets
-                }
-            },
-            ShadingRateFlags: value.shading_rate_flags.bits(),
-            RTVFormats: match &value.output {
-                GraphicsPipelineOutput::RenderPass(_) => std::array::from_fn(|_| {
-                    diligent_sys::TEX_FORMAT_UNKNOWN as diligent_sys::TEXTURE_FORMAT
-                }),
-                GraphicsPipelineOutput::RenderTargets(render_targets) => {
-                    render_targets.rtv_formats.map(|format| {
-                        format.map_or(
+                PrimitiveTopology: primitive_topology.into(),
+                NumViewports: num_viewports,
+                NumRenderTargets: match &output {
+                    GraphicsPipelineOutput::RenderPass(_) => 0,
+                    GraphicsPipelineOutput::RenderTargets(render_targets) => {
+                        render_targets.num_render_targets
+                    }
+                },
+                ShadingRateFlags: shading_rate_flags.bits(),
+                RTVFormats: match &output {
+                    GraphicsPipelineOutput::RenderPass(_) => std::array::from_fn(|_| {
+                        diligent_sys::TEX_FORMAT_UNKNOWN as diligent_sys::TEXTURE_FORMAT
+                    }),
+                    GraphicsPipelineOutput::RenderTargets(render_targets) => {
+                        render_targets.rtv_formats.map(|format| {
+                            format.map_or(
+                                diligent_sys::TEX_FORMAT_UNKNOWN as diligent_sys::TEXTURE_FORMAT,
+                                |format| format.into(),
+                            )
+                        })
+                    }
+                },
+                DSVFormat: match &output {
+                    GraphicsPipelineOutput::RenderPass(_) => {
+                        diligent_sys::TEX_FORMAT_UNKNOWN as diligent_sys::TEXTURE_FORMAT
+                    }
+                    GraphicsPipelineOutput::RenderTargets(render_targets) => {
+                        render_targets.dsv_format.map_or(
                             diligent_sys::TEX_FORMAT_UNKNOWN as diligent_sys::TEXTURE_FORMAT,
                             |format| format.into(),
                         )
-                    })
-                }
-            },
-            DSVFormat: match &value.output {
-                GraphicsPipelineOutput::RenderPass(_) => {
-                    diligent_sys::TEX_FORMAT_UNKNOWN as diligent_sys::TEXTURE_FORMAT
-                }
-                GraphicsPipelineOutput::RenderTargets(render_targets) => {
-                    render_targets.dsv_format.map_or(
-                        diligent_sys::TEX_FORMAT_UNKNOWN as diligent_sys::TEXTURE_FORMAT,
-                        |format| format.into(),
-                    )
-                }
-            },
-            ReadOnlyDSV: match &value.output {
-                GraphicsPipelineOutput::RenderPass(_) => false,
-                GraphicsPipelineOutput::RenderTargets(render_targets) => {
-                    render_targets.read_only_dsv
-                }
-            },
-            SmplDesc: diligent_sys::SampleDesc {
-                Count: value.sample_count,
-                Quality: value.sample_quality,
-            },
-            pRenderPass: match &value.output {
-                GraphicsPipelineOutput::RenderPass(render_pass) => {
-                    render_pass.render_pass.sys_ptr()
-                }
-                GraphicsPipelineOutput::RenderTargets(_) => std::ptr::null_mut(),
-            },
-            SubpassIndex: match &value.output {
-                GraphicsPipelineOutput::RenderPass(render_pass) => render_pass.subpass_index,
-                GraphicsPipelineOutput::RenderTargets(_) => 0,
-            },
-            NodeMask: value.node_mask,
-        };
-
-        GraphicsPipelineDescWrapper {
-            _input_layouts: input_layouts,
-            desc,
-        }
-    }
-}
-
-#[derive(Builder)]
-#[builder(derive(Clone))]
-pub struct GraphicsPipelineStateCreateInfo<'a> {
-    pipeline_state_create_info: PipelineStateCreateInfo<'a>,
-
-    graphics_pipeline_desc: GraphicsPipelineDesc<'a>,
-
-    vertex_shader: Option<&'a Shader>,
-
-    pixel_shader: Option<&'a Shader>,
-
-    domain_shader: Option<&'a Shader>,
-
-    hull_shader: Option<&'a Shader>,
-
-    geometry_shader: Option<&'a Shader>,
-
-    amplification_shader: Option<&'a Shader>,
-
-    mesh_shader: Option<&'a Shader>,
-}
-
-type ClosestHitShader<'a> = Option<&'a Shader>;
-type AnyHitShader<'a> = Option<&'a Shader>;
-
-#[derive(Builder)]
-pub struct RayTracingPipelineStateCreateInfo<'a> {
-    #[builder(setters(vis = ""))]
-    pipeline_state_create_info: PipelineStateCreateInfo<'a>,
-
-    shader_record_size: u16,
-
-    max_recursion_depth: u8,
-
-    #[builder(with = |shaders : Vec<(impl AsRef<str>, &'a Shader)>| {
-        shaders.into_iter().map(|(name, shader)| (CString::new(name.as_ref()).unwrap(), shader)).collect()
-    })]
-    general_shaders: Vec<(CString, &'a Shader)>,
-
-    #[builder(with = |shaders : Vec<(impl AsRef<str>, &'a Shader, Option<&'a Shader>)>| {
-        shaders.into_iter().map(|(name, closest_hit_shader, any_hit_shader)|
-            (CString::new(name.as_ref()).unwrap(), closest_hit_shader, any_hit_shader)
-        ).collect()
-    })]
-    triangle_hit_shaders: Option<Vec<(CString, &'a Shader, AnyHitShader<'a>)>>,
-
-    #[builder(with = |shaders : Vec<(impl AsRef<str>, &'a Shader, Option<&'a Shader>, Option<&'a Shader>)>| {
-        shaders.into_iter().map(|(name, intersection_shader, closest_hit_shader, any_hit_shader)|
-            (CString::new(name.as_ref()).unwrap(), intersection_shader, closest_hit_shader, any_hit_shader)
-        ).collect()
-    })]
-    procedural_hit_shaders:
-        Option<Vec<(CString, &'a Shader, ClosestHitShader<'a>, AnyHitShader<'a>)>>,
-
-    #[cfg(feature = "d3d12")]
-    shader_record_name: Option<CString>,
-
-    #[cfg(feature = "d3d12")]
-    #[builder(default = 0)]
-    max_attribute_size: u32,
-
-    #[cfg(feature = "d3d12")]
-    #[builder(default = 0)]
-    max_payload_size: u32,
-}
-
-pub(crate) struct RayTracingPipelineStateCreateInfoWrapper {
-    _pci: PipelineStateCreateInfoWrapper,
-    _general_shaders: Vec<diligent_sys::RayTracingGeneralShaderGroup>,
-    _triangle_hit_shaders: Vec<diligent_sys::RayTracingTriangleHitShaderGroup>,
-    _procedural_hit_shaders: Vec<diligent_sys::RayTracingProceduralHitShaderGroup>,
-    ci: diligent_sys::RayTracingPipelineStateCreateInfo,
-}
-
-impl Deref for RayTracingPipelineStateCreateInfoWrapper {
-    type Target = diligent_sys::RayTracingPipelineStateCreateInfo;
-    fn deref(&self) -> &Self::Target {
-        &self.ci
-    }
-}
-
-impl From<&RayTracingPipelineStateCreateInfo<'_>> for RayTracingPipelineStateCreateInfoWrapper {
-    fn from(value: &RayTracingPipelineStateCreateInfo<'_>) -> Self {
-        let pci = PipelineStateCreateInfoWrapper::from(&value.pipeline_state_create_info);
-        let general_shaders = value
-            .general_shaders
-            .iter()
-            .map(
-                |(name, shader)| diligent_sys::RayTracingGeneralShaderGroup {
-                    Name: name.as_ptr(),
-                    pShader: shader.sys_ptr(),
+                    }
                 },
-            )
-            .collect::<Vec<_>>();
-
-        let triangle_hit_shaders =
-            value
-                .triangle_hit_shaders
-                .as_ref()
-                .map_or(Vec::default(), |shaders| {
-                    shaders
-                        .iter()
-                        .map(|(name, closest_hit_shader, any_hit_shader)| {
-                            diligent_sys::RayTracingTriangleHitShaderGroup {
-                                Name: name.as_ptr(),
-                                pClosestHitShader: closest_hit_shader.sys_ptr(),
-                                pAnyHitShader: any_hit_shader
-                                    .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr()),
-                            }
-                        })
-                        .collect()
-                });
-
-        let procedural_hit_shaders =
-            value
-                .procedural_hit_shaders
-                .as_ref()
-                .map_or(Vec::default(), |shaders| {
-                    shaders
-                        .iter()
-                        .map(
-                            |(name, intersection_shader, closest_hit_shader, any_hit_shader)| {
-                                diligent_sys::RayTracingProceduralHitShaderGroup {
-                                    Name: name.as_ptr(),
-                                    pIntersectionShader: intersection_shader.sys_ptr(),
-                                    pClosestHitShader: closest_hit_shader
-                                        .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr()),
-                                    pAnyHitShader: any_hit_shader
-                                        .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr()),
-                                }
-                            },
-                        )
-                        .collect()
-                });
-
-        let ci = diligent_sys::RayTracingPipelineStateCreateInfo {
-            _PipelineStateCreateInfo: *pci,
-            RayTracingPipeline: diligent_sys::RayTracingPipelineDesc {
-                ShaderRecordSize: value.shader_record_size,
-                MaxRecursionDepth: value.max_recursion_depth,
+                ReadOnlyDSV: match &output {
+                    GraphicsPipelineOutput::RenderPass(_) => false,
+                    GraphicsPipelineOutput::RenderTargets(render_targets) => {
+                        render_targets.read_only_dsv
+                    }
+                },
+                SmplDesc: diligent_sys::SampleDesc {
+                    Count: sample_count,
+                    Quality: sample_quality,
+                },
+                pRenderPass: match &output {
+                    GraphicsPipelineOutput::RenderPass(render_pass) => {
+                        render_pass.render_pass.sys_ptr()
+                    }
+                    GraphicsPipelineOutput::RenderTargets(_) => std::ptr::null_mut(),
+                },
+                SubpassIndex: match &output {
+                    GraphicsPipelineOutput::RenderPass(render_pass) => render_pass.subpass_index,
+                    GraphicsPipelineOutput::RenderTargets(_) => 0,
+                },
+                NodeMask: node_mask,
             },
-            pGeneralShaders: general_shaders.as_ptr(),
-            GeneralShaderCount: general_shaders.len() as u32,
-            pTriangleHitShaders: triangle_hit_shaders.as_ptr(),
-            TriangleHitShaderCount: triangle_hit_shaders.len() as u32,
-            pProceduralHitShaders: procedural_hit_shaders.as_ptr(),
-            ProceduralHitShaderCount: procedural_hit_shaders.len() as u32,
-            #[cfg(feature = "d3d12")]
-            pShaderRecordName: value
-                .shader_record_name
-                .as_ref()
-                .map_or(std::ptr::null(), |name| name.as_ptr()),
-            #[cfg(feature = "d3d12")]
-            MaxAttributeSize: value.max_attribute_size,
-            #[cfg(feature = "d3d12")]
-            MaxPayloadSize: value.max_payload_size,
-
-            #[cfg(not(feature = "d3d12"))]
-            pShaderRecordName: std::ptr::null(),
-            #[cfg(not(feature = "d3d12"))]
-            MaxAttributeSize: 0,
-            #[cfg(not(feature = "d3d12"))]
-            MaxPayloadSize: 0,
-        };
-
-        Self {
-            _pci: pci,
-            _general_shaders: general_shaders,
-            _triangle_hit_shaders: triangle_hit_shaders,
-            _procedural_hit_shaders: procedural_hit_shaders,
-            ci,
-        }
+            PhantomData,
+        )
     }
 }
 
-pub(crate) struct GraphicsPipelineStateCreateInfoWrapper {
-    _pci: PipelineStateCreateInfoWrapper,
-    _gpd: GraphicsPipelineDescWrapper,
-    ci: diligent_sys::GraphicsPipelineStateCreateInfo,
-}
+#[repr(transparent)]
+#[derive(Clone)]
+pub struct GraphicsPipelineStateCreateInfo<'a>(
+    pub(crate) diligent_sys::GraphicsPipelineStateCreateInfo,
+    PhantomData<&'a ()>,
+);
 
-impl Deref for GraphicsPipelineStateCreateInfoWrapper {
-    type Target = diligent_sys::GraphicsPipelineStateCreateInfo;
-    fn deref(&self) -> &Self::Target {
-        &self.ci
+#[bon::bon]
+impl<'a> GraphicsPipelineStateCreateInfo<'a> {
+    #[builder(derive(Clone))]
+    pub fn new(
+        #[builder(setters(vis = ""))] pipeline_state_create_info: PipelineStateCreateInfo<'a>,
+
+        graphics_pipeline_desc: GraphicsPipelineDesc<'a>,
+
+        vertex_shader: Option<&'a Shader>,
+
+        pixel_shader: Option<&'a Shader>,
+
+        domain_shader: Option<&'a Shader>,
+
+        hull_shader: Option<&'a Shader>,
+
+        geometry_shader: Option<&'a Shader>,
+
+        amplification_shader: Option<&'a Shader>,
+
+        mesh_shader: Option<&'a Shader>,
+    ) -> Self {
+        GraphicsPipelineStateCreateInfo(
+            diligent_sys::GraphicsPipelineStateCreateInfo {
+                _PipelineStateCreateInfo: pipeline_state_create_info.0,
+                GraphicsPipeline: graphics_pipeline_desc.0,
+                pVS: vertex_shader.map_or(std::ptr::null_mut(), |shader| shader.sys_ptr()),
+                pPS: pixel_shader.map_or(std::ptr::null_mut(), |shader| shader.sys_ptr()),
+                pDS: domain_shader.map_or(std::ptr::null_mut(), |shader| shader.sys_ptr()),
+                pHS: hull_shader.map_or(std::ptr::null_mut(), |shader| shader.sys_ptr()),
+                pGS: geometry_shader.map_or(std::ptr::null_mut(), |shader| shader.sys_ptr()),
+                pAS: amplification_shader.map_or(std::ptr::null_mut(), |shader| shader.sys_ptr()),
+                pMS: mesh_shader.map_or(std::ptr::null_mut(), |shader| shader.sys_ptr()),
+            },
+            PhantomData,
+        )
     }
 }
 
-impl From<&GraphicsPipelineStateCreateInfo<'_>> for GraphicsPipelineStateCreateInfoWrapper {
-    fn from(value: &GraphicsPipelineStateCreateInfo<'_>) -> Self {
-        let pci = PipelineStateCreateInfoWrapper::from(&value.pipeline_state_create_info);
-        let gpd = GraphicsPipelineDescWrapper::from(&value.graphics_pipeline_desc);
-        let ci = diligent_sys::GraphicsPipelineStateCreateInfo {
-            _PipelineStateCreateInfo: *pci,
-            GraphicsPipeline: *gpd,
-            pVS: value
-                .vertex_shader
-                .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr()),
-            pPS: value
-                .pixel_shader
-                .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr()),
-            pDS: value
-                .domain_shader
-                .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr()),
-            pHS: value
-                .hull_shader
-                .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr()),
-            pGS: value
-                .geometry_shader
-                .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr()),
-            pAS: value
-                .amplification_shader
-                .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr()),
-            pMS: value
-                .mesh_shader
-                .map_or(std::ptr::null_mut(), |shader| shader.sys_ptr()),
-        };
+#[repr(transparent)]
+pub struct RayTracingGeneralShaderGroup<'a>(
+    pub(crate) diligent_sys::RayTracingGeneralShaderGroup,
+    PhantomData<&'a ()>,
+);
 
-        GraphicsPipelineStateCreateInfoWrapper {
-            _pci: pci,
-            _gpd: gpd,
-            ci,
-        }
+#[bon::bon]
+impl<'a> RayTracingGeneralShaderGroup<'a> {
+    #[builder]
+    pub fn new(name: &CStr, shader: &Shader) -> Self {
+        Self(
+            diligent_sys::RayTracingGeneralShaderGroup {
+                Name: name.as_ptr(),
+                pShader: shader.sys_ptr(),
+            },
+            PhantomData,
+        )
+    }
+}
+
+#[repr(transparent)]
+pub struct RayTracingTriangleHitShaderGroup<'a>(
+    pub(crate) diligent_sys::RayTracingTriangleHitShaderGroup,
+    PhantomData<&'a ()>,
+);
+
+#[bon::bon]
+impl<'a> RayTracingTriangleHitShaderGroup<'a> {
+    #[builder]
+    pub fn new(name: &CStr, closest: &Shader, any: Option<&'a Shader>) -> Self {
+        Self(
+            diligent_sys::RayTracingTriangleHitShaderGroup {
+                Name: name.as_ptr(),
+                pClosestHitShader: closest.sys_ptr(),
+                pAnyHitShader: any.map_or(std::ptr::null_mut(), Shader::sys_ptr),
+            },
+            PhantomData,
+        )
+    }
+}
+
+#[repr(transparent)]
+pub struct RayTracingProceduralHitShaderGroup<'a>(
+    pub(crate) diligent_sys::RayTracingProceduralHitShaderGroup,
+    PhantomData<&'a ()>,
+);
+
+#[bon::bon]
+impl<'a> RayTracingProceduralHitShaderGroup<'a> {
+    #[builder]
+    pub fn new(
+        name: &CStr,
+        intersection: &Shader,
+        closest: Option<&'a Shader>,
+        any: Option<&'a Shader>,
+    ) -> Self {
+        Self(
+            diligent_sys::RayTracingProceduralHitShaderGroup {
+                Name: name.as_ptr(),
+                pIntersectionShader: intersection.sys_ptr(),
+                pClosestHitShader: closest.map_or(std::ptr::null_mut(), Shader::sys_ptr),
+                pAnyHitShader: any.map_or(std::ptr::null_mut(), Shader::sys_ptr),
+            },
+            PhantomData,
+        )
+    }
+}
+
+pub struct RayTracingPipelineStateCreateInfo<'a>(
+    pub(crate) diligent_sys::RayTracingPipelineStateCreateInfo,
+    PhantomData<&'a ()>,
+);
+
+#[bon::bon]
+impl<'a> RayTracingPipelineStateCreateInfo<'a> {
+    #[builder]
+    pub fn new(
+        #[builder(setters(vis = ""))] pipeline_state_create_info: PipelineStateCreateInfo<'a>,
+
+        shader_record_size: u16,
+
+        max_recursion_depth: u8,
+
+        general_shaders: &[RayTracingGeneralShaderGroup<'a>],
+
+        triangle_hit_shaders: Option<&[RayTracingTriangleHitShaderGroup<'a>]>,
+
+        procedural_hit_shaders: Option<&[RayTracingProceduralHitShaderGroup<'a>]>,
+
+        #[cfg(feature = "d3d12")] shader_record_name: Option<CString>,
+
+        #[cfg(feature = "d3d12")]
+        #[builder(default = 0)]
+        max_attribute_size: u32,
+
+        #[cfg(feature = "d3d12")]
+        #[builder(default = 0)]
+        max_payload_size: u32,
+    ) -> Self {
+        RayTracingPipelineStateCreateInfo(
+            diligent_sys::RayTracingPipelineStateCreateInfo {
+                _PipelineStateCreateInfo: pipeline_state_create_info.0,
+                RayTracingPipeline: diligent_sys::RayTracingPipelineDesc {
+                    ShaderRecordSize: shader_record_size,
+                    MaxRecursionDepth: max_recursion_depth,
+                },
+                pGeneralShaders: general_shaders
+                    .first()
+                    .map_or(std::ptr::null(), |shader| std::ptr::from_ref(&shader.0)),
+                GeneralShaderCount: general_shaders.len() as u32,
+                pTriangleHitShaders: triangle_hit_shaders
+                    .map(|shaders| {
+                        shaders
+                            .first()
+                            .map_or(std::ptr::null(), |shader| std::ptr::from_ref(&shader.0))
+                    })
+                    .unwrap_or(std::ptr::null()),
+                TriangleHitShaderCount: triangle_hit_shaders.map_or(0, |shaders| shaders.len())
+                    as u32,
+                pProceduralHitShaders: procedural_hit_shaders
+                    .map(|shaders| {
+                        shaders
+                            .first()
+                            .map_or(std::ptr::null(), |shader| std::ptr::from_ref(&shader.0))
+                    })
+                    .unwrap_or(std::ptr::null()),
+                ProceduralHitShaderCount: procedural_hit_shaders.map_or(0, |shaders| shaders.len())
+                    as u32,
+                #[cfg(feature = "d3d12")]
+                pShaderRecordName: shader_record_name
+                    .as_ref()
+                    .map_or(std::ptr::null(), |name| name.as_ptr()),
+                #[cfg(feature = "d3d12")]
+                MaxAttributeSize: max_attribute_size,
+                #[cfg(feature = "d3d12")]
+                MaxPayloadSize: max_payload_size,
+
+                #[cfg(not(feature = "d3d12"))]
+                pShaderRecordName: std::ptr::null(),
+                #[cfg(not(feature = "d3d12"))]
+                MaxAttributeSize: 0,
+                #[cfg(not(feature = "d3d12"))]
+                MaxPayloadSize: 0,
+            },
+            PhantomData,
+        )
     }
 }
 
@@ -1356,51 +1198,44 @@ impl RayTracingPipelineState {
     }
 }
 
-pub(crate) struct TilePipelineStateCreateInfoWrapper {
-    _pci: PipelineStateCreateInfoWrapper,
-    ci: diligent_sys::TilePipelineStateCreateInfo,
-}
+#[repr(transparent)]
+pub struct TilePipelineStateCreateInfo<'a>(
+    pub(crate) diligent_sys::TilePipelineStateCreateInfo,
+    PhantomData<&'a ()>,
+);
 
-#[derive(Builder)]
-pub struct TilePipelineStateCreateInfo<'a> {
-    #[builder(setters(vis = ""))]
-    pipeline_state_create_info: PipelineStateCreateInfo<'a>,
-    render_target_formats: Vec<TextureFormat>,
-    sample_count: u8,
+#[bon::bon]
+impl<'a> TilePipelineStateCreateInfo<'a> {
+    #[builder]
+    pub fn new(
+        #[builder(setters(vis = ""))] pipeline_state_create_info: PipelineStateCreateInfo<'a>,
+        render_target_formats: Vec<TextureFormat>,
+        sample_count: u8,
 
-    shader: &'a Shader,
-}
+        shader: &'a Shader,
+    ) -> Self {
+        Self(
+            diligent_sys::TilePipelineStateCreateInfo {
+                _PipelineStateCreateInfo: pipeline_state_create_info.0,
+                TilePipeline: diligent_sys::TilePipelineDesc {
+                    NumRenderTargets: render_target_formats.len() as u8,
+                    SampleCount: sample_count,
+                    RTVFormats: {
+                        let mut formats = [diligent_sys::TEX_FORMAT_UNKNOWN
+                            as diligent_sys::TEXTURE_FORMAT;
+                            diligent_sys::MAX_RENDER_TARGETS as usize];
 
-impl<'a> From<&TilePipelineStateCreateInfo<'a>> for TilePipelineStateCreateInfoWrapper {
-    fn from(value: &TilePipelineStateCreateInfo) -> Self {
-        let pci = PipelineStateCreateInfoWrapper::from(&value.pipeline_state_create_info);
-        let ci = diligent_sys::TilePipelineStateCreateInfo {
-            _PipelineStateCreateInfo: *pci,
-            TilePipeline: diligent_sys::TilePipelineDesc {
-                NumRenderTargets: value.render_target_formats.len() as u8,
-                SampleCount: value.sample_count,
-                RTVFormats: {
-                    let mut formats = [diligent_sys::TEX_FORMAT_UNKNOWN
-                        as diligent_sys::TEXTURE_FORMAT;
-                        diligent_sys::MAX_RENDER_TARGETS as usize];
-                    value
-                        .render_target_formats
-                        .iter()
-                        .enumerate()
-                        .for_each(|(index, &fmt)| formats[index] = fmt.into());
-                    formats
+                        render_target_formats
+                            .iter()
+                            .enumerate()
+                            .for_each(|(index, &fmt)| formats[index] = fmt.into());
+                        formats
+                    },
                 },
+                pTS: shader.sys_ptr(),
             },
-            pTS: value.shader.sys_ptr(),
-        };
-        Self { _pci: pci, ci }
-    }
-}
-
-impl Deref for TilePipelineStateCreateInfoWrapper {
-    type Target = diligent_sys::TilePipelineStateCreateInfo;
-    fn deref(&self) -> &Self::Target {
-        &self.ci
+            PhantomData,
+        )
     }
 }
 
@@ -1422,33 +1257,26 @@ impl TilePipelineState {
     }
 }
 
-#[derive(Builder, Clone)]
-#[builder(derive(Clone))]
-pub struct ComputePipelineStateCreateInfo<'a> {
-    #[builder(setters(vis = ""))]
-    pipeline_state_create_info: PipelineStateCreateInfo<'a>,
-    shader: &'a Shader,
-}
+#[repr(transparent)]
+#[derive(Clone)]
+pub struct ComputePipelineStateCreateInfo<'a>(
+    pub(crate) diligent_sys::ComputePipelineStateCreateInfo,
+    PhantomData<&'a ()>,
+);
 
-pub(crate) struct ComputePipelineStateCreateInfoWrapper {
-    _pci: PipelineStateCreateInfoWrapper,
-    ci: diligent_sys::ComputePipelineStateCreateInfo,
-}
-
-impl<'a> From<&ComputePipelineStateCreateInfo<'a>> for ComputePipelineStateCreateInfoWrapper {
-    fn from(value: &ComputePipelineStateCreateInfo) -> Self {
-        let pci = PipelineStateCreateInfoWrapper::from(&value.pipeline_state_create_info);
-        let ci = diligent_sys::ComputePipelineStateCreateInfo {
-            _PipelineStateCreateInfo: *pci,
-            pCS: value.shader.sys_ptr(),
-        };
-        Self { _pci: pci, ci }
-    }
-}
-
-impl Deref for ComputePipelineStateCreateInfoWrapper {
-    type Target = diligent_sys::ComputePipelineStateCreateInfo;
-    fn deref(&self) -> &Self::Target {
-        &self.ci
+#[bon::bon]
+impl<'a> ComputePipelineStateCreateInfo<'a> {
+    #[builder]
+    pub fn new(
+        #[builder(setters(vis = ""))] pipeline_state_create_info: PipelineStateCreateInfo<'a>,
+        shader: &Shader,
+    ) -> Self {
+        ComputePipelineStateCreateInfo(
+            diligent_sys::ComputePipelineStateCreateInfo {
+                _PipelineStateCreateInfo: pipeline_state_create_info.0,
+                pCS: shader.sys_ptr(),
+            },
+            PhantomData,
+        )
     }
 }

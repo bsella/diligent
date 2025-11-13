@@ -180,17 +180,17 @@ impl SampleBase for GeometryShader {
             .default_variable_type(ShaderResourceVariableType::Static)
             // Shader variables should typically be mutable, which means they are expected
             // to change on a per-instance basis
-            .shader_resource_variables([ShaderResourceVariableDesc::builder()
-                .name("g_Texture")
+            .shader_resource_variables(&[ShaderResourceVariableDesc::builder()
+                .name(c"g_Texture")
                 .variable_type(ShaderResourceVariableType::Mutable)
                 .shader_stages(ShaderTypes::Pixel)
                 .build()])
-            .immutable_samplers([ImmutableSamplerDesc::new(
-                ShaderTypes::Pixel,
-                "g_Texture",
-                &sampler_desc,
-            )])
-            .name("Cube PSO")
+            .immutable_samplers(&[ImmutableSamplerDesc::builder()
+                .shader_stages(ShaderTypes::Pixel)
+                .sampler_or_texture_name(c"g_Texture")
+                .sampler_desc(&sampler_desc)
+                .build()])
+            .name(c"Cube PSO")
             .graphics()
             .graphics_pipeline_desc(
                 GraphicsPipelineDesc::builder()
@@ -200,11 +200,19 @@ impl SampleBase for GeometryShader {
                     // Primitive topology defines what kind of primitives will be rendered by this pipeline state
                     .primitive_topology(PrimitiveTopology::TriangleList)
                     // Define vertex shader input layout
-                    .input_layouts([
+                    .input_layouts(&[
                         // Attribute 0 - vertex position
-                        LayoutElement::builder().slot(0).f32_3().build(),
+                        LayoutElement::builder()
+                            .input_index(0)
+                            .slot(0)
+                            .f32_3()
+                            .build(),
                         // Attribute 1 - texture coordinates
-                        LayoutElement::builder().slot(0).f32_2().build(),
+                        LayoutElement::builder()
+                            .input_index(1)
+                            .slot(0)
+                            .f32_2()
+                            .build(),
                     ])
                     .build(),
             )
