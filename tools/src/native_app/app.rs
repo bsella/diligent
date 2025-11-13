@@ -17,7 +17,7 @@ pub trait App {
     fn new(
         app_settings: Self::AppSettings,
         engine_create_info: EngineCreateInfo,
-        window: Option<NativeWindow>,
+        window: NativeWindow,
     ) -> Self;
 
     fn run(

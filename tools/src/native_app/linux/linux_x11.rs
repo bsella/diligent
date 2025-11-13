@@ -471,12 +471,9 @@ where
         (win, display)
     };
 
-    let native_window = NativeWindow::X11 {
-        window_id: win as u32,
-        display: display as _,
-    };
+    let native_window = NativeWindow::new(win as u32, display as _, std::ptr::null_mut());
 
-    let result = Application::new(settings, EngineCreateInfo::default(), Some(native_window)).run(
+    let result = Application::new(settings, EngineCreateInfo::default(), native_window).run(
         X11EventHandler { display },
         |title| unsafe {
             let cstring = CString::new(title).unwrap();

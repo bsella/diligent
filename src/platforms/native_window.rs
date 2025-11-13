@@ -1,47 +1,32 @@
-#[cfg(target_os = "windows")]
-pub struct NativeWindow(pub *mut std::os::raw::c_void);
+#[repr(transparent)]
+pub struct NativeWindow(pub(crate) diligent_sys::NativeWindow);
 
-#[cfg(target_os = "windows")]
-impl From<&NativeWindow> for diligent_sys::NativeWindow {
-    fn from(value: &NativeWindow) -> Self {
-        diligent_sys::NativeWindow { hWnd: value.0 }
+impl NativeWindow {
+    #[cfg(target_os = "linux")]
+    pub fn new(window_id: u32, x_display: *mut (), xcb_connection: *mut ()) -> Self {
+        Self(diligent_sys::NativeWindow {
+            WindowId: window_id,
+            pDisplay: x_display as _,
+            pXCBConnection: xcb_connection as _,
+        })
+    }
+
+    #[cfg(target_os = "windows")]
+    pub fn new(hwnd: *mut c_void) -> Self {
+        Self(diligent_sys::NativeWindow { hWnd: hwnd })
     }
 }
 
-#[derive(Clone, Copy)]
-#[cfg(target_os = "linux")]
-pub enum NativeWindow {
-    #[cfg(feature = "vulkan")]
-    XCB {
-        window_id: u32,
-        connection: *mut std::ffi::c_void,
-    },
-    #[cfg(feature = "opengl")]
-    X11 {
-        window_id: u32,
-        display: *mut std::ffi::c_void,
-    },
+pub trait Window {
+    fn native(&self) -> NativeWindow;
+
+    fn set_title(&self, title: &str);
 }
 
-#[cfg(target_os = "linux")]
-impl From<&NativeWindow> for diligent_sys::NativeWindow {
-    fn from(value: &NativeWindow) -> Self {
-        match *value {
-            #[cfg(feature = "vulkan")]
-            NativeWindow::XCB {
-                window_id,
-                connection,
-            } => diligent_sys::NativeWindow {
-                WindowId: window_id,
-                pXCBConnection: connection,
-                pDisplay: std::ptr::null_mut(),
-            },
-            #[cfg(feature = "opengl")]
-            NativeWindow::X11 { window_id, display } => diligent_sys::NativeWindow {
-                WindowId: window_id,
-                pXCBConnection: std::ptr::null_mut(),
-                pDisplay: display,
-            },
-        }
-    }
+pub trait WindowFactory {
+    type Window<'factory>: Window
+    where
+        Self: 'factory;
+
+    fn create_window(&self, width: u16, height: u16) -> Self::Window<'_>;
 }

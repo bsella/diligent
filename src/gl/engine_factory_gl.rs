@@ -49,7 +49,7 @@ impl From<&EngineGLCreateInfo> for diligent_sys::EngineGLCreateInfo {
             _EngineCreateInfo: (&value.engine_create_info).into(),
             PreferredAdapterType: value.preferred_adapter_type.into(),
             ZeroToOneNDZ: value.zero_to_one_ndz,
-            Window: (&value.window).into(),
+            Window: value.window.0,
         }
     }
 }

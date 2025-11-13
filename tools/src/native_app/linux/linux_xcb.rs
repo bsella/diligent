@@ -315,12 +315,13 @@ where
     let (connection, window, atom_delete_window) =
         init_connection_and_window(width, height).unwrap();
 
-    let native_window = NativeWindow::XCB {
-        window_id: window.resource_id(),
-        connection: connection.get_raw_conn() as _,
-    };
+    let native_window = NativeWindow::new(
+        window.resource_id(),
+        std::ptr::null_mut(),
+        connection.get_raw_conn() as _,
+    );
 
-    let app = Application::new(settings, EngineCreateInfo::default(), Some(native_window));
+    let app = Application::new(settings, EngineCreateInfo::default(), native_window);
 
     connection.flush().unwrap();
 

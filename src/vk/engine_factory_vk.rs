@@ -308,12 +308,10 @@ impl EngineFactoryVk {
         device: &RenderDevice,
         immediate_context: &ImmediateDeviceContext,
         swapchain_ci: &SwapChainCreateInfo,
-        window: Option<&NativeWindow>,
+        window: &NativeWindow,
     ) -> Result<Boxed<SwapChain>, ()> {
         let swapchain_desc = swapchain_ci.into();
         let mut swap_chain_ptr = std::ptr::null_mut();
-
-        let window = window.map(|window| window.into());
 
         unsafe_member_call!(
             self,
@@ -322,7 +320,7 @@ impl EngineFactoryVk {
             device.sys_ptr(),
             immediate_context.sys_ptr(),
             std::ptr::from_ref(&swapchain_desc),
-            window.as_ref().map_or(std::ptr::null(), std::ptr::from_ref),
+            std::ptr::from_ref(window) as _,
             std::ptr::addr_of_mut!(swap_chain_ptr)
         );
 
