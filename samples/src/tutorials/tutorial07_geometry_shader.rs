@@ -221,7 +221,7 @@ impl SampleBase for GeometryShader {
         let shader_constants = create_uniform_buffer(
             &device,
             std::mem::size_of::<Constants>() as u64,
-            "Shader constants CB",
+            c"Shader constants CB",
             Usage::Dynamic,
             BindFlags::UniformBuffer,
             CpuAccessFlags::Write,

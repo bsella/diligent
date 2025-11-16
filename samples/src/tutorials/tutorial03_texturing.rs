@@ -92,7 +92,7 @@ impl SampleBase for Texturing {
         let vertex_shader_constant_buffer = device
             .create_buffer(
                 &BufferDesc::builder()
-                    .name("VS constants CB")
+                    .name(c"VS constants CB")
                     .size((std::mem::size_of::<glam::Mat4>()) as u64)
                     .usage(Usage::Dynamic)
                     .bind_flags(BindFlags::UniformBuffer)
@@ -257,7 +257,7 @@ impl SampleBase for Texturing {
             ];
 
             let vertex_buffer_desc = BufferDesc::builder()
-                .name("Cube vertex buffer")
+                .name(c"Cube vertex buffer")
                 .size(std::mem::size_of_val(&CUBE_VERTS) as u64)
                 .usage(Usage::Immutable)
                 .bind_flags(BindFlags::VertexBuffer)
@@ -280,7 +280,7 @@ impl SampleBase for Texturing {
             ];
 
             let vertex_buffer_desc = BufferDesc::builder()
-                .name("Cube index buffer")
+                .name(c"Cube index buffer")
                 .size(std::mem::size_of_val(&INDICES) as u64)
                 .usage(Usage::Immutable)
                 .bind_flags(BindFlags::IndexBuffer)

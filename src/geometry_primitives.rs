@@ -112,6 +112,6 @@ pub fn create_geometry_primitive(
     }
 }
 
-pub fn get_geometry_primitive_vertex_size(vertex_flags: &GeometryPrimitiveVertexFlags) -> u32 {
+pub fn get_geometry_primitive_vertex_size(vertex_flags: GeometryPrimitiveVertexFlags) -> u32 {
     unsafe { diligent_sys::Diligent_GetGeometryPrimitiveVertexSize(vertex_flags.bits()) }
 }

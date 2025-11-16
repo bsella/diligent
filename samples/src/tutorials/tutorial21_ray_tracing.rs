@@ -519,7 +519,7 @@ fn create_tlas(device: &RenderDevice) -> (Boxed<TopLevelAS>, Boxed<Buffer>, Boxe
     let scratch_buffer = {
         let sbs = tlas.get_scratch_buffer_sizes();
         let desc = BufferDesc::builder()
-            .name("TLAS Scratch Buffer")
+            .name(c"TLAS Scratch Buffer")
             .size(u64::max(sbs.build, sbs.update))
             .usage(Usage::Default)
             .bind_flags(BindFlags::RayTracing)
@@ -531,7 +531,7 @@ fn create_tlas(device: &RenderDevice) -> (Boxed<TopLevelAS>, Boxed<Buffer>, Boxe
     let instance_buffer = {
         let desc = BufferDesc::builder()
             .size((TLAS_INSTANCE_DATA_SIZE * NUM_INSTANCES as u32) as u64)
-            .name("TLAS Instance Buffer")
+            .name(c"TLAS Instance Buffer")
             .usage(Usage::Default)
             .bind_flags(BindFlags::RayTracing)
             .build();
@@ -595,7 +595,7 @@ fn create_and_build_cube_blas(
         device
             .create_buffer_with_data(
                 &BufferDesc::builder()
-                    .name("Cube Attribs")
+                    .name(c"Cube Attribs")
                     .usage(Usage::Immutable)
                     .bind_flags(BindFlags::UniformBuffer)
                     .size(std::mem::size_of_val(&attribs) as u64)
@@ -652,7 +652,7 @@ fn create_and_build_cube_blas(
     let scratch_buffer = device
         .create_buffer(
             &BufferDesc::builder()
-                .name("BLAS Scratch Buffer")
+                .name(c"BLAS Scratch Buffer")
                 .usage(Usage::Default)
                 .bind_flags(BindFlags::RayTracing)
                 .size(blas.get_scratch_buffer_sizes().build)
@@ -714,7 +714,7 @@ fn create_and_build_procedural_blas(
     // Create box buffer
     let box_attribs_cb = {
         let buffer_desc = BufferDesc::builder()
-            .name("AABB Buffer")
+            .name(c"AABB Buffer")
             .usage(Usage::Immutable)
             .bind_flags(BindFlags::RayTracing | BindFlags::ShaderResource)
             .size(std::mem::size_of_val(&BOXES) as u64)
@@ -748,7 +748,7 @@ fn create_and_build_procedural_blas(
     // Create scratch buffer
     let scratch_buffer = {
         let buff_desc = BufferDesc::builder()
-            .name("BLAS Scratch Buffer")
+            .name(c"BLAS Scratch Buffer")
             .usage(Usage::Default)
             .bind_flags(BindFlags::RayTracing)
             .size(procedural_blas.get_scratch_buffer_sizes().build)
@@ -988,7 +988,7 @@ impl SampleBase for RayTracing {
 
         // Create a buffer with shared constants.
         let buffer_desc = BufferDesc::builder()
-            .name("Constant buffer")
+            .name(c"Constant buffer")
             .size(std::mem::size_of::<Constants>() as u64)
             .usage(Usage::Default)
             .bind_flags(BindFlags::UniformBuffer)

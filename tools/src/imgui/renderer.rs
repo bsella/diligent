@@ -602,7 +602,7 @@ impl ImguiRenderer {
 
         let vertex_constant_buffer = {
             let buffer_desc = BufferDesc::builder()
-                .name("Imgui Vertex Constant Buffer")
+                .name(c"Imgui Vertex Constant Buffer")
                 .size((std::mem::size_of::<f32>() * 4 * 4) as u64)
                 .usage(Usage::Dynamic)
                 .bind_flags(BindFlags::UniformBuffer)
@@ -712,7 +712,7 @@ impl ImguiRenderer {
             }
 
             let buffer_desc = BufferDesc::builder()
-                .name("Imgui vertex buffer")
+                .name(c"Imgui vertex buffer")
                 .size(
                     (self.vertex_buffer_size as usize * std::mem::size_of::<imgui::DrawVert>())
                         as u64,
@@ -737,7 +737,7 @@ impl ImguiRenderer {
             }
 
             let buffer_desc = BufferDesc::builder()
-                .name("Imgui index buffer")
+                .name(c"Imgui index buffer")
                 .size(
                     (self.index_buffer_size as usize * std::mem::size_of::<imgui::DrawIdx>())
                         as u64,

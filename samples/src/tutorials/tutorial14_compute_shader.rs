@@ -312,7 +312,7 @@ fn create_particle_buffers(
         .create_buffer_with_data(
             &buffer_desc
                 .clone()
-                .name("Particle attribs buffer")
+                .name(c"Particle attribs buffer")
                 .element_byte_stride(std::mem::size_of::<ParticleAttribs>() as u32)
                 .size(std::mem::size_of::<ParticleAttribs>() as u64 * num_particles as u64)
                 .build(),
@@ -326,10 +326,10 @@ fn create_particle_buffers(
         .size(std::mem::size_of::<i32>() as u64 * num_particles as u64);
 
     let particle_list_heads_buffer = device
-        .create_buffer(&buffer_desc.clone().name("Particle list heads").build())
+        .create_buffer(&buffer_desc.clone().name(c"Particle list heads").build())
         .unwrap();
     let particle_lists_buffer = device
-        .create_buffer(&buffer_desc.name("Particle lists").build())
+        .create_buffer(&buffer_desc.name(c"Particle lists").build())
         .unwrap();
 
     (
@@ -343,7 +343,7 @@ fn create_constant_buffer(device: &RenderDevice) -> Boxed<Buffer> {
     device
         .create_buffer(
             &BufferDesc::builder()
-                .name("Constants buffer")
+                .name(c"Constants buffer")
                 .usage(Usage::Dynamic)
                 .bind_flags(BindFlags::UniformBuffer)
                 .cpu_access_flags(CpuAccessFlags::Write)

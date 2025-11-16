@@ -1,3 +1,5 @@
+use std::ffi::{CStr, CString};
+
 use bon::Builder;
 
 use crate::{
@@ -65,6 +67,7 @@ pub fn create_geometry_primitive_buffers(
     };
 
     let name = format!("Geometry primitive {primitive_id} ({primitive_type_str})");
+    let name = CString::new(name).unwrap();
 
     let vb_desc = {
         let vb_desc = BufferDesc::builder()
@@ -77,7 +80,7 @@ pub fn create_geometry_primitive_buffers(
 
         if buffer_ci.vertex_buffer_mode.is_some() {
             vb_desc
-                .element_byte_stride(get_geometry_primitive_vertex_size(&attribs.vertex_flags))
+                .element_byte_stride(get_geometry_primitive_vertex_size(attribs.vertex_flags))
                 .build()
         } else {
             vb_desc.build()
@@ -120,7 +123,7 @@ pub fn create_geometry_primitive_buffers(
 pub fn create_uniform_buffer(
     device: &RenderDevice,
     size: u64,
-    name: impl AsRef<str>,
+    name: impl AsRef<CStr>,
     usage: Usage,
     bind_flags: BindFlags,
     cpu_access_flags: CpuAccessFlags,
@@ -131,7 +134,7 @@ pub fn create_uniform_buffer(
     };
 
     let cb_desc = BufferDesc::builder()
-        .name(&name)
+        .name(name.as_ref())
         .size(size)
         .usage(usage)
         .bind_flags(bind_flags)
@@ -144,7 +147,7 @@ pub fn create_uniform_buffer(
 pub fn create_uniform_buffer_with_data<T>(
     device: &RenderDevice,
     size: u64,
-    name: impl AsRef<str>,
+    name: impl AsRef<CStr>,
     usage: Usage,
     bind_flags: BindFlags,
     cpu_access_flags: CpuAccessFlags,
@@ -156,7 +159,7 @@ pub fn create_uniform_buffer_with_data<T>(
     };
 
     let cb_desc = BufferDesc::builder()
-        .name(name)
+        .name(name.as_ref())
         .size(size)
         .usage(usage)
         .bind_flags(bind_flags)

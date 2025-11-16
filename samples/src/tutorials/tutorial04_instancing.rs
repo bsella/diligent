@@ -174,7 +174,7 @@ impl SampleBase for Instancing {
         let vs_constants = create_uniform_buffer(
             &device,
             std::mem::size_of::<glam::Mat4>() as u64 * 2,
-            "VS constants CB",
+            c"VS constants CB",
             Usage::Dynamic,
             BindFlags::UniformBuffer,
             CpuAccessFlags::Write,
@@ -244,7 +244,7 @@ impl SampleBase for Instancing {
 
         // Use default usage as this buffer will only be updated when grid size changes
         let inst_buff_desc = BufferDesc::builder()
-            .name("Instance data buffer")
+            .name(c"Instance data buffer")
             .size(std::mem::size_of::<glam::Mat4>() as u64 * MAX_INSTANCES)
             .usage(Usage::Default)
             .bind_flags(BindFlags::VertexBuffer)

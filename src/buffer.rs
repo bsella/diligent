@@ -1,7 +1,6 @@
-use std::{ffi::CString, ops::Deref};
+use std::{ffi::CStr, ops::Deref};
 
 use bitflags::bitflags;
-use bon::Builder;
 use static_assertions::const_assert_eq;
 
 use crate::{
@@ -44,53 +43,45 @@ impl Default for MiscBufferFlags {
     }
 }
 
-#[derive(Builder, Clone)]
-#[builder(derive(Clone))]
-pub struct BufferDesc {
-    #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
-    name: Option<CString>,
+//#[derive(Builder, Clone)]
+#[repr(transparent)]
+pub struct BufferDesc(pub(crate) diligent_sys::BufferDesc);
 
-    size: u64,
+#[bon::bon]
+impl BufferDesc {
+    #[builder(derive(Clone))]
+    pub fn new(
+        name: Option<&CStr>,
 
-    bind_flags: BindFlags,
+        size: u64,
 
-    usage: Usage,
+        bind_flags: BindFlags,
 
-    #[builder(default)]
-    cpu_access_flags: CpuAccessFlags,
+        usage: Usage,
 
-    mode: Option<BufferMode>,
+        #[builder(default)] cpu_access_flags: CpuAccessFlags,
 
-    #[builder(default)]
-    misc_flags: MiscBufferFlags,
+        mode: Option<BufferMode>,
 
-    #[builder(default = 0)]
-    element_byte_stride: u32,
+        #[builder(default)] misc_flags: MiscBufferFlags,
 
-    #[builder(default = 1)]
-    immediate_context_mask: u64,
-}
+        #[builder(default = 0)] element_byte_stride: u32,
 
-impl From<&BufferDesc> for diligent_sys::BufferDesc {
-    fn from(value: &BufferDesc) -> Self {
-        diligent_sys::BufferDesc {
+        #[builder(default = 1)] immediate_context_mask: u64,
+    ) -> Self {
+        BufferDesc(diligent_sys::BufferDesc {
             _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                Name: value
-                    .name
-                    .as_ref()
-                    .map_or(std::ptr::null(), |name| name.as_ptr()),
+                Name: name.map_or(std::ptr::null(), |name| name.as_ptr()),
             },
-            Size: value.size,
-            BindFlags: value.bind_flags.bits(),
-            Usage: value.usage.into(),
-            CPUAccessFlags: value.cpu_access_flags.bits(),
-            Mode: value
-                .mode
-                .map_or(diligent_sys::BUFFER_MODE_UNDEFINED as _, |bm| bm.into()),
-            MiscFlags: value.misc_flags.bits(),
-            ElementByteStride: value.element_byte_stride,
-            ImmediateContextMask: value.immediate_context_mask,
-        }
+            Size: size,
+            BindFlags: bind_flags.bits(),
+            Usage: usage.into(),
+            CPUAccessFlags: cpu_access_flags.bits(),
+            Mode: mode.map_or(diligent_sys::BUFFER_MODE_UNDEFINED as _, |bm| bm.into()),
+            MiscFlags: misc_flags.bits(),
+            ElementByteStride: element_byte_stride,
+            ImmediateContextMask: immediate_context_mask,
+        })
     }
 }
 

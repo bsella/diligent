@@ -162,7 +162,7 @@ impl SampleBase for Tessellation {
         let shader_constants = create_uniform_buffer(
             &device,
             std::mem::size_of::<GlobalConstants>() as u64,
-            "Global shader constants CB",
+            c"Global shader constants CB",
             Usage::Dynamic,
             BindFlags::UniformBuffer,
             CpuAccessFlags::Write,

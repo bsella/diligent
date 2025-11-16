@@ -73,7 +73,7 @@ impl SampleBase for Queries {
         let cube_vs_constants = create_uniform_buffer(
             &device,
             std::mem::size_of::<glam::Mat4>() as u64,
-            "VS constants CB",
+            c"VS constants CB",
             Usage::Dynamic,
             BindFlags::UniformBuffer,
             CpuAccessFlags::Write,

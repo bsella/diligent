@@ -100,12 +100,11 @@ impl RenderDevice {
     pub fn create_buffer(&self, buffer_desc: &BufferDesc) -> Result<Boxed<Buffer>, ()> {
         let mut buffer_ptr = std::ptr::null_mut();
 
-        let buffer_desc = buffer_desc.into();
         unsafe_member_call!(
             self,
             RenderDevice,
             CreateBuffer,
-            std::ptr::addr_of!(buffer_desc),
+            std::ptr::from_ref(&buffer_desc.0),
             std::ptr::null(),
             std::ptr::addr_of_mut!(buffer_ptr)
         );
@@ -131,12 +130,11 @@ impl RenderDevice {
             pContext: device_context.map_or(std::ptr::null_mut(), |context| context.sys_ptr()),
         };
 
-        let buffer_desc = buffer_desc.into();
         unsafe_member_call!(
             self,
             RenderDevice,
             CreateBuffer,
-            std::ptr::from_ref(&buffer_desc),
+            std::ptr::from_ref(&buffer_desc.0),
             std::ptr::from_ref(&buffer_data),
             std::ptr::addr_of_mut!(buffer_ptr)
         );
