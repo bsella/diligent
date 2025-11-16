@@ -1,3 +1,6 @@
+#[cfg(target_os = "windows")]
+use std::os::raw::c_void;
+
 #[repr(transparent)]
 pub struct NativeWindow(pub(crate) diligent_sys::NativeWindow);
 

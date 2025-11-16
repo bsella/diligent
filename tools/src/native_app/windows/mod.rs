@@ -399,7 +399,7 @@ where
     Application::new(
         settings,
         EngineCreateInfo::default(),
-        Some(NativeWindow(hwnd.0)),
+        NativeWindow::new(hwnd.0),
     )
     .run(
         Win32EventHandler {

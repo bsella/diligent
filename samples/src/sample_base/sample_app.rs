@@ -437,7 +437,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
                             immediate_contexts.first().unwrap(),
                             &swap_chain_ci,
                             &FullScreenModeDesc::default(),
-                            window.as_ref(),
+                            &window,
                         )
                         .unwrap();
 
@@ -483,7 +483,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
                             immediate_contexts.first().unwrap(),
                             &swap_chain_ci,
                             &FullScreenModeDesc::default(),
-                            window.as_ref(),
+                            &window,
                         )
                         .unwrap();
 
