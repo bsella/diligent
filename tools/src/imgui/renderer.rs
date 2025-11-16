@@ -573,22 +573,10 @@ impl ImguiRenderer {
                 GraphicsPipelineDesc::builder()
                     .blend_desc(blend_state_desc)
                     .primitive_topology(PrimitiveTopology::TriangleList)
-                    .input_layouts(&[
-                        LayoutElement::builder()
-                            .input_index(0)
-                            .slot(0)
-                            .f32_2()
-                            .build(),
-                        LayoutElement::builder()
-                            .input_index(1)
-                            .slot(0)
-                            .f32_2()
-                            .build(),
-                        LayoutElement::builder()
-                            .input_index(2)
-                            .slot(0)
-                            .u8_4()
-                            .build(),
+                    .input_layouts(&input_layouts![
+                        LayoutElement::builder().slot(0).f32_2(),
+                        LayoutElement::builder().slot(0).f32_2(),
+                        LayoutElement::builder().slot(0).u8_4(),
                     ])
                     .rasterizer_desc(rasterizer_state_desc)
                     .depth_stencil_desc(

@@ -125,3 +125,16 @@ impl InputLayoutDesc {
         })
     }
 }
+
+#[macro_export]
+macro_rules! input_layouts {
+    ()=> {};
+    ($($builder:expr,)+) => {
+        {
+            let mut index = 0;
+            [
+                $($builder.input_index({index += 1; index - 1}).build()),*
+            ]
+        }
+    };
+}

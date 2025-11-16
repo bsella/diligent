@@ -151,25 +151,25 @@ impl SampleBase for TextureArray {
         // Define vertex shader input layout
         // This tutorial uses two types of input: per-vertex data and per-instance data.
         #[rustfmt::skip]
-        let layout_elements = [
+        let layout_elements = input_layouts![
             // Per-vertex data - first buffer slot
             // Attribute 0 - vertex position
-            LayoutElement::builder().input_index(0).slot(0).f32_3().build(),
+            LayoutElement::builder().slot(0).f32_3(),
             // Attribute 1 - texture coordinates
-            LayoutElement::builder().input_index(1).slot(0).f32_2().build(),
+            LayoutElement::builder().slot(0).f32_2(),
 
             // Per-instance data - second buffer slot
             // We will use four attributes to encode instance-specific 4x4 transformation matrix
             // Attribute 2 - first row
-            LayoutElement::builder().input_index(2).slot(1).f32_4().frequency(InputElementFrequency::PerInstance).build(),
+            LayoutElement::builder().slot(1).f32_4().frequency(InputElementFrequency::PerInstance),
             // Attribute 3 - second row
-            LayoutElement::builder().input_index(3).slot(1).f32_4().frequency(InputElementFrequency::PerInstance).build(),
+            LayoutElement::builder().slot(1).f32_4().frequency(InputElementFrequency::PerInstance),
             // Attribute 4 - third row
-            LayoutElement::builder().input_index(4).slot(1).f32_4().frequency(InputElementFrequency::PerInstance).build(),
+            LayoutElement::builder().slot(1).f32_4().frequency(InputElementFrequency::PerInstance),
             // Attribute 5 - fourth row
-            LayoutElement::builder().input_index(5).slot(1).f32_4().frequency(InputElementFrequency::PerInstance).build(),
+            LayoutElement::builder().slot(1).f32_4().frequency(InputElementFrequency::PerInstance),
             // Attribute 6 - texture array index
-            LayoutElement::builder().input_index(6).slot(1).f32().frequency(InputElementFrequency::PerInstance).build(),
+            LayoutElement::builder().slot(1).f32().frequency(InputElementFrequency::PerInstance),
         ];
 
         let cube_pso_ci = CreatePSOInfo::new(

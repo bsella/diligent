@@ -148,19 +148,11 @@ impl SampleBase for Cube {
                     // Primitive topology defines what kind of primitives will be rendered by this pipeline state
                     .primitive_topology(PrimitiveTopology::TriangleList)
                     // Define vertex shader input layout
-                    .input_layouts(&[
+                    .input_layouts(&input_layouts![
                         // Attribute 0 - vertex position
-                        LayoutElement::builder()
-                            .input_index(0)
-                            .slot(0)
-                            .f32_3()
-                            .build(),
+                        LayoutElement::builder().slot(0).f32_3(),
                         // Attribute 1 - vertex color
-                        LayoutElement::builder()
-                            .input_index(1)
-                            .slot(0)
-                            .f32_4()
-                            .build(),
+                        LayoutElement::builder().slot(0).f32_4(),
                     ])
                     .build(),
             )
