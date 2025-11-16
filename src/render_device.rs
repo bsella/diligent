@@ -182,7 +182,6 @@ impl RenderDevice {
         device_context: Option<&DeviceContext>,
     ) -> Result<Boxed<Texture>, ()> {
         let mut texture_ptr = std::ptr::null_mut();
-        let texture_desc = texture_desc.into();
 
         let mut subresources: Vec<_> = subresources.iter().map(|&subres| subres.into()).collect();
 
@@ -196,7 +195,7 @@ impl RenderDevice {
             self,
             RenderDevice,
             CreateTexture,
-            std::ptr::addr_of!(texture_desc),
+            std::ptr::from_ref(&texture_desc.0),
             if device_context.is_none() && subresources.is_empty() {
                 std::ptr::null()
             } else {

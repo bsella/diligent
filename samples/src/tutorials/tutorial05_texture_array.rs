@@ -230,7 +230,7 @@ impl SampleBase for TextureArray {
             });
 
             let texture_desc = TextureDesc::builder()
-                .name("DGLogo")
+                .name(c"DGLogo")
                 .dimension(TextureDimension::Texture2DArray {
                     array_size: std::num::NonZero::new(NUM_TEXTURES).unwrap(),
                 })

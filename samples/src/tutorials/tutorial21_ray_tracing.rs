@@ -1,5 +1,5 @@
 use core::f32;
-use std::{ops::Deref, path::Path};
+use std::{ffi::CString, ops::Deref, path::Path};
 
 use diligent::{
     geometry_primitives::{
@@ -448,8 +448,10 @@ fn load_textures(device: &RenderDevice) -> ([Boxed<Texture>; NUM_TEXTURES], Boxe
             .decode()
             .unwrap();
 
+        let image_name = CString::new(image_name).unwrap();
+
         let texture_desc = TextureDesc::builder()
-            .name(image_name)
+            .name(&image_name)
             .dimension(TextureDimension::Texture2D)
             .width(image.width())
             .height(image.height())
@@ -479,7 +481,7 @@ fn load_textures(device: &RenderDevice) -> ([Boxed<Texture>; NUM_TEXTURES], Boxe
         let image = image.to_rgba8();
 
         let texture_desc = TextureDesc::builder()
-            .name("Ground")
+            .name(c"Ground")
             .dimension(TextureDimension::Texture2D)
             .width(image.width())
             .height(image.height())
@@ -1115,7 +1117,7 @@ impl SampleBase for RayTracing {
         let swap_chain_desc = swap_chain.get_desc();
 
         let texture_desc = TextureDesc::builder()
-            .name("Color buffer")
+            .name(c"Color buffer")
             .dimension(TextureDimension::Texture2D)
             .width(swap_chain_desc.width())
             .height(swap_chain_desc.height())
@@ -1509,7 +1511,7 @@ impl SampleBase for RayTracing {
         );
 
         let texture_desc = TextureDesc::builder()
-            .name("Color buffer")
+            .name(c"Color buffer")
             .dimension(TextureDimension::Texture2D)
             .width(new_swap_chain.width())
             .height(new_swap_chain.height())

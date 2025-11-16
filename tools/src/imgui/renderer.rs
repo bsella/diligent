@@ -621,7 +621,7 @@ impl ImguiRenderer {
         let font_atlas_texture = font_atlas.build_rgba32_texture();
 
         let font_texture_desc = TextureDesc::builder()
-            .name("Imgui font texture")
+            .name(c"Imgui font texture")
             .dimension(TextureDimension::Texture2D)
             .width(font_atlas_texture.width)
             .height(font_atlas_texture.height)

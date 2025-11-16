@@ -210,7 +210,7 @@ impl SampleBase for Instancing {
                 .unwrap();
 
             let texture_desc = TextureDesc::builder()
-                .name("DGLogo")
+                .name(c"DGLogo")
                 .dimension(TextureDimension::Texture2D)
                 .width(image.width())
                 .height(image.height())

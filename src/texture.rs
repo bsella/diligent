@@ -1,4 +1,4 @@
-use std::{ffi::CString, num::NonZero, ops::Deref};
+use std::{ffi::CStr, num::NonZero, ops::Deref};
 
 use bitflags::bitflags;
 use bon::Builder;
@@ -138,94 +138,81 @@ impl From<&TextureSubResource<'_>> for diligent_sys::TextureSubResData {
     }
 }
 
-#[derive(Builder)]
-pub struct TextureDesc {
-    #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
-    name: Option<CString>,
+#[repr(transparent)]
+pub struct TextureDesc(pub(crate) diligent_sys::TextureDesc);
 
-    dimension: TextureDimension,
+#[bon::bon]
+impl TextureDesc {
+    #[builder]
 
-    width: u32,
+    pub fn new(
+        name: Option<&CStr>,
 
-    height: u32,
+        dimension: TextureDimension,
 
-    format: TextureFormat,
+        width: u32,
 
-    #[builder(default = 1)]
-    mip_levels: u32,
+        height: u32,
 
-    #[builder(default = 1)]
-    sample_count: u32,
+        format: TextureFormat,
 
-    #[builder(default)]
-    bind_flags: BindFlags,
+        #[builder(default = 1)] mip_levels: u32,
 
-    #[builder(default)]
-    usage: Usage,
+        #[builder(default = 1)] sample_count: u32,
 
-    #[builder(default)]
-    cpu_access_flags: CpuAccessFlags,
+        #[builder(default)] bind_flags: BindFlags,
 
-    #[builder(default)]
-    misc_flags: MiscTextureFlags,
+        #[builder(default)] usage: Usage,
 
-    #[builder(default = [0.0, 0.0, 0.0, 0.0])]
-    clear_color: [f32; 4],
+        #[builder(default)] cpu_access_flags: CpuAccessFlags,
 
-    #[builder(default = 1.0)]
-    clear_depth: f32,
+        #[builder(default)] misc_flags: MiscTextureFlags,
 
-    #[builder(default = 0)]
-    clear_stencil: u8,
+        #[builder(default = [0.0, 0.0, 0.0, 0.0])] clear_color: [f32; 4],
 
-    #[builder(default = 1)]
-    immediate_context_mask: u64,
-}
+        #[builder(default = 1.0)] clear_depth: f32,
 
-impl From<&TextureDesc> for diligent_sys::TextureDesc {
-    fn from(value: &TextureDesc) -> Self {
-        let anon = match value.dimension {
-            TextureDimension::Texture1DArray { array_size }
-            | TextureDimension::Texture2DArray { array_size }
-            | TextureDimension::TextureCubeArray { array_size } => {
-                diligent_sys::TextureDesc__bindgen_ty_1 {
-                    ArraySize: array_size.get() as u32,
-                }
-            }
-            TextureDimension::Texture3D { depth } => diligent_sys::TextureDesc__bindgen_ty_1 {
-                Depth: depth.get() as u32,
-            },
-            _ => diligent_sys::TextureDesc__bindgen_ty_1 { ArraySize: 1 },
-        };
+        #[builder(default = 0)] clear_stencil: u8,
 
-        diligent_sys::TextureDesc {
+        #[builder(default = 1)] immediate_context_mask: u64,
+    ) -> Self {
+        Self(diligent_sys::TextureDesc {
             _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                Name: value
-                    .name
-                    .as_ref()
-                    .map_or(std::ptr::null(), |name| name.as_ptr()),
+                Name: name.as_ref().map_or(std::ptr::null(), |name| name.as_ptr()),
             },
-            Type: value.dimension.into(),
-            Width: value.width,
-            Height: value.height,
-            Format: value.format.into(),
-            MipLevels: value.mip_levels,
-            SampleCount: value.sample_count,
-            BindFlags: value.bind_flags.bits(),
-            Usage: value.usage.into(),
-            CPUAccessFlags: value.cpu_access_flags.bits(),
-            MiscFlags: value.misc_flags.bits(),
+            Type: dimension.into(),
+            Width: width,
+            Height: height,
+            Format: format.into(),
+            MipLevels: mip_levels,
+            SampleCount: sample_count,
+            BindFlags: bind_flags.bits(),
+            Usage: usage.into(),
+            CPUAccessFlags: cpu_access_flags.bits(),
+            MiscFlags: misc_flags.bits(),
             ClearValue: diligent_sys::OptimizedClearValue {
-                Color: value.clear_color,
+                Color: clear_color,
                 DepthStencil: diligent_sys::DepthStencilClearValue {
-                    Depth: value.clear_depth,
-                    Stencil: value.clear_stencil,
+                    Depth: clear_depth,
+                    Stencil: clear_stencil,
                 },
-                Format: value.format.into(),
+                Format: format.into(),
             },
-            ImmediateContextMask: value.immediate_context_mask,
-            __bindgen_anon_1: anon,
-        }
+            ImmediateContextMask: immediate_context_mask,
+            __bindgen_anon_1: match dimension {
+                TextureDimension::Texture1DArray { array_size }
+                | TextureDimension::Texture2DArray { array_size }
+                | TextureDimension::TextureCubeArray { array_size } => {
+                    diligent_sys::TextureDesc__bindgen_ty_1 {
+                        ArraySize: array_size.get() as u32,
+                    }
+                }
+                TextureDimension::Texture3D { depth } => diligent_sys::TextureDesc__bindgen_ty_1 {
+                    Depth: depth.get() as u32,
+                },
+                _ => diligent_sys::TextureDesc__bindgen_ty_1 { ArraySize: 1 },
+            },
+        })
     }
 }
 

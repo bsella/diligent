@@ -307,7 +307,7 @@ impl SampleBase for Tessellation {
                 .unwrap();
 
             let texture_desc = TextureDesc::builder()
-                .name("Terrain height map")
+                .name(c"Terrain height map")
                 .dimension(TextureDimension::Texture2D)
                 .width(image.width())
                 .height(image.height())
@@ -346,7 +346,7 @@ impl SampleBase for Tessellation {
                 .unwrap();
 
             let texture_desc = TextureDesc::builder()
-                .name("Terrain color map")
+                .name(c"Terrain color map")
                 .dimension(TextureDimension::Texture2D)
                 .width(image.width())
                 .height(image.height())
