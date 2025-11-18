@@ -5,7 +5,7 @@ use bon::{Builder, builder};
 use static_assertions::const_assert_eq;
 
 use crate::{
-    Boxed,
+    Boxed, PrimitiveTopology,
     blas::BottomLevelAS,
     buffer::{Buffer, BufferMapReadToken, BufferMapReadWriteToken, BufferMapWriteToken},
     command_queue::CommandQueue,
@@ -31,6 +31,153 @@ use crate::{
     texture_view::TextureView,
     tlas::{HitGroupBindingMode, TLASBuildInstanceData, TopLevelAS},
 };
+
+#[repr(transparent)]
+pub struct DeviceContextCommandCounters(diligent_sys::DeviceContextCommandCounters);
+
+impl DeviceContextCommandCounters {
+    pub fn set_pipeline_state(&self) -> u32 {
+        self.0.SetPipelineState
+    }
+    pub fn commit_shader_resources(&self) -> u32 {
+        self.0.CommitShaderResources
+    }
+    pub fn set_vertex_buffers(&self) -> u32 {
+        self.0.SetVertexBuffers
+    }
+    pub fn set_index_buffer(&self) -> u32 {
+        self.0.SetIndexBuffer
+    }
+    pub fn set_render_targets(&self) -> u32 {
+        self.0.SetRenderTargets
+    }
+    pub fn set_blend_factors(&self) -> u32 {
+        self.0.SetBlendFactors
+    }
+    pub fn set_stencil_ref(&self) -> u32 {
+        self.0.SetStencilRef
+    }
+    pub fn set_viewports(&self) -> u32 {
+        self.0.SetViewports
+    }
+    pub fn set_scissor_rects(&self) -> u32 {
+        self.0.SetScissorRects
+    }
+    pub fn clear_render_target(&self) -> u32 {
+        self.0.ClearRenderTarget
+    }
+    pub fn clear_depth_stencil(&self) -> u32 {
+        self.0.ClearDepthStencil
+    }
+    pub fn draw(&self) -> u32 {
+        self.0.Draw
+    }
+    pub fn draw_indexed(&self) -> u32 {
+        self.0.DrawIndexed
+    }
+    pub fn draw_indirect(&self) -> u32 {
+        self.0.DrawIndirect
+    }
+    pub fn draw_indexed_indirect(&self) -> u32 {
+        self.0.DrawIndexedIndirect
+    }
+    pub fn multi_draw(&self) -> u32 {
+        self.0.MultiDraw
+    }
+    pub fn multi_draw_indexed(&self) -> u32 {
+        self.0.MultiDrawIndexed
+    }
+    pub fn dispatch_compute(&self) -> u32 {
+        self.0.DispatchCompute
+    }
+    pub fn dispatch_compute_indirect(&self) -> u32 {
+        self.0.DispatchComputeIndirect
+    }
+    pub fn dispatch_tile(&self) -> u32 {
+        self.0.DispatchTile
+    }
+    pub fn draw_mesh(&self) -> u32 {
+        self.0.DrawMesh
+    }
+    pub fn draw_mesh_indirect(&self) -> u32 {
+        self.0.DrawMeshIndirect
+    }
+    pub fn build_blas(&self) -> u32 {
+        self.0.BuildBLAS
+    }
+    pub fn build_tlas(&self) -> u32 {
+        self.0.BuildTLAS
+    }
+    pub fn copy_blas(&self) -> u32 {
+        self.0.CopyBLAS
+    }
+    pub fn copy_tlas(&self) -> u32 {
+        self.0.CopyTLAS
+    }
+    pub fn write_blas_compacted_size(&self) -> u32 {
+        self.0.WriteBLASCompactedSize
+    }
+    pub fn write_tlas_compacted_size(&self) -> u32 {
+        self.0.WriteTLASCompactedSize
+    }
+    pub fn trace_rays(&self) -> u32 {
+        self.0.TraceRays
+    }
+    pub fn trace_rays_indirect(&self) -> u32 {
+        self.0.TraceRaysIndirect
+    }
+    pub fn update_sbt(&self) -> u32 {
+        self.0.UpdateSBT
+    }
+    pub fn update_buffer(&self) -> u32 {
+        self.0.UpdateBuffer
+    }
+    pub fn copy_buffer(&self) -> u32 {
+        self.0.CopyBuffer
+    }
+    pub fn map_buffer(&self) -> u32 {
+        self.0.MapBuffer
+    }
+    pub fn update_texture(&self) -> u32 {
+        self.0.UpdateTexture
+    }
+    pub fn copy_texture(&self) -> u32 {
+        self.0.CopyTexture
+    }
+    pub fn map_texture_subresource(&self) -> u32 {
+        self.0.MapTextureSubresource
+    }
+    pub fn begin_query(&self) -> u32 {
+        self.0.BeginQuery
+    }
+    pub fn generate_mips(&self) -> u32 {
+        self.0.GenerateMips
+    }
+    pub fn resolve_texture_subresource(&self) -> u32 {
+        self.0.ResolveTextureSubresource
+    }
+    pub fn bind_sparse_resource_memory(&self) -> u32 {
+        self.0.BindSparseResourceMemory
+    }
+}
+
+#[repr(transparent)]
+pub struct DeviceContextStats(diligent_sys::DeviceContextStats);
+
+impl DeviceContextStats {
+    pub fn primitive_counts(&self, primitive_topology: PrimitiveTopology) -> u32 {
+        let primitive_topology = diligent_sys::PRIMITIVE_TOPOLOGY::from(primitive_topology);
+        unsafe {
+            *self
+                .0
+                .PrimitiveCounts
+                .get_unchecked(primitive_topology as usize)
+        }
+    }
+    pub fn command_counters(&self) -> &DeviceContextCommandCounters {
+        unsafe { std::mem::transmute(&self.0.CommandCounters) }
+    }
+}
 
 bitflags! {
     #[derive(Clone, Copy)]
@@ -1792,11 +1939,10 @@ impl DeviceContext {
         unsafe_member_call!(self, DeviceContext, ClearStats)
     }
 
-    pub fn get_stats(&self) -> &diligent_sys::DeviceContextStats {
-        // TODO
+    pub fn get_stats(&self) -> &DeviceContextStats {
         let stats = unsafe_member_call!(self, DeviceContext, GetStats);
 
-        unsafe { stats.as_ref().unwrap_unchecked() }
+        unsafe { &*(stats as *const DeviceContextStats) }
     }
 }
 
