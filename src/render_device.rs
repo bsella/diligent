@@ -641,13 +641,12 @@ impl RenderDevice {
         &self,
         desc: &ShaderBindingTableDesc,
     ) -> Result<Boxed<ShaderBindingTable>, ()> {
-        let desc = desc.into();
         let mut sbt_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
             RenderDevice,
             CreateSBT,
-            std::ptr::from_ref(&desc),
+            std::ptr::from_ref(&desc.0),
             std::ptr::addr_of_mut!(sbt_ptr)
         );
 

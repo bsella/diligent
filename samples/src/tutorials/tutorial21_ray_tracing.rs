@@ -793,7 +793,7 @@ fn create_sbt(
     device
         .create_sbt(
             &ShaderBindingTableDesc::builder()
-                .name("SBT")
+                .name(c"SBT")
                 .raytracing_pso(raytracing_pso)
                 .build(),
         )

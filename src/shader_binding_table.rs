@@ -1,7 +1,9 @@
-use std::{ffi::CString, ops::Deref};
+use std::{
+    ffi::{CStr, CString},
+    ops::Deref,
+};
 
 use bitflags::bitflags;
-use bon::Builder;
 use static_assertions::const_assert_eq;
 
 use crate::{
@@ -20,24 +22,18 @@ bitflags! {
     }
 }
 
-#[derive(Builder)]
-pub struct ShaderBindingTableDesc<'a> {
-    #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
-    name: Option<CString>,
-    raytracing_pso: &'a RayTracingPipelineState,
-}
+pub struct ShaderBindingTableDesc(pub(crate) diligent_sys::ShaderBindingTableDesc);
 
-impl From<&ShaderBindingTableDesc<'_>> for diligent_sys::ShaderBindingTableDesc {
-    fn from(value: &ShaderBindingTableDesc<'_>) -> Self {
-        Self {
+#[bon::bon]
+impl ShaderBindingTableDesc {
+    #[builder]
+    pub fn new(name: Option<&CStr>, raytracing_pso: &RayTracingPipelineState) -> Self {
+        Self(diligent_sys::ShaderBindingTableDesc {
             _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                Name: value
-                    .name
-                    .as_ref()
-                    .map_or(std::ptr::null(), |name| name.as_ptr()),
+                Name: name.map_or(std::ptr::null(), |name| name.as_ptr()),
             },
-            pPSO: value.raytracing_pso.sys_ptr(),
-        }
+            pPSO: raytracing_pso.sys_ptr(),
+        })
     }
 }
 
@@ -64,7 +60,10 @@ impl ShaderBindingTable {
         std::ptr::addr_of!(self.0) as _
     }
 
-    //TODO pub fn GetDesc() -> ShaderBindingTableDesc{}
+    pub fn get_desc(&self) -> &ShaderBindingTableDesc {
+        let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
+        unsafe { &*(desc_ptr as *const ShaderBindingTableDesc) }
+    }
 
     pub fn verify(&self, flags: VerifySBTFlags) -> bool {
         unsafe_member_call!(self, ShaderBindingTable, Verify, flags.bits())
