@@ -1,8 +1,39 @@
-use std::ops::Deref;
+use std::{ffi::CStr, ops::Deref};
 
 use static_assertions::const_assert_eq;
 
 use crate::{device_object::DeviceObject, object::Object};
+
+#[repr(transparent)]
+pub struct ResourceMappingEntry(pub(crate) diligent_sys::ResourceMappingEntry);
+
+#[bon::bon]
+impl ResourceMappingEntry {
+    #[builder]
+    pub fn new(name: Option<&CStr>, object: &DeviceObject, array_index: Option<u32>) -> Self {
+        ResourceMappingEntry(diligent_sys::ResourceMappingEntry {
+            Name: name.map_or(std::ptr::null(), |name| name.as_ptr()),
+            pObject: object.sys_ptr(),
+            ArrayIndex: array_index.unwrap_or(0),
+        })
+    }
+}
+
+#[repr(transparent)]
+pub struct ResourceMappingCreateInfo(pub(crate) diligent_sys::ResourceMappingCreateInfo);
+
+#[bon::bon]
+impl ResourceMappingCreateInfo {
+    #[builder]
+    pub fn new(entries: &[ResourceMappingEntry]) -> Self {
+        ResourceMappingCreateInfo(diligent_sys::ResourceMappingCreateInfo {
+            pEntries: entries
+                .first()
+                .map_or(std::ptr::null(), |entry| std::ptr::from_ref(&entry.0)),
+            NumEntries: entries.len() as u32,
+        })
+    }
+}
 
 const_assert_eq!(
     std::mem::size_of::<diligent_sys::IResourceMappingMethods>(),

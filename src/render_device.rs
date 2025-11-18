@@ -3,7 +3,7 @@ use std::{ffi::CStr, ops::Deref, os::raw::c_void};
 use static_assertions::const_assert_eq;
 
 use crate::{
-    Boxed, SparseTextureFormatInfo, TilePipelineStateCreateInfo,
+    Boxed, ResourceMappingCreateInfo, SparseTextureFormatInfo, TilePipelineStateCreateInfo,
     blas::{BottomLevelAS, BottomLevelASDesc},
     buffer::{Buffer, BufferDesc},
     data_blob::DataBlob,
@@ -232,14 +232,14 @@ impl RenderDevice {
 
     pub fn create_resource_mapping(
         &self,
-        resource_mapping_ci: &diligent_sys::ResourceMappingCreateInfo,
+        resource_mapping_ci: &ResourceMappingCreateInfo,
     ) -> Result<Boxed<ResourceMapping>, ()> {
         let mut resource_mapping_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
             RenderDevice,
             CreateResourceMapping,
-            resource_mapping_ci,
+            std::ptr::from_ref(&resource_mapping_ci.0),
             std::ptr::addr_of_mut!(resource_mapping_ptr)
         );
 
