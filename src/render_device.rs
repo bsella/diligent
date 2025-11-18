@@ -3,7 +3,8 @@ use std::{ffi::CStr, ops::Deref, os::raw::c_void};
 use static_assertions::const_assert_eq;
 
 use crate::{
-    Boxed, ResourceMappingCreateInfo, SparseTextureFormatInfo, TilePipelineStateCreateInfo,
+    Boxed, ResourceMappingCreateInfo, SparseTextureFormatInfo, TextureFormatInfoExt,
+    TilePipelineStateCreateInfo,
     blas::{BottomLevelAS, BottomLevelASDesc},
     buffer::{Buffer, BufferDesc},
     data_blob::DataBlob,
@@ -764,13 +765,10 @@ impl RenderDevice {
         unsafe { (*info).Supported }
     }
 
-    pub fn get_texture_format_info_ext(
-        &self,
-        format: TextureFormat,
-    ) -> &diligent_sys::TextureFormatInfoExt {
-        // TODO
-        let info = unsafe_member_call!(self, RenderDevice, GetTextureFormatInfoExt, format.into());
-        unsafe { info.as_ref().unwrap_unchecked() }
+    pub fn get_texture_format_info_ext(&self, format: TextureFormat) -> &TextureFormatInfoExt {
+        let info = unsafe_member_call!(self, RenderDevice, GetTextureFormatInfoExt, format.into())
+            as *const TextureFormatInfoExt;
+        unsafe { &*info }
     }
 
     pub fn get_sparse_texture_format_info(

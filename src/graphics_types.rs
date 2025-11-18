@@ -899,7 +899,7 @@ bitflags! {
         const Mul         = diligent_sys::SHADING_RATE_COMBINER_MUL as diligent_sys::SHADING_RATE_COMBINER;
     }
 }
-const_assert_eq!(diligent_sys::SAMPLE_COUNT_MAX, 64);
+const_assert_eq!(diligent_sys::SHADING_RATE_COMBINER_LAST, 32);
 
 bitflags! {
     #[derive(Clone, Copy)]
@@ -2737,6 +2737,38 @@ impl TextureFormat {
             | TextureFormat::ETC2_RGBA8_UNORM
             | TextureFormat::ETC2_RGBA8_UNORM_SRGB => 4,
         }
+    }
+}
+
+bitflags! {
+    #[derive(Clone, Copy)]
+    pub struct ResourceDimensionSupport : diligent_sys::RESOURCE_DIMENSION_SUPPORT {
+        const None          = diligent_sys::RESOURCE_DIMENSION_SUPPORT_NONE           as diligent_sys::RESOURCE_DIMENSION_SUPPORT;
+        const Buffer        = diligent_sys::RESOURCE_DIMENSION_SUPPORT_BUFFER         as diligent_sys::RESOURCE_DIMENSION_SUPPORT;
+        const Tex1D         = diligent_sys::RESOURCE_DIMENSION_SUPPORT_TEX_1D         as diligent_sys::RESOURCE_DIMENSION_SUPPORT;
+        const Tex1DArray    = diligent_sys::RESOURCE_DIMENSION_SUPPORT_TEX_1D_ARRAY   as diligent_sys::RESOURCE_DIMENSION_SUPPORT;
+        const Tex2D         = diligent_sys::RESOURCE_DIMENSION_SUPPORT_TEX_2D         as diligent_sys::RESOURCE_DIMENSION_SUPPORT;
+        const Tex2DArray    = diligent_sys::RESOURCE_DIMENSION_SUPPORT_TEX_2D_ARRAY   as diligent_sys::RESOURCE_DIMENSION_SUPPORT;
+        const Tex3D         = diligent_sys::RESOURCE_DIMENSION_SUPPORT_TEX_3D         as diligent_sys::RESOURCE_DIMENSION_SUPPORT;
+        const TexCube       = diligent_sys::RESOURCE_DIMENSION_SUPPORT_TEX_CUBE       as diligent_sys::RESOURCE_DIMENSION_SUPPORT;
+        const TexCube_array = diligent_sys::RESOURCE_DIMENSION_SUPPORT_TEX_CUBE_ARRAY as diligent_sys::RESOURCE_DIMENSION_SUPPORT;
+    }
+}
+
+#[repr(transparent)]
+pub struct TextureFormatInfoExt(diligent_sys::TextureFormatInfoExt);
+impl TextureFormatInfoExt {
+    pub fn bind_flags(&self) -> BindFlags {
+        BindFlags::from_bits_retain(self.0.BindFlags)
+    }
+    pub fn dimensions(&self) -> ResourceDimensionSupport {
+        ResourceDimensionSupport::from_bits_retain(self.0.Dimensions)
+    }
+    pub fn sample_counts(&self) -> SampleCount {
+        SampleCount::from_bits_retain(self.0.SampleCounts)
+    }
+    pub fn filterable(&self) -> bool {
+        self.0.Filterable
     }
 }
 
