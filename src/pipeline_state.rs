@@ -1151,8 +1151,12 @@ impl PipelineState {
         )
     }
 
-    pub fn get_resource_signatures(&self) -> Vec<PipelineResourceSignature> {
-        todo!()
+    pub fn get_resource_signatures(&self) -> &[PipelineResourceSignature] {
+        let signatures_count = unsafe_member_call!(self, PipelineState, GetResourceSignatureCount);
+        let first_signature = unsafe_member_call!(self, PipelineState, GetResourceSignature, 0)
+            as *const PipelineResourceSignature;
+
+        unsafe { std::slice::from_raw_parts(first_signature, signatures_count as usize) }
     }
 
     pub fn get_status(&self, wait_for_completion: bool) -> PipelineStateStatus {
@@ -1178,10 +1182,10 @@ impl Deref for GraphicsPipelineState {
 }
 
 impl GraphicsPipelineState {
-    pub fn get_graphics_pipeline_desc(&self) -> &diligent_sys::GraphicsPipelineDesc {
-        // TODO
-        let desc = unsafe_member_call!(self.0, PipelineState, GetGraphicsPipelineDesc);
-        unsafe { desc.as_ref().unwrap_unchecked() }
+    pub fn get_graphics_pipeline_desc(&self) -> &GraphicsPipelineDesc<'_> {
+        let desc = unsafe_member_call!(self.0, PipelineState, GetGraphicsPipelineDesc)
+            as *const GraphicsPipelineDesc;
+        unsafe { &*desc }
     }
 }
 
@@ -1205,11 +1209,23 @@ impl Deref for RayTracingPipelineState {
     }
 }
 
+#[repr(transparent)]
+pub struct RayTracingPipelineDesc(diligent_sys::RayTracingPipelineDesc);
+
+impl RayTracingPipelineDesc {
+    pub fn shader_record_size(&self) -> u16 {
+        self.0.ShaderRecordSize
+    }
+    pub fn max_recursion_depth(&self) -> u8 {
+        self.0.MaxRecursionDepth
+    }
+}
+
 impl RayTracingPipelineState {
-    pub fn get_raytracing_pipeline_desc(&self) -> &diligent_sys::RayTracingPipelineDesc {
-        // TODO
-        let desc = unsafe_member_call!(self.0, PipelineState, GetRayTracingPipelineDesc);
-        unsafe { desc.as_ref().unwrap_unchecked() }
+    pub fn get_raytracing_pipeline_desc(&self) -> &RayTracingPipelineDesc {
+        let desc = unsafe_member_call!(self.0, PipelineState, GetRayTracingPipelineDesc)
+            as *const RayTracingPipelineDesc;
+        unsafe { &*desc }
     }
 }
 
@@ -1264,11 +1280,25 @@ impl Deref for TilePipelineState {
     }
 }
 
+pub struct TilePipelineDesc(diligent_sys::TilePipelineDesc);
+
+impl TilePipelineDesc {
+    pub fn num_render_targets(&self) -> u8 {
+        self.0.NumRenderTargets
+    }
+    pub fn sample_count(&self) -> u8 {
+        self.0.SampleCount
+    }
+    pub fn rtv_formats(&self) -> [TextureFormat; 8usize] {
+        self.0.RTVFormats.map(TextureFormat::from)
+    }
+}
+
 impl TilePipelineState {
-    pub fn get_tile_pipeline_desc(&self) -> &diligent_sys::TilePipelineDesc {
-        // TODO
-        let desc = unsafe_member_call!(self.0, PipelineState, GetTilePipelineDesc);
-        unsafe { desc.as_ref().unwrap_unchecked() }
+    pub fn get_tile_pipeline_desc(&self) -> &TilePipelineDesc {
+        let desc = unsafe_member_call!(self.0, PipelineState, GetTilePipelineDesc)
+            as *const TilePipelineDesc;
+        unsafe { &*desc }
     }
 }
 
