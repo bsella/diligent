@@ -305,6 +305,14 @@ impl Default for PipelineShadingRateFlags {
     }
 }
 
+#[derive(Clone, Copy)]
+pub enum PipelineStateStatus {
+    Uninitialized,
+    Compiling,
+    Ready,
+    Failed,
+}
+
 #[repr(transparent)]
 #[derive(Clone)]
 pub struct PipelineStateCreateInfo<'a>(
@@ -1147,8 +1155,15 @@ impl PipelineState {
         todo!()
     }
 
-    pub fn get_status(&self, wait_for_completion: bool) -> diligent_sys::PIPELINE_STATE_STATUS {
-        unsafe_member_call!(self, PipelineState, GetStatus, wait_for_completion)
+    pub fn get_status(&self, wait_for_completion: bool) -> PipelineStateStatus {
+        let status = unsafe_member_call!(self, PipelineState, GetStatus, wait_for_completion);
+        match status {
+            diligent_sys::PIPELINE_STATE_STATUS_UNINITIALIZED => PipelineStateStatus::Uninitialized,
+            diligent_sys::PIPELINE_STATE_STATUS_COMPILING => PipelineStateStatus::Compiling,
+            diligent_sys::PIPELINE_STATE_STATUS_READY => PipelineStateStatus::Ready,
+            diligent_sys::PIPELINE_STATE_STATUS_FAILED => PipelineStateStatus::Failed,
+            _ => panic!("Unknown PIPELINE_STATE_STATUS value"),
+        }
     }
 }
 
