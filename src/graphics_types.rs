@@ -382,6 +382,20 @@ impl From<Usage> for diligent_sys::USAGE {
     }
 }
 
+impl From<diligent_sys::USAGE> for Usage {
+    fn from(value: diligent_sys::USAGE) -> Self {
+        match value as _ {
+            diligent_sys::USAGE_IMMUTABLE => Usage::Immutable,
+            diligent_sys::USAGE_DEFAULT => Usage::Default,
+            diligent_sys::USAGE_DYNAMIC => Usage::Dynamic,
+            diligent_sys::USAGE_STAGING => Usage::Staging,
+            diligent_sys::USAGE_UNIFIED => Usage::Unified,
+            diligent_sys::USAGE_SPARSE => Usage::Sparse,
+            _ => panic!("Unknown USAGE value"),
+        }
+    }
+}
+
 bitflags! {
     #[derive(Clone, Copy)]
     pub struct CpuAccessFlags: diligent_sys::CPU_ACCESS_FLAGS {

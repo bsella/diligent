@@ -85,6 +85,38 @@ impl BufferDesc {
     }
 }
 
+impl BufferDesc {
+    pub fn size(&self) -> u64 {
+        self.0.Size
+    }
+    pub fn bind_flags(&self) -> BindFlags {
+        BindFlags::from_bits_retain(self.0.BindFlags)
+    }
+    pub fn usage(&self) -> Usage {
+        self.0.Usage.into()
+    }
+    pub fn cpu_access_flags(&self) -> CpuAccessFlags {
+        CpuAccessFlags::from_bits_retain(self.0.CPUAccessFlags)
+    }
+    pub fn mode(&self) -> Option<BufferMode> {
+        match self.0.Mode as _ {
+            diligent_sys::BUFFER_MODE_FORMATTED => Some(BufferMode::Formatted),
+            diligent_sys::BUFFER_MODE_STRUCTURED => Some(BufferMode::Structured),
+            diligent_sys::BUFFER_MODE_RAW => Some(BufferMode::Raw),
+            _ => None,
+        }
+    }
+    pub fn misc_flags(&self) -> MiscBufferFlags {
+        MiscBufferFlags::from_bits_retain(self.0.MiscFlags)
+    }
+    pub fn element_byte_stride(&self) -> u32 {
+        self.0.ElementByteStride
+    }
+    pub fn immediate_context_mask(&self) -> u64 {
+        self.0.ImmediateContextMask
+    }
+}
+
 const_assert_eq!(
     std::mem::size_of::<diligent_sys::IBufferMethods>(),
     9 * std::mem::size_of::<*const ()>()
@@ -106,6 +138,11 @@ impl Deref for Buffer {
 impl Buffer {
     pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IBuffer {
         std::ptr::addr_of!(self.0) as _
+    }
+
+    pub fn get_desc(&self) -> &BufferDesc {
+        let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
+        unsafe { &*(desc_ptr as *const BufferDesc) }
     }
 
     pub fn create_view(&self, view_desc: &BufferViewDesc) -> Result<Boxed<BufferView>, ()> {
@@ -188,7 +225,7 @@ impl<'a, T> BufferMapReadToken<'a, T> {
             device_context,
             DeviceContext,
             MapBuffer,
-            std::ptr::addr_of!(buffer.0) as _,
+            std::ptr::from_ref(&buffer.0) as *mut _,
             diligent_sys::MAP_READ as diligent_sys::MAP_TYPE,
             map_flags,
             std::ptr::addr_of_mut!(ptr)
