@@ -319,7 +319,7 @@ impl SampleBase for Cube {
                 let mut constant_buffer_data = immediate_context
                     .map_buffer_write(&self.vertex_shader_constant_buffer, MapFlags::Discard);
 
-                *unsafe { constant_buffer_data.as_mut() } = model_view_proj;
+                constant_buffer_data[0] = model_view_proj;
             }
         }
 

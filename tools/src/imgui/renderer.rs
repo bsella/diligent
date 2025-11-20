@@ -765,14 +765,10 @@ impl ImguiRenderer {
                 let vtx_buffer = draw_list.vtx_buffer();
                 let idx_buffer = draw_list.idx_buffer();
 
-                unsafe { vb_access.as_mut_slice(vtx_buffer.len(), vtx_offset as isize) }
-                    .copy_from_slice(vtx_buffer);
+                vb_access[vtx_offset..][..vtx_buffer.len()].copy_from_slice(vtx_buffer);
+                ib_access[idx_offset..][..idx_buffer.len()].copy_from_slice(idx_buffer);
 
                 vtx_offset += vtx_buffer.len();
-
-                unsafe { ib_access.as_mut_slice(idx_buffer.len(), idx_offset as isize) }
-                    .copy_from_slice(idx_buffer);
-
                 idx_offset += idx_buffer.len();
             }
         }
@@ -800,7 +796,7 @@ impl ImguiRenderer {
                 let mut projection_data = device_context
                     .map_buffer_write::<[f32; 16]>(&self.vertex_constant_buffer, MapFlags::Discard);
 
-                *unsafe { projection_data.as_mut() } = projection;
+                (*projection_data)[0] = projection;
             }
         }
 

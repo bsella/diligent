@@ -371,9 +371,8 @@ impl SampleBase for TextureArray {
             let mut cb_constants = immediate_context
                 .map_buffer_write(&self.vertex_shader_constants, MapFlags::Discard);
 
-            let buffer_write = unsafe { cb_constants.as_mut_slice(2, 0) };
-            buffer_write[0] = view_proj_matrix;
-            buffer_write[1] = self.rotation_matrix;
+            cb_constants[0] = view_proj_matrix;
+            cb_constants[1] = self.rotation_matrix;
         }
 
         {

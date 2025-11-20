@@ -1682,7 +1682,7 @@ impl DeviceContext {
         )
     }
 
-    pub fn map_buffer_read<'a, T>(
+    pub fn map_buffer_read<'a, T: Sized>(
         &'a self,
         buffer: &'a Buffer,
         map_flags: MapFlags,
@@ -1693,7 +1693,7 @@ impl DeviceContext {
         BufferMapReadToken::new(self, buffer, map_flags.bits())
     }
 
-    pub fn map_buffer_write<'a, T>(
+    pub fn map_buffer_write<'a, T: Sized>(
         &'a self,
         buffer: &'a Buffer,
         map_flags: MapFlags,
@@ -1704,7 +1704,7 @@ impl DeviceContext {
         BufferMapWriteToken::new(self, buffer, map_flags.bits())
     }
 
-    pub fn map_buffer_read_write<'a, T>(
+    pub fn map_buffer_read_write<'a, T: Sized>(
         &'a self,
         buffer: &'a Buffer,
         map_flags: MapFlags,

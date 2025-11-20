@@ -569,9 +569,7 @@ impl SampleBase for Tessellation {
             let mut constants =
                 immediate_context.map_buffer_write(&self.shader_constants, MapFlags::Discard);
 
-            let buffer_write = unsafe { constants.as_mut() };
-
-            *buffer_write = GlobalConstants {
+            constants[0] = GlobalConstants {
                 block_size: self.block_size as f32,
                 num_horz_blocks,
                 num_vert_blocks,

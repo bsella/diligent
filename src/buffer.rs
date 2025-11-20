@@ -1,4 +1,8 @@
-use std::{ffi::CStr, ops::Deref};
+use std::{
+    ffi::CStr,
+    marker::PhantomData,
+    ops::{Deref, DerefMut},
+};
 
 use bitflags::bitflags;
 use static_assertions::const_assert_eq;
@@ -208,162 +212,113 @@ impl Buffer {
     }
 }
 
-pub struct BufferMapReadToken<'a, T> {
-    device_context: &'a DeviceContext,
-    buffer: &'a Buffer,
-    data_ptr: *const T,
+mod states {
+    pub struct Read;
+    pub struct Write;
+    pub struct ReadWrite;
 }
 
-impl<'a, T> BufferMapReadToken<'a, T> {
+pub struct BufferMapToken<'a, T: Sized, State: MapType> {
+    device_context: &'a DeviceContext,
+    buffer: &'a Buffer,
+    data: &'a mut [T],
+    phantom: PhantomData<State>,
+}
+
+pub trait MapType {
+    const MAP_TYPE: diligent_sys::MAP_TYPE;
+}
+
+impl MapType for states::Read {
+    const MAP_TYPE: diligent_sys::MAP_TYPE = diligent_sys::MAP_READ as diligent_sys::MAP_TYPE;
+}
+
+impl MapType for states::Write {
+    const MAP_TYPE: diligent_sys::MAP_TYPE = diligent_sys::MAP_WRITE as diligent_sys::MAP_TYPE;
+}
+
+impl MapType for states::ReadWrite {
+    const MAP_TYPE: diligent_sys::MAP_TYPE = diligent_sys::MAP_READ_WRITE as diligent_sys::MAP_TYPE;
+}
+
+impl<'a, T: Sized, State: MapType> BufferMapToken<'a, T, State> {
     pub(super) fn new(
         device_context: &'a DeviceContext,
         buffer: &'a Buffer,
         map_flags: diligent_sys::MAP_FLAGS,
-    ) -> BufferMapReadToken<'a, T> {
+    ) -> BufferMapToken<'a, T, State> {
         let mut ptr = std::ptr::null_mut();
         unsafe_member_call!(
             device_context,
             DeviceContext,
             MapBuffer,
             std::ptr::from_ref(&buffer.0) as *mut _,
-            diligent_sys::MAP_READ as diligent_sys::MAP_TYPE,
+            State::MAP_TYPE,
             map_flags,
             std::ptr::addr_of_mut!(ptr)
         );
 
-        BufferMapReadToken {
+        BufferMapToken::<T, State> {
             buffer,
-            data_ptr: ptr as *const T,
+            data: unsafe {
+                std::slice::from_raw_parts_mut(
+                    ptr as *mut T,
+                    buffer.get_desc().size() as usize / std::mem::size_of::<T>(),
+                )
+            },
             device_context,
+            phantom: PhantomData,
         }
-    }
-
-    pub unsafe fn as_ref(&self) -> &T {
-        unsafe { self.data_ptr.as_ref().unwrap_unchecked() }
-    }
-
-    pub unsafe fn as_slice(&self, len: usize, offset: isize) -> &[T] {
-        unsafe { std::slice::from_raw_parts(self.data_ptr.offset(offset), len) }
     }
 }
 
-impl<T> Drop for BufferMapReadToken<'_, T> {
+impl<'a, T: Sized, State: MapType> Drop for BufferMapToken<'a, T, State> {
     fn drop(&mut self) {
         unsafe_member_call!(
             self.device_context,
             DeviceContext,
             UnmapBuffer,
-            std::ptr::addr_of!(self.buffer.0) as _,
-            diligent_sys::MAP_READ as diligent_sys::MAP_TYPE
+            std::ptr::from_ref(&self.buffer.0) as *mut _,
+            State::MAP_TYPE
         )
     }
 }
 
-pub struct BufferMapWriteToken<'a, T> {
-    device_context: &'a DeviceContext,
-    buffer: &'a Buffer,
-    data_ptr: *mut T,
-}
-
-impl<'a, T> BufferMapWriteToken<'a, T> {
-    pub(super) fn new(
-        device_context: &'a DeviceContext,
-        buffer: &'a Buffer,
-        map_flags: diligent_sys::MAP_FLAGS,
-    ) -> BufferMapWriteToken<'a, T> {
-        let mut ptr = std::ptr::null_mut();
-        unsafe_member_call!(
-            device_context,
-            DeviceContext,
-            MapBuffer,
-            std::ptr::addr_of!(buffer.0) as _,
-            diligent_sys::MAP_WRITE as diligent_sys::MAP_TYPE,
-            map_flags,
-            std::ptr::addr_of_mut!(ptr)
-        );
-
-        BufferMapWriteToken {
-            buffer,
-            data_ptr: ptr as *mut T,
-            device_context,
-        }
-    }
-
-    pub unsafe fn as_mut(&mut self) -> &mut T {
-        unsafe { self.data_ptr.as_mut().unwrap_unchecked() }
-    }
-
-    pub unsafe fn as_mut_slice(&mut self, len: usize, offset: isize) -> &mut [T] {
-        unsafe { std::slice::from_raw_parts_mut(self.data_ptr.offset(offset), len) }
+impl<T> Deref for BufferMapToken<'_, T, states::Read> {
+    type Target = [T];
+    fn deref(&self) -> &Self::Target {
+        self.data
     }
 }
 
-impl<T> Drop for BufferMapWriteToken<'_, T> {
-    fn drop(&mut self) {
-        unsafe_member_call!(
-            self.device_context,
-            DeviceContext,
-            UnmapBuffer,
-            std::ptr::addr_of!(self.buffer.0) as _,
-            diligent_sys::MAP_WRITE as diligent_sys::MAP_TYPE
-        )
+// Note : Normally you shouldn't be able to read from the write token,
+//        but DerefMut cannot be implemented without Deref.
+impl<'a, T> Deref for BufferMapToken<'a, T, states::Write> {
+    type Target = [T];
+    fn deref(&self) -> &Self::Target {
+        self.data
     }
 }
 
-pub struct BufferMapReadWriteToken<'a, T> {
-    device_context: &'a DeviceContext,
-    buffer: &'a Buffer,
-    data_ptr: *mut T,
-}
-
-impl<'a, T> BufferMapReadWriteToken<'a, T> {
-    pub(super) fn new(
-        device_context: &'a DeviceContext,
-        buffer: &'a Buffer,
-        map_flags: diligent_sys::MAP_FLAGS,
-    ) -> BufferMapReadWriteToken<'a, T> {
-        let mut ptr = std::ptr::null_mut();
-        unsafe_member_call!(
-            device_context,
-            DeviceContext,
-            MapBuffer,
-            std::ptr::addr_of!(buffer.0) as _,
-            diligent_sys::MAP_READ_WRITE as diligent_sys::MAP_TYPE,
-            map_flags,
-            std::ptr::addr_of_mut!(ptr)
-        );
-
-        BufferMapReadWriteToken {
-            buffer,
-            data_ptr: ptr as *mut T,
-            device_context,
-        }
-    }
-
-    pub unsafe fn as_ref(&self) -> &T {
-        unsafe { self.data_ptr.as_ref().unwrap_unchecked() }
-    }
-
-    pub unsafe fn as_slice(&self, len: usize, offset: isize) -> &[T] {
-        unsafe { std::slice::from_raw_parts(self.data_ptr.offset(offset), len) }
-    }
-
-    pub unsafe fn as_mut(&mut self) -> &mut T {
-        unsafe { self.data_ptr.as_mut().unwrap_unchecked() }
-    }
-
-    pub unsafe fn as_mut_slice(&mut self, len: usize, offset: isize) -> &mut [T] {
-        unsafe { std::slice::from_raw_parts_mut(self.data_ptr.offset(offset), len) }
+impl<'a, T> DerefMut for BufferMapToken<'a, T, states::Write> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.data
     }
 }
-impl<T> Drop for BufferMapReadWriteToken<'_, T> {
-    fn drop(&mut self) {
-        unsafe_member_call!(
-            self.device_context,
-            DeviceContext,
-            UnmapBuffer,
-            std::ptr::addr_of!(self.buffer.0) as _,
-            diligent_sys::MAP_READ_WRITE as diligent_sys::MAP_TYPE
-        )
+
+impl<'a, T> Deref for BufferMapToken<'a, T, states::ReadWrite> {
+    type Target = [T];
+    fn deref(&self) -> &Self::Target {
+        self.data
     }
 }
+
+impl<'a, T> DerefMut for BufferMapToken<'a, T, states::ReadWrite> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.data
+    }
+}
+
+pub type BufferMapReadToken<'a, T> = BufferMapToken<'a, T, states::Read>;
+pub type BufferMapWriteToken<'a, T> = BufferMapToken<'a, T, states::Write>;
+pub type BufferMapReadWriteToken<'a, T> = BufferMapToken<'a, T, states::ReadWrite>;

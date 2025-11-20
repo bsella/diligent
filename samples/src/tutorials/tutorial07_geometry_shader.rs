@@ -383,8 +383,7 @@ impl SampleBase for GeometryShader {
             let mut constants = immediate_context
                 .map_buffer_write(&self.vertex_shader_constants, MapFlags::Discard);
 
-            let buffer_write = unsafe { constants.as_mut() };
-            *buffer_write = Constants {
+            constants[0] = Constants {
                 world_view_proj: (view_proj_matrix * self.rotation_matrix).to_cols_array(),
                 viewport_size: [
                     swap_chain_desc.width() as f32,

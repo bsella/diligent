@@ -618,10 +618,11 @@ impl SampleBase for ComputeShader {
             }
 
             // Map the buffer and write current world-view-projection matrix
-            let mut map =
+            let mut constants =
                 immediate_context.map_buffer_write::<Constants>(&self.constants, MapFlags::Discard);
 
-            let constants = unsafe { map.as_mut() };
+            let constants = &mut constants[0];
+
             constants.ui_num_particles = self.num_particles as u32;
             constants.f_delta_time = f32::min(self.time_delta, 1.0 / 60.0) * self.simulation_speed;
 

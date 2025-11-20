@@ -268,7 +268,7 @@ impl SampleBase for Queries {
             let mut constant_buffer_data =
                 immediate_context.map_buffer_write(&self.cube_vs_constants, MapFlags::Discard);
 
-            *unsafe { constant_buffer_data.as_mut() } = view_proj_matrix * self.rotation_matrix;
+            constant_buffer_data[0] = view_proj_matrix * self.rotation_matrix;
         }
 
         let rtv = swap_chain.get_current_back_buffer_rtv().unwrap();
