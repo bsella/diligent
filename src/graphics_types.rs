@@ -3030,12 +3030,7 @@ pub struct ImmediateContextCreateInfo(diligent_sys::ImmediateContextCreateInfo);
 #[bon::bon]
 impl ImmediateContextCreateInfo {
     #[builder]
-    pub fn new(
-        #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
-        name: Option<CString>,
-        queue_id: u8,
-        priority: Option<QueuePriority>,
-    ) -> Self {
+    pub fn new(name: Option<&CStr>, queue_id: u8, priority: Option<QueuePriority>) -> Self {
         Self(diligent_sys::ImmediateContextCreateInfo {
             Name: name.map_or(std::ptr::null(), |name| name.as_ptr()),
             QueueId: queue_id,
