@@ -124,7 +124,7 @@ impl From<&TextureComponentMapping> for diligent_sys::TextureComponentMapping {
 }
 
 #[repr(transparent)]
-pub struct TextureViewDesc(diligent_sys::TextureViewDesc);
+pub struct TextureViewDesc(pub(crate) diligent_sys::TextureViewDesc);
 
 #[bon::bon]
 impl TextureViewDesc {
@@ -167,7 +167,7 @@ impl TextureViewDesc {
 }
 
 #[repr(transparent)]
-pub struct TextureView(diligent_sys::ITextureView);
+pub struct TextureView(pub(crate) diligent_sys::ITextureView);
 
 impl Deref for TextureView {
     type Target = DeviceObject;

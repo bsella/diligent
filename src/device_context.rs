@@ -729,17 +729,13 @@ impl<'a> BuildBLASAttribs<'a> {
                 pBLAS: blas.sys_ptr(),
                 BLASTransitionMode: blas_transition_mode.into(),
                 GeometryTransitionMode: geometry_transition_mode.into(),
-                pTriangleData: if triangle_data.is_empty() {
-                    std::ptr::null()
-                } else {
-                    triangle_data.as_ptr() as _
-                },
+                pTriangleData: triangle_data
+                    .first()
+                    .map_or(std::ptr::null(), |triangle| std::ptr::from_ref(&triangle.0)),
                 TriangleDataCount: triangle_data.len() as u32,
-                pBoxData: if box_data.is_empty() {
-                    std::ptr::null()
-                } else {
-                    box_data.as_ptr() as _
-                },
+                pBoxData: box_data
+                    .first()
+                    .map_or(std::ptr::null(), |box_data| std::ptr::from_ref(&box_data.0)),
                 BoxDataCount: box_data.len() as u32,
                 pScratchBuffer: scratch_buffer.sys_ptr(),
                 ScratchBufferOffset: scratch_buffer_offset,
@@ -752,7 +748,10 @@ impl<'a> BuildBLASAttribs<'a> {
 }
 
 #[repr(transparent)]
-pub struct BuildTLASAttribs<'a>(diligent_sys::BuildTLASAttribs, PhantomData<&'a ()>);
+pub struct BuildTLASAttribs<'a>(
+    pub(crate) diligent_sys::BuildTLASAttribs,
+    PhantomData<&'a ()>,
+);
 #[bon::bon]
 impl<'a> BuildTLASAttribs<'a> {
     #[builder]
@@ -794,11 +793,9 @@ impl<'a> BuildTLASAttribs<'a> {
                 pTLAS: tlas.sys_ptr(),
                 TLASTransitionMode: tlas_transition_mode.into(),
                 BLASTransitionMode: blas_transition_mode.into(),
-                pInstances: if instances.is_empty() {
-                    std::ptr::null()
-                } else {
-                    instances.as_ptr() as _
-                },
+                pInstances: instances
+                    .first()
+                    .map_or(std::ptr::null(), |instance| std::ptr::from_ref(&instance.0)),
                 InstanceCount: instances.len() as u32,
                 pInstanceBuffer: instance_buffer.sys_ptr(),
                 InstanceBufferOffset: instance_buffer_offset,
@@ -1172,7 +1169,7 @@ impl<'a> GraphicsPipelineToken<'a> {
             self.context,
             DeviceContext,
             Draw,
-            std::ptr::from_ref(attribs) as _
+            std::ptr::from_ref(&attribs.0)
         )
     }
 
@@ -1181,7 +1178,7 @@ impl<'a> GraphicsPipelineToken<'a> {
             self.context,
             DeviceContext,
             DrawIndexed,
-            std::ptr::from_ref(attribs) as _
+            std::ptr::from_ref(&attribs.0)
         )
     }
 
@@ -1190,7 +1187,7 @@ impl<'a> GraphicsPipelineToken<'a> {
             self.context,
             DeviceContext,
             DrawIndirect,
-            std::ptr::from_ref(attribs) as _
+            std::ptr::from_ref(&attribs.0)
         )
     }
 
@@ -1199,7 +1196,7 @@ impl<'a> GraphicsPipelineToken<'a> {
             self.context,
             DeviceContext,
             DrawIndexedIndirect,
-            std::ptr::from_ref(attribs) as _
+            std::ptr::from_ref(&attribs.0)
         )
     }
 
@@ -1264,7 +1261,7 @@ impl<'a> MeshPipelineToken<'a> {
             self.context,
             DeviceContext,
             DrawMesh,
-            std::ptr::from_ref(attribs) as _
+            std::ptr::from_ref(&attribs.0)
         )
     }
 
@@ -1273,7 +1270,7 @@ impl<'a> MeshPipelineToken<'a> {
             self.context,
             DeviceContext,
             DrawMeshIndirect,
-            std::ptr::from_ref(attribs) as _
+            std::ptr::from_ref(&attribs.0)
         )
     }
 }
@@ -1288,7 +1285,7 @@ impl<'a> ComputePipelineToken<'a> {
             self.context,
             DeviceContext,
             DispatchCompute,
-            std::ptr::from_ref(attribs) as _
+            std::ptr::from_ref(&attribs.0)
         )
     }
 
@@ -1297,7 +1294,7 @@ impl<'a> ComputePipelineToken<'a> {
             self.context,
             DeviceContext,
             DispatchComputeIndirect,
-            std::ptr::from_ref(attribs) as _
+            std::ptr::from_ref(&attribs.0)
         )
     }
 }
@@ -1312,7 +1309,7 @@ impl<'a> TilePipelineToken<'a> {
             self.context,
             DeviceContext,
             DispatchTile,
-            std::ptr::from_ref(attribs) as _
+            std::ptr::from_ref(&attribs.0)
         )
     }
 }
@@ -1327,7 +1324,7 @@ impl<'a> RayTracingPipelineToken<'a> {
             self.context,
             DeviceContext,
             TraceRays,
-            std::ptr::from_ref(attribs) as _
+            std::ptr::from_ref(&attribs.0)
         )
     }
 
@@ -1336,7 +1333,7 @@ impl<'a> RayTracingPipelineToken<'a> {
             self.context,
             DeviceContext,
             TraceRaysIndirect,
-            std::ptr::from_ref(attribs) as _
+            std::ptr::from_ref(&attribs.0)
         )
     }
 }
@@ -1486,7 +1483,7 @@ impl DeviceContext {
             SetVertexBuffers,
             0,
             num_buffers as u32,
-            buffer_pointers.as_ptr() as _,
+            buffer_pointers.as_ptr(),
             offsets.as_ptr(),
             state_transition_mode.into(),
             flags.bits()
@@ -1862,7 +1859,9 @@ impl DeviceContext {
             DeviceContext,
             TransitionResourceStates,
             barriers.len() as u32,
-            barriers.as_ptr() as _
+            barriers.first().map_or(std::ptr::null(), |barrier| {
+                std::ptr::from_ref(&barrier.0)
+            })
         )
     }
 
@@ -1887,7 +1886,7 @@ impl DeviceContext {
             self,
             DeviceContext,
             BuildBLAS,
-            std::ptr::from_ref(attribs) as _
+            std::ptr::from_ref(&attribs.0)
         )
     }
 
@@ -1896,7 +1895,7 @@ impl DeviceContext {
             self,
             DeviceContext,
             BuildTLAS,
-            std::ptr::from_ref(attribs) as _
+            std::ptr::from_ref(&attribs.0)
         )
     }
 
@@ -2007,7 +2006,11 @@ impl ImmediateDeviceContext {
             DeviceContext,
             ExecuteCommandLists,
             command_lists.len() as u32,
-            command_lists.as_ptr() as _
+            command_lists
+                .first()
+                .map_or(std::ptr::null(), |command_list| {
+                    std::ptr::from_ref(&command_list.0) as *mut _
+                })
         )
     }
 

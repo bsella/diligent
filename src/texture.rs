@@ -288,7 +288,7 @@ impl Texture {
             self,
             Texture,
             CreateView,
-            std::ptr::from_ref(&texture_view_desc) as _,
+            std::ptr::from_ref(&texture_view_desc.0),
             std::ptr::addr_of_mut!(texture_view_ptr)
         );
 

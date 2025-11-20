@@ -96,7 +96,10 @@ impl TLASBuildInfo {
 }
 
 #[repr(transparent)]
-pub struct TLASBuildInstanceData<'a>(diligent_sys::TLASBuildInstanceData, PhantomData<&'a ()>);
+pub struct TLASBuildInstanceData<'a>(
+    pub(crate) diligent_sys::TLASBuildInstanceData,
+    PhantomData<&'a ()>,
+);
 #[bon::bon]
 impl<'a> TLASBuildInstanceData<'a> {
     #[builder]
