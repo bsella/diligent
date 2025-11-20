@@ -3053,3 +3053,47 @@ bitflags! {
         const CheckShaderBufferSize = diligent_sys::VALIDATION_FLAG_CHECK_SHADER_BUFFER_SIZE as diligent_sys::VALIDATION_FLAGS;
     }
 }
+
+#[derive(Clone, Copy)]
+#[repr(transparent)]
+pub struct Box(pub(crate) diligent_sys::Box);
+
+#[bon::bon]
+impl Box {
+    #[builder]
+    pub fn new(
+        #[builder(default = 0)] min_x: u32,
+        #[builder(default = 0)] max_x: u32,
+        #[builder(default = 0)] min_y: u32,
+        #[builder(default = 0)] max_y: u32,
+        #[builder(default = 0)] min_z: u32,
+        #[builder(default = 1)] max_z: u32,
+    ) -> Self {
+        Self(diligent_sys::Box {
+            MinX: min_x,
+            MaxX: max_x,
+            MinY: min_y,
+            MaxY: max_y,
+            MinZ: min_z,
+            MaxZ: max_z,
+        })
+    }
+}
+
+impl Box {
+    pub fn width(&self) -> u32 {
+        self.0.MaxX - self.0.MinX
+    }
+
+    pub fn height(&self) -> u32 {
+        self.0.MaxY - self.0.MinY
+    }
+
+    pub fn depth(&self) -> u32 {
+        self.0.MaxZ - self.0.MinZ
+    }
+
+    pub fn is_valid(&self) -> bool {
+        self.0.MaxX > self.0.MinX && self.0.MaxY > self.0.MinY && self.0.MaxZ > self.0.MinZ
+    }
+}

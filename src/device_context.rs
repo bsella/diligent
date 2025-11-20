@@ -1720,7 +1720,7 @@ impl DeviceContext {
         texture: &mut Texture,
         mip_level: u32,
         slice: u32,
-        dst_box: &diligent_sys::Box,
+        dst_box: &crate::Box,
         subres_data: &TextureSubResource,
         src_buffer_transition_mode: ResourceStateTransitionMode,
         texture_transition_mode: ResourceStateTransitionMode,
@@ -1734,7 +1734,7 @@ impl DeviceContext {
             texture.sys_ptr(),
             mip_level,
             slice,
-            std::ptr::from_ref(dst_box),
+            std::ptr::from_ref(&dst_box.0),
             std::ptr::addr_of!(subres_data),
             src_buffer_transition_mode.into(),
             texture_transition_mode.into()
@@ -1756,7 +1756,7 @@ impl DeviceContext {
         mip_level: u32,
         array_slice: u32,
         map_flags: MapFlags,
-        map_region: Option<diligent_sys::Box>,
+        map_region: Option<crate::Box>,
     ) -> TextureSubresourceReadMapToken<'a, T> {
         TextureSubresourceReadMapToken::new(
             self,
@@ -1774,7 +1774,7 @@ impl DeviceContext {
         mip_level: u32,
         array_slice: u32,
         map_flags: MapFlags,
-        map_region: Option<diligent_sys::Box>,
+        map_region: Option<crate::Box>,
     ) -> TextureSubresourceWriteMapToken<'a, T> {
         TextureSubresourceWriteMapToken::new(
             self,
@@ -1792,7 +1792,7 @@ impl DeviceContext {
         mip_level: u32,
         array_slice: u32,
         map_flags: MapFlags,
-        map_region: Option<diligent_sys::Box>,
+        map_region: Option<crate::Box>,
     ) -> TextureSubresourceReadWriteMapToken<'a, T> {
         TextureSubresourceReadWriteMapToken::new(
             self,

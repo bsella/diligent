@@ -343,7 +343,7 @@ impl<'a, T> TextureSubresourceReadMapToken<'a, T> {
         mip_level: u32,
         array_slice: u32,
         map_flags: MapFlags,
-        map_region: Option<diligent_sys::Box>,
+        map_region: Option<crate::Box>,
     ) -> TextureSubresourceReadMapToken<'a, T> {
         let ptr = std::ptr::null_mut();
         unsafe_member_call!(
@@ -355,9 +355,7 @@ impl<'a, T> TextureSubresourceReadMapToken<'a, T> {
             array_slice,
             diligent_sys::MAP_READ as diligent_sys::MAP_TYPE,
             map_flags.bits(),
-            map_region
-                .as_ref()
-                .map_or(std::ptr::null(), std::ptr::from_ref),
+            map_region.map_or(std::ptr::null(), |bx| { std::ptr::from_ref(&bx.0) }),
             ptr
         );
 
@@ -407,7 +405,7 @@ impl<'a, T> TextureSubresourceWriteMapToken<'a, T> {
         mip_level: u32,
         array_slice: u32,
         map_flags: MapFlags,
-        map_region: Option<diligent_sys::Box>,
+        map_region: Option<crate::Box>,
     ) -> TextureSubresourceWriteMapToken<'a, T> {
         let ptr = std::ptr::null_mut();
         unsafe_member_call!(
@@ -419,9 +417,7 @@ impl<'a, T> TextureSubresourceWriteMapToken<'a, T> {
             array_slice,
             diligent_sys::MAP_WRITE as diligent_sys::MAP_TYPE,
             map_flags.bits(),
-            map_region
-                .as_ref()
-                .map_or(std::ptr::null(), std::ptr::from_ref),
+            map_region.map_or(std::ptr::null(), |bx| { std::ptr::from_ref(&bx.0) }),
             ptr
         );
 
@@ -471,7 +467,7 @@ impl<'a, T> TextureSubresourceReadWriteMapToken<'a, T> {
         mip_level: u32,
         array_slice: u32,
         map_flags: MapFlags,
-        map_region: Option<diligent_sys::Box>,
+        map_region: Option<crate::Box>,
     ) -> TextureSubresourceReadWriteMapToken<'a, T> {
         let ptr = std::ptr::null_mut();
         unsafe_member_call!(
@@ -483,9 +479,7 @@ impl<'a, T> TextureSubresourceReadWriteMapToken<'a, T> {
             array_slice,
             diligent_sys::MAP_READ_WRITE as diligent_sys::MAP_TYPE,
             map_flags.bits(),
-            map_region
-                .as_ref()
-                .map_or(std::ptr::null(), std::ptr::from_ref),
+            map_region.map_or(std::ptr::null(), |bx| { std::ptr::from_ref(&bx.0) }),
             ptr
         );
 
