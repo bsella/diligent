@@ -880,6 +880,46 @@ impl<'a> TraceRaysIndirectAttribs<'a> {
     }
 }
 
+#[repr(transparent)]
+pub struct CopyTextureAttribs<'a>(diligent_sys::CopyTextureAttribs, PhantomData<&'a ()>);
+
+#[bon::bon]
+impl<'a> CopyTextureAttribs<'a> {
+    #[builder]
+    pub fn new(
+        src_texture: &'a Texture,
+        src_mip_level: u32,
+        src_slice: u32,
+        src_box: &'a crate::Box,
+        src_texture_transition_mode: ResourceStateTransitionMode,
+        dst_texture: &'a Texture,
+        dst_mip_level: u32,
+        dst_slice: u32,
+        dst_x: u32,
+        dst_y: u32,
+        dst_z: u32,
+        dst_texture_transition_mode: ResourceStateTransitionMode,
+    ) -> Self {
+        CopyTextureAttribs(
+            diligent_sys::CopyTextureAttribs {
+                pSrcTexture: src_texture.sys_ptr(),
+                SrcMipLevel: src_mip_level,
+                SrcSlice: src_slice,
+                pSrcBox: std::ptr::from_ref(&src_box.0),
+                SrcTextureTransitionMode: src_texture_transition_mode.into(),
+                pDstTexture: dst_texture.sys_ptr(),
+                DstMipLevel: dst_mip_level,
+                DstSlice: dst_slice,
+                DstX: dst_x,
+                DstY: dst_y,
+                DstZ: dst_z,
+                DstTextureTransitionMode: dst_texture_transition_mode.into(),
+            },
+            PhantomData,
+        )
+    }
+}
+
 #[derive(Clone, Copy)]
 pub enum ResourceStateTransitionMode {
     None,
@@ -1741,12 +1781,12 @@ impl DeviceContext {
         )
     }
 
-    pub fn copy_texture(&self, copy_attribs: &diligent_sys::CopyTextureAttribs) {
+    pub fn copy_texture(&self, copy_attribs: &CopyTextureAttribs) {
         unsafe_member_call!(
             self,
             DeviceContext,
             CopyTexture,
-            std::ptr::from_ref(copy_attribs)
+            std::ptr::from_ref(&copy_attribs.0)
         )
     }
 
