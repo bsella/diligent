@@ -1,4 +1,4 @@
-use std::{ffi::CString, ops::Deref};
+use std::{ffi::CStr, ops::Deref};
 
 use bitflags::bitflags;
 use bon::Builder;
@@ -130,8 +130,7 @@ pub struct TextureViewDesc(pub(crate) diligent_sys::TextureViewDesc);
 impl TextureViewDesc {
     #[builder]
     pub fn new(
-        #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
-        name: Option<CString>,
+        name: Option<&CStr>,
         view_type: TextureViewType,
         dimension: Option<TextureDimension>,
         num_array_or_depth_slices: usize,

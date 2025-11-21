@@ -186,7 +186,7 @@ impl BottomLevelAS {
         unsafe_member_call!(self, BottomLevelAS, GetNativeHandle)
     }
 
-    pub fn set_state(&self, state: ResourceState) {
+    pub fn set_state(&mut self, state: ResourceState) {
         unsafe_member_call!(self, BottomLevelAS, SetState, state.bits())
     }
 
