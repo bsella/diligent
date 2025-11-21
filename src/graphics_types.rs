@@ -1,7 +1,4 @@
-use std::{
-    ffi::{CStr, CString},
-    fmt::Display,
-};
+use std::{ffi::CStr, fmt::Display};
 
 use bitflags::bitflags;
 use bon::Builder;
@@ -1709,7 +1706,6 @@ const_assert_eq!(diligent_sys::QUEUE_PRIORITY_LAST, 4);
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum ComponentType {
-    Undefined,
     Float,
     Snorm,
     Unorm,
@@ -1720,6 +1716,50 @@ pub enum ComponentType {
     DepthStencil,
     Compound,
     Compressed,
+}
+
+impl ComponentType {
+    pub const fn to_value_type(&self, size: u32) -> Option<ValueType> {
+        match self {
+            ComponentType::Float => match size {
+                2 => Some(ValueType::Float16),
+                4 => Some(ValueType::Float32),
+                8 => Some(ValueType::Float64),
+                _ => None,
+            },
+            ComponentType::Snorm => match size {
+                1 => Some(ValueType::Int8),
+                2 => Some(ValueType::Int16),
+                _ => None,
+            },
+            ComponentType::Unorm => match size {
+                1 => Some(ValueType::Uint8),
+                2 => Some(ValueType::Uint16),
+                _ => None,
+            },
+            ComponentType::UnormSRGB => match size {
+                1 => Some(ValueType::Uint8),
+                _ => None,
+            },
+            ComponentType::Sint => match size {
+                1 => Some(ValueType::Int8),
+                2 => Some(ValueType::Int16),
+                4 => Some(ValueType::Int32),
+                _ => None,
+            },
+            ComponentType::Uint => match size {
+                1 => Some(ValueType::Uint8),
+                2 => Some(ValueType::Uint16),
+                4 => Some(ValueType::Uint32),
+                _ => None,
+            },
+            ComponentType::Depth => match size {
+                4 => Some(ValueType::Float32),
+                _ => None,
+            },
+            _ => None,
+        }
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -2302,7 +2342,7 @@ impl TextureFormat {
         }
     }
 
-    pub const fn component_type(self) -> ComponentType {
+    pub const fn component_type(self) -> Option<ComponentType> {
         match self {
             TextureFormat::RGBA32_TYPELESS
             | TextureFormat::RGB32_TYPELESS
@@ -2315,7 +2355,7 @@ impl TextureFormat {
             | TextureFormat::R16_TYPELESS
             | TextureFormat::R8_TYPELESS
             | TextureFormat::BGRA8_TYPELESS
-            | TextureFormat::BGRX8_TYPELESS => ComponentType::Undefined,
+            | TextureFormat::BGRX8_TYPELESS => None,
 
             TextureFormat::RGBA32_FLOAT
             | TextureFormat::RGB32_FLOAT
@@ -2323,7 +2363,7 @@ impl TextureFormat {
             | TextureFormat::RG32_FLOAT
             | TextureFormat::RG16_FLOAT
             | TextureFormat::R32_FLOAT
-            | TextureFormat::R16_FLOAT => ComponentType::Float,
+            | TextureFormat::R16_FLOAT => Some(ComponentType::Float),
 
             TextureFormat::RGBA32_UINT
             | TextureFormat::RGB32_UINT
@@ -2334,7 +2374,7 @@ impl TextureFormat {
             | TextureFormat::R32_UINT
             | TextureFormat::RG8_UINT
             | TextureFormat::R16_UINT
-            | TextureFormat::R8_UINT => ComponentType::Uint,
+            | TextureFormat::R8_UINT => Some(ComponentType::Uint),
 
             TextureFormat::RGBA32_SINT
             | TextureFormat::RGB32_SINT
@@ -2345,7 +2385,7 @@ impl TextureFormat {
             | TextureFormat::R32_SINT
             | TextureFormat::RG8_SINT
             | TextureFormat::R16_SINT
-            | TextureFormat::R8_SINT => ComponentType::Sint,
+            | TextureFormat::R8_SINT => Some(ComponentType::Sint),
 
             TextureFormat::RGBA16_UNORM
             | TextureFormat::RGBA8_UNORM
@@ -2361,14 +2401,14 @@ impl TextureFormat {
             | TextureFormat::BGRA8_UNORM
             | TextureFormat::BGRX8_UNORM
             | TextureFormat::BGRA8_UNORM_SRGB
-            | TextureFormat::BGRX8_UNORM_SRGB => ComponentType::UnormSRGB,
+            | TextureFormat::BGRX8_UNORM_SRGB => Some(ComponentType::UnormSRGB),
 
             TextureFormat::RGBA16_SNORM
             | TextureFormat::RGBA8_SNORM
             | TextureFormat::RG16_SNORM
             | TextureFormat::RG8_SNORM
             | TextureFormat::R16_SNORM
-            | TextureFormat::R8_SNORM => ComponentType::Snorm,
+            | TextureFormat::R8_SNORM => Some(ComponentType::Snorm),
 
             TextureFormat::R32G8X24_TYPELESS
             | TextureFormat::D32_FLOAT_S8X24_UINT
@@ -2377,7 +2417,7 @@ impl TextureFormat {
             | TextureFormat::R24G8_TYPELESS
             | TextureFormat::D24_UNORM_S8_UINT
             | TextureFormat::R24_UNORM_X8_TYPELESS
-            | TextureFormat::X24_TYPELESS_G8_UINT => ComponentType::DepthStencil,
+            | TextureFormat::X24_TYPELESS_G8_UINT => Some(ComponentType::DepthStencil),
 
             TextureFormat::RGB10A2_TYPELESS
             | TextureFormat::RGB10A2_UNORM
@@ -2386,9 +2426,9 @@ impl TextureFormat {
             | TextureFormat::RGB9E5_SHAREDEXP
             | TextureFormat::B5G6R5_UNORM
             | TextureFormat::B5G5R5A1_UNORM
-            | TextureFormat::R10G10B10_XR_BIAS_A2_UNORM => ComponentType::Compound,
+            | TextureFormat::R10G10B10_XR_BIAS_A2_UNORM => Some(ComponentType::Compound),
 
-            TextureFormat::D32_FLOAT | TextureFormat::D16_UNORM => ComponentType::Depth,
+            TextureFormat::D32_FLOAT | TextureFormat::D16_UNORM => Some(ComponentType::Depth),
 
             TextureFormat::BC1_TYPELESS
             | TextureFormat::BC1_UNORM
@@ -2416,7 +2456,7 @@ impl TextureFormat {
             | TextureFormat::ETC2_RGB8A1_UNORM
             | TextureFormat::ETC2_RGB8A1_UNORM_SRGB
             | TextureFormat::ETC2_RGBA8_UNORM
-            | TextureFormat::ETC2_RGBA8_UNORM_SRGB => ComponentType::Compressed,
+            | TextureFormat::ETC2_RGBA8_UNORM_SRGB => Some(ComponentType::Compressed),
         }
     }
 
@@ -2751,6 +2791,22 @@ impl TextureFormat {
             | TextureFormat::ETC2_RGBA8_UNORM
             | TextureFormat::ETC2_RGBA8_UNORM_SRGB => 4,
         }
+    }
+
+    pub const fn is_rgb_format(self) -> bool {
+        matches!(
+            self,
+            TextureFormat::RGBA8_UNORM_SRGB
+                | TextureFormat::BC1_UNORM_SRGB
+                | TextureFormat::BC2_UNORM_SRGB
+                | TextureFormat::BC3_UNORM_SRGB
+                | TextureFormat::BGRA8_UNORM_SRGB
+                | TextureFormat::BGRX8_UNORM_SRGB
+                | TextureFormat::BC7_UNORM_SRGB
+                | TextureFormat::ETC2_RGB8_UNORM_SRGB
+                | TextureFormat::ETC2_RGB8A1_UNORM_SRGB
+                | TextureFormat::ETC2_RGBA8_UNORM_SRGB
+        )
     }
 }
 

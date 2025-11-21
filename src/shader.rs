@@ -13,6 +13,7 @@ use bon::Builder;
 use static_assertions::const_assert_eq;
 
 use crate::{
+    PipelineResourceFlags,
     device_object::DeviceObject,
     graphics_types::{ShaderType, Version},
 };
@@ -105,6 +106,34 @@ impl From<ShaderResourceType> for diligent_sys::SHADER_RESOURCE_TYPE {
             ShaderResourceType::TextureSRV => diligent_sys::SHADER_RESOURCE_TYPE_TEXTURE_SRV,
             ShaderResourceType::TextureUAV => diligent_sys::SHADER_RESOURCE_TYPE_TEXTURE_UAV,
         }) as _
+    }
+}
+
+impl ShaderResourceType {
+    pub fn get_valid_pipeline_resource_flags(&self) -> PipelineResourceFlags {
+        const_assert_eq!(diligent_sys::SHADER_RESOURCE_TYPE_LAST, 8);
+        match self {
+            ShaderResourceType::ConstantBuffer => {
+                PipelineResourceFlags::NoDynamicBuffers | PipelineResourceFlags::RuntimeArray
+            }
+            ShaderResourceType::TextureSRV => {
+                PipelineResourceFlags::CombinedSampler | PipelineResourceFlags::RuntimeArray
+            }
+            ShaderResourceType::BufferSRV => {
+                PipelineResourceFlags::NoDynamicBuffers
+                    | PipelineResourceFlags::FormattedBuffer
+                    | PipelineResourceFlags::RuntimeArray
+            }
+            ShaderResourceType::TextureUAV => PipelineResourceFlags::RuntimeArray,
+            ShaderResourceType::BufferUAV => {
+                PipelineResourceFlags::NoDynamicBuffers
+                    | PipelineResourceFlags::FormattedBuffer
+                    | PipelineResourceFlags::RuntimeArray
+            }
+            ShaderResourceType::Sampler => PipelineResourceFlags::RuntimeArray,
+            ShaderResourceType::InputAttachment => PipelineResourceFlags::GeneralInputAttachment,
+            ShaderResourceType::AccelStruct => PipelineResourceFlags::RuntimeArray,
+        }
     }
 }
 

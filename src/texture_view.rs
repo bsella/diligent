@@ -1,7 +1,6 @@
 use std::{ffi::CStr, ops::Deref};
 
 use bitflags::bitflags;
-use bon::Builder;
 use static_assertions::const_assert_eq;
 
 use crate::{
@@ -89,40 +88,42 @@ impl From<TextureComponentSwizzle> for diligent_sys::TEXTURE_COMPONENT_SWIZZLE {
     }
 }
 
-#[derive(Builder)]
-pub struct TextureComponentMapping {
-    #[builder(default = TextureComponentSwizzle::Identity)]
-    r: TextureComponentSwizzle,
-    #[builder(default = TextureComponentSwizzle::Identity)]
-    g: TextureComponentSwizzle,
-    #[builder(default = TextureComponentSwizzle::Identity)]
-    b: TextureComponentSwizzle,
-    #[builder(default = TextureComponentSwizzle::Identity)]
-    a: TextureComponentSwizzle,
-}
+#[repr(transparent)]
+pub struct TextureComponentMapping(diligent_sys::TextureComponentMapping);
 
-impl Default for TextureComponentMapping {
-    fn default() -> Self {
-        Self {
-            r: TextureComponentSwizzle::Identity,
-            g: TextureComponentSwizzle::Identity,
-            b: TextureComponentSwizzle::Identity,
-            a: TextureComponentSwizzle::Identity,
-        }
+#[bon::bon]
+impl TextureComponentMapping {
+    #[builder]
+    pub fn new(
+        #[builder(default = TextureComponentSwizzle::Identity)] r: TextureComponentSwizzle,
+        #[builder(default = TextureComponentSwizzle::Identity)] g: TextureComponentSwizzle,
+        #[builder(default = TextureComponentSwizzle::Identity)] b: TextureComponentSwizzle,
+        #[builder(default = TextureComponentSwizzle::Identity)] a: TextureComponentSwizzle,
+    ) -> Self {
+        Self(diligent_sys::TextureComponentMapping {
+            R: r as diligent_sys::TEXTURE_COMPONENT_SWIZZLE,
+            G: g as diligent_sys::TEXTURE_COMPONENT_SWIZZLE,
+            B: b as diligent_sys::TEXTURE_COMPONENT_SWIZZLE,
+            A: a as diligent_sys::TEXTURE_COMPONENT_SWIZZLE,
+        })
     }
 }
 
-impl From<&TextureComponentMapping> for diligent_sys::TextureComponentMapping {
-    fn from(value: &TextureComponentMapping) -> Self {
-        Self {
-            R: value.r.into(),
-            G: value.g.into(),
-            B: value.b.into(),
-            A: value.a.into(),
-        }
+impl TextureComponentMapping {
+    #[rustfmt::skip]
+    pub fn is_identity(&self) -> bool {
+            ( self.0.R == diligent_sys::TEXTURE_COMPONENT_SWIZZLE_IDENTITY as diligent_sys::TEXTURE_COMPONENT_SWIZZLE
+        ||    self.0.R == diligent_sys::TEXTURE_COMPONENT_SWIZZLE_R        as diligent_sys::TEXTURE_COMPONENT_SWIZZLE)
+        &&  ( self.0.G == diligent_sys::TEXTURE_COMPONENT_SWIZZLE_IDENTITY as diligent_sys::TEXTURE_COMPONENT_SWIZZLE
+        ||    self.0.G == diligent_sys::TEXTURE_COMPONENT_SWIZZLE_G        as diligent_sys::TEXTURE_COMPONENT_SWIZZLE)
+        &&  ( self.0.B == diligent_sys::TEXTURE_COMPONENT_SWIZZLE_IDENTITY as diligent_sys::TEXTURE_COMPONENT_SWIZZLE
+        ||    self.0.B == diligent_sys::TEXTURE_COMPONENT_SWIZZLE_B        as diligent_sys::TEXTURE_COMPONENT_SWIZZLE)
+        &&  ( self.0.A == diligent_sys::TEXTURE_COMPONENT_SWIZZLE_IDENTITY as diligent_sys::TEXTURE_COMPONENT_SWIZZLE
+        ||    self.0.A == diligent_sys::TEXTURE_COMPONENT_SWIZZLE_A        as diligent_sys::TEXTURE_COMPONENT_SWIZZLE)
     }
 }
 
+#[derive(Clone, Copy)]
 #[repr(transparent)]
 pub struct TextureViewDesc(pub(crate) diligent_sys::TextureViewDesc);
 
@@ -140,7 +141,8 @@ impl TextureViewDesc {
         #[builder(default = 0)] num_mip_levels: usize,
         #[builder(default = UavAccessFlags::Unspecified)] access_flags: UavAccessFlags,
         #[builder(default = TextureViewFlags::None)] flags: TextureViewFlags,
-        #[builder(default)] swizzle: TextureComponentMapping,
+        #[builder(default = TextureComponentMapping::builder().build())]
+        swizzle: TextureComponentMapping,
     ) -> Self {
         Self(diligent_sys::TextureViewDesc {
             _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
@@ -160,7 +162,7 @@ impl TextureViewDesc {
             },
             AccessFlags: access_flags.bits(),
             Flags: flags.bits(),
-            Swizzle: (&swizzle).into(),
+            Swizzle: swizzle.0,
         })
     }
 }

@@ -144,7 +144,6 @@ pub struct TextureDesc(pub(crate) diligent_sys::TextureDesc);
 #[bon::bon]
 impl TextureDesc {
     #[builder]
-
     pub fn new(
         name: Option<&CStr>,
 
@@ -213,6 +212,12 @@ impl TextureDesc {
                 _ => diligent_sys::TextureDesc__bindgen_ty_1 { ArraySize: 1 },
             },
         })
+    }
+}
+
+impl TextureDesc {
+    pub fn get_standard_sparse_texture_properties(&self) -> SparseTextureProperties {
+        todo!()
     }
 }
 

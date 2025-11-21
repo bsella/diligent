@@ -415,8 +415,10 @@ impl ImguiRenderer {
     pub fn new(create_info: &ImguiRendererCreateInfo) -> Self {
         let mut imgui_context = imgui::Context::create();
 
-        let srgb_framebuffer =
-            create_info.back_buffer_format.component_type() == ComponentType::UnormSRGB;
+        let srgb_framebuffer = create_info
+            .back_buffer_format
+            .component_type()
+            .is_some_and(|comp_type| comp_type == ComponentType::UnormSRGB);
 
         let manual_srgb = (create_info.color_conversion == ColorConversionMode::Auto
             && srgb_framebuffer)

@@ -7,9 +7,9 @@ use bitflags::bitflags;
 use bon::Builder;
 use static_assertions::const_assert_eq;
 
-use crate::Boxed;
 use crate::device_object::DeviceObject;
 use crate::pipeline_state_cache::PipelineStateCache;
+use crate::{Boxed, PipelineResourceFlags};
 use crate::{
     graphics_types::{PrimitiveTopology, ShaderType, ShaderTypes, TextureFormat},
     input_layout::LayoutElement,
@@ -255,6 +255,24 @@ const_assert_eq!(diligent_sys::SHADER_VARIABLE_FLAG_LAST, 8);
 impl Default for ShaderVariableFlags {
     fn default() -> Self {
         ShaderVariableFlags::None
+    }
+}
+
+impl ShaderVariableFlags {
+    pub fn to_pipeline_resource_flags(&self) -> PipelineResourceFlags {
+        const_assert_eq!(diligent_sys::SHADER_VARIABLE_FLAG_LAST, 1 << 3);
+
+        let mut result = PipelineResourceFlags::None;
+
+        if self.contains(ShaderVariableFlags::NoDynamicBuffers) {
+            result |= PipelineResourceFlags::NoDynamicBuffers;
+        }
+
+        if self.contains(ShaderVariableFlags::GeneralInputAttachmentVk) {
+            result |= PipelineResourceFlags::GeneralInputAttachment;
+        }
+
+        result
     }
 }
 

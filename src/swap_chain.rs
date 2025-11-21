@@ -5,6 +5,7 @@ use bon::Builder;
 use static_assertions::const_assert_eq;
 
 use crate::{
+    BindFlags,
     graphics_types::{DisplayModeAttribs, SurfaceTransform, TextureFormat},
     object::Object,
     texture_view::TextureView,
@@ -25,6 +26,26 @@ const_assert_eq!(diligent_sys::SWAP_CHAIN_USAGE_LAST, 8);
 impl Default for SwapChainUsageFlags {
     fn default() -> Self {
         SwapChainUsageFlags::None
+    }
+}
+
+impl SwapChainUsageFlags {
+    pub fn to_bind_flags(&self) -> BindFlags {
+        let mut result = BindFlags::None;
+
+        if self.contains(SwapChainUsageFlags::RenderTarget) {
+            result |= BindFlags::RenderTarget
+        }
+
+        if self.contains(SwapChainUsageFlags::ShaderResource) {
+            result |= BindFlags::ShaderResource
+        }
+
+        if self.contains(SwapChainUsageFlags::InputAttachment) {
+            result |= BindFlags::InputAttachement
+        }
+
+        result
     }
 }
 
