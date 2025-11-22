@@ -138,7 +138,7 @@ impl ShaderResourceType {
 }
 
 #[repr(transparent)]
-pub struct ShaderResourceDesc(diligent_sys::ShaderResourceDesc);
+pub struct ShaderResourceDesc(pub(crate) diligent_sys::ShaderResourceDesc);
 impl ShaderResourceDesc {
     pub fn name(&self) -> &CStr {
         unsafe { CStr::from_ptr(self.0.Name) }

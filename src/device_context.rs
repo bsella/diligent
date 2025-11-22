@@ -813,15 +813,32 @@ impl<'a> BuildTLASAttribs<'a> {
     }
 }
 
-#[derive(Builder)]
-pub struct UpdateIndirectRTBufferAttribs<'a> {
-    attribs_buffer: &'a Buffer,
+#[repr(transparent)]
+pub struct UpdateIndirectRTBufferAttribs<'buffer>(
+    diligent_sys::UpdateIndirectRTBufferAttribs,
+    PhantomData<&'buffer ()>,
+);
 
-    #[builder(default = 0)]
-    attribs_buffer_offset: u64,
+#[bon::bon]
+impl<'buffer> UpdateIndirectRTBufferAttribs<'buffer> {
+    #[builder]
+    pub fn new(
+        attribs_buffer: &'buffer Buffer,
 
-    #[builder(default = ResourceStateTransitionMode::None)]
-    transition_mode: ResourceStateTransitionMode,
+        #[builder(default = 0)] attribs_buffer_offset: u64,
+
+        #[builder(default = ResourceStateTransitionMode::None)]
+        transition_mode: ResourceStateTransitionMode,
+    ) -> Self {
+        Self(
+            diligent_sys::UpdateIndirectRTBufferAttribs {
+                pAttribsBuffer: attribs_buffer.sys_ptr(),
+                AttribsBufferOffset: attribs_buffer_offset,
+                TransitionMode: transition_mode.into(),
+            },
+            PhantomData,
+        )
+    }
 }
 
 #[repr(transparent)]
@@ -914,6 +931,160 @@ impl<'a> CopyTextureAttribs<'a> {
             },
             PhantomData,
         )
+    }
+}
+
+#[repr(transparent)]
+pub struct ResolveTextureSubresourceAttribs(diligent_sys::ResolveTextureSubresourceAttribs);
+
+#[bon::bon]
+impl ResolveTextureSubresourceAttribs {
+    #[builder]
+    pub fn new(
+        src_mip_level: u32,
+        src_slice: u32,
+        src_texture_transition_mode: ResourceStateTransitionMode,
+        dst_mip_level: u32,
+        dst_slice: u32,
+        dst_texture_transition_mode: ResourceStateTransitionMode,
+        format: TextureFormat,
+    ) -> Self {
+        Self(diligent_sys::ResolveTextureSubresourceAttribs {
+            SrcMipLevel: src_mip_level,
+            SrcSlice: src_slice,
+            SrcTextureTransitionMode: src_texture_transition_mode.into(),
+            DstMipLevel: dst_mip_level,
+            DstSlice: dst_slice,
+            DstTextureTransitionMode: dst_texture_transition_mode.into(),
+            Format: format.into(),
+        })
+    }
+}
+
+#[repr(transparent)]
+pub struct WriteBLASCompactedSizeAttribs<'a>(
+    diligent_sys::WriteBLASCompactedSizeAttribs,
+    PhantomData<&'a ()>,
+);
+
+#[bon::bon]
+impl<'a> WriteBLASCompactedSizeAttribs<'a> {
+    #[builder]
+    pub fn new(
+        blas: &'a BottomLevelAS,
+        dest_buffer: &'a Buffer,
+        dest_buffer_offset: u64,
+        blas_transition_mode: ResourceStateTransitionMode,
+        buffer_transition_mode: ResourceStateTransitionMode,
+    ) -> Self {
+        Self(
+            diligent_sys::WriteBLASCompactedSizeAttribs {
+                pBLAS: blas.sys_ptr(),
+                pDestBuffer: dest_buffer.sys_ptr(),
+                DestBufferOffset: dest_buffer_offset,
+                BLASTransitionMode: blas_transition_mode.into(),
+                BufferTransitionMode: buffer_transition_mode.into(),
+            },
+            PhantomData,
+        )
+    }
+}
+
+#[repr(transparent)]
+pub struct WriteTLASCompactedSizeAttribs<'a>(
+    diligent_sys::WriteTLASCompactedSizeAttribs,
+    PhantomData<&'a ()>,
+);
+
+#[bon::bon]
+impl<'a> WriteTLASCompactedSizeAttribs<'a> {
+    #[builder]
+    pub fn new(
+        tlas: &'a TopLevelAS,
+        dest_buffer: &'a Buffer,
+        dest_buffer_offset: u64,
+        tlas_transition_mode: ResourceStateTransitionMode,
+        buffer_transition_mode: ResourceStateTransitionMode,
+    ) -> Self {
+        Self(
+            diligent_sys::WriteTLASCompactedSizeAttribs {
+                pTLAS: tlas.sys_ptr(),
+                pDestBuffer: dest_buffer.sys_ptr(),
+                DestBufferOffset: dest_buffer_offset,
+                TLASTransitionMode: tlas_transition_mode.into(),
+                BufferTransitionMode: buffer_transition_mode.into(),
+            },
+            PhantomData,
+        )
+    }
+}
+
+#[repr(transparent)]
+pub struct CopyBLASAttribs<'a>(diligent_sys::CopyBLASAttribs, PhantomData<&'a ()>);
+
+#[bon::bon]
+impl<'a> CopyBLASAttribs<'a> {
+    #[builder]
+    pub fn new(
+        src: &'a BottomLevelAS,
+        dst: &'a BottomLevelAS,
+        mode: CopyAsMode,
+        src_transition_mode: ResourceStateTransitionMode,
+        dst_transition_mode: ResourceStateTransitionMode,
+    ) -> Self {
+        CopyBLASAttribs(
+            diligent_sys::CopyBLASAttribs {
+                pSrc: src.sys_ptr(),
+                pDst: dst.sys_ptr(),
+                Mode: mode.into(),
+                SrcTransitionMode: src_transition_mode.into(),
+                DstTransitionMode: dst_transition_mode.into(),
+            },
+            PhantomData,
+        )
+    }
+}
+
+#[repr(transparent)]
+pub struct CopyTLASAttribs<'a>(diligent_sys::CopyTLASAttribs, PhantomData<&'a ()>);
+
+#[bon::bon]
+impl<'a> CopyTLASAttribs<'a> {
+    #[builder]
+    pub fn new(
+        src: &'a TopLevelAS,
+        dst: &'a TopLevelAS,
+        mode: CopyAsMode,
+        src_transition_mode: ResourceStateTransitionMode,
+        dst_transition_mode: ResourceStateTransitionMode,
+    ) -> Self {
+        CopyTLASAttribs(
+            diligent_sys::CopyTLASAttribs {
+                pSrc: src.sys_ptr(),
+                pDst: dst.sys_ptr(),
+                Mode: mode.into(),
+                SrcTransitionMode: src_transition_mode.into(),
+                DstTransitionMode: dst_transition_mode.into(),
+            },
+            PhantomData,
+        )
+    }
+}
+
+#[derive(Clone, Copy)]
+pub enum CopyAsMode {
+    Clone,
+    Compact,
+}
+
+const_assert_eq!(diligent_sys::COPY_AS_MODE_LAST, 1);
+
+impl From<CopyAsMode> for diligent_sys::COPY_AS_MODE {
+    fn from(value: CopyAsMode) -> Self {
+        (match value {
+            CopyAsMode::Clone => diligent_sys::COPY_AS_MODE_CLONE,
+            CopyAsMode::Compact => diligent_sys::COPY_AS_MODE_COMPACT,
+        }) as _
     }
 }
 
@@ -1869,7 +2040,7 @@ impl DeviceContext {
         &self,
         src_texture: &Texture,
         dst_texture: &mut Texture,
-        resolve_attribs: &diligent_sys::ResolveTextureSubresourceAttribs,
+        resolve_attribs: &ResolveTextureSubresourceAttribs,
     ) {
         unsafe_member_call!(
             self,
@@ -1877,7 +2048,7 @@ impl DeviceContext {
             ResolveTextureSubresource,
             src_texture.sys_ptr(),
             dst_texture.sys_ptr(),
-            std::ptr::from_ref(resolve_attribs)
+            std::ptr::from_ref(&resolve_attribs.0)
         )
     }
 
@@ -1899,29 +2070,39 @@ impl DeviceContext {
         )
     }
 
-    pub fn copy_blas(&self, attribs: &diligent_sys::CopyBLASAttribs) {
-        unsafe_member_call!(self, DeviceContext, CopyBLAS, std::ptr::from_ref(attribs))
+    pub fn copy_blas(&self, attribs: &CopyBLASAttribs) {
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            CopyBLAS,
+            std::ptr::from_ref(&attribs.0)
+        )
     }
 
-    pub fn copy_tlas(&self, attribs: &diligent_sys::CopyTLASAttribs) {
-        unsafe_member_call!(self, DeviceContext, CopyTLAS, std::ptr::from_ref(attribs))
+    pub fn copy_tlas(&self, attribs: &CopyTLASAttribs) {
+        unsafe_member_call!(
+            self,
+            DeviceContext,
+            CopyTLAS,
+            std::ptr::from_ref(&attribs.0)
+        )
     }
 
-    pub fn write_blas_compacted_size(&self, attribs: &diligent_sys::WriteBLASCompactedSizeAttribs) {
+    pub fn write_blas_compacted_size(&self, attribs: &WriteBLASCompactedSizeAttribs) {
         unsafe_member_call!(
             self,
             DeviceContext,
             WriteBLASCompactedSize,
-            std::ptr::from_ref(attribs)
+            std::ptr::from_ref(&attribs.0)
         )
     }
 
-    pub fn write_tlas_compacted_size(&self, attribs: &diligent_sys::WriteTLASCompactedSizeAttribs) {
+    pub fn write_tlas_compacted_size(&self, attribs: &WriteTLASCompactedSizeAttribs) {
         unsafe_member_call!(
             self,
             DeviceContext,
             WriteTLASCompactedSize,
-            std::ptr::from_ref(attribs)
+            std::ptr::from_ref(&attribs.0)
         )
     }
 
@@ -1930,17 +2111,14 @@ impl DeviceContext {
         sbt: &ShaderBindingTable,
         attribs: Option<&UpdateIndirectRTBufferAttribs>,
     ) {
-        let attribs = attribs.map(|attribs| diligent_sys::UpdateIndirectRTBufferAttribs {
-            pAttribsBuffer: attribs.attribs_buffer.sys_ptr(),
-            AttribsBufferOffset: attribs.attribs_buffer_offset,
-            TransitionMode: attribs.transition_mode.into(),
-        });
         unsafe_member_call!(
             self,
             DeviceContext,
             UpdateSBT,
             sbt.sys_ptr(),
-            attribs.map_or(std::ptr::null_mut(), |attribs| std::ptr::from_ref(&attribs))
+            attribs.map_or(std::ptr::null_mut(), |attribs| std::ptr::from_ref(
+                &attribs.0
+            ))
         )
     }
 

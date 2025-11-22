@@ -180,17 +180,17 @@ impl ShaderResourceVariable {
     }
 
     pub fn get_resource_desc(&self) -> ShaderResourceDesc {
-        let mut shader_resource_desc: MaybeUninit<ShaderResourceDesc> =
+        let mut shader_resource_desc: MaybeUninit<diligent_sys::ShaderResourceDesc> =
             std::mem::MaybeUninit::uninit();
 
         unsafe_member_call!(
             self,
             ShaderResourceVariable,
             GetResourceDesc,
-            shader_resource_desc.as_mut_ptr() as *mut diligent_sys::ShaderResourceDesc
+            shader_resource_desc.as_mut_ptr()
         );
 
-        unsafe { shader_resource_desc.assume_init() }
+        ShaderResourceDesc(unsafe { shader_resource_desc.assume_init() })
     }
 
     pub fn get_index(&self) -> u32 {
