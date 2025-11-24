@@ -8,7 +8,7 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct MemoryAllocator(diligent_sys::IMemoryAllocator);
+pub struct MemoryAllocator(pub(crate) diligent_sys::IMemoryAllocator);
 
 pub struct MemoryAllocation<'a> {
     allocator: &'a MemoryAllocator,

@@ -30,7 +30,7 @@ pub struct BufferFormat {
 }
 
 #[repr(transparent)]
-pub struct BufferViewDesc(diligent_sys::BufferViewDesc);
+pub struct BufferViewDesc(pub(crate) diligent_sys::BufferViewDesc);
 
 #[bon::bon]
 impl BufferViewDesc {

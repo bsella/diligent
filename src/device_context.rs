@@ -1264,22 +1264,64 @@ impl<'a> StateTransitionDesc<'a> {
 #[repr(transparent)]
 pub struct CommandList(diligent_sys::ICommandList);
 
-pub struct DepthStencilClearValue {
-    pub depth: f32,
-    pub stencil: u8,
+#[repr(transparent)]
+pub struct DepthStencilClearValue(pub(crate) diligent_sys::DepthStencilClearValue);
+
+#[bon::bon]
+impl DepthStencilClearValue {
+    #[builder]
+    pub fn new(depth: f32, stencil: u8) -> Self {
+        Self(diligent_sys::DepthStencilClearValue {
+            Depth: depth,
+            Stencil: stencil,
+        })
+    }
 }
 
-pub struct OptimizedClearValue {
-    pub format: TextureFormat,
-    pub color: [f32; 4usize],
-    pub depth_stencil: DepthStencilClearValue,
+#[repr(transparent)]
+pub struct OptimizedClearValue(pub(crate) diligent_sys::OptimizedClearValue);
+
+#[bon::bon]
+impl OptimizedClearValue {
+    #[builder]
+    pub fn new(
+        format: TextureFormat,
+        color: [f32; 4usize],
+        depth_stencil: DepthStencilClearValue,
+    ) -> Self {
+        Self(diligent_sys::OptimizedClearValue {
+            Format: format.into(),
+            Color: color,
+            DepthStencil: depth_stencil.0,
+        })
+    }
 }
 
-pub struct BeginRenderPassAttribs<'a> {
-    pub render_pass: &'a RenderPass,
-    pub frame_buffer: &'a Framebuffer,
-    pub clear_values: Vec<OptimizedClearValue>,
-    pub state_transition_mode: ResourceStateTransitionMode,
+#[repr(transparent)]
+pub struct BeginRenderPassAttribs<'a>(diligent_sys::BeginRenderPassAttribs, PhantomData<&'a ()>);
+
+#[bon::bon]
+impl<'a> BeginRenderPassAttribs<'a> {
+    #[builder]
+    pub fn new(
+        render_pass: &'a RenderPass,
+        frame_buffer: &'a Framebuffer,
+        clear_values: &'a [OptimizedClearValue],
+        state_transition_mode: ResourceStateTransitionMode,
+    ) -> Self {
+        Self(
+            diligent_sys::BeginRenderPassAttribs {
+                pRenderPass: render_pass.sys_ptr(),
+                pFramebuffer: frame_buffer.sys_ptr(),
+                ClearValueCount: clear_values.len() as u32,
+                pClearValues: clear_values.first().map_or(std::ptr::null_mut(), |value| {
+                    std::ptr::from_ref(&value.0) as *mut _
+                }),
+                StateTransitionMode: state_transition_mode.into(),
+            },
+            PhantomData,
+        )
+    }
 }
 
 pub struct RenderPassToken<'a> {
@@ -1288,32 +1330,11 @@ pub struct RenderPassToken<'a> {
 
 impl<'a> RenderPassToken<'a> {
     pub fn new(context: &'a DeviceContext, attribs: &BeginRenderPassAttribs) -> Self {
-        let clear_values = attribs
-            .clear_values
-            .iter()
-            .map(|clear_value| diligent_sys::OptimizedClearValue {
-                Color: clear_value.color,
-                DepthStencil: diligent_sys::DepthStencilClearValue {
-                    Depth: clear_value.depth_stencil.depth,
-                    Stencil: clear_value.depth_stencil.stencil,
-                },
-                Format: clear_value.format.into(),
-            })
-            .collect::<Vec<_>>();
-
-        let attribs = diligent_sys::BeginRenderPassAttribs {
-            pRenderPass: attribs.render_pass.sys_ptr(),
-            ClearValueCount: attribs.clear_values.len() as u32,
-            pClearValues: clear_values.as_ptr() as *mut diligent_sys::OptimizedClearValue,
-            StateTransitionMode: attribs.state_transition_mode.into(),
-            pFramebuffer: attribs.frame_buffer.sys_ptr(),
-        };
-
         unsafe_member_call!(
             context,
             DeviceContext,
             BeginRenderPass,
-            std::ptr::from_ref(&attribs)
+            std::ptr::from_ref(&attribs.0)
         );
 
         RenderPassToken { context }

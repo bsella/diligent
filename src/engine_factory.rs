@@ -231,7 +231,7 @@ impl EngineFactory {
             &self,
             EngineFactory,
             SetMemoryAllocator,
-            std::ptr::from_ref(allocator) as _
+            std::ptr::from_ref(&allocator.0) as *mut _
         );
     }
 }

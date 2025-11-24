@@ -1,6 +1,5 @@
-use std::{ffi::CString, ops::Deref};
+use std::{ffi::CStr, ops::Deref};
 
-use bon::Builder;
 use static_assertions::const_assert_eq;
 
 use crate::device_object::DeviceObject;
@@ -31,29 +30,26 @@ pub enum FenceType {
 
 const_assert_eq!(diligent_sys::FENCE_TYPE_LAST, 1);
 
-#[derive(Builder)]
-pub struct FenceDesc {
-    #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
-    name: Option<CString>,
+#[repr(transparent)]
+pub struct FenceDesc(pub(crate) diligent_sys::FenceDesc);
 
-    #[builder(default = FenceType::CpuWaitOnly)]
-    fence_type: FenceType,
-}
+#[bon::bon]
+impl FenceDesc {
+    #[builder]
+    pub fn new(
+        name: Option<&CStr>,
 
-impl From<&FenceDesc> for diligent_sys::FenceDesc {
-    fn from(value: &FenceDesc) -> Self {
-        diligent_sys::FenceDesc {
+        #[builder(default = FenceType::CpuWaitOnly)] fence_type: FenceType,
+    ) -> Self {
+        Self(diligent_sys::FenceDesc {
             _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                Name: value
-                    .name
-                    .as_ref()
-                    .map_or(std::ptr::null(), |name| name.as_ptr()),
+                Name: name.map_or(std::ptr::null(), |name| name.as_ptr()),
             },
-            Type: match value.fence_type {
+            Type: match fence_type {
                 FenceType::CpuWaitOnly => diligent_sys::FENCE_TYPE_CPU_WAIT_ONLY,
                 FenceType::General => diligent_sys::FENCE_TYPE_GENERAL,
             } as diligent_sys::FENCE_TYPE,
-        }
+        })
     }
 }
 

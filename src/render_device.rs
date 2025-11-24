@@ -338,14 +338,12 @@ impl RenderDevice {
     }
 
     pub fn create_fence(&self, fence_desc: &FenceDesc) -> Result<Boxed<Fence>, ()> {
-        let fence_desc = fence_desc.into();
-
         let mut fence_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
             RenderDevice,
             CreateFence,
-            std::ptr::from_ref(&fence_desc),
+            std::ptr::from_ref(&fence_desc.0),
             std::ptr::addr_of_mut!(fence_ptr)
         );
 

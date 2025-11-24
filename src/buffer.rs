@@ -156,7 +156,7 @@ impl Buffer {
             self,
             Buffer,
             CreateView,
-            std::ptr::from_ref(&view_desc) as _,
+            std::ptr::from_ref(&view_desc.0),
             std::ptr::addr_of_mut!(buffer_view_ptr)
         );
 
