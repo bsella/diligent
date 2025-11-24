@@ -820,17 +820,17 @@ impl ImguiRenderer {
 
             device_context.set_blend_factors(Some(&[0.0, 0.0, 0.0, 0.0]));
 
-            let viewport = Viewport::new(
-                0.0,
-                0.0,
-                draw_data.display_size[0],
-                draw_data.display_size[1],
-            )
-            .min_depth(0.0)
-            .max_depth(1.0);
+            let viewport = Viewport::builder()
+                .top_left_x(0.0)
+                .top_left_y(0.0)
+                .width(draw_data.display_size[0])
+                .height(draw_data.display_size[1])
+                .min_depth(0.0)
+                .max_depth(1.0)
+                .build();
 
             device_context.set_viewports(
-                &[&viewport],
+                &[viewport],
                 draw_data.display_size[0] as u32,
                 draw_data.display_size[1] as u32,
             );
@@ -864,19 +864,19 @@ impl ImguiRenderer {
                         // Apply pretransform
                         //clip_rect = TransformClipRect(draw_data.display_size, clip_rect);
 
-                        let scissor = Rect {
-                            left: clip_rect[0].max(0.0) as i32,
-                            top: clip_rect[1].max(0.0) as i32,
-                            right: clip_rect[2].min(draw_data.display_size[0]) as i32,
-                            bottom: clip_rect[3].min(draw_data.display_size[1]) as i32,
-                        };
+                        let scissor = Rect::builder()
+                            .left(clip_rect[0].max(0.0) as i32)
+                            .top(clip_rect[1].max(0.0) as i32)
+                            .right(clip_rect[2].min(draw_data.display_size[0]) as i32)
+                            .bottom(clip_rect[3].min(draw_data.display_size[1]) as i32)
+                            .build();
 
                         if !scissor.is_valid() {
                             continue;
                         }
 
                         device_context.set_scissor_rects(
-                            &[&scissor],
+                            &[scissor],
                             draw_data.display_size[0] as u32,
                             draw_data.display_size[1] as u32,
                         );

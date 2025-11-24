@@ -75,6 +75,10 @@ impl From<&DeviceMemoryDesc> for diligent_sys::DeviceMemoryDesc {
 }
 
 impl DeviceMemory {
+    pub fn sys_ptr(&self) -> *mut diligent_sys::IDeviceMemory {
+        std::ptr::from_ref(&self.0) as *mut _
+    }
+
     pub fn resize(&self, new_size: u64) -> bool {
         unsafe_member_call!(self, DeviceMemory, Resize, new_size)
     }

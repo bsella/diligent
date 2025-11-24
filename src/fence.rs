@@ -10,7 +10,7 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct Fence(diligent_sys::IFence);
+pub struct Fence(pub(crate) diligent_sys::IFence);
 
 impl Deref for Fence {
     type Target = DeviceObject;

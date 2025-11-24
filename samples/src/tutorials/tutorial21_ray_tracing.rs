@@ -510,8 +510,8 @@ fn create_tlas(device: &RenderDevice) -> (Boxed<TopLevelAS>, Boxed<Buffer>, Boxe
 
     let tlas = {
         let desc = TopLevelASDesc::builder()
-            .name("TLAS")
-            .max_instance_count(NUM_INSTANCES as u32)
+            .name(c"TLAS")
+            .max_instance_count(NUM_INSTANCES)
             .flags(RayTracingBuildAsFlags::AllowUpdate | RayTracingBuildAsFlags::PreferFastTrace)
             .build();
 

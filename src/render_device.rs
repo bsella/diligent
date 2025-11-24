@@ -606,7 +606,7 @@ impl RenderDevice {
             self,
             RenderDevice,
             CreateBLAS,
-            std::ptr::from_ref(desc) as _,
+            std::ptr::from_ref(&desc.0),
             std::ptr::addr_of_mut!(blas_ptr)
         );
 
@@ -618,13 +618,12 @@ impl RenderDevice {
     }
 
     pub fn create_tlas(&self, desc: &TopLevelASDesc) -> Result<Boxed<TopLevelAS>, ()> {
-        let desc = desc.into();
         let mut tlas_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
             RenderDevice,
             CreateTLAS,
-            std::ptr::from_ref(&desc),
+            std::ptr::from_ref(&desc.0),
             std::ptr::addr_of_mut!(tlas_ptr)
         );
 

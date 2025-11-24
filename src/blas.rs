@@ -87,7 +87,10 @@ impl BLASBoundingBoxDesc {
 }
 
 #[repr(transparent)]
-pub struct BottomLevelASDesc<'a>(diligent_sys::BottomLevelASDesc, PhantomData<&'a ()>);
+pub struct BottomLevelASDesc<'a>(
+    pub(crate) diligent_sys::BottomLevelASDesc,
+    PhantomData<&'a ()>,
+);
 
 #[bon::bon]
 impl<'a> BottomLevelASDesc<'a> {
@@ -110,17 +113,13 @@ impl<'a> BottomLevelASDesc<'a> {
                 _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
                     Name: name.as_ref().map_or(std::ptr::null(), |name| name.as_ptr()),
                 },
-                pTriangles: if triangles.is_empty() {
-                    std::ptr::null()
-                } else {
-                    triangles.as_ptr() as _
-                },
+                pTriangles: triangles
+                    .first()
+                    .map_or(std::ptr::null(), |tr| std::ptr::from_ref(&tr.0)),
                 TriangleCount: triangles.len() as u32,
-                pBoxes: if boxes.is_empty() {
-                    std::ptr::null()
-                } else {
-                    boxes.as_ptr() as _
-                },
+                pBoxes: boxes
+                    .first()
+                    .map_or(std::ptr::null(), |bx| std::ptr::from_ref(&bx.0)),
                 BoxCount: boxes.len() as u32,
                 Flags: flags.bits(),
                 CompactedSize: compacted_size,

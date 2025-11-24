@@ -1,12 +1,10 @@
 use std::{
     ffi::{CStr, CString},
     marker::PhantomData,
-    mem::{transmute, transmute_copy},
     ops::Deref,
 };
 
 use bitflags::bitflags;
-use bon::Builder;
 use static_assertions::const_assert_eq;
 
 use crate::{
@@ -56,7 +54,7 @@ impl Default for RayTracingInstanceFlags {
 }
 
 #[repr(transparent)]
-pub struct TLASInstanceDesc(diligent_sys::TLASInstanceDesc);
+pub struct TLASInstanceDesc(pub(crate) diligent_sys::TLASInstanceDesc);
 impl TLASInstanceDesc {
     pub fn contribution_to_hit_group_index(&self) -> u32 {
         self.0.ContributionToHitGroupIndex
@@ -70,7 +68,7 @@ impl TLASInstanceDesc {
 }
 
 #[repr(transparent)]
-pub struct TLASBuildInfo(diligent_sys::TLASBuildInfo);
+pub struct TLASBuildInfo(pub(crate) diligent_sys::TLASBuildInfo);
 impl TLASBuildInfo {
     pub fn instance_count(&self) -> u32 {
         self.0.InstanceCount
@@ -140,38 +138,32 @@ impl<'a> TLASBuildInstanceData<'a> {
     }
 }
 
-#[derive(Builder)]
-pub struct TopLevelASDesc {
-    #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
-    name: Option<CString>,
+#[repr(transparent)]
+pub struct TopLevelASDesc(pub(crate) diligent_sys::TopLevelASDesc);
 
-    #[builder(default = 0)]
-    max_instance_count: u32,
+#[bon::bon]
+impl TopLevelASDesc {
+    #[builder]
+    pub fn new(
+        name: Option<&CStr>,
 
-    #[builder(default)]
-    flags: RayTracingBuildAsFlags,
+        #[builder(default = 0)] max_instance_count: usize,
 
-    #[builder(default = 0)]
-    compacted_size: u64,
+        #[builder(default)] flags: RayTracingBuildAsFlags,
 
-    #[builder(default = 1)]
-    immediate_context_mask: u64,
-}
+        #[builder(default = 0)] compacted_size: u64,
 
-impl From<&TopLevelASDesc> for diligent_sys::TopLevelASDesc {
-    fn from(value: &TopLevelASDesc) -> Self {
-        Self {
+        #[builder(default = 1)] immediate_context_mask: u64,
+    ) -> Self {
+        Self(diligent_sys::TopLevelASDesc {
             _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                Name: value
-                    .name
-                    .as_ref()
-                    .map_or(std::ptr::null(), |name| name.as_ptr()),
+                Name: name.as_ref().map_or(std::ptr::null(), |name| name.as_ptr()),
             },
-            MaxInstanceCount: value.max_instance_count,
-            Flags: value.flags.bits(),
-            CompactedSize: value.compacted_size,
-            ImmediateContextMask: value.immediate_context_mask,
-        }
+            MaxInstanceCount: max_instance_count as u32,
+            Flags: flags.bits(),
+            CompactedSize: compacted_size,
+            ImmediateContextMask: immediate_context_mask,
+        })
     }
 }
 
@@ -206,13 +198,12 @@ impl TopLevelAS {
         {
             None
         } else {
-            Some(unsafe { transmute_copy(&desc) })
+            Some(TLASInstanceDesc(desc))
         }
     }
 
     pub fn get_build_info(&self) -> TLASBuildInfo {
-        let desc = unsafe_member_call!(self, TopLevelAS, GetBuildInfo);
-        unsafe { transmute(desc) }
+        TLASBuildInfo(unsafe_member_call!(self, TopLevelAS, GetBuildInfo))
     }
 
     pub fn get_scratch_buffer_sizes(&self) -> ScratchBufferSizes {

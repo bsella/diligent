@@ -5,7 +5,7 @@ use bon::{Builder, builder};
 use static_assertions::const_assert_eq;
 
 use crate::{
-    Boxed, PrimitiveTopology,
+    Boxed, DeviceMemory, PrimitiveTopology,
     blas::BottomLevelAS,
     buffer::{Buffer, BufferMapReadToken, BufferMapReadWriteToken, BufferMapWriteToken},
     command_queue::CommandQueue,
@@ -1109,71 +1109,50 @@ impl From<ResourceStateTransitionMode> for diligent_sys::RESOURCE_STATE_TRANSITI
     }
 }
 
-pub struct Viewport {
-    top_left_x: f32,
-    top_left_y: f32,
-    width: f32,
-    height: f32,
-    min_depth: f32,
-    max_depth: f32,
-}
+#[repr(transparent)]
+pub struct Viewport(diligent_sys::Viewport);
 
+#[bon::bon]
 impl Viewport {
-    pub fn new(top_left_x: f32, top_left_y: f32, width: f32, height: f32) -> Self {
-        Viewport {
-            top_left_x,
-            top_left_y,
-            width,
-            height,
-            min_depth: 0.0,
-            max_depth: 1.0,
-        }
-    }
-    pub fn min_depth(mut self, min_depth: f32) -> Self {
-        self.min_depth = min_depth;
-        self
-    }
-    pub fn max_depth(mut self, max_depth: f32) -> Self {
-        self.max_depth = max_depth;
-        self
-    }
-}
-
-impl From<&Viewport> for diligent_sys::Viewport {
-    fn from(value: &Viewport) -> Self {
-        diligent_sys::Viewport {
-            TopLeftX: value.top_left_x,
-            TopLeftY: value.top_left_y,
-            Width: value.width,
-            Height: value.height,
-            MinDepth: value.min_depth,
-            MaxDepth: value.max_depth,
-        }
+    #[builder]
+    pub fn new(
+        top_left_x: f32,
+        top_left_y: f32,
+        width: f32,
+        height: f32,
+        #[builder(default = 0.0)] min_depth: f32,
+        #[builder(default = 1.0)] max_depth: f32,
+    ) -> Self {
+        Self(diligent_sys::Viewport {
+            TopLeftX: top_left_x,
+            TopLeftY: top_left_y,
+            Width: width,
+            Height: height,
+            MinDepth: min_depth,
+            MaxDepth: max_depth,
+        })
     }
 }
 
-#[derive(Eq, PartialEq)]
-pub struct Rect {
-    pub left: i32,
-    pub top: i32,
-    pub right: i32,
-    pub bottom: i32,
+#[repr(transparent)]
+pub struct Rect(diligent_sys::Rect);
+
+#[bon::bon]
+impl Rect {
+    #[builder]
+    pub fn new(left: i32, top: i32, right: i32, bottom: i32) -> Self {
+        Self(diligent_sys::Rect {
+            left,
+            top,
+            right,
+            bottom,
+        })
+    }
 }
 
 impl Rect {
     pub fn is_valid(&self) -> bool {
-        self.right > self.left && self.bottom > self.top
-    }
-}
-
-impl From<&Rect> for diligent_sys::Rect {
-    fn from(value: &Rect) -> Self {
-        diligent_sys::Rect {
-            bottom: value.bottom,
-            left: value.left,
-            right: value.right,
-            top: value.top,
-        }
+        self.0.right > self.0.left && self.0.bottom > self.0.top
     }
 }
 
@@ -1321,6 +1300,137 @@ impl<'a> BeginRenderPassAttribs<'a> {
             },
             PhantomData,
         )
+    }
+}
+
+#[repr(transparent)]
+pub struct SparseBufferMemoryBindRange(diligent_sys::SparseBufferMemoryBindRange);
+
+#[bon::bon]
+impl SparseBufferMemoryBindRange {
+    #[builder]
+    pub fn new(
+        buffer_offset: u64,
+        memory_offset: u64,
+        memory_size: u64,
+        memory: &DeviceMemory,
+    ) -> Self {
+        Self(diligent_sys::SparseBufferMemoryBindRange {
+            BufferOffset: buffer_offset,
+            MemoryOffset: memory_offset,
+            MemorySize: memory_size,
+            pMemory: memory.sys_ptr(),
+        })
+    }
+}
+
+#[repr(transparent)]
+pub struct SparseTextureMemoryBindRange(diligent_sys::SparseTextureMemoryBindRange);
+
+#[bon::bon]
+impl SparseTextureMemoryBindRange {
+    #[builder]
+    pub fn new(
+        mip_level: u32,
+        array_slice: u32,
+        region: crate::Box,
+        offset_in_mip_tail: u64,
+        memory_size: u64,
+        memory_offset: u64,
+        memory: &DeviceMemory,
+    ) -> Self {
+        Self(diligent_sys::SparseTextureMemoryBindRange {
+            MipLevel: mip_level,
+            ArraySlice: array_slice,
+            Region: region.0,
+            OffsetInMipTail: offset_in_mip_tail,
+            MemorySize: memory_size,
+            MemoryOffset: memory_offset,
+            pMemory: memory.sys_ptr(),
+        })
+    }
+}
+
+#[repr(transparent)]
+pub struct SparseBufferMemoryBindInfo(diligent_sys::SparseBufferMemoryBindInfo);
+
+#[bon::bon]
+impl SparseBufferMemoryBindInfo {
+    #[builder]
+    pub fn new(buffer: &Buffer, ranges: &[SparseBufferMemoryBindRange]) -> Self {
+        Self(diligent_sys::SparseBufferMemoryBindInfo {
+            pBuffer: buffer.sys_ptr(),
+            pRanges: ranges
+                .first()
+                .map_or(std::ptr::null(), |r| std::ptr::from_ref(&r.0)),
+            NumRanges: ranges.len() as u32,
+        })
+    }
+}
+
+#[repr(transparent)]
+pub struct SparseTextureMemoryBindInfo(diligent_sys::SparseTextureMemoryBindInfo);
+
+#[bon::bon]
+impl SparseTextureMemoryBindInfo {
+    #[builder]
+    pub fn new(texture: &Texture, ranges: &[SparseTextureMemoryBindRange]) -> Self {
+        Self(diligent_sys::SparseTextureMemoryBindInfo {
+            pTexture: texture.sys_ptr(),
+            pRanges: ranges
+                .first()
+                .map_or(std::ptr::null(), |r| std::ptr::from_ref(&r.0)),
+            NumRanges: ranges.len() as u32,
+        })
+    }
+}
+
+#[repr(transparent)]
+pub struct BindSparseResourceMemoryAttribs(diligent_sys::BindSparseResourceMemoryAttribs);
+
+#[bon::bon]
+impl BindSparseResourceMemoryAttribs {
+    #[builder]
+    pub fn new(
+        buffer_binds: &[SparseBufferMemoryBindInfo],
+        texture_binds: &[SparseTextureMemoryBindInfo],
+        wait_fences: &[&Fence],
+        wait_fence_values: &[u64],
+        signal_fences: &[&Fence],
+        signal_fence_values: &[u64],
+    ) -> Self {
+        Self(diligent_sys::BindSparseResourceMemoryAttribs {
+            pBufferBinds: buffer_binds
+                .first()
+                .map_or(std::ptr::null(), |binds| std::ptr::from_ref(&binds.0)),
+            NumBufferBinds: buffer_binds.len() as u32,
+            pTextureBinds: texture_binds
+                .first()
+                .map_or(std::ptr::null(), |binds| std::ptr::from_ref(&binds.0)),
+            NumTextureBinds: texture_binds.len() as u32,
+            ppWaitFences: unsafe {
+                std::mem::transmute::<&[&Fence], &[*mut diligent_sys::IFence]>(wait_fences)
+            }
+            .first()
+            .map_or(std::ptr::null_mut(), |&fence| {
+                std::ptr::addr_of!(fence) as *mut _
+            }),
+            pWaitFenceValues: wait_fence_values
+                .first()
+                .map_or(std::ptr::null_mut(), std::ptr::from_ref),
+            NumWaitFences: wait_fences.len() as u32,
+            ppSignalFences: unsafe {
+                std::mem::transmute::<&[&Fence], &[*mut diligent_sys::IFence]>(signal_fences)
+            }
+            .first()
+            .map_or(std::ptr::null_mut(), |&fence| {
+                std::ptr::addr_of!(fence) as *mut _
+            }),
+            pSignalFenceValues: signal_fence_values
+                .first()
+                .map_or(std::ptr::null_mut(), std::ptr::from_ref),
+            NumSignalFences: signal_fences.len() as u32,
+        })
     }
 }
 
@@ -1704,17 +1814,18 @@ impl DeviceContext {
 
     pub fn set_viewports(
         &self,
-        viewports: &[&Viewport],
+        viewports: &[Viewport],
         render_target_width: u32,
         render_target_height: u32,
     ) {
-        let viewports: Vec<_> = viewports.iter().map(|&viewport| viewport.into()).collect();
         unsafe_member_call!(
             self,
             DeviceContext,
             SetViewports,
             viewports.len() as u32,
-            viewports.as_ptr(),
+            viewports
+                .first()
+                .map_or(std::ptr::null(), |viewport| std::ptr::from_ref(&viewport.0)),
             render_target_width,
             render_target_height
         )
@@ -1722,18 +1833,18 @@ impl DeviceContext {
 
     pub fn set_scissor_rects(
         &self,
-        rects: &[&Rect],
+        rects: &[Rect],
         render_target_width: u32,
         render_target_height: u32,
     ) {
-        let rects: Vec<_> = rects.iter().map(|&rect| rect.into()).collect();
-
         unsafe_member_call!(
             self,
             DeviceContext,
             SetScissorRects,
             rects.len() as u32,
-            rects.as_ptr(),
+            rects
+                .first()
+                .map_or(std::ptr::null(), |rect| std::ptr::from_ref(&rect.0)),
             render_target_width,
             render_target_height
         )
@@ -1840,7 +1951,7 @@ impl DeviceContext {
             DeviceContext,
             ClearRenderTarget,
             view.sys_ptr(),
-            (*rgba).as_ptr() as *const std::os::raw::c_void,
+            rgba.as_ptr() as *const std::os::raw::c_void,
             state_transition_mode.into()
         )
     }
@@ -2245,15 +2356,12 @@ impl ImmediateDeviceContext {
         TimeStampQueryToken::new(query, self)
     }
 
-    pub fn bind_sparse_resource_memory(
-        &self,
-        attribs: &diligent_sys::BindSparseResourceMemoryAttribs,
-    ) {
+    pub fn bind_sparse_resource_memory(&self, attribs: &BindSparseResourceMemoryAttribs) {
         unsafe_member_call!(
             self.0,
             DeviceContext,
             BindSparseResourceMemory,
-            std::ptr::from_ref(attribs)
+            std::ptr::from_ref(&attribs.0)
         )
     }
 
