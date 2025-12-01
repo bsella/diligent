@@ -63,10 +63,13 @@ struct Constants {
     glass_reflection_color_mask: float3,
     glass_absorption: f32,
     glass_material_color: float4,
-    glass_index_of_refraction: float2, // min and max IO
-    glass_enable_dispersion: bool,
-    dispersion_sample_count: u32,                      // 1..1,
-    dispersion_samples: [float4; MAX_DISPERS_SAMPLES], // [rgb color] [IOR scale,
+    glass_index_of_refraction: float2, // min and max IOR
+
+    glass_enable_dispersion: bool, // We're assuming that the size of bool is 1 byte.
+    padding3: [i8; 3],             // This is why we need this padding of 3 bytes.
+
+    dispersion_sample_count: u32,                      // 1..16
+    dispersion_samples: [float4; MAX_DISPERS_SAMPLES], // [rgb color] [IOR scale]
     disc_points: [float4; 8],                          // packed float2[16]
 
     // Light properties
@@ -842,56 +845,68 @@ impl RayTracing {
                 .instance_name(c"Cube Instance 1")
                 .custom_id(0)
                 .blas(&self.cube_blas)
-                .mask(OPAQUE_GEOM_MASK as _)
+                .mask(if self.enabled_cubes[0] {
+                    OPAQUE_GEOM_MASK as _
+                } else {
+                    0
+                })
                 .transform(
                     animate_opaque_cube(0)
                         .transpose()
                         .to_cols_array()
-                        .split_first_chunk::<12>()
-                        .unwrap()
-                        .0,
+                        .first_chunk::<12>()
+                        .unwrap(),
                 )
                 .build(),
             TLASBuildInstanceData::builder()
                 .instance_name(c"Cube Instance 2")
                 .custom_id(1)
                 .blas(&self.cube_blas)
-                .mask(OPAQUE_GEOM_MASK as _)
+                .mask(if self.enabled_cubes[1] {
+                    OPAQUE_GEOM_MASK as _
+                } else {
+                    0
+                })
                 .transform(
                     animate_opaque_cube(1)
                         .transpose()
                         .to_cols_array()
-                        .split_first_chunk::<12>()
-                        .unwrap()
-                        .0,
+                        .first_chunk::<12>()
+                        .unwrap(),
                 )
                 .build(),
             TLASBuildInstanceData::builder()
                 .instance_name(c"Cube Instance 3")
                 .custom_id(2)
                 .blas(&self.cube_blas)
-                .mask(OPAQUE_GEOM_MASK as _)
+                .mask(if self.enabled_cubes[2] {
+                    OPAQUE_GEOM_MASK as _
+                } else {
+                    0
+                })
                 .transform(
                     animate_opaque_cube(2)
                         .transpose()
                         .to_cols_array()
-                        .split_first_chunk::<12>()
-                        .unwrap()
-                        .0,
+                        .first_chunk::<12>()
+                        .unwrap(),
                 )
                 .build(),
             TLASBuildInstanceData::builder()
                 .instance_name(c"Cube Instance 4")
                 .custom_id(3)
                 .blas(&self.cube_blas)
-                .mask(OPAQUE_GEOM_MASK as _)
+                .mask(if self.enabled_cubes[3] {
+                    OPAQUE_GEOM_MASK as _
+                } else {
+                    0
+                })
                 .transform(
                     animate_opaque_cube(3)
                         .transpose()
                         .to_cols_array()
-                        .split_first_chunk::<12>()
-                        .unwrap()
-                        .0,
+                        .first_chunk::<12>()
+                        .unwrap(),
                 )
                 .build(),
             TLASBuildInstanceData::builder()
@@ -903,9 +918,8 @@ impl RayTracing {
                         * glam::Mat4::from_scale(glam::vec3(100.0, 0.1, 100.0)))
                     .transpose()
                     .to_cols_array()
-                    .split_first_chunk::<12>()
-                    .unwrap()
-                    .0,
+                    .first_chunk::<12>()
+                    .unwrap(),
                 )
                 .build(),
             TLASBuildInstanceData::builder()
@@ -917,9 +931,8 @@ impl RayTracing {
                     glam::Mat4::from_translation(glam::vec3(-3.0, -3.0, -5.0))
                         .transpose()
                         .to_cols_array()
-                        .split_first_chunk::<12>()
-                        .unwrap()
-                        .0,
+                        .first_chunk::<12>()
+                        .unwrap(),
                 )
                 .build(),
             TLASBuildInstanceData::builder()
@@ -934,9 +947,8 @@ impl RayTracing {
                         ))
                     .transpose()
                     .to_cols_array()
-                    .split_first_chunk::<12>()
-                    .unwrap()
-                    .0,
+                    .first_chunk::<12>()
+                    .unwrap(),
                 )
                 .build(),
         ];
@@ -1150,6 +1162,7 @@ impl SampleBase for RayTracing {
                 glass_material_color: [0.33, 0.93, 0.29, 1.0],
                 glass_index_of_refraction: [1.5, 1.02],
                 glass_enable_dispersion: false,
+                padding3: [0, 0, 0],
 
                 // Wavelength to RGB and index of refraction interpolation factor.
                 dispersion_samples: [
@@ -1462,6 +1475,7 @@ impl SampleBase for RayTracing {
                     &mut self.dispersion_factor,
                 );
 
+                // TODO
                 //int rsamples = PlatformMisc::GetLSB(m_Constants.DispersionSampleCount);
                 //ImGui::SliderInt("Dispersion samples", &rsamples, 1, PlatformMisc::GetLSB(Uint32{MAX_DISPERS_SAMPLES}), std::to_string(1 << rsamples).c_str());
                 //m_Constants.DispersionSampleCount = 1u << rsamples;
