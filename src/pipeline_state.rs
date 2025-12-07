@@ -1179,7 +1179,7 @@ impl PipelineState {
 
     pub fn get_status(&self, wait_for_completion: bool) -> PipelineStateStatus {
         let status = unsafe_member_call!(self, PipelineState, GetStatus, wait_for_completion);
-        match status {
+        match status as _ {
             diligent_sys::PIPELINE_STATE_STATUS_UNINITIALIZED => PipelineStateStatus::Uninitialized,
             diligent_sys::PIPELINE_STATE_STATUS_COMPILING => PipelineStateStatus::Compiling,
             diligent_sys::PIPELINE_STATE_STATUS_READY => PipelineStateStatus::Ready,
