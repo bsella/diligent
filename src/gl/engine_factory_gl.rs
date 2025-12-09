@@ -86,8 +86,6 @@ impl EngineFactoryOpenGL {
         let mut device_context_ptr = std::ptr::null_mut();
         let mut swap_chain_ptr = std::ptr::null_mut();
 
-        let swap_chain_desc = sc_desc.into();
-
         unsafe_member_call!(
             self,
             EngineFactoryOpenGL,
@@ -95,7 +93,7 @@ impl EngineFactoryOpenGL {
             std::ptr::from_ref(&engine_ci),
             std::ptr::addr_of_mut!(render_device_ptr),
             std::ptr::addr_of_mut!(device_context_ptr),
-            std::ptr::from_ref(&swap_chain_desc),
+            std::ptr::from_ref(&sc_desc.0.0),
             std::ptr::addr_of_mut!(swap_chain_ptr)
         );
 

@@ -1,7 +1,6 @@
 use std::ops::Deref;
 
 use bitflags::bitflags;
-use bon::Builder;
 use static_assertions::const_assert_eq;
 
 use crate::{
@@ -50,7 +49,7 @@ impl SwapChainUsageFlags {
 }
 
 #[repr(transparent)]
-pub struct SwapChainDesc(diligent_sys::SwapChainDesc);
+pub struct SwapChainDesc(pub(crate) diligent_sys::SwapChainDesc);
 
 impl SwapChainDesc {
     pub fn width(&self) -> u32 {
@@ -85,51 +84,52 @@ impl SwapChainDesc {
     }
 }
 
-#[derive(Builder)]
-pub struct SwapChainCreateInfo {
-    width: u32,
+#[repr(transparent)]
+pub struct SwapChainCreateInfo(pub(crate) SwapChainDesc);
 
-    height: u32,
-
-    #[builder(default = TextureFormat::RGBA8_UNORM_SRGB)]
-    color_buffer_format: TextureFormat,
-
-    #[builder(default = TextureFormat::D32_FLOAT)]
-    depth_buffer_format: TextureFormat,
-
-    #[builder(default = SwapChainUsageFlags::RenderTarget)]
-    usage: SwapChainUsageFlags,
-
-    #[builder(default = SurfaceTransform::Optimal)]
-    pre_transform: SurfaceTransform,
-
-    #[builder(default = 2)]
-    buffer_count: u32,
-
-    #[builder(default = 1.0)]
-    default_depth_value: f32,
-
-    #[builder(default = 0)]
-    default_stencil_value: u8,
-
-    #[builder(default = true)]
-    is_primary: bool,
+impl Deref for SwapChainCreateInfo {
+    type Target = SwapChainDesc;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
-impl From<&SwapChainCreateInfo> for diligent_sys::SwapChainDesc {
-    fn from(value: &SwapChainCreateInfo) -> Self {
-        diligent_sys::SwapChainDesc {
-            Width: value.width,
-            Height: value.height,
-            ColorBufferFormat: value.color_buffer_format.into(),
-            DepthBufferFormat: value.depth_buffer_format.into(),
-            Usage: value.usage.bits(),
-            PreTransform: value.pre_transform.into(),
-            BufferCount: value.buffer_count,
-            DefaultDepthValue: value.default_depth_value,
-            DefaultStencilValue: value.default_stencil_value,
-            IsPrimary: value.is_primary,
-        }
+#[bon::bon]
+impl SwapChainCreateInfo {
+    #[builder]
+    pub fn new(
+        width: u32,
+
+        height: u32,
+
+        #[builder(default = TextureFormat::RGBA8_UNORM_SRGB)] color_buffer_format: TextureFormat,
+
+        #[builder(default = TextureFormat::D32_FLOAT)] depth_buffer_format: TextureFormat,
+
+        #[builder(default = SwapChainUsageFlags::RenderTarget)] usage: SwapChainUsageFlags,
+
+        #[builder(default = SurfaceTransform::Optimal)] pre_transform: SurfaceTransform,
+
+        #[builder(default = 2)] buffer_count: u32,
+
+        #[builder(default = 1.0)] default_depth_value: f32,
+
+        #[builder(default = 0)] default_stencil_value: u8,
+
+        #[builder(default = true)] is_primary: bool,
+    ) -> Self {
+        Self(SwapChainDesc(diligent_sys::SwapChainDesc {
+            Width: width,
+            Height: height,
+            ColorBufferFormat: color_buffer_format.into(),
+            DepthBufferFormat: depth_buffer_format.into(),
+            Usage: usage.bits(),
+            PreTransform: pre_transform.into(),
+            BufferCount: buffer_count,
+            DefaultDepthValue: default_depth_value,
+            DefaultStencilValue: default_stencil_value,
+            IsPrimary: is_primary,
+        }))
     }
 }
 
