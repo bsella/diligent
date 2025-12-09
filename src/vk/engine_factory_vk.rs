@@ -275,8 +275,8 @@ impl EngineFactoryVk {
                 self,
                 EngineFactoryVk,
                 CreateDeviceAndContextsVk,
-                std::ptr::addr_of!(create_info),
-                std::ptr::addr_of_mut!(render_device_ptr),
+                &create_info,
+                &mut render_device_ptr,
                 device_context_ptrs.as_mut_ptr()
             )
         }
@@ -318,9 +318,9 @@ impl EngineFactoryVk {
             CreateSwapChainVk,
             device.sys_ptr(),
             immediate_context.sys_ptr(),
-            std::ptr::from_ref(&swapchain_ci.0.0),
+            &swapchain_ci.0.0,
             std::ptr::from_ref(window) as _,
-            std::ptr::addr_of_mut!(swap_chain_ptr)
+            &mut swap_chain_ptr
         );
 
         if swap_chain_ptr.is_null() {

@@ -90,11 +90,11 @@ impl EngineFactoryOpenGL {
             self,
             EngineFactoryOpenGL,
             CreateDeviceAndSwapChainGL,
-            std::ptr::from_ref(&engine_ci),
-            std::ptr::addr_of_mut!(render_device_ptr),
-            std::ptr::addr_of_mut!(device_context_ptr),
-            std::ptr::from_ref(&sc_desc.0.0),
-            std::ptr::addr_of_mut!(swap_chain_ptr)
+            &engine_ci,
+            &mut render_device_ptr,
+            &mut device_context_ptr,
+            &sc_desc.0.0,
+            &mut swap_chain_ptr
         );
 
         if render_device_ptr.is_null() {
@@ -123,9 +123,9 @@ impl EngineFactoryOpenGL {
             self,
             EngineFactoryOpenGL,
             AttachToActiveGLContext,
-            std::ptr::from_ref(&engine_ci),
-            std::ptr::addr_of_mut!(render_device_ptr),
-            std::ptr::addr_of_mut!(device_context_ptr)
+            &engine_ci,
+            &mut render_device_ptr,
+            &mut device_context_ptr
         );
 
         if render_device_ptr.is_null() {

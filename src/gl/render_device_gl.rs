@@ -52,9 +52,9 @@ impl RenderDeviceGL {
             CreateTextureFromGLHandle,
             gl_handle,
             gl_bind_target,
-            std::ptr::from_ref(tex_desc) as _,
+            &tex_desc.0,
             initial_state.bits(),
-            std::ptr::addr_of_mut!(texture_ptr)
+            &mut texture_ptr
         );
 
         if texture_ptr.is_null() {
@@ -76,9 +76,9 @@ impl RenderDeviceGL {
             RenderDeviceGL,
             CreateBufferFromGLHandle,
             gl_handle,
-            std::ptr::from_ref(buff_desc) as _,
+            &buff_desc.0,
             initial_state.bits(),
-            std::ptr::addr_of_mut!(buffer_ptr)
+            &mut buffer_ptr
         );
 
         if buffer_ptr.is_null() {
@@ -98,9 +98,9 @@ impl RenderDeviceGL {
             self,
             RenderDeviceGL,
             CreateDummyTexture,
-            std::ptr::from_ref(tex_desc) as _,
+            &tex_desc.0,
             initial_state.bits(),
-            std::ptr::addr_of_mut!(texture_ptr)
+            &mut texture_ptr
         );
 
         if texture_ptr.is_null() {

@@ -39,8 +39,8 @@ impl EventHandler for Win32EventHandler {
         if unsafe { PeekMessageW(msg.as_mut_ptr(), None, 0, 0, PM_REMOVE).as_bool() } {
             let msg = unsafe { msg.assume_init() };
             unsafe {
-                let _ = TranslateMessage(std::ptr::addr_of!(msg));
-                DispatchMessageW(std::ptr::addr_of!(msg));
+                let _ = TranslateMessage(&msg);
+                DispatchMessageW(&msg);
             }
 
             Some(msg)

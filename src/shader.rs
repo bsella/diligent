@@ -586,7 +586,7 @@ impl Shader {
             Shader,
             GetBytecode,
             std::ptr::addr_of_mut!(bytecode) as *mut *const std::ffi::c_void,
-            std::ptr::addr_of_mut!(size)
+            &mut size
         );
 
         if bytecode.is_null() {

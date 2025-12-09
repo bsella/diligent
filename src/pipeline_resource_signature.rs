@@ -175,7 +175,7 @@ impl PipelineResourceSignature {
             self,
             PipelineResourceSignature,
             CreateShaderResourceBinding,
-            std::ptr::addr_of_mut!(shader_resource_binding_ptr),
+            &mut shader_resource_binding_ptr,
             init_static_resources
         );
 

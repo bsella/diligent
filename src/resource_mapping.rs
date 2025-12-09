@@ -27,9 +27,7 @@ impl ResourceMappingCreateInfo {
     #[builder]
     pub fn new(entries: &[ResourceMappingEntry]) -> Self {
         ResourceMappingCreateInfo(diligent_sys::ResourceMappingCreateInfo {
-            pEntries: entries
-                .first()
-                .map_or(std::ptr::null(), |entry| std::ptr::from_ref(&entry.0)),
+            pEntries: entries.first().map_or(std::ptr::null(), |entry| &entry.0),
             NumEntries: entries.len() as u32,
         })
     }

@@ -293,8 +293,8 @@ impl Texture {
             self,
             Texture,
             CreateView,
-            std::ptr::from_ref(&texture_view_desc.0),
-            std::ptr::addr_of_mut!(texture_view_ptr)
+            &texture_view_desc.0,
+            &mut texture_view_ptr
         );
 
         if texture_view_ptr.is_null() {
@@ -360,7 +360,7 @@ impl<'a, T> TextureSubresourceReadMapToken<'a, T> {
             array_slice,
             diligent_sys::MAP_READ as diligent_sys::MAP_TYPE,
             map_flags.bits(),
-            map_region.map_or(std::ptr::null(), |bx| { std::ptr::from_ref(&bx.0) }),
+            map_region.map_or(std::ptr::null(), |bx| { &bx.0 }),
             ptr
         );
 
@@ -422,7 +422,7 @@ impl<'a, T> TextureSubresourceWriteMapToken<'a, T> {
             array_slice,
             diligent_sys::MAP_WRITE as diligent_sys::MAP_TYPE,
             map_flags.bits(),
-            map_region.map_or(std::ptr::null(), |bx| { std::ptr::from_ref(&bx.0) }),
+            map_region.map_or(std::ptr::null(), |bx| { &bx.0 }),
             ptr
         );
 
@@ -484,7 +484,7 @@ impl<'a, T> TextureSubresourceReadWriteMapToken<'a, T> {
             array_slice,
             diligent_sys::MAP_READ_WRITE as diligent_sys::MAP_TYPE,
             map_flags.bits(),
-            map_region.map_or(std::ptr::null(), |bx| { std::ptr::from_ref(&bx.0) }),
+            map_region.map_or(std::ptr::null(), |bx| { &bx.0 }),
             ptr
         );
 

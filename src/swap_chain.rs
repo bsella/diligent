@@ -170,12 +170,7 @@ impl SwapChain {
     }
 
     pub fn set_fullscreen_mode(&self, display_mode: &DisplayModeAttribs) {
-        unsafe_member_call!(
-            self,
-            SwapChain,
-            SetFullscreenMode,
-            std::ptr::from_ref(&display_mode.0)
-        )
+        unsafe_member_call!(self, SwapChain, SetFullscreenMode, &display_mode.0)
     }
 
     pub fn set_windowed_mode(&self) {

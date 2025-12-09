@@ -128,7 +128,7 @@ impl EngineFactory {
             EngineFactory,
             CreateDefaultShaderSourceStreamFactory,
             search.as_ptr(),
-            std::ptr::addr_of_mut!(stream_factory_ptr)
+            &mut stream_factory_ptr
         );
 
         if stream_factory_ptr.is_null() {
@@ -148,7 +148,7 @@ impl EngineFactory {
             CreateDataBlob,
             initial_size,
             std::ptr::null(),
-            std::ptr::addr_of_mut!(data_blob_ptr)
+            &mut data_blob_ptr
         );
 
         if data_blob_ptr.is_null() {
@@ -166,7 +166,7 @@ impl EngineFactory {
             CreateDataBlob,
             std::mem::size_of_val(data),
             std::ptr::from_ref(data) as *const c_void,
-            std::ptr::addr_of_mut!(data_blob_ptr)
+            &mut data_blob_ptr
         );
 
         if data_blob_ptr.is_null() {
@@ -190,7 +190,7 @@ impl EngineFactory {
             EngineFactory,
             EnumerateAdapters,
             version,
-            std::ptr::addr_of_mut!(num_adapters),
+            &mut num_adapters,
             std::ptr::null_mut()
         );
 
@@ -202,7 +202,7 @@ impl EngineFactory {
                 EngineFactory,
                 EnumerateAdapters,
                 version,
-                std::ptr::addr_of_mut!(num_adapters),
+                &mut num_adapters,
                 adapters.as_mut_ptr() as _
             );
 

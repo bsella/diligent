@@ -1521,7 +1521,7 @@ impl CommandQueueInfo {
 }
 
 #[repr(transparent)]
-pub struct GraphicsAdapterInfo(diligent_sys::GraphicsAdapterInfo);
+pub struct GraphicsAdapterInfo(pub(crate) diligent_sys::GraphicsAdapterInfo);
 impl GraphicsAdapterInfo {
     pub fn description(&self) -> &CStr {
         unsafe { CStr::from_ptr(self.0.Description.as_ptr()) }

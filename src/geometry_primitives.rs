@@ -82,15 +82,11 @@ pub fn create_geometry_primitive(
     unsafe {
         diligent_sys::Diligent_CreateGeometryPrimitive(
             match attribs {
-                GeometryPrimitiveType::Cube(attribs) => {
-                    std::ptr::from_ref(&attribs._GeometryPrimitiveAttributes)
-                }
-                GeometryPrimitiveType::Sphere(attribs) => {
-                    std::ptr::from_ref(&attribs._GeometryPrimitiveAttributes)
-                }
+                GeometryPrimitiveType::Cube(attribs) => &attribs._GeometryPrimitiveAttributes,
+                GeometryPrimitiveType::Sphere(attribs) => &attribs._GeometryPrimitiveAttributes,
             },
-            std::ptr::addr_of_mut!(vertices),
-            std::ptr::addr_of_mut!(indices),
+            &mut vertices,
+            &mut indices,
             info.as_mut_ptr(),
         );
     }

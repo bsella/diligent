@@ -152,13 +152,7 @@ impl Buffer {
     pub fn create_view(&self, view_desc: &BufferViewDesc) -> Result<Boxed<BufferView>, ()> {
         let mut buffer_view_ptr = std::ptr::null_mut();
 
-        unsafe_member_call!(
-            self,
-            Buffer,
-            CreateView,
-            std::ptr::from_ref(&view_desc.0),
-            std::ptr::addr_of_mut!(buffer_view_ptr)
-        );
+        unsafe_member_call!(self, Buffer, CreateView, &view_desc.0, &mut buffer_view_ptr);
 
         if buffer_view_ptr.is_null() {
             Err(())
@@ -255,7 +249,7 @@ impl<'a, T: Sized, State: MapType> BufferMapToken<'a, T, State> {
             std::ptr::from_ref(&buffer.0) as *mut _,
             State::MAP_TYPE,
             map_flags,
-            std::ptr::addr_of_mut!(ptr)
+            &mut ptr
         );
 
         BufferMapToken::<T, State> {

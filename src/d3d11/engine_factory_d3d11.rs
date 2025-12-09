@@ -115,8 +115,8 @@ impl EngineFactoryD3D11 {
             self,
             EngineFactoryD3D11,
             CreateDeviceAndContextsD3D11,
-            std::ptr::from_ref(&engine_ci),
-            std::ptr::addr_of_mut!(render_device_ptr),
+            &engine_ci,
+            &mut render_device_ptr,
             device_context_ptrs.as_mut_ptr()
         );
 
@@ -160,10 +160,10 @@ impl EngineFactoryD3D11 {
             CreateSwapChainD3D11,
             device.sys_ptr(),
             context.sys_ptr(),
-            std::ptr::from_ref(&swapchain_desc),
-            std::ptr::from_ref(&fs_desc),
-            std::ptr::from_ref(&window.0),
-            std::ptr::addr_of_mut!(swap_chain_ptr)
+            &swapchain_desc,
+            &fs_desc,
+            &window.0,
+            mut &swap_chain_ptr
         );
 
         if swap_chain_ptr.is_null() {
@@ -207,8 +207,8 @@ impl EngineFactoryD3D11 {
             AttachToD3D11Device,
             native_device,
             immediate_context.sys_ptr() as _,
-            std::ptr::from_ref(&engine_ci),
-            std::ptr::addr_of_mut!(render_device_ptr),
+            &engine_ci,
+            &mut render_device_ptr,
             device_context_ptrs.as_mut_ptr()
         );
 

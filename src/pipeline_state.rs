@@ -380,11 +380,11 @@ impl<'a> PipelineStateCreateInfo<'a> {
                         NumVariables: shader_resource_variables.len() as u32,
                         Variables: shader_resource_variables
                             .first()
-                            .map_or(std::ptr::null(), |v| std::ptr::from_ref(&v.0)),
+                            .map_or(std::ptr::null(), |v| &v.0),
                         NumImmutableSamplers: immutable_samplers.len() as u32,
                         ImmutableSamplers: immutable_samplers
                             .first()
-                            .map_or(std::ptr::null(), |sampler| std::ptr::from_ref(&sampler.0)),
+                            .map_or(std::ptr::null(), |sampler| &sampler.0),
                     },
                     ImmediateContextMask: immediate_context_mask,
                     PipelineType: pipeline_type,
@@ -798,7 +798,7 @@ impl<'a> GraphicsPipelineDesc<'a> {
                 InputLayout: diligent_sys::InputLayoutDesc {
                     LayoutElements: input_layouts
                         .first()
-                        .map_or(std::ptr::null(), |layout| std::ptr::from_ref(&layout.0)),
+                        .map_or(std::ptr::null(), |layout| &layout.0),
                     NumElements: input_layouts.len() as u32,
                 },
                 PrimitiveTopology: primitive_topology.into(),
@@ -1015,23 +1015,15 @@ impl<'a> RayTracingPipelineStateCreateInfo<'a> {
                 },
                 pGeneralShaders: general_shaders
                     .first()
-                    .map_or(std::ptr::null(), |shader| std::ptr::from_ref(&shader.0)),
+                    .map_or(std::ptr::null(), |shader| &shader.0),
                 GeneralShaderCount: general_shaders.len() as u32,
                 pTriangleHitShaders: triangle_hit_shaders
-                    .map(|shaders| {
-                        shaders
-                            .first()
-                            .map_or(std::ptr::null(), |shader| std::ptr::from_ref(&shader.0))
-                    })
+                    .map(|shaders| shaders.first().map_or(std::ptr::null(), |shader| &shader.0))
                     .unwrap_or(std::ptr::null()),
                 TriangleHitShaderCount: triangle_hit_shaders.map_or(0, |shaders| shaders.len())
                     as u32,
                 pProceduralHitShaders: procedural_hit_shaders
-                    .map(|shaders| {
-                        shaders
-                            .first()
-                            .map_or(std::ptr::null(), |shader| std::ptr::from_ref(&shader.0))
-                    })
+                    .map(|shaders| shaders.first().map_or(std::ptr::null(), |shader| &shader.0))
                     .unwrap_or(std::ptr::null()),
                 ProceduralHitShaderCount: procedural_hit_shaders.map_or(0, |shaders| shaders.len())
                     as u32,
@@ -1126,7 +1118,7 @@ impl PipelineState {
             self,
             PipelineState,
             CreateShaderResourceBinding,
-            std::ptr::addr_of_mut!(shader_resource_binding_ptr),
+            &mut shader_resource_binding_ptr,
             init_static_resources
         );
 

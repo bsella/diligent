@@ -63,7 +63,7 @@ impl RenderDeviceVk {
             vk_image,
             &texture_desc.0,
             initial_state.bits(),
-            std::ptr::addr_of_mut!(texture_ptr)
+            &mut texture_ptr
         );
 
         if texture_ptr.is_null() {
@@ -90,7 +90,7 @@ impl RenderDeviceVk {
             vk_buffer,
             &buffer_desc.0,
             initial_state.bits(),
-            std::ptr::addr_of_mut!(buffer_ptr)
+            &mut buffer_ptr
         );
 
         if buffer_ptr.is_null() {
@@ -117,7 +117,7 @@ impl RenderDeviceVk {
             vk_blas,
             &blas_desc.0,
             initial_state.bits(),
-            std::ptr::addr_of_mut!(bottom_level_as_ptr)
+            &mut bottom_level_as_ptr
         );
 
         if bottom_level_as_ptr.is_null() {
@@ -144,7 +144,7 @@ impl RenderDeviceVk {
             vk_tlas,
             &tlas_desc.0,
             initial_state.bits(),
-            std::ptr::addr_of_mut!(top_level_as_ptr)
+            &mut top_level_as_ptr
         );
 
         if top_level_as_ptr.is_null() {
@@ -169,7 +169,7 @@ impl RenderDeviceVk {
             CreateFenceFromVulkanResource,
             vk_timeline_semaphore,
             &fence_desc.0,
-            std::ptr::addr_of_mut!(fence_ptr)
+            &mut fence_ptr
         );
 
         if fence_ptr.is_null() {

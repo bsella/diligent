@@ -105,9 +105,9 @@ impl RenderDevice {
             self,
             RenderDevice,
             CreateBuffer,
-            std::ptr::from_ref(&buffer_desc.0),
+            &buffer_desc.0,
             std::ptr::null(),
-            std::ptr::addr_of_mut!(buffer_ptr)
+            &mut buffer_ptr
         );
 
         if buffer_ptr.is_null() {
@@ -135,9 +135,9 @@ impl RenderDevice {
             self,
             RenderDevice,
             CreateBuffer,
-            std::ptr::from_ref(&buffer_desc.0),
-            std::ptr::from_ref(&buffer_data),
-            std::ptr::addr_of_mut!(buffer_ptr)
+            &buffer_desc.0,
+            &buffer_data,
+            &mut buffer_ptr
         );
 
         if buffer_ptr.is_null() {
@@ -161,8 +161,8 @@ impl RenderDevice {
             RenderDevice,
             CreateShader,
             std::ptr::from_ref(&shader_ci_wrapper),
-            std::ptr::addr_of_mut!(shader_ptr),
-            std::ptr::addr_of_mut!(data_blob_ptr)
+            &mut shader_ptr,
+            &mut data_blob_ptr
         );
 
         if shader_ptr.is_null() {
@@ -196,13 +196,13 @@ impl RenderDevice {
             self,
             RenderDevice,
             CreateTexture,
-            std::ptr::from_ref(&texture_desc.0),
+            &texture_desc.0,
             if device_context.is_none() && subresources.is_empty() {
                 std::ptr::null()
             } else {
-                std::ptr::addr_of!(texture_data)
+                &texture_data
             },
-            std::ptr::addr_of_mut!(texture_ptr)
+            &mut texture_ptr
         );
 
         if texture_ptr.is_null() {
@@ -220,8 +220,8 @@ impl RenderDevice {
             self,
             RenderDevice,
             CreateSampler,
-            std::ptr::addr_of!(sampler_desc),
-            std::ptr::addr_of_mut!(sampler_ptr)
+            &sampler_desc,
+            &mut sampler_ptr
         );
 
         if sampler_ptr.is_null() {
@@ -240,8 +240,8 @@ impl RenderDevice {
             self,
             RenderDevice,
             CreateResourceMapping,
-            std::ptr::from_ref(&resource_mapping_ci.0),
-            std::ptr::addr_of_mut!(resource_mapping_ptr)
+            &resource_mapping_ci.0,
+            &mut resource_mapping_ptr
         );
 
         if resource_mapping_ptr.is_null() {
@@ -261,8 +261,8 @@ impl RenderDevice {
             self,
             RenderDevice,
             CreateGraphicsPipelineState,
-            std::ptr::from_ref(&pipeline_ci.0),
-            std::ptr::addr_of_mut!(pipeline_state_ptr)
+            &pipeline_ci.0,
+            &mut pipeline_state_ptr
         );
 
         if pipeline_state_ptr.is_null() {
@@ -282,8 +282,8 @@ impl RenderDevice {
             self,
             RenderDevice,
             CreateComputePipelineState,
-            std::ptr::from_ref(&pipeline_ci.0),
-            std::ptr::addr_of_mut!(pipeline_state_ptr)
+            &pipeline_ci.0,
+            &mut pipeline_state_ptr
         );
 
         if pipeline_state_ptr.is_null() {
@@ -303,8 +303,8 @@ impl RenderDevice {
             self,
             RenderDevice,
             CreateRayTracingPipelineState,
-            std::ptr::from_ref(&pipeline_ci.0),
-            std::ptr::addr_of_mut!(pipeline_state_ptr)
+            &pipeline_ci.0,
+            &mut pipeline_state_ptr
         );
 
         if pipeline_state_ptr.is_null() {
@@ -326,8 +326,8 @@ impl RenderDevice {
             self,
             RenderDevice,
             CreateTilePipelineState,
-            std::ptr::from_ref(&pipeline_ci.0),
-            std::ptr::addr_of_mut!(pipeline_state_ptr)
+            &pipeline_ci.0,
+            &mut pipeline_state_ptr
         );
 
         if pipeline_state_ptr.is_null() {
@@ -343,8 +343,8 @@ impl RenderDevice {
             self,
             RenderDevice,
             CreateFence,
-            std::ptr::from_ref(&fence_desc.0),
-            std::ptr::addr_of_mut!(fence_ptr)
+            &fence_desc.0,
+            &mut fence_ptr
         );
 
         if fence_ptr.is_null() {
@@ -367,13 +367,7 @@ impl RenderDevice {
 
         let mut query_ptr = std::ptr::null_mut();
 
-        unsafe_member_call!(
-            self,
-            RenderDevice,
-            CreateQuery,
-            std::ptr::from_ref(&query_desc),
-            std::ptr::addr_of_mut!(query_ptr)
-        );
+        unsafe_member_call!(self, RenderDevice, CreateQuery, &query_desc, &mut query_ptr);
 
         if query_ptr.is_null() {
             Err(())
@@ -551,8 +545,8 @@ impl RenderDevice {
             self,
             RenderDevice,
             CreateRenderPass,
-            std::ptr::from_ref(&desc),
-            std::ptr::addr_of_mut!(render_pass_ptr)
+            &desc,
+            &mut render_pass_ptr
         );
 
         if render_pass_ptr.is_null() {
@@ -589,8 +583,8 @@ impl RenderDevice {
             self,
             RenderDevice,
             CreateFramebuffer,
-            std::ptr::from_ref(&desc),
-            std::ptr::addr_of_mut!(frame_buffer_ptr)
+            &desc,
+            &mut frame_buffer_ptr
         );
 
         if frame_buffer_ptr.is_null() {
@@ -602,13 +596,7 @@ impl RenderDevice {
 
     pub fn create_blas(&self, desc: &BottomLevelASDesc) -> Result<Boxed<BottomLevelAS>, ()> {
         let mut blas_ptr = std::ptr::null_mut();
-        unsafe_member_call!(
-            self,
-            RenderDevice,
-            CreateBLAS,
-            std::ptr::from_ref(&desc.0),
-            std::ptr::addr_of_mut!(blas_ptr)
-        );
+        unsafe_member_call!(self, RenderDevice, CreateBLAS, &desc.0, &mut blas_ptr);
 
         if blas_ptr.is_null() {
             Err(())
@@ -619,13 +607,7 @@ impl RenderDevice {
 
     pub fn create_tlas(&self, desc: &TopLevelASDesc) -> Result<Boxed<TopLevelAS>, ()> {
         let mut tlas_ptr = std::ptr::null_mut();
-        unsafe_member_call!(
-            self,
-            RenderDevice,
-            CreateTLAS,
-            std::ptr::from_ref(&desc.0),
-            std::ptr::addr_of_mut!(tlas_ptr)
-        );
+        unsafe_member_call!(self, RenderDevice, CreateTLAS, &desc.0, &mut tlas_ptr);
 
         if tlas_ptr.is_null() {
             Err(())
@@ -639,13 +621,7 @@ impl RenderDevice {
         desc: &ShaderBindingTableDesc,
     ) -> Result<Boxed<ShaderBindingTable>, ()> {
         let mut sbt_ptr = std::ptr::null_mut();
-        unsafe_member_call!(
-            self,
-            RenderDevice,
-            CreateSBT,
-            std::ptr::from_ref(&desc.0),
-            std::ptr::addr_of_mut!(sbt_ptr)
-        );
+        unsafe_member_call!(self, RenderDevice, CreateSBT, &desc.0, &mut sbt_ptr);
 
         if sbt_ptr.is_null() {
             Err(())
@@ -663,8 +639,8 @@ impl RenderDevice {
             self,
             RenderDevice,
             CreatePipelineResourceSignature,
-            std::ptr::from_ref(&desc.0),
-            std::ptr::addr_of_mut!(prs_ptr)
+            &desc.0,
+            &mut prs_ptr
         );
 
         if prs_ptr.is_null() {
@@ -696,8 +672,8 @@ impl RenderDevice {
             self,
             RenderDevice,
             CreateDeviceMemory,
-            std::ptr::from_ref(&create_info),
-            std::ptr::addr_of_mut!(device_memory_ptr)
+            &create_info,
+            &mut device_memory_ptr
         );
 
         if device_memory_ptr.is_null() {
@@ -717,8 +693,8 @@ impl RenderDevice {
             self,
             RenderDevice,
             CreatePipelineStateCache,
-            std::ptr::from_ref(&create_info),
-            std::ptr::addr_of_mut!(pso_cache_ptr)
+            &create_info,
+            &mut pso_cache_ptr
         );
 
         if pso_cache_ptr.is_null() {
@@ -734,7 +710,7 @@ impl RenderDevice {
             self,
             RenderDevice,
             CreateDeferredContext,
-            std::ptr::addr_of_mut!(deferred_context_ptr)
+            &mut deferred_context_ptr
         );
 
         if deferred_context_ptr.is_null() {

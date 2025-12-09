@@ -340,7 +340,7 @@ where
             display,
             x11::xlib::XDefaultScreen(display),
             visual_attribs.as_ptr(),
-            std::ptr::addr_of_mut!(fbcount),
+            &mut fbcount,
         );
 
         if fbc.is_null() {
@@ -394,11 +394,11 @@ where
             x11::xlib::InputOutput as u32,
             (*vi).visual,
             x11::xlib::CWBorderPixel | x11::xlib::CWColormap | x11::xlib::CWEventMask,
-            std::ptr::addr_of_mut!(swa),
+            &mut swa,
         );
 
         if win == 0 {
-            return Err(Error::new(ErrorKind::Other, "Failed to create window."));
+            return Err(Error::other("Failed to create window."));
         }
 
         {
@@ -424,8 +424,7 @@ where
         };
 
         if gl_x_create_context_attribs_arb.is_none() {
-            return Err(Error::new(
-                ErrorKind::Other,
+            return Err(Error::other(
                 "glXCreateContextAttribsARB entry point not found. Aborting.",
             ));
         }

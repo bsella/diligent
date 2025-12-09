@@ -113,13 +113,9 @@ impl<'a> BottomLevelASDesc<'a> {
                 _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
                     Name: name.as_ref().map_or(std::ptr::null(), |name| name.as_ptr()),
                 },
-                pTriangles: triangles
-                    .first()
-                    .map_or(std::ptr::null(), |tr| std::ptr::from_ref(&tr.0)),
+                pTriangles: triangles.first().map_or(std::ptr::null(), |tr| &tr.0),
                 TriangleCount: triangles.len() as u32,
-                pBoxes: boxes
-                    .first()
-                    .map_or(std::ptr::null(), |bx| std::ptr::from_ref(&bx.0)),
+                pBoxes: boxes.first().map_or(std::ptr::null(), |bx| &bx.0),
                 BoxCount: boxes.len() as u32,
                 Flags: flags.bits(),
                 CompactedSize: compacted_size,

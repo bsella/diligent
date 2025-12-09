@@ -172,8 +172,8 @@ impl EngineFactoryD3D12 {
             self,
             EngineFactoryD3D12,
             CreateDeviceAndContextsD3D12,
-            std::ptr::from_ref(&engine_ci),
-            std::ptr::addr_of_mut!(render_device_ptr),
+            &engine_ci,
+            &mut render_device_ptr,
             device_context_ptrs.as_mut_ptr()
         );
 
@@ -238,10 +238,10 @@ impl EngineFactoryD3D12 {
             CreateSwapChainD3D12,
             device.sys_ptr(),
             context.sys_ptr(),
-            std::ptr::from_ref(&swapchain_desc),
-            std::ptr::from_ref(&fs_desc),
-            std::ptr::from_ref(&window.0),
-            std::ptr::addr_of_mut!(swap_chain_ptr)
+            &swapchain_desc,
+            &fs_desc,
+            &window.0,
+            &mut swap_chain_ptr
         );
 
         if swap_chain_ptr.is_null() {
@@ -271,7 +271,7 @@ impl EngineFactoryD3D12 {
             adapter_id,
             output_id,
             format.into(),
-            std::ptr::from_mut(&mut num_display_modes),
+            &mut num_display_modes,
             std::ptr::null_mut()
         );
 

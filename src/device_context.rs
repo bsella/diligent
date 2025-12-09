@@ -731,11 +731,11 @@ impl<'a> BuildBLASAttribs<'a> {
                 GeometryTransitionMode: geometry_transition_mode.into(),
                 pTriangleData: triangle_data
                     .first()
-                    .map_or(std::ptr::null(), |triangle| std::ptr::from_ref(&triangle.0)),
+                    .map_or(std::ptr::null(), |triangle| &triangle.0),
                 TriangleDataCount: triangle_data.len() as u32,
                 pBoxData: box_data
                     .first()
-                    .map_or(std::ptr::null(), |box_data| std::ptr::from_ref(&box_data.0)),
+                    .map_or(std::ptr::null(), |box_data| &box_data.0),
                 BoxDataCount: box_data.len() as u32,
                 pScratchBuffer: scratch_buffer.sys_ptr(),
                 ScratchBufferOffset: scratch_buffer_offset,
@@ -795,7 +795,7 @@ impl<'a> BuildTLASAttribs<'a> {
                 BLASTransitionMode: blas_transition_mode.into(),
                 pInstances: instances
                     .first()
-                    .map_or(std::ptr::null(), |instance| std::ptr::from_ref(&instance.0)),
+                    .map_or(std::ptr::null(), |instance| &instance.0),
                 InstanceCount: instances.len() as u32,
                 pInstanceBuffer: instance_buffer.sys_ptr(),
                 InstanceBufferOffset: instance_buffer_offset,
@@ -919,7 +919,7 @@ impl<'a> CopyTextureAttribs<'a> {
                 pSrcTexture: src_texture.sys_ptr(),
                 SrcMipLevel: src_mip_level,
                 SrcSlice: src_slice,
-                pSrcBox: std::ptr::from_ref(&src_box.0),
+                pSrcBox: &src_box.0,
                 SrcTextureTransitionMode: src_texture_transition_mode.into(),
                 pDstTexture: dst_texture.sys_ptr(),
                 DstMipLevel: dst_mip_level,
@@ -1360,9 +1360,7 @@ impl SparseBufferMemoryBindInfo {
     pub fn new(buffer: &Buffer, ranges: &[SparseBufferMemoryBindRange]) -> Self {
         Self(diligent_sys::SparseBufferMemoryBindInfo {
             pBuffer: buffer.sys_ptr(),
-            pRanges: ranges
-                .first()
-                .map_or(std::ptr::null(), |r| std::ptr::from_ref(&r.0)),
+            pRanges: ranges.first().map_or(std::ptr::null(), |r| &r.0),
             NumRanges: ranges.len() as u32,
         })
     }
@@ -1377,9 +1375,7 @@ impl SparseTextureMemoryBindInfo {
     pub fn new(texture: &Texture, ranges: &[SparseTextureMemoryBindRange]) -> Self {
         Self(diligent_sys::SparseTextureMemoryBindInfo {
             pTexture: texture.sys_ptr(),
-            pRanges: ranges
-                .first()
-                .map_or(std::ptr::null(), |r| std::ptr::from_ref(&r.0)),
+            pRanges: ranges.first().map_or(std::ptr::null(), |r| &r.0),
             NumRanges: ranges.len() as u32,
         })
     }
@@ -1402,11 +1398,11 @@ impl BindSparseResourceMemoryAttribs {
         Self(diligent_sys::BindSparseResourceMemoryAttribs {
             pBufferBinds: buffer_binds
                 .first()
-                .map_or(std::ptr::null(), |binds| std::ptr::from_ref(&binds.0)),
+                .map_or(std::ptr::null(), |binds| &binds.0),
             NumBufferBinds: buffer_binds.len() as u32,
             pTextureBinds: texture_binds
                 .first()
-                .map_or(std::ptr::null(), |binds| std::ptr::from_ref(&binds.0)),
+                .map_or(std::ptr::null(), |binds| &binds.0),
             NumTextureBinds: texture_binds.len() as u32,
             ppWaitFences: unsafe {
                 std::mem::transmute::<&[&Fence], &[*mut diligent_sys::IFence]>(wait_fences)
@@ -1440,12 +1436,7 @@ pub struct RenderPassToken<'a> {
 
 impl<'a> RenderPassToken<'a> {
     pub fn new(context: &'a DeviceContext, attribs: &BeginRenderPassAttribs) -> Self {
-        unsafe_member_call!(
-            context,
-            DeviceContext,
-            BeginRenderPass,
-            std::ptr::from_ref(&attribs.0)
-        );
+        unsafe_member_call!(context, DeviceContext, BeginRenderPass, &attribs.0);
 
         RenderPassToken { context }
     }
@@ -1467,39 +1458,19 @@ pub struct GraphicsPipelineToken<'a> {
 
 impl<'a> GraphicsPipelineToken<'a> {
     pub fn draw(&self, attribs: &DrawAttribs) {
-        unsafe_member_call!(
-            self.context,
-            DeviceContext,
-            Draw,
-            std::ptr::from_ref(&attribs.0)
-        )
+        unsafe_member_call!(self.context, DeviceContext, Draw, &attribs.0)
     }
 
     pub fn draw_indexed(&self, attribs: &DrawIndexedAttribs) {
-        unsafe_member_call!(
-            self.context,
-            DeviceContext,
-            DrawIndexed,
-            std::ptr::from_ref(&attribs.0)
-        )
+        unsafe_member_call!(self.context, DeviceContext, DrawIndexed, &attribs.0)
     }
 
     pub fn draw_indirect(&self, attribs: &DrawIndirectAttribs) {
-        unsafe_member_call!(
-            self.context,
-            DeviceContext,
-            DrawIndirect,
-            std::ptr::from_ref(&attribs.0)
-        )
+        unsafe_member_call!(self.context, DeviceContext, DrawIndirect, &attribs.0)
     }
 
     pub fn draw_indexed_indirect(&self, attribs: &DrawIndexedIndirectAttribs) {
-        unsafe_member_call!(
-            self.context,
-            DeviceContext,
-            DrawIndexedIndirect,
-            std::ptr::from_ref(&attribs.0)
-        )
+        unsafe_member_call!(self.context, DeviceContext, DrawIndexedIndirect, &attribs.0)
     }
 
     pub fn multi_draw(&self, attribs: &MultiDrawAttribs) {
@@ -1518,12 +1489,7 @@ impl<'a> GraphicsPipelineToken<'a> {
             NumInstances: attribs.num_instances,
             FirstInstanceLocation: attribs.first_instance_location,
         };
-        unsafe_member_call!(
-            self.context,
-            DeviceContext,
-            MultiDraw,
-            std::ptr::from_ref(&attribs)
-        )
+        unsafe_member_call!(self.context, DeviceContext, MultiDraw, &attribs)
     }
 
     pub fn multi_draw_indexed(&self, attribs: &MultiDrawIndexedAttribs) {
@@ -1544,12 +1510,7 @@ impl<'a> GraphicsPipelineToken<'a> {
             NumInstances: attribs.num_instances,
             FirstInstanceLocation: attribs.first_instance_location,
         };
-        unsafe_member_call!(
-            self.context,
-            DeviceContext,
-            MultiDrawIndexed,
-            std::ptr::from_ref(&attribs)
-        )
+        unsafe_member_call!(self.context, DeviceContext, MultiDrawIndexed, &attribs)
     }
 }
 
@@ -1559,21 +1520,11 @@ pub struct MeshPipelineToken<'a> {
 
 impl<'a> MeshPipelineToken<'a> {
     pub fn draw_mesh(&self, attribs: &DrawMeshAttribs) {
-        unsafe_member_call!(
-            self.context,
-            DeviceContext,
-            DrawMesh,
-            std::ptr::from_ref(&attribs.0)
-        )
+        unsafe_member_call!(self.context, DeviceContext, DrawMesh, &attribs.0)
     }
 
     pub fn draw_mesh_indirect(&self, attribs: &DrawMeshIndirectAttribs) {
-        unsafe_member_call!(
-            self.context,
-            DeviceContext,
-            DrawMeshIndirect,
-            std::ptr::from_ref(&attribs.0)
-        )
+        unsafe_member_call!(self.context, DeviceContext, DrawMeshIndirect, &attribs.0)
     }
 }
 
@@ -1583,12 +1534,7 @@ pub struct ComputePipelineToken<'a> {
 
 impl<'a> ComputePipelineToken<'a> {
     pub fn dispatch_compute(&self, attribs: &DispatchComputeAttribs) {
-        unsafe_member_call!(
-            self.context,
-            DeviceContext,
-            DispatchCompute,
-            std::ptr::from_ref(&attribs.0)
-        )
+        unsafe_member_call!(self.context, DeviceContext, DispatchCompute, &attribs.0)
     }
 
     pub fn dispatch_compute_indirect(&self, attribs: &DispatchComputeIndirectAttribs) {
@@ -1596,7 +1542,7 @@ impl<'a> ComputePipelineToken<'a> {
             self.context,
             DeviceContext,
             DispatchComputeIndirect,
-            std::ptr::from_ref(&attribs.0)
+            &attribs.0
         )
     }
 }
@@ -1607,12 +1553,7 @@ pub struct TilePipelineToken<'a> {
 
 impl<'a> TilePipelineToken<'a> {
     pub fn dispatch_tile(&self, attribs: &DispatchTileAttribs) {
-        unsafe_member_call!(
-            self.context,
-            DeviceContext,
-            DispatchTile,
-            std::ptr::from_ref(&attribs.0)
-        )
+        unsafe_member_call!(self.context, DeviceContext, DispatchTile, &attribs.0)
     }
 }
 
@@ -1622,21 +1563,11 @@ pub struct RayTracingPipelineToken<'a> {
 
 impl<'a> RayTracingPipelineToken<'a> {
     pub fn trace_rays(&self, attribs: &TraceRaysAttribs) {
-        unsafe_member_call!(
-            self.context,
-            DeviceContext,
-            TraceRays,
-            std::ptr::from_ref(&attribs.0)
-        )
+        unsafe_member_call!(self.context, DeviceContext, TraceRays, &attribs.0)
     }
 
     pub fn trace_rays_indirect(&self, attribs: &TraceRaysIndirectAttribs) {
-        unsafe_member_call!(
-            self.context,
-            DeviceContext,
-            TraceRaysIndirect,
-            std::ptr::from_ref(&attribs.0)
-        )
+        unsafe_member_call!(self.context, DeviceContext, TraceRaysIndirect, &attribs.0)
     }
 }
 
@@ -1825,7 +1756,7 @@ impl DeviceContext {
             viewports.len() as u32,
             viewports
                 .first()
-                .map_or(std::ptr::null(), |viewport| std::ptr::from_ref(&viewport.0)),
+                .map_or(std::ptr::null(), |viewport| &viewport.0),
             render_target_width,
             render_target_height
         )
@@ -1842,9 +1773,7 @@ impl DeviceContext {
             DeviceContext,
             SetScissorRects,
             rects.len() as u32,
-            rects
-                .first()
-                .map_or(std::ptr::null(), |rect| std::ptr::from_ref(&rect.0)),
+            rects.first().map_or(std::ptr::null(), |rect| &rect.0),
             render_target_width,
             render_target_height
         )
@@ -1878,8 +1807,8 @@ impl DeviceContext {
             self,
             DeviceContext,
             GetTileSize,
-            std::ptr::addr_of_mut!(tile_size_x),
-            std::ptr::addr_of_mut!(tile_size_y)
+            &mut tile_size_x,
+            &mut tile_size_y
         );
         (tile_size_x, tile_size_y)
     }
@@ -2074,20 +2003,15 @@ impl DeviceContext {
             texture.sys_ptr(),
             mip_level,
             slice,
-            std::ptr::from_ref(&dst_box.0),
-            std::ptr::addr_of!(subres_data),
+            &dst_box.0,
+            &subres_data,
             src_buffer_transition_mode.into(),
             texture_transition_mode.into()
         )
     }
 
     pub fn copy_texture(&self, copy_attribs: &CopyTextureAttribs) {
-        unsafe_member_call!(
-            self,
-            DeviceContext,
-            CopyTexture,
-            std::ptr::from_ref(&copy_attribs.0)
-        )
+        unsafe_member_call!(self, DeviceContext, CopyTexture, &copy_attribs.0)
     }
 
     pub fn map_texture_subresource_read<'a, T>(
@@ -2162,9 +2086,9 @@ impl DeviceContext {
             DeviceContext,
             TransitionResourceStates,
             barriers.len() as u32,
-            barriers.first().map_or(std::ptr::null(), |barrier| {
-                std::ptr::from_ref(&barrier.0)
-            })
+            barriers
+                .first()
+                .map_or(std::ptr::null(), |barrier| { &barrier.0 })
         )
     }
 
@@ -2180,62 +2104,32 @@ impl DeviceContext {
             ResolveTextureSubresource,
             src_texture.sys_ptr(),
             dst_texture.sys_ptr(),
-            std::ptr::from_ref(&resolve_attribs.0)
+            &resolve_attribs.0
         )
     }
 
     pub fn build_blas(&self, attribs: &BuildBLASAttribs) {
-        unsafe_member_call!(
-            self,
-            DeviceContext,
-            BuildBLAS,
-            std::ptr::from_ref(&attribs.0)
-        )
+        unsafe_member_call!(self, DeviceContext, BuildBLAS, &attribs.0)
     }
 
     pub fn build_tlas<'a>(&self, attribs: &BuildTLASAttribs<'a>) {
-        unsafe_member_call!(
-            self,
-            DeviceContext,
-            BuildTLAS,
-            std::ptr::from_ref(&attribs.0)
-        )
+        unsafe_member_call!(self, DeviceContext, BuildTLAS, &attribs.0)
     }
 
     pub fn copy_blas(&self, attribs: &CopyBLASAttribs) {
-        unsafe_member_call!(
-            self,
-            DeviceContext,
-            CopyBLAS,
-            std::ptr::from_ref(&attribs.0)
-        )
+        unsafe_member_call!(self, DeviceContext, CopyBLAS, &attribs.0)
     }
 
     pub fn copy_tlas(&self, attribs: &CopyTLASAttribs) {
-        unsafe_member_call!(
-            self,
-            DeviceContext,
-            CopyTLAS,
-            std::ptr::from_ref(&attribs.0)
-        )
+        unsafe_member_call!(self, DeviceContext, CopyTLAS, &attribs.0)
     }
 
     pub fn write_blas_compacted_size(&self, attribs: &WriteBLASCompactedSizeAttribs) {
-        unsafe_member_call!(
-            self,
-            DeviceContext,
-            WriteBLASCompactedSize,
-            std::ptr::from_ref(&attribs.0)
-        )
+        unsafe_member_call!(self, DeviceContext, WriteBLASCompactedSize, &attribs.0)
     }
 
     pub fn write_tlas_compacted_size(&self, attribs: &WriteTLASCompactedSizeAttribs) {
-        unsafe_member_call!(
-            self,
-            DeviceContext,
-            WriteTLASCompactedSize,
-            std::ptr::from_ref(&attribs.0)
-        )
+        unsafe_member_call!(self, DeviceContext, WriteTLASCompactedSize, &attribs.0)
     }
 
     pub fn update_sbt(
@@ -2248,9 +2142,7 @@ impl DeviceContext {
             DeviceContext,
             UpdateSBT,
             sbt.sys_ptr(),
-            attribs.map_or(std::ptr::null_mut(), |attribs| std::ptr::from_ref(
-                &attribs.0
-            ))
+            attribs.map_or(std::ptr::null_mut(), |attribs| &attribs.0)
         )
     }
 
@@ -2357,12 +2249,7 @@ impl ImmediateDeviceContext {
     }
 
     pub fn bind_sparse_resource_memory(&self, attribs: &BindSparseResourceMemoryAttribs) {
-        unsafe_member_call!(
-            self.0,
-            DeviceContext,
-            BindSparseResourceMemory,
-            std::ptr::from_ref(&attribs.0)
-        )
+        unsafe_member_call!(self.0, DeviceContext, BindSparseResourceMemory, &attribs.0)
     }
 
     pub fn device_wait_for_fence(&self, fence: &Fence, value: u64) {
@@ -2397,7 +2284,7 @@ impl DeferredDeviceContext {
             self.0,
             DeviceContext,
             FinishCommandList,
-            std::ptr::addr_of_mut!(command_list_ptr)
+            &mut command_list_ptr
         );
 
         if command_list_ptr.is_null() {
