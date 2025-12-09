@@ -10,22 +10,19 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct TextureViewVk<'a>(&'a TextureView);
+pub struct TextureViewVk(diligent_sys::ITextureViewVk);
 
-impl Deref for TextureViewVk<'_> {
+impl Deref for TextureViewVk {
     type Target = TextureView;
     fn deref(&self) -> &Self::Target {
-        self.0
+        unsafe {
+            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::ITextureView
+                as *const TextureView)
+        }
     }
 }
 
-impl<'a> From<&'a TextureView> for TextureViewVk<'a> {
-    fn from(value: &'a TextureView) -> Self {
-        TextureViewVk(value)
-    }
-}
-
-impl TextureViewVk<'_> {
+impl TextureViewVk {
     pub fn get_vulkan_image_view(&self) -> diligent_sys::VkImageView {
         unsafe_member_call!(self, TextureViewVk, GetVulkanImageView)
     }

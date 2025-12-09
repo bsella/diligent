@@ -10,22 +10,18 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct SwapChainVk<'a>(&'a SwapChain);
+pub struct SwapChainVk(diligent_sys::ISwapChainVk);
 
-impl Deref for SwapChainVk<'_> {
+impl Deref for SwapChainVk {
     type Target = SwapChain;
     fn deref(&self) -> &Self::Target {
-        self.0
+        unsafe {
+            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::ISwapChain as *const SwapChain)
+        }
     }
 }
 
-impl<'a> From<&'a SwapChain> for SwapChainVk<'a> {
-    fn from(value: &'a SwapChain) -> Self {
-        SwapChainVk(value)
-    }
-}
-
-impl SwapChainVk<'_> {
+impl SwapChainVk {
     pub fn get_vk_surface(&self) -> diligent_sys::VkSurfaceKHR {
         unsafe_member_call!(self, SwapChainVk, GetVkSurface)
     }

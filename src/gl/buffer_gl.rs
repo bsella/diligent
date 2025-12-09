@@ -10,22 +10,16 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct BufferGL<'a>(&'a Buffer);
+pub struct BufferGL(diligent_sys::IBufferGL);
 
-impl<'a> Deref for BufferGL<'a> {
+impl Deref for BufferGL {
     type Target = Buffer;
     fn deref(&self) -> &Self::Target {
-        self.0
+        unsafe { &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IBuffer as *const Buffer) }
     }
 }
 
-impl<'a> From<&'a Buffer> for BufferGL<'a> {
-    fn from(value: &'a Buffer) -> Self {
-        BufferGL(value)
-    }
-}
-
-impl BufferGL<'_> {
+impl BufferGL {
     pub fn get_buffer_handle(&self) -> diligent_sys::GLuint {
         unsafe_member_call!(self, BufferGL, GetGLBufferHandle)
     }

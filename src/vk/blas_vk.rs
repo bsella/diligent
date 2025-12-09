@@ -10,22 +10,19 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct BottomLevelASVk<'a>(&'a BottomLevelAS);
+pub struct BottomLevelASVk(diligent_sys::IBottomLevelASVk);
 
-impl<'a> Deref for BottomLevelASVk<'a> {
+impl Deref for BottomLevelASVk {
     type Target = BottomLevelAS;
     fn deref(&self) -> &Self::Target {
-        self.0
+        unsafe {
+            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IBottomLevelAS
+                as *const BottomLevelAS)
+        }
     }
 }
 
-impl<'a> From<&'a BottomLevelAS> for BottomLevelASVk<'a> {
-    fn from(value: &'a BottomLevelAS) -> Self {
-        BottomLevelASVk(value)
-    }
-}
-
-impl BottomLevelASVk<'_> {
+impl BottomLevelASVk {
     pub fn get_vk_blas(&self) -> diligent_sys::VkAccelerationStructureKHR {
         unsafe_member_call!(self, BottomLevelASVk, GetVkBLAS)
     }

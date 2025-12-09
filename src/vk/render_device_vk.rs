@@ -3,6 +3,7 @@ use std::ops::Deref;
 use static_assertions::const_assert_eq;
 
 use crate::{
+    BottomLevelAS, BottomLevelASDesc, Boxed, TopLevelAS, TopLevelASDesc,
     buffer::{Buffer, BufferDesc},
     fence::{Fence, FenceDesc},
     graphics_types::ResourceState,
@@ -16,22 +17,19 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct RenderDeviceVk<'a>(&'a RenderDevice);
+pub struct RenderDeviceVk(diligent_sys::IRenderDeviceVk);
 
-impl Deref for RenderDeviceVk<'_> {
+impl Deref for RenderDeviceVk {
     type Target = RenderDevice;
     fn deref(&self) -> &Self::Target {
-        self.0
+        unsafe {
+            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IRenderDevice
+                as *const RenderDevice)
+        }
     }
 }
 
-impl<'a> From<&'a RenderDevice> for RenderDeviceVk<'a> {
-    fn from(value: &'a RenderDevice) -> Self {
-        RenderDeviceVk(value)
-    }
-}
-
-impl RenderDeviceVk<'_> {
+impl RenderDeviceVk {
     pub fn get_vk_device(&self) -> diligent_sys::VkDevice {
         unsafe_member_call!(self, RenderDeviceVk, GetVkDevice)
     }
@@ -48,14 +46,14 @@ impl RenderDeviceVk<'_> {
         unsafe_member_call!(self, RenderDeviceVk, GetVkVersion)
     }
 
-    pub fn create_texture_from_vulkan_image(
+    /// # Safety
+    /// vk_image is a pointer. The user of this function must make sure that it is valid.
+    pub unsafe fn create_texture_from_vulkan_image(
         &self,
         vk_image: diligent_sys::VkImage,
         texture_desc: &TextureDesc,
         initial_state: ResourceState,
-    ) -> Option<Texture> {
-        let texture_desc = diligent_sys::TextureDesc::from(texture_desc);
-
+    ) -> Result<Boxed<Texture>, ()> {
         let mut texture_ptr = std::ptr::null_mut();
 
         unsafe_member_call!(
@@ -63,26 +61,26 @@ impl RenderDeviceVk<'_> {
             RenderDeviceVk,
             CreateTextureFromVulkanImage,
             vk_image,
-            std::ptr::from_ref(&texture_desc),
+            &texture_desc.0,
             initial_state.bits(),
             std::ptr::addr_of_mut!(texture_ptr)
         );
 
         if texture_ptr.is_null() {
-            None
+            Err(())
         } else {
-            Some(Texture::new(texture_ptr))
+            Ok(Boxed::new(texture_ptr as _))
         }
     }
 
-    pub fn create_buffer_from_vulkan_resource(
+    /// # Safety
+    /// vk_buffer is a pointer. The user of this function must make sure that it is valid.
+    pub unsafe fn create_buffer_from_vulkan_resource(
         &self,
         vk_buffer: diligent_sys::VkBuffer,
         buffer_desc: &BufferDesc,
         initial_state: ResourceState,
-    ) -> Option<Buffer> {
-        let buffer_desc = diligent_sys::BufferDesc::from(buffer_desc);
-
+    ) -> Result<Boxed<Buffer>, ()> {
         let mut buffer_ptr = std::ptr::null_mut();
 
         unsafe_member_call!(
@@ -90,29 +88,79 @@ impl RenderDeviceVk<'_> {
             RenderDeviceVk,
             CreateBufferFromVulkanResource,
             vk_buffer,
-            std::ptr::from_ref(&buffer_desc),
+            &buffer_desc.0,
             initial_state.bits(),
             std::ptr::addr_of_mut!(buffer_ptr)
         );
 
         if buffer_ptr.is_null() {
-            None
+            Err(())
         } else {
-            Some(Buffer::new(buffer_ptr))
+            Ok(Boxed::new(buffer_ptr as _))
         }
     }
 
-    // TODO
-    //pub fn create_blas_from_vulkan_resource(&self,   vkBLAS: VkAccelerationStructureKHR, blas_desc: &BottomLevelASDesc , RESOURCE_STATE              InitialState) -> Option<BottomLevelAS>{}
-    //pub fn create_tlas_from_vulkan_resource(&self,   vkTLAS: VkAccelerationStructureKHR, tlas_desc: &TopLevelASDesc    , RESOURCE_STATE             InitialState)  -> Option<TopLevelAS>{}
+    /// # Safety
+    /// vk_blas is a pointer. The user of this function must make sure that it is valid.
+    pub unsafe fn create_blas_from_vulkan_resource(
+        &self,
+        vk_blas: diligent_sys::VkAccelerationStructureKHR,
+        blas_desc: &BottomLevelASDesc,
+        initial_state: ResourceState,
+    ) -> Result<Boxed<BottomLevelAS>, ()> {
+        let mut bottom_level_as_ptr = std::ptr::null_mut();
 
-    pub fn create_fence_from_vulkan_resource(
+        unsafe_member_call!(
+            self,
+            RenderDeviceVk,
+            CreateBLASFromVulkanResource,
+            vk_blas,
+            &blas_desc.0,
+            initial_state.bits(),
+            std::ptr::addr_of_mut!(bottom_level_as_ptr)
+        );
+
+        if bottom_level_as_ptr.is_null() {
+            Err(())
+        } else {
+            Ok(Boxed::new(bottom_level_as_ptr as _))
+        }
+    }
+
+    /// # Safety
+    /// vk_tlas is a pointer. The user of this function must make sure that it is valid.
+    pub unsafe fn create_tlas_from_vulkan_resource(
+        &self,
+        vk_tlas: diligent_sys::VkAccelerationStructureKHR,
+        tlas_desc: &TopLevelASDesc,
+        initial_state: ResourceState,
+    ) -> Result<Boxed<TopLevelAS>, ()> {
+        let mut top_level_as_ptr = std::ptr::null_mut();
+
+        unsafe_member_call!(
+            self,
+            RenderDeviceVk,
+            CreateTLASFromVulkanResource,
+            vk_tlas,
+            &tlas_desc.0,
+            initial_state.bits(),
+            std::ptr::addr_of_mut!(top_level_as_ptr)
+        );
+
+        if top_level_as_ptr.is_null() {
+            Err(())
+        } else {
+            Ok(Boxed::new(top_level_as_ptr as _))
+        }
+    }
+
+    /// # Safety
+    /// vk_timeline_semaphore is a pointer. The user of this function must make sure that it is valid.
+    pub unsafe fn create_fence_from_vulkan_resource(
         &self,
         vk_timeline_semaphore: diligent_sys::VkSemaphore,
         fence_desc: &FenceDesc,
-    ) -> Option<Fence> {
-        let fence_desc = diligent_sys::FenceDesc::from(fence_desc);
-
+    ) -> Result<Boxed<Fence>, ()> {
         let mut fence_ptr = std::ptr::null_mut();
 
         unsafe_member_call!(
@@ -120,14 +168,14 @@ impl RenderDeviceVk<'_> {
             RenderDeviceVk,
             CreateFenceFromVulkanResource,
             vk_timeline_semaphore,
-            std::ptr::from_ref(&fence_desc),
+            &fence_desc.0,
             std::ptr::addr_of_mut!(fence_ptr)
         );
 
         if fence_ptr.is_null() {
-            None
+            Err(())
         } else {
-            Some(Fence::new(fence_ptr))
+            Ok(Boxed::<Fence>::new(fence_ptr as _))
         }
     }
 

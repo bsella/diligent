@@ -10,23 +10,22 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct CommandQueueVk<'a>(&'a CommandQueue<'a>);
+pub struct CommandQueueVk(diligent_sys::ICommandQueueVk);
 
-impl<'a> Deref for CommandQueueVk<'a> {
-    type Target = CommandQueue<'a>;
+impl Deref for CommandQueueVk {
+    type Target = CommandQueue;
     fn deref(&self) -> &Self::Target {
-        self.0
+        unsafe {
+            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::ICommandQueue
+                as *const CommandQueue)
+        }
     }
 }
 
-impl<'a> From<&'a CommandQueue<'a>> for CommandQueueVk<'a> {
-    fn from(value: &'a CommandQueue) -> Self {
-        CommandQueueVk(value)
-    }
-}
-
-impl CommandQueueVk<'_> {
-    pub fn submit_cmd_buffer(&self, cmd_buffer: diligent_sys::VkCommandBuffer) -> u64 {
+impl CommandQueueVk {
+    /// # Safety
+    /// cmd_buffer is a pointer. The user of this function must make sure that it is valid.
+    pub unsafe fn submit_cmd_buffer(&self, cmd_buffer: diligent_sys::VkCommandBuffer) -> u64 {
         unsafe_member_call!(self, CommandQueueVk, SubmitCmdBuffer, cmd_buffer)
     }
 
@@ -50,11 +49,19 @@ impl CommandQueueVk<'_> {
         unsafe_member_call!(self, CommandQueueVk, GetQueueFamilyIndex)
     }
 
-    pub fn enqueue_signal_fence(&self, vk_fence: diligent_sys::VkFence) {
+    /// # Safety
+    /// vk_fence is a pointer. The user of this function must make sure that it is valid.
+    pub unsafe fn enqueue_signal_fence(&self, vk_fence: diligent_sys::VkFence) {
         unsafe_member_call!(self, CommandQueueVk, EnqueueSignalFence, vk_fence)
     }
 
-    pub fn enqueue_signal(&self, vk_timeline_semaphore: diligent_sys::VkSemaphore, value: u64) {
+    /// # Safety
+    /// vk_timeline_semaphore is a pointer. The user of this function must make sure that it is valid.
+    pub unsafe fn enqueue_signal(
+        &self,
+        vk_timeline_semaphore: diligent_sys::VkSemaphore,
+        value: u64,
+    ) {
         unsafe_member_call!(
             self,
             CommandQueueVk,

@@ -10,22 +10,18 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct RenderPassVk<'a>(&'a RenderPass);
+pub struct RenderPassVk(diligent_sys::IRenderPassVk);
 
-impl Deref for RenderPassVk<'_> {
+impl Deref for RenderPassVk {
     type Target = RenderPass;
     fn deref(&self) -> &Self::Target {
-        self.0
+        unsafe {
+            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IRenderPass as *const RenderPass)
+        }
     }
 }
 
-impl<'a> From<&'a RenderPass> for RenderPassVk<'a> {
-    fn from(value: &'a RenderPass) -> Self {
-        RenderPassVk(value)
-    }
-}
-
-impl RenderPassVk<'_> {
+impl RenderPassVk {
     pub fn get_vk_render_pass(&self) -> diligent_sys::VkRenderPass {
         unsafe_member_call!(self, RenderPassVk, GetVkRenderPass)
     }

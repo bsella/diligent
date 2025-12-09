@@ -10,22 +10,18 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct BufferViewVk<'a>(&'a BufferView<'a>);
+pub struct BufferViewVk(diligent_sys::IBufferViewVk);
 
-impl<'a> Deref for BufferViewVk<'a> {
-    type Target = BufferView<'a>;
+impl Deref for BufferViewVk {
+    type Target = BufferView;
     fn deref(&self) -> &Self::Target {
-        self.0
+        unsafe {
+            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IBufferView as *const BufferView)
+        }
     }
 }
 
-impl<'a> From<&'a BufferView<'a>> for BufferViewVk<'a> {
-    fn from(value: &'a BufferView) -> Self {
-        BufferViewVk(value)
-    }
-}
-
-impl BufferViewVk<'_> {
+impl BufferViewVk {
     pub fn get_vk_buffer_view(&self) -> diligent_sys::VkBufferView {
         unsafe_member_call!(self, BufferViewVk, GetVkBufferView)
     }

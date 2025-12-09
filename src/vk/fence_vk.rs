@@ -10,22 +10,16 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct FenceVk<'a>(&'a Fence);
+pub struct FenceVk(diligent_sys::IFenceVk);
 
-impl Deref for FenceVk<'_> {
+impl Deref for FenceVk {
     type Target = Fence;
     fn deref(&self) -> &Self::Target {
-        self.0
+        unsafe { &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IFence as *const Fence) }
     }
 }
 
-impl<'a> From<&'a Fence> for FenceVk<'a> {
-    fn from(value: &'a Fence) -> Self {
-        FenceVk(value)
-    }
-}
-
-impl FenceVk<'_> {
+impl FenceVk {
     pub fn get_vk_semaphore(&self) -> diligent_sys::VkSemaphore {
         unsafe_member_call!(self, FenceVk, GetVkSemaphore)
     }

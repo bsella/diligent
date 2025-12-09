@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::{marker::PhantomData, ops::Deref};
 
 use static_assertions::const_assert_eq;
 
@@ -10,24 +10,22 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct QueryGL<'a, QueryDataType: GetSysQueryType>(&'a Query<QueryDataType>);
+pub struct QueryGL<QueryDataType: GetSysQueryType>(
+    diligent_sys::IQueryGL,
+    PhantomData<QueryDataType>,
+);
 
-impl<'a, QueryDataType: GetSysQueryType> Deref for QueryGL<'a, QueryDataType> {
+impl<QueryDataType: GetSysQueryType> Deref for QueryGL<QueryDataType> {
     type Target = Query<QueryDataType>;
     fn deref(&self) -> &Self::Target {
-        self.0
+        unsafe {
+            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IQuery
+                as *const Query<QueryDataType>)
+        }
     }
 }
 
-impl<'a, QueryDataType: GetSysQueryType> From<&'a Query<QueryDataType>>
-    for QueryGL<'a, QueryDataType>
-{
-    fn from(value: &'a Query<QueryDataType>) -> Self {
-        QueryGL(value)
-    }
-}
-
-impl<QueryDataType: GetSysQueryType> QueryGL<'_, QueryDataType> {
+impl<QueryDataType: GetSysQueryType> QueryGL<QueryDataType> {
     pub fn get_query_handle(&self) -> diligent_sys::GLuint {
         unsafe_member_call!(self, QueryGL, GetGlQueryHandle)
     }

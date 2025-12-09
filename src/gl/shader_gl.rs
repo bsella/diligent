@@ -10,22 +10,16 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct ShaderGL<'a>(&'a Shader);
+pub struct ShaderGL(diligent_sys::IShaderGL);
 
-impl<'a> Deref for ShaderGL<'a> {
+impl Deref for ShaderGL {
     type Target = Shader;
     fn deref(&self) -> &Self::Target {
-        self.0
+        unsafe { &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IShader as *const Shader) }
     }
 }
 
-impl<'a> From<&'a Shader> for ShaderGL<'a> {
-    fn from(value: &'a Shader) -> Self {
-        ShaderGL(value)
-    }
-}
-
-impl ShaderGL<'_> {
+impl ShaderGL {
     pub fn get_shader_handle(&self) -> diligent_sys::GLuint {
         unsafe_member_call!(self, ShaderGL, GetGLShaderHandle)
     }

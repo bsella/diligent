@@ -10,22 +10,19 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct DeviceContextVk<'a>(&'a DeviceContext);
+pub struct DeviceContextVk(diligent_sys::IDeviceContextVk);
 
-impl Deref for DeviceContextVk<'_> {
+impl Deref for DeviceContextVk {
     type Target = DeviceContext;
     fn deref(&self) -> &Self::Target {
-        self.0
+        unsafe {
+            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IDeviceContext
+                as *const DeviceContext)
+        }
     }
 }
 
-impl<'a> From<&'a DeviceContext> for DeviceContextVk<'a> {
-    fn from(value: &'a DeviceContext) -> Self {
-        DeviceContextVk(value)
-    }
-}
-
-impl DeviceContextVk<'_> {
+impl DeviceContextVk {
     pub fn transition_image_layout(
         &self,
         texture: &Texture,
@@ -35,7 +32,7 @@ impl DeviceContextVk<'_> {
             self,
             DeviceContextVk,
             TransitionImageLayout,
-            texture.sys_ptr as _,
+            texture.sys_ptr(),
             new_layout
         )
     }
@@ -49,7 +46,7 @@ impl DeviceContextVk<'_> {
             self,
             DeviceContextVk,
             BufferMemoryBarrier,
-            buffer.sys_ptr as _,
+            buffer.sys_ptr(),
             new_access_flags
         )
     }

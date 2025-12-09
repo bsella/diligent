@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use static_assertions::const_assert_eq;
 
-use crate::pipeline_state::PipelineState;
+use crate::{pipeline_state::PipelineState, vk::render_pass_vk::RenderPassVk};
 
 const_assert_eq!(
     std::mem::size_of::<diligent_sys::IPipelineStateVkMethods>(),
@@ -10,30 +10,26 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct PipelineStateVk<'a>(&'a PipelineState);
+pub struct PipelineStateVk(diligent_sys::IPipelineStateVk);
 
-impl Deref for PipelineStateVk<'_> {
+impl Deref for PipelineStateVk {
     type Target = PipelineState;
     fn deref(&self) -> &Self::Target {
-        self.0
+        unsafe {
+            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IPipelineState
+                as *const PipelineState)
+        }
     }
 }
 
-impl<'a> From<&'a PipelineState> for PipelineStateVk<'a> {
-    fn from(value: &'a PipelineState) -> Self {
-        PipelineStateVk(value)
-    }
-}
-
-impl PipelineStateVk<'_> {
-    pub fn get_render_pass(&self) -> diligent_sys::IRenderPassVk {
-        todo!()
-        //unsafe {
-        //    (*self.virtual_functions)
-        //        .PipelineStateVk
-        //        .GetRenderPass
-        //        .unwrap_unchecked()(self.sys_ptr)
-        //}
+impl PipelineStateVk {
+    pub fn get_render_pass(&self) -> Option<&RenderPassVk> {
+        let render_pass_ptr = unsafe_member_call!(self, PipelineStateVk, GetRenderPass);
+        if render_pass_ptr.is_null() {
+            None
+        } else {
+            Some(unsafe { &*(render_pass_ptr as *const RenderPassVk) })
+        }
     }
 
     pub fn get_vk_pipeline(&self) -> diligent_sys::VkPipeline {

@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use static_assertions::const_assert_eq;
 
-use crate::{SwapChain, device_context::DeviceContext};
+use crate::{device_context::DeviceContext, gl::swap_chain_gl::SwapChainGL};
 
 const_assert_eq!(
     std::mem::size_of::<diligent_sys::IDeviceContextGLMethods>(),
@@ -10,22 +10,19 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct DeviceContextGL<'a>(&'a DeviceContext);
+pub struct DeviceContextGL(diligent_sys::IDeviceContextGL);
 
-impl<'a> Deref for DeviceContextGL<'a> {
+impl Deref for DeviceContextGL {
     type Target = DeviceContext;
     fn deref(&self) -> &Self::Target {
-        self.0
+        unsafe {
+            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IDeviceContext
+                as *const DeviceContext)
+        }
     }
 }
 
-impl<'a> From<&'a DeviceContext> for DeviceContextGL<'a> {
-    fn from(value: &'a DeviceContext) -> Self {
-        DeviceContextGL(value)
-    }
-}
-
-impl DeviceContextGL<'_> {
+impl DeviceContextGL {
     pub fn update_current_gl_context(&self) -> bool {
         unsafe_member_call!(self, DeviceContextGL, UpdateCurrentGLContext)
     }
@@ -34,7 +31,12 @@ impl DeviceContextGL<'_> {
         unsafe_member_call!(self, DeviceContextGL, PurgeCurrentGLContextCaches)
     }
 
-    pub fn set_swap_chain(&self, swap_chain: &SwapChain) {
-        unsafe_member_call!(self, DeviceContextGL, SetSwapChain, swap_chain.sys_ptr as _)
+    pub fn set_swap_chain(&self, swap_chain: &SwapChainGL) {
+        unsafe_member_call!(
+            self,
+            DeviceContextGL,
+            SetSwapChain,
+            std::ptr::from_ref(&swap_chain.0) as *mut _
+        )
     }
 }

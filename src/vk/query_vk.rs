@@ -1,23 +1,21 @@
-use std::ops::Deref;
+use std::{marker::PhantomData, ops::Deref};
 
 use crate::query::{GetSysQueryType, Query};
 
 #[repr(transparent)]
-pub struct QueryVk<'a, QueryDataType: GetSysQueryType>(&'a Query<QueryDataType>);
+pub struct QueryVk<QueryDataType: GetSysQueryType>(
+    diligent_sys::IQueryVk,
+    PhantomData<QueryDataType>,
+);
 
-impl<QueryDataType: GetSysQueryType> Deref for QueryVk<'_, QueryDataType> {
+impl<QueryDataType: GetSysQueryType> Deref for QueryVk<QueryDataType> {
     type Target = Query<QueryDataType>;
     fn deref(&self) -> &Self::Target {
-        self.0
+        unsafe {
+            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IQuery
+                as *const Query<QueryDataType>)
+        }
     }
 }
 
-impl<'a, QueryDataType: GetSysQueryType> From<&'a Query<QueryDataType>>
-    for QueryVk<'a, QueryDataType>
-{
-    fn from(value: &'a Query<QueryDataType>) -> Self {
-        QueryVk(value)
-    }
-}
-
-impl<QueryDataType: GetSysQueryType> QueryVk<'_, QueryDataType> {}
+impl<QueryDataType: GetSysQueryType> QueryVk<QueryDataType> {}

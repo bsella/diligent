@@ -10,22 +10,18 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct TextureGL<'a>(&'a Texture);
+pub struct TextureGL(diligent_sys::ITextureGL);
 
-impl Deref for TextureGL<'_> {
+impl Deref for TextureGL {
     type Target = Texture;
     fn deref(&self) -> &Self::Target {
-        self.0
+        unsafe {
+            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::ITexture as *const Texture)
+        }
     }
 }
 
-impl<'a> From<&'a Texture> for TextureGL<'a> {
-    fn from(value: &'a Texture) -> Self {
-        TextureGL(value)
-    }
-}
-
-impl TextureGL<'_> {
+impl TextureGL {
     pub fn get_texture_handle(&self) -> diligent_sys::GLuint {
         unsafe_member_call!(self, TextureGL, GetGLTextureHandle)
     }

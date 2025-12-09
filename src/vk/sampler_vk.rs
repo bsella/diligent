@@ -10,22 +10,18 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct SamplerVk<'a>(&'a Sampler);
+pub struct SamplerVk(diligent_sys::ISamplerVk);
 
-impl Deref for SamplerVk<'_> {
+impl Deref for SamplerVk {
     type Target = Sampler;
     fn deref(&self) -> &Self::Target {
-        self.0
+        unsafe {
+            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::ISampler as *const Sampler)
+        }
     }
 }
 
-impl<'a> From<&'a Sampler> for SamplerVk<'a> {
-    fn from(value: &'a Sampler) -> Self {
-        SamplerVk(value)
-    }
-}
-
-impl SamplerVk<'_> {
+impl SamplerVk {
     pub fn get_vk_sampler(&self) -> diligent_sys::VkSampler {
         unsafe_member_call!(self, SamplerVk, GetVkSampler)
     }

@@ -10,22 +10,19 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct PipelineStateCacheVk<'a>(&'a PipelineStateCache);
+pub struct PipelineStateCacheVk(diligent_sys::IPipelineStateCacheVk);
 
-impl Deref for PipelineStateCacheVk<'_> {
+impl Deref for PipelineStateCacheVk {
     type Target = PipelineStateCache;
     fn deref(&self) -> &Self::Target {
-        self.0
+        unsafe {
+            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IPipelineStateCache
+                as *const PipelineStateCache)
+        }
     }
 }
 
-impl<'a> From<&'a PipelineStateCache> for PipelineStateCacheVk<'a> {
-    fn from(value: &'a PipelineStateCache) -> Self {
-        PipelineStateCacheVk(value)
-    }
-}
-
-impl PipelineStateCacheVk<'_> {
+impl PipelineStateCacheVk {
     pub fn get_vk_pipeline_cache(&self) -> diligent_sys::VkPipelineCache {
         unsafe_member_call!(self, PipelineStateCacheVk, GetVkPipelineCache)
     }

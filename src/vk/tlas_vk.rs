@@ -10,22 +10,18 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct TopLevelASVk<'a>(&'a TopLevelAS);
+pub struct TopLevelASVk(diligent_sys::ITopLevelASVk);
 
-impl Deref for TopLevelASVk<'_> {
+impl Deref for TopLevelASVk {
     type Target = TopLevelAS;
     fn deref(&self) -> &Self::Target {
-        self.0
+        unsafe {
+            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::ITopLevelAS as *const TopLevelAS)
+        }
     }
 }
 
-impl<'a> From<&'a TopLevelAS> for TopLevelASVk<'a> {
-    fn from(value: &'a TopLevelAS) -> Self {
-        TopLevelASVk(value)
-    }
-}
-
-impl TopLevelASVk<'_> {
+impl TopLevelASVk {
     pub fn get_vk_tlas(&self) -> diligent_sys::VkAccelerationStructureKHR {
         unsafe_member_call!(self, TopLevelASVk, GetVkTLAS)
     }

@@ -10,22 +10,19 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct DeviceMemoryVk<'a>(&'a DeviceMemory);
+pub struct DeviceMemoryVk(diligent_sys::IDeviceMemoryVk);
 
-impl Deref for DeviceMemoryVk<'_> {
+impl Deref for DeviceMemoryVk {
     type Target = DeviceMemory;
     fn deref(&self) -> &Self::Target {
-        self.0
+        unsafe {
+            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IDeviceMemory
+                as *const DeviceMemory)
+        }
     }
 }
 
-impl<'a> From<&'a DeviceMemory> for DeviceMemoryVk<'a> {
-    fn from(value: &'a DeviceMemory) -> Self {
-        DeviceMemoryVk(value)
-    }
-}
-
-impl DeviceMemoryVk<'_> {
+impl DeviceMemoryVk {
     pub fn get_range(&self, offset: u64, size: u64) -> diligent_sys::DeviceMemoryRangeVk {
         unsafe_member_call!(self, DeviceMemoryVk, GetRange, offset, size)
     }

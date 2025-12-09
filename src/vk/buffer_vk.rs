@@ -10,22 +10,16 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct BufferVk<'a>(&'a Buffer);
+pub struct BufferVk(diligent_sys::IBufferVk);
 
-impl<'a> Deref for BufferVk<'a> {
+impl Deref for BufferVk {
     type Target = Buffer;
     fn deref(&self) -> &Self::Target {
-        self.0
+        unsafe { &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IBuffer as *const Buffer) }
     }
 }
 
-impl<'a> From<&'a Buffer> for BufferVk<'a> {
-    fn from(value: &'a Buffer) -> Self {
-        BufferVk(value)
-    }
-}
-
-impl BufferVk<'_> {
+impl BufferVk {
     pub fn get_vk_buffer_view(&self) -> diligent_sys::VkBuffer {
         unsafe_member_call!(self, BufferVk, GetVkBuffer)
     }

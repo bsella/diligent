@@ -10,22 +10,18 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct SwapChainGL<'a>(&'a SwapChain);
+pub struct SwapChainGL(pub(crate) diligent_sys::ISwapChainGL);
 
-impl<'a> Deref for SwapChainGL<'a> {
+impl Deref for SwapChainGL {
     type Target = SwapChain;
     fn deref(&self) -> &Self::Target {
-        self.0
+        unsafe {
+            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::ISwapChain as *const SwapChain)
+        }
     }
 }
 
-impl<'a> From<&'a SwapChain> for SwapChainGL<'a> {
-    fn from(value: &'a SwapChain) -> Self {
-        SwapChainGL(value)
-    }
-}
-
-impl SwapChainGL<'_> {
+impl SwapChainGL {
     pub fn get_default_fbo(&self) -> diligent_sys::GLuint {
         unsafe_member_call!(self, SwapChainGL, GetDefaultFBO)
     }

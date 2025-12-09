@@ -10,22 +10,19 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct PipelineStateGL<'a>(&'a PipelineState);
+pub struct PipelineStateGL(diligent_sys::IPipelineStateGL);
 
-impl<'a> Deref for PipelineStateGL<'a> {
+impl Deref for PipelineStateGL {
     type Target = PipelineState;
     fn deref(&self) -> &Self::Target {
-        self.0
+        unsafe {
+            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IPipelineState
+                as *const PipelineState)
+        }
     }
 }
 
-impl<'a> From<&'a PipelineState> for PipelineStateGL<'a> {
-    fn from(value: &'a PipelineState) -> Self {
-        PipelineStateGL(value)
-    }
-}
-
-impl PipelineStateGL<'_> {
+impl PipelineStateGL {
     pub fn get_pipeline_state_handle(&self, state: ShaderType) -> diligent_sys::GLuint {
         unsafe_member_call!(self, PipelineStateGL, GetGLProgramHandle, state.into())
     }

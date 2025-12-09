@@ -2,7 +2,9 @@ use std::ops::Deref;
 
 use static_assertions::const_assert_eq;
 
-use crate::{Buffer, BufferDesc, ResourceState, Texture, TextureDesc, render_device::RenderDevice};
+use crate::{
+    Boxed, Buffer, BufferDesc, ResourceState, Texture, TextureDesc, render_device::RenderDevice,
+};
 
 #[cfg(target_os = "windows")]
 const_assert_eq!(
@@ -23,29 +25,26 @@ struct NativeGLContextAttribsWin32(diligent_sys::NativeGLContextAttribsWin32);
 pub type NativeGLContextAttribs = NativeGLContextAttribsWin32;
 
 #[repr(transparent)]
-pub struct RenderDeviceGL<'a>(&'a RenderDevice);
+pub struct RenderDeviceGL(diligent_sys::IRenderDeviceGL);
 
-impl<'a> Deref for RenderDeviceGL<'a> {
+impl Deref for RenderDeviceGL {
     type Target = RenderDevice;
     fn deref(&self) -> &Self::Target {
-        self.0
+        unsafe {
+            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IRenderDevice
+                as *const RenderDevice)
+        }
     }
 }
 
-impl<'a> From<&'a RenderDevice> for RenderDeviceGL<'a> {
-    fn from(value: &'a RenderDevice) -> Self {
-        RenderDeviceGL(value)
-    }
-}
-
-impl RenderDeviceGL<'_> {
+impl RenderDeviceGL {
     pub fn create_texture_from_gl_handle(
         &self,
         gl_handle: u32,
         gl_bind_target: u32,
         tex_desc: &TextureDesc,
         initial_state: ResourceState,
-    ) -> Result<Texture, ()> {
+    ) -> Result<Boxed<Texture>, ()> {
         let mut texture_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
@@ -61,7 +60,7 @@ impl RenderDeviceGL<'_> {
         if texture_ptr.is_null() {
             Err(())
         } else {
-            Ok(Texture::new(texture_ptr))
+            Ok(Boxed::<Texture>::new(texture_ptr as _))
         }
     }
 
@@ -70,7 +69,7 @@ impl RenderDeviceGL<'_> {
         gl_handle: u32,
         buff_desc: &BufferDesc,
         initial_state: ResourceState,
-    ) -> Result<Buffer, ()> {
+    ) -> Result<Boxed<Buffer>, ()> {
         let mut buffer_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
@@ -85,7 +84,7 @@ impl RenderDeviceGL<'_> {
         if buffer_ptr.is_null() {
             Err(())
         } else {
-            Ok(Buffer::new(buffer_ptr))
+            Ok(Boxed::<Buffer>::new(buffer_ptr as _))
         }
     }
 
@@ -93,7 +92,7 @@ impl RenderDeviceGL<'_> {
         &self,
         tex_desc: &TextureDesc,
         initial_state: ResourceState,
-    ) -> Result<Texture, ()> {
+    ) -> Result<Boxed<Texture>, ()> {
         let mut texture_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
@@ -107,7 +106,7 @@ impl RenderDeviceGL<'_> {
         if texture_ptr.is_null() {
             Err(())
         } else {
-            Ok(Texture::new(texture_ptr))
+            Ok(Boxed::<Texture>::new(texture_ptr as _))
         }
     }
 

@@ -10,22 +10,19 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct FramebufferVk<'a>(&'a Framebuffer);
+pub struct FramebufferVk(diligent_sys::IFramebufferVk);
 
-impl Deref for FramebufferVk<'_> {
+impl Deref for FramebufferVk {
     type Target = Framebuffer;
     fn deref(&self) -> &Self::Target {
-        self.0
+        unsafe {
+            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IFramebuffer
+                as *const Framebuffer)
+        }
     }
 }
 
-impl<'a> From<&'a Framebuffer> for FramebufferVk<'a> {
-    fn from(value: &'a Framebuffer) -> Self {
-        FramebufferVk(value)
-    }
-}
-
-impl FramebufferVk<'_> {
+impl FramebufferVk {
     pub fn get_vk_framebuffer(&self) -> diligent_sys::VkFramebuffer {
         unsafe_member_call!(self, FramebufferVk, GetVkFramebuffer)
     }
