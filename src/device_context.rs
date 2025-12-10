@@ -1,7 +1,6 @@
 use std::{ffi::CStr, marker::PhantomData, ops::Deref};
 
 use bitflags::bitflags;
-use bon::{Builder, builder};
 use static_assertions::const_assert_eq;
 
 use crate::{
@@ -427,47 +426,85 @@ impl<'a> DrawMeshIndirectAttribs<'a> {
     }
 }
 
-#[derive(Clone, Copy)]
-pub struct MultiDrawItem {
-    pub num_vertices: u32,
-    pub start_vertex_location: u32,
+#[repr(transparent)]
+pub struct MultiDrawItem(diligent_sys::MultiDrawItem);
+
+#[bon::bon]
+impl MultiDrawItem {
+    #[builder]
+    pub fn new(num_vertices: u32, start_vertex_location: u32) -> Self {
+        Self(diligent_sys::MultiDrawItem {
+            NumVertices: num_vertices,
+            StartVertexLocation: start_vertex_location,
+        })
+    }
 }
 
-#[derive(Builder)]
-pub struct MultiDrawAttribs {
-    draw_items: Vec<MultiDrawItem>,
+#[repr(transparent)]
+pub struct MultiDrawAttribs(diligent_sys::MultiDrawAttribs);
 
-    #[builder(default = DrawFlags::None)]
-    flags: DrawFlags,
+#[bon::bon]
+impl MultiDrawAttribs {
+    #[builder]
+    pub fn new(
+        draw_items: &[MultiDrawItem],
 
-    #[builder(default = 1)]
-    num_instances: u32,
+        #[builder(default = DrawFlags::None)] flags: DrawFlags,
 
-    #[builder(default = 0)]
-    first_instance_location: u32,
+        #[builder(default = 1)] num_instances: u32,
+
+        #[builder(default = 0)] first_instance_location: u32,
+    ) -> Self {
+        Self(diligent_sys::MultiDrawAttribs {
+            DrawCount: draw_items.len() as u32,
+            pDrawItems: draw_items.first().map_or(std::ptr::null(), |item| &item.0),
+            Flags: flags.bits(),
+            NumInstances: num_instances,
+            FirstInstanceLocation: first_instance_location,
+        })
+    }
 }
 
-#[derive(Clone, Copy)]
-pub struct MultiDrawIndexedItem {
-    pub num_vertices: u32,
-    pub first_index_location: u32,
-    pub base_vertex: u32,
+#[repr(transparent)]
+pub struct MultiDrawIndexedItem(diligent_sys::MultiDrawIndexedItem);
+#[bon::bon]
+impl MultiDrawIndexedItem {
+    #[builder]
+    pub fn new(num_vertices: u32, first_index_location: u32, base_vertex: u32) -> Self {
+        Self(diligent_sys::MultiDrawIndexedItem {
+            NumIndices: num_vertices,
+            FirstIndexLocation: first_index_location,
+            BaseVertex: base_vertex,
+        })
+    }
 }
 
-#[derive(Builder)]
-pub struct MultiDrawIndexedAttribs {
-    draw_items: Vec<MultiDrawIndexedItem>,
+#[repr(transparent)]
+pub struct MultiDrawIndexedAttribs(diligent_sys::MultiDrawIndexedAttribs);
 
-    index_type: ValueType,
+#[bon::bon]
+impl MultiDrawIndexedAttribs {
+    #[builder]
+    pub fn new(
+        draw_items: &[MultiDrawIndexedItem],
 
-    #[builder(default = DrawFlags::None)]
-    flags: DrawFlags,
+        index_type: ValueType,
 
-    #[builder(default = 1)]
-    num_instances: u32,
+        #[builder(default = DrawFlags::None)] flags: DrawFlags,
 
-    #[builder(default = 0)]
-    first_instance_location: u32,
+        #[builder(default = 1)] num_instances: u32,
+
+        #[builder(default = 0)] first_instance_location: u32,
+    ) -> Self {
+        Self(diligent_sys::MultiDrawIndexedAttribs {
+            DrawCount: draw_items.len() as u32,
+            pDrawItems: draw_items.first().map_or(std::ptr::null(), |item| &item.0),
+            IndexType: index_type.into(),
+            Flags: flags.bits(),
+            NumInstances: num_instances,
+            FirstInstanceLocation: first_instance_location,
+        })
+    }
 }
 
 #[repr(transparent)]
@@ -1474,43 +1511,11 @@ impl<'a> GraphicsPipelineToken<'a> {
     }
 
     pub fn multi_draw(&self, attribs: &MultiDrawAttribs) {
-        let draw_items = attribs
-            .draw_items
-            .iter()
-            .map(|item| diligent_sys::MultiDrawItem {
-                NumVertices: item.num_vertices,
-                StartVertexLocation: item.start_vertex_location,
-            })
-            .collect::<Vec<_>>();
-        let attribs = diligent_sys::MultiDrawAttribs {
-            DrawCount: draw_items.len() as u32,
-            pDrawItems: draw_items.as_ptr(),
-            Flags: attribs.flags.bits(),
-            NumInstances: attribs.num_instances,
-            FirstInstanceLocation: attribs.first_instance_location,
-        };
-        unsafe_member_call!(self.context, DeviceContext, MultiDraw, &attribs)
+        unsafe_member_call!(self.context, DeviceContext, MultiDraw, &attribs.0)
     }
 
     pub fn multi_draw_indexed(&self, attribs: &MultiDrawIndexedAttribs) {
-        let draw_items = attribs
-            .draw_items
-            .iter()
-            .map(|item| diligent_sys::MultiDrawIndexedItem {
-                NumIndices: item.num_vertices,
-                FirstIndexLocation: item.first_index_location,
-                BaseVertex: item.base_vertex,
-            })
-            .collect::<Vec<_>>();
-        let attribs = diligent_sys::MultiDrawIndexedAttribs {
-            DrawCount: draw_items.len() as u32,
-            pDrawItems: draw_items.as_ptr(),
-            IndexType: attribs.index_type.into(),
-            Flags: attribs.flags.bits(),
-            NumInstances: attribs.num_instances,
-            FirstInstanceLocation: attribs.first_instance_location,
-        };
-        unsafe_member_call!(self.context, DeviceContext, MultiDrawIndexed, &attribs)
+        unsafe_member_call!(self.context, DeviceContext, MultiDrawIndexed, &attribs.0)
     }
 }
 
