@@ -1,4 +1,4 @@
-use std::{ffi::CString, ops::Deref};
+use std::{ffi::CStr, ops::Deref};
 
 use bon::Builder;
 use static_assertions::const_assert_eq;
@@ -36,8 +36,7 @@ pub struct BufferViewDesc(pub(crate) diligent_sys::BufferViewDesc);
 impl BufferViewDesc {
     #[builder]
     pub fn new(
-        #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
-        name: Option<CString>,
+        name: Option<&CStr>,
         view_type: BufferViewType,
         format: Option<BufferFormat>,
         #[builder(default = 0)] byte_offset: u64,

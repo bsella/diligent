@@ -1,7 +1,4 @@
-use std::{
-    ffi::CString,
-    io::{Error, ErrorKind},
-};
+use std::{ffi::CString, io::Error};
 
 use crate::native_app::{
     app::App,
@@ -344,10 +341,7 @@ where
         );
 
         if fbc.is_null() {
-            return Err(Error::new(
-                ErrorKind::Other,
-                "Failed to retrieve a framebuffer config",
-            ));
+            return Err(Error::other("Failed to retrieve a framebuffer config"));
         }
 
         let vi = x11::glx::glXGetVisualFromFBConfig(display, *fbc);
@@ -436,8 +430,8 @@ where
         let mut flags = x11::glx::arb::GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB;
         #[cfg(debug_assertions)]
         {
-            flags |= x11::glx::arb::GLX_CONTEXT_DEBUG_BIT_ARB
-        };
+            flags |= x11::glx::arb::GLX_CONTEXT_DEBUG_BIT_ARB;
+        }
 
         let major_version = 4;
         let minor_version = 3;
@@ -460,7 +454,7 @@ where
             context_attribs.as_ptr(),
         );
         if ctx.is_null() {
-            return Err(Error::new(ErrorKind::Other, "Failed to create GL context."));
+            return Err(Error::other("Failed to create GL context."));
         }
 
         x11::xlib::XFree(fbc as *mut std::ffi::c_void);

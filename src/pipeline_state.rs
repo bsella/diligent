@@ -996,7 +996,7 @@ impl<'a> RayTracingPipelineStateCreateInfo<'a> {
 
         procedural_hit_shaders: Option<&[RayTracingProceduralHitShaderGroup<'a>]>,
 
-        #[cfg(feature = "d3d12")] shader_record_name: Option<CString>,
+        #[cfg(feature = "d3d12")] shader_record_name: Option<&CStr>,
 
         #[cfg(feature = "d3d12")]
         #[builder(default = 0)]
@@ -1029,7 +1029,6 @@ impl<'a> RayTracingPipelineStateCreateInfo<'a> {
                     as u32,
                 #[cfg(feature = "d3d12")]
                 pShaderRecordName: shader_record_name
-                    .as_ref()
                     .map_or(std::ptr::null(), |name| name.as_ptr()),
                 #[cfg(feature = "d3d12")]
                 MaxAttributeSize: max_attribute_size,
