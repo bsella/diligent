@@ -49,6 +49,8 @@ fn generate_diligent_c_bindings(
     diligent_install_dir: &Path,
     out_dir: &Path,
 ) {
+    println!("cargo::rerun-if-changed=wrapper.h");
+
     let diligent_include = [
         "-I",
         &diligent_install_dir.join("include").display().to_string(),

@@ -44,6 +44,10 @@ extern void Diligent_CreateGeometryPrimitive(const GeometryPrimitiveAttributes* 
 #include <DiligentCore/Graphics/GraphicsEngineOpenGL/interface/EngineFactoryOpenGL.h>
 
 #ifdef OPENGL_INTEROP
+#   ifdef _WIN32
+#   define WINGDIAPI
+#   define APIENTRY
+#   endif
 #   include <GL/gl.h>
 
 #   include <DiligentCore/Graphics/GraphicsEngineOpenGL/interface/BaseInterfacesGL.h>

@@ -19,7 +19,8 @@ const_assert_eq!(
 );
 
 #[cfg(target_os = "windows")]
-struct NativeGLContextAttribsWin32(diligent_sys::NativeGLContextAttribsWin32);
+#[repr(transparent)]
+pub struct NativeGLContextAttribsWin32(diligent_sys::NativeGLContextAttribsWin32);
 
 #[cfg(target_os = "windows")]
 pub type NativeGLContextAttribs = NativeGLContextAttribsWin32;
@@ -110,7 +111,12 @@ impl RenderDeviceGL {
         }
     }
 
-    // TODO
     #[cfg(target_os = "windows")]
-    pub fn get_native_gl_context_attribs(&self) -> NativeGLContextAttribs {}
+    pub fn get_native_gl_context_attribs(&self) -> NativeGLContextAttribs {
+        NativeGLContextAttribsWin32(unsafe_member_call!(
+            self,
+            RenderDeviceGL,
+            GetNativeGLContextAttribs
+        ))
+    }
 }
