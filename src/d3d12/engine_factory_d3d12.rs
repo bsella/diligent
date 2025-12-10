@@ -228,7 +228,6 @@ impl EngineFactoryD3D12 {
         fs_desc: &FullScreenModeDesc,
         window: &NativeWindow,
     ) -> Result<Boxed<SwapChain>, ()> {
-        let swapchain_desc = swapchain_desc.into();
         let mut swap_chain_ptr = std::ptr::null_mut();
 
         let fs_desc = fs_desc.into();
@@ -238,7 +237,7 @@ impl EngineFactoryD3D12 {
             CreateSwapChainD3D12,
             device.sys_ptr(),
             context.sys_ptr(),
-            &swapchain_desc,
+            &swapchain_desc.0.0,
             &fs_desc,
             &window.0,
             &mut swap_chain_ptr

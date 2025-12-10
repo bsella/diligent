@@ -1,7 +1,4 @@
-use std::{
-    ops::{Deref, DerefMut},
-    os::raw::c_void,
-};
+use std::ops::{Deref, DerefMut};
 
 use bitflags::bitflags;
 
@@ -150,7 +147,6 @@ impl EngineFactoryD3D11 {
         fs_desc: &FullScreenModeDesc,
         window: &NativeWindow,
     ) -> Result<Boxed<SwapChain>, ()> {
-        let swapchain_desc = swapchain_desc.into();
         let mut swap_chain_ptr = std::ptr::null_mut();
 
         let fs_desc = fs_desc.into();
@@ -160,10 +156,10 @@ impl EngineFactoryD3D11 {
             CreateSwapChainD3D11,
             device.sys_ptr(),
             context.sys_ptr(),
-            &swapchain_desc,
+            &swapchain_desc.0.0,
             &fs_desc,
             &window.0,
-            mut &swap_chain_ptr
+            &mut swap_chain_ptr
         );
 
         if swap_chain_ptr.is_null() {
@@ -173,9 +169,11 @@ impl EngineFactoryD3D11 {
         }
     }
 
-    pub fn attach_to_d3d11_device(
+    /// # Safety
+    /// native_device is a pointer. The user of this function must make sure that it is valid.
+    pub unsafe fn attach_to_d3d11_device(
         &self,
-        native_device: *mut c_void,
+        native_device: *mut (),
         immediate_context: &ImmediateDeviceContext,
         engine_ci: &EngineD3D11CreateInfo,
     ) -> Result<
@@ -205,7 +203,7 @@ impl EngineFactoryD3D11 {
             self,
             EngineFactoryD3D11,
             AttachToD3D11Device,
-            native_device,
+            native_device as _,
             immediate_context.sys_ptr() as _,
             &engine_ci,
             &mut render_device_ptr,
