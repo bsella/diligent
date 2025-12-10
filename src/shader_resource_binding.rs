@@ -23,13 +23,13 @@ pub struct ShaderResourceBinding(diligent_sys::IShaderResourceBinding);
 impl Deref for ShaderResourceBinding {
     type Target = Object;
     fn deref(&self) -> &Self::Target {
-        unsafe { &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IObject as *const Object) }
+        unsafe { &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IObject as *const Object) }
     }
 }
 
 impl ShaderResourceBinding {
     pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IShaderResourceBinding {
-        std::ptr::addr_of!(self.0) as _
+        std::ptr::from_ref(&self.0) as _
     }
 
     pub fn get_pipeline_resource_signature(&self) -> Option<&PipelineResourceSignature> {

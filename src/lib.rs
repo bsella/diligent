@@ -14,7 +14,7 @@ macro_rules! unsafe_member_call {
                 .$type_name
                 .$func_name
                 .unwrap_unchecked()(
-                std::ptr::addr_of!($instance.0) as _,
+                std::ptr::from_ref(&$instance.0) as _,
                 $($arg), *
             )
         }

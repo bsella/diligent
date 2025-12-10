@@ -95,7 +95,7 @@ impl<QueryDataType: GetSysQueryType> Deref for Query<QueryDataType> {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
         unsafe {
-            &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IDeviceObject
+            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IDeviceObject
                 as *const DeviceObject)
         }
     }
@@ -103,7 +103,7 @@ impl<QueryDataType: GetSysQueryType> Deref for Query<QueryDataType> {
 
 impl<QueryDataType: GetSysQueryType> Query<QueryDataType> {
     pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IQuery {
-        std::ptr::addr_of!(self.0) as _
+        std::ptr::from_ref(&self.0) as _
     }
 
     pub fn invalidate(&self) {

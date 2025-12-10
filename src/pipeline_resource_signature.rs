@@ -58,7 +58,7 @@ impl Deref for PipelineResourceSignature {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
         unsafe {
-            &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IDeviceObject
+            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IDeviceObject
                 as *const DeviceObject)
         }
     }
@@ -163,7 +163,7 @@ impl<'a> PipelineResourceSignatureDesc<'a> {
 
 impl PipelineResourceSignature {
     pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IPipelineResourceSignature {
-        std::ptr::addr_of!(self.0) as _
+        std::ptr::from_ref(&self.0) as _
     }
 
     pub fn create_shader_resource_binding(

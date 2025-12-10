@@ -22,7 +22,7 @@ impl Deref for EngineFactoryD3D11 {
     type Target = EngineFactory;
     fn deref(&self) -> &Self::Target {
         unsafe {
-            &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IEngineFactory
+            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IEngineFactory
                 as *const EngineFactory)
         }
     }

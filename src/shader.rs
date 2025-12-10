@@ -541,7 +541,7 @@ impl Deref for Shader {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
         unsafe {
-            &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IDeviceObject
+            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IDeviceObject
                 as *const DeviceObject)
         }
     }
@@ -549,7 +549,7 @@ impl Deref for Shader {
 
 impl Shader {
     pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IShader {
-        std::ptr::addr_of!(self.0) as _
+        std::ptr::from_ref(&self.0) as _
     }
 
     pub fn get_resources(&self) -> Vec<ShaderResourceDesc> {
@@ -585,7 +585,7 @@ impl Shader {
             self,
             Shader,
             GetBytecode,
-            std::ptr::addr_of_mut!(bytecode) as *mut *const std::ffi::c_void,
+            std::ptr::from_mut(&mut bytecode) as *mut *const std::ffi::c_void,
             &mut size
         );
 
@@ -618,7 +618,7 @@ pub struct ShaderSourceInputStreamFactory(diligent_sys::IShaderSourceInputStream
 
 impl ShaderSourceInputStreamFactory {
     pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IShaderSourceInputStreamFactory {
-        std::ptr::addr_of!(self.0) as _
+        std::ptr::from_ref(&self.0) as _
     }
     //pub fn create_input_stream(&self, name : impl AsRef<str>, IFileStream** ppStream);
 

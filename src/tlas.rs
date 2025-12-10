@@ -179,7 +179,7 @@ impl Deref for TopLevelAS {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
         unsafe {
-            &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IDeviceObject
+            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IDeviceObject
                 as *const DeviceObject)
         }
     }
@@ -187,7 +187,7 @@ impl Deref for TopLevelAS {
 
 impl TopLevelAS {
     pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::ITopLevelAS {
-        std::ptr::addr_of!(self.0) as _
+        std::ptr::from_ref(&self.0) as _
     }
 
     pub fn get_instance_desc(&self, name: impl AsRef<str>) -> Option<TLASInstanceDesc> {

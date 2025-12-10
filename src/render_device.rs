@@ -89,13 +89,13 @@ pub struct RenderDevice(diligent_sys::IRenderDevice);
 impl Deref for RenderDevice {
     type Target = Object;
     fn deref(&self) -> &Self::Target {
-        unsafe { &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IObject as *const Object) }
+        unsafe { &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IObject as *const Object) }
     }
 }
 
 impl RenderDevice {
     pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IRenderDevice {
-        std::ptr::addr_of!(self.0) as _
+        std::ptr::from_ref(&self.0) as _
     }
 
     pub fn create_buffer(&self, buffer_desc: &BufferDesc) -> Result<Boxed<Buffer>, ()> {

@@ -44,13 +44,13 @@ pub struct ResourceMapping(diligent_sys::IResourceMapping);
 impl Deref for ResourceMapping {
     type Target = Object;
     fn deref(&self) -> &Self::Target {
-        unsafe { &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IObject as *const Object) }
+        unsafe { &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IObject as *const Object) }
     }
 }
 
 impl ResourceMapping {
     pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IResourceMapping {
-        std::ptr::addr_of!(self.0) as _
+        std::ptr::from_ref(&self.0) as _
     }
 
     pub fn add_resource(&mut self, name: impl AsRef<str>, object: &DeviceObject, is_unique: bool) {

@@ -16,7 +16,7 @@ impl Deref for Fence {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
         unsafe {
-            &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IDeviceObject
+            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IDeviceObject
                 as *const DeviceObject)
         }
     }
@@ -55,7 +55,7 @@ impl FenceDesc {
 
 impl Fence {
     pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IFence {
-        std::ptr::addr_of!(self.0) as _
+        std::ptr::from_ref(&self.0) as _
     }
 
     pub fn get_completed_value(&self) -> u64 {

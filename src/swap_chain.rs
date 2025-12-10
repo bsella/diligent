@@ -144,7 +144,7 @@ pub struct SwapChain(diligent_sys::ISwapChain);
 impl Deref for SwapChain {
     type Target = Object;
     fn deref(&self) -> &Self::Target {
-        unsafe { &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IObject as *const Object) }
+        unsafe { &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IObject as *const Object) }
     }
 }
 

@@ -1060,7 +1060,7 @@ impl Deref for PipelineState {
     type Target = DeviceObject;
     fn deref(&self) -> &Self::Target {
         unsafe {
-            &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IDeviceObject
+            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IDeviceObject
                 as *const DeviceObject)
         }
     }
@@ -1068,7 +1068,7 @@ impl Deref for PipelineState {
 
 impl PipelineState {
     pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IPipelineState {
-        std::ptr::addr_of!(self.0) as _
+        std::ptr::from_ref(&self.0) as _
     }
 
     pub fn bind_static_resources(

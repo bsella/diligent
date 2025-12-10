@@ -13,6 +13,6 @@ impl Object {
         unsafe_member_call!(self, Object, AddRef);
     }
     pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IObject {
-        std::ptr::addr_of!(self.0) as _
+        std::ptr::from_ref(&self.0) as _
     }
 }
