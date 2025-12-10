@@ -104,7 +104,7 @@ impl SampleBase for Tessellation {
         rtv_formats[0] = Some(swap_chain_desc.color_buffer_format());
 
         let linear_clamp_sampler = SamplerDesc::builder()
-            .name("Linear Sampler")
+            .name(c"Linear Sampler")
             .mag_filter(FilterType::Linear)
             .min_filter(FilterType::Linear)
             .mip_filter(FilterType::Linear)

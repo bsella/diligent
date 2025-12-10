@@ -115,7 +115,7 @@ impl SampleBase for Texturing {
 
         // Define immutable sampler for g_Texture. Immutable samplers should be used whenever possible
         let sampler_desc = SamplerDesc::builder()
-            .name("Cube texture sampler")
+            .name(c"Cube texture sampler")
             .min_filter(FilterType::Linear)
             .mag_filter(FilterType::Linear)
             .mip_filter(FilterType::Linear)

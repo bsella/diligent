@@ -343,7 +343,7 @@ fn create_ray_tracing_pso(
         .min(8);
 
     let sampler_desc = SamplerDesc::builder()
-        .name("Linear Wrap Sampler")
+        .name(c"Linear Wrap Sampler")
         .min_filter(FilterType::Linear)
         .mag_filter(FilterType::Linear)
         .mip_filter(FilterType::Linear)

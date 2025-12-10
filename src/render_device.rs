@@ -213,14 +213,12 @@ impl RenderDevice {
     }
 
     pub fn create_sampler(&self, sampler_desc: &SamplerDesc) -> Result<Boxed<Sampler>, ()> {
-        let sampler_desc = sampler_desc.into();
-
         let mut sampler_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
             RenderDevice,
             CreateSampler,
-            &sampler_desc,
+            &sampler_desc.0,
             &mut sampler_ptr
         );
 

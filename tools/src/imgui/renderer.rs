@@ -526,7 +526,7 @@ impl ImguiRenderer {
         };
 
         let sampler_desc = SamplerDesc::builder()
-            .name("Texture Sampler")
+            .name(c"Texture Sampler")
             .address_u(TextureAddressMode::Wrap)
             .address_v(TextureAddressMode::Wrap)
             .address_w(TextureAddressMode::Wrap)

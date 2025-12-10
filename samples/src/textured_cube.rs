@@ -210,7 +210,7 @@ impl TexturedCube {
             .unwrap();
 
         let sampler_desc = SamplerDesc::builder()
-            .name("Textured Cube Sampler")
+            .name(c"Textured Cube Sampler")
             .min_filter(FilterType::Linear)
             .mag_filter(FilterType::Linear)
             .mip_filter(FilterType::Linear)

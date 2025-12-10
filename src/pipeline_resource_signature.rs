@@ -39,7 +39,7 @@ impl<'a> ImmutableSamplerDesc<'a> {
             diligent_sys::ImmutableSamplerDesc {
                 ShaderStages: shader_stages.bits(),
                 SamplerOrTextureName: sampler_or_texture_name.as_ptr(),
-                Desc: (sampler_desc).into(),
+                Desc: sampler_desc.0,
             },
             PhantomData,
         )
