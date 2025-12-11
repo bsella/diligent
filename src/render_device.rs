@@ -84,7 +84,7 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct RenderDevice(diligent_sys::IRenderDevice);
+pub struct RenderDevice(pub(crate) diligent_sys::IRenderDevice);
 
 impl Deref for RenderDevice {
     type Target = Object;

@@ -11,7 +11,7 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct DataBlob(diligent_sys::IDataBlob);
+pub struct DataBlob(pub(crate) diligent_sys::IDataBlob);
 
 impl Deref for DataBlob {
     type Target = Object;

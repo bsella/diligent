@@ -3,13 +3,25 @@ use std::{ops::Deref, os::raw::c_void, path::Path};
 use static_assertions::const_assert_eq;
 
 use crate::{
-    APIInfo, Boxed, ImmediateContextCreateInfo, ValidationFlags,
+    APIInfo, Boxed, Dearchiver, ImmediateContextCreateInfo, ValidationFlags,
     data_blob::DataBlob,
     graphics_types::{DeviceFeatures, GraphicsAdapterInfo, Version},
     memory_allocator::MemoryAllocator,
     object::Object,
     shader::ShaderSourceInputStreamFactory,
 };
+
+pub struct DearchiverCreateInfo(diligent_sys::DearchiverCreateInfo);
+
+#[bon::bon]
+impl DearchiverCreateInfo {
+    #[builder]
+    pub fn new() -> Self {
+        Self(diligent_sys::DearchiverCreateInfo {
+            pDummy: std::ptr::null_mut(),
+        })
+    }
+}
 
 pub struct EngineCreateInfo {
     pub engine_api_version: i32,
@@ -121,8 +133,7 @@ impl EngineFactory {
 
         let search = std::ffi::CString::new(search).unwrap();
 
-        let mut stream_factory_ptr: *mut diligent_sys::IShaderSourceInputStreamFactory =
-            std::ptr::null_mut();
+        let mut stream_factory_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
             EngineFactory,
@@ -141,7 +152,7 @@ impl EngineFactory {
     }
 
     pub fn create_empty_data_blob(&self, initial_size: usize) -> Result<Boxed<DataBlob>, ()> {
-        let mut data_blob_ptr: *mut diligent_sys::IDataBlob = std::ptr::null_mut();
+        let mut data_blob_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
             EngineFactory,
@@ -159,7 +170,7 @@ impl EngineFactory {
     }
 
     pub fn create_data_blob<T>(&self, data: &T) -> Result<Boxed<DataBlob>, ()> {
-        let mut data_blob_ptr: *mut diligent_sys::IDataBlob = std::ptr::null_mut();
+        let mut data_blob_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
             EngineFactory,
@@ -216,7 +227,24 @@ impl EngineFactory {
         }
     }
 
-    //pub fn create_dearchiver(&self, create_info : &diligent_sys::DearchiverCreateInfo) -> diligent_sys::IDearchiver;
+    pub fn create_dearchiver(
+        &self,
+        create_info: &DearchiverCreateInfo,
+    ) -> Result<Boxed<Dearchiver>, ()> {
+        let mut dearchiver_ptr = std::ptr::null_mut();
+        unsafe_member_call!(
+            self,
+            EngineFactory,
+            CreateDearchiver,
+            &create_info.0,
+            &mut dearchiver_ptr
+        );
+        if dearchiver_ptr.is_null() {
+            Err(())
+        } else {
+            Ok(Boxed::new(dearchiver_ptr as _))
+        }
+    }
 
     pub fn set_message_callback(&self, callback: diligent_sys::DebugMessageCallbackType) {
         unsafe_member_call!(self, EngineFactory, SetMessageCallback, callback)

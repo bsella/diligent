@@ -3175,3 +3175,24 @@ impl Box {
         self.0.MaxX > self.0.MinX && self.0.MaxY > self.0.MinY && self.0.MaxZ > self.0.MinZ
     }
 }
+
+#[derive(Clone, Copy)]
+pub enum PipelineType {
+    Graphics,
+    Compute,
+    Mesh,
+    RayTracing,
+    Tile,
+}
+
+impl From<PipelineType> for diligent_sys::PIPELINE_TYPE {
+    fn from(value: PipelineType) -> Self {
+        (match value {
+            PipelineType::Graphics => diligent_sys::PIPELINE_TYPE_GRAPHICS,
+            PipelineType::Compute => diligent_sys::PIPELINE_TYPE_COMPUTE,
+            PipelineType::Mesh => diligent_sys::PIPELINE_TYPE_MESH,
+            PipelineType::RayTracing => diligent_sys::PIPELINE_TYPE_RAY_TRACING,
+            PipelineType::Tile => diligent_sys::PIPELINE_TYPE_TILE,
+        }) as _
+    }
+}

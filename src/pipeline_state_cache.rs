@@ -12,7 +12,7 @@ const_assert_eq!(
 );
 
 #[repr(transparent)]
-pub struct PipelineStateCache(diligent_sys::IPipelineStateCache);
+pub struct PipelineStateCache(pub(crate) diligent_sys::IPipelineStateCache);
 
 impl Deref for PipelineStateCache {
     type Target = DeviceObject;
