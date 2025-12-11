@@ -6,6 +6,42 @@ extern unsigned int Diligent_GetGeometryPrimitiveVertexSize(GEOMETRY_PRIMITIVE_V
 
 extern void Diligent_CreateGeometryPrimitive(const GeometryPrimitiveAttributes* Attribs, IDataBlob** ppVertices, IDataBlob** ppIndices, GeometryPrimitiveInfo* pInfo);
 
+#include <DiligentCore/Graphics/GraphicsEngine/interface/APIInfo.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/BlendState.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/BottomLevelAS.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/Buffer.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/BufferView.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/CommandList.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/CommandQueue.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/Constants.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/Dearchiver.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/DepthStencilState.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/DeviceContext.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/DeviceMemory.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/DeviceObject.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/EngineFactory.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/Fence.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/Framebuffer.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/GraphicsTypes.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/InputLayout.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/PipelineResourceSignature.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/PipelineStateCache.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/PipelineState.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/Query.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/RasterizerState.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/RenderDevice.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/RenderPass.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/ResourceMapping.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/Sampler.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/ShaderBindingTable.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/Shader.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/ShaderResourceBinding.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/ShaderResourceVariable.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/SwapChain.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/Texture.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/TextureView.h>
+#include <DiligentCore/Graphics/GraphicsEngine/interface/TopLevelAS.h>
+
 #ifdef VULKAN_SUPPORTED
 
 #include <DiligentCore/Graphics/GraphicsEngineVulkan/interface/EngineFactoryVk.h>
