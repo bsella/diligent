@@ -18,6 +18,25 @@ use crate::{
     graphics_types::{ShaderType, Version},
 };
 
+#[repr(transparent)]
+pub struct ShaderDesc(diligent_sys::ShaderDesc);
+
+impl ShaderDesc {
+    pub fn name(&self) -> &CStr {
+        unsafe { CStr::from_ptr(self.0._DeviceObjectAttribs.Name) }
+    }
+    pub fn shader_type(&self) -> ShaderType {
+        ShaderType::from(self.0.ShaderType)
+    }
+    pub fn use_combined_texture_samplers(&self) -> bool {
+        self.0.UseCombinedTextureSamplers
+    }
+
+    pub fn combined_sampler_suffix(&self) -> &CStr {
+        unsafe { CStr::from_ptr(self.0.CombinedSamplerSuffix) }
+    }
+}
+
 #[derive(Clone, Copy)]
 pub enum ShaderSource<'a> {
     FilePath(&'a Path),
@@ -550,6 +569,11 @@ impl Deref for Shader {
 impl Shader {
     pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IShader {
         std::ptr::from_ref(&self.0) as _
+    }
+
+    pub fn get_desc(&self) -> &ShaderDesc {
+        let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
+        unsafe { &*(desc_ptr as *const ShaderDesc) }
     }
 
     pub fn get_resources(&self) -> Vec<ShaderResourceDesc> {

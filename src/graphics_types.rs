@@ -74,6 +74,28 @@ impl From<ShaderType> for diligent_sys::SHADER_TYPE {
         }) as _
     }
 }
+impl From<diligent_sys::SHADER_TYPE> for ShaderType {
+    fn from(value: diligent_sys::SHADER_TYPE) -> Self {
+        match value as _ {
+            diligent_sys::SHADER_TYPE_VERTEX => ShaderType::Vertex,
+            diligent_sys::SHADER_TYPE_PIXEL => ShaderType::Pixel,
+            diligent_sys::SHADER_TYPE_GEOMETRY => ShaderType::Geometry,
+            diligent_sys::SHADER_TYPE_HULL => ShaderType::Hull,
+            diligent_sys::SHADER_TYPE_DOMAIN => ShaderType::Domain,
+            diligent_sys::SHADER_TYPE_COMPUTE => ShaderType::Compute,
+            diligent_sys::SHADER_TYPE_AMPLIFICATION => ShaderType::Amplification,
+            diligent_sys::SHADER_TYPE_MESH => ShaderType::Mesh,
+            diligent_sys::SHADER_TYPE_RAY_GEN => ShaderType::RayGen,
+            diligent_sys::SHADER_TYPE_RAY_MISS => ShaderType::RayMiss,
+            diligent_sys::SHADER_TYPE_RAY_CLOSEST_HIT => ShaderType::RayClosestHit,
+            diligent_sys::SHADER_TYPE_RAY_ANY_HIT => ShaderType::RayAnyHit,
+            diligent_sys::SHADER_TYPE_RAY_INTERSECTION => ShaderType::RayIntersection,
+            diligent_sys::SHADER_TYPE_CALLABLE => ShaderType::Callable,
+            diligent_sys::SHADER_TYPE_TILE => ShaderType::Tile,
+            _ => panic!("Unknown SHADER_TYPE value"),
+        }
+    }
+}
 
 #[derive(Clone, Copy)]
 pub enum FilterType {
