@@ -60,7 +60,7 @@ impl ShaderBindingTable {
         std::ptr::from_ref(&self.0) as _
     }
 
-    pub fn get_desc(&self) -> &ShaderBindingTableDesc {
+    pub fn desc(&self) -> &ShaderBindingTableDesc {
         let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
         unsafe { &*(desc_ptr as *const ShaderBindingTableDesc) }
     }

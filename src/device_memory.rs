@@ -79,6 +79,11 @@ impl DeviceMemory {
         std::ptr::from_ref(&self.0) as *mut _
     }
 
+    pub fn desc(&self) -> &DeviceMemoryDesc {
+        let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
+        unsafe { &*(desc_ptr as *const DeviceMemoryDesc) }
+    }
+
     pub fn resize(&self, new_size: u64) -> bool {
         unsafe_member_call!(self, DeviceMemory, Resize, new_size)
     }

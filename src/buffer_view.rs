@@ -86,6 +86,11 @@ const_assert_eq!(
 );
 
 impl BufferView {
+    pub fn desc(&self) -> &BufferViewDesc {
+        let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
+        unsafe { &*(desc_ptr as *const BufferViewDesc) }
+    }
+
     pub fn get_buffer(&self) -> &Buffer {
         let buffer_ptr = unsafe_member_call!(self, BufferView, GetBuffer);
 

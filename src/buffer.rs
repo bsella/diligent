@@ -144,7 +144,7 @@ impl Buffer {
         std::ptr::addr_of!(self.0) as _
     }
 
-    pub fn get_desc(&self) -> &BufferDesc {
+    pub fn desc(&self) -> &BufferDesc {
         let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
         unsafe { &*(desc_ptr as *const BufferDesc) }
     }
@@ -257,7 +257,7 @@ impl<'a, T: Sized, State: MapType> BufferMapToken<'a, T, State> {
             data: unsafe {
                 std::slice::from_raw_parts_mut(
                     ptr as *mut T,
-                    buffer.get_desc().size() as usize / std::mem::size_of::<T>(),
+                    buffer.desc().size() as usize / std::mem::size_of::<T>(),
                 )
             },
             device_context,

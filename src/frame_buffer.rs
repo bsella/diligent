@@ -1,4 +1,4 @@
-use std::{ffi::CString, ops::Deref};
+use std::{ffi::CStr, ops::Deref};
 
 use crate::{device_object::DeviceObject, render_pass::RenderPass, texture_view::TextureView};
 
@@ -15,19 +15,42 @@ impl Deref for Framebuffer {
     }
 }
 
-pub struct FramebufferDesc<'a> {
-    pub name: Option<CString>,
+pub struct FramebufferDesc(pub(crate) diligent_sys::FramebufferDesc);
 
-    pub render_pass: &'a RenderPass,
-
-    pub attachments: Vec<&'a TextureView>,
-    pub width: u32,
-    pub height: u32,
-    pub num_array_slices: u32,
+#[bon::bon]
+impl FramebufferDesc {
+    #[builder]
+    pub fn new(
+        name: Option<&CStr>,
+        render_pass: &RenderPass,
+        attachments: &[&TextureView],
+        width: u32,
+        height: u32,
+        num_array_slices: u32,
+    ) -> Self {
+        Self(diligent_sys::FramebufferDesc {
+            _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
+                Name: name.map_or(std::ptr::null(), |name| name.as_ptr()),
+            },
+            pRenderPass: render_pass.sys_ptr(),
+            AttachmentCount: attachments.len() as u32,
+            ppAttachments: attachments
+                .first()
+                .map_or(std::ptr::null(), |_| attachments.as_ptr() as *const *mut _),
+            Width: width,
+            Height: height,
+            NumArraySlices: num_array_slices,
+        })
+    }
 }
 
 impl Framebuffer {
     pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IFramebuffer {
         std::ptr::from_ref(&self.0) as _
+    }
+
+    pub fn desc(&self) -> &FramebufferDesc {
+        let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
+        unsafe { &*(desc_ptr as *const &FramebufferDesc) }
     }
 }

@@ -96,7 +96,7 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
         self.swap_chain
             .resize(width, height, SurfaceTransform::Optimal);
 
-        let swap_chain_desc = self.swap_chain.get_desc();
+        let swap_chain_desc = self.swap_chain.desc();
 
         self.sample.window_resize(swap_chain_desc);
     }
@@ -108,7 +108,7 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
     fn update_ui(&mut self) {
         let ui = self.imgui_renderer.new_frame();
 
-        let swap_chain_desc = self.swap_chain.get_desc();
+        let swap_chain_desc = self.swap_chain.desc();
 
         let adapters_wnd_width = swap_chain_desc.width().min(330);
 
@@ -505,7 +505,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             &swap_chain,
         );
 
-        let swap_chain_desc = swap_chain.get_desc();
+        let swap_chain_desc = swap_chain.desc();
 
         let imgui_renderer = ImguiRenderer::new(
             &ImguiRendererCreateInfo::builder()

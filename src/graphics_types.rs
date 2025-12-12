@@ -3196,3 +3196,15 @@ impl From<PipelineType> for diligent_sys::PIPELINE_TYPE {
         }) as _
     }
 }
+impl From<diligent_sys::PIPELINE_TYPE> for PipelineType {
+    fn from(value: diligent_sys::PIPELINE_TYPE) -> Self {
+        match value as _ {
+            diligent_sys::PIPELINE_TYPE_GRAPHICS => PipelineType::Graphics,
+            diligent_sys::PIPELINE_TYPE_COMPUTE => PipelineType::Compute,
+            diligent_sys::PIPELINE_TYPE_MESH => PipelineType::Mesh,
+            diligent_sys::PIPELINE_TYPE_RAY_TRACING => PipelineType::RayTracing,
+            diligent_sys::PIPELINE_TYPE_TILE => PipelineType::Tile,
+            _ => panic!("Unknown pipeline type"),
+        }
+    }
+}

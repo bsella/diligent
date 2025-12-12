@@ -468,7 +468,7 @@ impl SampleBase for ComputeShader {
         _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
         swap_chain: &SwapChain,
     ) -> Self {
-        let swap_chain_desc = swap_chain.get_desc();
+        let swap_chain_desc = swap_chain.desc();
 
         let mut clear_color = [0.350, 0.350, 0.350, 1.0];
 
@@ -604,7 +604,7 @@ impl SampleBase for ComputeShader {
 
         immediate_context.clear_depth(dsv, 1.0, ResourceStateTransitionMode::Transition);
 
-        let swap_chain_desc = swap_chain.get_desc();
+        let swap_chain_desc = swap_chain.desc();
 
         {
             #[repr(C)]

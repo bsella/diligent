@@ -66,7 +66,7 @@ impl SampleBase for GeometryShader {
         _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
         swap_chain: &SwapChain,
     ) -> Self {
-        let swap_chain_desc = swap_chain.get_desc();
+        let swap_chain_desc = swap_chain.desc();
 
         // If the swap chain color buffer format is a non-sRGB UNORM format,
         // we need to manually convert pixel shader output to gamma space.
@@ -328,10 +328,10 @@ impl SampleBase for GeometryShader {
     fn render(&self, swap_chain: &SwapChain) {
         let immediate_context = self.get_immediate_context();
 
-        let swap_chain_desc = swap_chain.get_desc();
+        let swap_chain_desc = swap_chain.desc();
 
         let view_proj_matrix = {
-            let swap_chain_desc = swap_chain.get_desc();
+            let swap_chain_desc = swap_chain.desc();
 
             // Get pretransform matrix that rotates the scene according the surface orientation
             let srf_pre_transform = get_surface_pretransform_matrix(

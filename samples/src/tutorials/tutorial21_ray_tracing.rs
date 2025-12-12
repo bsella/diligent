@@ -1010,7 +1010,7 @@ impl SampleBase for RayTracing {
 
         let constant_buffer = device.create_buffer(&buffer_desc).unwrap();
 
-        let swap_chain_desc = swap_chain.get_desc();
+        let swap_chain_desc = swap_chain.desc();
 
         let image_blit_pso = create_graphics_pso(engine_factory, &device, swap_chain_desc);
         let image_blit_srb = image_blit_pso.create_shader_resource_binding(true).unwrap();
@@ -1126,7 +1126,7 @@ impl SampleBase for RayTracing {
 
         let inv_view_proj = camera.projection_matrix().inverse();
 
-        let swap_chain_desc = swap_chain.get_desc();
+        let swap_chain_desc = swap_chain.desc();
 
         let texture_desc = TextureDesc::builder()
             .name(c"Color buffer")
@@ -1342,7 +1342,7 @@ impl SampleBase for RayTracing {
                 ResourceStateTransitionMode::Transition,
             );
 
-            let swap_chain_desc = swap_chain.get_desc();
+            let swap_chain_desc = swap_chain.desc();
 
             let attribs = TraceRaysAttribs::builder()
                 .sbt(&self.sbt)

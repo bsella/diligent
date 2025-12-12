@@ -154,6 +154,11 @@ impl BottomLevelAS {
         std::ptr::addr_of!(self.0) as _
     }
 
+    pub fn desc(&self) -> &BottomLevelASDesc<'_> {
+        let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
+        unsafe { &*(desc_ptr as *const BottomLevelASDesc) }
+    }
+
     pub fn get_geometry_desc_index(&self, name: impl AsRef<str>) -> u32 {
         let name = CString::new(name.as_ref()).unwrap();
         unsafe_member_call!(self, BottomLevelAS, GetGeometryDescIndex, name.as_ptr())

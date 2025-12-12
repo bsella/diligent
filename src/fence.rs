@@ -58,6 +58,11 @@ impl Fence {
         std::ptr::from_ref(&self.0) as _
     }
 
+    pub fn desc(&self) -> &FenceDesc {
+        let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
+        unsafe { &*(desc_ptr as *const FenceDesc) }
+    }
+
     pub fn get_completed_value(&self) -> u64 {
         unsafe_member_call!(self, Fence, GetCompletedValue)
     }

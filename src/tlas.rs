@@ -190,6 +190,11 @@ impl TopLevelAS {
         std::ptr::from_ref(&self.0) as _
     }
 
+    pub fn desc(&self) -> &TopLevelASDesc {
+        let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
+        unsafe { &*(desc_ptr as *const TopLevelASDesc) }
+    }
+
     pub fn get_instance_desc(&self, name: impl AsRef<str>) -> Option<TLASInstanceDesc> {
         let name = CString::new(name.as_ref()).unwrap();
         let desc = unsafe_member_call!(self, TopLevelAS, GetInstanceDesc, name.as_ptr());

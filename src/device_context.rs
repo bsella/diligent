@@ -4,7 +4,7 @@ use bitflags::bitflags;
 use static_assertions::const_assert_eq;
 
 use crate::{
-    Boxed, DeviceMemory, PrimitiveTopology,
+    Boxed, CommandQueueType, DeviceMemory, PrimitiveTopology,
     blas::BottomLevelAS,
     buffer::{Buffer, BufferMapReadToken, BufferMapReadWriteToken, BufferMapWriteToken},
     command_queue::CommandQueue,
@@ -30,6 +30,27 @@ use crate::{
     texture_view::TextureView,
     tlas::{HitGroupBindingMode, TLASBuildInstanceData, TopLevelAS},
 };
+
+#[repr(transparent)]
+pub struct DeviceContextDesc(diligent_sys::DeviceContextDesc);
+
+impl DeviceContextDesc {
+    pub fn queue_type(&self) -> CommandQueueType {
+        CommandQueueType::from_bits_retain(self.0.QueueType)
+    }
+    pub fn is_deferred(&self) -> bool {
+        self.0.IsDeferred
+    }
+    pub fn context_id(&self) -> u8 {
+        self.0.ContextId
+    }
+    pub fn queue_id(&self) -> u8 {
+        self.0.QueueId
+    }
+    pub fn texture_copy_granularity(&self) -> &[u32; 3usize] {
+        &self.0.TextureCopyGranularity
+    }
+}
 
 #[repr(transparent)]
 pub struct DeviceContextCommandCounters(diligent_sys::DeviceContextCommandCounters);
@@ -1596,6 +1617,11 @@ impl DeviceContext {
         std::ptr::addr_of!(self.0) as _
     }
 
+    pub fn desc(&self) -> &DeviceContextDesc {
+        let desc_ptr = unsafe_member_call!(self, DeviceContext, GetDesc);
+        unsafe { &*(desc_ptr as *const DeviceContextDesc) }
+    }
+
     pub fn set_graphics_pipeline_state(
         &self,
         pipeline_state: &GraphicsPipelineState,
@@ -2093,7 +2119,7 @@ impl DeviceContext {
             barriers.len() as u32,
             barriers
                 .first()
-                .map_or(std::ptr::null(), |barrier| { &barrier.0 })
+                .map_or(std::ptr::null(), |barrier| &barrier.0)
         )
     }
 
@@ -2207,17 +2233,15 @@ impl ImmediateDeviceContext {
         unsafe_member_call!(self.0, DeviceContext, Flush)
     }
 
-    pub fn execute_command_lists(&self, command_lists: &[CommandList]) {
+    pub fn execute_command_lists(&self, command_lists: &[&CommandList]) {
         unsafe_member_call!(
             self.0,
             DeviceContext,
             ExecuteCommandLists,
             command_lists.len() as u32,
-            command_lists
-                .first()
-                .map_or(std::ptr::null(), |command_list| {
-                    std::ptr::from_ref(&command_list.0) as *mut _
-                })
+            command_lists.first().map_or(std::ptr::null(), |_| {
+                command_lists.as_ptr() as *const *mut _
+            })
         )
     }
 

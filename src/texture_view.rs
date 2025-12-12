@@ -185,6 +185,11 @@ impl TextureView {
         std::ptr::from_ref(&self.0) as _
     }
 
+    pub fn desc(&self) -> &TextureViewDesc {
+        let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
+        unsafe { &*(desc_ptr as *const TextureViewDesc) }
+    }
+
     pub fn set_sampler(&mut self, sampler: &Sampler) {
         unsafe_member_call!(self, TextureView, SetSampler, sampler.sys_ptr());
     }

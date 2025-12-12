@@ -166,6 +166,11 @@ impl PipelineResourceSignature {
         std::ptr::from_ref(&self.0) as _
     }
 
+    pub fn desc(&self) -> &PipelineResourceSignatureDesc<'_> {
+        let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
+        unsafe { &*(desc_ptr as *const PipelineResourceSignatureDesc) }
+    }
+
     pub fn create_shader_resource_binding(
         &self,
         init_static_resources: bool,

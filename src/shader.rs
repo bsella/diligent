@@ -571,7 +571,7 @@ impl Shader {
         std::ptr::from_ref(&self.0) as _
     }
 
-    pub fn get_desc(&self) -> &ShaderDesc {
+    pub fn desc(&self) -> &ShaderDesc {
         let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
         unsafe { &*(desc_ptr as *const ShaderDesc) }
     }

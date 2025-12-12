@@ -9,7 +9,7 @@ use static_assertions::const_assert_eq;
 
 use crate::device_object::DeviceObject;
 use crate::pipeline_state_cache::PipelineStateCache;
-use crate::{Boxed, PipelineResourceFlags};
+use crate::{Boxed, PipelineResourceFlags, PipelineType};
 use crate::{
     graphics_types::{PrimitiveTopology, ShaderType, ShaderTypes, TextureFormat},
     input_layout::LayoutElement,
@@ -329,6 +329,54 @@ pub enum PipelineStateStatus {
     Compiling,
     Ready,
     Failed,
+}
+
+#[repr(transparent)]
+pub struct PipelineResourceLayoutDesc(diligent_sys::PipelineResourceLayoutDesc);
+
+impl PipelineResourceLayoutDesc {
+    pub fn default_variable_type(&self) -> ShaderResourceVariableType {
+        self.0.DefaultVariableType.into()
+    }
+    pub fn default_variable_merge_stages(&self) -> ShaderTypes {
+        ShaderTypes::from_bits_retain(self.0.DefaultVariableMergeStages)
+    }
+    pub fn variables(&self) -> &[ShaderResourceVariableDesc<'_>] {
+        unsafe {
+            std::slice::from_raw_parts(
+                self.0.Variables as *const ShaderResourceVariableDesc,
+                self.0.NumVariables as usize,
+            )
+        }
+    }
+    pub fn immutable_samplers(&self) -> &[ImmutableSamplerDesc<'_>] {
+        unsafe {
+            std::slice::from_raw_parts(
+                self.0.ImmutableSamplers as *const ImmutableSamplerDesc,
+                self.0.NumImmutableSamplers as usize,
+            )
+        }
+    }
+}
+
+pub struct PipelineStateDesc(diligent_sys::PipelineStateDesc);
+
+impl PipelineStateDesc {
+    pub fn pipeline_type(&self) -> PipelineType {
+        self.0.PipelineType.into()
+    }
+
+    pub fn srb_allocation_granularity(&self) -> u32 {
+        self.0.SRBAllocationGranularity
+    }
+
+    pub fn immediate_context_mask(&self) -> u64 {
+        self.0.ImmediateContextMask
+    }
+
+    pub fn resource_layout(&self) -> &PipelineResourceLayoutDesc {
+        unsafe { std::mem::transmute(&self.0.ResourceLayout) }
+    }
 }
 
 #[repr(transparent)]
@@ -1068,6 +1116,11 @@ impl Deref for PipelineState {
 impl PipelineState {
     pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IPipelineState {
         std::ptr::from_ref(&self.0) as _
+    }
+
+    pub fn desc(&self) -> &PipelineStateDesc {
+        let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
+        unsafe { &*(desc_ptr as *const PipelineStateDesc) }
     }
 
     pub fn bind_static_resources(

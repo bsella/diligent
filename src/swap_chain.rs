@@ -153,7 +153,7 @@ impl SwapChain {
         unsafe_member_call!(self, SwapChain, Present, sync_interval)
     }
 
-    pub fn get_desc(&self) -> &SwapChainDesc {
+    pub fn desc(&self) -> &SwapChainDesc {
         let sys_ptr = unsafe_member_call!(self, SwapChain, GetDesc);
         unsafe { &*(sys_ptr as *const SwapChainDesc) }
     }

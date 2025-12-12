@@ -76,7 +76,7 @@ impl SampleBase for Tessellation {
             DeviceFeatureState::Disabled
         );
 
-        let swap_chain_desc = swap_chain.get_desc();
+        let swap_chain_desc = swap_chain.desc();
 
         // Cull back faces. For some reason, in OpenGL the order is reversed
         let cull = {
@@ -503,7 +503,7 @@ impl SampleBase for Tessellation {
     fn render(&self, swap_chain: &SwapChain) {
         let immediate_context = self.get_immediate_context();
 
-        let swap_chain_desc = swap_chain.get_desc();
+        let swap_chain_desc = swap_chain.desc();
 
         let proj_matrix = {
             // Get pretransform matrix that rotates the scene according the surface orientation

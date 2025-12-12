@@ -555,33 +555,12 @@ impl RenderDevice {
     }
 
     pub fn create_framebuffer(&self, desc: &FramebufferDesc) -> Result<Boxed<Framebuffer>, ()> {
-        let texture_views = desc
-            .attachments
-            .iter()
-            .map(|view| view.sys_ptr())
-            .collect::<Vec<_>>();
-
-        let desc = diligent_sys::FramebufferDesc {
-            _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                Name: desc
-                    .name
-                    .as_ref()
-                    .map_or(std::ptr::null(), |name| name.as_ptr()),
-            },
-            pRenderPass: desc.render_pass.sys_ptr(),
-            AttachmentCount: texture_views.len() as u32,
-            ppAttachments: texture_views.as_ptr() as _,
-            Width: desc.width,
-            Height: desc.height,
-            NumArraySlices: desc.num_array_slices,
-        };
-
         let mut frame_buffer_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
             RenderDevice,
             CreateFramebuffer,
-            &desc,
+            &desc.0,
             &mut frame_buffer_ptr
         );
 

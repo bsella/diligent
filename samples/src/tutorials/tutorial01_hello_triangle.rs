@@ -26,7 +26,7 @@ impl SampleBase for HelloTriangle {
         _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
         swap_chain: &SwapChain,
     ) -> Self {
-        let swap_chain_desc = swap_chain.get_desc();
+        let swap_chain_desc = swap_chain.desc();
 
         let shader_create_info = ShaderCreateInfo::builder()
             // Tell the system that the shader source code is in HLSL.
