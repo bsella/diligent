@@ -548,6 +548,69 @@ impl ShaderCodeBufferDesc {
     }
 }
 
+pub struct ShaderResourceDescIterator<'shader> {
+    shader: &'shader Shader,
+    count: usize,
+    current_index: usize,
+}
+
+impl Iterator for ShaderResourceDescIterator<'_> {
+    type Item = ShaderResourceDesc;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current_index >= self.count {
+            return None;
+        }
+
+        let mut desc = std::mem::MaybeUninit::uninit();
+
+        unsafe_member_call!(
+            self.shader,
+            Shader,
+            GetResourceDesc,
+            self.current_index as u32,
+            desc.as_mut_ptr()
+        );
+
+        self.current_index += 1;
+
+        Some(ShaderResourceDesc(unsafe { desc.assume_init() }))
+    }
+
+    fn count(self) -> usize
+    where
+        Self: Sized,
+    {
+        self.count
+    }
+
+    fn last(self) -> Option<Self::Item>
+    where
+        Self: Sized,
+    {
+        if self.count == 0 {
+            return None;
+        }
+
+        let mut desc = std::mem::MaybeUninit::uninit();
+
+        unsafe_member_call!(
+            self.shader,
+            Shader,
+            GetResourceDesc,
+            self.count as u32 - 1,
+            desc.as_mut_ptr()
+        );
+
+        Some(ShaderResourceDesc(unsafe { desc.assume_init() }))
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let remaining = self.count - self.current_index;
+        (remaining, Some(remaining))
+    }
+}
+
 const_assert_eq!(
     std::mem::size_of::<diligent_sys::IShaderMethods>(),
     5 * std::mem::size_of::<*const ()>()
@@ -576,19 +639,12 @@ impl Shader {
         unsafe { &*(desc_ptr as *const ShaderDesc) }
     }
 
-    pub fn get_resources(&self) -> Vec<ShaderResourceDesc> {
-        let num_resources = unsafe_member_call!(self, Shader, GetResourceCount);
-        let mut resources = Vec::with_capacity(num_resources as usize);
-
-        for index in 0..num_resources {
-            let resources_ptr = std::ptr::null_mut();
-            unsafe_member_call!(self, Shader, GetResourceDesc, index, resources_ptr);
-
-            unsafe {
-                resources.push(ShaderResourceDesc(*resources_ptr));
-            }
+    pub fn resources(&self) -> ShaderResourceDescIterator<'_> {
+        ShaderResourceDescIterator {
+            count: unsafe_member_call!(self, Shader, GetResourceCount) as usize,
+            current_index: 0,
+            shader: self,
         }
-        resources
     }
 
     pub fn get_constant_buffer_desc(&self, index: u32) -> Option<&ShaderCodeBufferDesc> {

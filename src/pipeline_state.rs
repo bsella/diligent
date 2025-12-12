@@ -1095,6 +1095,63 @@ impl<'a> RayTracingPipelineStateCreateInfo<'a> {
     }
 }
 
+pub struct PipelineResourceSignatureIterator<'pipeline> {
+    pipeline: &'pipeline PipelineState,
+    signatures_count: usize,
+    current_index: usize,
+}
+
+impl<'pipeline> Iterator for PipelineResourceSignatureIterator<'pipeline> {
+    type Item = &'pipeline PipelineResourceSignature;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current_index >= self.signatures_count {
+            return None;
+        }
+
+        let signature = unsafe_member_call!(
+            self.pipeline,
+            PipelineState,
+            GetResourceSignature,
+            self.current_index as u32
+        ) as *const PipelineResourceSignature;
+
+        self.current_index += 1;
+
+        Some(unsafe { &*signature })
+    }
+
+    fn count(self) -> usize
+    where
+        Self: Sized,
+    {
+        self.signatures_count
+    }
+
+    fn last(self) -> Option<Self::Item>
+    where
+        Self: Sized,
+    {
+        if self.signatures_count == 0 {
+            return None;
+        }
+
+        let signature = unsafe_member_call!(
+            self.pipeline,
+            PipelineState,
+            GetResourceSignature,
+            self.signatures_count as u32 - 1
+        ) as *const PipelineResourceSignature;
+
+        Some(unsafe { &*signature })
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let remaining = self.signatures_count - self.current_index;
+        (remaining, Some(remaining))
+    }
+}
+
 const_assert_eq!(
     std::mem::size_of::<diligent_sys::IPipelineStateMethods>(),
     14 * std::mem::size_of::<*const ()>()
@@ -1213,12 +1270,14 @@ impl PipelineState {
         )
     }
 
-    pub fn get_resource_signatures(&self) -> &[PipelineResourceSignature] {
-        let signatures_count = unsafe_member_call!(self, PipelineState, GetResourceSignatureCount);
-        let first_signature = unsafe_member_call!(self, PipelineState, GetResourceSignature, 0)
-            as *const PipelineResourceSignature;
-
-        unsafe { std::slice::from_raw_parts(first_signature, signatures_count as usize) }
+    pub fn resource_signatures(&self) -> PipelineResourceSignatureIterator<'_> {
+        let signatures_count =
+            unsafe_member_call!(self, PipelineState, GetResourceSignatureCount) as usize;
+        PipelineResourceSignatureIterator {
+            current_index: 0,
+            pipeline: self,
+            signatures_count,
+        }
     }
 
     pub fn get_status(&self, wait_for_completion: bool) -> PipelineStateStatus {
