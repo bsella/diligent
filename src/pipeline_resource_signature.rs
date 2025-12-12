@@ -122,6 +122,37 @@ pub struct PipelineResourceSignatureDesc<'a>(
     PhantomData<&'a ()>,
 );
 
+impl PipelineResourceSignatureDesc<'_> {
+    pub fn resources(&self) -> &[PipelineResourceDesc<'_>] {
+        unsafe {
+            std::slice::from_raw_parts(
+                self.0.Resources as *const PipelineResourceDesc,
+                self.0.NumResources as usize,
+            )
+        }
+    }
+    pub fn immutable_samplers(&self) -> &[ImmutableSamplerDesc<'_>] {
+        unsafe {
+            std::slice::from_raw_parts(
+                self.0.ImmutableSamplers as *const ImmutableSamplerDesc,
+                self.0.NumImmutableSamplers as usize,
+            )
+        }
+    }
+    pub fn binding_index(&self) -> u8 {
+        self.0.BindingIndex
+    }
+    pub fn use_combined_texture_samplers(&self) -> bool {
+        self.0.UseCombinedTextureSamplers
+    }
+    pub fn combined_sampler_suffix(&self) -> &CStr {
+        unsafe { CStr::from_ptr(self.0.CombinedSamplerSuffix) }
+    }
+    pub fn srb_allocation_granularity(&self) -> u32 {
+        self.0.SRBAllocationGranularity
+    }
+}
+
 #[bon::bon]
 impl<'a> PipelineResourceSignatureDesc<'a> {
     #[builder]
@@ -131,7 +162,7 @@ impl<'a> PipelineResourceSignatureDesc<'a> {
         immutable_samplers: &'a [ImmutableSamplerDesc<'a>],
         binding_index: u8,
         use_combined_texture_samplers: bool,
-        combined_sampler_suffix: CString,
+        combined_sampler_suffix: &'a CStr,
         srb_allocation_granularity: u32,
     ) -> Self {
         PipelineResourceSignatureDesc(
