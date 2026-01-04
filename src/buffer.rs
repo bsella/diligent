@@ -8,11 +8,12 @@ use bitflags::bitflags;
 use static_assertions::const_assert_eq;
 
 use crate::{
-    Boxed,
+    Boxed, MapType,
     buffer_view::{BufferView, BufferViewDesc, BufferViewType},
     device_context::DeviceContext,
     device_object::DeviceObject,
     graphics_types::{BindFlags, CpuAccessFlags, MemoryProperty, ResourceState, Usage},
+    resource_access_states,
 };
 
 #[derive(Clone, Copy)]
@@ -206,33 +207,11 @@ impl Buffer {
     }
 }
 
-mod states {
-    pub struct Read;
-    pub struct Write;
-    pub struct ReadWrite;
-}
-
 pub struct BufferMapToken<'a, T: Sized, State: MapType> {
     device_context: &'a DeviceContext,
     buffer: &'a Buffer,
     data: &'a mut [T],
     phantom: PhantomData<State>,
-}
-
-pub trait MapType {
-    const MAP_TYPE: diligent_sys::MAP_TYPE;
-}
-
-impl MapType for states::Read {
-    const MAP_TYPE: diligent_sys::MAP_TYPE = diligent_sys::MAP_READ as diligent_sys::MAP_TYPE;
-}
-
-impl MapType for states::Write {
-    const MAP_TYPE: diligent_sys::MAP_TYPE = diligent_sys::MAP_WRITE as diligent_sys::MAP_TYPE;
-}
-
-impl MapType for states::ReadWrite {
-    const MAP_TYPE: diligent_sys::MAP_TYPE = diligent_sys::MAP_READ_WRITE as diligent_sys::MAP_TYPE;
 }
 
 impl<'a, T: Sized, State: MapType> BufferMapToken<'a, T, State> {
@@ -278,7 +257,7 @@ impl<'a, T: Sized, State: MapType> Drop for BufferMapToken<'a, T, State> {
     }
 }
 
-impl<T> Deref for BufferMapToken<'_, T, states::Read> {
+impl<T> Deref for BufferMapToken<'_, T, resource_access_states::Read> {
     type Target = [T];
     fn deref(&self) -> &Self::Target {
         self.data
@@ -287,32 +266,32 @@ impl<T> Deref for BufferMapToken<'_, T, states::Read> {
 
 // Note : Normally you shouldn't be able to read from the write token,
 //        but DerefMut cannot be implemented without Deref.
-impl<'a, T> Deref for BufferMapToken<'a, T, states::Write> {
+impl<'a, T> Deref for BufferMapToken<'a, T, resource_access_states::Write> {
     type Target = [T];
     fn deref(&self) -> &Self::Target {
         self.data
     }
 }
 
-impl<'a, T> DerefMut for BufferMapToken<'a, T, states::Write> {
+impl<'a, T> DerefMut for BufferMapToken<'a, T, resource_access_states::Write> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.data
     }
 }
 
-impl<'a, T> Deref for BufferMapToken<'a, T, states::ReadWrite> {
+impl<'a, T> Deref for BufferMapToken<'a, T, resource_access_states::ReadWrite> {
     type Target = [T];
     fn deref(&self) -> &Self::Target {
         self.data
     }
 }
 
-impl<'a, T> DerefMut for BufferMapToken<'a, T, states::ReadWrite> {
+impl<'a, T> DerefMut for BufferMapToken<'a, T, resource_access_states::ReadWrite> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.data
     }
 }
 
-pub type BufferMapReadToken<'a, T> = BufferMapToken<'a, T, states::Read>;
-pub type BufferMapWriteToken<'a, T> = BufferMapToken<'a, T, states::Write>;
-pub type BufferMapReadWriteToken<'a, T> = BufferMapToken<'a, T, states::ReadWrite>;
+pub type BufferMapReadToken<'a, T> = BufferMapToken<'a, T, resource_access_states::Read>;
+pub type BufferMapWriteToken<'a, T> = BufferMapToken<'a, T, resource_access_states::Write>;
+pub type BufferMapReadWriteToken<'a, T> = BufferMapToken<'a, T, resource_access_states::ReadWrite>;

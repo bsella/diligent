@@ -339,3 +339,25 @@ impl<T> Drop for Boxed<T> {
         }
     }
 }
+
+mod resource_access_states {
+    pub struct Read;
+    pub struct Write;
+    pub struct ReadWrite;
+}
+
+pub trait MapType {
+    const MAP_TYPE: diligent_sys::MAP_TYPE;
+}
+
+impl MapType for resource_access_states::Read {
+    const MAP_TYPE: diligent_sys::MAP_TYPE = diligent_sys::MAP_READ as diligent_sys::MAP_TYPE;
+}
+
+impl MapType for resource_access_states::Write {
+    const MAP_TYPE: diligent_sys::MAP_TYPE = diligent_sys::MAP_WRITE as diligent_sys::MAP_TYPE;
+}
+
+impl MapType for resource_access_states::ReadWrite {
+    const MAP_TYPE: diligent_sys::MAP_TYPE = diligent_sys::MAP_READ_WRITE as diligent_sys::MAP_TYPE;
+}

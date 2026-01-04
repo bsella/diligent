@@ -1,15 +1,21 @@
-use std::{ffi::CStr, num::NonZero, ops::Deref};
+use std::{
+    ffi::CStr,
+    marker::PhantomData,
+    num::NonZero,
+    ops::{Deref, DerefMut},
+};
 
 use bitflags::bitflags;
 use bon::Builder;
 use static_assertions::const_assert_eq;
 
 use crate::{
-    Boxed,
+    Boxed, MapType,
     buffer::Buffer,
     device_context::DeviceContext,
     device_object::DeviceObject,
-    graphics_types::{BindFlags, CpuAccessFlags, MapFlags, ResourceState, TextureFormat, Usage},
+    graphics_types::{BindFlags, CpuAccessFlags, ResourceState, TextureFormat, Usage},
+    resource_access_states,
     texture_view::{TextureView, TextureViewDesc, TextureViewType},
 };
 
@@ -42,6 +48,57 @@ impl From<TextureDimension> for diligent_sys::RESOURCE_DIMENSION {
                 diligent_sys::RESOURCE_DIM_TEX_CUBE_ARRAY
             }
         }) as _
+    }
+}
+
+impl TextureDimension {
+    pub fn is_array(&self) -> bool {
+        matches!(
+            &self,
+            TextureDimension::Texture1DArray { array_size: _ }
+                | TextureDimension::Texture2DArray { array_size: _ }
+                | TextureDimension::TextureCubeArray { array_size: _ }
+        )
+    }
+
+    #[allow(non_snake_case)]
+    pub fn is_1D(&self) -> bool {
+        matches!(
+            &self,
+            TextureDimension::Texture1D | TextureDimension::Texture1DArray { array_size: _ }
+        )
+    }
+
+    #[allow(non_snake_case)]
+    pub fn is_2D(&self) -> bool {
+        matches!(
+            &self,
+            TextureDimension::Texture2D
+                | TextureDimension::Texture2DArray { array_size: _ }
+                | TextureDimension::TextureCube
+                | TextureDimension::TextureCubeArray { array_size: _ }
+        )
+    }
+
+    #[allow(non_snake_case)]
+    pub fn is_3D(&self) -> bool {
+        matches!(&self, TextureDimension::Texture3D { depth: _ })
+    }
+
+    pub fn is_cube(&self) -> bool {
+        matches!(
+            &self,
+            TextureDimension::TextureCube | TextureDimension::TextureCubeArray { array_size: _ }
+        )
+    }
+
+    pub fn array_size(&self) -> usize {
+        match self {
+            TextureDimension::Texture1DArray { array_size } => array_size.get(),
+            TextureDimension::Texture2DArray { array_size } => array_size.get(),
+            TextureDimension::TextureCubeArray { array_size } => array_size.get(),
+            _ => 1,
+        }
     }
 }
 
@@ -216,6 +273,122 @@ impl TextureDesc {
 }
 
 impl TextureDesc {
+    pub fn dimension(&self) -> TextureDimension {
+        let array_size =
+            || NonZero::new(unsafe { self.0.__bindgen_anon_1.ArraySize as usize }).unwrap();
+
+        match self.0.Type as _ {
+            diligent_sys::RESOURCE_DIM_TEX_1D => TextureDimension::Texture1D,
+            diligent_sys::RESOURCE_DIM_TEX_1D_ARRAY => TextureDimension::Texture1DArray {
+                array_size: array_size(),
+            },
+            diligent_sys::RESOURCE_DIM_TEX_2D => TextureDimension::Texture2D,
+            diligent_sys::RESOURCE_DIM_TEX_2D_ARRAY => TextureDimension::Texture2DArray {
+                array_size: array_size(),
+            },
+            diligent_sys::RESOURCE_DIM_TEX_3D => TextureDimension::Texture3D {
+                depth: NonZero::new(unsafe { self.0.__bindgen_anon_1.Depth as usize }).unwrap(),
+            },
+            diligent_sys::RESOURCE_DIM_TEX_CUBE => TextureDimension::TextureCube,
+            diligent_sys::RESOURCE_DIM_TEX_CUBE_ARRAY => TextureDimension::TextureCubeArray {
+                array_size: array_size(),
+            },
+            _ => panic!("Unknown RESOURCE_DIM value"),
+        }
+    }
+    pub fn width(&self) -> u32 {
+        self.0.Width
+    }
+    pub fn height(&self) -> u32 {
+        self.0.Height
+    }
+    pub fn depth(&self) -> u32 {
+        unsafe { self.0.__bindgen_anon_1.Depth }
+    }
+    pub fn format(&self) -> TextureFormat {
+        self.0.Format.into()
+    }
+    pub fn mip_levels(&self) -> u32 {
+        self.0.MipLevels
+    }
+    pub fn sample_count(&self) -> u32 {
+        self.0.SampleCount
+    }
+    pub fn bind_flags(&self) -> BindFlags {
+        BindFlags::from_bits_retain(self.0.BindFlags)
+    }
+    pub fn usage(&self) -> Usage {
+        self.0.Usage.into()
+    }
+    pub fn cpu_access_flags(&self) -> CpuAccessFlags {
+        CpuAccessFlags::from_bits_retain(self.0.CPUAccessFlags)
+    }
+    pub fn misc_flags(&self) -> MiscTextureFlags {
+        MiscTextureFlags::from_bits_retain(self.0.MiscFlags)
+    }
+    pub fn clear_color(&self) -> &[f32; 4] {
+        &self.0.ClearValue.Color
+    }
+    pub fn clear_depth(&self) -> f32 {
+        self.0.ClearValue.DepthStencil.Depth
+    }
+    pub fn clear_stencil(&self) -> u8 {
+        self.0.ClearValue.DepthStencil.Stencil
+    }
+    pub fn immediate_context_mask(&self) -> u64 {
+        self.0.ImmediateContextMask
+    }
+}
+
+impl TextureDesc {
+    pub fn mip_level_logical_width(&self, mip_level: u32) -> u32 {
+        u32::max(self.width() >> mip_level, 1)
+    }
+    pub fn mip_level_logical_height(&self, mip_level: u32) -> u32 {
+        u32::max(self.height() >> mip_level, 1)
+    }
+    pub fn mip_level_depth(&self, mip_level: u32) -> u32 {
+        u32::max(self.depth() >> mip_level, 1)
+    }
+
+    pub fn mip_level_storage_width(&self, mip_level: u32) -> usize {
+        if let Some(crate::ComponentType::Compressed) = self.format().component_type() {
+            todo!()
+        } else {
+            self.mip_level_logical_width(mip_level) as usize
+        }
+    }
+
+    pub fn mip_level_storage_height(&self, mip_level: u32) -> usize {
+        if let Some(crate::ComponentType::Compressed) = self.format().component_type() {
+            todo!()
+        } else {
+            self.mip_level_logical_height(mip_level) as usize
+        }
+    }
+
+    pub fn mip_level_row_size(&self, mip_level: u32) -> usize {
+        if let Some(crate::ComponentType::Compressed) = self.format().component_type() {
+            todo!()
+        } else {
+            self.mip_level_storage_width(mip_level)
+                * self.format().component_size() as usize
+                * self.format().num_components() as usize
+        }
+    }
+
+    pub fn mip_level_depth_slice_size(&self, mip_level: u32) -> usize {
+        if let Some(crate::ComponentType::Compressed) = self.format().component_type() {
+            todo!()
+        } else {
+            self.mip_level_row_size(mip_level) * self.mip_level_storage_height(mip_level)
+        }
+    }
+
+    pub fn mip_level_mip_size(&self, mip_level: u32) -> usize {
+        self.mip_level_depth_slice_size(mip_level) * self.mip_level_depth(mip_level) as usize
+    }
+
     pub fn get_standard_sparse_texture_properties(&self) -> SparseTextureProperties {
         todo!()
     }
@@ -338,24 +511,29 @@ impl Texture {
     }
 }
 
-pub struct TextureSubresourceReadMapToken<'a, T> {
+pub struct TextureMapToken<'a, T: Sized, State: MapType> {
     device_context: &'a DeviceContext,
     texture: &'a Texture,
+    data: &'a mut [T],
+    stride: u64,
+    depth_stride: u64,
     mip_level: u32,
     array_slice: u32,
-    data_ptr: *const T,
+    phantom: PhantomData<State>,
 }
 
-impl<'a, T> TextureSubresourceReadMapToken<'a, T> {
+impl<'a, T: Sized, State: MapType> TextureMapToken<'a, T, State> {
+    #[cfg(any(feature = "d3d11", feature = "d3d12", feature = "vulkan"))]
     pub(super) fn new(
         device_context: &'a DeviceContext,
         texture: &'a Texture,
         mip_level: u32,
         array_slice: u32,
-        map_flags: MapFlags,
+        map_flags: crate::MapFlags,
         map_region: Option<crate::Box>,
-    ) -> TextureSubresourceReadMapToken<'a, T> {
-        let ptr = std::ptr::null_mut();
+    ) -> TextureMapToken<'a, T, State> {
+        let mut mapped_resource = std::mem::MaybeUninit::uninit();
+
         unsafe_member_call!(
             device_context,
             DeviceContext,
@@ -366,28 +544,38 @@ impl<'a, T> TextureSubresourceReadMapToken<'a, T> {
             diligent_sys::MAP_READ as diligent_sys::MAP_TYPE,
             map_flags.bits(),
             map_region.map_or(std::ptr::null(), |bx| { &bx.0 }),
-            ptr
+            mapped_resource.as_mut_ptr()
         );
 
-        TextureSubresourceReadMapToken {
+        let mapped_resource = unsafe { mapped_resource.assume_init() };
+
+        TextureMapToken::<T, State> {
             device_context,
             texture,
             mip_level,
             array_slice,
-            data_ptr: ptr as *mut T,
+            data: unsafe {
+                std::slice::from_raw_parts_mut(
+                    mapped_resource.pData as *mut T,
+                    texture.desc().mip_level_mip_size(mip_level) / std::mem::size_of::<T>(),
+                )
+            },
+            stride: mapped_resource.Stride,
+            depth_stride: mapped_resource.DepthStride,
+            phantom: PhantomData,
         }
     }
 
-    pub unsafe fn as_ref(&self) -> &T {
-        unsafe { self.data_ptr.as_ref().unwrap_unchecked() }
+    pub fn stride(&self) -> u64 {
+        self.stride
     }
 
-    pub unsafe fn as_slice(&self, len: usize, offset: isize) -> &[T] {
-        unsafe { std::slice::from_raw_parts(self.data_ptr.offset(offset), len) }
+    pub fn depth_stride(&self) -> u64 {
+        self.depth_stride
     }
 }
 
-impl<T> Drop for TextureSubresourceReadMapToken<'_, T> {
+impl<'a, T: Sized, State: MapType> Drop for TextureMapToken<'a, T, State> {
     fn drop(&mut self) {
         unsafe_member_call!(
             self.device_context,
@@ -400,134 +588,42 @@ impl<T> Drop for TextureSubresourceReadMapToken<'_, T> {
     }
 }
 
-pub struct TextureSubresourceWriteMapToken<'a, T> {
-    device_context: &'a DeviceContext,
-    texture: &'a Texture,
-    mip_level: u32,
-    array_slice: u32,
-    data_ptr: *mut T,
-}
-
-impl<'a, T> TextureSubresourceWriteMapToken<'a, T> {
-    pub(super) fn new(
-        device_context: &'a DeviceContext,
-        texture: &'a Texture,
-        mip_level: u32,
-        array_slice: u32,
-        map_flags: MapFlags,
-        map_region: Option<crate::Box>,
-    ) -> TextureSubresourceWriteMapToken<'a, T> {
-        let ptr = std::ptr::null_mut();
-        unsafe_member_call!(
-            device_context,
-            DeviceContext,
-            MapTextureSubresource,
-            texture.sys_ptr(),
-            mip_level,
-            array_slice,
-            diligent_sys::MAP_WRITE as diligent_sys::MAP_TYPE,
-            map_flags.bits(),
-            map_region.map_or(std::ptr::null(), |bx| { &bx.0 }),
-            ptr
-        );
-
-        TextureSubresourceWriteMapToken {
-            device_context,
-            texture,
-            mip_level,
-            array_slice,
-            data_ptr: ptr as *mut T,
-        }
-    }
-
-    pub unsafe fn as_mut(&mut self) -> &mut T {
-        unsafe { self.data_ptr.as_mut().unwrap_unchecked() }
-    }
-
-    pub unsafe fn as_mut_slice(&mut self, len: usize, offset: isize) -> &mut [T] {
-        unsafe { std::slice::from_raw_parts_mut(self.data_ptr.offset(offset), len) }
+impl<T> Deref for TextureMapToken<'_, T, resource_access_states::Read> {
+    type Target = [T];
+    fn deref(&self) -> &Self::Target {
+        self.data
     }
 }
 
-impl<T> Drop for TextureSubresourceWriteMapToken<'_, T> {
-    fn drop(&mut self) {
-        unsafe_member_call!(
-            self.device_context,
-            DeviceContext,
-            UnmapTextureSubresource,
-            self.texture.sys_ptr(),
-            self.mip_level,
-            self.array_slice
-        )
+// Note : Normally you shouldn't be able to read from the write token,
+//        but DerefMut cannot be implemented without Deref.
+impl<'a, T> Deref for TextureMapToken<'a, T, resource_access_states::Write> {
+    type Target = [T];
+    fn deref(&self) -> &Self::Target {
+        self.data
     }
 }
 
-pub struct TextureSubresourceReadWriteMapToken<'a, T> {
-    device_context: &'a DeviceContext,
-    texture: &'a Texture,
-    mip_level: u32,
-    array_slice: u32,
-    data_ptr: *mut T,
-}
-
-impl<'a, T> TextureSubresourceReadWriteMapToken<'a, T> {
-    pub(super) fn new(
-        device_context: &'a DeviceContext,
-        texture: &'a Texture,
-        mip_level: u32,
-        array_slice: u32,
-        map_flags: MapFlags,
-        map_region: Option<crate::Box>,
-    ) -> TextureSubresourceReadWriteMapToken<'a, T> {
-        let ptr = std::ptr::null_mut();
-        unsafe_member_call!(
-            device_context,
-            DeviceContext,
-            MapTextureSubresource,
-            texture.sys_ptr(),
-            mip_level,
-            array_slice,
-            diligent_sys::MAP_READ_WRITE as diligent_sys::MAP_TYPE,
-            map_flags.bits(),
-            map_region.map_or(std::ptr::null(), |bx| { &bx.0 }),
-            ptr
-        );
-
-        TextureSubresourceReadWriteMapToken {
-            device_context,
-            texture,
-            mip_level,
-            array_slice,
-            data_ptr: ptr as *mut T,
-        }
-    }
-
-    pub unsafe fn as_ref(&self) -> &T {
-        unsafe { self.data_ptr.as_ref().unwrap_unchecked() }
-    }
-
-    pub unsafe fn as_slice(&self, len: usize, offset: isize) -> &[T] {
-        unsafe { std::slice::from_raw_parts(self.data_ptr.offset(offset), len) }
-    }
-
-    pub unsafe fn as_mut(&mut self) -> &mut T {
-        unsafe { self.data_ptr.as_mut().unwrap_unchecked() }
-    }
-
-    pub unsafe fn as_mut_slice(&mut self, len: usize, offset: isize) -> &mut [T] {
-        unsafe { std::slice::from_raw_parts_mut(self.data_ptr.offset(offset), len) }
+impl<'a, T> DerefMut for TextureMapToken<'a, T, resource_access_states::Write> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.data
     }
 }
 
-impl<T> Drop for TextureSubresourceReadWriteMapToken<'_, T> {
-    fn drop(&mut self) {
-        unsafe_member_call!(
-            self.device_context,
-            DeviceContext,
-            UnmapTextureSubresource,
-            self.texture.sys_ptr(),
-            self.mip_level,
-            self.array_slice
-        )
+impl<'a, T> Deref for TextureMapToken<'a, T, resource_access_states::ReadWrite> {
+    type Target = [T];
+    fn deref(&self) -> &Self::Target {
+        self.data
     }
 }
+
+impl<'a, T> DerefMut for TextureMapToken<'a, T, resource_access_states::ReadWrite> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.data
+    }
+}
+
+pub type TextureMapReadToken<'a, T> = TextureMapToken<'a, T, resource_access_states::Read>;
+pub type TextureMapWriteToken<'a, T> = TextureMapToken<'a, T, resource_access_states::Write>;
+pub type TextureMapReadWriteToken<'a, T> =
+    TextureMapToken<'a, T, resource_access_states::ReadWrite>;

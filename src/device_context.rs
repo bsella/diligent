@@ -23,10 +23,7 @@ use crate::{
     render_pass::RenderPass,
     shader_binding_table::ShaderBindingTable,
     shader_resource_binding::ShaderResourceBinding,
-    texture::{
-        Texture, TextureSubResource, TextureSubresourceReadMapToken,
-        TextureSubresourceReadWriteMapToken, TextureSubresourceWriteMapToken,
-    },
+    texture::{Texture, TextureSubResource},
     texture_view::TextureView,
     tlas::{HitGroupBindingMode, TLASBuildInstanceData, TopLevelAS},
 };
@@ -2045,6 +2042,7 @@ impl DeviceContext {
         unsafe_member_call!(self, DeviceContext, CopyTexture, &copy_attribs.0)
     }
 
+    #[cfg(any(feature = "d3d11", feature = "d3d12", feature = "vulkan"))]
     pub fn map_texture_subresource_read<'a, T>(
         &'a self,
         texture: &'a Texture,
@@ -2052,8 +2050,8 @@ impl DeviceContext {
         array_slice: u32,
         map_flags: MapFlags,
         map_region: Option<crate::Box>,
-    ) -> TextureSubresourceReadMapToken<'a, T> {
-        TextureSubresourceReadMapToken::new(
+    ) -> crate::texture::TextureMapReadToken<'a, T> {
+        crate::texture::TextureMapReadToken::new(
             self,
             texture,
             mip_level,
@@ -2063,6 +2061,7 @@ impl DeviceContext {
         )
     }
 
+    #[cfg(any(feature = "d3d11", feature = "d3d12", feature = "vulkan"))]
     pub fn map_texture_subresource_write<'a, T>(
         &'a self,
         texture: &'a Texture,
@@ -2070,8 +2069,8 @@ impl DeviceContext {
         array_slice: u32,
         map_flags: MapFlags,
         map_region: Option<crate::Box>,
-    ) -> TextureSubresourceWriteMapToken<'a, T> {
-        TextureSubresourceWriteMapToken::new(
+    ) -> crate::texture::TextureMapWriteToken<'a, T> {
+        crate::texture::TextureMapWriteToken::new(
             self,
             texture,
             mip_level,
@@ -2081,6 +2080,7 @@ impl DeviceContext {
         )
     }
 
+    #[cfg(any(feature = "d3d11", feature = "d3d12", feature = "vulkan"))]
     pub fn map_texture_subresource_read_write<'a, T>(
         &'a self,
         texture: &'a Texture,
@@ -2088,8 +2088,8 @@ impl DeviceContext {
         array_slice: u32,
         map_flags: MapFlags,
         map_region: Option<crate::Box>,
-    ) -> TextureSubresourceReadWriteMapToken<'a, T> {
-        TextureSubresourceReadWriteMapToken::new(
+    ) -> crate::texture::TextureMapReadWriteToken<'a, T> {
+        crate::texture::TextureMapReadWriteToken::new(
             self,
             texture,
             mip_level,
