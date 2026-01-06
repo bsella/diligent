@@ -434,23 +434,12 @@ impl SparseTextureProperties {
     }
 }
 
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::ITextureMethods>(),
-    6 * std::mem::size_of::<*const ()>()
+define_ported!(
+    Texture,
+    diligent_sys::ITexture,
+    diligent_sys::ITextureMethods : 6,
+    DeviceObject
 );
-
-#[repr(transparent)]
-pub struct Texture(diligent_sys::ITexture);
-
-impl Deref for Texture {
-    type Target = DeviceObject;
-    fn deref(&self) -> &Self::Target {
-        unsafe {
-            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IDeviceObject
-                as *const DeviceObject)
-        }
-    }
-}
 
 impl Texture {
     pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::ITexture {
@@ -478,7 +467,7 @@ impl Texture {
         if texture_view_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<TextureView>::new(texture_view_ptr as _))
+            Ok(Boxed::new(texture_view_ptr))
         }
     }
 

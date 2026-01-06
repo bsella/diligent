@@ -3,7 +3,8 @@ use std::{cell::RefCell, marker::PhantomData, mem::MaybeUninit, ops::Deref};
 use static_assertions::const_assert_eq;
 
 use crate::{
-    Boxed, device_context::DeviceContext, device_object::DeviceObject, render_device::RenderDevice,
+    Boxed, Ported, device_context::DeviceContext, device_object::DeviceObject,
+    render_device::RenderDevice,
 };
 
 const_assert_eq!(diligent_sys::QUERY_TYPE_NUM_TYPES, 6);
@@ -89,6 +90,7 @@ const_assert_eq!(
     2 * std::mem::size_of::<*const ()>()
 );
 
+#[repr(transparent)]
 pub struct Query<QueryDataType: GetSysQueryType>(diligent_sys::IQuery, PhantomData<QueryDataType>);
 
 impl<QueryDataType: GetSysQueryType> Deref for Query<QueryDataType> {
@@ -99,6 +101,10 @@ impl<QueryDataType: GetSysQueryType> Deref for Query<QueryDataType> {
                 as *const DeviceObject)
         }
     }
+}
+
+impl<QueryDataType: GetSysQueryType> Ported for Query<QueryDataType> {
+    type SysType = diligent_sys::IQuery;
 }
 
 impl<QueryDataType: GetSysQueryType> Query<QueryDataType> {

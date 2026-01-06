@@ -1,28 +1,16 @@
-use std::{ffi::CString, ops::Deref};
+use std::ffi::CString;
 
 use bitflags::bitflags;
 use bon::Builder;
-use static_assertions::const_assert_eq;
 
 use crate::{data_blob::DataBlob, device_object::DeviceObject};
 
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::IPipelineStateCacheMethods>(),
-    std::mem::size_of::<*const ()>()
+define_ported!(
+    PipelineStateCache,
+    diligent_sys::IPipelineStateCache,
+    diligent_sys::IPipelineStateCacheMethods : 1,
+    DeviceObject
 );
-
-#[repr(transparent)]
-pub struct PipelineStateCache(pub(crate) diligent_sys::IPipelineStateCache);
-
-impl Deref for PipelineStateCache {
-    type Target = DeviceObject;
-    fn deref(&self) -> &Self::Target {
-        unsafe {
-            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IDeviceObject
-                as *const DeviceObject)
-        }
-    }
-}
 
 pub enum PsoCacheMode {
     Load,

@@ -1,10 +1,6 @@
-use std::{
-    ffi::{CStr, CString},
-    ops::Deref,
-};
+use std::ffi::{CStr, CString};
 
 use bitflags::bitflags;
-use static_assertions::const_assert_eq;
 
 use crate::{
     RayTracingPipelineState, device_object::DeviceObject, pipeline_state::PipelineState,
@@ -37,23 +33,12 @@ impl ShaderBindingTableDesc {
     }
 }
 
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::IShaderBindingTableMethods>(),
-    10 * std::mem::size_of::<*const ()>()
+define_ported!(
+    ShaderBindingTable,
+    diligent_sys::IShaderBindingTable,
+    diligent_sys::IShaderBindingTableMethods : 10,
+    DeviceObject
 );
-
-#[repr(transparent)]
-pub struct ShaderBindingTable(diligent_sys::IShaderBindingTable);
-
-impl Deref for ShaderBindingTable {
-    type Target = DeviceObject;
-    fn deref(&self) -> &Self::Target {
-        unsafe {
-            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IDeviceObject
-                as *const DeviceObject)
-        }
-    }
-}
 
 impl ShaderBindingTable {
     pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IShaderBindingTable {

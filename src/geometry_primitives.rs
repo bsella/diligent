@@ -97,8 +97,8 @@ pub fn create_geometry_primitive(
         Err(())
     } else {
         Ok((
-            Boxed::<DataBlob>::new(vertices as _),
-            Boxed::<DataBlob>::new(indices as _),
+            Boxed::new(vertices),
+            Boxed::new(indices),
             GeometryPrimitiveInfo {
                 num_indices: info.NumIndices as usize,
                 num_vertices: info.NumVertices as usize,

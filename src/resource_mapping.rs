@@ -1,6 +1,4 @@
-use std::{ffi::CStr, ops::Deref};
-
-use static_assertions::const_assert_eq;
+use std::ffi::CStr;
 
 use crate::{device_object::DeviceObject, object::Object};
 
@@ -33,20 +31,12 @@ impl ResourceMappingCreateInfo {
     }
 }
 
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::IResourceMappingMethods>(),
-    5 * std::mem::size_of::<*const ()>()
+define_ported!(
+    ResourceMapping,
+    diligent_sys::IResourceMapping,
+    diligent_sys::IResourceMappingMethods : 5,
+    Object
 );
-
-#[repr(transparent)]
-pub struct ResourceMapping(diligent_sys::IResourceMapping);
-
-impl Deref for ResourceMapping {
-    type Target = Object;
-    fn deref(&self) -> &Self::Target {
-        unsafe { &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IObject as *const Object) }
-    }
-}
 
 impl ResourceMapping {
     pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IResourceMapping {

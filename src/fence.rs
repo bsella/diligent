@@ -1,26 +1,15 @@
-use std::{ffi::CStr, ops::Deref};
+use std::ffi::CStr;
 
 use static_assertions::const_assert_eq;
 
 use crate::device_object::DeviceObject;
 
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::IFenceMethods>(),
-    3 * std::mem::size_of::<*const ()>()
+define_ported!(
+    Fence,
+    diligent_sys::IFence,
+    diligent_sys::IFenceMethods : 3,
+    DeviceObject
 );
-
-#[repr(transparent)]
-pub struct Fence(pub(crate) diligent_sys::IFence);
-
-impl Deref for Fence {
-    type Target = DeviceObject;
-    fn deref(&self) -> &Self::Target {
-        unsafe {
-            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IDeviceObject
-                as *const DeviceObject)
-        }
-    }
-}
 
 #[derive(Clone, Copy)]
 pub enum FenceType {

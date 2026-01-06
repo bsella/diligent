@@ -1,26 +1,11 @@
-use std::ops::Deref;
-
-use static_assertions::const_assert_eq;
-
 use crate::command_queue::CommandQueue;
 
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::ICommandQueueVkMethods>(),
-    8 * std::mem::size_of::<*const ()>()
+define_ported!(
+    CommandQueueVk,
+    diligent_sys::ICommandQueueVk,
+    diligent_sys::ICommandQueueVkMethods : 8,
+    CommandQueue
 );
-
-#[repr(transparent)]
-pub struct CommandQueueVk(diligent_sys::ICommandQueueVk);
-
-impl Deref for CommandQueueVk {
-    type Target = CommandQueue;
-    fn deref(&self) -> &Self::Target {
-        unsafe {
-            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::ICommandQueue
-                as *const CommandQueue)
-        }
-    }
-}
 
 impl CommandQueueVk {
     /// # Safety

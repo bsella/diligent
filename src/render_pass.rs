@@ -1,4 +1,4 @@
-use std::{ffi::CString, ops::Deref};
+use std::ffi::CString;
 
 use bon::Builder;
 use static_assertions::const_assert_eq;
@@ -8,18 +8,7 @@ use crate::{
     graphics_types::{AccessFlags, PipelineStageFlags, ResourceState, TextureFormat},
 };
 
-#[repr(transparent)]
-pub struct RenderPass(diligent_sys::IRenderPass);
-
-impl Deref for RenderPass {
-    type Target = DeviceObject;
-    fn deref(&self) -> &Self::Target {
-        unsafe {
-            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IDeviceObject
-                as *const DeviceObject)
-        }
-    }
-}
+define_ported!(RenderPass, diligent_sys::IRenderPass, DeviceObject);
 
 #[derive(Clone, Copy)]
 pub enum AttachmentLoadOperation {

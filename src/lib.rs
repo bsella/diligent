@@ -21,6 +21,45 @@ macro_rules! unsafe_member_call {
     );
 }
 
+macro_rules! define_ported {
+    ($name:ident, $sys_name:ty) => {
+        #[repr(transparent)]
+        pub struct $name(pub(crate) $sys_name);
+
+        impl crate::Ported for $name {
+            type SysType = $sys_name;
+        }
+    };
+
+    (@parent $name:ident, $parent:ty) => {
+        impl std::ops::Deref for $name {
+            type Target = $parent;
+            fn deref(&self) -> &Self::Target {
+                unsafe { &*(std::ptr::from_ref(&self.0) as *const $parent) }
+            }
+        }
+    };
+
+    ($name:ident, $sys_name:ty, $parent:ty) => {
+        define_ported!($name, $sys_name);
+        define_ported!(@parent $name, $parent);
+    };
+
+    ($name:ident, $sys_name:ty, $methods:ty : $num_methods:expr) => {
+        define_ported!($name, $sys_name);
+
+        static_assertions::const_assert_eq!(
+            std::mem::size_of::<$methods>(),
+            $num_methods * std::mem::size_of::<*const ()>()
+        );
+    };
+
+    ($name:ident, $sys_name:ty, $methods:ty : $num_methods:expr, $parent:ty) => {
+        define_ported!($name, $sys_name, $methods : $num_methods);
+        define_ported!(@parent $name, $parent);
+    };
+}
+
 pub mod geometry_primitives;
 
 pub mod graphics_utilities;
@@ -301,13 +340,17 @@ impl APIInfo {
     }
 }
 
-pub struct Boxed<T> {
+pub trait Ported {
+    type SysType;
+}
+
+pub struct Boxed<T: Ported> {
     ptr: *mut T,
 }
 
-impl<T> Boxed<T> {
-    pub(crate) fn new(ptr: *mut T) -> Self {
-        Self { ptr }
+impl<T: Ported> Boxed<T> {
+    pub(crate) fn new(ptr: *mut T::SysType) -> Self {
+        Self { ptr: ptr as _ }
     }
 
     pub fn from_ref(object: &Object) -> Self {
@@ -318,20 +361,20 @@ impl<T> Boxed<T> {
     }
 }
 
-impl<T> Deref for Boxed<T> {
+impl<T: Ported> Deref for Boxed<T> {
     type Target = T;
     fn deref(&self) -> &Self::Target {
         unsafe { &*self.ptr }
     }
 }
 
-impl<T> DerefMut for Boxed<T> {
+impl<T: Ported> DerefMut for Boxed<T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         unsafe { &mut *self.ptr }
     }
 }
 
-impl<T> Drop for Boxed<T> {
+impl<T: Ported> Drop for Boxed<T> {
     fn drop(&mut self) {
         let object_ptr = self.ptr as *mut diligent_sys::IObject;
         unsafe {

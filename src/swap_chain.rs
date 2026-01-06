@@ -133,20 +133,12 @@ impl SwapChainCreateInfo {
     }
 }
 
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::ISwapChainMethods>(),
-    8 * std::mem::size_of::<*const ()>()
+define_ported!(
+    SwapChain,
+    diligent_sys::ISwapChain,
+    diligent_sys::ISwapChainMethods : 8,
+    Object
 );
-
-#[repr(transparent)]
-pub struct SwapChain(diligent_sys::ISwapChain);
-
-impl Deref for SwapChain {
-    type Target = Object;
-    fn deref(&self) -> &Self::Target {
-        unsafe { &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IObject as *const Object) }
-    }
-}
 
 impl SwapChain {
     pub fn present(&self, sync_interval: u32) {

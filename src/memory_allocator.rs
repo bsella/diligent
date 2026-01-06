@@ -1,14 +1,10 @@
 use std::os::raw::c_void;
 
-use static_assertions::const_assert_eq;
-
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::IMemoryAllocatorMethods>(),
-    4 * std::mem::size_of::<*const ()>()
+define_ported!(
+    MemoryAllocator,
+    diligent_sys::IMemoryAllocator,
+    diligent_sys::IMemoryAllocatorMethods : 4
 );
-
-#[repr(transparent)]
-pub struct MemoryAllocator(pub(crate) diligent_sys::IMemoryAllocator);
 
 pub struct MemoryAllocation<'a> {
     allocator: &'a MemoryAllocator,

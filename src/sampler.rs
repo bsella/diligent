@@ -1,4 +1,4 @@
-use std::{ffi::CStr, ops::Deref};
+use std::ffi::CStr;
 
 use bitflags::bitflags;
 use static_assertions::const_assert_eq;
@@ -85,18 +85,7 @@ impl SamplerDesc {
     }
 }
 
-#[repr(transparent)]
-pub struct Sampler(diligent_sys::ISampler);
-
-impl Deref for Sampler {
-    type Target = DeviceObject;
-    fn deref(&self) -> &Self::Target {
-        unsafe {
-            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IDeviceObject
-                as *const DeviceObject)
-        }
-    }
-}
+define_ported!(Sampler, diligent_sys::ISampler, DeviceObject);
 
 impl Sampler {
     pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::ISampler {

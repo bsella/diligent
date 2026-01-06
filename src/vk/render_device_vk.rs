@@ -1,7 +1,3 @@
-use std::ops::Deref;
-
-use static_assertions::const_assert_eq;
-
 use crate::{
     BottomLevelAS, BottomLevelASDesc, Boxed, TopLevelAS, TopLevelASDesc,
     buffer::{Buffer, BufferDesc},
@@ -11,23 +7,12 @@ use crate::{
     texture::{Texture, TextureDesc},
 };
 
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::IRenderDeviceVkMethods>(),
-    11 * std::mem::size_of::<*const ()>()
+define_ported!(
+    RenderDeviceVk,
+    diligent_sys::IRenderDeviceVk,
+    diligent_sys::IRenderDeviceVkMethods : 11,
+    RenderDevice
 );
-
-#[repr(transparent)]
-pub struct RenderDeviceVk(diligent_sys::IRenderDeviceVk);
-
-impl Deref for RenderDeviceVk {
-    type Target = RenderDevice;
-    fn deref(&self) -> &Self::Target {
-        unsafe {
-            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IRenderDevice
-                as *const RenderDevice)
-        }
-    }
-}
 
 impl RenderDeviceVk {
     pub fn get_vk_device(&self) -> diligent_sys::VkDevice {
@@ -69,7 +54,7 @@ impl RenderDeviceVk {
         if texture_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::new(texture_ptr as _))
+            Ok(Boxed::new(texture_ptr))
         }
     }
 
@@ -96,7 +81,7 @@ impl RenderDeviceVk {
         if buffer_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::new(buffer_ptr as _))
+            Ok(Boxed::new(buffer_ptr))
         }
     }
 
@@ -123,7 +108,7 @@ impl RenderDeviceVk {
         if bottom_level_as_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::new(bottom_level_as_ptr as _))
+            Ok(Boxed::new(bottom_level_as_ptr))
         }
     }
 
@@ -150,7 +135,7 @@ impl RenderDeviceVk {
         if top_level_as_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::new(top_level_as_ptr as _))
+            Ok(Boxed::new(top_level_as_ptr))
         }
     }
 
@@ -175,7 +160,7 @@ impl RenderDeviceVk {
         if fence_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<Fence>::new(fence_ptr as _))
+            Ok(Boxed::new(fence_ptr))
         }
     }
 

@@ -1,27 +1,15 @@
-use std::{ffi::CString, ops::Deref};
+use std::ffi::CString;
 
 use bon::Builder;
-use static_assertions::const_assert_eq;
 
 use crate::device_object::DeviceObject;
 
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::IDeviceMemoryMethods>(),
-    3 * std::mem::size_of::<*const ()>()
+define_ported!(
+    DeviceMemory,
+    diligent_sys::IDeviceMemory,
+    diligent_sys::IDeviceMemoryMethods : 3,
+    DeviceObject
 );
-
-#[repr(transparent)]
-pub struct DeviceMemory(diligent_sys::IDeviceMemory);
-
-impl Deref for DeviceMemory {
-    type Target = DeviceObject;
-    fn deref(&self) -> &Self::Target {
-        unsafe {
-            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IDeviceObject
-                as *const DeviceObject)
-        }
-    }
-}
 
 #[derive(Clone, Copy)]
 pub enum DeviceMemoryType {

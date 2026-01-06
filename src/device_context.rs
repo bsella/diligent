@@ -4,7 +4,7 @@ use bitflags::bitflags;
 use static_assertions::const_assert_eq;
 
 use crate::{
-    Boxed, CommandQueueType, DeviceMemory, PrimitiveTopology,
+    Boxed, CommandQueueType, DeviceMemory, Ported, PrimitiveTopology,
     blas::BottomLevelAS,
     buffer::{Buffer, BufferMapReadToken, BufferMapReadWriteToken, BufferMapWriteToken},
     command_queue::CommandQueue,
@@ -1295,8 +1295,7 @@ impl<'a> StateTransitionDesc<'a> {
     }
 }
 
-#[repr(transparent)]
-pub struct CommandList(diligent_sys::ICommandList);
+define_ported!(CommandList, diligent_sys::ICommandList);
 
 #[repr(transparent)]
 pub struct DepthStencilClearValue(pub(crate) diligent_sys::DepthStencilClearValue);
@@ -1594,20 +1593,12 @@ impl<'a> RayTracingPipelineToken<'a> {
     }
 }
 
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::IDeviceContextMethods>(),
-    72 * std::mem::size_of::<*const ()>()
+define_ported!(
+    DeviceContext,
+    diligent_sys::IDeviceContext,
+    diligent_sys::IDeviceContextMethods : 72,
+    Object
 );
-
-#[repr(transparent)]
-pub struct DeviceContext(pub(crate) diligent_sys::IDeviceContext);
-
-impl Deref for DeviceContext {
-    type Target = Object;
-    fn deref(&self) -> &Self::Target {
-        unsafe { &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IObject as *const Object) }
-    }
-}
 
 impl DeviceContext {
     pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IDeviceContext {
@@ -2218,6 +2209,14 @@ impl DeviceContext {
     }
 }
 
+impl Ported for ImmediateDeviceContext {
+    type SysType = diligent_sys::IDeviceContext;
+}
+
+impl Ported for DeferredDeviceContext {
+    type SysType = diligent_sys::IDeviceContext;
+}
+
 #[repr(transparent)]
 pub struct ImmediateDeviceContext(DeviceContext);
 
@@ -2255,7 +2254,7 @@ impl ImmediateDeviceContext {
         if command_queue_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<CommandQueue>::new(command_queue_ptr as _))
+            Ok(Boxed::new(command_queue_ptr))
         }
     }
 
@@ -2319,7 +2318,7 @@ impl DeferredDeviceContext {
         if command_list_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<CommandList>::new(command_list_ptr as _))
+            Ok(Boxed::new(command_list_ptr))
         }
     }
 }

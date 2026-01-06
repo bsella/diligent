@@ -1,4 +1,4 @@
-use std::{ffi::CStr, ops::Deref};
+use std::ffi::CStr;
 
 use bon::Builder;
 use static_assertions::const_assert_eq;
@@ -67,22 +67,11 @@ impl BufferViewDesc {
     }
 }
 
-#[repr(transparent)]
-pub struct BufferView(diligent_sys::IBufferView);
-
-impl Deref for BufferView {
-    type Target = DeviceObject;
-    fn deref(&self) -> &Self::Target {
-        unsafe {
-            &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IDeviceObject
-                as *const DeviceObject)
-        }
-    }
-}
-
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::IBufferViewMethods>(),
-    std::mem::size_of::<*const ()>()
+define_ported!(
+    BufferView,
+    diligent_sys::IBufferView,
+    diligent_sys::IBufferViewMethods : 1,
+    DeviceObject
 );
 
 impl BufferView {

@@ -1,6 +1,4 @@
-use std::{ops::Deref, os::raw::c_void, path::Path};
-
-use static_assertions::const_assert_eq;
+use std::{os::raw::c_void, path::Path};
 
 use crate::{
     APIInfo, Boxed, Dearchiver, ImmediateContextCreateInfo, ValidationFlags,
@@ -99,20 +97,12 @@ impl From<&EngineCreateInfo> for diligent_sys::EngineCreateInfo {
     }
 }
 
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::IEngineFactoryMethods>(),
-    8 * std::mem::size_of::<*const ()>()
+define_ported!(
+    EngineFactory,
+    diligent_sys::IEngineFactory,
+    diligent_sys::IEngineFactoryMethods : 8,
+    Object
 );
-
-#[repr(transparent)]
-pub struct EngineFactory(diligent_sys::IEngineFactory);
-
-impl Deref for EngineFactory {
-    type Target = Object;
-    fn deref(&self) -> &Self::Target {
-        unsafe { &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IObject as *const Object) }
-    }
-}
 
 impl EngineFactory {
     pub fn get_api_info(&self) -> &APIInfo {
@@ -145,9 +135,7 @@ impl EngineFactory {
         if stream_factory_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<ShaderSourceInputStreamFactory>::new(
-                stream_factory_ptr as _,
-            ))
+            Ok(Boxed::new(stream_factory_ptr))
         }
     }
 
@@ -165,7 +153,7 @@ impl EngineFactory {
         if data_blob_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<DataBlob>::new(data_blob_ptr as _))
+            Ok(Boxed::new(data_blob_ptr))
         }
     }
 
@@ -183,7 +171,7 @@ impl EngineFactory {
         if data_blob_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<DataBlob>::new(data_blob_ptr as _))
+            Ok(Boxed::new(data_blob_ptr))
         }
     }
 
@@ -242,7 +230,7 @@ impl EngineFactory {
         if dearchiver_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::new(dearchiver_ptr as _))
+            Ok(Boxed::new(dearchiver_ptr))
         }
     }
 

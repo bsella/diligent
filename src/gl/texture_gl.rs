@@ -1,25 +1,11 @@
-use std::ops::Deref;
-
-use static_assertions::const_assert_eq;
-
 use crate::texture::Texture;
 
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::ITextureGLMethods>(),
-    2 * std::mem::size_of::<*const ()>()
+define_ported!(
+    TextureGL,
+    diligent_sys::ITextureGL,
+    diligent_sys::ITextureGLMethods : 2,
+    Texture
 );
-
-#[repr(transparent)]
-pub struct TextureGL(diligent_sys::ITextureGL);
-
-impl Deref for TextureGL {
-    type Target = Texture;
-    fn deref(&self) -> &Self::Target {
-        unsafe {
-            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::ITexture as *const Texture)
-        }
-    }
-}
 
 impl TextureGL {
     pub fn get_texture_handle(&self) -> diligent_sys::GLuint {

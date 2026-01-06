@@ -122,23 +122,12 @@ impl BufferDesc {
     }
 }
 
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::IBufferMethods>(),
-    9 * std::mem::size_of::<*const ()>()
+define_ported!(
+    Buffer,
+    diligent_sys::IBuffer,
+    diligent_sys::IBufferMethods : 9,
+    DeviceObject
 );
-
-#[repr(transparent)]
-pub struct Buffer(pub(crate) diligent_sys::IBuffer);
-
-impl Deref for Buffer {
-    type Target = DeviceObject;
-    fn deref(&self) -> &Self::Target {
-        unsafe {
-            &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IDeviceObject
-                as *const DeviceObject)
-        }
-    }
-}
 
 impl Buffer {
     pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IBuffer {
@@ -158,7 +147,7 @@ impl Buffer {
         if buffer_view_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<BufferView>::new(buffer_view_ptr as _))
+            Ok(Boxed::new(buffer_view_ptr))
         }
     }
 

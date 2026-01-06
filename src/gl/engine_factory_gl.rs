@@ -54,18 +54,12 @@ impl From<&EngineGLCreateInfo> for diligent_sys::EngineGLCreateInfo {
     }
 }
 
-#[repr(transparent)]
-pub struct EngineFactoryOpenGL(diligent_sys::IEngineFactoryOpenGL);
-
-impl Deref for EngineFactoryOpenGL {
-    type Target = EngineFactory;
-    fn deref(&self) -> &Self::Target {
-        unsafe {
-            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IEngineFactory
-                as *const EngineFactory)
-        }
-    }
-}
+define_ported!(
+    EngineFactoryOpenGL,
+    diligent_sys::IEngineFactoryOpenGL,
+    diligent_sys::IEngineFactoryOpenGLMethods : 3,
+    EngineFactory
+);
 
 impl EngineFactoryOpenGL {
     pub fn create_device_and_swap_chain_gl(
@@ -101,9 +95,9 @@ impl EngineFactoryOpenGL {
             Err(())
         } else {
             Ok((
-                Boxed::<RenderDevice>::new(render_device_ptr as _),
-                Boxed::<ImmediateDeviceContext>::new(device_context_ptr as _),
-                Boxed::<SwapChain>::new(swap_chain_ptr as _),
+                Boxed::new(render_device_ptr),
+                Boxed::new(device_context_ptr),
+                Boxed::new(swap_chain_ptr),
             ))
         }
     }
@@ -132,8 +126,8 @@ impl EngineFactoryOpenGL {
             Err(())
         } else {
             Ok((
-                Boxed::<RenderDevice>::new(render_device_ptr as _),
-                Boxed::<ImmediateDeviceContext>::new(device_context_ptr as _),
+                Boxed::new(render_device_ptr),
+                Boxed::new(device_context_ptr),
             ))
         }
     }

@@ -1,22 +1,6 @@
-use std::ops::Deref;
-
-use static_assertions::const_assert_eq;
-
 use crate::{
     Boxed, Buffer, BufferDesc, ResourceState, Texture, TextureDesc, render_device::RenderDevice,
 };
-
-#[cfg(target_os = "windows")]
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::IRenderDeviceGLMethods>(),
-    4 * std::mem::size_of::<*const ()>()
-);
-
-#[cfg(not(target_os = "windows"))]
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::IRenderDeviceGLMethods>(),
-    3 * std::mem::size_of::<*const ()>()
-);
 
 #[cfg(target_os = "windows")]
 #[repr(transparent)]
@@ -25,18 +9,18 @@ pub struct NativeGLContextAttribsWin32(diligent_sys::NativeGLContextAttribsWin32
 #[cfg(target_os = "windows")]
 pub type NativeGLContextAttribs = NativeGLContextAttribsWin32;
 
-#[repr(transparent)]
-pub struct RenderDeviceGL(diligent_sys::IRenderDeviceGL);
+#[cfg(target_os = "windows")]
+const IRENDER_DEVICE_GL_METHODS_COUNT: usize = 4;
 
-impl Deref for RenderDeviceGL {
-    type Target = RenderDevice;
-    fn deref(&self) -> &Self::Target {
-        unsafe {
-            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IRenderDevice
-                as *const RenderDevice)
-        }
-    }
-}
+#[cfg(not(target_os = "windows"))]
+const IRENDER_DEVICE_GL_METHODS_COUNT: usize = 3;
+
+define_ported!(
+    RenderDeviceGL,
+    diligent_sys::IRenderDeviceGL,
+    diligent_sys::IRenderDeviceGLMethods : IRENDER_DEVICE_GL_METHODS_COUNT,
+    RenderDevice
+);
 
 impl RenderDeviceGL {
     pub fn create_texture_from_gl_handle(
@@ -61,7 +45,7 @@ impl RenderDeviceGL {
         if texture_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<Texture>::new(texture_ptr as _))
+            Ok(Boxed::new(texture_ptr))
         }
     }
 
@@ -85,7 +69,7 @@ impl RenderDeviceGL {
         if buffer_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<Buffer>::new(buffer_ptr as _))
+            Ok(Boxed::new(buffer_ptr))
         }
     }
 
@@ -107,7 +91,7 @@ impl RenderDeviceGL {
         if texture_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<Texture>::new(texture_ptr as _))
+            Ok(Boxed::new(texture_ptr))
         }
     }
 

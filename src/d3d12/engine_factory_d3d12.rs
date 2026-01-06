@@ -16,23 +16,15 @@ use crate::{
     swap_chain::{SwapChain, SwapChainCreateInfo},
 };
 
-#[repr(transparent)]
-pub struct EngineFactoryD3D12(diligent_sys::IEngineFactoryD3D12);
-
-impl Deref for EngineFactoryD3D12 {
-    type Target = EngineFactory;
-    fn deref(&self) -> &Self::Target {
-        unsafe {
-            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IEngineFactory
-                as *const EngineFactory)
-        }
-    }
-}
+define_ported!(
+    EngineFactoryD3D12,
+    diligent_sys::IEngineFactoryD3D12,
+    diligent_sys::IEngineFactoryD3D12Methods : 6,
+    EngineFactory
+);
 
 pub fn get_engine_factory_d3d12() -> Boxed<EngineFactoryD3D12> {
-    let engine_factory_d3d12 = unsafe { diligent_sys::Diligent_GetEngineFactoryD3D12() };
-
-    Boxed::new(engine_factory_d3d12 as _)
+    Boxed::new(unsafe { diligent_sys::Diligent_GetEngineFactoryD3D12() })
 }
 
 bitflags! {
@@ -181,19 +173,19 @@ impl EngineFactoryD3D12 {
             Err(())
         } else {
             Ok((
-                Boxed::new(render_device_ptr as _),
+                Boxed::new(render_device_ptr),
                 Vec::from_iter(
                     device_context_ptrs
                         .iter()
                         .take(num_immediate_contexts)
-                        .map(|&dc_ptr| Boxed::new(dc_ptr as _)),
+                        .map(|&dc_ptr| Boxed::new(dc_ptr)),
                 ),
                 Vec::from_iter(
                     device_context_ptrs
                         .iter()
                         .rev()
                         .take(num_deferred_contexts)
-                        .map(|&dc_ptr| Boxed::new(dc_ptr as _)),
+                        .map(|&dc_ptr| Boxed::new(dc_ptr)),
                 ),
             ))
         }
@@ -246,7 +238,7 @@ impl EngineFactoryD3D12 {
         if swap_chain_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::new(swap_chain_ptr as _))
+            Ok(Boxed::new(swap_chain_ptr))
         }
     }
 

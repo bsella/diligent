@@ -3,8 +3,6 @@ use std::ops::Deref;
 use std::ops::DerefMut;
 use std::path::PathBuf;
 
-use static_assertions::const_assert_eq;
-
 use crate::Boxed;
 use crate::EngineFactory;
 use crate::graphics_types::Version;
@@ -140,23 +138,12 @@ impl Default for EngineVkCreateInfo {
     }
 }
 
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::IEngineFactoryVkMethods>(),
-    4 * std::mem::size_of::<*const ()>()
+define_ported!(
+    EngineFactoryVk,
+    diligent_sys::IEngineFactoryVk,
+    diligent_sys::IEngineFactoryVkMethods : 4,
+    EngineFactory
 );
-
-#[repr(transparent)]
-pub struct EngineFactoryVk(pub(crate) diligent_sys::IEngineFactoryVk);
-
-impl Deref for EngineFactoryVk {
-    type Target = EngineFactory;
-    fn deref(&self) -> &Self::Target {
-        unsafe {
-            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IEngineFactory
-                as *const EngineFactory)
-        }
-    }
-}
 
 pub fn get_engine_factory_vk() -> Boxed<EngineFactoryVk> {
     let engine_factory_vk = unsafe { diligent_sys::Diligent_GetEngineFactoryVk() };
@@ -285,19 +272,19 @@ impl EngineFactoryVk {
             Err(())
         } else {
             Ok((
-                Boxed::<RenderDevice>::new(render_device_ptr as _),
+                Boxed::new(render_device_ptr),
                 Vec::from_iter(
                     device_context_ptrs
                         .iter()
                         .take(num_immediate_contexts)
-                        .map(|dc_ptr| Boxed::<ImmediateDeviceContext>::new(*dc_ptr as _)),
+                        .map(|dc_ptr| Boxed::new(*dc_ptr)),
                 ),
                 Vec::from_iter(
                     device_context_ptrs
                         .iter()
                         .rev()
                         .take(num_deferred_contexts)
-                        .map(|dc_ptr| Boxed::<DeferredDeviceContext>::new(*dc_ptr as _)),
+                        .map(|dc_ptr| Boxed::new(*dc_ptr)),
                 ),
             ))
         }
@@ -326,7 +313,7 @@ impl EngineFactoryVk {
         if swap_chain_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<SwapChain>::new(swap_chain_ptr as _))
+            Ok(Boxed::new(swap_chain_ptr))
         }
     }
 

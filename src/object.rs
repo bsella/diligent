@@ -1,12 +1,8 @@
-use static_assertions::const_assert_eq;
-
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::IObjectMethods>(),
-    4 * std::mem::size_of::<*const ()>()
+define_ported!(
+    Object,
+    diligent_sys::IObject,
+    diligent_sys::IObjectMethods : 4
 );
-
-#[repr(transparent)]
-pub struct Object(diligent_sys::IObject);
 
 impl Object {
     pub(crate) fn add_ref(&self) {

@@ -1,23 +1,11 @@
-use std::ops::Deref;
-
-use static_assertions::const_assert_eq;
-
 use crate::buffer::Buffer;
 
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::IBufferVkMethods>(),
-    4 * std::mem::size_of::<*const ()>()
+define_ported!(
+    BufferVk,
+    diligent_sys::IBufferVk,
+    diligent_sys::IBufferVkMethods : 4,
+    Buffer
 );
-
-#[repr(transparent)]
-pub struct BufferVk(diligent_sys::IBufferVk);
-
-impl Deref for BufferVk {
-    type Target = Buffer;
-    fn deref(&self) -> &Self::Target {
-        unsafe { &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IBuffer as *const Buffer) }
-    }
-}
 
 impl BufferVk {
     pub fn get_vk_buffer_view(&self) -> diligent_sys::VkBuffer {

@@ -1,26 +1,11 @@
-use std::ops::Deref;
-
-use static_assertions::const_assert_eq;
-
 use crate::{device_context::DeviceContext, gl::swap_chain_gl::SwapChainGL};
 
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::IDeviceContextGLMethods>(),
-    3 * std::mem::size_of::<*const ()>()
+define_ported!(
+    DeviceContextGL,
+    diligent_sys::IDeviceContextGL,
+    diligent_sys::IDeviceContextGLMethods : 3,
+    DeviceContext
 );
-
-#[repr(transparent)]
-pub struct DeviceContextGL(diligent_sys::IDeviceContextGL);
-
-impl Deref for DeviceContextGL {
-    type Target = DeviceContext;
-    fn deref(&self) -> &Self::Target {
-        unsafe {
-            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IDeviceContext
-                as *const DeviceContext)
-        }
-    }
-}
 
 impl DeviceContextGL {
     pub fn update_current_gl_context(&self) -> bool {

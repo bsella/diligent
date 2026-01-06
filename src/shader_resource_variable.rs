@@ -1,4 +1,4 @@
-use std::{ffi::CStr, marker::PhantomData, mem::MaybeUninit, ops::Deref};
+use std::{ffi::CStr, marker::PhantomData, mem::MaybeUninit};
 
 use bitflags::bitflags;
 use static_assertions::const_assert_eq;
@@ -107,20 +107,12 @@ impl<'a> ShaderResourceVariableDesc<'a> {
     }
 }
 
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::IShaderResourceVariableMethods>(),
-    8 * std::mem::size_of::<*const ()>()
+define_ported!(
+    ShaderResourceVariable,
+    diligent_sys::IShaderResourceVariable,
+    diligent_sys::IShaderResourceVariableMethods : 8,
+    Object
 );
-
-#[repr(transparent)]
-pub struct ShaderResourceVariable(diligent_sys::IShaderResourceVariable);
-
-impl Deref for ShaderResourceVariable {
-    type Target = Object;
-    fn deref(&self) -> &Self::Target {
-        unsafe { &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IObject as *const Object) }
-    }
-}
 
 impl ShaderResourceVariable {
     pub fn set(&self, device_object: &DeviceObject, flags: SetShaderResourceFlags) {

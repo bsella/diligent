@@ -12,18 +12,12 @@ use crate::{
     swap_chain::{SwapChain, SwapChainCreateInfo},
 };
 
-#[repr(transparent)]
-pub struct EngineFactoryD3D11(diligent_sys::IEngineFactoryD3D11);
-
-impl Deref for EngineFactoryD3D11 {
-    type Target = EngineFactory;
-    fn deref(&self) -> &Self::Target {
-        unsafe {
-            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IEngineFactory
-                as *const EngineFactory)
-        }
-    }
-}
+define_ported!(
+    EngineFactoryD3D11,
+    diligent_sys::IEngineFactoryD3D11,
+    diligent_sys::IEngineFactoryD3D11Methods : 4,
+    EngineFactory
+);
 
 pub fn get_engine_factory_d3d11() -> Boxed<EngineFactoryD3D11> {
     let engine_factory_d3d11 = unsafe { diligent_sys::Diligent_GetEngineFactoryD3D11() };
@@ -121,19 +115,19 @@ impl EngineFactoryD3D11 {
             Err(())
         } else {
             Ok((
-                Boxed::new(render_device_ptr as _),
+                Boxed::new(render_device_ptr),
                 Vec::from_iter(
                     device_context_ptrs
                         .iter()
                         .take(num_immediate_contexts)
-                        .map(|&dc_ptr| Boxed::new(dc_ptr as _)),
+                        .map(|&dc_ptr| Boxed::new(dc_ptr)),
                 ),
                 Vec::from_iter(
                     device_context_ptrs
                         .iter()
                         .rev()
                         .take(num_deferred_contexts)
-                        .map(|&dc_ptr| Boxed::new(dc_ptr as _)),
+                        .map(|&dc_ptr| Boxed::new(dc_ptr)),
                 ),
             ))
         }
@@ -165,7 +159,7 @@ impl EngineFactoryD3D11 {
         if swap_chain_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::new(swap_chain_ptr as _))
+            Ok(Boxed::new(swap_chain_ptr))
         }
     }
 
@@ -214,19 +208,19 @@ impl EngineFactoryD3D11 {
             Err(())
         } else {
             Ok((
-                Boxed::new(render_device_ptr as _),
+                Boxed::new(render_device_ptr),
                 Vec::from_iter(
                     device_context_ptrs
                         .iter()
                         .take(num_immediate_contexts)
-                        .map(|&dc_ptr| Boxed::new(dc_ptr as _)),
+                        .map(|&dc_ptr| Boxed::new(dc_ptr)),
                 ),
                 Vec::from_iter(
                     device_context_ptrs
                         .iter()
                         .rev()
                         .take(num_deferred_contexts)
-                        .map(|&dc_ptr| Boxed::new(dc_ptr as _)),
+                        .map(|&dc_ptr| Boxed::new(dc_ptr)),
                 ),
             ))
         }

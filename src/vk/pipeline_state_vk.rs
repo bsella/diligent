@@ -1,26 +1,11 @@
-use std::ops::Deref;
-
-use static_assertions::const_assert_eq;
-
 use crate::{pipeline_state::PipelineState, vk::render_pass_vk::RenderPassVk};
 
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::IPipelineStateVkMethods>(),
-    2 * std::mem::size_of::<*const ()>()
+define_ported!(
+    PipelineStateVk,
+    diligent_sys::IPipelineStateVk,
+    diligent_sys::IPipelineStateVkMethods : 2,
+    PipelineState
 );
-
-#[repr(transparent)]
-pub struct PipelineStateVk(diligent_sys::IPipelineStateVk);
-
-impl Deref for PipelineStateVk {
-    type Target = PipelineState;
-    fn deref(&self) -> &Self::Target {
-        unsafe {
-            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IPipelineState
-                as *const PipelineState)
-        }
-    }
-}
 
 impl PipelineStateVk {
     pub fn get_render_pass(&self) -> Option<&RenderPassVk> {

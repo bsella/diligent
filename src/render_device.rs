@@ -1,6 +1,4 @@
-use std::{ffi::CStr, ops::Deref, os::raw::c_void};
-
-use static_assertions::const_assert_eq;
+use std::{ffi::CStr, os::raw::c_void};
 
 use crate::{
     Boxed, ResourceMappingCreateInfo, SparseTextureFormatInfo, TextureFormatInfoExt,
@@ -78,20 +76,12 @@ impl RenderDeviceInfo {
     //RenderDeviceShaderVersionInfo MaxShaderVersion DEFAULT_INITIALIZER({});
 }
 
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::IRenderDeviceMethods>(),
-    29 * std::mem::size_of::<*const ()>()
+define_ported!(
+    RenderDevice,
+    diligent_sys::IRenderDevice,
+    diligent_sys::IRenderDeviceMethods : 29,
+    Object
 );
-
-#[repr(transparent)]
-pub struct RenderDevice(pub(crate) diligent_sys::IRenderDevice);
-
-impl Deref for RenderDevice {
-    type Target = Object;
-    fn deref(&self) -> &Self::Target {
-        unsafe { &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IObject as *const Object) }
-    }
-}
 
 impl RenderDevice {
     pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IRenderDevice {
@@ -113,7 +103,7 @@ impl RenderDevice {
         if buffer_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<Buffer>::new(buffer_ptr as _))
+            Ok(Boxed::new(buffer_ptr))
         }
     }
 
@@ -143,7 +133,7 @@ impl RenderDevice {
         if buffer_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<Buffer>::new(buffer_ptr as _))
+            Ok(Boxed::new(buffer_ptr))
         }
     }
 
@@ -169,10 +159,10 @@ impl RenderDevice {
             if data_blob_ptr.is_null() {
                 Err(None)
             } else {
-                Err(Some(Boxed::<DataBlob>::new(data_blob_ptr as _)))
+                Err(Some(Boxed::new(data_blob_ptr)))
             }
         } else {
-            Ok(Boxed::<Shader>::new(shader_ptr as _))
+            Ok(Boxed::new(shader_ptr))
         }
     }
 
@@ -208,7 +198,7 @@ impl RenderDevice {
         if texture_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<Texture>::new(texture_ptr as _))
+            Ok(Boxed::new(texture_ptr))
         }
     }
 
@@ -225,7 +215,7 @@ impl RenderDevice {
         if sampler_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<Sampler>::new(sampler_ptr as _))
+            Ok(Boxed::new(sampler_ptr))
         }
     }
 
@@ -245,7 +235,7 @@ impl RenderDevice {
         if resource_mapping_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<ResourceMapping>::new(resource_mapping_ptr as _))
+            Ok(Boxed::new(resource_mapping_ptr))
         }
     }
 
@@ -266,7 +256,7 @@ impl RenderDevice {
         if pipeline_state_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<GraphicsPipelineState>::new(pipeline_state_ptr as _))
+            Ok(Boxed::new(pipeline_state_ptr))
         }
     }
 
@@ -287,7 +277,7 @@ impl RenderDevice {
         if pipeline_state_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<ComputePipelineState>::new(pipeline_state_ptr as _))
+            Ok(Boxed::new(pipeline_state_ptr))
         }
     }
 
@@ -308,9 +298,7 @@ impl RenderDevice {
         if pipeline_state_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<RayTracingPipelineState>::new(
-                pipeline_state_ptr as _,
-            ))
+            Ok(Boxed::new(pipeline_state_ptr))
         }
     }
 
@@ -331,7 +319,7 @@ impl RenderDevice {
         if pipeline_state_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<TilePipelineState>::new(pipeline_state_ptr as _))
+            Ok(Boxed::new(pipeline_state_ptr))
         }
     }
 
@@ -348,7 +336,7 @@ impl RenderDevice {
         if fence_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<Fence>::new(fence_ptr as _))
+            Ok(Boxed::new(fence_ptr))
         }
     }
 
@@ -370,7 +358,7 @@ impl RenderDevice {
         if query_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<Query<QueryDataType>>::new(query_ptr as _))
+            Ok(Boxed::new(query_ptr))
         }
     }
 
@@ -550,7 +538,7 @@ impl RenderDevice {
         if render_pass_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<RenderPass>::new(render_pass_ptr as _))
+            Ok(Boxed::new(render_pass_ptr))
         }
     }
 
@@ -567,7 +555,7 @@ impl RenderDevice {
         if frame_buffer_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<Framebuffer>::new(frame_buffer_ptr as _))
+            Ok(Boxed::new(frame_buffer_ptr))
         }
     }
 
@@ -578,7 +566,7 @@ impl RenderDevice {
         if blas_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<BottomLevelAS>::new(blas_ptr as _))
+            Ok(Boxed::new(blas_ptr))
         }
     }
 
@@ -589,7 +577,7 @@ impl RenderDevice {
         if tlas_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<TopLevelAS>::new(tlas_ptr as _))
+            Ok(Boxed::new(tlas_ptr))
         }
     }
 
@@ -603,7 +591,7 @@ impl RenderDevice {
         if sbt_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<ShaderBindingTable>::new(sbt_ptr as _))
+            Ok(Boxed::new(sbt_ptr))
         }
     }
 
@@ -623,7 +611,7 @@ impl RenderDevice {
         if prs_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<PipelineResourceSignature>::new(prs_ptr as _))
+            Ok(Boxed::new(prs_ptr))
         }
     }
 
@@ -656,7 +644,7 @@ impl RenderDevice {
         if device_memory_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<DeviceMemory>::new(device_memory_ptr as _))
+            Ok(Boxed::new(device_memory_ptr))
         }
     }
 
@@ -677,7 +665,7 @@ impl RenderDevice {
         if pso_cache_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<PipelineStateCache>::new(pso_cache_ptr as _))
+            Ok(Boxed::new(pso_cache_ptr))
         }
     }
 
@@ -693,9 +681,7 @@ impl RenderDevice {
         if deferred_context_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<DeferredDeviceContext>::new(
-                deferred_context_ptr as _,
-            ))
+            Ok(Boxed::new(deferred_context_ptr))
         }
     }
 

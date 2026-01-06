@@ -1,24 +1,14 @@
 use core::fmt;
 use std::{fmt::Debug, ops::Deref};
 
-use static_assertions::const_assert_eq;
-
 use crate::{Boxed, object::Object};
 
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::IDataBlobMethods>(),
-    4 * std::mem::size_of::<*const ()>()
+define_ported!(
+    DataBlob,
+    diligent_sys::IDataBlob,
+    diligent_sys::IDataBlobMethods : 4,
+    Object
 );
-
-#[repr(transparent)]
-pub struct DataBlob(pub(crate) diligent_sys::IDataBlob);
-
-impl Deref for DataBlob {
-    type Target = Object;
-    fn deref(&self) -> &Self::Target {
-        unsafe { &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IObject as *const Object) }
-    }
-}
 
 impl fmt::Debug for DataBlob {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

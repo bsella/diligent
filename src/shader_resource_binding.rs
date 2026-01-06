@@ -1,6 +1,4 @@
-use std::{ffi::CString, ops::Deref, str::FromStr};
-
-use static_assertions::const_assert_eq;
+use std::{ffi::CString, str::FromStr};
 
 use crate::{
     graphics_types::ShaderTypes,
@@ -12,20 +10,12 @@ use crate::{
     },
 };
 
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::IShaderResourceBindingMethods>(),
-    7 * std::mem::size_of::<*const ()>()
+define_ported!(
+    ShaderResourceBinding,
+    diligent_sys::IShaderResourceBinding,
+    diligent_sys::IShaderResourceBindingMethods : 7,
+    Object
 );
-
-#[repr(transparent)]
-pub struct ShaderResourceBinding(diligent_sys::IShaderResourceBinding);
-
-impl Deref for ShaderResourceBinding {
-    type Target = Object;
-    fn deref(&self) -> &Self::Target {
-        unsafe { &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IObject as *const Object) }
-    }
-}
 
 impl ShaderResourceBinding {
     pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IShaderResourceBinding {

@@ -1,7 +1,6 @@
 use std::{
     ffi::{CStr, CString},
     marker::PhantomData,
-    ops::Deref,
 };
 
 use bitflags::bitflags;
@@ -126,28 +125,17 @@ impl<'a> BottomLevelASDesc<'a> {
     }
 }
 
-#[repr(transparent)]
-pub struct BottomLevelAS(diligent_sys::IBottomLevelAS);
-
-impl Deref for BottomLevelAS {
-    type Target = DeviceObject;
-    fn deref(&self) -> &Self::Target {
-        unsafe {
-            &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IDeviceObject
-                as *const DeviceObject)
-        }
-    }
-}
+define_ported!(
+    BottomLevelAS,
+    diligent_sys::IBottomLevelAS,
+    diligent_sys::IBottomLevelASMethods : 7,
+    DeviceObject
+);
 
 pub struct ScratchBufferSizes {
     pub build: u64,
     pub update: u64,
 }
-
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::IBottomLevelASMethods>(),
-    7 * std::mem::size_of::<*const ()>()
-);
 
 impl BottomLevelAS {
     pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IBottomLevelAS {

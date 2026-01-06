@@ -16,6 +16,7 @@ use crate::{
     PipelineResourceFlags,
     device_object::DeviceObject,
     graphics_types::{ShaderType, Version},
+    object::Object,
 };
 
 #[repr(transparent)]
@@ -611,23 +612,12 @@ impl Iterator for ShaderResourceDescIterator<'_> {
     }
 }
 
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::IShaderMethods>(),
-    5 * std::mem::size_of::<*const ()>()
+define_ported!(
+    Shader,
+    diligent_sys::IShader,
+    diligent_sys::IShaderMethods : 5,
+    DeviceObject
 );
-
-#[repr(transparent)]
-pub struct Shader(diligent_sys::IShader);
-
-impl Deref for Shader {
-    type Target = DeviceObject;
-    fn deref(&self) -> &Self::Target {
-        unsafe {
-            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IDeviceObject
-                as *const DeviceObject)
-        }
-    }
-}
 
 impl Shader {
     pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IShader {
@@ -688,13 +678,12 @@ impl Shader {
     }
 }
 
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::IShaderSourceInputStreamFactoryMethods>(),
-    2 * std::mem::size_of::<*const ()>()
+define_ported!(
+    ShaderSourceInputStreamFactory,
+    diligent_sys::IShaderSourceInputStreamFactory,
+    diligent_sys::IShaderSourceInputStreamFactoryMethods : 2,
+    Object
 );
-
-#[repr(transparent)]
-pub struct ShaderSourceInputStreamFactory(diligent_sys::IShaderSourceInputStreamFactory);
 
 impl ShaderSourceInputStreamFactory {
     pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IShaderSourceInputStreamFactory {

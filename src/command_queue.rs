@@ -1,22 +1,10 @@
-use std::ops::Deref;
-
-use static_assertions::const_assert_eq;
-
 use crate::object::Object;
 
-#[repr(transparent)]
-pub struct CommandQueue(diligent_sys::ICommandQueue);
-
-impl Deref for CommandQueue {
-    type Target = Object;
-    fn deref(&self) -> &Self::Target {
-        unsafe { &*(std::ptr::addr_of!(self.0) as *const diligent_sys::IObject as *const Object) }
-    }
-}
-
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::ICommandQueueMethods>(),
-    3 * std::mem::size_of::<*const ()>()
+define_ported!(
+    CommandQueue,
+    diligent_sys::ICommandQueue,
+    diligent_sys::ICommandQueueMethods : 3,
+    Object
 );
 
 impl CommandQueue {

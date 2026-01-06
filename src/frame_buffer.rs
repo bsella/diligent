@@ -1,19 +1,8 @@
-use std::{ffi::CStr, ops::Deref};
+use std::ffi::CStr;
 
 use crate::{device_object::DeviceObject, render_pass::RenderPass, texture_view::TextureView};
 
-#[repr(transparent)]
-pub struct Framebuffer(diligent_sys::IFramebuffer);
-
-impl Deref for Framebuffer {
-    type Target = DeviceObject;
-    fn deref(&self) -> &Self::Target {
-        unsafe {
-            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IDeviceObject
-                as *const DeviceObject)
-        }
-    }
-}
+define_ported!(Framebuffer, diligent_sys::IFramebuffer, DeviceObject);
 
 pub struct FramebufferDesc(pub(crate) diligent_sys::FramebufferDesc);
 

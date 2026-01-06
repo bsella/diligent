@@ -1,4 +1,4 @@
-use std::{ffi::CStr, ops::Deref};
+use std::ffi::CStr;
 
 use bitflags::bitflags;
 use static_assertions::const_assert_eq;
@@ -34,11 +34,6 @@ impl From<TextureViewType> for diligent_sys::TEXTURE_VIEW_TYPE {
         }) as _
     }
 }
-
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::ITextureViewMethods>(),
-    3 * std::mem::size_of::<*const ()>()
-);
 
 bitflags! {
     #[derive(Clone,Copy)]
@@ -167,18 +162,12 @@ impl TextureViewDesc {
     }
 }
 
-#[repr(transparent)]
-pub struct TextureView(pub(crate) diligent_sys::ITextureView);
-
-impl Deref for TextureView {
-    type Target = DeviceObject;
-    fn deref(&self) -> &Self::Target {
-        unsafe {
-            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IDeviceObject
-                as *const DeviceObject)
-        }
-    }
-}
+define_ported!(
+    TextureView,
+    diligent_sys::ITextureView,
+    diligent_sys::ITextureViewMethods : 3,
+    DeviceObject
+);
 
 impl TextureView {
     pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::ITextureView {

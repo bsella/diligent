@@ -1,7 +1,6 @@
 use std::{
     ffi::{CStr, CString},
     marker::PhantomData,
-    ops::Deref,
     str::FromStr,
 };
 
@@ -46,23 +45,12 @@ impl<'a> ImmutableSamplerDesc<'a> {
     }
 }
 
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::IPipelineResourceSignatureMethods>(),
-    8 * std::mem::size_of::<*const ()>()
+define_ported!(
+    PipelineResourceSignature,
+    diligent_sys::IPipelineResourceSignature,
+    diligent_sys::IPipelineResourceSignatureMethods : 8,
+    DeviceObject
 );
-
-#[repr(transparent)]
-pub struct PipelineResourceSignature(diligent_sys::IPipelineResourceSignature);
-
-impl Deref for PipelineResourceSignature {
-    type Target = DeviceObject;
-    fn deref(&self) -> &Self::Target {
-        unsafe {
-            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IDeviceObject
-                as *const DeviceObject)
-        }
-    }
-}
 
 bitflags! {
     #[derive(Clone,Copy)]
@@ -218,9 +206,7 @@ impl PipelineResourceSignature {
         if shader_resource_binding_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<ShaderResourceBinding>::new(
-                shader_resource_binding_ptr as _,
-            ))
+            Ok(Boxed::new(shader_resource_binding_ptr))
         }
     }
 

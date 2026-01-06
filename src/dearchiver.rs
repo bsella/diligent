@@ -1,6 +1,4 @@
-use std::{ffi::CStr, marker::PhantomData, ops::Deref};
-
-use static_assertions::const_assert_eq;
+use std::{ffi::CStr, marker::PhantomData};
 
 use crate::{
     Boxed, DataBlob, PipelineResourceSignature, PipelineState, PipelineStateCache,
@@ -141,20 +139,12 @@ impl<'user_data, UserData> RenderPassUnpackInfo<'user_data, UserData> {
     }
 }
 
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::IDearchiverMethods>(),
-    8 * std::mem::size_of::<*const ()>()
+define_ported!(
+    Dearchiver,
+    diligent_sys::IDearchiver,
+    diligent_sys::IDearchiverMethods : 8,
+    Object
 );
-
-#[repr(transparent)]
-pub struct Dearchiver(pub(crate) diligent_sys::IDearchiver);
-
-impl Deref for Dearchiver {
-    type Target = Object;
-    fn deref(&self) -> &Self::Target {
-        unsafe { &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IObject as *const Object) }
-    }
-}
 
 impl Dearchiver {
     pub fn load_archive(&self, archive: &DataBlob, content_version: u32, make_copy: bool) -> bool {
@@ -183,7 +173,7 @@ impl Dearchiver {
         if shader_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::new(shader_ptr as _))
+            Ok(Boxed::new(shader_ptr))
         }
     }
 
@@ -202,7 +192,7 @@ impl Dearchiver {
         if pipeline_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::new(pipeline_ptr as _))
+            Ok(Boxed::new(pipeline_ptr))
         }
     }
 
@@ -221,7 +211,7 @@ impl Dearchiver {
         if rs_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::new(rs_ptr as _))
+            Ok(Boxed::new(rs_ptr))
         }
     }
 
@@ -240,7 +230,7 @@ impl Dearchiver {
         if render_pass_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::new(render_pass_ptr as _))
+            Ok(Boxed::new(render_pass_ptr))
         }
     }
 
@@ -248,7 +238,7 @@ impl Dearchiver {
         let mut data_blob_ptr = std::ptr::null_mut();
         let success = unsafe_member_call!(self, Dearchiver, Store, &mut data_blob_ptr);
         if success && !data_blob_ptr.is_null() {
-            Ok(Boxed::new(data_blob_ptr as _))
+            Ok(Boxed::new(data_blob_ptr))
         } else {
             Err(())
         }

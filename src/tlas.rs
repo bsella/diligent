@@ -1,7 +1,6 @@
 use std::{
     ffi::{CStr, CString},
     marker::PhantomData,
-    ops::Deref,
 };
 
 use bitflags::bitflags;
@@ -167,23 +166,12 @@ impl TopLevelASDesc {
     }
 }
 
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::ITopLevelASMethods>(),
-    6 * std::mem::size_of::<*const ()>()
+define_ported!(
+    TopLevelAS,
+    diligent_sys::ITopLevelAS,
+    diligent_sys::ITopLevelASMethods : 6,
+    DeviceObject
 );
-
-#[repr(transparent)]
-pub struct TopLevelAS(diligent_sys::ITopLevelAS);
-
-impl Deref for TopLevelAS {
-    type Target = DeviceObject;
-    fn deref(&self) -> &Self::Target {
-        unsafe {
-            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IDeviceObject
-                as *const DeviceObject)
-        }
-    }
-}
 
 impl TopLevelAS {
     pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::ITopLevelAS {

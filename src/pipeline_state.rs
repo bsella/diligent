@@ -9,7 +9,7 @@ use static_assertions::const_assert_eq;
 
 use crate::device_object::DeviceObject;
 use crate::pipeline_state_cache::PipelineStateCache;
-use crate::{Boxed, PipelineResourceFlags, PipelineType};
+use crate::{Boxed, PipelineResourceFlags, PipelineType, Ported};
 use crate::{
     graphics_types::{PrimitiveTopology, ShaderType, ShaderTypes, TextureFormat},
     input_layout::LayoutElement,
@@ -1152,23 +1152,12 @@ impl<'pipeline> Iterator for PipelineResourceSignatureIterator<'pipeline> {
     }
 }
 
-const_assert_eq!(
-    std::mem::size_of::<diligent_sys::IPipelineStateMethods>(),
-    14 * std::mem::size_of::<*const ()>()
+define_ported!(
+    PipelineState,
+    diligent_sys::IPipelineState,
+    diligent_sys::IPipelineStateMethods : 14,
+    DeviceObject
 );
-
-#[repr(transparent)]
-pub struct PipelineState(diligent_sys::IPipelineState);
-
-impl Deref for PipelineState {
-    type Target = DeviceObject;
-    fn deref(&self) -> &Self::Target {
-        unsafe {
-            &*(std::ptr::from_ref(&self.0) as *const diligent_sys::IDeviceObject
-                as *const DeviceObject)
-        }
-    }
-}
 
 impl PipelineState {
     pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IPipelineState {
@@ -1234,9 +1223,7 @@ impl PipelineState {
         if shader_resource_binding_ptr.is_null() {
             Err(())
         } else {
-            Ok(Boxed::<ShaderResourceBinding>::new(
-                shader_resource_binding_ptr as _,
-            ))
+            Ok(Boxed::new(shader_resource_binding_ptr))
         }
     }
 
@@ -1445,4 +1432,20 @@ impl<'a> ComputePipelineStateCreateInfo<'a> {
             PhantomData,
         )
     }
+}
+
+impl Ported for GraphicsPipelineState {
+    type SysType = diligent_sys::IPipelineState;
+}
+
+impl Ported for ComputePipelineState {
+    type SysType = diligent_sys::IPipelineState;
+}
+
+impl Ported for RayTracingPipelineState {
+    type SysType = diligent_sys::IPipelineState;
+}
+
+impl Ported for TilePipelineState {
+    type SysType = diligent_sys::IPipelineState;
 }
