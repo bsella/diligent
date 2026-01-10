@@ -8,10 +8,6 @@ define_ported!(
 );
 
 impl DeviceObject {
-    pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IDeviceObject {
-        std::ptr::from_ref(&self.0) as _
-    }
-
     pub fn get_unique_id(&self) -> i32 {
         unsafe_member_call!(self, DeviceObject, GetUniqueID)
     }

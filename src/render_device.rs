@@ -84,10 +84,6 @@ define_ported!(
 );
 
 impl RenderDevice {
-    pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IRenderDevice {
-        std::ptr::from_ref(&self.0) as _
-    }
-
     pub fn create_buffer(&self, buffer_desc: &BufferDesc) -> Result<Boxed<Buffer>, ()> {
         let mut buffer_ptr = std::ptr::null_mut();
 

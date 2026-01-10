@@ -146,9 +146,3 @@ pub struct RenderPassDesc {
     pub(crate) subpasses: Vec<SubpassDesc>,
     pub(crate) dependencies: Vec<SubpassDependencyDesc>,
 }
-
-impl RenderPass {
-    pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IRenderPass {
-        std::ptr::from_ref(&self.0) as _
-    }
-}

@@ -29,6 +29,13 @@ macro_rules! define_ported {
         impl crate::Ported for $name {
             type SysType = $sys_name;
         }
+
+        impl $name {
+            #[allow(unused)]
+            pub(crate) fn sys_ptr(&self) -> *mut $sys_name {
+                std::ptr::addr_of!(self.0) as _
+            }
+        }
     };
 
     (@parent $name:ident, $parent:ty) => {
@@ -354,7 +361,7 @@ impl<T: Ported> Boxed<T> {
     }
 
     pub fn from_ref(object: &Object) -> Self {
-        object.add_ref();
+        unsafe_member_call!(object, Object, AddRef);
         Self {
             ptr: object.sys_ptr() as *mut T,
         }

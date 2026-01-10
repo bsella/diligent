@@ -34,10 +34,6 @@ impl FramebufferDesc {
 }
 
 impl Framebuffer {
-    pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IFramebuffer {
-        std::ptr::from_ref(&self.0) as _
-    }
-
     pub fn desc(&self) -> &FramebufferDesc {
         let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
         unsafe { &*(desc_ptr as *const &FramebufferDesc) }

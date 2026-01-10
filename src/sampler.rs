@@ -88,10 +88,6 @@ impl SamplerDesc {
 define_ported!(Sampler, diligent_sys::ISampler, DeviceObject);
 
 impl Sampler {
-    pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::ISampler {
-        std::ptr::from_ref(&self.0) as _
-    }
-
     pub fn desc(&self) -> &SamplerDesc {
         let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
         unsafe { &*(desc_ptr as *const SamplerDesc) }

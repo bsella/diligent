@@ -18,10 +18,6 @@ define_ported!(
 );
 
 impl ShaderResourceBinding {
-    pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IShaderResourceBinding {
-        std::ptr::from_ref(&self.0) as _
-    }
-
     pub fn get_pipeline_resource_signature(&self) -> Option<&PipelineResourceSignature> {
         let prs_ptr =
             unsafe_member_call!(self, ShaderResourceBinding, GetPipelineResourceSignature);

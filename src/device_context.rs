@@ -1601,10 +1601,6 @@ define_ported!(
 );
 
 impl DeviceContext {
-    pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IDeviceContext {
-        std::ptr::addr_of!(self.0) as _
-    }
-
     pub fn desc(&self) -> &DeviceContextDesc {
         let desc_ptr = unsafe_member_call!(self, DeviceContext, GetDesc);
         unsafe { &*(desc_ptr as *const DeviceContextDesc) }

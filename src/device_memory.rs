@@ -63,10 +63,6 @@ impl From<&DeviceMemoryDesc> for diligent_sys::DeviceMemoryDesc {
 }
 
 impl DeviceMemory {
-    pub fn sys_ptr(&self) -> *mut diligent_sys::IDeviceMemory {
-        std::ptr::from_ref(&self.0) as *mut _
-    }
-
     pub fn desc(&self) -> &DeviceMemoryDesc {
         let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
         unsafe { &*(desc_ptr as *const DeviceMemoryDesc) }

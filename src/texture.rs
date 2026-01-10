@@ -442,10 +442,6 @@ define_ported!(
 );
 
 impl Texture {
-    pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::ITexture {
-        std::ptr::from_ref(&self.0) as _
-    }
-
     pub fn desc(&self) -> &TextureDesc {
         let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
         unsafe { &*(desc_ptr as *const TextureDesc) }

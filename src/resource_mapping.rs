@@ -39,10 +39,6 @@ define_ported!(
 );
 
 impl ResourceMapping {
-    pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IResourceMapping {
-        std::ptr::from_ref(&self.0) as _
-    }
-
     pub fn add_resource(&mut self, name: impl AsRef<str>, object: &DeviceObject, is_unique: bool) {
         let name = std::ffi::CString::new(name.as_ref()).unwrap();
         unsafe_member_call!(

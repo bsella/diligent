@@ -130,10 +130,6 @@ define_ported!(
 );
 
 impl Buffer {
-    pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IBuffer {
-        std::ptr::addr_of!(self.0) as _
-    }
-
     pub fn desc(&self) -> &BufferDesc {
         let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
         unsafe { &*(desc_ptr as *const BufferDesc) }

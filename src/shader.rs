@@ -620,10 +620,6 @@ define_ported!(
 );
 
 impl Shader {
-    pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IShader {
-        std::ptr::from_ref(&self.0) as _
-    }
-
     pub fn desc(&self) -> &ShaderDesc {
         let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
         unsafe { &*(desc_ptr as *const ShaderDesc) }
@@ -686,9 +682,6 @@ define_ported!(
 );
 
 impl ShaderSourceInputStreamFactory {
-    pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IShaderSourceInputStreamFactory {
-        std::ptr::from_ref(&self.0) as _
-    }
     //pub fn create_input_stream(&self, name : impl AsRef<str>, IFileStream** ppStream);
 
     //pub fn create_input_stream2(&self, name : impl AsRef<str>, CREATE_SHADER_SOURCE_INPUT_STREAM_FLAGS Flags, IFileStream** ppStream);
