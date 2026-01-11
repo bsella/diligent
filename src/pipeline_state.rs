@@ -498,6 +498,28 @@ where
         )
     }
 
+    #[cfg(feature = "d3d12")]
+    pub fn raytracing<
+        'general_shaders,
+        'triangle_hit_shaders,
+        'procedural_hit_shaders,
+        'shader_record_name,
+    >(
+        self,
+    ) -> RayTracingPipelineStateCreateInfoBuilder<
+        'a,
+        'general_shaders,
+        'triangle_hit_shaders,
+        'procedural_hit_shaders,
+        'shader_record_name,
+        ray_tracing_pipeline_state_create_info_builder::SetPipelineStateCreateInfo,
+    > {
+        RayTracingPipelineStateCreateInfo::builder().pipeline_state_create_info(
+            self.pipeline_type(diligent_sys::PIPELINE_TYPE_RAY_TRACING as _)
+                .build(),
+        )
+    }
+    #[cfg(not(feature = "d3d12"))]
     pub fn raytracing<'general_shaders, 'triangle_hit_shaders, 'procedural_hit_shaders>(
         self,
     ) -> RayTracingPipelineStateCreateInfoBuilder<
