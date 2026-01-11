@@ -1,5 +1,5 @@
 use crate::{
-    BottomLevelAS, BottomLevelASDesc, Boxed, TopLevelAS, TopLevelASDesc,
+    BottomLevelAS, BottomLevelASDesc, Boxed, BoxedFromNulError, TopLevelAS, TopLevelASDesc,
     buffer::{Buffer, BufferDesc},
     fence::{Fence, FenceDesc},
     graphics_types::ResourceState,
@@ -38,7 +38,7 @@ impl RenderDeviceVk {
         vk_image: diligent_sys::VkImage,
         texture_desc: &TextureDesc,
         initial_state: ResourceState,
-    ) -> Result<Boxed<Texture>, ()> {
+    ) -> Result<Boxed<Texture>, BoxedFromNulError> {
         let mut texture_ptr = std::ptr::null_mut();
 
         unsafe_member_call!(
@@ -51,11 +51,7 @@ impl RenderDeviceVk {
             &mut texture_ptr
         );
 
-        if texture_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(texture_ptr))
-        }
+        Boxed::new(texture_ptr)
     }
 
     /// # Safety
@@ -65,7 +61,7 @@ impl RenderDeviceVk {
         vk_buffer: diligent_sys::VkBuffer,
         buffer_desc: &BufferDesc,
         initial_state: ResourceState,
-    ) -> Result<Boxed<Buffer>, ()> {
+    ) -> Result<Boxed<Buffer>, BoxedFromNulError> {
         let mut buffer_ptr = std::ptr::null_mut();
 
         unsafe_member_call!(
@@ -78,11 +74,7 @@ impl RenderDeviceVk {
             &mut buffer_ptr
         );
 
-        if buffer_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(buffer_ptr))
-        }
+        Boxed::new(buffer_ptr)
     }
 
     /// # Safety
@@ -92,7 +84,7 @@ impl RenderDeviceVk {
         vk_blas: diligent_sys::VkAccelerationStructureKHR,
         blas_desc: &BottomLevelASDesc,
         initial_state: ResourceState,
-    ) -> Result<Boxed<BottomLevelAS>, ()> {
+    ) -> Result<Boxed<BottomLevelAS>, BoxedFromNulError> {
         let mut bottom_level_as_ptr = std::ptr::null_mut();
 
         unsafe_member_call!(
@@ -105,11 +97,7 @@ impl RenderDeviceVk {
             &mut bottom_level_as_ptr
         );
 
-        if bottom_level_as_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(bottom_level_as_ptr))
-        }
+        Boxed::new(bottom_level_as_ptr)
     }
 
     /// # Safety
@@ -119,7 +107,7 @@ impl RenderDeviceVk {
         vk_tlas: diligent_sys::VkAccelerationStructureKHR,
         tlas_desc: &TopLevelASDesc,
         initial_state: ResourceState,
-    ) -> Result<Boxed<TopLevelAS>, ()> {
+    ) -> Result<Boxed<TopLevelAS>, BoxedFromNulError> {
         let mut top_level_as_ptr = std::ptr::null_mut();
 
         unsafe_member_call!(
@@ -132,11 +120,7 @@ impl RenderDeviceVk {
             &mut top_level_as_ptr
         );
 
-        if top_level_as_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(top_level_as_ptr))
-        }
+        Boxed::new(top_level_as_ptr)
     }
 
     /// # Safety
@@ -145,7 +129,7 @@ impl RenderDeviceVk {
         &self,
         vk_timeline_semaphore: diligent_sys::VkSemaphore,
         fence_desc: &FenceDesc,
-    ) -> Result<Boxed<Fence>, ()> {
+    ) -> Result<Boxed<Fence>, BoxedFromNulError> {
         let mut fence_ptr = std::ptr::null_mut();
 
         unsafe_member_call!(
@@ -157,11 +141,7 @@ impl RenderDeviceVk {
             &mut fence_ptr
         );
 
-        if fence_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(fence_ptr))
-        }
+        Boxed::new(fence_ptr)
     }
 
     // TODO

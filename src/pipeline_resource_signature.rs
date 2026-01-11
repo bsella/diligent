@@ -8,7 +8,7 @@ use bitflags::bitflags;
 use static_assertions::const_assert_eq;
 
 use crate::{
-    Boxed,
+    Boxed, BoxedFromNulError,
     device_object::DeviceObject,
     graphics_types::{ShaderType, ShaderTypes},
     resource_mapping::ResourceMapping,
@@ -189,7 +189,7 @@ impl PipelineResourceSignature {
     pub fn create_shader_resource_binding(
         &self,
         init_static_resources: bool,
-    ) -> Result<Boxed<ShaderResourceBinding>, ()> {
+    ) -> Result<Boxed<ShaderResourceBinding>, BoxedFromNulError> {
         let mut shader_resource_binding_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
@@ -199,11 +199,7 @@ impl PipelineResourceSignature {
             init_static_resources
         );
 
-        if shader_resource_binding_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(shader_resource_binding_ptr))
-        }
+        Boxed::new(shader_resource_binding_ptr)
     }
 
     pub fn bind_static_resources(

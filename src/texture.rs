@@ -10,7 +10,7 @@ use bon::Builder;
 use static_assertions::const_assert_eq;
 
 use crate::{
-    Boxed, MapType,
+    Boxed, BoxedFromNulError, MapType,
     buffer::Buffer,
     device_context::DeviceContext,
     device_object::DeviceObject,
@@ -450,7 +450,7 @@ impl Texture {
     pub fn create_view(
         &self,
         texture_view_desc: &TextureViewDesc,
-    ) -> Result<Boxed<TextureView>, ()> {
+    ) -> Result<Boxed<TextureView>, BoxedFromNulError> {
         let mut texture_view_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
@@ -460,11 +460,7 @@ impl Texture {
             &mut texture_view_ptr
         );
 
-        if texture_view_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(texture_view_ptr))
-        }
+        Boxed::new(texture_view_ptr)
     }
 
     pub fn get_default_view(&self, texture_view_type: TextureViewType) -> Option<&TextureView> {

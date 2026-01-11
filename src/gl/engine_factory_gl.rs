@@ -1,7 +1,7 @@
 use std::ops::{Deref, DerefMut};
 
 use crate::{
-    Boxed,
+    Boxed, BoxedFromNulError,
     device_context::ImmediateDeviceContext,
     engine_factory::{EngineCreateInfo, EngineFactory},
     graphics_types::AdapterType,
@@ -72,7 +72,7 @@ impl EngineFactoryOpenGL {
             Boxed<ImmediateDeviceContext>,
             Boxed<SwapChain>,
         ),
-        (),
+        BoxedFromNulError,
     > {
         let engine_ci = engine_ci.into();
 
@@ -91,15 +91,12 @@ impl EngineFactoryOpenGL {
             &mut swap_chain_ptr
         );
 
-        if render_device_ptr.is_null() {
-            Err(())
-        } else {
-            Ok((
-                Boxed::new(render_device_ptr),
-                Boxed::new(device_context_ptr),
-                Boxed::new(swap_chain_ptr),
-            ))
-        }
+        Boxed::new(render_device_ptr).and_then(|render_device| {
+            Boxed::new(device_context_ptr).and_then(|device_context| {
+                Boxed::new(swap_chain_ptr)
+                    .map(|swap_chain| (render_device, device_context, swap_chain))
+            })
+        })
     }
 
     //TODO pub fn create_hlsl2glsl_converter(&self) -> Result<HLSL2GLSLConverter, ()>{}
@@ -107,7 +104,7 @@ impl EngineFactoryOpenGL {
     pub fn attach_to_active_gl_context(
         &self,
         engine_ci: &EngineGLCreateInfo,
-    ) -> Result<(Boxed<RenderDevice>, Boxed<ImmediateDeviceContext>), ()> {
+    ) -> Result<(Boxed<RenderDevice>, Boxed<ImmediateDeviceContext>), BoxedFromNulError> {
         let engine_ci = engine_ci.into();
 
         let mut render_device_ptr = std::ptr::null_mut();
@@ -122,19 +119,12 @@ impl EngineFactoryOpenGL {
             &mut device_context_ptr
         );
 
-        if render_device_ptr.is_null() {
-            Err(())
-        } else {
-            Ok((
-                Boxed::new(render_device_ptr),
-                Boxed::new(device_context_ptr),
-            ))
-        }
+        Boxed::new(render_device_ptr).and_then(|render_device| {
+            Boxed::new(device_context_ptr).map(|device_context| (render_device, device_context))
+        })
     }
 }
 
 pub fn get_engine_factory_gl() -> Boxed<EngineFactoryOpenGL> {
-    let engine_factory_gl = unsafe { diligent_sys::Diligent_GetEngineFactoryOpenGL() };
-
-    Boxed::new(engine_factory_gl as _)
+    Boxed::new(unsafe { diligent_sys::Diligent_GetEngineFactoryOpenGL() }).unwrap()
 }

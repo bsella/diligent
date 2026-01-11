@@ -4,7 +4,7 @@ use bitflags::bitflags;
 use static_assertions::const_assert_eq;
 
 use crate::{
-    Boxed, CommandQueueType, DeviceMemory, Ported, PrimitiveTopology,
+    Boxed, BoxedFromNulError, CommandQueueType, DeviceMemory, Ported, PrimitiveTopology,
     blas::BottomLevelAS,
     buffer::{Buffer, BufferMapReadToken, BufferMapReadWriteToken, BufferMapWriteToken},
     command_queue::CommandQueue,
@@ -2245,13 +2245,8 @@ impl ImmediateDeviceContext {
     }
 
     // TODO : make command queue locking RAII
-    pub fn lock_command_queue(&self) -> Result<Boxed<CommandQueue>, ()> {
-        let command_queue_ptr = unsafe_member_call!(self.0, DeviceContext, LockCommandQueue);
-        if command_queue_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(command_queue_ptr))
-        }
+    pub fn lock_command_queue(&self) -> Result<Boxed<CommandQueue>, BoxedFromNulError> {
+        Boxed::new(unsafe_member_call!(self.0, DeviceContext, LockCommandQueue))
     }
 
     pub fn unlock_command_queue(&self) {
@@ -2302,7 +2297,7 @@ impl DeferredDeviceContext {
         unsafe_member_call!(self.0, DeviceContext, Begin, immediate_context_id)
     }
 
-    pub fn finish_command_list(&self) -> Result<Boxed<CommandList>, ()> {
+    pub fn finish_command_list(&self) -> Result<Boxed<CommandList>, BoxedFromNulError> {
         let mut command_list_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self.0,
@@ -2311,10 +2306,6 @@ impl DeferredDeviceContext {
             &mut command_list_ptr
         );
 
-        if command_list_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(command_list_ptr))
-        }
+        Boxed::new(command_list_ptr)
     }
 }

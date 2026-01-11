@@ -2,7 +2,7 @@ use bitflags::bitflags;
 use bon::Builder;
 use static_assertions::const_assert_eq;
 
-use crate::{Boxed, data_blob::DataBlob};
+use crate::{Boxed, BoxedFromNulError, data_blob::DataBlob};
 
 bitflags! {
     #[derive(Clone, Copy)]
@@ -45,7 +45,7 @@ pub struct GeometryPrimitiveInfo {
 
 pub fn create_geometry_primitive(
     attribs: &GeometryPrimitiveAttributes,
-) -> Result<(Boxed<DataBlob>, Boxed<DataBlob>, GeometryPrimitiveInfo), ()> {
+) -> Result<(Boxed<DataBlob>, Boxed<DataBlob>, GeometryPrimitiveInfo), BoxedFromNulError> {
     enum GeometryPrimitiveType {
         Cube(diligent_sys::CubeGeometryPrimitiveAttributes),
         Sphere(diligent_sys::SphereGeometryPrimitiveAttributes),
@@ -74,8 +74,8 @@ pub fn create_geometry_primitive(
         }
     };
 
-    let mut vertices = std::ptr::null_mut();
-    let mut indices = std::ptr::null_mut();
+    let mut vertices_ptr = std::ptr::null_mut();
+    let mut indices_ptr = std::ptr::null_mut();
 
     let mut info = std::mem::MaybeUninit::<diligent_sys::GeometryPrimitiveInfo>::uninit();
 
@@ -85,27 +85,27 @@ pub fn create_geometry_primitive(
                 GeometryPrimitiveType::Cube(attribs) => &attribs._GeometryPrimitiveAttributes,
                 GeometryPrimitiveType::Sphere(attribs) => &attribs._GeometryPrimitiveAttributes,
             },
-            &mut vertices,
-            &mut indices,
+            &mut vertices_ptr,
+            &mut indices_ptr,
             info.as_mut_ptr(),
         );
     }
 
     let info = unsafe { info.assume_init() };
 
-    if vertices.is_null() || indices.is_null() {
-        Err(())
-    } else {
-        Ok((
-            Boxed::new(vertices),
-            Boxed::new(indices),
-            GeometryPrimitiveInfo {
-                num_indices: info.NumIndices as usize,
-                num_vertices: info.NumVertices as usize,
-                vertex_size: info.VertexSize as usize,
-            },
-        ))
-    }
+    Boxed::new(vertices_ptr).and_then(|vertices| {
+        Boxed::new(indices_ptr).map(|indices| {
+            (
+                vertices,
+                indices,
+                GeometryPrimitiveInfo {
+                    num_indices: info.NumIndices as usize,
+                    num_vertices: info.NumVertices as usize,
+                    vertex_size: info.VertexSize as usize,
+                },
+            )
+        })
+    })
 }
 
 pub fn get_geometry_primitive_vertex_size(vertex_flags: GeometryPrimitiveVertexFlags) -> u32 {

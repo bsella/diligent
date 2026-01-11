@@ -3,7 +3,7 @@ use std::{cell::RefCell, marker::PhantomData, mem::MaybeUninit, ops::Deref};
 use static_assertions::const_assert_eq;
 
 use crate::{
-    Boxed, Ported, device_context::DeviceContext, device_object::DeviceObject,
+    Boxed, BoxedFromNulError, Ported, device_context::DeviceContext, device_object::DeviceObject,
     render_device::RenderDevice,
 };
 
@@ -219,7 +219,7 @@ impl TimeStampQueryToken<'_> {
 }
 
 impl DurationQueryHelper {
-    pub fn new(device: &RenderDevice) -> Result<DurationQueryHelper, ()> {
+    pub fn new(device: &RenderDevice) -> Result<DurationQueryHelper, BoxedFromNulError> {
         Ok(DurationQueryHelper {
             start: device.create_query_timestamp(Some(c"Duration start timestamp query"))?,
             end: device.create_query_timestamp(Some(c"Duration end timestamp query"))?,

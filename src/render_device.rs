@@ -1,8 +1,8 @@
 use std::{ffi::CStr, os::raw::c_void};
 
 use crate::{
-    Boxed, ResourceMappingCreateInfo, SparseTextureFormatInfo, TextureFormatInfoExt,
-    TilePipelineStateCreateInfo,
+    Boxed, BoxedFromNulError, ResourceMappingCreateInfo, SparseTextureFormatInfo,
+    TextureFormatInfoExt, TilePipelineStateCreateInfo,
     blas::{BottomLevelAS, BottomLevelASDesc},
     buffer::{Buffer, BufferDesc},
     data_blob::DataBlob,
@@ -84,7 +84,10 @@ define_ported!(
 );
 
 impl RenderDevice {
-    pub fn create_buffer(&self, buffer_desc: &BufferDesc) -> Result<Boxed<Buffer>, ()> {
+    pub fn create_buffer(
+        &self,
+        buffer_desc: &BufferDesc,
+    ) -> Result<Boxed<Buffer>, BoxedFromNulError> {
         let mut buffer_ptr = std::ptr::null_mut();
 
         unsafe_member_call!(
@@ -96,11 +99,7 @@ impl RenderDevice {
             &mut buffer_ptr
         );
 
-        if buffer_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(buffer_ptr))
-        }
+        Boxed::new(buffer_ptr)
     }
 
     pub fn create_buffer_with_data<T: ?Sized>(
@@ -108,7 +107,7 @@ impl RenderDevice {
         buffer_desc: &BufferDesc,
         buffer_data: &T,
         device_context: Option<&DeviceContext>,
-    ) -> Result<Boxed<Buffer>, ()> {
+    ) -> Result<Boxed<Buffer>, BoxedFromNulError> {
         let mut buffer_ptr = std::ptr::null_mut();
 
         let buffer_data = diligent_sys::BufferData {
@@ -126,11 +125,7 @@ impl RenderDevice {
             &mut buffer_ptr
         );
 
-        if buffer_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(buffer_ptr))
-        }
+        Boxed::new(buffer_ptr)
     }
 
     pub fn create_shader(
@@ -151,15 +146,7 @@ impl RenderDevice {
             &mut data_blob_ptr
         );
 
-        if shader_ptr.is_null() {
-            if data_blob_ptr.is_null() {
-                Err(None)
-            } else {
-                Err(Some(Boxed::new(data_blob_ptr)))
-            }
-        } else {
-            Ok(Boxed::new(shader_ptr))
-        }
+        Boxed::new(shader_ptr).map_err(|_| Some(Boxed::new(data_blob_ptr).unwrap()))
     }
 
     pub fn create_texture(
@@ -167,7 +154,7 @@ impl RenderDevice {
         texture_desc: &TextureDesc,
         subresources: &[&TextureSubResource],
         device_context: Option<&DeviceContext>,
-    ) -> Result<Boxed<Texture>, ()> {
+    ) -> Result<Boxed<Texture>, BoxedFromNulError> {
         let mut texture_ptr = std::ptr::null_mut();
 
         let mut subresources: Vec<_> = subresources.iter().map(|&subres| subres.into()).collect();
@@ -191,14 +178,13 @@ impl RenderDevice {
             &mut texture_ptr
         );
 
-        if texture_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(texture_ptr))
-        }
+        Boxed::new(texture_ptr)
     }
 
-    pub fn create_sampler(&self, sampler_desc: &SamplerDesc) -> Result<Boxed<Sampler>, ()> {
+    pub fn create_sampler(
+        &self,
+        sampler_desc: &SamplerDesc,
+    ) -> Result<Boxed<Sampler>, BoxedFromNulError> {
         let mut sampler_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
@@ -208,17 +194,13 @@ impl RenderDevice {
             &mut sampler_ptr
         );
 
-        if sampler_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(sampler_ptr))
-        }
+        Boxed::new(sampler_ptr)
     }
 
     pub fn create_resource_mapping(
         &self,
         resource_mapping_ci: &ResourceMappingCreateInfo,
-    ) -> Result<Boxed<ResourceMapping>, ()> {
+    ) -> Result<Boxed<ResourceMapping>, BoxedFromNulError> {
         let mut resource_mapping_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
@@ -228,17 +210,13 @@ impl RenderDevice {
             &mut resource_mapping_ptr
         );
 
-        if resource_mapping_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(resource_mapping_ptr))
-        }
+        Boxed::new(resource_mapping_ptr)
     }
 
     pub fn create_graphics_pipeline_state(
         &self,
         pipeline_ci: &GraphicsPipelineStateCreateInfo,
-    ) -> Result<Boxed<GraphicsPipelineState>, ()> {
+    ) -> Result<Boxed<GraphicsPipelineState>, BoxedFromNulError> {
         let mut pipeline_state_ptr = std::ptr::null_mut();
 
         unsafe_member_call!(
@@ -249,17 +227,13 @@ impl RenderDevice {
             &mut pipeline_state_ptr
         );
 
-        if pipeline_state_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(pipeline_state_ptr))
-        }
+        Boxed::new(pipeline_state_ptr)
     }
 
     pub fn create_compute_pipeline_state(
         &self,
         pipeline_ci: &ComputePipelineStateCreateInfo,
-    ) -> Result<Boxed<ComputePipelineState>, ()> {
+    ) -> Result<Boxed<ComputePipelineState>, BoxedFromNulError> {
         let mut pipeline_state_ptr = std::ptr::null_mut();
 
         unsafe_member_call!(
@@ -270,17 +244,13 @@ impl RenderDevice {
             &mut pipeline_state_ptr
         );
 
-        if pipeline_state_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(pipeline_state_ptr))
-        }
+        Boxed::new(pipeline_state_ptr)
     }
 
     pub fn create_ray_tracing_pipeline_state(
         &self,
         pipeline_ci: &RayTracingPipelineStateCreateInfo,
-    ) -> Result<Boxed<RayTracingPipelineState>, ()> {
+    ) -> Result<Boxed<RayTracingPipelineState>, BoxedFromNulError> {
         let mut pipeline_state_ptr = std::ptr::null_mut();
 
         unsafe_member_call!(
@@ -291,17 +261,13 @@ impl RenderDevice {
             &mut pipeline_state_ptr
         );
 
-        if pipeline_state_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(pipeline_state_ptr))
-        }
+        Boxed::new(pipeline_state_ptr)
     }
 
     pub fn create_tile_pipeline_state(
         &self,
         pipeline_ci: &TilePipelineStateCreateInfo,
-    ) -> Result<Boxed<TilePipelineState>, ()> {
+    ) -> Result<Boxed<TilePipelineState>, BoxedFromNulError> {
         let mut pipeline_state_ptr = std::ptr::null_mut();
 
         unsafe_member_call!(
@@ -312,14 +278,10 @@ impl RenderDevice {
             &mut pipeline_state_ptr
         );
 
-        if pipeline_state_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(pipeline_state_ptr))
-        }
+        Boxed::new(pipeline_state_ptr)
     }
 
-    pub fn create_fence(&self, fence_desc: &FenceDesc) -> Result<Boxed<Fence>, ()> {
+    pub fn create_fence(&self, fence_desc: &FenceDesc) -> Result<Boxed<Fence>, BoxedFromNulError> {
         let mut fence_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
@@ -329,17 +291,13 @@ impl RenderDevice {
             &mut fence_ptr
         );
 
-        if fence_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(fence_ptr))
-        }
+        Boxed::new(fence_ptr)
     }
 
     fn create_query<QueryDataType: GetSysQueryType>(
         &self,
         name: Option<&CStr>,
-    ) -> Result<Boxed<Query<QueryDataType>>, ()> {
+    ) -> Result<Boxed<Query<QueryDataType>>, BoxedFromNulError> {
         let query_desc = diligent_sys::QueryDesc {
             _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
                 Name: name.map_or(std::ptr::null(), |name| name.as_ptr()),
@@ -351,49 +309,48 @@ impl RenderDevice {
 
         unsafe_member_call!(self, RenderDevice, CreateQuery, &query_desc, &mut query_ptr);
 
-        if query_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(query_ptr))
-        }
+        Boxed::new(query_ptr)
     }
 
     pub fn create_query_occlusion(
         &self,
         name: Option<&CStr>,
-    ) -> Result<Boxed<Query<QueryDataOcclusion>>, ()> {
+    ) -> Result<Boxed<Query<QueryDataOcclusion>>, BoxedFromNulError> {
         self.create_query(name)
     }
 
     pub fn create_query_binary_occlusion(
         &self,
         name: Option<&CStr>,
-    ) -> Result<Boxed<Query<QueryDataBinaryOcclusion>>, ()> {
+    ) -> Result<Boxed<Query<QueryDataBinaryOcclusion>>, BoxedFromNulError> {
         self.create_query(name)
     }
 
     pub fn create_query_timestamp(
         &self,
         name: Option<&CStr>,
-    ) -> Result<Boxed<Query<QueryDataTimestamp>>, ()> {
+    ) -> Result<Boxed<Query<QueryDataTimestamp>>, BoxedFromNulError> {
         self.create_query(name)
     }
 
     pub fn create_query_pipeline_statistics(
         &self,
         name: Option<&CStr>,
-    ) -> Result<Boxed<Query<QueryDataPipelineStatistics>>, ()> {
+    ) -> Result<Boxed<Query<QueryDataPipelineStatistics>>, BoxedFromNulError> {
         self.create_query(name)
     }
 
     pub fn create_query_duration(
         &self,
         name: Option<&CStr>,
-    ) -> Result<Boxed<Query<QueryDataDuration>>, ()> {
+    ) -> Result<Boxed<Query<QueryDataDuration>>, BoxedFromNulError> {
         self.create_query(name)
     }
 
-    pub fn create_render_pass(&self, desc: &RenderPassDesc) -> Result<Boxed<RenderPass>, ()> {
+    pub fn create_render_pass(
+        &self,
+        desc: &RenderPassDesc,
+    ) -> Result<Boxed<RenderPass>, BoxedFromNulError> {
         let attachments = desc
             .attachments
             .iter()
@@ -531,14 +488,13 @@ impl RenderDevice {
             &mut render_pass_ptr
         );
 
-        if render_pass_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(render_pass_ptr))
-        }
+        Boxed::new(render_pass_ptr)
     }
 
-    pub fn create_framebuffer(&self, desc: &FramebufferDesc) -> Result<Boxed<Framebuffer>, ()> {
+    pub fn create_framebuffer(
+        &self,
+        desc: &FramebufferDesc,
+    ) -> Result<Boxed<Framebuffer>, BoxedFromNulError> {
         let mut frame_buffer_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
@@ -548,53 +504,43 @@ impl RenderDevice {
             &mut frame_buffer_ptr
         );
 
-        if frame_buffer_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(frame_buffer_ptr))
-        }
+        Boxed::new(frame_buffer_ptr)
     }
 
-    pub fn create_blas(&self, desc: &BottomLevelASDesc) -> Result<Boxed<BottomLevelAS>, ()> {
+    pub fn create_blas(
+        &self,
+        desc: &BottomLevelASDesc,
+    ) -> Result<Boxed<BottomLevelAS>, BoxedFromNulError> {
         let mut blas_ptr = std::ptr::null_mut();
         unsafe_member_call!(self, RenderDevice, CreateBLAS, &desc.0, &mut blas_ptr);
 
-        if blas_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(blas_ptr))
-        }
+        Boxed::new(blas_ptr)
     }
 
-    pub fn create_tlas(&self, desc: &TopLevelASDesc) -> Result<Boxed<TopLevelAS>, ()> {
+    pub fn create_tlas(
+        &self,
+        desc: &TopLevelASDesc,
+    ) -> Result<Boxed<TopLevelAS>, BoxedFromNulError> {
         let mut tlas_ptr = std::ptr::null_mut();
         unsafe_member_call!(self, RenderDevice, CreateTLAS, &desc.0, &mut tlas_ptr);
 
-        if tlas_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(tlas_ptr))
-        }
+        Boxed::new(tlas_ptr)
     }
 
     pub fn create_sbt(
         &self,
         desc: &ShaderBindingTableDesc,
-    ) -> Result<Boxed<ShaderBindingTable>, ()> {
+    ) -> Result<Boxed<ShaderBindingTable>, BoxedFromNulError> {
         let mut sbt_ptr = std::ptr::null_mut();
         unsafe_member_call!(self, RenderDevice, CreateSBT, &desc.0, &mut sbt_ptr);
 
-        if sbt_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(sbt_ptr))
-        }
+        Boxed::new(sbt_ptr)
     }
 
     pub fn create_pipeline_resource_signature(
         &self,
         desc: &PipelineResourceSignatureDesc,
-    ) -> Result<Boxed<PipelineResourceSignature>, ()> {
+    ) -> Result<Boxed<PipelineResourceSignature>, BoxedFromNulError> {
         let mut prs_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
@@ -604,17 +550,13 @@ impl RenderDevice {
             &mut prs_ptr
         );
 
-        if prs_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(prs_ptr))
-        }
+        Boxed::new(prs_ptr)
     }
 
     pub fn create_device_memory(
         &self,
         create_info: &DeviceMemoryCreateInfo,
-    ) -> Result<Boxed<DeviceMemory>, ()> {
+    ) -> Result<Boxed<DeviceMemory>, BoxedFromNulError> {
         let mut compatible_resources: Vec<_> = create_info
             .compatible_resources
             .iter()
@@ -637,17 +579,13 @@ impl RenderDevice {
             &mut device_memory_ptr
         );
 
-        if device_memory_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(device_memory_ptr))
-        }
+        Boxed::new(device_memory_ptr)
     }
 
     pub fn create_pipeline_state_cache<T>(
         &self,
         create_info: &PipelineStateCacheCreateInfo<T>,
-    ) -> Result<Boxed<PipelineStateCache>, ()> {
+    ) -> Result<Boxed<PipelineStateCache>, BoxedFromNulError> {
         let create_info = create_info.into();
         let mut pso_cache_ptr = std::ptr::null_mut();
         unsafe_member_call!(
@@ -658,14 +596,12 @@ impl RenderDevice {
             &mut pso_cache_ptr
         );
 
-        if pso_cache_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(pso_cache_ptr))
-        }
+        Boxed::new(pso_cache_ptr)
     }
 
-    pub fn create_deferred_context(&self) -> Result<Boxed<DeferredDeviceContext>, ()> {
+    pub fn create_deferred_context(
+        &self,
+    ) -> Result<Boxed<DeferredDeviceContext>, BoxedFromNulError> {
         let mut deferred_context_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
@@ -674,11 +610,7 @@ impl RenderDevice {
             &mut deferred_context_ptr
         );
 
-        if deferred_context_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(deferred_context_ptr))
-        }
+        Boxed::new(deferred_context_ptr)
     }
 
     pub fn get_adapter_info(&self) -> &GraphicsAdapterInfo {

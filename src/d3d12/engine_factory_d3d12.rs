@@ -7,7 +7,7 @@ use std::{
 use bitflags::bitflags;
 
 use crate::{
-    Boxed,
+    Boxed, BoxedFromNulError,
     device_context::{DeferredDeviceContext, ImmediateDeviceContext},
     engine_factory::{EngineCreateInfo, EngineFactory},
     graphics_types::{DisplayModeAttribs, FullScreenModeDesc, TextureFormat, Version},
@@ -24,7 +24,7 @@ define_ported!(
 );
 
 pub fn get_engine_factory_d3d12() -> Boxed<EngineFactoryD3D12> {
-    Boxed::new(unsafe { diligent_sys::Diligent_GetEngineFactoryD3D12() })
+    Boxed::new(unsafe { diligent_sys::Diligent_GetEngineFactoryD3D12() }).unwrap()
 }
 
 bitflags! {
@@ -142,7 +142,7 @@ impl EngineFactoryD3D12 {
             Vec<Boxed<ImmediateDeviceContext>>,
             Vec<Boxed<DeferredDeviceContext>>,
         ),
-        (),
+        BoxedFromNulError,
     > {
         let num_immediate_contexts = engine_ci
             .engine_create_info
@@ -155,10 +155,11 @@ impl EngineFactoryD3D12 {
         let engine_ci = engine_ci.into();
 
         let mut render_device_ptr = std::ptr::null_mut();
-        let mut device_context_ptrs = Vec::from_iter(std::iter::repeat_n(
+        let mut device_context_ptrs: Vec<_> = std::iter::repeat_n(
             std::ptr::null_mut(),
             num_immediate_contexts + num_deferred_contexts,
-        ));
+        )
+        .collect();
 
         unsafe_member_call!(
             self,
@@ -169,28 +170,27 @@ impl EngineFactoryD3D12 {
             device_context_ptrs.as_mut_ptr()
         );
 
-        if render_device_ptr.is_null() {
-            Err(())
-        } else {
-            Ok((
-                Boxed::new(render_device_ptr),
-                Vec::from_iter(
-                    device_context_ptrs
-                        .iter()
-                        .take(num_immediate_contexts)
-                        .map(|&dc_ptr| Boxed::new(dc_ptr)),
-                ),
-                Vec::from_iter(
+        Boxed::new(render_device_ptr).and_then(|render_device| {
+            device_context_ptrs
+                .iter()
+                .take(num_immediate_contexts)
+                .map(|&dc_ptr| Boxed::new(dc_ptr))
+                .collect::<Result<Vec<_>, _>>()
+                .and_then(|immediate_devices| {
                     device_context_ptrs
                         .iter()
                         .rev()
                         .take(num_deferred_contexts)
-                        .map(|&dc_ptr| Boxed::new(dc_ptr)),
-                ),
-            ))
-        }
+                        .map(|&dc_ptr| Boxed::new(dc_ptr))
+                        .collect::<Result<Vec<_>, _>>()
+                        .map(|deferred_devices| {
+                            (render_device, immediate_devices, deferred_devices)
+                        })
+                })
+        })
     }
 
+    // TODO
     //pub fn create_command_queue_d3d12(&self,
     //    pd3d12NativeDevice : *mut c_void,
     //    pd3d12NativeCommandQueue : *mut c_void,
@@ -199,6 +199,7 @@ impl EngineFactoryD3D12 {
     //
     //    }
 
+    // TODO
     //pub fn attach_to_d3d12_device(
     //    &self,
     //    native_device: *mut c_void,
@@ -219,7 +220,7 @@ impl EngineFactoryD3D12 {
         swapchain_desc: &SwapChainCreateInfo,
         fs_desc: &FullScreenModeDesc,
         window: &NativeWindow,
-    ) -> Result<Boxed<SwapChain>, ()> {
+    ) -> Result<Boxed<SwapChain>, BoxedFromNulError> {
         let mut swap_chain_ptr = std::ptr::null_mut();
 
         let fs_desc = fs_desc.into();
@@ -235,11 +236,7 @@ impl EngineFactoryD3D12 {
             &mut swap_chain_ptr
         );
 
-        if swap_chain_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(swap_chain_ptr))
-        }
+        Boxed::new(swap_chain_ptr)
     }
 
     pub fn enumerate_display_modes(

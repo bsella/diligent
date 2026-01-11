@@ -4,6 +4,7 @@ use std::ops::DerefMut;
 use std::path::PathBuf;
 
 use crate::Boxed;
+use crate::BoxedFromNulError;
 use crate::EngineFactory;
 use crate::graphics_types::Version;
 use crate::swap_chain::SwapChainCreateInfo;
@@ -148,7 +149,7 @@ define_ported!(
 pub fn get_engine_factory_vk() -> Boxed<EngineFactoryVk> {
     let engine_factory_vk = unsafe { diligent_sys::Diligent_GetEngineFactoryVk() };
 
-    Boxed::new(engine_factory_vk as _)
+    Boxed::new(engine_factory_vk as _).unwrap()
 }
 
 impl EngineFactoryVk {
@@ -161,7 +162,7 @@ impl EngineFactoryVk {
             Vec<Boxed<ImmediateDeviceContext>>,
             Vec<Boxed<DeferredDeviceContext>>,
         ),
-        (),
+        BoxedFromNulError,
     > {
         let num_immediate_contexts = create_info
             .engine_create_info
@@ -268,26 +269,24 @@ impl EngineFactoryVk {
             )
         }
 
-        if render_device_ptr.is_null() {
-            Err(())
-        } else {
-            Ok((
-                Boxed::new(render_device_ptr),
-                Vec::from_iter(
-                    device_context_ptrs
-                        .iter()
-                        .take(num_immediate_contexts)
-                        .map(|dc_ptr| Boxed::new(*dc_ptr)),
-                ),
-                Vec::from_iter(
+        Boxed::new(render_device_ptr).and_then(|render_device| {
+            device_context_ptrs
+                .iter()
+                .take(num_immediate_contexts)
+                .map(|&dc_ptr| Boxed::new(dc_ptr))
+                .collect::<Result<Vec<_>, _>>()
+                .and_then(|immediate_devices| {
                     device_context_ptrs
                         .iter()
                         .rev()
                         .take(num_deferred_contexts)
-                        .map(|dc_ptr| Boxed::new(*dc_ptr)),
-                ),
-            ))
-        }
+                        .map(|&dc_ptr| Boxed::new(dc_ptr))
+                        .collect::<Result<Vec<_>, _>>()
+                        .map(|deferred_devices| {
+                            (render_device, immediate_devices, deferred_devices)
+                        })
+                })
+        })
     }
 
     pub fn create_swap_chain(
@@ -296,7 +295,7 @@ impl EngineFactoryVk {
         immediate_context: &ImmediateDeviceContext,
         swapchain_ci: &SwapChainCreateInfo,
         window: &NativeWindow,
-    ) -> Result<Boxed<SwapChain>, ()> {
+    ) -> Result<Boxed<SwapChain>, BoxedFromNulError> {
         let mut swap_chain_ptr = std::ptr::null_mut();
 
         unsafe_member_call!(
@@ -310,11 +309,7 @@ impl EngineFactoryVk {
             &mut swap_chain_ptr
         );
 
-        if swap_chain_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(swap_chain_ptr))
-        }
+        Boxed::new(swap_chain_ptr)
     }
 
     pub fn enable_device_simulation(&self) {

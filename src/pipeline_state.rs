@@ -9,7 +9,7 @@ use static_assertions::const_assert_eq;
 
 use crate::device_object::DeviceObject;
 use crate::pipeline_state_cache::PipelineStateCache;
-use crate::{Boxed, PipelineResourceFlags, PipelineType, Ported};
+use crate::{Boxed, BoxedFromNulError, PipelineResourceFlags, PipelineType, Ported};
 use crate::{
     graphics_types::{PrimitiveTopology, ShaderType, ShaderTypes, TextureFormat},
     input_layout::LayoutElement,
@@ -1228,7 +1228,7 @@ impl PipelineState {
     pub fn create_shader_resource_binding(
         &self,
         init_static_resources: bool,
-    ) -> Result<Boxed<ShaderResourceBinding>, ()> {
+    ) -> Result<Boxed<ShaderResourceBinding>, BoxedFromNulError> {
         let mut shader_resource_binding_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
@@ -1238,11 +1238,7 @@ impl PipelineState {
             init_static_resources
         );
 
-        if shader_resource_binding_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(shader_resource_binding_ptr))
-        }
+        Boxed::new(shader_resource_binding_ptr)
     }
 
     pub fn initialize_static_srb_resources(

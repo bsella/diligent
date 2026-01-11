@@ -1,3 +1,5 @@
+use std::error::Error;
+use std::fmt::Display;
 use std::ops::Deref;
 use std::ops::DerefMut;
 
@@ -351,13 +353,28 @@ pub trait Ported {
     type SysType;
 }
 
+#[derive(Debug)]
+pub struct BoxedFromNulError;
+
+impl Error for BoxedFromNulError {}
+
+impl Display for BoxedFromNulError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("The Diligent Engine returned a null pointer when creating an object. Please check the last log messages for errors")
+    }
+}
+
 pub struct Boxed<T: Ported> {
     ptr: *mut T,
 }
 
 impl<T: Ported> Boxed<T> {
-    pub(crate) fn new(ptr: *mut T::SysType) -> Self {
-        Self { ptr: ptr as _ }
+    pub(crate) fn new(ptr: *mut T::SysType) -> Result<Boxed<T>, BoxedFromNulError> {
+        if ptr.is_null() {
+            Err(BoxedFromNulError)
+        } else {
+            Ok(Self { ptr: ptr as _ })
+        }
     }
 
     pub fn from_ref(object: &Object) -> Self {

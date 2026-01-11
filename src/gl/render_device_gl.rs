@@ -1,5 +1,6 @@
 use crate::{
-    Boxed, Buffer, BufferDesc, ResourceState, Texture, TextureDesc, render_device::RenderDevice,
+    Boxed, BoxedFromNulError, Buffer, BufferDesc, ResourceState, Texture, TextureDesc,
+    render_device::RenderDevice,
 };
 
 #[cfg(target_os = "windows")]
@@ -29,7 +30,7 @@ impl RenderDeviceGL {
         gl_bind_target: u32,
         tex_desc: &TextureDesc,
         initial_state: ResourceState,
-    ) -> Result<Boxed<Texture>, ()> {
+    ) -> Result<Boxed<Texture>, BoxedFromNulError> {
         let mut texture_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
@@ -42,11 +43,7 @@ impl RenderDeviceGL {
             &mut texture_ptr
         );
 
-        if texture_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(texture_ptr))
-        }
+        Boxed::new(texture_ptr)
     }
 
     pub fn create_buffer_from_gl_handle(
@@ -54,7 +51,7 @@ impl RenderDeviceGL {
         gl_handle: u32,
         buff_desc: &BufferDesc,
         initial_state: ResourceState,
-    ) -> Result<Boxed<Buffer>, ()> {
+    ) -> Result<Boxed<Buffer>, BoxedFromNulError> {
         let mut buffer_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
@@ -66,18 +63,14 @@ impl RenderDeviceGL {
             &mut buffer_ptr
         );
 
-        if buffer_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(buffer_ptr))
-        }
+        Boxed::new(buffer_ptr)
     }
 
     pub fn create_dummy_texture(
         &self,
         tex_desc: &TextureDesc,
         initial_state: ResourceState,
-    ) -> Result<Boxed<Texture>, ()> {
+    ) -> Result<Boxed<Texture>, BoxedFromNulError> {
         let mut texture_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
@@ -88,11 +81,7 @@ impl RenderDeviceGL {
             &mut texture_ptr
         );
 
-        if texture_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(texture_ptr))
-        }
+        Boxed::new(texture_ptr)
     }
 
     #[cfg(target_os = "windows")]

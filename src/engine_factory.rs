@@ -1,7 +1,7 @@
 use std::{os::raw::c_void, path::Path};
 
 use crate::{
-    APIInfo, Boxed, Dearchiver, ImmediateContextCreateInfo, ValidationFlags,
+    APIInfo, Boxed, BoxedFromNulError, Dearchiver, ImmediateContextCreateInfo, ValidationFlags,
     data_blob::DataBlob,
     graphics_types::{DeviceFeatures, GraphicsAdapterInfo, Version},
     memory_allocator::MemoryAllocator,
@@ -113,7 +113,7 @@ impl EngineFactory {
     pub fn create_default_shader_source_stream_factory(
         &self,
         search_directories: &[&Path],
-    ) -> Result<Boxed<ShaderSourceInputStreamFactory>, ()> {
+    ) -> Result<Boxed<ShaderSourceInputStreamFactory>, BoxedFromNulError> {
         let mut search = String::new();
 
         search_directories.iter().for_each(|&dir| {
@@ -132,14 +132,13 @@ impl EngineFactory {
             &mut stream_factory_ptr
         );
 
-        if stream_factory_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(stream_factory_ptr))
-        }
+        Boxed::new(stream_factory_ptr)
     }
 
-    pub fn create_empty_data_blob(&self, initial_size: usize) -> Result<Boxed<DataBlob>, ()> {
+    pub fn create_empty_data_blob(
+        &self,
+        initial_size: usize,
+    ) -> Result<Boxed<DataBlob>, BoxedFromNulError> {
         let mut data_blob_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
@@ -150,14 +149,10 @@ impl EngineFactory {
             &mut data_blob_ptr
         );
 
-        if data_blob_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(data_blob_ptr))
-        }
+        Boxed::new(data_blob_ptr)
     }
 
-    pub fn create_data_blob<T>(&self, data: &T) -> Result<Boxed<DataBlob>, ()> {
+    pub fn create_data_blob<T>(&self, data: &T) -> Result<Boxed<DataBlob>, BoxedFromNulError> {
         let mut data_blob_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
@@ -168,11 +163,7 @@ impl EngineFactory {
             &mut data_blob_ptr
         );
 
-        if data_blob_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(data_blob_ptr))
-        }
+        Boxed::new(data_blob_ptr)
     }
 
     pub fn enumerate_adapters(&self, version: Version) -> Vec<GraphicsAdapterInfo> {
@@ -218,7 +209,7 @@ impl EngineFactory {
     pub fn create_dearchiver(
         &self,
         create_info: &DearchiverCreateInfo,
-    ) -> Result<Boxed<Dearchiver>, ()> {
+    ) -> Result<Boxed<Dearchiver>, BoxedFromNulError> {
         let mut dearchiver_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
@@ -227,11 +218,7 @@ impl EngineFactory {
             &create_info.0,
             &mut dearchiver_ptr
         );
-        if dearchiver_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(dearchiver_ptr))
-        }
+        Boxed::new(dearchiver_ptr)
     }
 
     pub fn set_message_callback(&self, callback: diligent_sys::DebugMessageCallbackType) {

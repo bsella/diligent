@@ -8,7 +8,7 @@ use bitflags::bitflags;
 use static_assertions::const_assert_eq;
 
 use crate::{
-    Boxed, MapType,
+    Boxed, BoxedFromNulError, MapType,
     buffer_view::{BufferView, BufferViewDesc, BufferViewType},
     device_context::DeviceContext,
     device_object::DeviceObject,
@@ -135,16 +135,15 @@ impl Buffer {
         unsafe { &*(desc_ptr as *const BufferDesc) }
     }
 
-    pub fn create_view(&self, view_desc: &BufferViewDesc) -> Result<Boxed<BufferView>, ()> {
+    pub fn create_view(
+        &self,
+        view_desc: &BufferViewDesc,
+    ) -> Result<Boxed<BufferView>, BoxedFromNulError> {
         let mut buffer_view_ptr = std::ptr::null_mut();
 
         unsafe_member_call!(self, Buffer, CreateView, &view_desc.0, &mut buffer_view_ptr);
 
-        if buffer_view_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(buffer_view_ptr))
-        }
+        Boxed::new(buffer_view_ptr)
     }
 
     pub fn get_default_view(&self, view_type: BufferViewType) -> Option<&BufferView> {

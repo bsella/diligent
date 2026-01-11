@@ -63,7 +63,7 @@ impl TexturedCube {
         vtx_buffer_mode: Option<BufferMode>,
         idx_buffer_bind_flags: BindFlags,
         idx_buffer_mode: Option<BufferMode>,
-    ) -> Result<Self, ()> {
+    ) -> Result<Self, BoxedFromNulError> {
         let create_info = GeometryPrimitiveBuffersCreateInfo::builder()
             .vertex_buffer_bind_flags(vtx_buffer_bind_flags)
             .maybe_vertex_buffer_mode(vtx_buffer_mode)
@@ -90,7 +90,7 @@ impl TexturedCube {
     pub fn create_pipeline_state(
         create_info: CreatePSOInfo,
         convert_output_to_gamma: bool,
-    ) -> Result<Boxed<GraphicsPipelineState>, ()> {
+    ) -> Result<Boxed<GraphicsPipelineState>, BoxedFromNulError> {
         let mut input_layouts = Vec::new();
 
         if create_info

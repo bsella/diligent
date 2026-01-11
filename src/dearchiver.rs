@@ -1,9 +1,9 @@
 use std::{ffi::CStr, marker::PhantomData};
 
 use crate::{
-    Boxed, DataBlob, PipelineResourceSignature, PipelineState, PipelineStateCache,
-    PipelineStateCreateInfo, PipelineType, RenderDevice, RenderPass, RenderPassDesc, Shader,
-    ShaderDesc, object::Object,
+    Boxed, BoxedFromNulError, DataBlob, PipelineResourceSignature, PipelineState,
+    PipelineStateCache, PipelineStateCreateInfo, PipelineType, RenderDevice, RenderPass,
+    RenderPassDesc, Shader, ShaderDesc, object::Object,
 };
 
 #[repr(transparent)]
@@ -161,7 +161,7 @@ impl Dearchiver {
     pub fn unpack_shader<'user_data, UserData>(
         &self,
         unpack_info: &'user_data ShaderUnpackInfo<'user_data, UserData>,
-    ) -> Result<Boxed<Shader>, ()> {
+    ) -> Result<Boxed<Shader>, BoxedFromNulError> {
         let mut shader_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
@@ -170,17 +170,13 @@ impl Dearchiver {
             &unpack_info.0,
             &mut shader_ptr
         );
-        if shader_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(shader_ptr))
-        }
+        Boxed::new(shader_ptr)
     }
 
     pub fn unpack_pipeline_state<'user_data, UserData>(
         &self,
         unpack_info: &'user_data PipelineStateUnpackInfo<'user_data, UserData>,
-    ) -> Result<Boxed<PipelineState>, ()> {
+    ) -> Result<Boxed<PipelineState>, BoxedFromNulError> {
         let mut pipeline_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
@@ -189,17 +185,13 @@ impl Dearchiver {
             &unpack_info.0,
             &mut pipeline_ptr
         );
-        if pipeline_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(pipeline_ptr))
-        }
+        Boxed::new(pipeline_ptr)
     }
 
     pub fn unpack_resource_signature(
         &self,
         unpack_info: &ResourceSignatureUnpackInfo,
-    ) -> Result<Boxed<PipelineResourceSignature>, ()> {
+    ) -> Result<Boxed<PipelineResourceSignature>, BoxedFromNulError> {
         let mut rs_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
@@ -208,17 +200,13 @@ impl Dearchiver {
             &unpack_info.0,
             &mut rs_ptr
         );
-        if rs_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(rs_ptr))
-        }
+        Boxed::new(rs_ptr)
     }
 
     pub fn unpack_render_pass<'user_data, UserData>(
         &self,
         unpack_info: &'user_data RenderPassUnpackInfo<'user_data, UserData>,
-    ) -> Result<Boxed<RenderPass>, ()> {
+    ) -> Result<Boxed<RenderPass>, BoxedFromNulError> {
         let mut render_pass_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
@@ -227,20 +215,16 @@ impl Dearchiver {
             &unpack_info.0,
             &mut render_pass_ptr
         );
-        if render_pass_ptr.is_null() {
-            Err(())
-        } else {
-            Ok(Boxed::new(render_pass_ptr))
-        }
+        Boxed::new(render_pass_ptr)
     }
 
-    pub fn store(&self) -> Result<Boxed<DataBlob>, ()> {
+    pub fn store(&self) -> Result<Boxed<DataBlob>, BoxedFromNulError> {
         let mut data_blob_ptr = std::ptr::null_mut();
         let success = unsafe_member_call!(self, Dearchiver, Store, &mut data_blob_ptr);
-        if success && !data_blob_ptr.is_null() {
-            Ok(Boxed::new(data_blob_ptr))
+        if success {
+            Boxed::new(data_blob_ptr)
         } else {
-            Err(())
+            Err(BoxedFromNulError)
         }
     }
 
