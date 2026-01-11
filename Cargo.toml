@@ -1,6 +1,6 @@
 [package]
 name         = "diligent"
-version      = "0.1.2"
+version      = "0.2.0"
 edition      = "2024"
 categories   = ["graphics", "rendering"]
 description  = "A port of the Diligent Engine to Rust"
@@ -10,10 +10,10 @@ license-file = "LICENSE.md"
 repository   = "https://github.com/bsella/diligent"
 
 [dependencies]
-diligent_sys      = { path = "./diligent_sys", version = "2.5.5"}
+diligent_sys      = { path = "./diligent_sys", version = "2.5.6-0"}
 static_assertions = "1.1.0"
 bitflags          = "2.10.0"
-bon               = "3.8.1"
+bon               = "3.8.2"
 
 [features]
 

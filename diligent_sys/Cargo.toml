@@ -1,6 +1,6 @@
 [package]
 name = "diligent_sys"
-version = "2.5.6"
+version = "2.5.6-0"
 edition = "2024"
 description  = "Raw FFI bindings of the Diligent Engine"
 categories   = ["graphics", "rendering"]
