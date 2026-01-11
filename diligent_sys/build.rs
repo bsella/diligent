@@ -19,10 +19,10 @@ fn configure_diligent_libs(diligent_install_dir: &Path) {
 
     println!("cargo::rustc-link-lib=static=DiligentCore");
 
+    #[allow(unused)]
+    let library_suffix = "";
     #[cfg(all(debug_assertions, target_os = "windows"))]
     let library_suffix = "d";
-    #[cfg(any(not(debug_assertions), not(target_os = "windows")))]
-    let library_suffix = "";
 
     #[cfg(feature = "vulkan")]
     {
