@@ -1,5 +1,7 @@
 use std::ops::BitAnd;
 
+use crate::native_app::{Window, WindowManager};
+
 use super::{
     app::App,
     app_settings::AppSettings,
@@ -350,65 +352,106 @@ extern "system" fn handle_message(
     }
 }
 
+struct Win32Window {
+    hwnd: HWND,
+}
+
+struct Win32WindowManager {
+    instance: HINSTANCE,
+
+    window_class_name: PCWSTR,
+}
+
+impl Window for Win32Window {
+    fn set_title(&self, title: &str) {
+        unsafe {
+            let _ = SetWindowTextW(self.hwnd, &HSTRING::from(title));
+        }
+    }
+    fn native(&self) -> NativeWindow {
+        NativeWindow::new(self.hwnd.0)
+    }
+}
+
+impl WindowManager for Win32WindowManager {
+    type Window<'manager>
+        = Win32Window
+    where
+        Self: 'manager;
+    fn new() -> Self {
+        let instance = unsafe { GetModuleHandleW(None) }.unwrap();
+
+        debug_assert!(!instance.0.is_null());
+
+        let instance = HINSTANCE(instance.0);
+
+        let window_class_name = w!("DiligentWindow");
+
+        let window_class = WNDCLASSW {
+            hCursor: unsafe { LoadCursorW(None, IDC_ARROW) }.unwrap(),
+            hInstance: instance,
+            lpszClassName: window_class_name,
+
+            style: CS_HREDRAW | CS_VREDRAW,
+            lpfnWndProc: Some(handle_message),
+            ..Default::default()
+        };
+
+        let atom = unsafe { RegisterClassW(&window_class) };
+        debug_assert!(atom != 0);
+
+        Win32WindowManager {
+            instance,
+            window_class_name,
+        }
+    }
+
+    fn create_window(&self, width: u32, height: u32) -> Self::Window<'_> {
+        let hwnd = unsafe {
+            CreateWindowExW(
+                WINDOW_EX_STYLE::default(),
+                self.window_class_name,
+                w!(""),
+                WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                CW_USEDEFAULT,
+                CW_USEDEFAULT,
+                width as i32,
+                height as i32,
+                None,
+                None,
+                Some(self.instance),
+                None,
+            )
+        }
+        .unwrap();
+        Win32Window { hwnd }
+    }
+}
+
+impl Drop for Win32WindowManager {
+    fn drop(&mut self) {
+        let _ = unsafe { UnregisterClassW(self.window_class_name, Some(self.instance)) };
+    }
+}
+
 pub fn main<Application>(
     settings: Application::AppSettings,
 ) -> std::result::Result<(), std::io::Error>
 where
     Application: App,
 {
-    let instance = unsafe { GetModuleHandleW(None) }?;
-
-    debug_assert!(!instance.0.is_null());
-
-    let instance = HINSTANCE(instance.0);
-
-    let window_class = w!("DiligentWindow");
-
-    let wc = WNDCLASSW {
-        hCursor: unsafe { LoadCursorW(None, IDC_ARROW) }?,
-        hInstance: instance,
-        lpszClassName: window_class,
-
-        style: CS_HREDRAW | CS_VREDRAW,
-        lpfnWndProc: Some(handle_message),
-        ..Default::default()
-    };
-
-    let atom = unsafe { RegisterClassW(&wc) };
-    debug_assert!(atom != 0);
-
     let (width, height) = settings.get_window_dimensions();
 
-    let hwnd = unsafe {
-        CreateWindowExW(
-            WINDOW_EX_STYLE::default(),
-            window_class,
-            w!(""),
-            WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            CW_USEDEFAULT,
-            CW_USEDEFAULT,
-            width as i32,
-            height as i32,
-            None,
-            None,
-            Some(instance),
-            None,
-        )
-    }?;
+    let window_manager = Win32WindowManager::new();
 
-    Application::new(
-        settings,
-        EngineCreateInfo::default(),
-        NativeWindow::new(hwnd.0),
-    )
-    .run(
+    let window = window_manager.create_window(width, height);
+
+    Application::new(settings, EngineCreateInfo::default(), window.native()).run(
         Win32EventHandler {
-            _hwnd: hwnd,
+            _hwnd: window.hwnd,
             resize_param: LPARAM::default(),
             resized: false,
         },
-        |title: &str| unsafe {
-            let _ = SetWindowTextW(hwnd, &HSTRING::from(title));
-        },
+        window,
     )
 }

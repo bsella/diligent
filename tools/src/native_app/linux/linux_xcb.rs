@@ -7,100 +7,20 @@ use crate::native_app::{
     app::App,
     app_settings::AppSettings,
     events::{Event, EventHandler, Key, MouseButton},
+    Window, WindowManager,
 };
-
-fn init_connection_and_window(
-    width: u16,
-    height: u16,
-) -> xcb::Result<(xcb::Connection, x::Window, x::Atom)> {
-    let (connection, screen_number) =
-        xcb::Connection::connect(None).expect("Unable to make an XCB connection");
-
-    let setup = connection.get_setup();
-
-    let screen = setup.roots().nth(screen_number as usize).unwrap();
-
-    let window = connection.generate_id();
-
-    connection.send_request(&x::CreateWindow {
-        depth: x::COPY_FROM_PARENT as u8,
-        wid: window,
-        parent: screen.root(),
-        x: 0,
-        y: 0,
-        width,
-        height,
-        border_width: 0,
-        class: x::WindowClass::InputOutput,
-        visual: screen.root_visual(),
-        value_list: &[
-            x::Cw::BackPixel(screen.black_pixel()),
-            x::Cw::EventMask(
-                x::EventMask::KEY_RELEASE
-                    | x::EventMask::KEY_PRESS
-                    | x::EventMask::EXPOSURE
-                    | x::EventMask::STRUCTURE_NOTIFY
-                    | x::EventMask::POINTER_MOTION
-                    | x::EventMask::BUTTON_PRESS
-                    | x::EventMask::BUTTON_RELEASE,
-            ),
-        ],
-    });
-
-    let cookies = (
-        connection.send_request(&x::InternAtom {
-            only_if_exists: true,
-            name: b"WM_PROTOCOLS",
-        }),
-        connection.send_request(&x::InternAtom {
-            only_if_exists: false,
-            name: b"WM_DELETE_WINDOW",
-        }),
-    );
-
-    let atom_wm_delete_window = connection.wait_for_reply(cookies.1)?.atom();
-    let atom_wm_protocols = connection.wait_for_reply(cookies.0)?.atom();
-
-    connection.send_request(&x::ChangeProperty {
-        mode: x::PropMode::Replace,
-        window,
-        property: atom_wm_protocols,
-        r#type: x::ATOM_ATOM,
-        data: &[atom_wm_delete_window],
-    });
-
-    // TODO : set the XCB_ATOM_WM_NORMAL_HINTS for minimal window size
-
-    connection.send_request(&x::MapWindow { window });
-
-    // Force the x/y coordinates to 100,100 results are identical in consecutive runs
-    connection.send_request(&x::ConfigureWindow {
-        window,
-        value_list: &[x::ConfigWindow::X(100), x::ConfigWindow::Y(100)],
-    });
-
-    connection.flush()?;
-
-    loop {
-        if let Ok(xcb::Event::X(x::Event::Expose(_event))) = connection.wait_for_event() {
-            break;
-        }
-    }
-
-    Ok((connection, window, atom_wm_delete_window))
-}
 
 struct XcbEventHandler<'a> {
     connection: &'a xcb::Connection,
     atom_delete_window: xcb::x::Atom,
-    keyboard_state: xkb::State,
+    keyboard_state: &'a xkb::State,
 }
 
 impl<'a> XcbEventHandler<'a> {
     fn new(
         connection: &'a xcb::Connection,
         atom_delete_window: xcb::x::Atom,
-        keyboard_state: xkb::State,
+        keyboard_state: &'a xkb::State,
     ) -> Self {
         XcbEventHandler {
             connection,
@@ -306,69 +226,182 @@ impl<'a> EventHandler for XcbEventHandler<'a> {
     }
 }
 
+struct XCBWindow<'manager> {
+    manager: &'manager XCBWindowManager,
+    window: xcb::x::Window,
+}
+struct XCBWindowManager {
+    connection: xcb::Connection,
+    screen_number: i32,
+
+    atom_wm_delete_window: xcb::x::Atom,
+    atom_wm_protocols: xcb::x::Atom,
+
+    kb_state: xkb::State,
+}
+
+impl<'manager> Window for XCBWindow<'manager> {
+    fn native(&self) -> NativeWindow {
+        NativeWindow::new(
+            self.window.resource_id(),
+            std::ptr::null_mut(),
+            self.manager.connection.get_raw_conn() as _,
+        )
+    }
+    fn set_title(&self, title: &str) {
+        self.manager.connection.send_request(&x::ChangeProperty {
+            mode: x::PropMode::Replace,
+            window: self.window,
+            property: x::ATOM_WM_NAME,
+            r#type: x::ATOM_STRING,
+            data: title.as_bytes(),
+        });
+        self.manager.connection.flush().unwrap();
+    }
+}
+
+impl WindowManager for XCBWindowManager {
+    type Window<'manager> = XCBWindow<'manager>;
+
+    fn new() -> Self {
+        let (connection, screen_number) =
+            xcb::Connection::connect(None).expect("Unable to make an XCB connection");
+
+        let cookies = (
+            connection.send_request(&x::InternAtom {
+                only_if_exists: true,
+                name: b"WM_PROTOCOLS",
+            }),
+            connection.send_request(&x::InternAtom {
+                only_if_exists: false,
+                name: b"WM_DELETE_WINDOW",
+            }),
+        );
+
+        let atom_wm_delete_window = connection.wait_for_reply(cookies.1).unwrap().atom();
+        let atom_wm_protocols = connection.wait_for_reply(cookies.0).unwrap().atom();
+
+        {
+            let mut _dummyu16 = 0u16;
+            let mut _dummyyu16 = 0u16;
+            let mut _dummyu8 = 0u8;
+            let mut _dummyyu8 = 0u8;
+
+            xkb::x11::setup_xkb_extension(
+                &connection,
+                1,
+                0,
+                xkb::x11::SetupXkbExtensionFlags::NoFlags,
+                &mut _dummyu16,
+                &mut _dummyyu16,
+                &mut _dummyu8,
+                &mut _dummyyu8,
+            );
+        }
+
+        let xkb_context = xkb::Context::new(xkb::COMPILE_NO_FLAGS);
+
+        let kb_device_id = xkb::x11::get_core_keyboard_device_id(&connection);
+
+        let keymap = xkb::x11::keymap_new_from_device(
+            &xkb_context,
+            &connection,
+            kb_device_id,
+            xkb::KEYMAP_COMPILE_NO_FLAGS,
+        );
+
+        let kb_state = xkb::x11::state_new_from_device(&keymap, &connection, kb_device_id);
+
+        Self {
+            connection,
+            screen_number,
+            atom_wm_delete_window,
+            atom_wm_protocols,
+            kb_state,
+        }
+    }
+
+    fn create_window(&self, width: u32, height: u32) -> Self::Window<'_> {
+        let setup = self.connection.get_setup();
+
+        let screen = setup.roots().nth(self.screen_number as usize).unwrap();
+
+        let window = self.connection.generate_id();
+
+        self.connection.send_request(&x::CreateWindow {
+            depth: x::COPY_FROM_PARENT as u8,
+            wid: window,
+            parent: screen.root(),
+            x: 0,
+            y: 0,
+            width: width as u16,
+            height: height as u16,
+            border_width: 0,
+            class: x::WindowClass::InputOutput,
+            visual: screen.root_visual(),
+            value_list: &[
+                x::Cw::BackPixel(screen.black_pixel()),
+                x::Cw::EventMask(
+                    x::EventMask::KEY_RELEASE
+                        | x::EventMask::KEY_PRESS
+                        | x::EventMask::EXPOSURE
+                        | x::EventMask::STRUCTURE_NOTIFY
+                        | x::EventMask::POINTER_MOTION
+                        | x::EventMask::BUTTON_PRESS
+                        | x::EventMask::BUTTON_RELEASE,
+                ),
+            ],
+        });
+
+        self.connection.send_request(&x::ChangeProperty {
+            mode: x::PropMode::Replace,
+            window,
+            property: self.atom_wm_protocols,
+            r#type: x::ATOM_ATOM,
+            data: &[self.atom_wm_delete_window],
+        });
+
+        // TODO : set the XCB_ATOM_WM_NORMAL_HINTS for minimal window size
+
+        self.connection.send_request(&x::MapWindow { window });
+
+        // Force the x/y coordinates to 100,100 results are identical in consecutive runs
+        self.connection.send_request(&x::ConfigureWindow {
+            window,
+            value_list: &[x::ConfigWindow::X(100), x::ConfigWindow::Y(100)],
+        });
+
+        self.connection.flush().unwrap();
+
+        loop {
+            if let Ok(xcb::Event::X(x::Event::Expose(_event))) = self.connection.wait_for_event() {
+                break;
+            }
+        }
+
+        XCBWindow {
+            manager: self,
+            window,
+        }
+    }
+}
+
 pub(super) fn main<Application>(settings: Application::AppSettings) -> Result<(), std::io::Error>
 where
     Application: App,
 {
     let (width, height) = settings.get_window_dimensions();
 
-    let (connection, window, atom_delete_window) =
-        init_connection_and_window(width, height).unwrap();
+    let window_manager = XCBWindowManager::new();
 
-    let native_window = NativeWindow::new(
-        window.resource_id(),
-        std::ptr::null_mut(),
-        connection.get_raw_conn() as _,
-    );
+    let window = window_manager.create_window(width, height);
 
-    let app = Application::new(settings, EngineCreateInfo::default(), native_window);
-
-    connection.flush().unwrap();
-
-    let update_window_title = |title: &str| {
-        connection.send_request(&x::ChangeProperty {
-            mode: x::PropMode::Replace,
-            window,
-            property: x::ATOM_WM_NAME,
-            r#type: x::ATOM_STRING,
-            data: title.as_bytes(),
-        });
-        connection.flush().unwrap();
-    };
-
-    {
-        let mut _dummyu16 = 0u16;
-        let mut _dummyyu16 = 0u16;
-        let mut _dummyu8 = 0u8;
-        let mut _dummyyu8 = 0u8;
-
-        xkb::x11::setup_xkb_extension(
-            &connection,
-            1,
-            0,
-            xkb::x11::SetupXkbExtensionFlags::NoFlags,
-            &mut _dummyu16,
-            &mut _dummyyu16,
-            &mut _dummyu8,
-            &mut _dummyyu8,
-        );
-    }
-
-    let xkb_context = xkb::Context::new(xkb::COMPILE_NO_FLAGS);
-
-    let kb_device_id = xkb::x11::get_core_keyboard_device_id(&connection);
-
-    let keymap = xkb::x11::keymap_new_from_device(
-        &xkb_context,
-        &connection,
-        kb_device_id,
-        xkb::KEYMAP_COMPILE_NO_FLAGS,
-    );
-
-    let state = xkb::x11::state_new_from_device(&keymap, &connection, kb_device_id);
-
-    app.run(
-        XcbEventHandler::new(&connection, atom_delete_window, state),
-        update_window_title,
+    Application::new(settings, EngineCreateInfo::default(), window.native()).run(
+        XcbEventHandler::new(
+            &window_manager.connection,
+            window_manager.atom_wm_delete_window,
+            &window_manager.kb_state,
+        ),
+        window,
     )
 }

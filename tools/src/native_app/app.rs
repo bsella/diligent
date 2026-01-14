@@ -1,5 +1,7 @@
 use diligent::{platforms::native_window::NativeWindow, EngineCreateInfo};
 
+use crate::native_app::Window;
+
 use super::{app_settings::AppSettings, events::EventHandler};
 
 pub enum GoldenImageMode {
@@ -23,6 +25,6 @@ pub trait App {
     fn run(
         self,
         event_handler: impl EventHandler,
-        update_window_title_cb: impl Fn(&str),
+        window: impl Window,
     ) -> Result<(), std::io::Error>;
 }

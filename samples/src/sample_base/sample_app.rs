@@ -10,6 +10,7 @@ use diligent_tools::{
     native_app::{
         app::{App, GoldenImageMode},
         events::{Event, EventHandler},
+        Window,
     },
 };
 
@@ -209,8 +210,8 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
         window: NativeWindow,
     ) -> Self {
         let swap_chain_ci = SwapChainCreateInfo::builder()
-            .width(app_settings.width as u32)
-            .height(app_settings.height as u32)
+            .width(app_settings.width)
+            .height(app_settings.height)
             .build();
 
         fn find_adapter(
@@ -561,7 +562,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
     fn run(
         mut self,
         mut event_handler: impl EventHandler,
-        update_window_title_cb: impl Fn(&str),
+        window: impl Window,
     ) -> Result<(), std::io::Error> {
         let start_time = std::time::Instant::now();
 
@@ -574,7 +575,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             + format!("{API_VERSION}").as_str()
             + ")";
 
-        update_window_title_cb(app_title.as_str());
+        window.set_title(app_title.as_str());
 
         let mut filtered_frame_time = 0.0;
 
@@ -625,7 +626,7 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
                 filtered_frame_time =
                     filtered_frame_time * (1.0 - filter_scale) + filter_scale * elapsed_time;
 
-                update_window_title_cb(
+                window.set_title(
                     format!(
                         "{app_title} - {:.1} ms ({:.1} fps)",
                         filtered_frame_time * 1000.0,
