@@ -1,6 +1,6 @@
-use std::ops::Deref;
+use std::{collections::VecDeque, ops::Deref};
 
-use diligent::{platforms::native_window::NativeWindow, *};
+use diligent::*;
 
 use diligent_tools::{
     imgui::{
@@ -9,7 +9,8 @@ use diligent_tools::{
     },
     native_app::{
         app::{App, GoldenImageMode},
-        events::{Event, EventHandler},
+        events::Event,
+        Window,
     },
 };
 
@@ -41,15 +42,17 @@ use super::{
     sample_app_settings::{parse_sample_app_settings, SampleAppSettings},
 };
 
-pub struct SampleApp<Sample: SampleBase> {
+struct SampleWindow<W: Window> {
+    window: W,
     swap_chain: Boxed<SwapChain>,
+    imgui_renderer: ImguiRenderer,
+}
 
+pub struct SampleApp<Sample: SampleBase, W: Window> {
     _golden_image_mode: GoldenImageMode,
     _golden_pixel_tolerance: u32,
 
     sample: Sample,
-
-    imgui_renderer: ImguiRenderer,
 
     app_settings: SampleAppSettings,
 
@@ -60,6 +63,8 @@ pub struct SampleApp<Sample: SampleBase> {
     selected_display_mode: usize,
 
     fullscreen_mode: bool,
+
+    windows: VecDeque<SampleWindow<W>>,
 }
 
 enum EngineFactory {
@@ -89,14 +94,13 @@ impl Deref for EngineFactory {
     }
 }
 
-impl<GenericSample: SampleBase> SampleApp<GenericSample> {
-    fn window_resize(&mut self, width: u32, height: u32) {
+impl<GenericSample: SampleBase, W: Window> SampleApp<GenericSample, W> {
+    fn window_resize(&mut self, width: u32, height: u32, swap_chain: &SwapChain) {
         self.sample.pre_window_resize();
 
-        self.swap_chain
-            .resize(width, height, SurfaceTransform::Optimal);
+        swap_chain.resize(width, height, SurfaceTransform::Optimal);
 
-        let swap_chain_desc = self.swap_chain.desc();
+        let swap_chain_desc = swap_chain.desc();
 
         self.sample.window_resize(swap_chain_desc);
     }
@@ -105,10 +109,10 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
         self.sample.update(current_time, elapsed_time);
     }
 
-    fn update_ui(&mut self) {
-        let ui = self.imgui_renderer.new_frame();
+    fn update_ui(&mut self, sample_window: &mut SampleWindow<W>) {
+        let ui = sample_window.imgui_renderer.new_frame();
 
-        let swap_chain_desc = self.swap_chain.desc();
+        let swap_chain_desc = sample_window.swap_chain.desc();
 
         let adapters_wnd_width = swap_chain_desc.width().min(330);
 
@@ -152,14 +156,14 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
                     if ui.button("Go Windowed") {
                         self.sample.release_swap_chain_buffers();
                         self.fullscreen_mode = false;
-                        self.swap_chain.set_windowed_mode();
+                        sample_window.swap_chain.set_windowed_mode();
                     }
                 } else if !self.display_modes.is_empty() && ui.button("Go Full Screen") {
                     self.sample.release_swap_chain_buffers();
 
                     let display_mode = self.display_modes.get(self.selected_display_mode).unwrap();
                     self.fullscreen_mode = true;
-                    self.swap_chain.set_fullscreen_mode(display_mode);
+                    sample_window.swap_chain.set_fullscreen_mode(display_mode);
                 }
 
                 // If you're noticing any difference in frame rate when you enable vsync,
@@ -171,46 +175,289 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
         self.sample.update_ui(ui);
     }
 
-    fn render(&self) {
+    fn render(&self, swap_chain: &SwapChain) {
         let context = self.sample.get_immediate_context();
         context.clear_stats();
 
-        let rtv = self.swap_chain.get_current_back_buffer_rtv().unwrap();
-        let dsv = self.swap_chain.get_depth_buffer_dsv().unwrap();
+        let rtv = swap_chain.get_current_back_buffer_rtv().unwrap();
+        let dsv = swap_chain.get_depth_buffer_dsv().unwrap();
 
         context.set_render_targets(&[rtv], Some(dsv), ResourceStateTransitionMode::Transition);
 
-        self.sample.render(&self.swap_chain);
+        self.sample.render(swap_chain);
 
         // Restore default render target in case the sample has changed it
         context.set_render_targets(&[rtv], Some(dsv), ResourceStateTransitionMode::Transition);
     }
 
-    fn present(&mut self) {
+    fn present(&self, swap_chain: &SwapChain) {
         // TODO screen capture
 
-        self.swap_chain
-            .present(if self.app_settings.vsync { 1 } else { 0 });
+        swap_chain.present(if self.app_settings.vsync { 1 } else { 0 });
 
         // TODO screen capture
+    }
+
+    fn create_device_and_contexts(
+        app_settings: &SampleAppSettings,
+        engine_factory: &EngineFactory,
+        engine_create_info: EngineCreateInfo,
+    ) -> (
+        Boxed<RenderDevice>,
+        Vec<Boxed<ImmediateDeviceContext>>,
+        Vec<Boxed<DeferredDeviceContext>>,
+    ) {
+        match &engine_factory {
+            #[cfg(feature = "vulkan")]
+            EngineFactory::Vulkan(engine_factory) => {
+                let mut engine_vk_create_info = EngineVkCreateInfo::new(engine_create_info);
+
+                if app_settings.vk_compatibility {
+                    engine_vk_create_info.features_vk = DeviceFeaturesVk::new(
+                        DeviceFeatureState::Disabled,
+                        DeviceFeatureState::Disabled,
+                    );
+                };
+
+                GenericSample::modify_engine_init_info(
+                    &mut sample::EngineCreateInfo::EngineVkCreateInfo(&mut engine_vk_create_info),
+                );
+
+                engine_factory
+                    .create_device_and_contexts(&engine_vk_create_info)
+                    .unwrap()
+            }
+            #[cfg(feature = "opengl")]
+            EngineFactory::OpenGL(_engine_factory) => {
+                // The device, and contexts are created with the swapchain in the same function later
+                unreachable!();
+            }
+            #[cfg(feature = "d3d11")]
+            EngineFactory::D3D11(engine_factory) => {
+                let mut engine_d3d11_create_info =
+                    EngineD3D11CreateInfo::new(D3D11ValidationFlags::None, engine_create_info);
+
+                GenericSample::modify_engine_init_info(
+                    &mut sample::EngineCreateInfo::EngineD3D11CreateInfo(
+                        &mut engine_d3d11_create_info,
+                    ),
+                );
+
+                engine_factory
+                    .create_device_and_contexts(&engine_d3d11_create_info)
+                    .unwrap()
+            }
+            #[cfg(feature = "d3d12")]
+            EngineFactory::D3D12(engine_factory) => {
+                let mut engine_d3d12_create_info = EngineD3D12CreateInfo::new(engine_create_info);
+
+                GenericSample::modify_engine_init_info(
+                    &mut sample::EngineCreateInfo::EngineD3D12CreateInfo(
+                        &mut engine_d3d12_create_info,
+                    ),
+                );
+
+                engine_factory
+                    .create_device_and_contexts(&engine_d3d12_create_info)
+                    .unwrap()
+            }
+        }
+    }
+
+    fn create_swap_chains(
+        app_settings: &SampleAppSettings,
+        engine_factory: &EngineFactory,
+        device: &RenderDevice,
+        swap_chain_ci: &SwapChainCreateInfo,
+        immediate_context: &ImmediateDeviceContext,
+    ) -> VecDeque<SampleWindow<W>> {
+        let window = W::create(app_settings.width, app_settings.height);
+
+        let imgui_renderer = ImguiRenderer::new(
+            &ImguiRendererCreateInfo::builder()
+                .device(device)
+                .back_buffer_format(swap_chain_ci.color_buffer_format())
+                .depth_buffer_format(swap_chain_ci.depth_buffer_format())
+                .initial_width(app_settings.width as f32)
+                .initial_height(app_settings.height as f32)
+                .build(),
+        );
+
+        match &engine_factory {
+            #[cfg(feature = "vulkan")]
+            EngineFactory::Vulkan(engine_factory) => {
+                let swap_chain = engine_factory
+                    .create_swap_chain(device, immediate_context, swap_chain_ci, &window.native())
+                    .unwrap();
+
+                VecDeque::from([SampleWindow {
+                    swap_chain,
+                    window,
+                    imgui_renderer,
+                }])
+            }
+            #[cfg(feature = "opengl")]
+            EngineFactory::OpenGL(_engine_factory) => {
+                unreachable!()
+            }
+            #[cfg(feature = "d3d11")]
+            EngineFactory::D3D11(engine_factory) => {
+                let swap_chain = engine_factory
+                    .create_swap_chain(
+                        device,
+                        immediate_context,
+                        swap_chain_ci,
+                        &FullScreenModeDesc::default(),
+                        &window.native(),
+                    )
+                    .unwrap();
+
+                VecDeque::from([SampleWindow {
+                    swap_chain,
+                    window,
+                    imgui_renderer,
+                }])
+            }
+            #[cfg(feature = "d3d12")]
+            EngineFactory::D3D12(engine_factory) => {
+                let swap_chain = engine_factory
+                    .create_swap_chain(
+                        device,
+                        immediate_context,
+                        swap_chain_ci,
+                        &FullScreenModeDesc::default(),
+                        &window.native(),
+                    )
+                    .unwrap();
+
+                VecDeque::from([SampleWindow {
+                    swap_chain,
+                    window,
+                    imgui_renderer,
+                }])
+            }
+        }
+    }
+
+    #[allow(clippy::type_complexity)]
+    fn create_device_and_contexts_and_swap_chains(
+        app_settings: &SampleAppSettings,
+        engine_factory: &EngineFactory,
+        swap_chain_ci: &SwapChainCreateInfo,
+        engine_create_info: EngineCreateInfo,
+    ) -> (
+        Boxed<RenderDevice>,
+        Vec<Boxed<ImmediateDeviceContext>>,
+        Vec<Boxed<DeferredDeviceContext>>,
+        VecDeque<SampleWindow<W>>,
+    ) {
+        match &engine_factory {
+            #[cfg(feature = "opengl")]
+            EngineFactory::OpenGL(engine_factory) => {
+                let window = W::create(app_settings.width, app_settings.height);
+
+                if engine_create_info.num_deferred_contexts != 0 {
+                    panic!("Deferred contexts are not supported in OpenGL mode");
+                }
+
+                let mut engine_gl_create_info =
+                    EngineGLCreateInfo::new(window.native(), engine_create_info);
+
+                GenericSample::modify_engine_init_info(
+                    &mut sample::EngineCreateInfo::EngineGLCreateInfo(&mut engine_gl_create_info),
+                );
+
+                let (device, immediate_context, swap_chain) = engine_factory
+                    .create_device_and_swap_chain_gl(&engine_gl_create_info, swap_chain_ci)
+                    .unwrap();
+
+                let imgui_renderer = ImguiRenderer::new(
+                    &ImguiRendererCreateInfo::builder()
+                        .device(&device)
+                        .back_buffer_format(swap_chain_ci.color_buffer_format())
+                        .depth_buffer_format(swap_chain_ci.depth_buffer_format())
+                        .initial_width(app_settings.width as f32)
+                        .initial_height(app_settings.height as f32)
+                        .build(),
+                );
+
+                (
+                    device,
+                    vec![immediate_context],
+                    Vec::new(),
+                    VecDeque::from([SampleWindow {
+                        swap_chain,
+                        window,
+                        imgui_renderer,
+                    }]),
+                )
+            }
+            #[cfg(any(feature = "vulkan", feature = "d3d11", feature = "d3d12"))]
+            _ => {
+                let (device, immediate_contexts, defered_contexts) =
+                    Self::create_device_and_contexts(
+                        app_settings,
+                        engine_factory,
+                        engine_create_info,
+                    );
+                let sample_windows = Self::create_swap_chains(
+                    app_settings,
+                    engine_factory,
+                    &device,
+                    swap_chain_ci,
+                    immediate_contexts.first().unwrap(),
+                );
+                (device, immediate_contexts, defered_contexts, sample_windows)
+            }
+        }
+    }
+
+    #[allow(unused_variables)]
+    fn display_modes(
+        engine_factory: &EngineFactory,
+        app_settings: &SampleAppSettings,
+        engine_create_info: &EngineCreateInfo,
+    ) -> Vec<DisplayModeAttribs> {
+        match &engine_factory {
+            #[cfg(feature = "vulkan")]
+            EngineFactory::Vulkan(_engine_factory) => Vec::new(),
+            #[cfg(feature = "opengl")]
+            EngineFactory::OpenGL(_engine_factory) => Vec::new(),
+            #[cfg(feature = "d3d11")]
+            EngineFactory::D3D11(engine_factory) => {
+                match (&app_settings.adapter_type, app_settings.adapter_index) {
+                    (AdapterType::Software, _) | (_, None) => Vec::new(),
+                    (_, Some(adapter_index)) => engine_factory.enumerate_display_modes(
+                        engine_create_info.graphics_api_version,
+                        adapter_index as u32,
+                        0,
+                        TextureFormat::RGBA8_UNORM_SRGB,
+                    ),
+                }
+            }
+            #[cfg(feature = "d3d12")]
+            EngineFactory::D3D12(engine_factory) => {
+                match (&app_settings.adapter_type, app_settings.adapter_index) {
+                    (AdapterType::Software, _) | (_, None) => Vec::new(),
+                    (_, Some(adapter_index)) => engine_factory.enumerate_display_modes(
+                        engine_create_info.graphics_api_version,
+                        adapter_index as u32,
+                        0,
+                        TextureFormat::RGBA8_UNORM_SRGB,
+                    ),
+                }
+            }
+        }
     }
 }
 
-impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
+impl<GenericSample: SampleBase, W: Window> App for SampleApp<GenericSample, W> {
     type AppSettings = SampleAppSettings;
 
-    fn parse_settings_from_cli() -> SampleAppSettings {
-        parse_sample_app_settings()
-    }
-
-    fn new(
-        app_settings: SampleAppSettings,
-        mut engine_create_info: EngineCreateInfo,
-        window: NativeWindow,
-    ) -> Self {
+    fn new(app_settings: SampleAppSettings, mut engine_create_info: EngineCreateInfo) -> Self {
         let swap_chain_ci = SwapChainCreateInfo::builder()
-            .width(app_settings.width as u32)
-            .height(app_settings.height as u32)
+            .width(app_settings.width)
+            .height(app_settings.height)
             .build();
 
         fn find_adapter(
@@ -294,9 +541,9 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             #[cfg(feature = "vulkan")]
             RenderDeviceType::VULKAN => EngineFactory::Vulkan(get_engine_factory_vk()),
             #[cfg(feature = "metal")]
-            RenderDeviceType::METAL => panic!(),
+            RenderDeviceType::METAL => todo!(),
             #[cfg(feature = "webgpu")]
-            RenderDeviceType::WEBGPU => panic!(),
+            RenderDeviceType::WEBGPU => todo!(),
         };
 
         #[cfg(feature = "d3d11")]
@@ -330,191 +577,23 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             .features
             .set_transfer_queue_timestamp_queries(DeviceFeatureState::Disabled);
 
-        let (device, immediate_contexts, deferred_contexts, swap_chain, display_modes) =
-            match &engine_factory {
-                #[cfg(feature = "vulkan")]
-                EngineFactory::Vulkan(engine_factory) => {
-                    let mut engine_vk_create_info = EngineVkCreateInfo::new(engine_create_info);
+        let display_modes =
+            Self::display_modes(&engine_factory, &app_settings, &engine_create_info);
 
-                    if app_settings.vk_compatibility {
-                        engine_vk_create_info.features_vk = DeviceFeaturesVk::new(
-                            DeviceFeatureState::Disabled,
-                            DeviceFeatureState::Disabled,
-                        );
-                    };
-
-                    GenericSample::modify_engine_init_info(
-                        &mut sample::EngineCreateInfo::EngineVkCreateInfo(
-                            &mut engine_vk_create_info,
-                        ),
-                    );
-
-                    let (device, immediate_contexts, deferred_contexts) = engine_factory
-                        .create_device_and_contexts(&engine_vk_create_info)
-                        .unwrap();
-
-                    let swap_chain = engine_factory
-                        .create_swap_chain(
-                            &device,
-                            immediate_contexts.first().unwrap(),
-                            &swap_chain_ci,
-                            &window,
-                        )
-                        .unwrap();
-
-                    (
-                        device,
-                        immediate_contexts,
-                        deferred_contexts,
-                        swap_chain,
-                        Vec::new(),
-                    )
-                }
-                #[cfg(feature = "opengl")]
-                EngineFactory::OpenGL(engine_factory) => {
-                    if app_settings.non_separable_progs {
-                        engine_create_info
-                            .features
-                            .set_separable_programs(DeviceFeatureState::Disabled);
-                    }
-
-                    if engine_create_info.num_deferred_contexts != 0 {
-                        panic!("Deferred contexts are not supported in OpenGL mode");
-                    }
-
-                    let mut engine_gl_create_info =
-                        EngineGLCreateInfo::new(window, engine_create_info);
-
-                    GenericSample::modify_engine_init_info(
-                        &mut sample::EngineCreateInfo::EngineGLCreateInfo(
-                            &mut engine_gl_create_info,
-                        ),
-                    );
-
-                    let (device, immediate_context, swap_chain) = engine_factory
-                        .create_device_and_swap_chain_gl(&engine_gl_create_info, &swap_chain_ci)
-                        .unwrap();
-
-                    (
-                        device,
-                        vec![immediate_context],
-                        Vec::new(),
-                        swap_chain,
-                        Vec::new(),
-                    )
-                }
-                #[cfg(feature = "d3d11")]
-                EngineFactory::D3D11(engine_factory) => {
-                    let graphics_api_version = engine_create_info.graphics_api_version;
-
-                    let mut engine_d3d11_create_info =
-                        EngineD3D11CreateInfo::new(D3D11ValidationFlags::None, engine_create_info);
-
-                    GenericSample::modify_engine_init_info(
-                        &mut sample::EngineCreateInfo::EngineD3D11CreateInfo(
-                            &mut engine_d3d11_create_info,
-                        ),
-                    );
-
-                    let (device, immediate_contexts, deferred_contexts) = engine_factory
-                        .create_device_and_contexts(&engine_d3d11_create_info)
-                        .unwrap();
-
-                    let display_modes =
-                        match (&app_settings.adapter_type, app_settings.adapter_index) {
-                            (AdapterType::Software, _) | (_, None) => Vec::new(),
-                            (_, Some(adapter_index)) => engine_factory.enumerate_display_modes(
-                                graphics_api_version,
-                                adapter_index as u32,
-                                0,
-                                TextureFormat::RGBA8_UNORM_SRGB,
-                            ),
-                        };
-
-                    let swap_chain = engine_factory
-                        .create_swap_chain(
-                            &device,
-                            immediate_contexts.first().unwrap(),
-                            &swap_chain_ci,
-                            &FullScreenModeDesc::default(),
-                            &window,
-                        )
-                        .unwrap();
-
-                    (
-                        device,
-                        immediate_contexts,
-                        deferred_contexts,
-                        swap_chain,
-                        display_modes,
-                    )
-                }
-                #[cfg(feature = "d3d12")]
-                EngineFactory::D3D12(engine_factory) => {
-                    let graphics_api_version = engine_create_info.graphics_api_version;
-
-                    let mut engine_d3d12_create_info =
-                        EngineD3D12CreateInfo::new(engine_create_info);
-
-                    GenericSample::modify_engine_init_info(
-                        &mut sample::EngineCreateInfo::EngineD3D12CreateInfo(
-                            &mut engine_d3d12_create_info,
-                        ),
-                    );
-
-                    let (device, immediate_contexts, deferred_contexts) = engine_factory
-                        .create_device_and_contexts(&engine_d3d12_create_info)
-                        .unwrap();
-
-                    let display_modes =
-                        match (&app_settings.adapter_type, app_settings.adapter_index) {
-                            (AdapterType::Software, _) | (_, None) => Vec::new(),
-                            (_, Some(adapter_index)) => engine_factory.enumerate_display_modes(
-                                graphics_api_version,
-                                adapter_index as u32,
-                                0,
-                                TextureFormat::RGBA8_UNORM_SRGB,
-                            ),
-                        };
-
-                    let swap_chain = engine_factory
-                        .create_swap_chain(
-                            &device,
-                            immediate_contexts.first().unwrap(),
-                            &swap_chain_ci,
-                            &FullScreenModeDesc::default(),
-                            &window,
-                        )
-                        .unwrap();
-
-                    (
-                        device,
-                        immediate_contexts,
-                        deferred_contexts,
-                        swap_chain,
-                        display_modes,
-                    )
-                }
-            };
+        let (device, immediate_contexts, deferred_contexts, windows) =
+            Self::create_device_and_contexts_and_swap_chains(
+                &app_settings,
+                &engine_factory,
+                &swap_chain_ci,
+                engine_create_info,
+            );
 
         let sample = GenericSample::new(
             &engine_factory,
             device,
             immediate_contexts,
             deferred_contexts,
-            &swap_chain,
-        );
-
-        let swap_chain_desc = swap_chain.desc();
-
-        let imgui_renderer = ImguiRenderer::new(
-            &ImguiRendererCreateInfo::builder()
-                .device(sample.get_render_device())
-                .back_buffer_format(swap_chain_desc.color_buffer_format())
-                .depth_buffer_format(swap_chain_desc.depth_buffer_format())
-                .initial_width(app_settings.width as f32)
-                .initial_height(app_settings.height as f32)
-                .build(),
+            &swap_chain_ci,
         );
 
         let display_modes_strings = display_modes
@@ -536,17 +615,13 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             })
             .collect();
 
-        SampleApp::<GenericSample> {
-            swap_chain,
-
+        SampleApp::<GenericSample, W> {
             _golden_image_mode: GoldenImageMode::None,
             _golden_pixel_tolerance: 0,
 
             sample,
 
             app_settings,
-
-            imgui_renderer,
 
             graphics_adapter: adapter,
 
@@ -555,14 +630,12 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             selected_display_mode: 0,
 
             fullscreen_mode: false,
+
+            windows,
         }
     }
 
-    fn run(
-        mut self,
-        mut event_handler: impl EventHandler,
-        update_window_title_cb: impl Fn(&str),
-    ) -> Result<(), std::io::Error> {
+    fn run(mut self) -> Result<(), std::io::Error> {
         let start_time = std::time::Instant::now();
 
         let mut last_time = start_time;
@@ -574,27 +647,13 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
             + format!("{API_VERSION}").as_str()
             + ")";
 
-        update_window_title_cb(app_title.as_str());
+        self.windows
+            .iter()
+            .for_each(|sample_window| sample_window.window.set_title(app_title.as_str()));
 
         let mut filtered_frame_time = 0.0;
 
-        'main: loop {
-            while let Some(event) = event_handler.poll_event() {
-                let event = event_handler.handle_event(&event);
-                match event {
-                    Event::Quit => break 'main,
-                    Event::Continue => {}
-                    Event::Resize { width, height } => {
-                        self.window_resize(width as u32, height as u32)
-                    }
-                    _ => {}
-                }
-
-                let event = imgui_handle_event(self.imgui_renderer.io_mut(), event);
-
-                self.sample.handle_event(event);
-            }
-
+        loop {
             let elapsed_time = {
                 let now = std::time::Instant::now();
 
@@ -608,34 +667,101 @@ impl<GenericSample: SampleBase> App for SampleApp<GenericSample> {
                 elapsed_time
             };
 
-            self.render();
+            let mut next_windows: VecDeque<SampleWindow<W>> = self.windows.drain(..).collect();
 
-            if self.app_settings.show_ui {
-                self.update_ui();
-                self.imgui_renderer.render(
-                    self.sample.get_immediate_context(),
-                    self.sample.get_render_device(),
-                );
+            'window: for mut sample_window in next_windows.drain(..) {
+                while let Some(event) = sample_window.window.poll_event() {
+                    let event = sample_window.window.handle_event(&event);
+                    match event {
+                        Event::Quit => {
+                            drop(sample_window);
+                            continue 'window;
+                        }
+                        Event::Continue => {}
+                        Event::Resize { width, height } => self.window_resize(
+                            width as u32,
+                            height as u32,
+                            &sample_window.swap_chain,
+                        ),
+                        _ => {}
+                    }
+
+                    let event = imgui_handle_event(sample_window.imgui_renderer.io_mut(), event);
+
+                    self.sample.handle_event(event);
+                }
+
+                self.render(&sample_window.swap_chain);
+
+                if self.app_settings.show_ui {
+                    self.update_ui(&mut sample_window);
+                    sample_window.imgui_renderer.render(
+                        self.sample.get_immediate_context(),
+                        self.sample.get_render_device(),
+                    );
+                }
+
+                self.present(&sample_window.swap_chain);
+
+                {
+                    let filter_scale = 0.2;
+                    filtered_frame_time =
+                        filtered_frame_time * (1.0 - filter_scale) + filter_scale * elapsed_time;
+
+                    sample_window.window.set_title(
+                        format!(
+                            "{app_title} - {:.1} ms ({:.1} fps)",
+                            filtered_frame_time * 1000.0,
+                            1.0 / filtered_frame_time
+                        )
+                        .as_str(),
+                    );
+                }
+
+                self.windows.push_back(sample_window);
             }
 
-            self.present();
-
-            {
-                let filter_scale = 0.2;
-                filtered_frame_time =
-                    filtered_frame_time * (1.0 - filter_scale) + filter_scale * elapsed_time;
-
-                update_window_title_cb(
-                    format!(
-                        "{app_title} - {:.1} ms ({:.1} fps)",
-                        filtered_frame_time * 1000.0,
-                        1.0 / filtered_frame_time
-                    )
-                    .as_str(),
-                );
+            if self.windows.is_empty() {
+                break;
             }
         }
 
         Ok(())
+    }
+}
+
+pub fn main<Sample: SampleBase>() -> Result<(), std::io::Error> {
+    let settings = parse_sample_app_settings();
+
+    let engine_ci = EngineCreateInfo::default();
+
+    #[cfg(target_os = "windows")]
+    {
+        use diligent_tools::native_app::windows::Win32Window;
+        SampleApp::<Sample, Win32Window>::new(settings, engine_ci).run()
+    }
+    #[cfg(target_os = "linux")]
+    {
+        let device_type = settings.device_type;
+        match device_type {
+            #[cfg(feature = "vulkan")]
+            RenderDeviceType::VULKAN => {
+                use diligent_tools::native_app::linux::xcb::XCBWindow;
+
+                SampleApp::<Sample, XCBWindow>::new(settings, engine_ci).run()
+            }
+
+            #[cfg(feature = "opengl")]
+            RenderDeviceType::GL => {
+                use diligent_tools::native_app::linux::x11::X11Window;
+
+                SampleApp::<Sample, X11Window>::new(settings, engine_ci).run()
+            }
+
+            #[allow(unreachable_patterns)]
+            _ => Err(std::io::Error::other(format!(
+                "Render device type {device_type} is not available on linux",
+            ))),
+        }
     }
 }

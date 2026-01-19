@@ -1,7 +1,9 @@
 use diligent::*;
 
-use diligent_samples::sample_base::{sample::SampleBase, sample_app::SampleApp};
-use diligent_tools::native_app;
+use diligent_samples::sample_base::{
+    sample::SampleBase,
+    sample_app::{self},
+};
 
 struct HelloTriangle {
     device: Boxed<RenderDevice>,
@@ -24,10 +26,8 @@ impl SampleBase for HelloTriangle {
         device: Boxed<RenderDevice>,
         immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
         _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
-        swap_chain: &SwapChain,
+        swap_chain_desc: &SwapChainDesc,
     ) -> Self {
-        let swap_chain_desc = swap_chain.desc();
-
         let shader_create_info = ShaderCreateInfo::builder()
             // Tell the system that the shader source code is in HLSL.
             // For OpenGL, the engine will convert this into GLSL under the hood.
@@ -182,5 +182,5 @@ void main(in PSInput PSIn, out PSOutput PSOut)
 }
 
 fn main() {
-    native_app::main::<SampleApp<HelloTriangle>>().unwrap()
+    sample_app::main::<HelloTriangle>().unwrap()
 }

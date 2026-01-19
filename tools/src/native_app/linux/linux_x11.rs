@@ -1,19 +1,29 @@
-use std::{ffi::CString, io::Error};
+use std::ffi::CString;
 
 use crate::native_app::{
-    app::App,
-    app_settings::AppSettings,
-    events::{Event, EventHandler, Key, MouseButton},
+    events::{Event, Key, MouseButton},
+    Window,
 };
 
-use diligent::{platforms::native_window::NativeWindow, EngineCreateInfo};
-use x11::{keysym::*, xlib::*};
+use diligent::platforms::native_window::NativeWindow;
+use x11::{glx::GLXFBConfig, keysym::*, xlib::*};
 
-struct X11EventHandler {
-    display: *mut x11::xlib::Display,
+pub struct X11Window {
+    display: *mut Display,
+    _fbc: FrameBufferConfig,
+    win: u64,
 }
 
-impl EventHandler for X11EventHandler {
+impl Window for X11Window {
+    fn native(&self) -> NativeWindow {
+        NativeWindow::new(self.win as u32, self.display as _, std::ptr::null_mut())
+    }
+    fn set_title(&self, title: &str) {
+        unsafe {
+            let cstring = CString::new(title).unwrap();
+            x11::xlib::XStoreName(self.display, self.win, cstring.as_ptr());
+        }
+    }
     type EventType = x11::xlib::XEvent;
 
     fn poll_event(&self) -> Option<x11::xlib::XEvent> {
@@ -292,17 +302,149 @@ impl EventHandler for X11EventHandler {
             _ => Event::Continue,
         }
     }
+
+    fn create(width: u32, height: u32) -> Self {
+        let display = unsafe { x11::xlib::XOpenDisplay(std::ptr::null()) };
+
+        let fbc = FrameBufferConfig::new(display);
+        let vi = unsafe { x11::glx::glXGetVisualFromFBConfig(display, *fbc.ptr) };
+        let mut swa = x11::xlib::XSetWindowAttributes {
+            colormap: unsafe {
+                x11::xlib::XCreateColormap(
+                    display,
+                    x11::xlib::XRootWindow(display, (*vi).screen),
+                    (*vi).visual,
+                    x11::xlib::AllocNone,
+                )
+            },
+            border_pixel: 0,
+            event_mask: x11::xlib::StructureNotifyMask
+                | x11::xlib::ExposureMask
+                | x11::xlib::KeyPressMask
+                | x11::xlib::KeyReleaseMask
+                | x11::xlib::ButtonPressMask
+                | x11::xlib::ButtonReleaseMask
+                | x11::xlib::PointerMotionMask,
+
+            background_pixel: 0,
+            background_pixmap: 0,
+            backing_pixel: 0,
+            backing_planes: 0,
+            backing_store: 0,
+            bit_gravity: 0,
+            border_pixmap: 0,
+            cursor: 0,
+            do_not_propagate_mask: 0,
+            override_redirect: 0,
+            save_under: 0,
+            win_gravity: 0,
+        };
+
+        let win = unsafe {
+            x11::xlib::XCreateWindow(
+                display,
+                x11::xlib::XRootWindow(display, (*vi).screen),
+                0,
+                0,
+                width,
+                height,
+                0,
+                (*vi).depth,
+                x11::xlib::InputOutput as u32,
+                (*vi).visual,
+                x11::xlib::CWBorderPixel | x11::xlib::CWColormap | x11::xlib::CWEventMask,
+                &mut swa,
+            )
+        };
+
+        if win == 0 {
+            panic!("Failed to create window.");
+        }
+
+        unsafe {
+            let size_hints = x11::xlib::XAllocSizeHints();
+            (*size_hints).flags = x11::xlib::PMinSize;
+            (*size_hints).min_width = 320;
+            (*size_hints).min_height = 240;
+            x11::xlib::XSetWMNormalHints(display, win, size_hints);
+            x11::xlib::XFree(size_hints as *mut std::ffi::c_void);
+        }
+
+        unsafe { x11::xlib::XMapWindow(display, win) };
+
+        let gl_x_create_context_attribs_arb = {
+            // Create an oldstyle context first, to get the correct function pointer for glXCreateContextAttribsARB
+            let ctx_old =
+                unsafe { x11::glx::glXCreateContext(display, vi, std::ptr::null_mut(), 1) };
+            let gl_x_create_context_attribs_arb = unsafe {
+                x11::glx::glXGetProcAddress(c"glXCreateContextAttribsARB".as_ptr() as *const u8)
+            };
+            unsafe {
+                x11::glx::glXMakeCurrent(display, 0, std::ptr::null_mut());
+                x11::glx::glXDestroyContext(display, ctx_old);
+            }
+
+            gl_x_create_context_attribs_arb
+        };
+
+        if gl_x_create_context_attribs_arb.is_none() {
+            panic!("glXCreateContextAttribsARB entry point not found. Aborting.",);
+        }
+
+        let gl_x_create_context_attribs_arb = unsafe {
+            std::mem::transmute::<unsafe extern "C" fn(), fn(_, _, _, _, _) -> _>(
+                gl_x_create_context_attribs_arb.unwrap(),
+            )
+        };
+
+        let mut flags = x11::glx::arb::GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB;
+        #[cfg(debug_assertions)]
+        {
+            flags |= x11::glx::arb::GLX_CONTEXT_DEBUG_BIT_ARB;
+        }
+
+        let major_version = 4;
+        let minor_version = 3;
+
+        let context_attribs = [
+            x11::glx::arb::GLX_CONTEXT_MAJOR_VERSION_ARB,
+            major_version,
+            x11::glx::arb::GLX_CONTEXT_MINOR_VERSION_ARB,
+            minor_version,
+            x11::glx::arb::GLX_CONTEXT_FLAGS_ARB,
+            flags,
+            0, //
+        ];
+
+        let ctx: x11::glx::GLXContext = gl_x_create_context_attribs_arb(
+            display,
+            unsafe { *fbc.ptr },
+            std::ptr::null::<x11::glx::GLXContext>(),
+            1,
+            context_attribs.as_ptr(),
+        );
+        if ctx.is_null() {
+            panic!("Failed to create GL context.");
+        }
+
+        unsafe {
+            x11::glx::glXMakeCurrent(display, win, ctx);
+        }
+
+        X11Window {
+            display,
+            _fbc: fbc,
+            win,
+        }
+    }
 }
 
-pub(super) fn main<Application>(settings: Application::AppSettings) -> Result<(), std::io::Error>
-where
-    Application: App,
-{
-    let (width, height) = settings.get_window_dimensions();
+struct FrameBufferConfig {
+    ptr: *mut GLXFBConfig,
+}
 
-    let (win, display) = unsafe {
-        let display = x11::xlib::XOpenDisplay(std::ptr::null());
-
+impl FrameBufferConfig {
+    fn new(display: *mut Display) -> Self {
         #[rustfmt::skip]
         let visual_attribs =
         [
@@ -333,154 +475,37 @@ where
 
         let mut fbcount = 0;
 
-        let fbc = x11::glx::glXChooseFBConfig(
-            display,
-            x11::xlib::XDefaultScreen(display),
-            visual_attribs.as_ptr(),
-            &mut fbcount,
-        );
-
-        if fbc.is_null() {
-            return Err(Error::other("Failed to retrieve a framebuffer config"));
-        }
-
-        let vi = x11::glx::glXGetVisualFromFBConfig(display, *fbc);
-
-        let mut swa = x11::xlib::XSetWindowAttributes {
-            colormap: x11::xlib::XCreateColormap(
+        let fb_ptr = unsafe {
+            x11::glx::glXChooseFBConfig(
                 display,
-                x11::xlib::XRootWindow(display, (*vi).screen),
-                (*vi).visual,
-                x11::xlib::AllocNone,
-            ),
-            border_pixel: 0,
-            event_mask: x11::xlib::StructureNotifyMask
-                | x11::xlib::ExposureMask
-                | x11::xlib::KeyPressMask
-                | x11::xlib::KeyReleaseMask
-                | x11::xlib::ButtonPressMask
-                | x11::xlib::ButtonReleaseMask
-                | x11::xlib::PointerMotionMask,
-
-            background_pixel: 0,
-            background_pixmap: 0,
-            backing_pixel: 0,
-            backing_planes: 0,
-            backing_store: 0,
-            bit_gravity: 0,
-            border_pixmap: 0,
-            cursor: 0,
-            do_not_propagate_mask: 0,
-            override_redirect: 0,
-            save_under: 0,
-            win_gravity: 0,
+                x11::xlib::XDefaultScreen(display),
+                visual_attribs.as_ptr(),
+                &mut fbcount,
+            )
         };
 
-        let win = x11::xlib::XCreateWindow(
-            display,
-            x11::xlib::XRootWindow(display, (*vi).screen),
-            0,
-            0,
-            width as u32,
-            height as u32,
-            0,
-            (*vi).depth,
-            x11::xlib::InputOutput as u32,
-            (*vi).visual,
-            x11::xlib::CWBorderPixel | x11::xlib::CWColormap | x11::xlib::CWEventMask,
-            &mut swa,
-        );
-
-        if win == 0 {
-            return Err(Error::other("Failed to create window."));
+        if fb_ptr.is_null() {
+            panic!("Failed to retrieve a framebuffer config");
         }
 
-        {
-            let size_hints = x11::xlib::XAllocSizeHints();
-            (*size_hints).flags = x11::xlib::PMinSize;
-            (*size_hints).min_width = 320;
-            (*size_hints).min_height = 240;
-            x11::xlib::XSetWMNormalHints(display, win, size_hints);
-            x11::xlib::XFree(size_hints as *mut std::ffi::c_void);
-        }
-
-        x11::xlib::XMapWindow(display, win);
-
-        let gl_x_create_context_attribs_arb = {
-            // Create an oldstyle context first, to get the correct function pointer for glXCreateContextAttribsARB
-            let ctx_old = x11::glx::glXCreateContext(display, vi, std::ptr::null_mut(), 1);
-            let gl_x_create_context_attribs_arb =
-                x11::glx::glXGetProcAddress(c"glXCreateContextAttribsARB".as_ptr() as *const u8);
-            x11::glx::glXMakeCurrent(display, 0, std::ptr::null_mut());
-            x11::glx::glXDestroyContext(display, ctx_old);
-
-            gl_x_create_context_attribs_arb
-        };
-
-        if gl_x_create_context_attribs_arb.is_none() {
-            return Err(Error::other(
-                "glXCreateContextAttribsARB entry point not found. Aborting.",
-            ));
-        }
-
-        let gl_x_create_context_attribs_arb = std::mem::transmute::<_, fn(_, _, _, _, _) -> _>(
-            gl_x_create_context_attribs_arb.unwrap(),
-        );
-
-        let mut flags = x11::glx::arb::GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB;
-        #[cfg(debug_assertions)]
-        {
-            flags |= x11::glx::arb::GLX_CONTEXT_DEBUG_BIT_ARB;
-        }
-
-        let major_version = 4;
-        let minor_version = 3;
-
-        let context_attribs = [
-            x11::glx::arb::GLX_CONTEXT_MAJOR_VERSION_ARB,
-            major_version,
-            x11::glx::arb::GLX_CONTEXT_MINOR_VERSION_ARB,
-            minor_version,
-            x11::glx::arb::GLX_CONTEXT_FLAGS_ARB,
-            flags,
-            0, //
-        ];
-
-        let ctx: x11::glx::GLXContext = gl_x_create_context_attribs_arb(
-            display,
-            *fbc,
-            std::ptr::null::<x11::glx::GLXContext>(),
-            1,
-            context_attribs.as_ptr(),
-        );
-        if ctx.is_null() {
-            return Err(Error::other("Failed to create GL context."));
-        }
-
-        x11::xlib::XFree(fbc as *mut std::ffi::c_void);
-
-        x11::glx::glXMakeCurrent(display, win, ctx);
-
-        (win, display)
-    };
-
-    let native_window = NativeWindow::new(win as u32, display as _, std::ptr::null_mut());
-
-    let result = Application::new(settings, EngineCreateInfo::default(), native_window).run(
-        X11EventHandler { display },
-        |title| unsafe {
-            let cstring = CString::new(title).unwrap();
-            x11::xlib::XStoreName(display, win, cstring.as_ptr());
-        },
-    );
-
-    unsafe {
-        let ctx = x11::glx::glXGetCurrentContext();
-        x11::glx::glXMakeCurrent(display, 0, std::ptr::null_mut());
-        x11::glx::glXDestroyContext(display, ctx);
-        x11::xlib::XDestroyWindow(display, win);
-        x11::xlib::XCloseDisplay(display);
+        FrameBufferConfig { ptr: fb_ptr }
     }
+}
 
-    result
+impl Drop for FrameBufferConfig {
+    fn drop(&mut self) {
+        unsafe { x11::xlib::XFree(self.ptr as *mut std::ffi::c_void) };
+    }
+}
+
+impl Drop for X11Window {
+    fn drop(&mut self) {
+        unsafe {
+            let ctx = x11::glx::glXGetCurrentContext();
+            x11::glx::glXMakeCurrent(self.display, 0, std::ptr::null_mut());
+            x11::glx::glXDestroyContext(self.display, ctx);
+            x11::xlib::XDestroyWindow(self.display, self.win);
+            x11::xlib::XCloseDisplay(self.display);
+        }
+    }
 }

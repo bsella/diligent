@@ -10,7 +10,9 @@ use diligent::{
     *,
 };
 use diligent_samples::sample_base::{
-    first_person_camera::FirstPersonCamera, sample::SampleBase, sample_app::SampleApp,
+    first_person_camera::FirstPersonCamera,
+    sample::SampleBase,
+    sample_app::{self},
 };
 use diligent_tools::native_app;
 
@@ -989,7 +991,7 @@ impl SampleBase for RayTracing {
         device: Boxed<RenderDevice>,
         immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
         _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
-        swap_chain: &SwapChain,
+        swap_chain_desc: &SwapChainDesc,
     ) -> Self {
         if !device
             .get_adapter_info()
@@ -1009,8 +1011,6 @@ impl SampleBase for RayTracing {
             .build();
 
         let constant_buffer = device.create_buffer(&buffer_desc).unwrap();
-
-        let swap_chain_desc = swap_chain.desc();
 
         let image_blit_pso = create_graphics_pso(engine_factory, &device, swap_chain_desc);
         let image_blit_srb = image_blit_pso.create_shader_resource_binding(true).unwrap();
@@ -1125,8 +1125,6 @@ impl SampleBase for RayTracing {
         camera.set_speed_up_scales(5.0, 10.0);
 
         let inv_view_proj = camera.projection_matrix().inverse();
-
-        let swap_chain_desc = swap_chain.desc();
 
         let texture_desc = TextureDesc::builder()
             .name(c"Color buffer")
@@ -1545,5 +1543,5 @@ impl SampleBase for RayTracing {
 }
 
 fn main() {
-    native_app::main::<SampleApp<RayTracing>>().unwrap()
+    sample_app::main::<RayTracing>().unwrap()
 }

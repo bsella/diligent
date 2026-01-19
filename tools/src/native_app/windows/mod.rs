@@ -1,12 +1,10 @@
 use std::ops::BitAnd;
 
-use super::{
-    app::App,
-    app_settings::AppSettings,
-    events::{Event, EventHandler, Key},
-};
+use crate::native_app::Window;
 
-use diligent::{platforms::native_window::NativeWindow, EngineCreateInfo};
+use super::events::{Event, Key};
+
+use diligent::platforms::native_window::NativeWindow;
 
 use windows::{
     core::*,
@@ -16,13 +14,111 @@ use windows::{
     },
 };
 
-struct Win32EventHandler {
-    _hwnd: HWND,
-    resize_param: LPARAM,
-    resized: bool,
+extern "system" fn handle_message(
+    hwnd: HWND,
+    message: u32,
+    wparam: WPARAM,
+    lparam: LPARAM,
+) -> LRESULT {
+    match message {
+        WM_PAINT => {
+            unsafe {
+                let _ = ValidateRect(Some(hwnd), None);
+            }
+            LRESULT(0)
+        }
+        WM_SIZE => {
+            let event_handler_ptr =
+                unsafe { GetWindowLongPtrA(hwnd, GWL_USERDATA) } as *mut Win32Window;
+
+            if !event_handler_ptr.is_null() {
+                unsafe {
+                    (*event_handler_ptr).resized = true;
+                    (*event_handler_ptr).resize_param = lparam;
+                }
+            }
+
+            LRESULT(0)
+        }
+        WM_DESTROY => {
+            unsafe { PostQuitMessage(0) };
+            LRESULT(0)
+        }
+        _ => unsafe { DefWindowProcW(hwnd, message, wparam, lparam) },
+    }
 }
 
-impl EventHandler for Win32EventHandler {
+pub struct Win32Window {
+    instance: HINSTANCE,
+
+    window_class_name: PCWSTR,
+
+    resize_param: LPARAM,
+    resized: bool,
+
+    hwnd: HWND,
+}
+
+impl Window for Win32Window {
+    fn set_title(&self, title: &str) {
+        unsafe {
+            let _ = SetWindowTextW(self.hwnd, &HSTRING::from(title));
+        }
+    }
+    fn native(&self) -> NativeWindow {
+        NativeWindow::new(self.hwnd.0)
+    }
+
+    fn create(width: u32, height: u32) -> Self {
+        let instance = unsafe { GetModuleHandleW(None) }.unwrap();
+
+        debug_assert!(!instance.0.is_null());
+
+        let instance = HINSTANCE(instance.0);
+
+        let window_class_name = w!("DiligentWindow");
+
+        let window_class = WNDCLASSW {
+            hCursor: unsafe { LoadCursorW(None, IDC_ARROW) }.unwrap(),
+            hInstance: instance,
+            lpszClassName: window_class_name,
+
+            style: CS_HREDRAW | CS_VREDRAW,
+            lpfnWndProc: Some(handle_message),
+            ..Default::default()
+        };
+
+        let atom = unsafe { RegisterClassW(&window_class) };
+        debug_assert!(atom != 0);
+
+        let hwnd = unsafe {
+            CreateWindowExW(
+                WINDOW_EX_STYLE::default(),
+                window_class_name,
+                w!(""),
+                WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                CW_USEDEFAULT,
+                CW_USEDEFAULT,
+                width as i32,
+                height as i32,
+                None,
+                None,
+                Some(instance),
+                None,
+            )
+        }
+        .unwrap();
+        Win32Window {
+            instance,
+            window_class_name,
+
+            resize_param: LPARAM::default(),
+            resized: false,
+
+            hwnd,
+        }
+    }
+
     type EventType = MSG;
 
     fn poll_event(&self) -> Option<Self::EventType> {
@@ -316,99 +412,9 @@ impl EventHandler for Win32EventHandler {
     }
 }
 
-extern "system" fn handle_message(
-    hwnd: HWND,
-    message: u32,
-    wparam: WPARAM,
-    lparam: LPARAM,
-) -> LRESULT {
-    match message {
-        WM_PAINT => {
-            unsafe {
-                let _ = ValidateRect(Some(hwnd), None);
-            }
-            LRESULT(0)
-        }
-        WM_SIZE => {
-            let event_handler_ptr =
-                unsafe { GetWindowLongPtrA(hwnd, GWL_USERDATA) } as *mut Win32EventHandler;
-
-            if !event_handler_ptr.is_null() {
-                unsafe {
-                    (*event_handler_ptr).resized = true;
-                    (*event_handler_ptr).resize_param = lparam;
-                }
-            }
-
-            LRESULT(0)
-        }
-        WM_DESTROY => {
-            unsafe { PostQuitMessage(0) };
-            LRESULT(0)
-        }
-        _ => unsafe { DefWindowProcW(hwnd, message, wparam, lparam) },
+impl Drop for Win32Window {
+    fn drop(&mut self) {
+        let _ = unsafe { DestroyWindow(self.hwnd) };
+        let _ = unsafe { UnregisterClassW(self.window_class_name, Some(self.instance)) };
     }
-}
-
-pub fn main<Application>(
-    settings: Application::AppSettings,
-) -> std::result::Result<(), std::io::Error>
-where
-    Application: App,
-{
-    let instance = unsafe { GetModuleHandleW(None) }?;
-
-    debug_assert!(!instance.0.is_null());
-
-    let instance = HINSTANCE(instance.0);
-
-    let window_class = w!("DiligentWindow");
-
-    let wc = WNDCLASSW {
-        hCursor: unsafe { LoadCursorW(None, IDC_ARROW) }?,
-        hInstance: instance,
-        lpszClassName: window_class,
-
-        style: CS_HREDRAW | CS_VREDRAW,
-        lpfnWndProc: Some(handle_message),
-        ..Default::default()
-    };
-
-    let atom = unsafe { RegisterClassW(&wc) };
-    debug_assert!(atom != 0);
-
-    let (width, height) = settings.get_window_dimensions();
-
-    let hwnd = unsafe {
-        CreateWindowExW(
-            WINDOW_EX_STYLE::default(),
-            window_class,
-            w!(""),
-            WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            CW_USEDEFAULT,
-            CW_USEDEFAULT,
-            width as i32,
-            height as i32,
-            None,
-            None,
-            Some(instance),
-            None,
-        )
-    }?;
-
-    Application::new(
-        settings,
-        EngineCreateInfo::default(),
-        NativeWindow::new(hwnd.0),
-    )
-    .run(
-        Win32EventHandler {
-            _hwnd: hwnd,
-            resize_param: LPARAM::default(),
-            resized: false,
-        },
-        |title: &str| unsafe {
-            let _ = SetWindowTextW(hwnd, &HSTRING::from(title));
-        },
-    )
 }

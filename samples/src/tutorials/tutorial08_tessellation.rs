@@ -6,9 +6,8 @@ use diligent::{
 };
 use diligent_samples::sample_base::{
     sample::{get_adjusted_projection_matrix, get_surface_pretransform_matrix, SampleBase},
-    sample_app::SampleApp,
+    sample_app::{self},
 };
-use diligent_tools::native_app;
 
 struct Tessellation {
     device: Boxed<RenderDevice>,
@@ -69,14 +68,12 @@ impl SampleBase for Tessellation {
         device: Boxed<RenderDevice>,
         immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
         _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
-        swap_chain: &SwapChain,
+        swap_chain_desc: &SwapChainDesc,
     ) -> Self {
         let wireframe_supported = !matches!(
             device.get_device_info().features().geometry_shaders(),
             DeviceFeatureState::Disabled
         );
-
-        let swap_chain_desc = swap_chain.desc();
 
         // Cull back faces. For some reason, in OpenGL the order is reversed
         let cull = {
@@ -625,5 +622,5 @@ impl SampleBase for Tessellation {
 }
 
 fn main() {
-    native_app::main::<SampleApp<Tessellation>>().unwrap()
+    sample_app::main::<Tessellation>().unwrap()
 }

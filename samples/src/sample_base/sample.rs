@@ -121,7 +121,7 @@ pub trait SampleBase {
         render_device: Boxed<RenderDevice>,
         immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
         deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
-        swap_chain: &SwapChain,
+        swap_chain_desc: &SwapChainDesc,
     ) -> Self;
 
     fn get_render_device(&self) -> &RenderDevice;

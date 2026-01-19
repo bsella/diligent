@@ -2,8 +2,11 @@ use std::{ops::Div, path::Path};
 
 use diligent::{graphics_utilities::linear_to_srgba, *};
 
-use diligent_samples::sample_base::{sample::SampleBase, sample_app::SampleApp};
-use diligent_tools::native_app;
+use diligent_samples::sample_base::{
+    sample::SampleBase,
+    sample_app::{self},
+};
+
 use imgui::InputTextFlags;
 use rand::distr::uniform::{UniformFloat, UniformSampler};
 
@@ -466,10 +469,8 @@ impl SampleBase for ComputeShader {
         device: Boxed<RenderDevice>,
         immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
         _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
-        swap_chain: &SwapChain,
+        swap_chain_desc: &SwapChainDesc,
     ) -> Self {
-        let swap_chain_desc = swap_chain.desc();
-
         let mut clear_color = [0.350, 0.350, 0.350, 1.0];
 
         let convert_ps_output_to_gamma = matches!(
@@ -765,5 +766,5 @@ impl SampleBase for ComputeShader {
 }
 
 fn main() {
-    native_app::main::<SampleApp<ComputeShader>>().unwrap()
+    sample_app::main::<ComputeShader>().unwrap()
 }

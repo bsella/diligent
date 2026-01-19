@@ -4,12 +4,10 @@ use diligent::{
     *,
 };
 
-use diligent_tools::native_app;
-
 use diligent_samples::{
     sample_base::{
         sample::{get_adjusted_projection_matrix, get_surface_pretransform_matrix, SampleBase},
-        sample_app::SampleApp,
+        sample_app::{self},
     },
     textured_cube::{CreatePSOInfo, TexturedCube},
 };
@@ -132,10 +130,8 @@ impl SampleBase for TextureArray {
         device: Boxed<RenderDevice>,
         immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
         _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
-        swap_chain: &SwapChain,
+        swap_chain_desc: &SwapChainDesc,
     ) -> Self {
-        let swap_chain_desc = swap_chain.desc();
-
         // If the swap chain color buffer format is a non-sRGB UNORM format,
         // we need to manually convert pixel shader output to gamma space.
         let convert_ps_output_to_gamma = matches!(
@@ -418,5 +414,5 @@ impl SampleBase for TextureArray {
 }
 
 fn main() {
-    native_app::main::<SampleApp<TextureArray>>().unwrap()
+    sample_app::main::<TextureArray>().unwrap()
 }

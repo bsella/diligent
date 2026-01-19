@@ -6,8 +6,8 @@ use diligent_tools::native_app::app_settings::AppSettings;
 pub struct SampleAppSettings {
     pub device_type: RenderDeviceType,
 
-    pub width: u16,
-    pub height: u16,
+    pub width: u32,
+    pub height: u32,
 
     pub validation: bool,
 
@@ -32,7 +32,7 @@ impl AppSettings for SampleAppSettings {
     fn get_render_device_type(&self) -> RenderDeviceType {
         self.device_type
     }
-    fn get_window_dimensions(&self) -> (u16, u16) {
+    fn get_window_dimensions(&self) -> (u32, u32) {
         (self.width, self.height)
     }
 }
@@ -63,14 +63,14 @@ pub fn parse_sample_app_settings() -> SampleAppSettings {
             Arg::new("width")
                 .long("width")
                 .short('w')
-                .value_parser(value_parser!(u16))
+                .value_parser(value_parser!(u32))
                 .default_value("1024"),
         )
         .arg(
             Arg::new("height")
                 .long("height")
                 .short('h')
-                .value_parser(value_parser!(u16))
+                .value_parser(value_parser!(u32))
                 .default_value("786"),
         )
         .arg(
@@ -112,8 +112,8 @@ pub fn parse_sample_app_settings() -> SampleAppSettings {
 
     let mut settings = SampleAppSettings {
         device_type: get_prefered_device_type(),
-        width: *matches.get_one::<u16>("width").unwrap(),
-        height: *matches.get_one::<u16>("height").unwrap(),
+        width: *matches.get_one::<u32>("width").unwrap(),
+        height: *matches.get_one::<u32>("height").unwrap(),
         adapter_index: None,
         adapter_type: AdapterType::Unknown,
         adapters_dialog: true,
