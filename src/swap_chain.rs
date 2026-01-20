@@ -150,7 +150,7 @@ impl SwapChain {
         unsafe { &*(sys_ptr as *const SwapChainDesc) }
     }
 
-    pub fn resize(&self, new_width: u32, new_height: u32, new_transform: SurfaceTransform) {
+    pub fn resize(&mut self, new_width: u32, new_height: u32, new_transform: SurfaceTransform) {
         unsafe_member_call!(
             self,
             SwapChain,
@@ -161,15 +161,15 @@ impl SwapChain {
         )
     }
 
-    pub fn set_fullscreen_mode(&self, display_mode: &DisplayModeAttribs) {
+    pub fn set_fullscreen_mode(&mut self, display_mode: &DisplayModeAttribs) {
         unsafe_member_call!(self, SwapChain, SetFullscreenMode, &display_mode.0)
     }
 
-    pub fn set_windowed_mode(&self) {
+    pub fn set_windowed_mode(&mut self) {
         unsafe_member_call!(self, SwapChain, SetWindowedMode)
     }
 
-    pub fn set_maximum_frame_latency(&self, max_latency: u32) {
+    pub fn set_maximum_frame_latency(&mut self, max_latency: u32) {
         unsafe_member_call!(self, SwapChain, SetMaximumFrameLatency, max_latency)
     }
 
