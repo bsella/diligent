@@ -26,8 +26,11 @@ impl SampleBase for HelloTriangle {
         device: Boxed<RenderDevice>,
         immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
         _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
-        swap_chain_desc: &SwapChainDesc,
+        swap_chain_descs: &[&SwapChainDesc],
     ) -> Self {
+        // We are only using one swap chain
+        let swap_chain_desc = swap_chain_descs[0];
+
         let shader_create_info = ShaderCreateInfo::builder()
             // Tell the system that the shader source code is in HLSL.
             // For OpenGL, the engine will convert this into GLSL under the hood.

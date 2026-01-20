@@ -51,8 +51,11 @@ impl SampleBase for Queries {
         device: Boxed<RenderDevice>,
         immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
         _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
-        swap_chain_desc: &SwapChainDesc,
+        swap_chain_descs: &[&SwapChainDesc],
     ) -> Self {
+        // We are only using one swap chain
+        let swap_chain_desc = swap_chain_descs[0];
+
         // If the swap chain color buffer format is a non-sRGB UNORM format,
         // we need to manually convert pixel shader output to gamma space.
         let convert_ps_output_to_gamma = matches!(

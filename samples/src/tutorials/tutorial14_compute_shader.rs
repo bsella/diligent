@@ -469,8 +469,11 @@ impl SampleBase for ComputeShader {
         device: Boxed<RenderDevice>,
         immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
         _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
-        swap_chain_desc: &SwapChainDesc,
+        swap_chain_descs: &[&SwapChainDesc],
     ) -> Self {
+        // We are only using one swap chain
+        let swap_chain_desc = swap_chain_descs[0];
+
         let mut clear_color = [0.350, 0.350, 0.350, 1.0];
 
         let convert_ps_output_to_gamma = matches!(

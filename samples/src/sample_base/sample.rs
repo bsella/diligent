@@ -14,7 +14,7 @@ use diligent::d3d11::engine_factory_d3d11::EngineD3D11CreateInfo;
 #[cfg(feature = "d3d12")]
 use diligent::d3d12::engine_factory_d3d12::EngineD3D12CreateInfo;
 
-use diligent_tools::native_app::events::Event;
+use diligent_tools::native_app::{app_settings::AppSettings, events::Event};
 use imgui::Ui;
 
 // Returns projection matrix adjusted to the current screen orientation
@@ -121,11 +121,20 @@ pub trait SampleBase {
         render_device: Boxed<RenderDevice>,
         immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
         deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
-        swap_chain_desc: &SwapChainDesc,
+        swap_chain_desc: &[&SwapChainDesc],
     ) -> Self;
 
     fn get_render_device(&self) -> &RenderDevice;
     fn get_immediate_context(&self) -> &ImmediateDeviceContext;
+
+    fn make_swap_chains_create_info(settings: &impl AppSettings) -> Vec<SwapChainCreateInfo> {
+        // By default, the sample only created one window with one swap chain
+        let (width, height) = settings.get_window_dimensions();
+        vec![SwapChainCreateInfo::builder()
+            .width(width)
+            .height(height)
+            .build()]
+    }
 
     fn render(&self, _swap_chain: &SwapChain) {}
 

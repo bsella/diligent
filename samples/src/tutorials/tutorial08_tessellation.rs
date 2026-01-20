@@ -68,8 +68,11 @@ impl SampleBase for Tessellation {
         device: Boxed<RenderDevice>,
         immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
         _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
-        swap_chain_desc: &SwapChainDesc,
+        swap_chain_descs: &[&SwapChainDesc],
     ) -> Self {
+        // We are only using one swap chain
+        let swap_chain_desc = swap_chain_descs[0];
+
         let wireframe_supported = !matches!(
             device.get_device_info().features().geometry_shaders(),
             DeviceFeatureState::Disabled

@@ -4,7 +4,7 @@ use diligent::*;
 use imgui::{
     internal::RawWrapper,
     sys::{ImDrawIdx, ImDrawVert},
-    Io, TextureId, Ui,
+    TextureId,
 };
 
 const GAMMA_TO_LINEAR: &str =
@@ -373,8 +373,7 @@ const PIXEL_SHADER_GAMMA_SPIRV: &[u32] = &[
     0x00000079, 0x000100fd, 0x00010038,
 ];
 
-pub struct ImguiRenderer {
-    context: imgui::Context,
+struct ImguiRendererData {
     pipeline_state: Boxed<GraphicsPipelineState>,
     _font_texture_view: Boxed<TextureView>,
     texture_var: Boxed<ShaderResourceVariable>,
@@ -388,6 +387,16 @@ pub struct ImguiRenderer {
     vertex_buffer_size: u32,
     index_buffer: Option<Boxed<Buffer>>,
     index_buffer_size: u32,
+}
+
+pub struct ImguiRenderer {
+    context: imgui::SuspendedContext,
+    data: ImguiRendererData,
+}
+
+pub struct ImguiFrame {
+    context: imgui::Context,
+    data: ImguiRendererData,
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]
@@ -661,33 +670,43 @@ impl ImguiRenderer {
             [create_info.initial_width, create_info.initial_height];
 
         ImguiRenderer {
-            base_vertex_supported: create_info
-                .device
-                .get_adapter_info()
-                .draw_command()
-                .cap_flags()
-                .contains(DrawCommandCapFlags::BaseVertex),
-            context: imgui_context,
-            pipeline_state,
-            _font_texture_view: Boxed::from_ref(font_texture_view),
-            shader_resource_binding,
-            texture_var,
-            vertex_buffer: None,
-            vertex_buffer_size: 1024,
-            index_buffer: None,
-            index_buffer_size: 2048,
-            vertex_constant_buffer,
+            context: imgui_context.suspend(),
+            data: ImguiRendererData {
+                base_vertex_supported: create_info
+                    .device
+                    .get_adapter_info()
+                    .draw_command()
+                    .cap_flags()
+                    .contains(DrawCommandCapFlags::BaseVertex),
+                pipeline_state,
+                _font_texture_view: Boxed::from_ref(font_texture_view),
+                shader_resource_binding,
+                texture_var,
+                vertex_buffer: None,
+                vertex_buffer_size: 1024,
+                index_buffer: None,
+                index_buffer_size: 2048,
+                vertex_constant_buffer,
+            },
         }
     }
 
-    pub fn io_mut(&mut self) -> &mut Io {
-        self.context.io_mut()
+    pub fn new_frame(self) -> ImguiFrame {
+        ImguiFrame {
+            context: self.context.activate().unwrap(),
+            data: self.data,
+        }
     }
 
-    pub fn new_frame(&mut self) -> &mut Ui {
-        self.context.new_frame()
+    pub fn finish_fram(frame: ImguiFrame) -> Self {
+        ImguiRenderer {
+            context: frame.context.suspend(),
+            data: frame.data,
+        }
     }
+}
 
+impl ImguiFrame {
     pub fn render(
         &mut self,
         device_context: &ImmediateDeviceContext,
@@ -706,17 +725,17 @@ impl ImguiRenderer {
         }
 
         // Resize the vertex buffer if needed
-        let vertex_buffer = if self.vertex_buffer.is_none()
-            || self.vertex_buffer_size < draw_data.total_vtx_count as u32
+        let vertex_buffer = if self.data.vertex_buffer.is_none()
+            || self.data.vertex_buffer_size < draw_data.total_vtx_count as u32
         {
-            while self.vertex_buffer_size < draw_data.total_vtx_count as u32 {
-                self.vertex_buffer_size *= 2
+            while self.data.vertex_buffer_size < draw_data.total_vtx_count as u32 {
+                self.data.vertex_buffer_size *= 2
             }
 
             let buffer_desc = BufferDesc::builder()
                 .name(c"Imgui vertex buffer")
                 .size(
-                    (self.vertex_buffer_size as usize * std::mem::size_of::<imgui::DrawVert>())
+                    (self.data.vertex_buffer_size as usize * std::mem::size_of::<imgui::DrawVert>())
                         as u64,
                 )
                 .usage(Usage::Dynamic)
@@ -724,24 +743,25 @@ impl ImguiRenderer {
                 .bind_flags(BindFlags::VertexBuffer)
                 .build();
 
-            self.vertex_buffer
+            self.data
+                .vertex_buffer
                 .insert(render_device.create_buffer(&buffer_desc).unwrap())
         } else {
-            self.vertex_buffer.as_ref().unwrap()
+            self.data.vertex_buffer.as_ref().unwrap()
         };
 
         // Resize the index buffer if needed
-        let index_buffer = if self.index_buffer.is_none()
-            || self.index_buffer_size < draw_data.total_idx_count as u32
+        let index_buffer = if self.data.index_buffer.is_none()
+            || self.data.index_buffer_size < draw_data.total_idx_count as u32
         {
-            while self.index_buffer_size < draw_data.total_idx_count as u32 {
-                self.index_buffer_size *= 2
+            while self.data.index_buffer_size < draw_data.total_idx_count as u32 {
+                self.data.index_buffer_size *= 2
             }
 
             let buffer_desc = BufferDesc::builder()
                 .name(c"Imgui index buffer")
                 .size(
-                    (self.index_buffer_size as usize * std::mem::size_of::<imgui::DrawIdx>())
+                    (self.data.index_buffer_size as usize * std::mem::size_of::<imgui::DrawIdx>())
                         as u64,
                 )
                 .usage(Usage::Dynamic)
@@ -749,10 +769,11 @@ impl ImguiRenderer {
                 .bind_flags(BindFlags::IndexBuffer)
                 .build();
 
-            self.index_buffer
+            self.data
+                .index_buffer
                 .insert(render_device.create_buffer(&buffer_desc).unwrap())
         } else {
-            self.index_buffer.as_mut().unwrap()
+            self.data.index_buffer.as_mut().unwrap()
         };
 
         // Transfer the vertex and index buffer from imgui data into our GPU buffers
@@ -795,8 +816,10 @@ impl ImguiRenderer {
             ];
 
             {
-                let mut projection_data = device_context
-                    .map_buffer_write::<[f32; 16]>(&self.vertex_constant_buffer, MapFlags::Discard);
+                let mut projection_data = device_context.map_buffer_write::<[f32; 16]>(
+                    &self.data.vertex_constant_buffer,
+                    MapFlags::Discard,
+                );
 
                 (*projection_data)[0] = projection;
             }
@@ -816,7 +839,8 @@ impl ImguiRenderer {
                 ResourceStateTransitionMode::Transition,
             );
 
-            let pipeline_token = device_context.set_graphics_pipeline_state(&self.pipeline_state);
+            let pipeline_token =
+                device_context.set_graphics_pipeline_state(&self.data.pipeline_state);
 
             device_context.set_blend_factors(Some(&[0.0, 0.0, 0.0, 0.0]));
 
@@ -889,11 +913,12 @@ impl ImguiRenderer {
 
                             let texture_view = unsafe { texture_view.as_ref().unwrap() };
 
-                            self.texture_var
+                            self.data
+                                .texture_var
                                 .set(texture_view, SetShaderResourceFlags::None);
 
                             device_context.commit_shader_resources(
-                                &self.shader_resource_binding,
+                                &self.data.shader_resource_binding,
                                 ResourceStateTransitionMode::Transition,
                             );
                         }
@@ -915,7 +940,7 @@ impl ImguiRenderer {
                                     cmd_params.idx_offset as u32 + global_idx_offset,
                                 );
 
-                            if self.base_vertex_supported {
+                            if self.data.base_vertex_supported {
                                 draw_attribs
                                     .base_vertex(cmd_params.vtx_offset as u32 + global_vtx_offset)
                                     .build()
@@ -947,5 +972,13 @@ impl ImguiRenderer {
             global_idx_offset += cmd_list.idx_buffer().len() as u32;
             global_vtx_offset += cmd_list.vtx_buffer().len() as u32;
         }
+    }
+
+    pub fn ui_mut(&mut self) -> &mut imgui::Ui {
+        self.context.frame()
+    }
+
+    pub fn io_mut(&mut self) -> &mut imgui::Io {
+        self.context.io_mut()
     }
 }

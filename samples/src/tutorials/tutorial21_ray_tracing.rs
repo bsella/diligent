@@ -991,8 +991,11 @@ impl SampleBase for RayTracing {
         device: Boxed<RenderDevice>,
         immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
         _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
-        swap_chain_desc: &SwapChainDesc,
+        swap_chain_descs: &[&SwapChainDesc],
     ) -> Self {
+        // We are only using one swap chain
+        let swap_chain_desc = swap_chain_descs[0];
+
         if !device
             .get_adapter_info()
             .ray_tracing()
