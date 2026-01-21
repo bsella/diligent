@@ -697,13 +697,6 @@ impl ImguiRenderer {
             data: self.data,
         }
     }
-
-    pub fn finish_fram(frame: ImguiFrame) -> Self {
-        ImguiRenderer {
-            context: frame.context.suspend(),
-            data: frame.data,
-        }
-    }
 }
 
 impl ImguiFrame {
@@ -980,5 +973,12 @@ impl ImguiFrame {
 
     pub fn io_mut(&mut self) -> &mut imgui::Io {
         self.context.io_mut()
+    }
+
+    pub fn finish(self) -> ImguiRenderer {
+        ImguiRenderer {
+            context: self.context.suspend(),
+            data: self.data,
+        }
     }
 }

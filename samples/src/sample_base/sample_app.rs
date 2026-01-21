@@ -647,6 +647,8 @@ impl<GenericSample: SampleBase, W: Window> App for SampleApp<GenericSample, W> {
 
         let mut filtered_frame_time = 0.0;
 
+        let mut next_windows = VecDeque::<SampleWindow<W>>::new();
+
         loop {
             let elapsed_time = {
                 let now = std::time::Instant::now();
@@ -661,7 +663,7 @@ impl<GenericSample: SampleBase, W: Window> App for SampleApp<GenericSample, W> {
                 elapsed_time
             };
 
-            let mut next_windows: VecDeque<SampleWindow<W>> = self.windows.drain(..).collect();
+            std::mem::swap(&mut self.windows, &mut next_windows);
 
             'window: for mut sample_window in next_windows.drain(..) {
                 let mut imgui_frame = sample_window.imgui_renderer.new_frame();
@@ -670,6 +672,7 @@ impl<GenericSample: SampleBase, W: Window> App for SampleApp<GenericSample, W> {
                     let event = sample_window.window.handle_event(&event);
                     match event {
                         Event::Quit => {
+                            // sample_window is destroyed here instead of being moved into self.windows
                             continue 'window;
                         }
                         Event::Continue => {}
@@ -713,7 +716,7 @@ impl<GenericSample: SampleBase, W: Window> App for SampleApp<GenericSample, W> {
                     );
                 }
 
-                sample_window.imgui_renderer = ImguiRenderer::finish_fram(imgui_frame);
+                sample_window.imgui_renderer = imgui_frame.finish();
 
                 self.windows.push_back(sample_window);
             }
