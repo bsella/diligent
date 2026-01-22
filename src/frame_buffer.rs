@@ -4,6 +4,7 @@ use crate::{device_object::DeviceObject, render_pass::RenderPass, texture_view::
 
 define_ported!(Framebuffer, diligent_sys::IFramebuffer, DeviceObject);
 
+#[repr(transparent)]
 pub struct FramebufferDesc(pub(crate) diligent_sys::FramebufferDesc);
 
 #[bon::bon]

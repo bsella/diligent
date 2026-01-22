@@ -2941,6 +2941,7 @@ impl From<ScanlineOrder> for diligent_sys::SCANLINE_ORDER {
     }
 }
 
+#[repr(transparent)]
 pub struct DisplayModeAttribs(pub(crate) diligent_sys::DisplayModeAttribs);
 
 impl DisplayModeAttribs {

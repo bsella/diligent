@@ -359,6 +359,7 @@ impl PipelineResourceLayoutDesc {
     }
 }
 
+#[repr(transparent)]
 pub struct PipelineStateDesc(diligent_sys::PipelineStateDesc);
 
 impl PipelineStateDesc {
@@ -1045,6 +1046,7 @@ impl<'a> RayTracingProceduralHitShaderGroup<'a> {
     }
 }
 
+#[repr(transparent)]
 pub struct RayTracingPipelineStateCreateInfo<'a>(
     pub(crate) diligent_sys::RayTracingPipelineStateCreateInfo,
     PhantomData<&'a ()>,
@@ -1402,6 +1404,7 @@ impl Deref for TilePipelineState {
     }
 }
 
+#[repr(transparent)]
 pub struct TilePipelineDesc(diligent_sys::TilePipelineDesc);
 
 impl TilePipelineDesc {

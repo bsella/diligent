@@ -18,6 +18,7 @@ bitflags! {
     }
 }
 
+#[repr(transparent)]
 pub struct ShaderBindingTableDesc(pub(crate) diligent_sys::ShaderBindingTableDesc);
 
 #[bon::bon]

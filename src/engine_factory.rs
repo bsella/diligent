@@ -9,6 +9,7 @@ use crate::{
     shader::ShaderSourceInputStreamFactory,
 };
 
+#[repr(transparent)]
 pub struct DearchiverCreateInfo(diligent_sys::DearchiverCreateInfo);
 
 #[bon::bon]
