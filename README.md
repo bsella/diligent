@@ -8,6 +8,9 @@ This port consists of a wrapper around Diligent Engine that follows the Rust par
 > [!WARNING]  
 > This crate is in its early stages and everything in it is prone to change. Please keep your expectations low.
 
+> [!NOTE]  
+> All the ported objects in this crate are defined using `repr(transparent)` with their native versions. This means that they have exactly the same ABI there isn't any difference in performance between using this crate or the original C++ version.
+
 ## The Rust paradigm
 
 ### Compile-time checks
@@ -48,7 +51,7 @@ The rust solution provides an enum that can only be one value at any given time.
 
 ```rust
 pub enum ShaderSource<'a> {
-    FilePath(PathBuf),
+    FilePath(&'a Path),
     SourceCode(&'a str),
     ByteCode(&'a [u8]),
 }
@@ -56,12 +59,45 @@ pub enum ShaderSource<'a> {
 
 This greatly clarifies what parameters need to be set in the struct and ensures their integrity and validity.
 
+### RAII Tokens
+
+Every scoped operation that is made with a `begin` and `end` is defined with a scoped token.
+
+### Typestates
+
+This crate make use of Rust's powerful type system to make sure the functions are used on the right objects at compile-time.
+
+> [!NOTE]  
+> TODO : Implement Typestate for Texture and Buffer usages
+
 ## Features
 
 Each of the supported graphics backends is a feature of this crate.
 For now, the supported backends are `vulkan`, `opengl`, `d3d11` and `d3d12`.
 
 For now, this port is only supported on Linux and Window. But it will be supported on all other platforms.
+
+### Interop backends
+The Diligent Engine provides access, for each backend, to specialized versions of each device object depending on the backend that you are using.
+
+For instance, if you're using the `vulkan_interop` feature, you can *unsafely* cast a `Texture` to `TextureVk` to access it's Vulkan-specific features.
+
+> [!NOTE]  
+> For now it's completely up to the user of this crate to guarantee the coherency of the interop device objects with their underlying backend. The only way of making this safe, would be to add the backend as a part of the objects' typestate which will make everything very verbose and defeats the purpose of having a backend-agnostic abstraction which is the main purpose of the Diligent Engine.
+
+## Building the crate
+To build the crate you need to choose at least one graphics backend. For instance if you want to build it with the Vulkan implementation, use `cargo build --features vulkan`.
+
+But before, you will be needing to define 2 environment variables :
+* `DILIGENT_SOURCE_DIR` : the source directory of the Diligent Engine (original C++ version)
+* `DILIGENT_INSTALL_DIR` : the install directory containing `lib`, `include`, etc
+
+The simplest way to do this is to make a file with relative path `.cargo/config.toml` (added to `.gitignore`) with the following content; after replacing `...` with valid paths.
+```
+[env]
+DILIGENT_SOURCE_DIR  = ...
+DILIGENT_INSTALL_DIR = ...
+```
 
 ## Samples
 All of the samples present in the [DiligentSamples repo](https://github.com/DiligentGraphics/DiligentSamples) will be ported (rewritten) in rust as examples in this crate.
