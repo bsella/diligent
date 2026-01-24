@@ -128,13 +128,18 @@ impl<QueryDataType: GetSysQueryType> Query<QueryDataType> {
     }
 }
 
-pub struct ScopedQueryToken<'a, QueryDataType: GetSysQueryType> {
-    query: &'a Query<QueryDataType>,
-    context: &'a DeviceContext,
+pub struct ScopedQueryToken<'query, 'context, QueryDataType: GetSysQueryType> {
+    query: &'query Query<QueryDataType>,
+    context: &'context DeviceContext,
 }
 
-impl<'a, QueryDataType: GetSysQueryType> ScopedQueryToken<'a, QueryDataType> {
-    pub(crate) fn new(context: &'a DeviceContext, query: &'a Query<QueryDataType>) -> Self {
+impl<'query, 'context, QueryDataType: GetSysQueryType>
+    ScopedQueryToken<'query, 'context, QueryDataType>
+{
+    pub(crate) fn new(
+        context: &'context DeviceContext,
+        query: &'query Query<QueryDataType>,
+    ) -> Self {
         unsafe_member_call!(context, DeviceContext, BeginQuery, query.sys_ptr());
 
         Self { query, context }
@@ -172,16 +177,16 @@ pub struct DurationQueryHelper {
     end_timestamp: RefCell<QueryDataTimestamp>,
 }
 
-pub struct TimeStampQueryToken<'a> {
-    query: &'a DurationQueryHelper,
-    context: &'a DeviceContext,
+pub struct TimeStampQueryToken<'query, 'context> {
+    query: &'query DurationQueryHelper,
+    context: &'context DeviceContext,
 }
 
-impl TimeStampQueryToken<'_> {
-    pub(crate) fn new<'a>(
-        helper: &'a DurationQueryHelper,
-        context: &'a DeviceContext,
-    ) -> TimeStampQueryToken<'a> {
+impl TimeStampQueryToken<'_, '_> {
+    pub(crate) fn new<'query, 'context>(
+        helper: &'query DurationQueryHelper,
+        context: &'context DeviceContext,
+    ) -> TimeStampQueryToken<'query, 'context> {
         unsafe_member_call!(context, DeviceContext, EndQuery, helper.start.sys_ptr());
 
         TimeStampQueryToken {

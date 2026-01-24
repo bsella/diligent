@@ -1,4 +1,4 @@
-use std::ffi::CStr;
+use std::{ffi::CStr, marker::PhantomData};
 
 use static_assertions::const_assert_eq;
 
@@ -20,30 +20,33 @@ pub enum FenceType {
 const_assert_eq!(diligent_sys::FENCE_TYPE_LAST, 1);
 
 #[repr(transparent)]
-pub struct FenceDesc(pub(crate) diligent_sys::FenceDesc);
+pub struct FenceDesc<'name>(pub(crate) diligent_sys::FenceDesc, PhantomData<&'name ()>);
 
 #[bon::bon]
-impl FenceDesc {
+impl<'name> FenceDesc<'name> {
     #[builder]
     pub fn new(
-        name: Option<&CStr>,
+        name: Option<&'name CStr>,
 
         #[builder(default = FenceType::CpuWaitOnly)] fence_type: FenceType,
     ) -> Self {
-        Self(diligent_sys::FenceDesc {
-            _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                Name: name.map_or(std::ptr::null(), |name| name.as_ptr()),
+        Self(
+            diligent_sys::FenceDesc {
+                _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
+                    Name: name.map_or(std::ptr::null(), |name| name.as_ptr()),
+                },
+                Type: match fence_type {
+                    FenceType::CpuWaitOnly => diligent_sys::FENCE_TYPE_CPU_WAIT_ONLY,
+                    FenceType::General => diligent_sys::FENCE_TYPE_GENERAL,
+                } as diligent_sys::FENCE_TYPE,
             },
-            Type: match fence_type {
-                FenceType::CpuWaitOnly => diligent_sys::FENCE_TYPE_CPU_WAIT_ONLY,
-                FenceType::General => diligent_sys::FENCE_TYPE_GENERAL,
-            } as diligent_sys::FENCE_TYPE,
-        })
+            PhantomData,
+        )
     }
 }
 
 impl Fence {
-    pub fn desc(&self) -> &FenceDesc {
+    pub fn desc(&self) -> &FenceDesc<'_> {
         let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
         unsafe { &*(desc_ptr as *const FenceDesc) }
     }

@@ -32,12 +32,13 @@ impl Default for RayTracingBuildAsFlags {
 }
 
 #[repr(transparent)]
-pub struct BLASTriangleDesc<'a>(diligent_sys::BLASTriangleDesc, PhantomData<&'a ()>);
+pub struct BLASTriangleDesc<'name>(diligent_sys::BLASTriangleDesc, PhantomData<&'name ()>);
+
 #[bon::bon]
-impl BLASTriangleDesc<'_> {
+impl<'name> BLASTriangleDesc<'name> {
     #[builder]
     pub fn new(
-        geometry_name: &CStr,
+        geometry_name: &'name CStr,
 
         max_vertex_count: usize,
 
@@ -72,34 +73,53 @@ impl BLASTriangleDesc<'_> {
 }
 
 #[repr(transparent)]
-pub struct BLASBoundingBoxDesc(diligent_sys::BLASBoundingBoxDesc);
+pub struct BLASBoundingBoxDesc<'name>(diligent_sys::BLASBoundingBoxDesc, PhantomData<&'name ()>);
 
 #[bon::bon]
-impl BLASBoundingBoxDesc {
+impl<'name> BLASBoundingBoxDesc<'name> {
     #[builder]
-    pub fn new(geometry_name: &CStr, max_box_count: usize) -> Self {
-        BLASBoundingBoxDesc(diligent_sys::BLASBoundingBoxDesc {
-            GeometryName: geometry_name.as_ptr(),
-            MaxBoxCount: max_box_count as u32,
-        })
+    pub fn new(geometry_name: &'name CStr, max_box_count: usize) -> Self {
+        BLASBoundingBoxDesc(
+            diligent_sys::BLASBoundingBoxDesc {
+                GeometryName: geometry_name.as_ptr(),
+                MaxBoxCount: max_box_count as u32,
+            },
+            PhantomData,
+        )
     }
 }
 
 #[repr(transparent)]
-pub struct BottomLevelASDesc<'a>(
+pub struct BottomLevelASDesc<
+    'name,
+    'triangle_descs,
+    'bb_descs,
+    'triangle_geometry_name,
+    'bb_geometry_name,
+>(
     pub(crate) diligent_sys::BottomLevelASDesc,
-    PhantomData<&'a ()>,
+    PhantomData<(
+        &'name (),
+        &'triangle_descs (),
+        &'bb_descs (),
+        &'triangle_geometry_name (),
+        &'bb_geometry_name (),
+    )>,
 );
 
 #[bon::bon]
-impl<'a> BottomLevelASDesc<'a> {
+impl<'name, 'triangle_descs, 'bb_descs, 'triangle_geometry_name, 'bb_geometry_name>
+    BottomLevelASDesc<'name, 'triangle_descs, 'bb_descs, 'triangle_geometry_name, 'bb_geometry_name>
+{
     #[builder]
     pub fn new(
-        name: Option<&CStr>,
+        name: Option<&'name CStr>,
 
-        #[builder(default = &[])] triangles: &[BLASTriangleDesc<'a>],
+        #[builder(default = &[])] triangles: &'triangle_descs [BLASTriangleDesc<
+            'triangle_geometry_name,
+        >],
 
-        #[builder(default = &[])] boxes: &[BLASBoundingBoxDesc],
+        #[builder(default = &[])] boxes: &'bb_descs [BLASBoundingBoxDesc<'bb_geometry_name>],
 
         #[builder(default)] flags: RayTracingBuildAsFlags,
 
@@ -138,7 +158,7 @@ pub struct ScratchBufferSizes {
 }
 
 impl BottomLevelAS {
-    pub fn desc(&self) -> &BottomLevelASDesc<'_> {
+    pub fn desc(&self) -> &BottomLevelASDesc<'_, '_, '_, '_, '_> {
         let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
         unsafe { &*(desc_ptr as *const BottomLevelASDesc) }
     }

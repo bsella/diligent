@@ -112,14 +112,16 @@ fn create_render_particle_pso(
         )
         .unwrap();
 
+    let shader_resource_variables = [ShaderResourceVariableDesc::builder()
+        .name(c"g_Particles")
+        // Shader variables should typically be mutable, which means they are expected
+        // to change on a per-instance basis
+        .variable_type(ShaderResourceVariableType::Mutable)
+        .shader_stages(ShaderTypes::Vertex)
+        .build()];
+
     let pso_ci = PipelineStateCreateInfo::builder()
-        .shader_resource_variables(&[ShaderResourceVariableDesc::builder()
-            .name(c"g_Particles")
-            // Shader variables should typically be mutable, which means they are expected
-            // to change on a per-instance basis
-            .variable_type(ShaderResourceVariableType::Mutable)
-            .shader_stages(ShaderTypes::Vertex)
-            .build()])
+        .shader_resource_variables(&shader_resource_variables)
         // Define variable type that will be used by default
         .default_variable_type(ShaderResourceVariableType::Static)
         // Pipeline state name is used by the engine to report issues.

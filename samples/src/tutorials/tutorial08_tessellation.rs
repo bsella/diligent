@@ -126,21 +126,23 @@ impl SampleBase for Tessellation {
                 .build(),
         ];
 
+        let shader_resouce_variables = [
+            ShaderResourceVariableDesc::builder()
+                .name(c"g_HeightMap")
+                .variable_type(ShaderResourceVariableType::Mutable)
+                .shader_stages(ShaderTypes::Hull | ShaderTypes::Domain)
+                .build(),
+            ShaderResourceVariableDesc::builder()
+                .name(c"g_Texture")
+                .variable_type(ShaderResourceVariableType::Mutable)
+                .shader_stages(ShaderTypes::Pixel)
+                .build(),
+        ];
+
         // Pipeline state object encompasses configuration of all GPU stages
         let pso_create_info = PipelineStateCreateInfo::builder()
             .default_variable_type(ShaderResourceVariableType::Static)
-            .shader_resource_variables(&[
-                ShaderResourceVariableDesc::builder()
-                    .name(c"g_HeightMap")
-                    .variable_type(ShaderResourceVariableType::Mutable)
-                    .shader_stages(ShaderTypes::Hull | ShaderTypes::Domain)
-                    .build(),
-                ShaderResourceVariableDesc::builder()
-                    .name(c"g_Texture")
-                    .variable_type(ShaderResourceVariableType::Mutable)
-                    .shader_stages(ShaderTypes::Pixel)
-                    .build(),
-            ])
+            .shader_resource_variables(&shader_resouce_variables)
             .immutable_samplers(&samplers)
             .name(c"Terrain PSO")
             .graphics()

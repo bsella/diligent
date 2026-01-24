@@ -219,6 +219,18 @@ impl TexturedCube {
             .address_w(TextureAddressMode::Clamp)
             .build();
 
+        let shader_resource_variables = [ShaderResourceVariableDesc::builder()
+            .name(c"g_Texture")
+            .variable_type(ShaderResourceVariableType::Mutable)
+            .shader_stages(ShaderTypes::Pixel)
+            .build()];
+
+        let immutable_samplers = [ImmutableSamplerDesc::builder()
+            .shader_stages(ShaderTypes::Pixel)
+            .sampler_or_texture_name(c"g_Texture")
+            .sampler_desc(&sampler_desc)
+            .build()];
+
         // Pipeline state name is used by the engine to report issues.
         // It is always a good idea to give objects descriptive names.
         let pso_create_info = PipelineStateCreateInfo::builder()
@@ -226,17 +238,9 @@ impl TexturedCube {
             .default_variable_type(ShaderResourceVariableType::Static)
             // Shader variables should typically be mutable, which means they are expected
             // to change on a per-instance basis
-            .shader_resource_variables(&[ShaderResourceVariableDesc::builder()
-                .name(c"g_Texture")
-                .variable_type(ShaderResourceVariableType::Mutable)
-                .shader_stages(ShaderTypes::Pixel)
-                .build()])
+            .shader_resource_variables(&shader_resource_variables)
             // Define immutable sampler for g_Texture. Immutable samplers should be used whenever possible
-            .immutable_samplers(&[ImmutableSamplerDesc::builder()
-                .shader_stages(ShaderTypes::Pixel)
-                .sampler_or_texture_name(c"g_Texture")
-                .sampler_desc(&sampler_desc)
-                .build()])
+            .immutable_samplers(&immutable_samplers)
             .name(c"Cube PSO")
             .graphics()
             .graphics_pipeline_desc(graphics_pipeline_desc)

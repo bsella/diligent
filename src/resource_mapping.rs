@@ -1,33 +1,64 @@
-use std::ffi::CStr;
+use std::{ffi::CStr, marker::PhantomData};
 
 use crate::{device_object::DeviceObject, object::Object};
 
 #[repr(transparent)]
-pub struct ResourceMappingEntry(pub(crate) diligent_sys::ResourceMappingEntry);
+pub struct ResourceMappingEntry<'name, 'object>(
+    pub(crate) diligent_sys::ResourceMappingEntry,
+    PhantomData<(&'name (), &'object ())>,
+);
 
 #[bon::bon]
-impl ResourceMappingEntry {
+impl<'name, 'object, 'array_index> ResourceMappingEntry<'name, 'object> {
     #[builder]
-    pub fn new(name: Option<&CStr>, object: &DeviceObject, array_index: Option<u32>) -> Self {
-        ResourceMappingEntry(diligent_sys::ResourceMappingEntry {
-            Name: name.map_or(std::ptr::null(), |name| name.as_ptr()),
-            pObject: object.sys_ptr(),
-            ArrayIndex: array_index.unwrap_or(0),
-        })
+    pub fn new(
+        name: Option<&'name CStr>,
+        object: &'object DeviceObject,
+        array_index: Option<u32>,
+    ) -> Self {
+        ResourceMappingEntry(
+            diligent_sys::ResourceMappingEntry {
+                Name: name.map_or(std::ptr::null(), |name| name.as_ptr()),
+                pObject: object.sys_ptr(),
+                ArrayIndex: array_index.unwrap_or(0),
+            },
+            PhantomData,
+        )
     }
 }
 
 #[repr(transparent)]
-pub struct ResourceMappingCreateInfo(pub(crate) diligent_sys::ResourceMappingCreateInfo);
+pub struct ResourceMappingCreateInfo<
+    'resource_mappings,
+    'resource_mapping_name,
+    'resource_mapping_object,
+>(
+    pub(crate) diligent_sys::ResourceMappingCreateInfo,
+    PhantomData<(
+        &'resource_mappings (),
+        &'resource_mapping_name (),
+        &'resource_mapping_object (),
+    )>,
+);
 
 #[bon::bon]
-impl ResourceMappingCreateInfo {
+impl<'resource_mappings, 'resource_mapping_name, 'resource_mapping_object>
+    ResourceMappingCreateInfo<'resource_mappings, 'resource_mapping_name, 'resource_mapping_object>
+{
     #[builder]
-    pub fn new(entries: &[ResourceMappingEntry]) -> Self {
-        ResourceMappingCreateInfo(diligent_sys::ResourceMappingCreateInfo {
-            pEntries: entries.first().map_or(std::ptr::null(), |entry| &entry.0),
-            NumEntries: entries.len() as u32,
-        })
+    pub fn new(
+        entries: &'resource_mappings [ResourceMappingEntry<
+            'resource_mapping_name,
+            'resource_mapping_object,
+        >],
+    ) -> Self {
+        ResourceMappingCreateInfo(
+            diligent_sys::ResourceMappingCreateInfo {
+                pEntries: entries.first().map_or(std::ptr::null(), |entry| &entry.0),
+                NumEntries: entries.len() as u32,
+            },
+            PhantomData,
+        )
     }
 }
 

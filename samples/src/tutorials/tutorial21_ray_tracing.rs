@@ -354,78 +354,84 @@ fn create_ray_tracing_pso(
         .address_w(TextureAddressMode::Wrap)
         .build();
 
-    let sampler = ImmutableSamplerDesc::builder()
+    let immutable_samplers = [ImmutableSamplerDesc::builder()
         .shader_stages(ShaderTypes::RayClosestHit)
         .sampler_or_texture_name(c"g_SamLinearWrap")
         .sampler_desc(&sampler_desc)
-        .build();
+        .build()];
+
+    let shader_resource_variables = [
+        ShaderResourceVariableDesc::builder()
+            .name(c"g_ConstantsCB")
+            .shader_stages(ShaderTypes::RayGen | ShaderTypes::RayMiss | ShaderTypes::RayClosestHit)
+            .variable_type(ShaderResourceVariableType::Static)
+            .build(),
+        ShaderResourceVariableDesc::builder()
+            .name(c"g_ColorBuffer")
+            .shader_stages(ShaderTypes::RayGen)
+            .variable_type(ShaderResourceVariableType::Dynamic)
+            .build(),
+    ];
+
+    let general_shaders = [
+        // Ray generation shader is an entry point for a ray tracing pipeline.
+        RayTracingGeneralShaderGroup::builder()
+            .name(c"Main")
+            .shader(&ray_gen_shader)
+            .build(),
+        // Primary ray miss shader.
+        RayTracingGeneralShaderGroup::builder()
+            .name(c"PrimaryMiss")
+            .shader(&primary_miss_shader)
+            .build(),
+        // Shadow ray miss shader.
+        RayTracingGeneralShaderGroup::builder()
+            .name(c"ShadowMiss")
+            .shader(&shadow_miss_shader)
+            .build(),
+    ];
+
+    let triangle_hit_shaders = [
+        // Primary ray hit group for the textured cube.
+        RayTracingTriangleHitShaderGroup::builder()
+            .name(c"CubePrimaryHit")
+            .closest(&cube_primary_hit_shader)
+            .build(),
+        // Primary ray hit group for the ground.
+        RayTracingTriangleHitShaderGroup::builder()
+            .name(c"GroundHit")
+            .closest(&ground_hit_shader)
+            .build(),
+        // Primary ray hit group for the glass cube.
+        RayTracingTriangleHitShaderGroup::builder()
+            .name(c"GlassPrimaryHit")
+            .closest(&glass_primary_hit_shader)
+            .build(),
+    ];
+
+    let procedural_hit_shaders = [
+        // Intersection and closest hit shaders for the procedural sphere.
+        RayTracingProceduralHitShaderGroup::builder()
+            .name(c"SpherePrimaryHit")
+            .intersection(&sphere_intersection_shader)
+            .closest(&sphere_primary_hit_shader)
+            .build(),
+        // Only intersection shader is needed for shadows.
+        RayTracingProceduralHitShaderGroup::builder()
+            .name(c"SphereShadowHit")
+            .intersection(&sphere_intersection_shader)
+            .build(),
+    ];
 
     let pso_create_info = PipelineStateCreateInfo::builder()
-        .shader_resource_variables(&[
-            ShaderResourceVariableDesc::builder()
-                .name(c"g_ConstantsCB")
-                .shader_stages(
-                    ShaderTypes::RayGen | ShaderTypes::RayMiss | ShaderTypes::RayClosestHit,
-                )
-                .variable_type(ShaderResourceVariableType::Static)
-                .build(),
-            ShaderResourceVariableDesc::builder()
-                .name(c"g_ColorBuffer")
-                .shader_stages(ShaderTypes::RayGen)
-                .variable_type(ShaderResourceVariableType::Dynamic)
-                .build(),
-        ])
+        .shader_resource_variables(&shader_resource_variables)
         .default_variable_type(ShaderResourceVariableType::Mutable)
-        .immutable_samplers(&[sampler])
+        .immutable_samplers(&immutable_samplers)
         .name(c"Ray tracing PSO")
         .raytracing()
-        .general_shaders(&[
-            // Ray generation shader is an entry point for a ray tracing pipeline.
-            RayTracingGeneralShaderGroup::builder()
-                .name(c"Main")
-                .shader(&ray_gen_shader)
-                .build(),
-            // Primary ray miss shader.
-            RayTracingGeneralShaderGroup::builder()
-                .name(c"PrimaryMiss")
-                .shader(&primary_miss_shader)
-                .build(),
-            // Shadow ray miss shader.
-            RayTracingGeneralShaderGroup::builder()
-                .name(c"ShadowMiss")
-                .shader(&shadow_miss_shader)
-                .build(),
-        ])
-        .triangle_hit_shaders(&[
-            // Primary ray hit group for the textured cube.
-            RayTracingTriangleHitShaderGroup::builder()
-                .name(c"CubePrimaryHit")
-                .closest(&cube_primary_hit_shader)
-                .build(),
-            // Primary ray hit group for the ground.
-            RayTracingTriangleHitShaderGroup::builder()
-                .name(c"GroundHit")
-                .closest(&ground_hit_shader)
-                .build(),
-            // Primary ray hit group for the glass cube.
-            RayTracingTriangleHitShaderGroup::builder()
-                .name(c"GlassPrimaryHit")
-                .closest(&glass_primary_hit_shader)
-                .build(),
-        ])
-        .procedural_hit_shaders(&[
-            // Intersection and closest hit shaders for the procedural sphere.
-            RayTracingProceduralHitShaderGroup::builder()
-                .name(c"SpherePrimaryHit")
-                .intersection(&sphere_intersection_shader)
-                .closest(&sphere_primary_hit_shader)
-                .build(),
-            // Only intersection shader is needed for shadows.
-            RayTracingProceduralHitShaderGroup::builder()
-                .name(c"SphereShadowHit")
-                .intersection(&sphere_intersection_shader)
-                .build(),
-        ])
+        .general_shaders(&general_shaders)
+        .triangle_hit_shaders(&triangle_hit_shaders)
+        .procedural_hit_shaders(&procedural_hit_shaders)
         // Specify the maximum ray recursion depth.
         // WARNING: the driver does not track the recursion depth and it is the
         //          application's responsibility to not exceed the specified limit.
@@ -738,14 +744,14 @@ fn create_and_build_procedural_blas(
 
     // Create BLAS
     let procedural_blas = {
-        let box_info = BLASBoundingBoxDesc::builder()
+        let box_info = [BLASBoundingBoxDesc::builder()
             .geometry_name(c"Box")
             .max_box_count(1)
-            .build();
+            .build()];
 
         let as_desc = BottomLevelASDesc::builder()
             .name(c"Procedural BLAS")
-            .boxes(&[box_info])
+            .boxes(&box_info)
             .flags(RayTracingBuildAsFlags::PreferFastTrace)
             .build();
 

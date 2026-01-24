@@ -119,15 +119,15 @@ impl Default for MiscTextureFlags {
     }
 }
 
-pub enum TextureSubResData<'a> {
-    CPU(&'a [u8]),
-    GPU(&'a Buffer),
+pub enum TextureSubResData<'buffer> {
+    CPU(&'buffer [u8]),
+    GPU(&'buffer Buffer),
 }
 
 #[derive(Builder)]
-pub struct TextureSubResource<'a> {
+pub struct TextureSubResource<'buffer> {
     #[builder(setters(vis = ""))]
-    source: TextureSubResData<'a>,
+    source: TextureSubResData<'buffer>,
 
     #[builder(setters(vis = ""))]
     source_offset: u64,
@@ -140,12 +140,12 @@ pub struct TextureSubResource<'a> {
 }
 
 use texture_sub_resource_builder::{IsUnset, SetSource, SetSourceOffset, SetStride, State};
-impl<'a, S: State> TextureSubResourceBuilder<'a, S> {
+impl<'data, S: State> TextureSubResourceBuilder<'data, S> {
     pub fn from_host(
         self,
-        data: &'a [u8],
+        data: &'data [u8],
         stride: u64,
-    ) -> TextureSubResourceBuilder<'a, SetSource<SetSourceOffset<SetStride<S>>>>
+    ) -> TextureSubResourceBuilder<'data, SetSource<SetSourceOffset<SetStride<S>>>>
     where
         S::Source: IsUnset,
         S::SourceOffset: IsUnset,
@@ -157,13 +157,13 @@ impl<'a, S: State> TextureSubResourceBuilder<'a, S> {
     }
 }
 
-impl<'a, S: State> TextureSubResourceBuilder<'a, S> {
+impl<'buffer, S: State> TextureSubResourceBuilder<'buffer, S> {
     pub fn from_device(
         self,
-        data: &'a Buffer,
+        data: &'buffer Buffer,
         source_offset: u64,
         stride: u64,
-    ) -> TextureSubResourceBuilder<'a, SetSource<SetSourceOffset<SetStride<S>>>>
+    ) -> TextureSubResourceBuilder<'buffer, SetSource<SetSourceOffset<SetStride<S>>>>
     where
         S::Source: IsUnset,
         S::SourceOffset: IsUnset,
@@ -196,13 +196,13 @@ impl From<&TextureSubResource<'_>> for diligent_sys::TextureSubResData {
 }
 
 #[repr(transparent)]
-pub struct TextureDesc(pub(crate) diligent_sys::TextureDesc);
+pub struct TextureDesc<'name>(pub(crate) diligent_sys::TextureDesc, PhantomData<&'name ()>);
 
 #[bon::bon]
-impl TextureDesc {
+impl<'name> TextureDesc<'name> {
     #[builder]
     pub fn new(
-        name: Option<&CStr>,
+        name: Option<&'name CStr>,
 
         dimension: TextureDimension,
 
@@ -232,47 +232,52 @@ impl TextureDesc {
 
         #[builder(default = 1)] immediate_context_mask: u64,
     ) -> Self {
-        Self(diligent_sys::TextureDesc {
-            _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                Name: name.as_ref().map_or(std::ptr::null(), |name| name.as_ptr()),
-            },
-            Type: dimension.into(),
-            Width: width,
-            Height: height,
-            Format: format.into(),
-            MipLevels: mip_levels,
-            SampleCount: sample_count,
-            BindFlags: bind_flags.bits(),
-            Usage: usage.into(),
-            CPUAccessFlags: cpu_access_flags.bits(),
-            MiscFlags: misc_flags.bits(),
-            ClearValue: diligent_sys::OptimizedClearValue {
-                Color: clear_color,
-                DepthStencil: diligent_sys::DepthStencilClearValue {
-                    Depth: clear_depth,
-                    Stencil: clear_stencil,
+        Self(
+            diligent_sys::TextureDesc {
+                _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
+                    Name: name.as_ref().map_or(std::ptr::null(), |name| name.as_ptr()),
                 },
+                Type: dimension.into(),
+                Width: width,
+                Height: height,
                 Format: format.into(),
-            },
-            ImmediateContextMask: immediate_context_mask,
-            __bindgen_anon_1: match dimension {
-                TextureDimension::Texture1DArray { array_size }
-                | TextureDimension::Texture2DArray { array_size }
-                | TextureDimension::TextureCubeArray { array_size } => {
-                    diligent_sys::TextureDesc__bindgen_ty_1 {
-                        ArraySize: array_size.get() as u32,
-                    }
-                }
-                TextureDimension::Texture3D { depth } => diligent_sys::TextureDesc__bindgen_ty_1 {
-                    Depth: depth.get() as u32,
+                MipLevels: mip_levels,
+                SampleCount: sample_count,
+                BindFlags: bind_flags.bits(),
+                Usage: usage.into(),
+                CPUAccessFlags: cpu_access_flags.bits(),
+                MiscFlags: misc_flags.bits(),
+                ClearValue: diligent_sys::OptimizedClearValue {
+                    Color: clear_color,
+                    DepthStencil: diligent_sys::DepthStencilClearValue {
+                        Depth: clear_depth,
+                        Stencil: clear_stencil,
+                    },
+                    Format: format.into(),
                 },
-                _ => diligent_sys::TextureDesc__bindgen_ty_1 { ArraySize: 1 },
+                ImmediateContextMask: immediate_context_mask,
+                __bindgen_anon_1: match dimension {
+                    TextureDimension::Texture1DArray { array_size }
+                    | TextureDimension::Texture2DArray { array_size }
+                    | TextureDimension::TextureCubeArray { array_size } => {
+                        diligent_sys::TextureDesc__bindgen_ty_1 {
+                            ArraySize: array_size.get() as u32,
+                        }
+                    }
+                    TextureDimension::Texture3D { depth } => {
+                        diligent_sys::TextureDesc__bindgen_ty_1 {
+                            Depth: depth.get() as u32,
+                        }
+                    }
+                    _ => diligent_sys::TextureDesc__bindgen_ty_1 { ArraySize: 1 },
+                },
             },
-        })
+            PhantomData,
+        )
     }
 }
 
-impl TextureDesc {
+impl TextureDesc<'_> {
     pub fn dimension(&self) -> TextureDimension {
         let array_size =
             || NonZero::new(unsafe { self.0.__bindgen_anon_1.ArraySize as usize }).unwrap();
@@ -340,7 +345,7 @@ impl TextureDesc {
     }
 }
 
-impl TextureDesc {
+impl TextureDesc<'_> {
     pub fn mip_level_logical_width(&self, mip_level: u32) -> u32 {
         u32::max(self.width() >> mip_level, 1)
     }
@@ -442,7 +447,7 @@ define_ported!(
 );
 
 impl Texture {
-    pub fn desc(&self) -> &TextureDesc {
+    pub fn desc(&self) -> &TextureDesc<'_> {
         let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
         unsafe { &*(desc_ptr as *const TextureDesc) }
     }

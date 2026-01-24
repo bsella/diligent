@@ -132,6 +132,13 @@ impl SampleBase for Cube {
             .dsv_format(swap_chain_desc.depth_buffer_format())
             .build();
 
+        let input_layouts = input_layouts![
+            // Attribute 0 - vertex position
+            LayoutElement::builder().slot(0).f32_3(),
+            // Attribute 1 - vertex color
+            LayoutElement::builder().slot(0).f32_4(),
+        ];
+
         // Pipeline state object encompasses configuration of all GPU stages
         let pso_create_info = PipelineStateCreateInfo::builder()
             // Define variable type that will be used by default
@@ -147,12 +154,7 @@ impl SampleBase for Cube {
                     // Primitive topology defines what kind of primitives will be rendered by this pipeline state
                     .primitive_topology(PrimitiveTopology::TriangleList)
                     // Define vertex shader input layout
-                    .input_layouts(&input_layouts![
-                        // Attribute 0 - vertex position
-                        LayoutElement::builder().slot(0).f32_3(),
-                        // Attribute 1 - vertex color
-                        LayoutElement::builder().slot(0).f32_4(),
-                    ])
+                    .input_layouts(&input_layouts)
                     .build(),
             )
             .vertex_shader(&vertex_shader)

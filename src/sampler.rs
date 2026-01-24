@@ -1,4 +1,4 @@
-use std::ffi::CStr;
+use std::{ffi::CStr, marker::PhantomData};
 
 use bitflags::bitflags;
 use static_assertions::const_assert_eq;
@@ -27,13 +27,13 @@ impl Default for SamplerFlags {
 }
 
 #[repr(transparent)]
-pub struct SamplerDesc(pub(crate) diligent_sys::SamplerDesc);
+pub struct SamplerDesc<'name>(pub(crate) diligent_sys::SamplerDesc, PhantomData<&'name ()>);
 
 #[bon::bon]
-impl SamplerDesc {
+impl<'name> SamplerDesc<'name> {
     #[builder]
     pub fn new(
-        name: Option<&CStr>,
+        name: Option<&'name CStr>,
 
         #[builder(default = FilterType::Linear)] min_filter: FilterType,
 
@@ -63,32 +63,35 @@ impl SamplerDesc {
 
         #[builder(default = f32::MAX)] max_lod: f32,
     ) -> Self {
-        Self(diligent_sys::SamplerDesc {
-            _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                Name: name.as_ref().map_or(std::ptr::null(), |name| name.as_ptr()),
+        Self(
+            diligent_sys::SamplerDesc {
+                _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
+                    Name: name.as_ref().map_or(std::ptr::null(), |name| name.as_ptr()),
+                },
+                MinFilter: min_filter.into(),
+                MagFilter: mag_filter.into(),
+                MipFilter: mip_filter.into(),
+                AddressU: address_u.into(),
+                AddressV: address_v.into(),
+                AddressW: address_w.into(),
+                Flags: flags.bits() as _,
+                UnnormalizedCoords: unnormalized_coords,
+                MipLODBias: mip_lod_bias,
+                MaxAnisotropy: max_anisotropy,
+                ComparisonFunc: comparison_func.into(),
+                BorderColor: border_color,
+                MinLOD: min_lod,
+                MaxLOD: max_lod,
             },
-            MinFilter: min_filter.into(),
-            MagFilter: mag_filter.into(),
-            MipFilter: mip_filter.into(),
-            AddressU: address_u.into(),
-            AddressV: address_v.into(),
-            AddressW: address_w.into(),
-            Flags: flags.bits() as _,
-            UnnormalizedCoords: unnormalized_coords,
-            MipLODBias: mip_lod_bias,
-            MaxAnisotropy: max_anisotropy,
-            ComparisonFunc: comparison_func.into(),
-            BorderColor: border_color,
-            MinLOD: min_lod,
-            MaxLOD: max_lod,
-        })
+            PhantomData,
+        )
     }
 }
 
 define_ported!(Sampler, diligent_sys::ISampler, DeviceObject);
 
 impl Sampler {
-    pub fn desc(&self) -> &SamplerDesc {
+    pub fn desc(&self) -> &SamplerDesc<'_> {
         let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
         unsafe { &*(desc_ptr as *const SamplerDesc) }
     }

@@ -1,4 +1,7 @@
-use std::ffi::{CStr, CString};
+use std::{
+    ffi::{CStr, CString},
+    marker::PhantomData,
+};
 
 use bitflags::bitflags;
 
@@ -19,18 +22,27 @@ bitflags! {
 }
 
 #[repr(transparent)]
-pub struct ShaderBindingTableDesc(pub(crate) diligent_sys::ShaderBindingTableDesc);
+pub struct ShaderBindingTableDesc<'name, 'pipeline_state>(
+    pub(crate) diligent_sys::ShaderBindingTableDesc,
+    PhantomData<(&'name (), &'pipeline_state ())>,
+);
 
 #[bon::bon]
-impl ShaderBindingTableDesc {
+impl<'name, 'pipeline_state> ShaderBindingTableDesc<'name, 'pipeline_state> {
     #[builder]
-    pub fn new(name: Option<&CStr>, raytracing_pso: &RayTracingPipelineState) -> Self {
-        Self(diligent_sys::ShaderBindingTableDesc {
-            _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                Name: name.map_or(std::ptr::null(), |name| name.as_ptr()),
+    pub fn new(
+        name: Option<&'name CStr>,
+        raytracing_pso: &'pipeline_state RayTracingPipelineState,
+    ) -> Self {
+        Self(
+            diligent_sys::ShaderBindingTableDesc {
+                _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
+                    Name: name.map_or(std::ptr::null(), |name| name.as_ptr()),
+                },
+                pPSO: raytracing_pso.sys_ptr(),
             },
-            pPSO: raytracing_pso.sys_ptr(),
-        })
+            PhantomData,
+        )
     }
 }
 
@@ -42,7 +54,7 @@ define_ported!(
 );
 
 impl ShaderBindingTable {
-    pub fn desc(&self) -> &ShaderBindingTableDesc {
+    pub fn desc(&self) -> &ShaderBindingTableDesc<'_, '_> {
         let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
         unsafe { &*(desc_ptr as *const ShaderBindingTableDesc) }
     }

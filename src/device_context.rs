@@ -283,13 +283,16 @@ impl DrawIndexedAttribs {
 }
 
 #[repr(transparent)]
-pub struct DrawIndirectAttribs<'a>(diligent_sys::DrawIndirectAttribs, PhantomData<&'a ()>);
+pub struct DrawIndirectAttribs<'attibs_buffer>(
+    diligent_sys::DrawIndirectAttribs,
+    PhantomData<&'attibs_buffer ()>,
+);
 
 #[bon::bon]
-impl<'a> DrawIndirectAttribs<'a> {
+impl<'attibs_buffer> DrawIndirectAttribs<'attibs_buffer> {
     #[builder]
     pub fn new(
-        attribs_buffer: &'a Buffer,
+        attribs_buffer: &'attibs_buffer Buffer,
 
         #[builder(default = 0)] draw_args_offset: u64,
 
@@ -328,18 +331,18 @@ impl<'a> DrawIndirectAttribs<'a> {
 }
 
 #[repr(transparent)]
-pub struct DrawIndexedIndirectAttribs<'a>(
+pub struct DrawIndexedIndirectAttribs<'attibs_buffer, 'counter_buffer>(
     diligent_sys::DrawIndexedIndirectAttribs,
-    PhantomData<&'a ()>,
+    PhantomData<(&'attibs_buffer (), &'counter_buffer ())>,
 );
 
 #[bon::bon]
-impl<'a> DrawIndexedIndirectAttribs<'a> {
+impl<'attibs_buffer, 'counter_buffer> DrawIndexedIndirectAttribs<'attibs_buffer, 'counter_buffer> {
     #[builder]
     pub fn new(
         index_type: ValueType,
 
-        attribs_buffer: &'a Buffer,
+        attribs_buffer: &'attibs_buffer Buffer,
 
         #[builder(default = 0)] draw_args_offset: u64,
 
@@ -352,7 +355,7 @@ impl<'a> DrawIndexedIndirectAttribs<'a> {
         #[builder(default = ResourceStateTransitionMode::None)]
         attribs_buffer_state_transition_mode: ResourceStateTransitionMode,
 
-        counter_buffer: Option<&'a Buffer>,
+        counter_buffer: Option<&'counter_buffer Buffer>,
 
         #[builder(default = 0)] counter_offset: u64,
 
@@ -403,13 +406,16 @@ impl DrawMeshAttribs {
 }
 
 #[repr(transparent)]
-pub struct DrawMeshIndirectAttribs<'a>(diligent_sys::DrawMeshIndirectAttribs, PhantomData<&'a ()>);
+pub struct DrawMeshIndirectAttribs<'attibs_buffer, 'counter_buffer>(
+    diligent_sys::DrawMeshIndirectAttribs,
+    PhantomData<(&'attibs_buffer (), &'counter_buffer ())>,
+);
 
 #[bon::bon]
-impl<'a> DrawMeshIndirectAttribs<'a> {
+impl<'attibs_buffer, 'counter_buffer> DrawMeshIndirectAttribs<'attibs_buffer, 'counter_buffer> {
     #[builder]
     pub fn new(
-        attribs_buffer: &'a Buffer,
+        attribs_buffer: &'attibs_buffer Buffer,
 
         #[builder(default = 0)] draw_args_offset: u64,
 
@@ -420,7 +426,7 @@ impl<'a> DrawMeshIndirectAttribs<'a> {
         #[builder(default = ResourceStateTransitionMode::None)]
         attribs_buffer_state_transition_mode: ResourceStateTransitionMode,
 
-        counter_buffer: Option<&'a Buffer>,
+        counter_buffer: Option<&'counter_buffer Buffer>,
 
         #[builder(default = 0)] counter_offset: u64,
 
@@ -459,13 +465,16 @@ impl MultiDrawItem {
 }
 
 #[repr(transparent)]
-pub struct MultiDrawAttribs(diligent_sys::MultiDrawAttribs);
+pub struct MultiDrawAttribs<'draw_items>(
+    diligent_sys::MultiDrawAttribs,
+    PhantomData<&'draw_items ()>,
+);
 
 #[bon::bon]
-impl MultiDrawAttribs {
+impl<'draw_items> MultiDrawAttribs<'draw_items> {
     #[builder]
     pub fn new(
-        draw_items: &[MultiDrawItem],
+        draw_items: &'draw_items [MultiDrawItem],
 
         #[builder(default = DrawFlags::None)] flags: DrawFlags,
 
@@ -473,13 +482,16 @@ impl MultiDrawAttribs {
 
         #[builder(default = 0)] first_instance_location: u32,
     ) -> Self {
-        Self(diligent_sys::MultiDrawAttribs {
-            DrawCount: draw_items.len() as u32,
-            pDrawItems: draw_items.first().map_or(std::ptr::null(), |item| &item.0),
-            Flags: flags.bits(),
-            NumInstances: num_instances,
-            FirstInstanceLocation: first_instance_location,
-        })
+        Self(
+            diligent_sys::MultiDrawAttribs {
+                DrawCount: draw_items.len() as u32,
+                pDrawItems: draw_items.first().map_or(std::ptr::null(), |item| &item.0),
+                Flags: flags.bits(),
+                NumInstances: num_instances,
+                FirstInstanceLocation: first_instance_location,
+            },
+            PhantomData,
+        )
     }
 }
 
@@ -498,13 +510,16 @@ impl MultiDrawIndexedItem {
 }
 
 #[repr(transparent)]
-pub struct MultiDrawIndexedAttribs(diligent_sys::MultiDrawIndexedAttribs);
+pub struct MultiDrawIndexedAttribs<'draw_items>(
+    diligent_sys::MultiDrawIndexedAttribs,
+    PhantomData<&'draw_items ()>,
+);
 
 #[bon::bon]
-impl MultiDrawIndexedAttribs {
+impl<'draw_items> MultiDrawIndexedAttribs<'draw_items> {
     #[builder]
     pub fn new(
-        draw_items: &[MultiDrawIndexedItem],
+        draw_items: &'draw_items [MultiDrawIndexedItem],
 
         index_type: ValueType,
 
@@ -514,14 +529,17 @@ impl MultiDrawIndexedAttribs {
 
         #[builder(default = 0)] first_instance_location: u32,
     ) -> Self {
-        Self(diligent_sys::MultiDrawIndexedAttribs {
-            DrawCount: draw_items.len() as u32,
-            pDrawItems: draw_items.first().map_or(std::ptr::null(), |item| &item.0),
-            IndexType: index_type.into(),
-            Flags: flags.bits(),
-            NumInstances: num_instances,
-            FirstInstanceLocation: first_instance_location,
-        })
+        Self(
+            diligent_sys::MultiDrawIndexedAttribs {
+                DrawCount: draw_items.len() as u32,
+                pDrawItems: draw_items.first().map_or(std::ptr::null(), |item| &item.0),
+                IndexType: index_type.into(),
+                Flags: flags.bits(),
+                NumInstances: num_instances,
+                FirstInstanceLocation: first_instance_location,
+            },
+            PhantomData,
+        )
     }
 }
 
@@ -570,16 +588,16 @@ impl DispatchComputeAttribs {
 }
 
 #[repr(transparent)]
-pub struct DispatchComputeIndirectAttribs<'a>(
+pub struct DispatchComputeIndirectAttribs<'attibs_buffer>(
     diligent_sys::DispatchComputeIndirectAttribs,
-    PhantomData<&'a ()>,
+    PhantomData<&'attibs_buffer ()>,
 );
 
 #[bon::bon]
-impl<'a> DispatchComputeIndirectAttribs<'a> {
+impl<'attibs_buffer> DispatchComputeIndirectAttribs<'attibs_buffer> {
     #[builder]
     pub fn new(
-        attribs_buffer: &'a Buffer,
+        attribs_buffer: &'attibs_buffer Buffer,
 
         #[builder(default = ResourceStateTransitionMode::None)]
         attribs_buffer_state_transition_mode: ResourceStateTransitionMode,
@@ -803,12 +821,12 @@ impl<'a> BuildBLASAttribs<'a> {
 }
 
 #[repr(transparent)]
-pub struct BuildTLASAttribs<'a>(
+pub struct BuildTLASAttribs<'a, 'tlas_instance_name, 'blas>(
     pub(crate) diligent_sys::BuildTLASAttribs,
-    PhantomData<&'a ()>,
+    PhantomData<(&'a (), &'tlas_instance_name (), &'blas ())>,
 );
 #[bon::bon]
-impl<'a> BuildTLASAttribs<'a> {
+impl<'a, 'tlas_instance_name, 'blas> BuildTLASAttribs<'a, 'tlas_instance_name, 'blas> {
     #[builder]
     pub fn new(
         tlas: &'a TopLevelAS,
@@ -819,7 +837,7 @@ impl<'a> BuildTLASAttribs<'a> {
         #[builder(default = ResourceStateTransitionMode::None)]
         blas_transition_mode: ResourceStateTransitionMode,
 
-        instances: &'a [TLASBuildInstanceData<'a>],
+        instances: &'a [TLASBuildInstanceData<'tlas_instance_name, 'blas>],
 
         instance_buffer: &'a Buffer,
 
@@ -1966,33 +1984,33 @@ impl DeviceContext {
         )
     }
 
-    pub fn map_buffer_read<'a, T: Sized>(
-        &'a self,
-        buffer: &'a Buffer,
+    pub fn map_buffer_read<'buffer, T: Sized>(
+        &self,
+        buffer: &'buffer Buffer,
         map_flags: MapFlags,
-    ) -> BufferMapReadToken<'a, T>
+    ) -> BufferMapReadToken<'_, 'buffer, T>
     where
         Self: Sized,
     {
         BufferMapReadToken::new(self, buffer, map_flags.bits())
     }
 
-    pub fn map_buffer_write<'a, T: Sized>(
-        &'a self,
-        buffer: &'a Buffer,
+    pub fn map_buffer_write<'buffer, T: Sized>(
+        &self,
+        buffer: &'buffer Buffer,
         map_flags: MapFlags,
-    ) -> BufferMapWriteToken<'a, T>
+    ) -> BufferMapWriteToken<'_, 'buffer, T>
     where
         Self: Sized,
     {
         BufferMapWriteToken::new(self, buffer, map_flags.bits())
     }
 
-    pub fn map_buffer_read_write<'a, T: Sized>(
-        &'a self,
-        buffer: &'a Buffer,
+    pub fn map_buffer_read_write<'buffer, T: Sized>(
+        &self,
+        buffer: &'buffer Buffer,
         map_flags: MapFlags,
-    ) -> BufferMapReadWriteToken<'a, T>
+    ) -> BufferMapReadWriteToken<'_, 'buffer, T>
     where
         Self: Sized,
     {
@@ -2130,7 +2148,10 @@ impl DeviceContext {
         unsafe_member_call!(self, DeviceContext, BuildBLAS, &attribs.0)
     }
 
-    pub fn build_tlas<'a>(&self, attribs: &BuildTLASAttribs<'a>) {
+    pub fn build_tlas<'a, 'tlas_instance_name, 'blas>(
+        &self,
+        attribs: &BuildTLASAttribs<'a, 'tlas_instance_name, 'blas>,
+    ) {
         unsafe_member_call!(self, DeviceContext, BuildTLAS, &attribs.0)
     }
 
@@ -2253,17 +2274,17 @@ impl ImmediateDeviceContext {
         unsafe_member_call!(self.0, DeviceContext, UnlockCommandQueue);
     }
 
-    pub fn begin_query<'a, QueryDataType: GetSysQueryType>(
-        &'a self,
-        query: &'a Query<QueryDataType>,
-    ) -> ScopedQueryToken<'a, QueryDataType> {
+    pub fn begin_query<'query, QueryDataType: GetSysQueryType>(
+        &self,
+        query: &'query Query<QueryDataType>,
+    ) -> ScopedQueryToken<'query, '_, QueryDataType> {
         ScopedQueryToken::<QueryDataType>::new(self, query)
     }
 
-    pub fn query_timestamp<'a>(
-        &'a self,
-        query: &'a DurationQueryHelper,
-    ) -> TimeStampQueryToken<'a> {
+    pub fn query_timestamp<'query>(
+        &self,
+        query: &'query DurationQueryHelper,
+    ) -> TimeStampQueryToken<'query, '_> {
         TimeStampQueryToken::new(query, self)
     }
 

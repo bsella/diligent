@@ -21,18 +21,24 @@ use crate::{
 };
 
 #[repr(transparent)]
-pub struct ImmutableSamplerDesc<'a>(
+pub struct ImmutableSamplerDesc<'sampler_or_texture_name, 'sampler_name, 'sampler_desc>(
     pub(crate) diligent_sys::ImmutableSamplerDesc,
-    PhantomData<&'a ()>,
+    PhantomData<(
+        &'sampler_or_texture_name (),
+        &'sampler_name (),
+        &'sampler_desc (),
+    )>,
 );
 
 #[bon::bon]
-impl<'a> ImmutableSamplerDesc<'a> {
+impl<'sampler_or_texture_name, 'sampler_name, 'sampler_desc>
+    ImmutableSamplerDesc<'sampler_or_texture_name, 'sampler_name, 'sampler_desc>
+{
     #[builder]
     pub fn new(
         shader_stages: ShaderTypes,
-        sampler_or_texture_name: &'a CStr,
-        sampler_desc: &'a SamplerDesc,
+        sampler_or_texture_name: &'sampler_or_texture_name CStr,
+        sampler_desc: &'sampler_desc SamplerDesc<'sampler_name>,
     ) -> Self {
         ImmutableSamplerDesc(
             diligent_sys::ImmutableSamplerDesc {
@@ -66,13 +72,13 @@ bitflags! {
 const_assert_eq!(diligent_sys::PIPELINE_RESOURCE_FLAG_LAST, 16);
 
 #[repr(transparent)]
-pub struct PipelineResourceDesc<'a>(diligent_sys::PipelineResourceDesc, PhantomData<&'a ()>);
+pub struct PipelineResourceDesc<'name>(diligent_sys::PipelineResourceDesc, PhantomData<&'name ()>);
 
 #[bon::bon]
-impl<'a> PipelineResourceDesc<'a> {
+impl<'name> PipelineResourceDesc<'name> {
     #[builder]
     pub fn new(
-        name: &'a CStr,
+        name: &'name CStr,
         shader_stages: ShaderTypes,
         array_size: u32,
         resource_type: Option<ShaderResourceType>,
@@ -105,52 +111,63 @@ impl<'a> PipelineResourceDesc<'a> {
 }
 
 #[repr(transparent)]
-pub struct PipelineResourceSignatureDesc<'a>(
+pub struct PipelineResourceSignatureDesc<
+    'name,
+    'resources,
+    'resource_name,
+    'sampler_suffix,
+    'sampler_or_texture_name,
+    'sampler_name,
+    'sampler_desc,
+    'immutable_samplers,
+>(
     pub(crate) diligent_sys::PipelineResourceSignatureDesc,
-    PhantomData<&'a ()>,
+    PhantomData<(
+        &'name (),
+        &'resources (),
+        &'resource_name (),
+        &'sampler_suffix (),
+        &'sampler_or_texture_name (),
+        &'sampler_name (),
+        &'sampler_desc (),
+        &'immutable_samplers (),
+    )>,
 );
 
-impl PipelineResourceSignatureDesc<'_> {
-    pub fn resources(&self) -> &[PipelineResourceDesc<'_>] {
-        unsafe {
-            std::slice::from_raw_parts(
-                self.0.Resources as *const PipelineResourceDesc,
-                self.0.NumResources as usize,
-            )
-        }
-    }
-    pub fn immutable_samplers(&self) -> &[ImmutableSamplerDesc<'_>] {
-        unsafe {
-            std::slice::from_raw_parts(
-                self.0.ImmutableSamplers as *const ImmutableSamplerDesc,
-                self.0.NumImmutableSamplers as usize,
-            )
-        }
-    }
-    pub fn binding_index(&self) -> u8 {
-        self.0.BindingIndex
-    }
-    pub fn use_combined_texture_samplers(&self) -> bool {
-        self.0.UseCombinedTextureSamplers
-    }
-    pub fn combined_sampler_suffix(&self) -> &CStr {
-        unsafe { CStr::from_ptr(self.0.CombinedSamplerSuffix) }
-    }
-    pub fn srb_allocation_granularity(&self) -> u32 {
-        self.0.SRBAllocationGranularity
-    }
-}
-
 #[bon::bon]
-impl<'a> PipelineResourceSignatureDesc<'a> {
+impl<
+    'name,
+    'resources,
+    'resource_name,
+    'sampler_suffix,
+    'sampler_or_texture_name,
+    'sampler_name,
+    'sampler_desc,
+    'immutable_samplers,
+>
+    PipelineResourceSignatureDesc<
+        'name,
+        'resources,
+        'resource_name,
+        'sampler_suffix,
+        'sampler_or_texture_name,
+        'sampler_name,
+        'sampler_desc,
+        'immutable_samplers,
+    >
+{
     #[builder]
     pub fn new(
-        name: &'a CStr,
-        resources: &'a [PipelineResourceDesc<'a>],
-        immutable_samplers: &'a [ImmutableSamplerDesc<'a>],
+        name: &'name CStr,
+        resources: &'resources [PipelineResourceDesc<'resource_name>],
+        immutable_samplers: &'immutable_samplers [ImmutableSamplerDesc<
+            'sampler_or_texture_name,
+            'sampler_name,
+            'sampler_desc,
+        >],
         binding_index: u8,
         use_combined_texture_samplers: bool,
-        combined_sampler_suffix: &'a CStr,
+        combined_sampler_suffix: &'sampler_suffix CStr,
         srb_allocation_granularity: u32,
     ) -> Self {
         PipelineResourceSignatureDesc(
@@ -180,8 +197,39 @@ impl<'a> PipelineResourceSignatureDesc<'a> {
     }
 }
 
+impl PipelineResourceSignatureDesc<'_, '_, '_, '_, '_, '_, '_, '_> {
+    pub fn resources(&self) -> &[PipelineResourceDesc<'_>] {
+        unsafe {
+            std::slice::from_raw_parts(
+                self.0.Resources as *const PipelineResourceDesc,
+                self.0.NumResources as usize,
+            )
+        }
+    }
+    pub fn immutable_samplers(&self) -> &[ImmutableSamplerDesc<'_, '_, '_>] {
+        unsafe {
+            std::slice::from_raw_parts(
+                self.0.ImmutableSamplers as *const ImmutableSamplerDesc,
+                self.0.NumImmutableSamplers as usize,
+            )
+        }
+    }
+    pub fn binding_index(&self) -> u8 {
+        self.0.BindingIndex
+    }
+    pub fn use_combined_texture_samplers(&self) -> bool {
+        self.0.UseCombinedTextureSamplers
+    }
+    pub fn combined_sampler_suffix(&self) -> &CStr {
+        unsafe { CStr::from_ptr(self.0.CombinedSamplerSuffix) }
+    }
+    pub fn srb_allocation_granularity(&self) -> u32 {
+        self.0.SRBAllocationGranularity
+    }
+}
+
 impl PipelineResourceSignature {
-    pub fn desc(&self) -> &PipelineResourceSignatureDesc<'_> {
+    pub fn desc(&self) -> &PipelineResourceSignatureDesc<'_, '_, '_, '_, '_, '_, '_, '_> {
         let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
         unsafe { &*(desc_ptr as *const PipelineResourceSignatureDesc) }
     }

@@ -93,17 +93,17 @@ impl TLASBuildInfo {
 }
 
 #[repr(transparent)]
-pub struct TLASBuildInstanceData<'a>(
+pub struct TLASBuildInstanceData<'instance_name, 'blas>(
     pub(crate) diligent_sys::TLASBuildInstanceData,
-    PhantomData<&'a ()>,
+    PhantomData<(&'instance_name (), &'blas ())>,
 );
 #[bon::bon]
-impl<'a> TLASBuildInstanceData<'a> {
+impl<'instance_name, 'blas> TLASBuildInstanceData<'instance_name, 'blas> {
     #[builder]
     pub fn new(
-        instance_name: &'a CStr,
+        instance_name: &'instance_name CStr,
 
-        blas: &'a BottomLevelAS,
+        blas: &'blas BottomLevelAS,
 
         transform: &[f32; 4 * 3],
 
@@ -138,13 +138,16 @@ impl<'a> TLASBuildInstanceData<'a> {
 }
 
 #[repr(transparent)]
-pub struct TopLevelASDesc(pub(crate) diligent_sys::TopLevelASDesc);
+pub struct TopLevelASDesc<'name>(
+    pub(crate) diligent_sys::TopLevelASDesc,
+    PhantomData<&'name ()>,
+);
 
 #[bon::bon]
-impl TopLevelASDesc {
+impl<'name> TopLevelASDesc<'name> {
     #[builder]
     pub fn new(
-        name: Option<&CStr>,
+        name: Option<&'name CStr>,
 
         #[builder(default = 0)] max_instance_count: usize,
 
@@ -154,15 +157,18 @@ impl TopLevelASDesc {
 
         #[builder(default = 1)] immediate_context_mask: u64,
     ) -> Self {
-        Self(diligent_sys::TopLevelASDesc {
-            _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                Name: name.as_ref().map_or(std::ptr::null(), |name| name.as_ptr()),
+        Self(
+            diligent_sys::TopLevelASDesc {
+                _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
+                    Name: name.as_ref().map_or(std::ptr::null(), |name| name.as_ptr()),
+                },
+                MaxInstanceCount: max_instance_count as u32,
+                Flags: flags.bits(),
+                CompactedSize: compacted_size,
+                ImmediateContextMask: immediate_context_mask,
             },
-            MaxInstanceCount: max_instance_count as u32,
-            Flags: flags.bits(),
-            CompactedSize: compacted_size,
-            ImmediateContextMask: immediate_context_mask,
-        })
+            PhantomData,
+        )
     }
 }
 
@@ -174,7 +180,7 @@ define_ported!(
 );
 
 impl TopLevelAS {
-    pub fn desc(&self) -> &TopLevelASDesc {
+    pub fn desc(&self) -> &TopLevelASDesc<'_> {
         let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
         unsafe { &*(desc_ptr as *const TopLevelASDesc) }
     }

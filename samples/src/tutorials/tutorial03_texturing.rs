@@ -136,23 +136,34 @@ impl SampleBase for Texturing {
         let mut rtv_formats = std::array::from_fn(|_| None);
         rtv_formats[0] = Some(swap_chain_desc.color_buffer_format());
 
+        let shader_resource_variables = [ShaderResourceVariableDesc::builder()
+            .name(c"g_Texture")
+            .variable_type(ShaderResourceVariableType::Mutable)
+            .shader_stages(ShaderTypes::Pixel)
+            .build()];
+
+        let immutable_samplers = [ImmutableSamplerDesc::builder()
+            .shader_stages(ShaderTypes::Pixel)
+            .sampler_or_texture_name(c"g_Texture")
+            .sampler_desc(&sampler_desc)
+            .build()];
+
+        let input_layouts = input_layouts![
+            // Attribute 0 - vertex position
+            LayoutElement::builder().slot(0).f32_3(),
+            // Attribute 1 - vertex color
+            LayoutElement::builder().slot(0).f32_2(),
+        ];
+
         // Pipeline state object encompasses configuration of all GPU stages
         let pso_create_info = PipelineStateCreateInfo::builder()
             // Define variable type that will be used by default
             .default_variable_type(ShaderResourceVariableType::Static)
             // Shader variables should typically be mutable, which means they are expected
             // to change on a per-instance basis
-            .shader_resource_variables(&[ShaderResourceVariableDesc::builder()
-                .name(c"g_Texture")
-                .variable_type(ShaderResourceVariableType::Mutable)
-                .shader_stages(ShaderTypes::Pixel)
-                .build()])
+            .shader_resource_variables(&shader_resource_variables)
             // Define immutable sampler for g_Texture. Immutable samplers should be used whenever possible
-            .immutable_samplers(&[ImmutableSamplerDesc::builder()
-                .shader_stages(ShaderTypes::Pixel)
-                .sampler_or_texture_name(c"g_Texture")
-                .sampler_desc(&sampler_desc)
-                .build()])
+            .immutable_samplers(&immutable_samplers)
             .name(c"Cube PSO")
             .graphics()
             .graphics_pipeline_desc(
@@ -171,12 +182,7 @@ impl SampleBase for Texturing {
                     // Primitive topology defines what kind of primitives will be rendered by this pipeline state
                     .primitive_topology(PrimitiveTopology::TriangleList)
                     // Define vertex shader input layout
-                    .input_layouts(&input_layouts![
-                        // Attribute 0 - vertex position
-                        LayoutElement::builder().slot(0).f32_3(),
-                        // Attribute 1 - vertex color
-                        LayoutElement::builder().slot(0).f32_2(),
-                    ])
+                    .input_layouts(&input_layouts)
                     .build(),
             )
             .vertex_shader(&vertex_shader)

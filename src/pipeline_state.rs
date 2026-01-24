@@ -349,7 +349,7 @@ impl PipelineResourceLayoutDesc {
             )
         }
     }
-    pub fn immutable_samplers(&self) -> &[ImmutableSamplerDesc<'_>] {
+    pub fn immutable_samplers(&self) -> &[ImmutableSamplerDesc<'_, '_, '_>] {
         unsafe {
             std::slice::from_raw_parts(
                 self.0.ImmutableSamplers as *const ImmutableSamplerDesc,
@@ -382,18 +382,64 @@ impl PipelineStateDesc {
 
 #[repr(transparent)]
 #[derive(Clone)]
-pub struct PipelineStateCreateInfo<'a>(
+pub struct PipelineStateCreateInfo<
+    'name,
+    'variable_names,
+    'pso_cache,
+    'sampler_or_texture_name,
+    'sampler_name,
+    'sampler_desc,
+    'shader_resource_variables,
+    'immutable_samplers,
+    'resource_signature,
+    'resource_signatures,
+>(
     pub(crate) diligent_sys::PipelineStateCreateInfo,
-    PhantomData<&'a ()>,
+    PhantomData<(
+        &'name (),
+        &'variable_names (),
+        &'pso_cache (),
+        &'sampler_or_texture_name (),
+        &'sampler_name (),
+        &'sampler_desc (),
+        &'shader_resource_variables (),
+        &'immutable_samplers (),
+        &'resource_signature (),
+        &'resource_signatures (),
+    )>,
 );
 
 #[bon::bon]
-impl<'a> PipelineStateCreateInfo<'a> {
+impl<
+    'name,
+    'variable_names,
+    'pso_cache,
+    'sampler_or_texture_name,
+    'sampler_name,
+    'sampler_desc,
+    'shader_resource_variables,
+    'immutable_samplers,
+    'resource_signature,
+    'resource_signatures,
+>
+    PipelineStateCreateInfo<
+        'name,
+        'variable_names,
+        'pso_cache,
+        'sampler_or_texture_name,
+        'sampler_name,
+        'sampler_desc,
+        'shader_resource_variables,
+        'immutable_samplers,
+        'resource_signature,
+        'resource_signatures,
+    >
+{
     #[builder(derive(Clone))]
     pub fn new(
         #[builder(setters(vis = ""))] pipeline_type: diligent_sys::PIPELINE_TYPE,
 
-        name: Option<&'a CStr>,
+        name: Option<&'name CStr>,
 
         #[builder(default = 1)] srb_allocation_granularity: u32,
 
@@ -404,15 +450,21 @@ impl<'a> PipelineStateCreateInfo<'a> {
 
         default_variable_merge_stages: Option<ShaderTypes>,
 
-        #[builder(default = &[])] shader_resource_variables: &[ShaderResourceVariableDesc<'a>],
+        #[builder(default = &[])] shader_resource_variables: &'shader_resource_variables[ShaderResourceVariableDesc<
+            'variable_names,
+        >],
 
-        #[builder(default = &[])] immutable_samplers: &[ImmutableSamplerDesc<'a>],
+        #[builder(default = &[])] immutable_samplers: &'immutable_samplers [ImmutableSamplerDesc<
+            'sampler_or_texture_name,
+            'sampler_name,
+            'sampler_desc,
+        >],
 
         #[builder(default)] flags: PipelineStateObjectCreateFlags,
 
-        #[builder(default = &[])] resource_signatures: &[&'a PipelineResourceSignature],
+        #[builder(default = &[])] resource_signatures: &'resource_signatures[&'resource_signature PipelineResourceSignature],
 
-        pso_cache: Option<&'a PipelineStateCache>,
+        pso_cache: Option<&'pso_cache PipelineStateCache>,
     ) -> Self {
         PipelineStateCreateInfo(
             diligent_sys::PipelineStateCreateInfo {
@@ -459,26 +511,66 @@ impl<'a> PipelineStateCreateInfo<'a> {
 }
 
 impl<
-    'a,
+    'name,
+    'variable_names,
+    'pso_cache,
+    'sampler_or_texture_name,
+    'sampler_name,
+    'sampler_desc,
     'shader_resource_variables,
     'immutable_samplers,
+    'resource_signature,
     'resource_signatures,
     S: pipeline_state_create_info_builder::State,
 >
     PipelineStateCreateInfoBuilder<
-        'a,
+        'name,
+        'variable_names,
+        'pso_cache,
+        'sampler_or_texture_name,
+        'sampler_name,
+        'sampler_desc,
         'shader_resource_variables,
         'immutable_samplers,
+        'resource_signature,
         'resource_signatures,
         S,
     >
 where
     S::PipelineType: pipeline_state_create_info_builder::IsUnset,
 {
-    pub fn graphics(
+    pub fn graphics<
+        'input_layouts,
+        'render_pass,
+        'vertex_shader,
+        'pixel_shader,
+        'domain_shader,
+        'hull_shader,
+        'geometry_shader,
+        'amplification_shader,
+        'mesh_shader,
+    >(
         self,
     ) -> GraphicsPipelineStateCreateInfoBuilder<
-        'a,
+        'name,
+        'variable_names,
+        'pso_cache,
+        'sampler_or_texture_name,
+        'sampler_name,
+        'sampler_desc,
+        'shader_resource_variables,
+        'immutable_samplers,
+        'resource_signature,
+        'resource_signatures,
+        'input_layouts,
+        'render_pass,
+        'vertex_shader,
+        'pixel_shader,
+        'domain_shader,
+        'hull_shader,
+        'geometry_shader,
+        'amplification_shader,
+        'mesh_shader,
         graphics_pipeline_state_create_info_builder::SetPipelineStateCreateInfo,
     > {
         GraphicsPipelineStateCreateInfo::builder().pipeline_state_create_info(
@@ -487,10 +579,38 @@ where
         )
     }
 
-    pub fn mesh(
+    pub fn mesh<
+        'input_layouts,
+        'render_pass,
+        'vertex_shader,
+        'pixel_shader,
+        'domain_shader,
+        'hull_shader,
+        'geometry_shader,
+        'amplification_shader,
+        'mesh_shader,
+    >(
         self,
     ) -> GraphicsPipelineStateCreateInfoBuilder<
-        'a,
+        'name,
+        'variable_names,
+        'pso_cache,
+        'sampler_or_texture_name,
+        'sampler_name,
+        'sampler_desc,
+        'shader_resource_variables,
+        'immutable_samplers,
+        'resource_signature,
+        'resource_signatures,
+        'input_layouts,
+        'render_pass,
+        'vertex_shader,
+        'pixel_shader,
+        'domain_shader,
+        'hull_shader,
+        'geometry_shader,
+        'amplification_shader,
+        'mesh_shader,
         graphics_pipeline_state_create_info_builder::SetPipelineStateCreateInfo,
     > {
         GraphicsPipelineStateCreateInfo::builder().pipeline_state_create_info(
@@ -521,13 +641,46 @@ where
         )
     }
     #[cfg(not(feature = "d3d12"))]
-    pub fn raytracing<'general_shaders, 'triangle_hit_shaders, 'procedural_hit_shaders>(
+    pub fn raytracing<
+        'general_shader_groups,
+        'general_shader_name,
+        'general_shader,
+        'triangle_hit_shaders,
+        'triangle_hit_shader_group_name,
+        'triangle_closest_hit_shader,
+        'triangle_any_hit_shader,
+        'procedural_hit_shaders,
+        'procedural_hit_shader_group_name,
+        'procedural_intersection_shader,
+        'procedural_closest_hit_shader,
+        'procedural_any_hit_shader,
+        'shader_record_name,
+    >(
         self,
     ) -> RayTracingPipelineStateCreateInfoBuilder<
-        'a,
-        'general_shaders,
+        'name,
+        'variable_names,
+        'pso_cache,
+        'sampler_or_texture_name,
+        'sampler_name,
+        'sampler_desc,
+        'shader_resource_variables,
+        'immutable_samplers,
+        'resource_signature,
+        'resource_signatures,
+        'general_shader_groups,
+        'general_shader_name,
+        'general_shader,
         'triangle_hit_shaders,
+        'triangle_hit_shader_group_name,
+        'triangle_closest_hit_shader,
+        'triangle_any_hit_shader,
         'procedural_hit_shaders,
+        'procedural_hit_shader_group_name,
+        'procedural_intersection_shader,
+        'procedural_closest_hit_shader,
+        'procedural_any_hit_shader,
+        'shader_record_name,
         ray_tracing_pipeline_state_create_info_builder::SetPipelineStateCreateInfo,
     > {
         RayTracingPipelineStateCreateInfo::builder().pipeline_state_create_info(
@@ -536,10 +689,21 @@ where
         )
     }
 
-    pub fn tile(
+    pub fn tile<'shader, 'texture_formats>(
         self,
     ) -> TilePipelineStateCreateInfoBuilder<
-        'a,
+        'name,
+        'variable_names,
+        'pso_cache,
+        'sampler_or_texture_name,
+        'sampler_name,
+        'sampler_desc,
+        'shader_resource_variables,
+        'immutable_samplers,
+        'resource_signature,
+        'resource_signatures,
+        'shader,
+        'texture_formats,
         tile_pipeline_state_create_info_builder::SetPipelineStateCreateInfo,
     > {
         TilePipelineStateCreateInfo::builder().pipeline_state_create_info(
@@ -551,7 +715,16 @@ where
     pub fn compute<'shader>(
         self,
     ) -> ComputePipelineStateCreateInfoBuilder<
-        'a,
+        'name,
+        'variable_names,
+        'pso_cache,
+        'sampler_or_texture_name,
+        'sampler_name,
+        'sampler_desc,
+        'shader_resource_variables,
+        'immutable_samplers,
+        'resource_signature,
+        'resource_signatures,
         'shader,
         compute_pipeline_state_create_info_builder::SetPipelineStateCreateInfo,
     > {
@@ -783,13 +956,13 @@ impl Default for GraphicsPipelineRenderTargets {
 }
 
 #[derive(Clone)]
-pub struct GraphicsPipelineRenderPass<'a> {
-    render_pass: &'a RenderPass,
+pub struct GraphicsPipelineRenderPass<'render_pass> {
+    render_pass: &'render_pass RenderPass,
     subpass_index: u8,
 }
 
-impl<'a> GraphicsPipelineRenderPass<'a> {
-    pub fn new(render_pass: &'a RenderPass) -> Self {
+impl<'render_pass> GraphicsPipelineRenderPass<'render_pass> {
+    pub fn new(render_pass: &'render_pass RenderPass) -> Self {
         GraphicsPipelineRenderPass {
             render_pass,
             subpass_index: 0,
@@ -798,19 +971,21 @@ impl<'a> GraphicsPipelineRenderPass<'a> {
 }
 
 #[derive(Clone)]
-pub enum GraphicsPipelineOutput<'a> {
+pub enum GraphicsPipelineOutput<'render_pass> {
     RenderTargets(GraphicsPipelineRenderTargets),
-    RenderPass(GraphicsPipelineRenderPass<'a>),
+    RenderPass(GraphicsPipelineRenderPass<'render_pass>),
 }
 
-impl<'a> From<GraphicsPipelineRenderTargets> for GraphicsPipelineOutput<'a> {
+impl From<GraphicsPipelineRenderTargets> for GraphicsPipelineOutput<'_> {
     fn from(value: GraphicsPipelineRenderTargets) -> Self {
         GraphicsPipelineOutput::RenderTargets(value)
     }
 }
 
-impl<'a> From<GraphicsPipelineRenderPass<'a>> for GraphicsPipelineOutput<'a> {
-    fn from(value: GraphicsPipelineRenderPass<'a>) -> Self {
+impl<'render_pass> From<GraphicsPipelineRenderPass<'render_pass>>
+    for GraphicsPipelineOutput<'render_pass>
+{
+    fn from(value: GraphicsPipelineRenderPass<'render_pass>) -> Self {
         GraphicsPipelineOutput::RenderPass(value)
     }
 }
@@ -823,13 +998,13 @@ impl Default for GraphicsPipelineOutput<'_> {
 
 #[repr(transparent)]
 #[derive(Clone, Copy)]
-pub struct GraphicsPipelineDesc<'a>(
+pub struct GraphicsPipelineDesc<'input_layouts, 'render_pass>(
     pub(crate) diligent_sys::GraphicsPipelineDesc,
-    PhantomData<&'a ()>,
+    PhantomData<(&'input_layouts (), &'render_pass ())>,
 );
 
 #[bon::bon]
-impl<'a> GraphicsPipelineDesc<'a> {
+impl<'input_layouts, 'render_pass> GraphicsPipelineDesc<'input_layouts, 'render_pass> {
     #[builder]
     pub fn new(
         #[builder(default = BlendStateDesc::builder().build())] blend_desc: BlendStateDesc,
@@ -842,11 +1017,11 @@ impl<'a> GraphicsPipelineDesc<'a> {
 
         #[builder(into)]
         #[builder(default)]
-        output: GraphicsPipelineOutput<'a>,
+        output: GraphicsPipelineOutput<'render_pass>,
 
         #[builder(default = 0xFFFFFFFF)] sample_mask: u32,
 
-        #[builder(default = &[])] input_layouts: &[LayoutElement],
+        #[builder(default = &[])] input_layouts: &'input_layouts [LayoutElement],
 
         #[builder(default = PrimitiveTopology::TriangleList)] primitive_topology: PrimitiveTopology,
 
@@ -934,32 +1109,125 @@ impl<'a> GraphicsPipelineDesc<'a> {
 
 #[repr(transparent)]
 #[derive(Clone)]
-pub struct GraphicsPipelineStateCreateInfo<'a>(
+pub struct GraphicsPipelineStateCreateInfo<
+    'name,
+    'variable_names,
+    'pso_cache,
+    'sampler_or_texture_name,
+    'sampler_name,
+    'sampler_desc,
+    'shader_resource_variables,
+    'immutable_samplers,
+    'resource_signature,
+    'resource_signatures,
+    'input_layouts,
+    'render_pass,
+    'vertex_shader,
+    'pixel_shader,
+    'domain_shader,
+    'hull_shader,
+    'geometry_shader,
+    'amplification_shader,
+    'mesh_shader,
+>(
     pub(crate) diligent_sys::GraphicsPipelineStateCreateInfo,
-    PhantomData<&'a ()>,
+    PhantomData<(
+        &'name (),
+        &'variable_names (),
+        &'pso_cache (),
+        &'sampler_or_texture_name (),
+        &'sampler_name (),
+        &'sampler_desc (),
+        &'shader_resource_variables (),
+        &'immutable_samplers (),
+        &'resource_signature (),
+        &'resource_signatures (),
+        &'input_layouts (),
+        &'render_pass (),
+        &'vertex_shader (),
+        &'pixel_shader (),
+        &'domain_shader (),
+        &'hull_shader (),
+        &'geometry_shader (),
+        &'amplification_shader (),
+        &'mesh_shader (),
+    )>,
 );
 
 #[bon::bon]
-impl<'a> GraphicsPipelineStateCreateInfo<'a> {
+impl<
+    'name,
+    'variable_names,
+    'pso_cache,
+    'sampler_or_texture_name,
+    'sampler_name,
+    'sampler_desc,
+    'shader_resource_variables,
+    'immutable_samplers,
+    'resource_signature,
+    'resource_signatures,
+    'input_layouts,
+    'render_pass,
+    'vertex_shader,
+    'pixel_shader,
+    'domain_shader,
+    'hull_shader,
+    'geometry_shader,
+    'amplification_shader,
+    'mesh_shader,
+>
+    GraphicsPipelineStateCreateInfo<
+        'name,
+        'variable_names,
+        'pso_cache,
+        'sampler_or_texture_name,
+        'sampler_name,
+        'sampler_desc,
+        'shader_resource_variables,
+        'immutable_samplers,
+        'resource_signature,
+        'resource_signatures,
+        'input_layouts,
+        'render_pass,
+        'vertex_shader,
+        'pixel_shader,
+        'domain_shader,
+        'hull_shader,
+        'geometry_shader,
+        'amplification_shader,
+        'mesh_shader,
+    >
+{
     #[builder(derive(Clone))]
     pub fn new(
-        #[builder(setters(vis = ""))] pipeline_state_create_info: PipelineStateCreateInfo<'a>,
+        #[builder(setters(vis = ""))] pipeline_state_create_info: PipelineStateCreateInfo<
+            'name,
+            'variable_names,
+            'pso_cache,
+            'sampler_or_texture_name,
+            'sampler_name,
+            'sampler_desc,
+            'shader_resource_variables,
+            'immutable_samplers,
+            'resource_signature,
+            'resource_signatures,
+        >,
 
-        graphics_pipeline_desc: GraphicsPipelineDesc<'a>,
+        graphics_pipeline_desc: GraphicsPipelineDesc<'input_layouts, 'render_pass>,
 
-        vertex_shader: Option<&'a Shader>,
+        vertex_shader: Option<&'vertex_shader Shader>,
 
-        pixel_shader: Option<&'a Shader>,
+        pixel_shader: Option<&'pixel_shader Shader>,
 
-        domain_shader: Option<&'a Shader>,
+        domain_shader: Option<&'domain_shader Shader>,
 
-        hull_shader: Option<&'a Shader>,
+        hull_shader: Option<&'hull_shader Shader>,
 
-        geometry_shader: Option<&'a Shader>,
+        geometry_shader: Option<&'geometry_shader Shader>,
 
-        amplification_shader: Option<&'a Shader>,
+        amplification_shader: Option<&'amplification_shader Shader>,
 
-        mesh_shader: Option<&'a Shader>,
+        mesh_shader: Option<&'mesh_shader Shader>,
     ) -> Self {
         GraphicsPipelineStateCreateInfo(
             diligent_sys::GraphicsPipelineStateCreateInfo {
@@ -979,15 +1247,15 @@ impl<'a> GraphicsPipelineStateCreateInfo<'a> {
 }
 
 #[repr(transparent)]
-pub struct RayTracingGeneralShaderGroup<'a>(
+pub struct RayTracingGeneralShaderGroup<'name, 'shader>(
     pub(crate) diligent_sys::RayTracingGeneralShaderGroup,
-    PhantomData<&'a ()>,
+    PhantomData<(&'name (), &'shader ())>,
 );
 
 #[bon::bon]
-impl<'a> RayTracingGeneralShaderGroup<'a> {
+impl<'name, 'shader> RayTracingGeneralShaderGroup<'name, 'shader> {
     #[builder]
-    pub fn new(name: &CStr, shader: &Shader) -> Self {
+    pub fn new(name: &'name CStr, shader: &'shader Shader) -> Self {
         Self(
             diligent_sys::RayTracingGeneralShaderGroup {
                 Name: name.as_ptr(),
@@ -999,15 +1267,21 @@ impl<'a> RayTracingGeneralShaderGroup<'a> {
 }
 
 #[repr(transparent)]
-pub struct RayTracingTriangleHitShaderGroup<'a>(
+pub struct RayTracingTriangleHitShaderGroup<'name, 'closest_hit_shader, 'any_hit_shader>(
     pub(crate) diligent_sys::RayTracingTriangleHitShaderGroup,
-    PhantomData<&'a ()>,
+    PhantomData<(&'name (), &'closest_hit_shader (), &'any_hit_shader ())>,
 );
 
 #[bon::bon]
-impl<'a> RayTracingTriangleHitShaderGroup<'a> {
+impl<'name, 'closest_hit_shader, 'any_hit_shader>
+    RayTracingTriangleHitShaderGroup<'name, 'closest_hit_shader, 'any_hit_shader>
+{
     #[builder]
-    pub fn new(name: &CStr, closest: &Shader, any: Option<&'a Shader>) -> Self {
+    pub fn new(
+        name: &'name CStr,
+        closest: &'closest_hit_shader Shader,
+        any: Option<&'any_hit_shader Shader>,
+    ) -> Self {
         Self(
             diligent_sys::RayTracingTriangleHitShaderGroup {
                 Name: name.as_ptr(),
@@ -1020,19 +1294,36 @@ impl<'a> RayTracingTriangleHitShaderGroup<'a> {
 }
 
 #[repr(transparent)]
-pub struct RayTracingProceduralHitShaderGroup<'a>(
+pub struct RayTracingProceduralHitShaderGroup<
+    'name,
+    'intersection_shader,
+    'closest_hit_shader,
+    'any_hit_shader,
+>(
     pub(crate) diligent_sys::RayTracingProceduralHitShaderGroup,
-    PhantomData<&'a ()>,
+    PhantomData<(
+        &'name (),
+        &'intersection_shader (),
+        &'closest_hit_shader (),
+        &'any_hit_shader (),
+    )>,
 );
 
 #[bon::bon]
-impl<'a> RayTracingProceduralHitShaderGroup<'a> {
+impl<'name, 'intersection_shader, 'closest_hit_shader, 'any_hit_shader>
+    RayTracingProceduralHitShaderGroup<
+        'name,
+        'intersection_shader,
+        'closest_hit_shader,
+        'any_hit_shader,
+    >
+{
     #[builder]
     pub fn new(
-        name: &CStr,
-        intersection: &Shader,
-        closest: Option<&'a Shader>,
-        any: Option<&'a Shader>,
+        name: &'name CStr,
+        intersection: &'intersection_shader Shader,
+        closest: Option<&'closest_hit_shader Shader>,
+        any: Option<&'any_hit_shader Shader>,
     ) -> Self {
         Self(
             diligent_sys::RayTracingProceduralHitShaderGroup {
@@ -1047,28 +1338,153 @@ impl<'a> RayTracingProceduralHitShaderGroup<'a> {
 }
 
 #[repr(transparent)]
-pub struct RayTracingPipelineStateCreateInfo<'a>(
+pub struct RayTracingPipelineStateCreateInfo<
+    'name,
+    'variable_names,
+    'pso_cache,
+    'sampler_or_texture_name,
+    'sampler_name,
+    'sampler_desc,
+    'shader_resource_variables,
+    'immutable_samplers,
+    'resource_signature,
+    'resource_signatures,
+    'general_shader_groups,
+    'general_shader_name,
+    'general_shader,
+    'triangle_hit_shaders,
+    'triangle_hit_shader_group_name,
+    'triangle_closest_hit_shader,
+    'triangle_any_hit_shader,
+    'procedural_hit_shaders,
+    'procedural_hit_shader_group_name,
+    'procedural_intersection_shader,
+    'procedural_closest_hit_shader,
+    'procedural_any_hit_shader,
+    'shader_record_name,
+>(
     pub(crate) diligent_sys::RayTracingPipelineStateCreateInfo,
-    PhantomData<&'a ()>,
+    PhantomData<(
+        &'name (),
+        &'variable_names (),
+        &'pso_cache (),
+        &'sampler_or_texture_name (),
+        &'sampler_name (),
+        &'sampler_desc (),
+        &'shader_resource_variables (),
+        &'immutable_samplers (),
+        &'resource_signature (),
+        &'resource_signatures (),
+        &'general_shader_groups (),
+        &'general_shader_name (),
+        &'general_shader (),
+        &'triangle_hit_shaders (),
+        &'triangle_hit_shader_group_name (),
+        &'triangle_closest_hit_shader (),
+        &'triangle_any_hit_shader (),
+        &'procedural_hit_shaders (),
+        &'procedural_hit_shader_group_name (),
+        &'procedural_intersection_shader (),
+        &'procedural_closest_hit_shader (),
+        &'procedural_any_hit_shader (),
+        &'shader_record_name (),
+    )>,
 );
 
 #[bon::bon]
-impl<'a> RayTracingPipelineStateCreateInfo<'a> {
+impl<
+    'name,
+    'variable_names,
+    'pso_cache,
+    'sampler_or_texture_name,
+    'sampler_name,
+    'sampler_desc,
+    'shader_resource_variables,
+    'immutable_samplers,
+    'resource_signature,
+    'resource_signatures,
+    'general_shader_groups,
+    'general_shader_name,
+    'general_shader,
+    'triangle_hit_shaders,
+    'triangle_hit_shader_group_name,
+    'triangle_closest_hit_shader,
+    'triangle_any_hit_shader,
+    'procedural_hit_shaders,
+    'procedural_hit_shader_group_name,
+    'procedural_intersection_shader,
+    'procedural_closest_hit_shader,
+    'procedural_any_hit_shader,
+    'shader_record_name,
+>
+    RayTracingPipelineStateCreateInfo<
+        'name,
+        'variable_names,
+        'pso_cache,
+        'sampler_or_texture_name,
+        'sampler_name,
+        'sampler_desc,
+        'shader_resource_variables,
+        'immutable_samplers,
+        'resource_signature,
+        'resource_signatures,
+        'general_shader_groups,
+        'general_shader_name,
+        'general_shader,
+        'triangle_hit_shaders,
+        'triangle_hit_shader_group_name,
+        'triangle_closest_hit_shader,
+        'triangle_any_hit_shader,
+        'procedural_hit_shaders,
+        'procedural_hit_shader_group_name,
+        'procedural_intersection_shader,
+        'procedural_closest_hit_shader,
+        'procedural_any_hit_shader,
+        'shader_record_name,
+    >
+{
     #[builder]
     pub fn new(
-        #[builder(setters(vis = ""))] pipeline_state_create_info: PipelineStateCreateInfo<'a>,
+        #[builder(setters(vis = ""))] pipeline_state_create_info: PipelineStateCreateInfo<
+            'name,
+            'variable_names,
+            'pso_cache,
+            'sampler_or_texture_name,
+            'sampler_name,
+            'sampler_desc,
+            'shader_resource_variables,
+            'immutable_samplers,
+            'resource_signature,
+            'resource_signatures,
+        >,
 
         shader_record_size: u16,
 
         max_recursion_depth: u8,
 
-        general_shaders: &[RayTracingGeneralShaderGroup<'a>],
+        general_shaders: &'general_shader_groups [RayTracingGeneralShaderGroup<
+            'general_shader_name,
+            'general_shader,
+        >],
 
-        triangle_hit_shaders: Option<&[RayTracingTriangleHitShaderGroup<'a>]>,
+        triangle_hit_shaders: Option<
+            &'triangle_hit_shaders [RayTracingTriangleHitShaderGroup<
+                'triangle_hit_shader_group_name,
+                'triangle_closest_hit_shader,
+                'triangle_any_hit_shader,
+            >],
+        >,
 
-        procedural_hit_shaders: Option<&[RayTracingProceduralHitShaderGroup<'a>]>,
+        procedural_hit_shaders: Option<
+            &'procedural_hit_shaders [RayTracingProceduralHitShaderGroup<
+                'procedural_hit_shader_group_name,
+                'procedural_intersection_shader,
+                'procedural_closest_hit_shader,
+                'procedural_any_hit_shader,
+            >],
+        >,
 
-        #[cfg(feature = "d3d12")] shader_record_name: Option<&CStr>,
+        #[cfg(feature = "d3d12")] shader_record_name: Option<&'shader_record_name CStr>,
 
         #[cfg(feature = "d3d12")]
         #[builder(default = 0)]
@@ -1306,7 +1722,7 @@ impl Deref for GraphicsPipelineState {
 }
 
 impl GraphicsPipelineState {
-    pub fn get_graphics_pipeline_desc(&self) -> &GraphicsPipelineDesc<'_> {
+    pub fn get_graphics_pipeline_desc(&self) -> &GraphicsPipelineDesc<'_, '_> {
         let desc = unsafe_member_call!(self.0, PipelineState, GetGraphicsPipelineDesc)
             as *const GraphicsPipelineDesc;
         unsafe { &*desc }
@@ -1354,20 +1770,81 @@ impl RayTracingPipelineState {
 }
 
 #[repr(transparent)]
-pub struct TilePipelineStateCreateInfo<'a>(
+pub struct TilePipelineStateCreateInfo<
+    'name,
+    'variable_names,
+    'pso_cache,
+    'sampler_or_texture_name,
+    'sampler_name,
+    'sampler_desc,
+    'shader_resource_variables,
+    'immutable_samplers,
+    'resource_signature,
+    'resource_signatures,
+    'shader,
+>(
     pub(crate) diligent_sys::TilePipelineStateCreateInfo,
-    PhantomData<&'a ()>,
+    PhantomData<(
+        &'name (),
+        &'variable_names (),
+        &'pso_cache (),
+        &'sampler_or_texture_name (),
+        &'sampler_name (),
+        &'sampler_desc (),
+        &'shader_resource_variables (),
+        &'immutable_samplers (),
+        &'resource_signature (),
+        &'resource_signatures (),
+        &'shader (),
+    )>,
 );
 
 #[bon::bon]
-impl<'a> TilePipelineStateCreateInfo<'a> {
+impl<
+    'name,
+    'variable_names,
+    'pso_cache,
+    'sampler_or_texture_name,
+    'sampler_name,
+    'sampler_desc,
+    'shader_resource_variables,
+    'immutable_samplers,
+    'resource_signature,
+    'resource_signatures,
+    'shader,
+>
+    TilePipelineStateCreateInfo<
+        'name,
+        'variable_names,
+        'pso_cache,
+        'sampler_or_texture_name,
+        'sampler_name,
+        'sampler_desc,
+        'shader_resource_variables,
+        'immutable_samplers,
+        'resource_signature,
+        'resource_signatures,
+        'shader,
+    >
+{
     #[builder]
     pub fn new(
-        #[builder(setters(vis = ""))] pipeline_state_create_info: PipelineStateCreateInfo<'a>,
-        render_target_formats: Vec<TextureFormat>,
+        #[builder(setters(vis = ""))] pipeline_state_create_info: PipelineStateCreateInfo<
+            'name,
+            'variable_names,
+            'pso_cache,
+            'sampler_or_texture_name,
+            'sampler_name,
+            'sampler_desc,
+            'shader_resource_variables,
+            'immutable_samplers,
+            'resource_signature,
+            'resource_signatures,
+        >,
+        render_target_formats: &[TextureFormat],
         sample_count: u8,
 
-        shader: &'a Shader,
+        shader: &'shader Shader,
     ) -> Self {
         Self(
             diligent_sys::TilePipelineStateCreateInfo {
@@ -1429,17 +1906,78 @@ impl TilePipelineState {
 
 #[repr(transparent)]
 #[derive(Clone)]
-pub struct ComputePipelineStateCreateInfo<'a>(
+pub struct ComputePipelineStateCreateInfo<
+    'name,
+    'variable_names,
+    'pso_cache,
+    'sampler_or_texture_name,
+    'sampler_name,
+    'sampler_desc,
+    'shader_resource_variables,
+    'immutable_samplers,
+    'resource_signature,
+    'resource_signatures,
+    'shader,
+>(
     pub(crate) diligent_sys::ComputePipelineStateCreateInfo,
-    PhantomData<&'a ()>,
+    PhantomData<(
+        &'name (),
+        &'variable_names (),
+        &'pso_cache (),
+        &'sampler_or_texture_name (),
+        &'sampler_name (),
+        &'sampler_desc (),
+        &'shader_resource_variables (),
+        &'immutable_samplers (),
+        &'resource_signature (),
+        &'resource_signatures (),
+        &'shader (),
+    )>,
 );
 
 #[bon::bon]
-impl<'a> ComputePipelineStateCreateInfo<'a> {
+impl<
+    'name,
+    'variable_names,
+    'pso_cache,
+    'sampler_or_texture_name,
+    'sampler_name,
+    'sampler_desc,
+    'shader_resource_variables,
+    'immutable_samplers,
+    'resource_signature,
+    'resource_signatures,
+    'shader,
+>
+    ComputePipelineStateCreateInfo<
+        'name,
+        'variable_names,
+        'pso_cache,
+        'sampler_or_texture_name,
+        'sampler_name,
+        'sampler_desc,
+        'shader_resource_variables,
+        'immutable_samplers,
+        'resource_signature,
+        'resource_signatures,
+        'shader,
+    >
+{
     #[builder]
     pub fn new(
-        #[builder(setters(vis = ""))] pipeline_state_create_info: PipelineStateCreateInfo<'a>,
-        shader: &Shader,
+        #[builder(setters(vis = ""))] pipeline_state_create_info: PipelineStateCreateInfo<
+            'name,
+            'variable_names,
+            'pso_cache,
+            'sampler_or_texture_name,
+            'sampler_name,
+            'sampler_desc,
+            'shader_resource_variables,
+            'immutable_samplers,
+            'resource_signature,
+            'resource_signatures,
+        >,
+        shader: &'shader Shader,
     ) -> Self {
         ComputePipelineStateCreateInfo(
             diligent_sys::ComputePipelineStateCreateInfo {

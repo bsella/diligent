@@ -7,17 +7,17 @@ use crate::{
 };
 
 #[repr(transparent)]
-pub struct ShaderUnpackInfo<'user_data, UserData>(
+pub struct ShaderUnpackInfo<'device, 'user_data, 'name, UserData>(
     diligent_sys::ShaderUnpackInfo,
-    PhantomData<&'user_data UserData>,
+    PhantomData<(&'user_data UserData, &'device (), &'name ())>,
 );
 
 #[bon::bon]
-impl<'user_data, UserData> ShaderUnpackInfo<'user_data, UserData> {
+impl<'device, 'user_data, 'name, UserData> ShaderUnpackInfo<'device, 'user_data, 'name, UserData> {
     #[builder]
     pub fn new(
-        device: &RenderDevice,
-        name: &CStr,
+        device: &'device RenderDevice,
+        name: &'name CStr,
         modify_shader_desc: Option<(fn(&mut ShaderDesc, &mut UserData), &'user_data mut UserData)>,
     ) -> Self {
         Self(
@@ -39,17 +39,19 @@ impl<'user_data, UserData> ShaderUnpackInfo<'user_data, UserData> {
 }
 
 #[repr(transparent)]
-pub struct PipelineStateUnpackInfo<'user_data, UserData>(
+pub struct PipelineStateUnpackInfo<'user_data, 'device, 'name, UserData>(
     diligent_sys::PipelineStateUnpackInfo,
-    PhantomData<&'user_data UserData>,
+    PhantomData<(&'user_data UserData, &'device (), &'name ())>,
 );
 
 #[bon::bon]
-impl<'user_data, UserData> PipelineStateUnpackInfo<'user_data, UserData> {
+impl<'user_data, 'device, 'name, UserData>
+    PipelineStateUnpackInfo<'user_data, 'device, 'name, UserData>
+{
     #[builder]
     pub fn new(
-        device: &RenderDevice,
-        name: &CStr,
+        device: &'device RenderDevice,
+        name: &'name CStr,
         pipeline_type: PipelineType,
         srb_allocation_granularity: u32,
         immediate_context_mask: u64,
@@ -87,32 +89,44 @@ impl<'user_data, UserData> PipelineStateUnpackInfo<'user_data, UserData> {
 }
 
 #[repr(transparent)]
-pub struct ResourceSignatureUnpackInfo(diligent_sys::ResourceSignatureUnpackInfo);
+pub struct ResourceSignatureUnpackInfo<'device, 'name>(
+    diligent_sys::ResourceSignatureUnpackInfo,
+    PhantomData<(&'device (), &'name ())>,
+);
 
 #[bon::bon]
-impl ResourceSignatureUnpackInfo {
+impl<'device, 'name> ResourceSignatureUnpackInfo<'device, 'name> {
     #[builder]
-    pub fn new(device: &RenderDevice, name: &CStr, srb_allocation_granularity: u32) -> Self {
-        Self(diligent_sys::ResourceSignatureUnpackInfo {
-            pDevice: std::ptr::from_ref(&device.0) as _,
-            Name: name.as_ptr(),
-            SRBAllocationGranularity: srb_allocation_granularity,
-        })
+    pub fn new(
+        device: &'device RenderDevice,
+        name: &'name CStr,
+        srb_allocation_granularity: u32,
+    ) -> Self {
+        Self(
+            diligent_sys::ResourceSignatureUnpackInfo {
+                pDevice: std::ptr::from_ref(&device.0) as _,
+                Name: name.as_ptr(),
+                SRBAllocationGranularity: srb_allocation_granularity,
+            },
+            PhantomData,
+        )
     }
 }
 
 #[repr(transparent)]
-pub struct RenderPassUnpackInfo<'user_data, UserData>(
+pub struct RenderPassUnpackInfo<'device, 'user_data, 'name, UserData>(
     diligent_sys::RenderPassUnpackInfo,
-    PhantomData<&'user_data UserData>,
+    PhantomData<(&'user_data UserData, &'device (), &'name ())>,
 );
 
 #[bon::bon]
-impl<'user_data, UserData> RenderPassUnpackInfo<'user_data, UserData> {
+impl<'device, 'user_data, 'name, UserData>
+    RenderPassUnpackInfo<'device, 'user_data, 'name, UserData>
+{
     #[builder]
     pub fn new(
-        device: &RenderDevice,
-        name: &CStr,
+        device: &'device RenderDevice,
+        name: &'name CStr,
         modify_render_pass_desc: Option<(
             fn(&mut RenderPassDesc, &mut UserData),
             &'user_data mut UserData,
@@ -158,9 +172,9 @@ impl Dearchiver {
         )
     }
 
-    pub fn unpack_shader<'user_data, UserData>(
+    pub fn unpack_shader<'device, 'user_data, 'name, UserData>(
         &self,
-        unpack_info: &'user_data ShaderUnpackInfo<'user_data, UserData>,
+        unpack_info: &ShaderUnpackInfo<'device, 'user_data, 'name, UserData>,
     ) -> Result<Boxed<Shader>, BoxedFromNulError> {
         let mut shader_ptr = std::ptr::null_mut();
         unsafe_member_call!(
@@ -173,9 +187,9 @@ impl Dearchiver {
         Boxed::new(shader_ptr)
     }
 
-    pub fn unpack_pipeline_state<'user_data, UserData>(
+    pub fn unpack_pipeline_state<'user_data, 'device, 'name, UserData>(
         &self,
-        unpack_info: &'user_data PipelineStateUnpackInfo<'user_data, UserData>,
+        unpack_info: &PipelineStateUnpackInfo<'user_data, 'device, 'name, UserData>,
     ) -> Result<Boxed<PipelineState>, BoxedFromNulError> {
         let mut pipeline_ptr = std::ptr::null_mut();
         unsafe_member_call!(
@@ -203,9 +217,9 @@ impl Dearchiver {
         Boxed::new(rs_ptr)
     }
 
-    pub fn unpack_render_pass<'user_data, UserData>(
+    pub fn unpack_render_pass<'device, 'user_data, 'name, UserData>(
         &self,
-        unpack_info: &'user_data RenderPassUnpackInfo<'user_data, UserData>,
+        unpack_info: &RenderPassUnpackInfo<'device, 'user_data, 'name, UserData>,
     ) -> Result<Boxed<RenderPass>, BoxedFromNulError> {
         let mut render_pass_ptr = std::ptr::null_mut();
         unsafe_member_call!(

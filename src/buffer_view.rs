@@ -1,4 +1,4 @@
-use std::ffi::CStr;
+use std::{ffi::CStr, marker::PhantomData};
 
 use bon::Builder;
 use static_assertions::const_assert_eq;
@@ -30,40 +30,46 @@ pub struct BufferFormat {
 }
 
 #[repr(transparent)]
-pub struct BufferViewDesc(pub(crate) diligent_sys::BufferViewDesc);
+pub struct BufferViewDesc<'name>(
+    pub(crate) diligent_sys::BufferViewDesc,
+    PhantomData<&'name ()>,
+);
 
 #[bon::bon]
-impl BufferViewDesc {
+impl<'name> BufferViewDesc<'name> {
     #[builder]
     pub fn new(
-        name: Option<&CStr>,
+        name: Option<&'name CStr>,
         view_type: BufferViewType,
         format: Option<BufferFormat>,
         #[builder(default = 0)] byte_offset: u64,
         #[builder(default = 0)] byte_width: u64,
     ) -> Self {
-        Self(diligent_sys::BufferViewDesc {
-            _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                Name: name.map_or(std::ptr::null(), |name| name.as_ptr()),
+        Self(
+            diligent_sys::BufferViewDesc {
+                _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
+                    Name: name.map_or(std::ptr::null(), |name| name.as_ptr()),
+                },
+                ViewType: view_type.into(),
+                Format: format.as_ref().map_or(
+                    diligent_sys::BufferFormat {
+                        ValueType: diligent_sys::VT_UNDEFINED as _,
+                        NumComponents: 1,
+                        IsNormalized: false,
+                    },
+                    |format| diligent_sys::BufferFormat {
+                        ValueType: format
+                            .value_type
+                            .map_or(diligent_sys::VT_UNDEFINED as _, |vt| vt.into()),
+                        NumComponents: format.num_components,
+                        IsNormalized: format.is_normalized,
+                    },
+                ),
+                ByteOffset: byte_offset,
+                ByteWidth: byte_width,
             },
-            ViewType: view_type.into(),
-            Format: format.as_ref().map_or(
-                diligent_sys::BufferFormat {
-                    ValueType: diligent_sys::VT_UNDEFINED as _,
-                    NumComponents: 1,
-                    IsNormalized: false,
-                },
-                |format| diligent_sys::BufferFormat {
-                    ValueType: format
-                        .value_type
-                        .map_or(diligent_sys::VT_UNDEFINED as _, |vt| vt.into()),
-                    NumComponents: format.num_components,
-                    IsNormalized: format.is_normalized,
-                },
-            ),
-            ByteOffset: byte_offset,
-            ByteWidth: byte_width,
-        })
+            PhantomData,
+        )
     }
 }
 
@@ -75,7 +81,7 @@ define_ported!(
 );
 
 impl BufferView {
-    pub fn desc(&self) -> &BufferViewDesc {
+    pub fn desc(&self) -> &BufferViewDesc<'_> {
         let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
         unsafe { &*(desc_ptr as *const BufferViewDesc) }
     }

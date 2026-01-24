@@ -50,13 +50,13 @@ impl Default for MiscBufferFlags {
 
 //#[derive(Builder, Clone)]
 #[repr(transparent)]
-pub struct BufferDesc(pub(crate) diligent_sys::BufferDesc);
+pub struct BufferDesc<'name>(pub(crate) diligent_sys::BufferDesc, PhantomData<&'name ()>);
 
 #[bon::bon]
-impl BufferDesc {
+impl<'name> BufferDesc<'name> {
     #[builder(derive(Clone))]
     pub fn new(
-        name: Option<&CStr>,
+        name: Option<&'name CStr>,
 
         size: u64,
 
@@ -74,23 +74,26 @@ impl BufferDesc {
 
         #[builder(default = 1)] immediate_context_mask: u64,
     ) -> Self {
-        BufferDesc(diligent_sys::BufferDesc {
-            _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                Name: name.map_or(std::ptr::null(), |name| name.as_ptr()),
+        BufferDesc(
+            diligent_sys::BufferDesc {
+                _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
+                    Name: name.map_or(std::ptr::null(), |name| name.as_ptr()),
+                },
+                Size: size,
+                BindFlags: bind_flags.bits(),
+                Usage: usage.into(),
+                CPUAccessFlags: cpu_access_flags.bits(),
+                Mode: mode.map_or(diligent_sys::BUFFER_MODE_UNDEFINED as _, |bm| bm.into()),
+                MiscFlags: misc_flags.bits(),
+                ElementByteStride: element_byte_stride,
+                ImmediateContextMask: immediate_context_mask,
             },
-            Size: size,
-            BindFlags: bind_flags.bits(),
-            Usage: usage.into(),
-            CPUAccessFlags: cpu_access_flags.bits(),
-            Mode: mode.map_or(diligent_sys::BUFFER_MODE_UNDEFINED as _, |bm| bm.into()),
-            MiscFlags: misc_flags.bits(),
-            ElementByteStride: element_byte_stride,
-            ImmediateContextMask: immediate_context_mask,
-        })
+            PhantomData,
+        )
     }
 }
 
-impl BufferDesc {
+impl BufferDesc<'_> {
     pub fn size(&self) -> u64 {
         self.0.Size
     }
@@ -130,7 +133,7 @@ define_ported!(
 );
 
 impl Buffer {
-    pub fn desc(&self) -> &BufferDesc {
+    pub fn desc(&self) -> &BufferDesc<'_> {
         let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
         unsafe { &*(desc_ptr as *const BufferDesc) }
     }
@@ -191,19 +194,19 @@ impl Buffer {
     }
 }
 
-pub struct BufferMapToken<'a, T: Sized, State: MapType> {
-    device_context: &'a DeviceContext,
-    buffer: &'a Buffer,
-    data: &'a mut [T],
+pub struct BufferMapToken<'context, 'buffer, T: Sized, State: MapType> {
+    device_context: &'context DeviceContext,
+    buffer: &'buffer Buffer,
+    data: &'buffer mut [T],
     phantom: PhantomData<State>,
 }
 
-impl<'a, T: Sized, State: MapType> BufferMapToken<'a, T, State> {
+impl<'context, 'buffer, T: Sized, State: MapType> BufferMapToken<'context, 'buffer, T, State> {
     pub(super) fn new(
-        device_context: &'a DeviceContext,
-        buffer: &'a Buffer,
+        device_context: &'context DeviceContext,
+        buffer: &'buffer Buffer,
         map_flags: diligent_sys::MAP_FLAGS,
-    ) -> BufferMapToken<'a, T, State> {
+    ) -> BufferMapToken<'context, 'buffer, T, State> {
         let mut ptr = std::ptr::null_mut();
         unsafe_member_call!(
             device_context,
@@ -229,7 +232,7 @@ impl<'a, T: Sized, State: MapType> BufferMapToken<'a, T, State> {
     }
 }
 
-impl<'a, T: Sized, State: MapType> Drop for BufferMapToken<'a, T, State> {
+impl<T: Sized, State: MapType> Drop for BufferMapToken<'_, '_, T, State> {
     fn drop(&mut self) {
         unsafe_member_call!(
             self.device_context,
@@ -241,7 +244,7 @@ impl<'a, T: Sized, State: MapType> Drop for BufferMapToken<'a, T, State> {
     }
 }
 
-impl<T> Deref for BufferMapToken<'_, T, resource_access_states::Read> {
+impl<T> Deref for BufferMapToken<'_, '_, T, resource_access_states::Read> {
     type Target = [T];
     fn deref(&self) -> &Self::Target {
         self.data
@@ -250,32 +253,35 @@ impl<T> Deref for BufferMapToken<'_, T, resource_access_states::Read> {
 
 // Note : Normally you shouldn't be able to read from the write token,
 //        but DerefMut cannot be implemented without Deref.
-impl<'a, T> Deref for BufferMapToken<'a, T, resource_access_states::Write> {
+impl<T> Deref for BufferMapToken<'_, '_, T, resource_access_states::Write> {
     type Target = [T];
     fn deref(&self) -> &Self::Target {
         self.data
     }
 }
 
-impl<'a, T> DerefMut for BufferMapToken<'a, T, resource_access_states::Write> {
+impl<T> DerefMut for BufferMapToken<'_, '_, T, resource_access_states::Write> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.data
     }
 }
 
-impl<'a, T> Deref for BufferMapToken<'a, T, resource_access_states::ReadWrite> {
+impl<T> Deref for BufferMapToken<'_, '_, T, resource_access_states::ReadWrite> {
     type Target = [T];
     fn deref(&self) -> &Self::Target {
         self.data
     }
 }
 
-impl<'a, T> DerefMut for BufferMapToken<'a, T, resource_access_states::ReadWrite> {
+impl<T> DerefMut for BufferMapToken<'_, '_, T, resource_access_states::ReadWrite> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.data
     }
 }
 
-pub type BufferMapReadToken<'a, T> = BufferMapToken<'a, T, resource_access_states::Read>;
-pub type BufferMapWriteToken<'a, T> = BufferMapToken<'a, T, resource_access_states::Write>;
-pub type BufferMapReadWriteToken<'a, T> = BufferMapToken<'a, T, resource_access_states::ReadWrite>;
+pub type BufferMapReadToken<'context, 'buffer, T> =
+    BufferMapToken<'context, 'buffer, T, resource_access_states::Read>;
+pub type BufferMapWriteToken<'context, 'buffer, T> =
+    BufferMapToken<'context, 'buffer, T, resource_access_states::Write>;
+pub type BufferMapReadWriteToken<'context, 'buffer, T> =
+    BufferMapToken<'context, 'buffer, T, resource_access_states::ReadWrite>;

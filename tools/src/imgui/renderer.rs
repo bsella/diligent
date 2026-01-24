@@ -567,28 +567,34 @@ impl ImguiRenderer {
 
         rtv_formats[0] = Some(create_info.back_buffer_format);
 
+        let shader_resource_variables = [ShaderResourceVariableDesc::builder()
+            .name(c"Texture")
+            .variable_type(ShaderResourceVariableType::Dynamic)
+            .shader_stages(ShaderTypes::Pixel)
+            .build()];
+
+        let immutable_samplers = [ImmutableSamplerDesc::builder()
+            .shader_stages(ShaderTypes::Pixel)
+            .sampler_or_texture_name(c"Texture")
+            .sampler_desc(&sampler_desc)
+            .build()];
+
+        let input_layouts = input_layouts![
+            LayoutElement::builder().slot(0).f32_2(),
+            LayoutElement::builder().slot(0).f32_2(),
+            LayoutElement::builder().slot(0).u8_4(),
+        ];
+
         let pipeline_state_ci = PipelineStateCreateInfo::builder()
-            .shader_resource_variables(&[ShaderResourceVariableDesc::builder()
-                .name(c"Texture")
-                .variable_type(ShaderResourceVariableType::Dynamic)
-                .shader_stages(ShaderTypes::Pixel)
-                .build()])
-            .immutable_samplers(&[ImmutableSamplerDesc::builder()
-                .shader_stages(ShaderTypes::Pixel)
-                .sampler_or_texture_name(c"Texture")
-                .sampler_desc(&sampler_desc)
-                .build()])
+            .shader_resource_variables(&shader_resource_variables)
+            .immutable_samplers(&immutable_samplers)
             .name(c"ImGUI PSO")
             .graphics()
             .graphics_pipeline_desc(
                 GraphicsPipelineDesc::builder()
                     .blend_desc(blend_state_desc)
                     .primitive_topology(PrimitiveTopology::TriangleList)
-                    .input_layouts(&input_layouts![
-                        LayoutElement::builder().slot(0).f32_2(),
-                        LayoutElement::builder().slot(0).f32_2(),
-                        LayoutElement::builder().slot(0).u8_4(),
-                    ])
+                    .input_layouts(&input_layouts)
                     .rasterizer_desc(rasterizer_state_desc)
                     .depth_stencil_desc(
                         DepthStencilStateDesc::builder().depth_enable(false).build(),
