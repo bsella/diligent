@@ -6,8 +6,8 @@ define_ported!(
     diligent_sys::IMemoryAllocatorMethods : 4
 );
 
-pub struct MemoryAllocation<'a> {
-    allocator: &'a MemoryAllocator,
+pub struct MemoryAllocation<'allocator> {
+    allocator: &'allocator MemoryAllocator,
     sys_ptr: *mut c_void,
 }
 
@@ -24,8 +24,8 @@ impl Drop for MemoryAllocation<'_> {
     }
 }
 
-pub struct AlignedMemoryAllocation<'a> {
-    allocator: &'a MemoryAllocator,
+pub struct AlignedMemoryAllocation<'allocator> {
+    allocator: &'allocator MemoryAllocator,
     sys_ptr: *mut c_void,
 }
 

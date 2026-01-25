@@ -674,7 +674,7 @@ fn create_and_build_cube_blas(
         .unwrap();
 
     // Build BLAS
-    let triangle_data = BLASBuildTriangleData::builder()
+    let triangle_data = [BLASBuildTriangleData::builder()
         .geometry_name(geometry_name)
         .vertex_buffer(&cube_vertex_buffer)
         .vertex_stride(std::mem::size_of::<float3>() as u32)
@@ -685,13 +685,13 @@ fn create_and_build_cube_blas(
         .primitive_count(max_primitive_count)
         .index_type(index_type)
         .flags(RaytracingGeometryFlags::Opaque)
-        .build();
+        .build()];
 
     // Build BLAS
     {
         let attribs = BuildBLASAttribs::builder()
             .blas(&blas)
-            .triangle_data(&[triangle_data])
+            .triangle_data(&triangle_data)
             // Scratch buffer will be used to store temporary data during BLAS build.
             // Previous content in the scratch buffer will be discarded.
             .scratch_buffer(&scratch_buffer)
@@ -772,16 +772,16 @@ fn create_and_build_procedural_blas(
 
     // Build BLAS
     {
-        let box_data = BLASBuildBoundingBoxData::builder()
+        let box_data = [BLASBuildBoundingBoxData::builder()
             .geometry_name(c"Box")
             .box_count(1)
             .box_buffer(&box_attribs_cb)
             .box_stride(std::mem::size_of_val(&BOXES[0]) as u32)
-            .build();
+            .build()];
 
         let attribs = BuildBLASAttribs::builder()
             .blas(&procedural_blas)
-            .box_data(&[box_data])
+            .box_data(&box_data)
             // Scratch buffer will be used to store temporary data during BLAS build.
             // Previous content in the scratch buffer will be discarded.
             .scratch_buffer(&scratch_buffer)

@@ -497,10 +497,10 @@ impl Texture {
     }
 }
 
-pub struct TextureMapToken<'a, T: Sized, State: MapType> {
-    device_context: &'a DeviceContext,
-    texture: &'a Texture,
-    data: &'a mut [T],
+pub struct TextureMapToken<'context, 'texture, T: Sized, State: MapType> {
+    device_context: &'context DeviceContext,
+    texture: &'texture Texture,
+    data: &'texture mut [T],
     stride: u64,
     depth_stride: u64,
     mip_level: u32,
@@ -508,16 +508,16 @@ pub struct TextureMapToken<'a, T: Sized, State: MapType> {
     phantom: PhantomData<State>,
 }
 
-impl<'a, T: Sized, State: MapType> TextureMapToken<'a, T, State> {
+impl<'context, 'texture, T: Sized, State: MapType> TextureMapToken<'context, 'texture, T, State> {
     #[cfg(any(feature = "d3d11", feature = "d3d12", feature = "vulkan"))]
     pub(super) fn new(
-        device_context: &'a DeviceContext,
-        texture: &'a Texture,
+        device_context: &'context DeviceContext,
+        texture: &'texture Texture,
         mip_level: u32,
         array_slice: u32,
         map_flags: crate::MapFlags,
         map_region: Option<crate::Box>,
-    ) -> TextureMapToken<'a, T, State> {
+    ) -> TextureMapToken<'context, 'texture, T, State> {
         let mut mapped_resource = std::mem::MaybeUninit::uninit();
 
         unsafe_member_call!(
@@ -561,7 +561,7 @@ impl<'a, T: Sized, State: MapType> TextureMapToken<'a, T, State> {
     }
 }
 
-impl<'a, T: Sized, State: MapType> Drop for TextureMapToken<'a, T, State> {
+impl<T: Sized, State: MapType> Drop for TextureMapToken<'_, '_, T, State> {
     fn drop(&mut self) {
         unsafe_member_call!(
             self.device_context,
@@ -574,7 +574,7 @@ impl<'a, T: Sized, State: MapType> Drop for TextureMapToken<'a, T, State> {
     }
 }
 
-impl<T> Deref for TextureMapToken<'_, T, resource_access_states::Read> {
+impl<T> Deref for TextureMapToken<'_, '_, T, resource_access_states::Read> {
     type Target = [T];
     fn deref(&self) -> &Self::Target {
         self.data
@@ -583,33 +583,35 @@ impl<T> Deref for TextureMapToken<'_, T, resource_access_states::Read> {
 
 // Note : Normally you shouldn't be able to read from the write token,
 //        but DerefMut cannot be implemented without Deref.
-impl<'a, T> Deref for TextureMapToken<'a, T, resource_access_states::Write> {
+impl<T> Deref for TextureMapToken<'_, '_, T, resource_access_states::Write> {
     type Target = [T];
     fn deref(&self) -> &Self::Target {
         self.data
     }
 }
 
-impl<'a, T> DerefMut for TextureMapToken<'a, T, resource_access_states::Write> {
+impl<T> DerefMut for TextureMapToken<'_, '_, T, resource_access_states::Write> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.data
     }
 }
 
-impl<'a, T> Deref for TextureMapToken<'a, T, resource_access_states::ReadWrite> {
+impl<T> Deref for TextureMapToken<'_, '_, T, resource_access_states::ReadWrite> {
     type Target = [T];
     fn deref(&self) -> &Self::Target {
         self.data
     }
 }
 
-impl<'a, T> DerefMut for TextureMapToken<'a, T, resource_access_states::ReadWrite> {
+impl<T> DerefMut for TextureMapToken<'_, '_, T, resource_access_states::ReadWrite> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.data
     }
 }
 
-pub type TextureMapReadToken<'a, T> = TextureMapToken<'a, T, resource_access_states::Read>;
-pub type TextureMapWriteToken<'a, T> = TextureMapToken<'a, T, resource_access_states::Write>;
-pub type TextureMapReadWriteToken<'a, T> =
-    TextureMapToken<'a, T, resource_access_states::ReadWrite>;
+pub type TextureMapReadToken<'context, 'texture, T> =
+    TextureMapToken<'context, 'texture, T, resource_access_states::Read>;
+pub type TextureMapWriteToken<'context, 'texture, T> =
+    TextureMapToken<'context, 'texture, T, resource_access_states::Write>;
+pub type TextureMapReadWriteToken<'context, 'texture, T> =
+    TextureMapToken<'context, 'texture, T, resource_access_states::ReadWrite>;

@@ -14,11 +14,11 @@ pub struct TexturedCube {
     //texture: Option<Boxed<Texture>>,
 }
 
-pub struct CreatePSOInfo<'a> {
-    device: &'a RenderDevice,
+pub struct CreatePSOInfo<'device, 'shader_factory> {
+    device: &'device RenderDevice,
     rtv_format: TextureFormat,
     dsv_format: TextureFormat,
-    shader_source_factory: &'a ShaderSourceInputStreamFactory,
+    shader_source_factory: &'shader_factory ShaderSourceInputStreamFactory,
     vs_file_path: PathBuf,
     ps_file_path: PathBuf,
     components: GeometryPrimitiveVertexFlags,
@@ -26,12 +26,12 @@ pub struct CreatePSOInfo<'a> {
     sample_count: u8,
 }
 
-impl<'a> CreatePSOInfo<'a> {
+impl<'device, 'shader_factory> CreatePSOInfo<'device, 'shader_factory> {
     pub fn new<P>(
-        device: &'a RenderDevice,
+        device: &'device RenderDevice,
         rtv_format: TextureFormat,
         dsv_format: TextureFormat,
-        shader_source_factory: &'a ShaderSourceInputStreamFactory,
+        shader_source_factory: &'shader_factory ShaderSourceInputStreamFactory,
         vs_file_path: P,
         ps_file_path: P,
         components: GeometryPrimitiveVertexFlags,

@@ -407,8 +407,8 @@ pub enum ColorConversionMode {
 }
 
 #[derive(Builder)]
-pub struct ImguiRendererCreateInfo<'a> {
-    device: &'a RenderDevice,
+pub struct ImguiRendererCreateInfo<'device> {
+    device: &'device RenderDevice,
 
     back_buffer_format: TextureFormat,
     depth_buffer_format: TextureFormat,

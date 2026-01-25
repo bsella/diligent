@@ -677,17 +677,17 @@ impl Default for RaytracingGeometryFlags {
 const_assert_eq!(diligent_sys::RAYTRACING_GEOMETRY_FLAG_LAST, 2);
 
 #[repr(transparent)]
-pub struct BLASBuildBoundingBoxData<'a>(
+pub struct BLASBuildBoundingBoxData<'name, 'buffer>(
     diligent_sys::BLASBuildBoundingBoxData,
-    PhantomData<&'a ()>,
+    PhantomData<(&'name (), &'buffer ())>,
 );
 #[bon::bon]
-impl<'a> BLASBuildBoundingBoxData<'a> {
+impl<'name, 'buffer> BLASBuildBoundingBoxData<'name, 'buffer> {
     #[builder]
     pub fn new(
-        geometry_name: &'a CStr,
+        geometry_name: &'name CStr,
 
-        box_buffer: &'a Buffer,
+        box_buffer: &'buffer Buffer,
 
         #[builder(default = 0)] box_offset: u64,
 
@@ -712,14 +712,24 @@ impl<'a> BLASBuildBoundingBoxData<'a> {
 }
 
 #[repr(transparent)]
-pub struct BLASBuildTriangleData<'a>(diligent_sys::BLASBuildTriangleData, PhantomData<&'a ()>);
+pub struct BLASBuildTriangleData<'geometry_name, 'vertex_buffer, 'index_buffer, 'transform_buffer>(
+    diligent_sys::BLASBuildTriangleData,
+    PhantomData<(
+        &'geometry_name (),
+        &'vertex_buffer (),
+        &'index_buffer (),
+        &'transform_buffer (),
+    )>,
+);
 #[bon::bon]
-impl<'a> BLASBuildTriangleData<'a> {
+impl<'geometry_name, 'vertex_buffer, 'index_buffer, 'transform_buffer>
+    BLASBuildTriangleData<'geometry_name, 'vertex_buffer, 'index_buffer, 'transform_buffer>
+{
     #[builder]
     pub fn new(
-        geometry_name: &'a CStr,
+        geometry_name: &'geometry_name CStr,
 
-        vertex_buffer: &'a Buffer,
+        vertex_buffer: &'vertex_buffer Buffer,
 
         #[builder(default = 0)] vertex_offset: u64,
 
@@ -733,13 +743,13 @@ impl<'a> BLASBuildTriangleData<'a> {
 
         primitive_count: usize,
 
-        index_buffer: Option<&'a Buffer>,
+        index_buffer: Option<&'index_buffer Buffer>,
 
         #[builder(default = 0)] index_offset: u64,
 
         index_type: Option<ValueType>,
 
-        transform_buffer: Option<&'a Buffer>,
+        transform_buffer: Option<&'transform_buffer Buffer>,
 
         #[builder(default = 0)] transform_buffer_offset: u64,
 
@@ -771,12 +781,61 @@ impl<'a> BLASBuildTriangleData<'a> {
 }
 
 #[repr(transparent)]
-pub struct BuildBLASAttribs<'a>(diligent_sys::BuildBLASAttribs, PhantomData<&'a ()>);
+pub struct BuildBLASAttribs<
+    'blas,
+    'scratch_buffer,
+    'triangles,
+    'triangles_geometry_name,
+    'triangles_vertex_buffer,
+    'triangles_index_buffer,
+    'triangles_transform_buffer,
+    'bounding_boxes,
+    'bb_name,
+    'bb_buffer,
+>(
+    diligent_sys::BuildBLASAttribs,
+    PhantomData<(
+        &'blas (),
+        &'scratch_buffer (),
+        &'triangles (),
+        &'triangles_geometry_name (),
+        &'triangles_vertex_buffer (),
+        &'triangles_index_buffer (),
+        &'triangles_transform_buffer (),
+        &'bounding_boxes (),
+        &'bb_name (),
+        &'bb_buffer (),
+    )>,
+);
 #[bon::bon]
-impl<'a> BuildBLASAttribs<'a> {
+impl<
+    'blas,
+    'scratch_buffer,
+    'triangles,
+    'triangles_geometry_name,
+    'triangles_vertex_buffer,
+    'triangles_index_buffer,
+    'triangles_transform_buffer,
+    'bounding_boxes,
+    'bb_name,
+    'bb_buffer,
+>
+    BuildBLASAttribs<
+        'blas,
+        'scratch_buffer,
+        'triangles,
+        'triangles_geometry_name,
+        'triangles_vertex_buffer,
+        'triangles_index_buffer,
+        'triangles_transform_buffer,
+        'bounding_boxes,
+        'bb_name,
+        'bb_buffer,
+    >
+{
     #[builder]
     pub fn new(
-        blas: &'a BottomLevelAS,
+        blas: &'blas BottomLevelAS,
 
         #[builder(default = ResourceStateTransitionMode::None)]
         blas_transition_mode: ResourceStateTransitionMode,
@@ -784,11 +843,19 @@ impl<'a> BuildBLASAttribs<'a> {
         #[builder(default = ResourceStateTransitionMode::None)]
         geometry_transition_mode: ResourceStateTransitionMode,
 
-        #[builder(default)] triangle_data: &[BLASBuildTriangleData<'a>],
+        #[builder(default)] triangle_data: &'triangles [BLASBuildTriangleData<
+            'triangles_geometry_name,
+            'triangles_vertex_buffer,
+            'triangles_index_buffer,
+            'triangles_transform_buffer,
+        >],
 
-        #[builder(default)] box_data: &[BLASBuildBoundingBoxData<'a>],
+        #[builder(default)] box_data: &'bounding_boxes [BLASBuildBoundingBoxData<
+            'bb_name,
+            'bb_buffer,
+        >],
 
-        scratch_buffer: &'a Buffer,
+        scratch_buffer: &'scratch_buffer Buffer,
 
         #[builder(default = 0)] scratch_buffer_offset: u64,
 
@@ -821,15 +888,38 @@ impl<'a> BuildBLASAttribs<'a> {
 }
 
 #[repr(transparent)]
-pub struct BuildTLASAttribs<'a, 'tlas_instance_name, 'blas>(
+pub struct BuildTLASAttribs<
+    'tlas,
+    'tlas_instance_name,
+    'blas,
+    'instance_buffer,
+    'scratch_buffer,
+    'instances,
+>(
     pub(crate) diligent_sys::BuildTLASAttribs,
-    PhantomData<(&'a (), &'tlas_instance_name (), &'blas ())>,
+    PhantomData<(
+        &'tlas (),
+        &'tlas_instance_name (),
+        &'blas (),
+        &'instance_buffer (),
+        &'scratch_buffer (),
+        &'instances (),
+    )>,
 );
 #[bon::bon]
-impl<'a, 'tlas_instance_name, 'blas> BuildTLASAttribs<'a, 'tlas_instance_name, 'blas> {
+impl<'tlas, 'tlas_instance_name, 'blas, 'instance_buffer, 'scratch_buffer, 'instances>
+    BuildTLASAttribs<
+        'tlas,
+        'tlas_instance_name,
+        'blas,
+        'instance_buffer,
+        'scratch_buffer,
+        'instances,
+    >
+{
     #[builder]
     pub fn new(
-        tlas: &'a TopLevelAS,
+        tlas: &'tlas TopLevelAS,
 
         #[builder(default = ResourceStateTransitionMode::None)]
         tlas_transition_mode: ResourceStateTransitionMode,
@@ -837,9 +927,9 @@ impl<'a, 'tlas_instance_name, 'blas> BuildTLASAttribs<'a, 'tlas_instance_name, '
         #[builder(default = ResourceStateTransitionMode::None)]
         blas_transition_mode: ResourceStateTransitionMode,
 
-        instances: &'a [TLASBuildInstanceData<'tlas_instance_name, 'blas>],
+        instances: &'instances [TLASBuildInstanceData<'tlas_instance_name, 'blas>],
 
-        instance_buffer: &'a Buffer,
+        instance_buffer: &'instance_buffer Buffer,
 
         #[builder(default = 0)] instance_buffer_offset: u64,
 
@@ -852,7 +942,7 @@ impl<'a, 'tlas_instance_name, 'blas> BuildTLASAttribs<'a, 'tlas_instance_name, '
 
         #[builder(default = HitGroupBindingMode::PerGeometry)] binding_mode: HitGroupBindingMode,
 
-        scratch_buffer: &'a Buffer,
+        scratch_buffer: &'scratch_buffer Buffer,
 
         #[builder(default = 0)] scratch_buffer_offset: u64,
 
@@ -915,12 +1005,15 @@ impl<'buffer> UpdateIndirectRTBufferAttribs<'buffer> {
 }
 
 #[repr(transparent)]
-pub struct TraceRaysAttribs<'a>(diligent_sys::TraceRaysAttribs, PhantomData<&'a ()>);
+pub struct TraceRaysAttribs<'shader_binding_table>(
+    diligent_sys::TraceRaysAttribs,
+    PhantomData<&'shader_binding_table ()>,
+);
 #[bon::bon]
-impl<'a> TraceRaysAttribs<'a> {
+impl<'shader_binding_table> TraceRaysAttribs<'shader_binding_table> {
     #[builder]
     pub fn new(
-        sbt: &'a ShaderBindingTable,
+        sbt: &'shader_binding_table ShaderBindingTable,
 
         #[builder(default = 1)] dimension_x: u32,
 
@@ -941,16 +1034,18 @@ impl<'a> TraceRaysAttribs<'a> {
 }
 
 #[repr(transparent)]
-pub struct TraceRaysIndirectAttribs<'a>(
+pub struct TraceRaysIndirectAttribs<'shader_binding_table, 'attribs_buffer>(
     diligent_sys::TraceRaysIndirectAttribs,
-    PhantomData<&'a ()>,
+    PhantomData<(&'shader_binding_table (), &'attribs_buffer ())>,
 );
 #[bon::bon]
-impl<'a> TraceRaysIndirectAttribs<'a> {
+impl<'shader_binding_table, 'attribs_buffer>
+    TraceRaysIndirectAttribs<'shader_binding_table, 'attribs_buffer>
+{
     #[builder]
     pub fn new(
-        sbt: &'a ShaderBindingTable,
-        attribs_buffer: &'a Buffer,
+        sbt: &'shader_binding_table ShaderBindingTable,
+        attribs_buffer: &'attribs_buffer Buffer,
         #[builder(default = ResourceStateTransitionMode::None)]
         attribs_buffer_state_transition_mode: ResourceStateTransitionMode,
         #[builder(default = 0)] args_byte_offset: u64,
@@ -968,18 +1063,21 @@ impl<'a> TraceRaysIndirectAttribs<'a> {
 }
 
 #[repr(transparent)]
-pub struct CopyTextureAttribs<'a>(diligent_sys::CopyTextureAttribs, PhantomData<&'a ()>);
+pub struct CopyTextureAttribs<'src_texture, 'dst_texture, 'region>(
+    diligent_sys::CopyTextureAttribs,
+    PhantomData<(&'src_texture (), &'dst_texture (), &'region ())>,
+);
 
 #[bon::bon]
-impl<'a> CopyTextureAttribs<'a> {
+impl<'src_texture, 'dst_texture, 'region> CopyTextureAttribs<'src_texture, 'dst_texture, 'region> {
     #[builder]
     pub fn new(
-        src_texture: &'a Texture,
+        src_texture: &'src_texture Texture,
         src_mip_level: u32,
         src_slice: u32,
-        src_box: &'a crate::Box,
+        src_box: &'region crate::Box,
         src_texture_transition_mode: ResourceStateTransitionMode,
-        dst_texture: &'a Texture,
+        dst_texture: &'dst_texture Texture,
         dst_mip_level: u32,
         dst_slice: u32,
         dst_x: u32,
@@ -1035,17 +1133,17 @@ impl ResolveTextureSubresourceAttribs {
 }
 
 #[repr(transparent)]
-pub struct WriteBLASCompactedSizeAttribs<'a>(
+pub struct WriteBLASCompactedSizeAttribs<'blas, 'buffer>(
     diligent_sys::WriteBLASCompactedSizeAttribs,
-    PhantomData<&'a ()>,
+    PhantomData<(&'blas (), &'buffer ())>,
 );
 
 #[bon::bon]
-impl<'a> WriteBLASCompactedSizeAttribs<'a> {
+impl<'blas, 'buffer> WriteBLASCompactedSizeAttribs<'blas, 'buffer> {
     #[builder]
     pub fn new(
-        blas: &'a BottomLevelAS,
-        dest_buffer: &'a Buffer,
+        blas: &'blas BottomLevelAS,
+        dest_buffer: &'buffer Buffer,
         dest_buffer_offset: u64,
         blas_transition_mode: ResourceStateTransitionMode,
         buffer_transition_mode: ResourceStateTransitionMode,
@@ -1064,17 +1162,17 @@ impl<'a> WriteBLASCompactedSizeAttribs<'a> {
 }
 
 #[repr(transparent)]
-pub struct WriteTLASCompactedSizeAttribs<'a>(
+pub struct WriteTLASCompactedSizeAttribs<'tlas, 'buffer>(
     diligent_sys::WriteTLASCompactedSizeAttribs,
-    PhantomData<&'a ()>,
+    PhantomData<(&'tlas (), &'buffer ())>,
 );
 
 #[bon::bon]
-impl<'a> WriteTLASCompactedSizeAttribs<'a> {
+impl<'tlas, 'buffer> WriteTLASCompactedSizeAttribs<'tlas, 'buffer> {
     #[builder]
     pub fn new(
-        tlas: &'a TopLevelAS,
-        dest_buffer: &'a Buffer,
+        tlas: &'tlas TopLevelAS,
+        dest_buffer: &'buffer Buffer,
         dest_buffer_offset: u64,
         tlas_transition_mode: ResourceStateTransitionMode,
         buffer_transition_mode: ResourceStateTransitionMode,
@@ -1093,14 +1191,17 @@ impl<'a> WriteTLASCompactedSizeAttribs<'a> {
 }
 
 #[repr(transparent)]
-pub struct CopyBLASAttribs<'a>(diligent_sys::CopyBLASAttribs, PhantomData<&'a ()>);
+pub struct CopyBLASAttribs<'src_blas, 'dst_blas>(
+    diligent_sys::CopyBLASAttribs,
+    PhantomData<(&'src_blas (), &'dst_blas ())>,
+);
 
 #[bon::bon]
-impl<'a> CopyBLASAttribs<'a> {
+impl<'src_blas, 'dst_blas> CopyBLASAttribs<'src_blas, 'dst_blas> {
     #[builder]
     pub fn new(
-        src: &'a BottomLevelAS,
-        dst: &'a BottomLevelAS,
+        src: &'src_blas BottomLevelAS,
+        dst: &'dst_blas BottomLevelAS,
         mode: CopyAsMode,
         src_transition_mode: ResourceStateTransitionMode,
         dst_transition_mode: ResourceStateTransitionMode,
@@ -1119,14 +1220,17 @@ impl<'a> CopyBLASAttribs<'a> {
 }
 
 #[repr(transparent)]
-pub struct CopyTLASAttribs<'a>(diligent_sys::CopyTLASAttribs, PhantomData<&'a ()>);
+pub struct CopyTLASAttribs<'src_tlas, 'dst_tlas>(
+    diligent_sys::CopyTLASAttribs,
+    PhantomData<(&'src_tlas (), &'dst_tlas ())>,
+);
 
 #[bon::bon]
-impl<'a> CopyTLASAttribs<'a> {
+impl<'src_tlas, 'dst_tlas> CopyTLASAttribs<'src_tlas, 'dst_tlas> {
     #[builder]
     pub fn new(
-        src: &'a TopLevelAS,
-        dst: &'a TopLevelAS,
+        src: &'src_tlas TopLevelAS,
+        dst: &'dst_tlas TopLevelAS,
         mode: CopyAsMode,
         src_transition_mode: ResourceStateTransitionMode,
         dst_transition_mode: ResourceStateTransitionMode,
@@ -1229,12 +1333,12 @@ impl Rect {
     }
 }
 
-pub struct ScopedDebugGroup<'a> {
-    device_context: &'a DeviceContext,
+pub struct ScopedDebugGroup<'context> {
+    device_context: &'context DeviceContext,
 }
 
-impl<'a> ScopedDebugGroup<'a> {
-    fn new(device_context: &'a DeviceContext, name: &CStr, color: Option<[f32; 4]>) -> Self {
+impl<'context> ScopedDebugGroup<'context> {
+    fn new(device_context: &'context DeviceContext, name: &CStr, color: Option<[f32; 4]>) -> Self {
         unsafe_member_call!(
             device_context,
             DeviceContext,
@@ -1247,7 +1351,7 @@ impl<'a> ScopedDebugGroup<'a> {
     }
 }
 
-impl<'a> Drop for ScopedDebugGroup<'a> {
+impl Drop for ScopedDebugGroup<'_> {
     fn drop(&mut self) {
         unsafe_member_call!(self.device_context, DeviceContext, EndDebugGroup)
     }
@@ -1270,12 +1374,15 @@ impl Default for StateTransitionFlags {
 }
 
 #[repr(transparent)]
-pub struct StateTransitionDesc<'a>(diligent_sys::StateTransitionDesc, PhantomData<&'a ()>);
+pub struct StateTransitionDesc<'resource>(
+    diligent_sys::StateTransitionDesc,
+    PhantomData<&'resource ()>,
+);
 #[bon::bon]
-impl<'a> StateTransitionDesc<'a> {
+impl<'resource> StateTransitionDesc<'resource> {
     #[builder(derive(Clone))]
     pub fn new(
-        resource: &'a DeviceObject,
+        resource: &'resource DeviceObject,
 
         new_state: ResourceState,
 
@@ -1349,15 +1456,20 @@ impl OptimizedClearValue {
 }
 
 #[repr(transparent)]
-pub struct BeginRenderPassAttribs<'a>(diligent_sys::BeginRenderPassAttribs, PhantomData<&'a ()>);
+pub struct BeginRenderPassAttribs<'render_pass, 'frame_buffer, 'clear_values>(
+    diligent_sys::BeginRenderPassAttribs,
+    PhantomData<(&'render_pass (), &'frame_buffer (), &'clear_values ())>,
+);
 
 #[bon::bon]
-impl<'a> BeginRenderPassAttribs<'a> {
+impl<'render_pass, 'frame_buffer, 'clear_values>
+    BeginRenderPassAttribs<'render_pass, 'frame_buffer, 'clear_values>
+{
     #[builder]
     pub fn new(
-        render_pass: &'a RenderPass,
-        frame_buffer: &'a Framebuffer,
-        clear_values: &'a [OptimizedClearValue],
+        render_pass: &'render_pass RenderPass,
+        frame_buffer: &'frame_buffer Framebuffer,
+        clear_values: &'clear_values [OptimizedClearValue],
         state_transition_mode: ResourceStateTransitionMode,
     ) -> Self {
         Self(
@@ -1502,12 +1614,12 @@ impl BindSparseResourceMemoryAttribs {
     }
 }
 
-pub struct RenderPassToken<'a> {
-    context: &'a DeviceContext,
+pub struct RenderPassToken<'context> {
+    context: &'context DeviceContext,
 }
 
-impl<'a> RenderPassToken<'a> {
-    pub fn new(context: &'a DeviceContext, attribs: &BeginRenderPassAttribs) -> Self {
+impl<'context> RenderPassToken<'context> {
+    pub fn new(context: &'context DeviceContext, attribs: &BeginRenderPassAttribs) -> Self {
         unsafe_member_call!(context, DeviceContext, BeginRenderPass, &attribs.0);
 
         RenderPassToken { context }
@@ -1524,11 +1636,11 @@ impl Drop for RenderPassToken<'_> {
     }
 }
 
-pub struct GraphicsPipelineToken<'a> {
-    context: &'a DeviceContext,
+pub struct GraphicsPipelineToken<'context> {
+    context: &'context DeviceContext,
 }
 
-impl<'a> GraphicsPipelineToken<'a> {
+impl GraphicsPipelineToken<'_> {
     pub fn draw(&self, attribs: &DrawAttribs) {
         unsafe_member_call!(self.context, DeviceContext, Draw, &attribs.0)
     }
@@ -1554,11 +1666,11 @@ impl<'a> GraphicsPipelineToken<'a> {
     }
 }
 
-pub struct MeshPipelineToken<'a> {
-    context: &'a DeviceContext,
+pub struct MeshPipelineToken<'context> {
+    context: &'context DeviceContext,
 }
 
-impl<'a> MeshPipelineToken<'a> {
+impl MeshPipelineToken<'_> {
     pub fn draw_mesh(&self, attribs: &DrawMeshAttribs) {
         unsafe_member_call!(self.context, DeviceContext, DrawMesh, &attribs.0)
     }
@@ -1568,11 +1680,11 @@ impl<'a> MeshPipelineToken<'a> {
     }
 }
 
-pub struct ComputePipelineToken<'a> {
-    context: &'a DeviceContext,
+pub struct ComputePipelineToken<'context> {
+    context: &'context DeviceContext,
 }
 
-impl<'a> ComputePipelineToken<'a> {
+impl ComputePipelineToken<'_> {
     pub fn dispatch_compute(&self, attribs: &DispatchComputeAttribs) {
         unsafe_member_call!(self.context, DeviceContext, DispatchCompute, &attribs.0)
     }
@@ -1587,21 +1699,21 @@ impl<'a> ComputePipelineToken<'a> {
     }
 }
 
-pub struct TilePipelineToken<'a> {
-    context: &'a DeviceContext,
+pub struct TilePipelineToken<'context> {
+    context: &'context DeviceContext,
 }
 
-impl<'a> TilePipelineToken<'a> {
+impl TilePipelineToken<'_> {
     pub fn dispatch_tile(&self, attribs: &DispatchTileAttribs) {
         unsafe_member_call!(self.context, DeviceContext, DispatchTile, &attribs.0)
     }
 }
 
-pub struct RayTracingPipelineToken<'a> {
-    context: &'a DeviceContext,
+pub struct RayTracingPipelineToken<'context> {
+    context: &'context DeviceContext,
 }
 
-impl<'a> RayTracingPipelineToken<'a> {
+impl RayTracingPipelineToken<'_> {
     pub fn trace_rays(&self, attribs: &TraceRaysAttribs) {
         unsafe_member_call!(self.context, DeviceContext, TraceRays, &attribs.0)
     }
@@ -2048,14 +2160,14 @@ impl DeviceContext {
     }
 
     #[cfg(any(feature = "d3d11", feature = "d3d12", feature = "vulkan"))]
-    pub fn map_texture_subresource_read<'a, T>(
-        &'a self,
-        texture: &'a Texture,
+    pub fn map_texture_subresource_read<'texture, T>(
+        &self,
+        texture: &'texture Texture,
         mip_level: u32,
         array_slice: u32,
         map_flags: MapFlags,
         map_region: Option<crate::Box>,
-    ) -> crate::texture::TextureMapReadToken<'a, T> {
+    ) -> crate::texture::TextureMapReadToken<'_, 'texture, T> {
         crate::texture::TextureMapReadToken::new(
             self,
             texture,
@@ -2067,14 +2179,14 @@ impl DeviceContext {
     }
 
     #[cfg(any(feature = "d3d11", feature = "d3d12", feature = "vulkan"))]
-    pub fn map_texture_subresource_write<'a, T>(
-        &'a self,
-        texture: &'a Texture,
+    pub fn map_texture_subresource_write<'texture, T>(
+        &self,
+        texture: &'texture Texture,
         mip_level: u32,
         array_slice: u32,
         map_flags: MapFlags,
         map_region: Option<crate::Box>,
-    ) -> crate::texture::TextureMapWriteToken<'a, T> {
+    ) -> crate::texture::TextureMapWriteToken<'_, 'texture, T> {
         crate::texture::TextureMapWriteToken::new(
             self,
             texture,
@@ -2086,14 +2198,14 @@ impl DeviceContext {
     }
 
     #[cfg(any(feature = "d3d11", feature = "d3d12", feature = "vulkan"))]
-    pub fn map_texture_subresource_read_write<'a, T>(
-        &'a self,
-        texture: &'a Texture,
+    pub fn map_texture_subresource_read_write<'texture, T>(
+        &self,
+        texture: &'texture Texture,
         mip_level: u32,
         array_slice: u32,
         map_flags: MapFlags,
         map_region: Option<crate::Box>,
-    ) -> crate::texture::TextureMapReadWriteToken<'a, T> {
+    ) -> crate::texture::TextureMapReadWriteToken<'_, 'texture, T> {
         crate::texture::TextureMapReadWriteToken::new(
             self,
             texture,
@@ -2148,9 +2260,23 @@ impl DeviceContext {
         unsafe_member_call!(self, DeviceContext, BuildBLAS, &attribs.0)
     }
 
-    pub fn build_tlas<'a, 'tlas_instance_name, 'blas>(
+    pub fn build_tlas<
+        'tlas,
+        'tlas_instance_name,
+        'blas,
+        'instance_buffer,
+        'scratch_buffer,
+        'instances,
+    >(
         &self,
-        attribs: &BuildTLASAttribs<'a, 'tlas_instance_name, 'blas>,
+        attribs: &BuildTLASAttribs<
+            'tlas,
+            'tlas_instance_name,
+            'blas,
+            'instance_buffer,
+            'scratch_buffer,
+            'instances,
+        >,
     ) {
         unsafe_member_call!(self, DeviceContext, BuildTLAS, &attribs.0)
     }
