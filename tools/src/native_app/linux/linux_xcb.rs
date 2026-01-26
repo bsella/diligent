@@ -1,11 +1,11 @@
 use diligent::platforms::native_window::NativeWindow;
 
-use xcb::{x, Xid};
+use xcb::{Xid, x};
 use xkbcommon::xkb;
 
 use crate::native_app::{
-    events::{Event, Key, MouseButton},
     Window,
+    events::{Event, Key, MouseButton},
 };
 
 pub struct XCBWindow {
@@ -153,10 +153,10 @@ impl Window for XCBWindow {
 
         match event {
             xcb::Event::X(x::Event::ClientMessage(message_event)) => {
-                if let x::ClientMessageData::Data32([atom, ..]) = message_event.data() {
-                    if atom == self.atom_wm_delete_window.resource_id() {
-                        return Event::Quit;
-                    }
+                if let x::ClientMessageData::Data32([atom, ..]) = message_event.data()
+                    && atom == self.atom_wm_delete_window.resource_id()
+                {
+                    return Event::Quit;
                 }
                 Event::Continue
             }
@@ -176,12 +176,10 @@ impl Window for XCBWindow {
 
                 if let Ok(Some(xcb::Event::X(x::Event::KeyPress(next_event)))) =
                     self.connection.poll_for_queued_event()
+                    && next_event.time() == key_event.time()
+                    && next_event.detail() == key_event.detail()
                 {
-                    if next_event.time() == key_event.time()
-                        && next_event.detail() == key_event.detail()
-                    {
-                        return Event::Continue;
-                    }
+                    return Event::Continue;
                 }
 
                 Event::KeyRelease(keysym_to_key(keysym.raw()))

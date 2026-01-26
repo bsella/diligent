@@ -8,30 +8,30 @@ use diligent_tools::{
         renderer::{ImguiRenderer, ImguiRendererCreateInfo},
     },
     native_app::{
+        Window,
         app::{App, GoldenImageMode},
         events::Event,
-        Window,
     },
 };
 
 #[cfg(feature = "vulkan")]
 use diligent::vk::engine_factory_vk::{
-    get_engine_factory_vk, DeviceFeaturesVk, EngineFactoryVk, EngineVkCreateInfo,
+    DeviceFeaturesVk, EngineFactoryVk, EngineVkCreateInfo, get_engine_factory_vk,
 };
 
 #[cfg(feature = "opengl")]
 use diligent::gl::engine_factory_gl::{
-    get_engine_factory_gl, EngineFactoryOpenGL, EngineGLCreateInfo,
+    EngineFactoryOpenGL, EngineGLCreateInfo, get_engine_factory_gl,
 };
 
 #[cfg(feature = "d3d11")]
 use diligent::d3d11::engine_factory_d3d11::{
-    get_engine_factory_d3d11, D3D11ValidationFlags, EngineD3D11CreateInfo, EngineFactoryD3D11,
+    D3D11ValidationFlags, EngineD3D11CreateInfo, EngineFactoryD3D11, get_engine_factory_d3d11,
 };
 
 #[cfg(feature = "d3d12")]
 use diligent::d3d12::engine_factory_d3d12::{
-    get_engine_factory_d3d12, EngineD3D12CreateInfo, EngineFactoryD3D12,
+    EngineD3D12CreateInfo, EngineFactoryD3D12, get_engine_factory_d3d12,
 };
 
 #[allow(unused_imports)]
@@ -39,7 +39,7 @@ use crate::sample_base::sample;
 
 use super::{
     sample::SampleBase,
-    sample_app_settings::{parse_sample_app_settings, SampleAppSettings},
+    sample_app_settings::{SampleAppSettings, parse_sample_app_settings},
 };
 
 struct SampleWindow<W: Window> {
@@ -114,8 +114,8 @@ impl<GenericSample: SampleBase, W: Window> SampleApp<GenericSample, W> {
 
         let adapters_wnd_width = swap_chain_desc.width().min(330);
 
-        if self.app_settings.show_adapters_dialog {
-            if let Some(_window_token) = ui
+        if self.app_settings.show_adapters_dialog
+            && let Some(_window_token) = ui
                 .window("Adapters")
                 .size([adapters_wnd_width as f32, 0.0], imgui::Condition::Always)
                 .position(
@@ -129,46 +129,45 @@ impl<GenericSample: SampleBase, W: Window> SampleApp<GenericSample, W> {
                 .flags(imgui::WindowFlags::NO_RESIZE)
                 .collapsed(true, imgui::Condition::FirstUseEver)
                 .begin()
+        {
+            if let Some(adapter) = &self.graphics_adapter
+                && adapter.adapter_type() != AdapterType::Unknown
             {
-                if let Some(adapter) = &self.graphics_adapter {
-                    if adapter.adapter_type() != AdapterType::Unknown {
-                        ui.text_disabled(format!(
-                            "Adapter: {} ({} MB)",
-                            adapter.description().to_str().unwrap(),
-                            adapter.memory().local_memory() >> 20
-                        ));
-                    }
-                }
-
-                if !self.display_modes.is_empty() {
-                    ui.set_next_item_width(220.0);
-                    ui.combo(
-                        "Display Modes",
-                        &mut self.selected_display_mode,
-                        self.display_modes_strings.as_slice(),
-                        |label| label.into(),
-                    );
-                }
-
-                if self.fullscreen_mode {
-                    if ui.button("Go Windowed") {
-                        self.sample.release_swap_chain_buffers();
-                        self.fullscreen_mode = false;
-                        swap_chain.set_windowed_mode();
-                    }
-                } else if !self.display_modes.is_empty() && ui.button("Go Full Screen") {
-                    self.sample.release_swap_chain_buffers();
-
-                    let display_mode = self.display_modes.get(self.selected_display_mode).unwrap();
-                    self.fullscreen_mode = true;
-                    swap_chain.set_fullscreen_mode(display_mode);
-                }
-
-                // If you're noticing any difference in frame rate when you enable vsync,
-                // this is because of the window title update. This also happens on the
-                // main DiligentSamples repository.
-                ui.checkbox("VSync", &mut self.app_settings.vsync);
+                ui.text_disabled(format!(
+                    "Adapter: {} ({} MB)",
+                    adapter.description().to_str().unwrap(),
+                    adapter.memory().local_memory() >> 20
+                ));
             }
+
+            if !self.display_modes.is_empty() {
+                ui.set_next_item_width(220.0);
+                ui.combo(
+                    "Display Modes",
+                    &mut self.selected_display_mode,
+                    self.display_modes_strings.as_slice(),
+                    |label| label.into(),
+                );
+            }
+
+            if self.fullscreen_mode {
+                if ui.button("Go Windowed") {
+                    self.sample.release_swap_chain_buffers();
+                    self.fullscreen_mode = false;
+                    swap_chain.set_windowed_mode();
+                }
+            } else if !self.display_modes.is_empty() && ui.button("Go Full Screen") {
+                self.sample.release_swap_chain_buffers();
+
+                let display_mode = self.display_modes.get(self.selected_display_mode).unwrap();
+                self.fullscreen_mode = true;
+                swap_chain.set_fullscreen_mode(display_mode);
+            }
+
+            // If you're noticing any difference in frame rate when you enable vsync,
+            // this is because of the window title update. This also happens on the
+            // main DiligentSamples repository.
+            ui.checkbox("VSync", &mut self.app_settings.vsync);
         }
         self.sample.update_ui(ui);
     }
@@ -471,8 +470,8 @@ impl<GenericSample: SampleBase, W: Window> App for SampleApp<GenericSample, W> {
                     .position(|adapter| adapter.adapter_type() == adapter_type);
             };
 
-            if adapter_index.is_none() {
-                if let Some((index, _best_adapter)) =
+            if adapter_index.is_none()
+                && let Some((index, _best_adapter)) =
                     adapters
                         .iter()
                         .enumerate()
@@ -497,9 +496,8 @@ impl<GenericSample: SampleBase, W: Window> App for SampleApp<GenericSample, W> {
                             compare_type(adapter1, adapter2)
                                 .then(compare_memory(adapter1, adapter2))
                         })
-                {
-                    adapter_index = Some(index);
-                }
+            {
+                adapter_index = Some(index);
             }
 
             if let Some(adapter_index) = adapter_index {

@@ -7,7 +7,7 @@ use diligent::{
 };
 use diligent_samples::{
     sample_base::{
-        sample::{get_adjusted_projection_matrix, get_surface_pretransform_matrix, SampleBase},
+        sample::{SampleBase, get_adjusted_projection_matrix, get_surface_pretransform_matrix},
         sample_app::{self},
     },
     textured_cube::{self, TexturedCube},
@@ -377,16 +377,15 @@ impl SampleBase for Queries {
             .always_auto_resize(true)
             .position([10.0, 10.0], imgui::Condition::FirstUseEver)
             .begin()
-        {
-            if self.query_pipeline_stats.is_some()
+            && (self.query_pipeline_stats.is_some()
                 || self.query_occlusion.is_some()
                 || self.query_duration.is_some()
-                || self.query_duration_from_timestamps.is_some()
-            {
-                let mut params = String::new();
-                let mut values = String::new();
-                if let Some(ref pipeline_statistics) = *self.pipeline_statistics.borrow() {
-                    params += r"Input vertices
+                || self.query_duration_from_timestamps.is_some())
+        {
+            let mut params = String::new();
+            let mut values = String::new();
+            if let Some(ref pipeline_statistics) = *self.pipeline_statistics.borrow() {
+                params += r"Input vertices
 Input primitives
 VS Invocations
 Clipping Invocations
@@ -394,49 +393,47 @@ Rasterized Primitives
 PS Invocations
 ";
 
+                values += format!(
+                    "{}\n{}\n{}\n{}\n{}\n{}\n",
+                    pipeline_statistics.input_vertices,
+                    pipeline_statistics.input_primitives,
+                    pipeline_statistics.vs_invocations,
+                    pipeline_statistics.clipping_invocations,
+                    pipeline_statistics.clipping_primitives,
+                    pipeline_statistics.ps_invocations,
+                )
+                .as_str();
+            }
+
+            if let Some(ref occlusion) = *self.occlusion.borrow() {
+                params += "Samples rendered\n";
+
+                values += occlusion.num_samples.to_string().as_str();
+                values += "\n";
+            }
+
+            if let Some(ref duration_data) = *self.duration.borrow() {
+                if duration_data.frequency > 0 {
+                    params += "Duration (mus)\n";
                     values += format!(
-                        "{}\n{}\n{}\n{}\n{}\n{}\n",
-                        pipeline_statistics.input_vertices,
-                        pipeline_statistics.input_primitives,
-                        pipeline_statistics.vs_invocations,
-                        pipeline_statistics.clipping_invocations,
-                        pipeline_statistics.clipping_primitives,
-                        pipeline_statistics.ps_invocations,
+                        "{}\n",
+                        duration_data.duration as f32 / duration_data.frequency as f32 * 1000000.0
                     )
                     .as_str();
-                }
-
-                if let Some(ref occlusion) = *self.occlusion.borrow() {
-                    params += "Samples rendered\n";
-
-                    values += occlusion.num_samples.to_string().as_str();
+                } else {
+                    params += "Duration unavailable\n";
                     values += "\n";
                 }
-
-                if let Some(ref duration_data) = *self.duration.borrow() {
-                    if duration_data.frequency > 0 {
-                        params += "Duration (mus)\n";
-                        values += format!(
-                            "{}\n",
-                            duration_data.duration as f32 / duration_data.frequency as f32
-                                * 1000000.0
-                        )
-                        .as_str();
-                    } else {
-                        params += "Duration unavailable\n";
-                        values += "\n";
-                    }
-                }
-
-                if let Some(duration_from_timestamps) = *self.duration_from_timestamps.borrow() {
-                    params += "Duration from TS (mus)\n";
-                    values += format!("{}", duration_from_timestamps * 1000000.0).as_str();
-                }
-
-                ui.text_disabled(params);
-                ui.same_line();
-                ui.text_disabled(values);
             }
+
+            if let Some(duration_from_timestamps) = *self.duration_from_timestamps.borrow() {
+                params += "Duration from TS (mus)\n";
+                values += format!("{}", duration_from_timestamps * 1000000.0).as_str();
+            }
+
+            ui.text_disabled(params);
+            ui.same_line();
+            ui.text_disabled(values);
         }
     }
 

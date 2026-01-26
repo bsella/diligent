@@ -6,7 +6,7 @@ use diligent::{
 
 use diligent_samples::{
     sample_base::{
-        sample::{get_adjusted_projection_matrix, get_surface_pretransform_matrix, SampleBase},
+        sample::{SampleBase, get_adjusted_projection_matrix, get_surface_pretransform_matrix},
         sample_app::{self},
     },
     textured_cube::{CreatePSOInfo, TexturedCube},
@@ -276,10 +276,9 @@ impl SampleBase for Instancing {
             .always_auto_resize(true)
             .position([10.0, 10.0], imgui::Condition::Always)
             .begin()
+            && ui.slider("Grid Size", 1, 32, &mut self.grid_size)
         {
-            if ui.slider("Grid Size", 1, 32, &mut self.grid_size) {
-                self.populate_instance_buffer();
-            }
+            self.populate_instance_buffer();
         }
     }
 

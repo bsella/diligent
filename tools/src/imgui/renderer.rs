@@ -2,9 +2,9 @@ use bon::Builder;
 use diligent::*;
 
 use imgui::{
+    TextureId,
     internal::RawWrapper,
     sys::{ImDrawIdx, ImDrawVert},
-    TextureId,
 };
 
 const GAMMA_TO_LINEAR: &str =
@@ -724,9 +724,11 @@ impl ImguiFrame {
         }
 
         // Resize the vertex buffer if needed
-        let vertex_buffer = if self.data.vertex_buffer.is_none()
-            || self.data.vertex_buffer_size < draw_data.total_vtx_count as u32
+        let vertex_buffer = if let Some(ref vertex_buffer) = self.data.vertex_buffer
+            && self.data.vertex_buffer_size >= draw_data.total_vtx_count as u32
         {
+            vertex_buffer
+        } else {
             while self.data.vertex_buffer_size < draw_data.total_vtx_count as u32 {
                 self.data.vertex_buffer_size *= 2
             }
@@ -745,14 +747,14 @@ impl ImguiFrame {
             self.data
                 .vertex_buffer
                 .insert(render_device.create_buffer(&buffer_desc).unwrap())
-        } else {
-            self.data.vertex_buffer.as_ref().unwrap()
         };
 
         // Resize the index buffer if needed
-        let index_buffer = if self.data.index_buffer.is_none()
-            || self.data.index_buffer_size < draw_data.total_idx_count as u32
+        let index_buffer = if let Some(ref index_buffer) = self.data.index_buffer
+            && self.data.index_buffer_size >= draw_data.total_idx_count as u32
         {
+            index_buffer
+        } else {
             while self.data.index_buffer_size < draw_data.total_idx_count as u32 {
                 self.data.index_buffer_size *= 2
             }
@@ -771,8 +773,6 @@ impl ImguiFrame {
             self.data
                 .index_buffer
                 .insert(render_device.create_buffer(&buffer_desc).unwrap())
-        } else {
-            self.data.index_buffer.as_mut().unwrap()
         };
 
         // Transfer the vertex and index buffer from imgui data into our GPU buffers
