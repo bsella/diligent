@@ -2139,8 +2139,6 @@ impl DeviceContext {
         src_buffer_transition_mode: ResourceStateTransitionMode,
         texture_transition_mode: ResourceStateTransitionMode,
     ) {
-        let subres_data = subres_data.into();
-
         unsafe_member_call!(
             self,
             DeviceContext,
@@ -2149,7 +2147,7 @@ impl DeviceContext {
             mip_level,
             slice,
             &dst_box.0,
-            &subres_data,
+            &subres_data.0,
             src_buffer_transition_mode.into(),
             texture_transition_mode.into()
         )

@@ -250,7 +250,7 @@ impl SampleBase for TextureArray {
             });
 
             let texture = device
-                .create_texture(&texture_desc, &texture_data.each_ref(), None)
+                .create_texture(&texture_desc, &texture_data, None)
                 .unwrap();
 
             // Get shader resource view from the texture array

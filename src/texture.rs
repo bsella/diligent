@@ -6,7 +6,6 @@ use std::{
 };
 
 use bitflags::bitflags;
-use bon::Builder;
 use static_assertions::const_assert_eq;
 
 use crate::{
@@ -119,24 +118,49 @@ impl Default for MiscTextureFlags {
     }
 }
 
+#[derive(Clone, Copy)]
 pub enum TextureSubResData<'buffer> {
     CPU(&'buffer [u8]),
     GPU(&'buffer Buffer),
 }
 
-#[derive(Builder)]
-pub struct TextureSubResource<'buffer> {
-    #[builder(setters(vis = ""))]
-    source: TextureSubResData<'buffer>,
+#[repr(transparent)]
+pub struct TextureSubResource<'buffer>(
+    pub(crate) diligent_sys::TextureSubResData,
+    PhantomData<&'buffer ()>,
+);
 
-    #[builder(setters(vis = ""))]
-    source_offset: u64,
+#[bon::bon]
+impl<'buffer> TextureSubResource<'buffer> {
+    #[builder]
+    pub fn new(
+        #[builder(setters(vis = ""))] source: TextureSubResData<'buffer>,
 
-    #[builder(setters(vis = ""))]
-    stride: u64,
+        #[builder(setters(vis = ""))] source_offset: u64,
 
-    #[builder(default = 0)]
-    depth_stride: u64,
+        #[builder(setters(vis = ""))] stride: u64,
+
+        #[builder(default = 0)] depth_stride: u64,
+    ) -> Self {
+        Self(
+            diligent_sys::TextureSubResData {
+                pData: if let TextureSubResData::CPU(data) = source {
+                    data.as_ptr() as *const std::ffi::c_void
+                } else {
+                    std::ptr::null()
+                },
+                pSrcBuffer: if let TextureSubResData::GPU(buffer) = source {
+                    buffer.sys_ptr() as _
+                } else {
+                    std::ptr::null_mut()
+                },
+                DepthStride: depth_stride,
+                SrcOffset: source_offset,
+                Stride: stride,
+            },
+            PhantomData,
+        )
+    }
 }
 
 use texture_sub_resource_builder::{IsUnset, SetSource, SetSourceOffset, SetStride, State};
@@ -172,26 +196,6 @@ impl<'buffer, S: State> TextureSubResourceBuilder<'buffer, S> {
         self.stride(stride)
             .source_offset(source_offset)
             .source(TextureSubResData::GPU(data))
-    }
-}
-
-impl From<&TextureSubResource<'_>> for diligent_sys::TextureSubResData {
-    fn from(value: &TextureSubResource<'_>) -> Self {
-        diligent_sys::TextureSubResData {
-            pData: if let TextureSubResData::CPU(data) = value.source {
-                data.as_ptr() as *const std::ffi::c_void
-            } else {
-                std::ptr::null()
-            },
-            pSrcBuffer: if let TextureSubResData::GPU(buffer) = value.source {
-                buffer.sys_ptr() as _
-            } else {
-                std::ptr::null_mut()
-            },
-            DepthStride: value.depth_stride,
-            SrcOffset: value.source_offset,
-            Stride: value.stride,
-        }
     }
 }
 

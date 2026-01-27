@@ -653,7 +653,7 @@ impl ImguiRenderer {
 
         let font_texture = create_info
             .device
-            .create_texture(&font_texture_desc, &[&subresource], None)
+            .create_texture(&font_texture_desc, &[subresource], None)
             .unwrap();
 
         let font_texture_view = font_texture

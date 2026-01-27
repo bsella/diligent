@@ -1,6 +1,4 @@
-use std::ffi::CString;
-
-use bon::Builder;
+use std::{ffi::CStr, marker::PhantomData};
 
 use crate::device_object::DeviceObject;
 
@@ -16,54 +14,75 @@ pub enum DeviceMemoryType {
     Sparce,
 }
 
-#[derive(Builder)]
-pub struct DeviceMemoryDesc {
-    #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
-    name: Option<CString>,
+#[repr(transparent)]
+pub struct DeviceMemoryDesc<'name>(diligent_sys::DeviceMemoryDesc, PhantomData<&'name ()>);
 
-    device_memory_type: Option<DeviceMemoryType>,
+#[bon::bon]
+impl<'name> DeviceMemoryDesc<'name> {
+    #[builder]
+    pub fn new(
+        name: Option<&'name CStr>,
 
-    page_size: u64,
+        device_memory_type: Option<DeviceMemoryType>,
 
-    #[builder(default = 1)]
-    immediate_context_mask: u64,
-}
+        page_size: u64,
 
-#[derive(Builder)]
-pub struct DeviceMemoryCreateInfo<'a> {
-    pub(crate) desc: DeviceMemoryDesc,
+        #[builder(default = 1)] immediate_context_mask: u64,
+    ) -> Self {
+        DeviceMemoryDesc(
+            diligent_sys::DeviceMemoryDesc {
+                _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
+                    Name: name.as_ref().map_or(std::ptr::null(), |name| name.as_ptr()),
+                },
+                Type: if let Some(memory_type) = device_memory_type {
+                    match memory_type {
+                        DeviceMemoryType::Sparce => diligent_sys::DEVICE_MEMORY_TYPE_SPARSE,
+                    }
+                } else {
+                    diligent_sys::DEVICE_MEMORY_TYPE_UNDEFINED
+                } as diligent_sys::DEVICE_MEMORY_TYPE,
 
-    pub(crate) initial_size: u64,
+                PageSize: page_size,
 
-    pub(crate) compatible_resources: Vec<&'a DeviceObject>,
-}
-
-impl From<&DeviceMemoryDesc> for diligent_sys::DeviceMemoryDesc {
-    fn from(value: &DeviceMemoryDesc) -> Self {
-        diligent_sys::DeviceMemoryDesc {
-            _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                Name: value
-                    .name
-                    .as_ref()
-                    .map_or(std::ptr::null(), |name| name.as_ptr()),
+                ImmediateContextMask: immediate_context_mask,
             },
-            Type: if let Some(memory_type) = value.device_memory_type {
-                match memory_type {
-                    DeviceMemoryType::Sparce => diligent_sys::DEVICE_MEMORY_TYPE_SPARSE,
-                }
-            } else {
-                diligent_sys::DEVICE_MEMORY_TYPE_UNDEFINED
-            } as diligent_sys::DEVICE_MEMORY_TYPE,
+            PhantomData,
+        )
+    }
+}
 
-            PageSize: value.page_size,
+#[repr(transparent)]
+pub struct DeviceMemoryCreateInfo<'name, 'resources, 'objects>(
+    pub(crate) diligent_sys::DeviceMemoryCreateInfo,
+    PhantomData<(&'name (), &'resources (), &'objects ())>,
+);
 
-            ImmediateContextMask: value.immediate_context_mask,
-        }
+#[bon::bon]
+impl<'name, 'resources, 'objects> DeviceMemoryCreateInfo<'name, 'resources, 'objects> {
+    #[builder]
+    pub fn new(
+        desc: DeviceMemoryDesc<'name>,
+        initial_size: u64,
+        compatible_resources: &'resources [&'objects DeviceObject],
+    ) -> Self {
+        DeviceMemoryCreateInfo(
+            diligent_sys::DeviceMemoryCreateInfo {
+                Desc: desc.0,
+                InitialSize: initial_size,
+                ppCompatibleResources: compatible_resources
+                    .first()
+                    .map_or(std::ptr::null_mut(), |resource| {
+                        std::ptr::from_ref(resource) as _
+                    }),
+                NumResources: compatible_resources.len() as u32,
+            },
+            PhantomData,
+        )
     }
 }
 
 impl DeviceMemory {
-    pub fn desc(&self) -> &DeviceMemoryDesc {
+    pub fn desc(&self) -> &DeviceMemoryDesc<'_> {
         let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
         unsafe { &*(desc_ptr as *const DeviceMemoryDesc) }
     }

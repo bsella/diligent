@@ -152,16 +152,18 @@ impl RenderDevice {
     pub fn create_texture(
         &self,
         texture_desc: &TextureDesc,
-        subresources: &[&TextureSubResource],
+        subresources: &[TextureSubResource],
         device_context: Option<&DeviceContext>,
     ) -> Result<Boxed<Texture>, BoxedFromNulError> {
         let mut texture_ptr = std::ptr::null_mut();
 
-        let mut subresources: Vec<_> = subresources.iter().map(|&subres| subres.into()).collect();
-
         let texture_data = diligent_sys::TextureData {
             NumSubresources: subresources.len() as u32,
-            pSubResources: subresources.as_mut_ptr(),
+            pSubResources: subresources
+                .first()
+                .map_or(std::ptr::null_mut(), |subresource| {
+                    std::ptr::from_ref(subresource) as _
+                }),
             pContext: device_context.map_or(std::ptr::null_mut(), |c| c.sys_ptr() as _),
         };
 
@@ -557,25 +559,12 @@ impl RenderDevice {
         &self,
         create_info: &DeviceMemoryCreateInfo,
     ) -> Result<Boxed<DeviceMemory>, BoxedFromNulError> {
-        let mut compatible_resources: Vec<_> = create_info
-            .compatible_resources
-            .iter()
-            .map(|device_object| device_object.sys_ptr())
-            .collect();
-
-        let create_info = diligent_sys::DeviceMemoryCreateInfo {
-            Desc: (&create_info.desc).into(),
-            InitialSize: create_info.initial_size,
-            NumResources: compatible_resources.len() as u32,
-            ppCompatibleResources: compatible_resources.as_mut_ptr() as _,
-        };
-
         let mut device_memory_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
             RenderDevice,
             CreateDeviceMemory,
-            &create_info,
+            &create_info.0,
             &mut device_memory_ptr
         );
 
@@ -586,13 +575,12 @@ impl RenderDevice {
         &self,
         create_info: &PipelineStateCacheCreateInfo<T>,
     ) -> Result<Boxed<PipelineStateCache>, BoxedFromNulError> {
-        let create_info = create_info.into();
         let mut pso_cache_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
             RenderDevice,
             CreatePipelineStateCache,
-            &create_info,
+            &create_info.0,
             &mut pso_cache_ptr
         );
 

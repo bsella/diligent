@@ -5,7 +5,7 @@ use diligent::{
     *,
 };
 use diligent_samples::sample_base::{
-    sample::{get_adjusted_projection_matrix, get_surface_pretransform_matrix, SampleBase},
+    sample::{SampleBase, get_adjusted_projection_matrix, get_surface_pretransform_matrix},
     sample_app::{self},
 };
 
@@ -318,15 +318,15 @@ impl SampleBase for Tessellation {
                 .usage(Usage::Immutable)
                 .build();
 
-            let subresource = TextureSubResource::builder()
+            let subresource = [TextureSubResource::builder()
                 .from_host(
                     image.as_bytes(),
                     image.width() as u64 * std::mem::size_of::<u16>() as u64,
                 )
-                .build();
+                .build()];
 
             let texture = device
-                .create_texture(&texture_desc, &[&subresource], None)
+                .create_texture(&texture_desc, &subresource, None)
                 .unwrap();
 
             // Get shader resource view from the texture
@@ -357,15 +357,15 @@ impl SampleBase for Tessellation {
                 .usage(Usage::Immutable)
                 .build();
 
-            let subresource = TextureSubResource::builder()
+            let subresource = [TextureSubResource::builder()
                 .from_host(
                     image.as_bytes(),
                     image.width() as u64 * std::mem::size_of::<[u8; 4]>() as u64,
                 )
-                .build();
+                .build()];
 
             let texture = device
-                .create_texture(&texture_desc, &[&subresource], None)
+                .create_texture(&texture_desc, &subresource, None)
                 .unwrap();
 
             // Get shader resource view from the texture

@@ -3,10 +3,10 @@ use std::{ffi::CString, ops::Deref, path::Path};
 
 use diligent::{
     geometry_primitives::{
-        create_geometry_primitive, GeometryPrimitive, GeometryPrimitiveAttributes,
-        GeometryPrimitiveVertexFlags,
+        GeometryPrimitive, GeometryPrimitiveAttributes, GeometryPrimitiveVertexFlags,
+        create_geometry_primitive,
     },
-    graphics_utilities::{create_geometry_primitive_buffers, GeometryPrimitiveBuffersCreateInfo},
+    graphics_utilities::{GeometryPrimitiveBuffersCreateInfo, create_geometry_primitive_buffers},
     *,
 };
 use diligent_samples::sample_base::{
@@ -479,7 +479,7 @@ fn load_textures(device: &RenderDevice) -> ([Boxed<Texture>; NUM_TEXTURES], Boxe
             .build();
 
         device
-            .create_texture(&texture_desc, &[&texture_data], None)
+            .create_texture(&texture_desc, &[texture_data], None)
             .unwrap()
     });
 
@@ -501,15 +501,15 @@ fn load_textures(device: &RenderDevice) -> ([Boxed<Texture>; NUM_TEXTURES], Boxe
             .usage(Usage::Immutable)
             .build();
 
-        let texture_data = TextureSubResource::builder()
+        let texture_data = [TextureSubResource::builder()
             .from_host(
                 image.as_bytes(),
                 image.width() as u64 * std::mem::size_of::<[u8; 4]>() as u64,
             )
-            .build();
+            .build()];
 
         device
-            .create_texture(&texture_desc, &[&texture_data], None)
+            .create_texture(&texture_desc, &texture_data, None)
             .unwrap()
     };
 

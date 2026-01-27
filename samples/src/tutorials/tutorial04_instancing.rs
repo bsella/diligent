@@ -218,15 +218,15 @@ impl SampleBase for Instancing {
                 .usage(Usage::Immutable)
                 .build();
 
-            let subresource = TextureSubResource::builder()
+            let subresource = [TextureSubResource::builder()
                 .from_host(
                     image.as_bytes(),
                     image.width() as u64 * std::mem::size_of::<[u8; 4]>() as u64,
                 )
-                .build();
+                .build()];
 
             let texture = device
-                .create_texture(&texture_desc, &[&subresource], None)
+                .create_texture(&texture_desc, &subresource, None)
                 .unwrap();
 
             // Get shader resource view from the texture

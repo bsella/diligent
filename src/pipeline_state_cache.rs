@@ -1,7 +1,6 @@
-use std::ffi::CString;
+use std::{ffi::CStr, marker::PhantomData};
 
 use bitflags::bitflags;
-use bon::Builder;
 
 use crate::{data_blob::DataBlob, device_object::DeviceObject};
 
@@ -26,37 +25,41 @@ bitflags! {
     }
 }
 
-#[derive(Builder)]
-pub struct PipelineStateCacheCreateInfo<T> {
-    #[builder(with =|name : impl AsRef<str>| CString::new(name.as_ref()).unwrap())]
-    name: Option<CString>,
-    mode: PsoCacheMode,
-    flags: PsoCacheFlags,
-    cache_data: Vec<T>,
-}
+#[repr(transparent)]
+pub struct PipelineStateCacheCreateInfo<'name, 'data, T>(
+    pub(crate) diligent_sys::PipelineStateCacheCreateInfo,
+    PhantomData<(&'name (), &'data (), T)>,
+);
 
-impl<T> From<&PipelineStateCacheCreateInfo<T>> for diligent_sys::PipelineStateCacheCreateInfo {
-    fn from(value: &PipelineStateCacheCreateInfo<T>) -> Self {
-        Self {
-            Desc: diligent_sys::PipelineStateCacheDesc {
-                _DeviceObjectAttribs: {
-                    diligent_sys::DeviceObjectAttribs {
-                        Name: value
-                            .name
-                            .as_ref()
-                            .map_or(std::ptr::null(), |name| name.as_ptr()),
-                    }
+#[bon::bon]
+impl<'name, 'data, T> PipelineStateCacheCreateInfo<'name, 'data, T> {
+    #[builder]
+    pub fn new(
+        name: Option<&'name CStr>,
+        mode: PsoCacheMode,
+        flags: PsoCacheFlags,
+        cache_data: &'data [T],
+    ) -> Self {
+        PipelineStateCacheCreateInfo(
+            diligent_sys::PipelineStateCacheCreateInfo {
+                Desc: diligent_sys::PipelineStateCacheDesc {
+                    _DeviceObjectAttribs: {
+                        diligent_sys::DeviceObjectAttribs {
+                            Name: name.as_ref().map_or(std::ptr::null(), |name| name.as_ptr()),
+                        }
+                    },
+                    Mode: match mode {
+                        PsoCacheMode::Load => diligent_sys::PSO_CACHE_MODE_LOAD,
+                        PsoCacheMode::Store => diligent_sys::PSO_CACHE_MODE_STORE,
+                        PsoCacheMode::LoadStore => diligent_sys::PSO_CACHE_MODE_LOAD_STORE,
+                    } as _,
+                    Flags: flags.bits(),
                 },
-                Mode: match value.mode {
-                    PsoCacheMode::Load => diligent_sys::PSO_CACHE_MODE_LOAD,
-                    PsoCacheMode::Store => diligent_sys::PSO_CACHE_MODE_STORE,
-                    PsoCacheMode::LoadStore => diligent_sys::PSO_CACHE_MODE_LOAD_STORE,
-                } as _,
-                Flags: value.flags.bits(),
+                pCacheData: cache_data.as_ptr() as _,
+                CacheDataSize: std::mem::size_of_val(cache_data) as u32,
             },
-            pCacheData: value.cache_data.as_ptr() as _,
-            CacheDataSize: (value.cache_data.len() * std::mem::size_of::<T>()) as u32,
-        }
+            PhantomData,
+        )
     }
 }
 

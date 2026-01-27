@@ -3,7 +3,7 @@ use std::path::Path;
 use diligent::{graphics_utilities::linear_to_srgba, *};
 
 use diligent_samples::sample_base::{
-    sample::{get_adjusted_projection_matrix, get_surface_pretransform_matrix, SampleBase},
+    sample::{SampleBase, get_adjusted_projection_matrix, get_surface_pretransform_matrix},
     sample_app::{self},
 };
 
@@ -315,7 +315,7 @@ impl SampleBase for Texturing {
             let texture = device
                 .create_texture(
                     &texture_desc,
-                    &[&TextureSubResource::builder()
+                    &[TextureSubResource::builder()
                         .from_host(
                             image.as_bytes(),
                             image.width() as u64 * std::mem::size_of::<[u8; 4]>() as u64,
