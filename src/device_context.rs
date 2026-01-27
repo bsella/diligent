@@ -1588,27 +1588,21 @@ impl BindSparseResourceMemoryAttribs {
                 .first()
                 .map_or(std::ptr::null(), |binds| &binds.0),
             NumTextureBinds: texture_binds.len() as u32,
-            ppWaitFences: unsafe {
-                std::mem::transmute::<&[&Fence], &[*mut diligent_sys::IFence]>(wait_fences)
-            }
-            .first()
-            .map_or(std::ptr::null_mut(), |&fence| {
-                std::ptr::addr_of!(fence) as *mut _
+            ppWaitFences: wait_fences.first().map_or(std::ptr::null_mut(), |&fence| {
+                std::ptr::from_ref(fence) as *mut _
             }),
             pWaitFenceValues: wait_fence_values
                 .first()
-                .map_or(std::ptr::null_mut(), std::ptr::from_ref),
+                .map_or(std::ptr::null(), std::ptr::from_ref),
             NumWaitFences: wait_fences.len() as u32,
-            ppSignalFences: unsafe {
-                std::mem::transmute::<&[&Fence], &[*mut diligent_sys::IFence]>(signal_fences)
-            }
-            .first()
-            .map_or(std::ptr::null_mut(), |&fence| {
-                std::ptr::addr_of!(fence) as *mut _
-            }),
+            ppSignalFences: signal_fences
+                .first()
+                .map_or(std::ptr::null_mut(), |&fence| {
+                    std::ptr::from_ref(fence) as *mut _
+                }),
             pSignalFenceValues: signal_fence_values
                 .first()
-                .map_or(std::ptr::null_mut(), std::ptr::from_ref),
+                .map_or(std::ptr::null(), std::ptr::from_ref),
             NumSignalFences: signal_fences.len() as u32,
         })
     }
@@ -1861,8 +1855,10 @@ impl DeviceContext {
             SetVertexBuffers,
             0,
             num_buffers as u32,
-            buffer_pointers.as_ptr(),
-            offsets.as_ptr(),
+            buffer_pointers
+                .first()
+                .map_or(std::ptr::null(), std::ptr::from_ref),
+            offsets.first().map_or(std::ptr::null(), std::ptr::from_ref),
             state_transition_mode.into(),
             flags.bits()
         )
@@ -1935,7 +1931,9 @@ impl DeviceContext {
             DeviceContext,
             SetRenderTargets,
             render_targets.len() as u32,
-            render_targets.as_ptr() as _,
+            render_targets.first().map_or(std::ptr::null_mut(), |rt| {
+                std::ptr::from_ref(rt) as *mut _
+            }),
             depth_stencil.map_or(std::ptr::null_mut(), |v| v.sys_ptr()),
             state_transition_mode.into()
         )
@@ -2066,8 +2064,9 @@ impl DeviceContext {
             UpdateBuffer,
             buffer.sys_ptr(),
             0,
-            data.len() as u64 * std::mem::size_of::<T>() as u64,
-            data.as_ptr() as *const std::os::raw::c_void,
+            std::mem::size_of_val(data) as u64,
+            data.first()
+                .map_or(std::ptr::null_mut(), |rt| { std::ptr::from_ref(rt) as _ }),
             state_transition_mode.into()
         )
     }
