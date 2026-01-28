@@ -46,30 +46,46 @@ pub fn get_surface_pretransform_matrix(
     pre_transform: SurfaceTransform,
     camera_view_axis: &glam::Vec3,
 ) -> glam::Mat4 {
-    match pre_transform
-    {
+    match pre_transform {
         SurfaceTransform::Rotate90 =>
-            // The image content is rotated 90 degrees clockwise.
-            glam::Mat4::from_quat(glam::Quat::from_axis_angle(*camera_view_axis, -std::f32::consts::PI / 2.0)),
+        // The image content is rotated 90 degrees clockwise.
+        {
+            glam::Mat4::from_quat(glam::Quat::from_axis_angle(
+                *camera_view_axis,
+                -std::f32::consts::PI / 2.0,
+            ))
+        }
 
-            SurfaceTransform::Rotate180 =>
+        SurfaceTransform::Rotate180 =>
         // The image content is rotated 180 degrees clockwise.
-        glam::Mat4::from_quat(glam::Quat::from_axis_angle(*camera_view_axis, -std::f32::consts::PI)),
+        {
+            glam::Mat4::from_quat(glam::Quat::from_axis_angle(
+                *camera_view_axis,
+                -std::f32::consts::PI,
+            ))
+        }
 
         SurfaceTransform::Rotate270 =>
         // The image content is rotated 270 degrees clockwise.
-        glam::Mat4::from_quat(glam::Quat::from_axis_angle(*camera_view_axis, -std::f32::consts::PI* 3.0 / 2.0)),
+        {
+            glam::Mat4::from_quat(glam::Quat::from_axis_angle(
+                *camera_view_axis,
+                -std::f32::consts::PI * 3.0 / 2.0,
+            ))
+        }
 
-        SurfaceTransform::Optimal=>
-            panic!("SURFACE_TRANSFORM_OPTIMAL is only valid as parameter during swap chain initialization."),
+        SurfaceTransform::Optimal => panic!(
+            "SURFACE_TRANSFORM_OPTIMAL is only valid as parameter during swap chain initialization."
+        ),
 
-        SurfaceTransform::HorizontalMirror|
-        SurfaceTransform::HorizontalMirrorRotate90|
-        SurfaceTransform::HorizontalMirrorRotate180|
-        SurfaceTransform::HorizontalMirrorRotate270 =>
-            panic!("Mirror transforms are not supported"),
+        SurfaceTransform::HorizontalMirror
+        | SurfaceTransform::HorizontalMirrorRotate90
+        | SurfaceTransform::HorizontalMirrorRotate180
+        | SurfaceTransform::HorizontalMirrorRotate270 => {
+            panic!("Mirror transforms are not supported")
+        }
 
-        _=> glam::Mat4::IDENTITY
+        _ => glam::Mat4::IDENTITY,
     }
 }
 
@@ -119,28 +135,42 @@ pub trait SampleBase {
     fn new(
         engine_factory: &EngineFactory,
         render_device: Boxed<RenderDevice>,
-        immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
+        main_context: &ImmediateDeviceContext,
+        other_immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
         deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
         swap_chain_desc: &[&SwapChainDesc],
     ) -> Self;
 
     fn get_render_device(&self) -> &RenderDevice;
-    fn get_immediate_context(&self) -> &ImmediateDeviceContext;
 
     fn make_swap_chains_create_info(settings: &impl AppSettings) -> Vec<SwapChainCreateInfo> {
         // By default, the sample only created one window with one swap chain
         let (width, height) = settings.get_window_dimensions();
-        vec![SwapChainCreateInfo::builder()
-            .width(width)
-            .height(height)
-            .build()]
+        vec![
+            SwapChainCreateInfo::builder()
+                .width(width)
+                .height(height)
+                .build(),
+        ]
     }
 
-    fn render(&self, _swap_chain: &SwapChain) {}
+    fn render(
+        &self,
+        main_context: Boxed<ImmediateDeviceContext>,
+        _swap_chain: &SwapChain,
+    ) -> Boxed<ImmediateDeviceContext> {
+        main_context
+    }
 
-    fn update(&mut self, _current_time: f64, _elapsed_time: f64) {}
+    fn update(
+        &mut self,
+        _main_context: &ImmediateDeviceContext,
+        _current_time: f64,
+        _elapsed_time: f64,
+    ) {
+    }
 
-    fn update_ui(&mut self, _ui: &mut Ui) {}
+    fn update_ui(&mut self, _main_context: &ImmediateDeviceContext, _ui: &mut Ui) {}
 
     fn get_name() -> &'static str;
 

@@ -7,7 +7,6 @@ use diligent_samples::sample_base::{
 
 struct HelloTriangle {
     device: Boxed<RenderDevice>,
-    immediate_context: Boxed<ImmediateDeviceContext>,
 
     pipeline_state: Boxed<GraphicsPipelineState>,
 }
@@ -17,14 +16,11 @@ impl SampleBase for HelloTriangle {
         &self.device
     }
 
-    fn get_immediate_context(&self) -> &ImmediateDeviceContext {
-        &self.immediate_context
-    }
-
     fn new(
         _engine_factory: &EngineFactory,
         device: Boxed<RenderDevice>,
-        immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
+        _immediate_context: &ImmediateDeviceContext,
+        _immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
         _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
         swap_chain_descs: &[&SwapChainDesc],
     ) -> Self {
@@ -150,33 +146,36 @@ void main(in PSInput PSIn, out PSOutput PSOut)
 
         HelloTriangle {
             device,
-            immediate_context: immediate_contexts.into_iter().nth(0).unwrap(),
             pipeline_state,
         }
     }
 
-    fn render(&self, swap_chain: &SwapChain) {
-        let immediate_context = self.get_immediate_context();
-
+    fn render(
+        &self,
+        main_context: Boxed<ImmediateDeviceContext>,
+        swap_chain: &SwapChain,
+    ) -> Boxed<ImmediateDeviceContext> {
         let rtv = swap_chain.get_current_back_buffer_rtv().unwrap();
         let dsv = swap_chain.get_depth_buffer_dsv().unwrap();
 
         // Clear the back buffer
         // Let the engine perform required state transitions
-        immediate_context.clear_render_target::<f32>(
+        main_context.clear_render_target::<f32>(
             rtv,
             &[0.350, 0.350, 0.350, 1.0],
             ResourceStateTransitionMode::Transition,
         );
 
-        immediate_context.clear_depth(dsv, 1.0, ResourceStateTransitionMode::Transition);
+        main_context.clear_depth(dsv, 1.0, ResourceStateTransitionMode::Transition);
 
         // Set the pipeline state in the immediate context
-        let graphics = immediate_context.set_graphics_pipeline_state(&self.pipeline_state);
+        let graphics = main_context.set_graphics_pipeline_state(&self.pipeline_state);
 
         // Typically we should now call CommitShaderResources(), however shaders in this example don't
         // use any resources.
         graphics.draw(&DrawAttribs::builder().num_vertices(3).build());
+
+        graphics.finish()
     }
 
     fn get_name() -> &'static str {

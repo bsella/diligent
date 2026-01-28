@@ -426,7 +426,6 @@ fn bind_buffers(
 
 struct ComputeShader {
     device: Boxed<RenderDevice>,
-    immediate_context: Boxed<ImmediateDeviceContext>,
 
     render_particle_pso: Boxed<GraphicsPipelineState>,
     render_particle_srb: Boxed<ShaderResourceBinding>,
@@ -462,14 +461,12 @@ impl SampleBase for ComputeShader {
     fn get_render_device(&self) -> &RenderDevice {
         &self.device
     }
-    fn get_immediate_context(&self) -> &ImmediateDeviceContext {
-        &self.immediate_context
-    }
 
     fn new(
         engine_factory: &EngineFactory,
         device: Boxed<RenderDevice>,
-        immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
+        _main_context: &ImmediateDeviceContext,
+        _immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
         _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
         swap_chain_descs: &[&SwapChainDesc],
     ) -> Self {
@@ -559,7 +556,6 @@ impl SampleBase for ComputeShader {
 
         ComputeShader {
             device,
-            immediate_context: immediate_contexts.into_iter().nth(0).unwrap(),
 
             render_particle_pso,
             reset_particle_lists_pso,
@@ -594,21 +590,23 @@ impl SampleBase for ComputeShader {
             .set_compute_shaders(DeviceFeatureState::Enabled);
     }
 
-    fn render(&self, swap_chain: &SwapChain) {
-        let immediate_context = self.get_immediate_context();
-
+    fn render(
+        &self,
+        main_context: Boxed<ImmediateDeviceContext>,
+        swap_chain: &SwapChain,
+    ) -> Boxed<ImmediateDeviceContext> {
         let rtv = swap_chain.get_current_back_buffer_rtv().unwrap();
         let dsv = swap_chain.get_depth_buffer_dsv().unwrap();
 
         // Clear the back buffer
         // Let the engine perform required state transitions
-        immediate_context.clear_render_target(
+        main_context.clear_render_target(
             rtv,
             &self.clear_color,
             ResourceStateTransitionMode::Transition,
         );
 
-        immediate_context.clear_depth(dsv, 1.0, ResourceStateTransitionMode::Transition);
+        main_context.clear_depth(dsv, 1.0, ResourceStateTransitionMode::Transition);
 
         let swap_chain_desc = swap_chain.desc();
 
@@ -625,7 +623,7 @@ impl SampleBase for ComputeShader {
 
             // Map the buffer and write current world-view-projection matrix
             let mut constants =
-                immediate_context.map_buffer_write::<Constants>(&self.constants, MapFlags::Discard);
+                main_context.map_buffer_write::<Constants>(&self.constants, MapFlags::Discard);
 
             let constants = &mut constants[0];
 
@@ -648,50 +646,55 @@ impl SampleBase for ComputeShader {
             )
             .build();
 
-        {
+        let main_context = {
             let reset_particle_lists =
-                immediate_context.set_compute_pipeline_state(&self.reset_particle_lists_pso);
-            immediate_context.commit_shader_resources(
+                main_context.set_compute_pipeline_state(&self.reset_particle_lists_pso);
+            reset_particle_lists.commit_shader_resources(
                 &self.reset_particle_lists_srb,
                 ResourceStateTransitionMode::Transition,
             );
             reset_particle_lists.dispatch_compute(&dispatch_attribs);
-        }
 
-        {
+            reset_particle_lists.finish()
+        };
+
+        let main_context = {
             let move_particle_lists =
-                immediate_context.set_compute_pipeline_state(&self.move_particles_pso);
-            immediate_context.commit_shader_resources(
+                main_context.set_compute_pipeline_state(&self.move_particles_pso);
+            move_particle_lists.commit_shader_resources(
                 &self.move_particles_srb,
                 ResourceStateTransitionMode::Transition,
             );
             move_particle_lists.dispatch_compute(&dispatch_attribs);
-        }
+            move_particle_lists.finish()
+        };
 
-        {
+        let main_context = {
             let collide_particles =
-                immediate_context.set_compute_pipeline_state(&self.collide_particles_pso);
-            immediate_context.commit_shader_resources(
+                main_context.set_compute_pipeline_state(&self.collide_particles_pso);
+            collide_particles.commit_shader_resources(
                 &self.collide_particles_srb,
                 ResourceStateTransitionMode::Transition,
             );
             collide_particles.dispatch_compute(&dispatch_attribs);
-        }
+            collide_particles.finish()
+        };
 
-        {
+        let main_context = {
             let update_particles =
-                immediate_context.set_compute_pipeline_state(&self.update_particle_speed_pso);
+                main_context.set_compute_pipeline_state(&self.update_particle_speed_pso);
             // Use the same SRB
-            immediate_context.commit_shader_resources(
+            update_particles.commit_shader_resources(
                 &self.collide_particles_srb,
                 ResourceStateTransitionMode::Transition,
             );
             update_particles.dispatch_compute(&dispatch_attribs);
-        }
+            update_particles.finish()
+        };
 
-        let graphics = immediate_context.set_graphics_pipeline_state(&self.render_particle_pso);
+        let graphics = main_context.set_graphics_pipeline_state(&self.render_particle_pso);
 
-        immediate_context.commit_shader_resources(
+        graphics.commit_shader_resources(
             &self.render_particle_srb,
             ResourceStateTransitionMode::Transition,
         );
@@ -702,9 +705,11 @@ impl SampleBase for ComputeShader {
                 .num_instances(self.num_particles as u32)
                 .build(),
         );
+
+        graphics.finish()
     }
 
-    fn update_ui(&mut self, ui: &mut imgui::Ui) {
+    fn update_ui(&mut self, _main_context: &ImmediateDeviceContext, ui: &mut imgui::Ui) {
         if let Some(_window_token) = ui
             .window("Settings")
             .always_auto_resize(true)
@@ -761,7 +766,12 @@ impl SampleBase for ComputeShader {
         }
     }
 
-    fn update(&mut self, _current_time: f64, elapsed_time: f64) {
+    fn update(
+        &mut self,
+        _main_context: &ImmediateDeviceContext,
+        _current_time: f64,
+        elapsed_time: f64,
+    ) {
         self.time_delta = elapsed_time as f32;
     }
 

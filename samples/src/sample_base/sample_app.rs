@@ -52,6 +52,8 @@ pub struct SampleApp<Sample: SampleBase, W: Window> {
     _golden_image_mode: GoldenImageMode,
     _golden_pixel_tolerance: u32,
 
+    main_context: Boxed<ImmediateDeviceContext>,
+
     sample: Sample,
 
     app_settings: SampleAppSettings,
@@ -106,7 +108,8 @@ impl<GenericSample: SampleBase, W: Window> SampleApp<GenericSample, W> {
     }
 
     fn update(&mut self, current_time: f64, elapsed_time: f64) {
-        self.sample.update(current_time, elapsed_time);
+        self.sample
+            .update(&self.main_context, current_time, elapsed_time);
     }
 
     fn update_ui(&mut self, swap_chain: &mut SwapChain, ui: &mut imgui::Ui) {
@@ -169,22 +172,7 @@ impl<GenericSample: SampleBase, W: Window> SampleApp<GenericSample, W> {
             // main DiligentSamples repository.
             ui.checkbox("VSync", &mut self.app_settings.vsync);
         }
-        self.sample.update_ui(ui);
-    }
-
-    fn render(&self, swap_chain: &SwapChain) {
-        let context = self.sample.get_immediate_context();
-        context.clear_stats();
-
-        let rtv = swap_chain.get_current_back_buffer_rtv().unwrap();
-        let dsv = swap_chain.get_depth_buffer_dsv().unwrap();
-
-        context.set_render_targets(&[rtv], Some(dsv), ResourceStateTransitionMode::Transition);
-
-        self.sample.render(swap_chain);
-
-        // Restore default render target in case the sample has changed it
-        context.set_render_targets(&[rtv], Some(dsv), ResourceStateTransitionMode::Transition);
+        self.sample.update_ui(&self.main_context, ui);
     }
 
     fn present(&self, swap_chain: &SwapChain) {
@@ -567,7 +555,7 @@ impl<GenericSample: SampleBase, W: Window> App for SampleApp<GenericSample, W> {
         let display_modes =
             Self::display_modes(&engine_factory, &app_settings, &engine_create_info);
 
-        let (device, immediate_contexts, deferred_contexts, windows) =
+        let (device, mut immediate_contexts, deferred_contexts, windows) =
             Self::create_device_and_contexts_and_swap_chains(
                 &app_settings,
                 &engine_factory,
@@ -580,10 +568,14 @@ impl<GenericSample: SampleBase, W: Window> App for SampleApp<GenericSample, W> {
             .map(|sample_window| sample_window.swap_chain.desc())
             .collect::<Vec<_>>();
 
+        let other_immediate_context = immediate_contexts.split_off(1);
+        let main_context = immediate_contexts.remove(0);
+
         let sample = GenericSample::new(
             &engine_factory,
             device,
-            immediate_contexts,
+            &main_context,
+            other_immediate_context,
             deferred_contexts,
             swap_chain_descs.as_slice(),
         );
@@ -610,6 +602,8 @@ impl<GenericSample: SampleBase, W: Window> App for SampleApp<GenericSample, W> {
         SampleApp::<GenericSample, W> {
             _golden_image_mode: GoldenImageMode::None,
             _golden_pixel_tolerance: 0,
+
+            main_context,
 
             sample,
 
@@ -648,6 +642,7 @@ impl<GenericSample: SampleBase, W: Window> App for SampleApp<GenericSample, W> {
         let mut next_windows = VecDeque::<SampleWindow<W>>::new();
 
         loop {
+            // Update
             let elapsed_time = {
                 let now = std::time::Instant::now();
 
@@ -663,6 +658,7 @@ impl<GenericSample: SampleBase, W: Window> App for SampleApp<GenericSample, W> {
 
             std::mem::swap(&mut self.windows, &mut next_windows);
 
+            // Handle events
             'window: for mut sample_window in next_windows.drain(..) {
                 let mut imgui_frame = sample_window.imgui_renderer.new_frame();
 
@@ -687,18 +683,44 @@ impl<GenericSample: SampleBase, W: Window> App for SampleApp<GenericSample, W> {
                     self.sample.handle_event(event);
                 }
 
-                self.render(&sample_window.swap_chain);
+                // Render
+                {
+                    self.main_context.clear_stats();
 
+                    let rtv = sample_window
+                        .swap_chain
+                        .get_current_back_buffer_rtv()
+                        .unwrap();
+                    let dsv = sample_window.swap_chain.get_depth_buffer_dsv().unwrap();
+
+                    self.main_context.set_render_targets(
+                        &[rtv],
+                        Some(dsv),
+                        ResourceStateTransitionMode::Transition,
+                    );
+
+                    self.main_context = self
+                        .sample
+                        .render(self.main_context, &sample_window.swap_chain);
+
+                    // Restore default render target in case the sample has changed it
+                    self.main_context.set_render_targets(
+                        &[rtv],
+                        Some(dsv),
+                        ResourceStateTransitionMode::Transition,
+                    );
+                }
+
+                // Render imgui UI
                 if self.app_settings.show_ui {
                     self.update_ui(&mut sample_window.swap_chain, imgui_frame.ui_mut());
-                    imgui_frame.render(
-                        self.sample.get_immediate_context(),
-                        self.sample.get_render_device(),
-                    );
+                    self.main_context =
+                        imgui_frame.render(self.main_context, self.sample.get_render_device());
                 }
 
                 self.present(&sample_window.swap_chain);
 
+                // Update window title
                 {
                     let filter_scale = 0.2;
                     filtered_frame_time =

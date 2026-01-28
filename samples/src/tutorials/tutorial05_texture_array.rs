@@ -27,7 +27,6 @@ struct InstanceData {
 
 struct TextureArray {
     device: Boxed<RenderDevice>,
-    immediate_context: Boxed<ImmediateDeviceContext>,
 
     textured_cube: TexturedCube,
 
@@ -48,7 +47,7 @@ struct TextureArray {
 }
 
 impl TextureArray {
-    fn populate_instance_buffer(&mut self) {
+    fn populate_instance_buffer(&mut self, context: &DeviceContext) {
         let mut instance_data = Vec::from_iter(std::iter::repeat_n(
             InstanceData {
                 matrix: std::array::from_fn(|_| 0.0),
@@ -109,7 +108,7 @@ impl TextureArray {
         }
 
         // Update instance data buffer
-        self.immediate_context.update_buffer_from_slice(
+        context.update_buffer_from_slice(
             &mut self.instance_buffer,
             instance_data.as_slice(),
             ResourceStateTransitionMode::Transition,
@@ -121,14 +120,12 @@ impl SampleBase for TextureArray {
     fn get_render_device(&self) -> &RenderDevice {
         &self.device
     }
-    fn get_immediate_context(&self) -> &ImmediateDeviceContext {
-        &self.immediate_context
-    }
 
     fn new(
         engine_factory: &EngineFactory,
         device: Boxed<RenderDevice>,
-        immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
+        main_context: &ImmediateDeviceContext,
+        _immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
         _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
         swap_chain_descs: &[&SwapChainDesc],
     ) -> Self {
@@ -279,7 +276,6 @@ impl SampleBase for TextureArray {
             device,
             convert_ps_output_to_gamma,
             pipeline_state,
-            immediate_context: immediate_contexts.into_iter().nth(0).unwrap(),
             textured_cube,
             srb,
             vertex_shader_constants: vs_constants,
@@ -289,12 +285,12 @@ impl SampleBase for TextureArray {
             _texture_view: texture_srv,
         };
 
-        sample.populate_instance_buffer();
+        sample.populate_instance_buffer(main_context);
 
         sample
     }
 
-    fn update_ui(&mut self, ui: &mut imgui::Ui) {
+    fn update_ui(&mut self, main_context: &ImmediateDeviceContext, ui: &mut imgui::Ui) {
         if let Some(_window_token) = ui
             .window("Settings")
             .always_auto_resize(true)
@@ -302,19 +298,26 @@ impl SampleBase for TextureArray {
             .begin()
             && ui.slider("Grid Size", 1, 32, &mut self.grid_size)
         {
-            self.populate_instance_buffer();
+            self.populate_instance_buffer(main_context);
         }
     }
 
-    fn update(&mut self, current_time: f64, _elapsed_time: f64) {
+    fn update(
+        &mut self,
+        _main_context: &ImmediateDeviceContext,
+        current_time: f64,
+        _elapsed_time: f64,
+    ) {
         // Apply rotation
         self.rotation_matrix = glam::Mat4::from_rotation_y(current_time as f32)
             * glam::Mat4::from_rotation_x(-current_time as f32 * 0.25);
     }
 
-    fn render(&self, swap_chain: &SwapChain) {
-        let immediate_context = self.get_immediate_context();
-
+    fn render(
+        &self,
+        main_context: Boxed<ImmediateDeviceContext>,
+        swap_chain: &SwapChain,
+    ) -> Boxed<ImmediateDeviceContext> {
         let view_proj_matrix = {
             let swap_chain_desc = swap_chain.desc();
 
@@ -355,19 +358,19 @@ impl SampleBase for TextureArray {
                 }
             };
 
-            immediate_context.clear_render_target::<f32>(
+            main_context.clear_render_target::<f32>(
                 rtv,
                 &clear_color,
                 ResourceStateTransitionMode::Transition,
             );
         }
 
-        immediate_context.clear_depth(dsv, 1.0, ResourceStateTransitionMode::Transition);
+        main_context.clear_depth(dsv, 1.0, ResourceStateTransitionMode::Transition);
 
         {
             // Map the buffer and write current world-view-projection matrix
-            let mut cb_constants = immediate_context
-                .map_buffer_write(&self.vertex_shader_constants, MapFlags::Discard);
+            let mut cb_constants =
+                main_context.map_buffer_write(&self.vertex_shader_constants, MapFlags::Discard);
 
             cb_constants[0] = view_proj_matrix;
             cb_constants[1] = self.rotation_matrix;
@@ -379,12 +382,12 @@ impl SampleBase for TextureArray {
                 (self.textured_cube.get_vertex_buffer(), 0),
                 (&self.instance_buffer, 0),
             ];
-            immediate_context.set_vertex_buffers(
+            main_context.set_vertex_buffers(
                 &buffers,
                 ResourceStateTransitionMode::Transition,
                 SetVertexBufferFlags::Reset,
             );
-            immediate_context.set_index_buffer(
+            main_context.set_index_buffer(
                 self.textured_cube.get_index_buffer(),
                 0,
                 ResourceStateTransitionMode::Transition,
@@ -392,12 +395,11 @@ impl SampleBase for TextureArray {
         }
 
         // Set the pipeline state
-        let graphics = immediate_context.set_graphics_pipeline_state(&self.pipeline_state);
+        let graphics = main_context.set_graphics_pipeline_state(&self.pipeline_state);
 
         // Commit shader resources. RESOURCE_STATE_TRANSITION_MODE_TRANSITION mode
         // makes sure that resources are transitioned to required states.
-        immediate_context
-            .commit_shader_resources(&self.srb, ResourceStateTransitionMode::Transition);
+        graphics.commit_shader_resources(&self.srb, ResourceStateTransitionMode::Transition);
 
         let draw_attribs = DrawIndexedAttribs::builder()
             .num_indices(36)
@@ -408,6 +410,8 @@ impl SampleBase for TextureArray {
             .build();
 
         graphics.draw_indexed(&draw_attribs);
+
+        graphics.finish()
     }
 
     fn get_name() -> &'static str {

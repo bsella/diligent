@@ -1,4 +1,4 @@
-use std::{ffi::CStr, marker::PhantomData, ops::Deref};
+use std::{borrow::Borrow, ffi::CStr, marker::PhantomData, ops::Deref};
 
 use bitflags::bitflags;
 use static_assertions::const_assert_eq;
@@ -1630,90 +1630,145 @@ impl Drop for RenderPassToken<'_> {
     }
 }
 
-pub struct GraphicsPipelineToken<'context> {
-    context: &'context DeviceContext,
-}
+pub struct GraphicsPipelineToken<Context: Borrow<DeviceContext>>(Context);
 
-impl GraphicsPipelineToken<'_> {
+impl<Context: Borrow<DeviceContext>> GraphicsPipelineToken<Context> {
     pub fn draw(&self, attribs: &DrawAttribs) {
-        unsafe_member_call!(self.context, DeviceContext, Draw, &attribs.0)
+        unsafe_member_call!(self.0.borrow(), DeviceContext, Draw, &attribs.0)
     }
 
     pub fn draw_indexed(&self, attribs: &DrawIndexedAttribs) {
-        unsafe_member_call!(self.context, DeviceContext, DrawIndexed, &attribs.0)
+        unsafe_member_call!(self.0.borrow(), DeviceContext, DrawIndexed, &attribs.0)
     }
 
     pub fn draw_indirect(&self, attribs: &DrawIndirectAttribs) {
-        unsafe_member_call!(self.context, DeviceContext, DrawIndirect, &attribs.0)
+        unsafe_member_call!(self.0.borrow(), DeviceContext, DrawIndirect, &attribs.0)
     }
 
     pub fn draw_indexed_indirect(&self, attribs: &DrawIndexedIndirectAttribs) {
-        unsafe_member_call!(self.context, DeviceContext, DrawIndexedIndirect, &attribs.0)
+        unsafe_member_call!(
+            self.0.borrow(),
+            DeviceContext,
+            DrawIndexedIndirect,
+            &attribs.0
+        )
     }
 
     pub fn multi_draw(&self, attribs: &MultiDrawAttribs) {
-        unsafe_member_call!(self.context, DeviceContext, MultiDraw, &attribs.0)
+        unsafe_member_call!(self.0.borrow(), DeviceContext, MultiDraw, &attribs.0)
     }
 
     pub fn multi_draw_indexed(&self, attribs: &MultiDrawIndexedAttribs) {
-        unsafe_member_call!(self.context, DeviceContext, MultiDrawIndexed, &attribs.0)
+        unsafe_member_call!(self.0.borrow(), DeviceContext, MultiDrawIndexed, &attribs.0)
+    }
+
+    pub fn finish(self) -> Context {
+        self.0
     }
 }
 
-pub struct MeshPipelineToken<'context> {
-    context: &'context DeviceContext,
+impl<Context: Borrow<DeviceContext>> Deref for GraphicsPipelineToken<Context> {
+    type Target = Context;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
-impl MeshPipelineToken<'_> {
+pub struct MeshPipelineToken<Context: Borrow<DeviceContext>>(Context);
+
+impl<Context: Borrow<DeviceContext>> MeshPipelineToken<Context> {
     pub fn draw_mesh(&self, attribs: &DrawMeshAttribs) {
-        unsafe_member_call!(self.context, DeviceContext, DrawMesh, &attribs.0)
+        unsafe_member_call!(self.0.borrow(), DeviceContext, DrawMesh, &attribs.0)
     }
 
     pub fn draw_mesh_indirect(&self, attribs: &DrawMeshIndirectAttribs) {
-        unsafe_member_call!(self.context, DeviceContext, DrawMeshIndirect, &attribs.0)
+        unsafe_member_call!(self.0.borrow(), DeviceContext, DrawMeshIndirect, &attribs.0)
+    }
+
+    pub fn finish(self) -> Context {
+        self.0
     }
 }
 
-pub struct ComputePipelineToken<'context> {
-    context: &'context DeviceContext,
+impl<Context: Borrow<DeviceContext>> Deref for MeshPipelineToken<Context> {
+    type Target = Context;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
-impl ComputePipelineToken<'_> {
+pub struct ComputePipelineToken<Context: Borrow<DeviceContext>>(Context);
+
+impl<Context: Borrow<DeviceContext>> ComputePipelineToken<Context> {
     pub fn dispatch_compute(&self, attribs: &DispatchComputeAttribs) {
-        unsafe_member_call!(self.context, DeviceContext, DispatchCompute, &attribs.0)
+        unsafe_member_call!(self.0.borrow(), DeviceContext, DispatchCompute, &attribs.0)
     }
 
     pub fn dispatch_compute_indirect(&self, attribs: &DispatchComputeIndirectAttribs) {
         unsafe_member_call!(
-            self.context,
+            self.0.borrow(),
             DeviceContext,
             DispatchComputeIndirect,
             &attribs.0
         )
     }
-}
 
-pub struct TilePipelineToken<'context> {
-    context: &'context DeviceContext,
-}
-
-impl TilePipelineToken<'_> {
-    pub fn dispatch_tile(&self, attribs: &DispatchTileAttribs) {
-        unsafe_member_call!(self.context, DeviceContext, DispatchTile, &attribs.0)
+    pub fn finish(self) -> Context {
+        self.0
     }
 }
 
-pub struct RayTracingPipelineToken<'context> {
-    context: &'context DeviceContext,
+impl<Context: Borrow<DeviceContext>> Deref for ComputePipelineToken<Context> {
+    type Target = Context;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
-impl RayTracingPipelineToken<'_> {
+pub struct TilePipelineToken<Context: Borrow<DeviceContext>>(Context);
+
+impl<Context: Borrow<DeviceContext>> TilePipelineToken<Context> {
+    pub fn dispatch_tile(&self, attribs: &DispatchTileAttribs) {
+        unsafe_member_call!(self.0.borrow(), DeviceContext, DispatchTile, &attribs.0)
+    }
+
+    pub fn finish(self) -> Context {
+        self.0
+    }
+}
+
+impl<Context: Borrow<DeviceContext>> Deref for TilePipelineToken<Context> {
+    type Target = Context;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+pub struct RayTracingPipelineToken<Context: Borrow<DeviceContext>>(Context);
+
+impl<Context: Borrow<DeviceContext>> RayTracingPipelineToken<Context> {
     pub fn trace_rays(&self, attribs: &TraceRaysAttribs) {
-        unsafe_member_call!(self.context, DeviceContext, TraceRays, &attribs.0)
+        unsafe_member_call!(self.0.borrow(), DeviceContext, TraceRays, &attribs.0)
     }
 
     pub fn trace_rays_indirect(&self, attribs: &TraceRaysIndirectAttribs) {
-        unsafe_member_call!(self.context, DeviceContext, TraceRaysIndirect, &attribs.0)
+        unsafe_member_call!(
+            self.0.borrow(),
+            DeviceContext,
+            TraceRaysIndirect,
+            &attribs.0
+        )
+    }
+
+    pub fn finish(self) -> Context {
+        self.0
+    }
+}
+
+impl<Context: Borrow<DeviceContext>> Deref for RayTracingPipelineToken<Context> {
+    type Target = Context;
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
@@ -1724,80 +1779,112 @@ define_ported!(
     Object
 );
 
+pub trait GraphicsContext: Borrow<DeviceContext> + Sized {
+    fn set_graphics_pipeline_state(
+        self,
+        pipeline_state: &GraphicsPipelineState,
+    ) -> GraphicsPipelineToken<Self> {
+        unsafe_member_call!(
+            self.borrow(),
+            DeviceContext,
+            SetPipelineState,
+            pipeline_state.sys_ptr()
+        );
+
+        GraphicsPipelineToken(self)
+    }
+}
+
+pub trait MeshContext: Borrow<DeviceContext> + Sized {
+    fn set_mesh_pipeline_state(
+        self,
+        pipeline_state: &GraphicsPipelineState,
+    ) -> GraphicsPipelineToken<Self> {
+        unsafe_member_call!(
+            self.borrow(),
+            DeviceContext,
+            SetPipelineState,
+            pipeline_state.sys_ptr()
+        );
+
+        GraphicsPipelineToken(self)
+    }
+}
+
+pub trait ComputeContext: Borrow<DeviceContext> + Sized {
+    fn set_compute_pipeline_state(
+        self,
+        pipeline_state: &ComputePipelineState,
+    ) -> ComputePipelineToken<Self> {
+        unsafe_member_call!(
+            self.borrow(),
+            DeviceContext,
+            SetPipelineState,
+            pipeline_state.sys_ptr()
+        );
+
+        ComputePipelineToken(self)
+    }
+}
+
+pub trait TileContext: Borrow<DeviceContext> + Sized {
+    fn set_tile_pipeline_state(
+        self,
+        pipeline_state: &TilePipelineState,
+    ) -> TilePipelineToken<Self> {
+        unsafe_member_call!(
+            self.borrow(),
+            DeviceContext,
+            SetPipelineState,
+            pipeline_state.sys_ptr()
+        );
+
+        TilePipelineToken(self)
+    }
+}
+
+pub trait RayTracingContext: Borrow<DeviceContext> + Sized {
+    fn set_ray_tracing_pipeline_state(
+        self,
+        pipeline_state: &RayTracingPipelineState,
+    ) -> RayTracingPipelineToken<Self> {
+        unsafe_member_call!(
+            self.borrow(),
+            DeviceContext,
+            SetPipelineState,
+            pipeline_state.sys_ptr()
+        );
+
+        RayTracingPipelineToken(self)
+    }
+}
+
+impl Borrow<DeviceContext> for Boxed<ImmediateDeviceContext> {
+    fn borrow(&self) -> &DeviceContext {
+        self
+    }
+}
+impl Borrow<DeviceContext> for Boxed<DeferredDeviceContext> {
+    fn borrow(&self) -> &DeviceContext {
+        self
+    }
+}
+
+impl GraphicsContext for Boxed<ImmediateDeviceContext> {}
+impl GraphicsContext for Boxed<DeferredDeviceContext> {}
+impl MeshContext for Boxed<ImmediateDeviceContext> {}
+impl MeshContext for Boxed<DeferredDeviceContext> {}
+impl ComputeContext for Boxed<ImmediateDeviceContext> {}
+impl ComputeContext for Boxed<DeferredDeviceContext> {}
+impl TileContext for Boxed<ImmediateDeviceContext> {}
+impl TileContext for Boxed<DeferredDeviceContext> {}
+impl RayTracingContext for Boxed<ImmediateDeviceContext> {}
+impl RayTracingContext for Boxed<DeferredDeviceContext> {}
+
 impl DeviceContext {
     pub fn desc(&self) -> &DeviceContextDesc {
         let desc_ptr = unsafe_member_call!(self, DeviceContext, GetDesc);
         unsafe { &*(desc_ptr as *const DeviceContextDesc) }
-    }
-
-    pub fn set_graphics_pipeline_state(
-        &self,
-        pipeline_state: &GraphicsPipelineState,
-    ) -> GraphicsPipelineToken<'_> {
-        unsafe_member_call!(
-            self,
-            DeviceContext,
-            SetPipelineState,
-            pipeline_state.sys_ptr()
-        );
-
-        GraphicsPipelineToken { context: self }
-    }
-
-    pub fn set_mesh_pipeline_state(
-        &self,
-        pipeline_state: &GraphicsPipelineState,
-    ) -> GraphicsPipelineToken<'_> {
-        unsafe_member_call!(
-            self,
-            DeviceContext,
-            SetPipelineState,
-            pipeline_state.sys_ptr()
-        );
-
-        GraphicsPipelineToken { context: self }
-    }
-
-    pub fn set_compute_pipeline_state(
-        &self,
-        pipeline_state: &ComputePipelineState,
-    ) -> ComputePipelineToken<'_> {
-        unsafe_member_call!(
-            self,
-            DeviceContext,
-            SetPipelineState,
-            pipeline_state.sys_ptr()
-        );
-
-        ComputePipelineToken { context: self }
-    }
-
-    pub fn set_tile_pipeline_state(
-        &self,
-        pipeline_state: &TilePipelineState,
-    ) -> TilePipelineToken<'_> {
-        unsafe_member_call!(
-            self,
-            DeviceContext,
-            SetPipelineState,
-            pipeline_state.sys_ptr()
-        );
-
-        TilePipelineToken { context: self }
-    }
-
-    pub fn set_ray_tracing_pipeline_state(
-        &self,
-        pipeline_state: &RayTracingPipelineState,
-    ) -> RayTracingPipelineToken<'_> {
-        unsafe_member_call!(
-            self,
-            DeviceContext,
-            SetPipelineState,
-            pipeline_state.sys_ptr()
-        );
-
-        RayTracingPipelineToken { context: self }
     }
 
     pub fn transition_shader_resources(&self, shader_resource_binding: &ShaderResourceBinding) {

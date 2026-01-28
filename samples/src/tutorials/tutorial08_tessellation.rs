@@ -11,7 +11,6 @@ use diligent_samples::sample_base::{
 
 struct Tessellation {
     device: Boxed<RenderDevice>,
-    immediate_context: Boxed<ImmediateDeviceContext>,
 
     main_pipeline: (Boxed<GraphicsPipelineState>, Boxed<ShaderResourceBinding>),
     wireframe_pipeline: Option<(Boxed<GraphicsPipelineState>, Boxed<ShaderResourceBinding>)>,
@@ -66,7 +65,8 @@ impl SampleBase for Tessellation {
     fn new(
         engine_factory: &EngineFactory,
         device: Boxed<RenderDevice>,
-        immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
+        _main_context: &ImmediateDeviceContext,
+        _immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
         _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
         swap_chain_descs: &[&SwapChainDesc],
     ) -> Self {
@@ -437,7 +437,6 @@ impl SampleBase for Tessellation {
             wireframe: false,
             tess_density: 32.0,
             distance: 10.0,
-            immediate_context: immediate_contexts.into_iter().nth(0).unwrap(),
             main_pipeline,
             wireframe_pipeline,
 
@@ -459,10 +458,6 @@ impl SampleBase for Tessellation {
         }
     }
 
-    fn get_immediate_context(&self) -> &ImmediateDeviceContext {
-        &self.immediate_context
-    }
-
     fn modify_engine_init_info(
         engine_ci: &mut diligent_samples::sample_base::sample::EngineCreateInfo,
     ) {
@@ -474,7 +469,7 @@ impl SampleBase for Tessellation {
             .set_geometry_shaders(DeviceFeatureState::Optional);
     }
 
-    fn update_ui(&mut self, ui: &mut imgui::Ui) {
+    fn update_ui(&mut self, _main_context: &ImmediateDeviceContext, ui: &mut imgui::Ui) {
         if let Some(_window_token) = ui
             .window("Settings")
             .always_auto_resize(true)
@@ -491,7 +486,12 @@ impl SampleBase for Tessellation {
         }
     }
 
-    fn update(&mut self, _current_time: f64, elapsed_time: f64) {
+    fn update(
+        &mut self,
+        _main_context: &ImmediateDeviceContext,
+        _current_time: f64,
+        elapsed_time: f64,
+    ) {
         // Set world view matrix
         if self.animate {
             self.rotation_angle += elapsed_time as f32 * 0.2;
@@ -502,9 +502,11 @@ impl SampleBase for Tessellation {
         }
     }
 
-    fn render(&self, swap_chain: &SwapChain) {
-        let immediate_context = self.get_immediate_context();
-
+    fn render(
+        &self,
+        main_context: Boxed<ImmediateDeviceContext>,
+        swap_chain: &SwapChain,
+    ) -> Boxed<ImmediateDeviceContext> {
         let swap_chain_desc = swap_chain.desc();
 
         let proj_matrix = {
@@ -554,14 +556,14 @@ impl SampleBase for Tessellation {
                 }
             };
 
-            immediate_context.clear_render_target::<f32>(
+            main_context.clear_render_target::<f32>(
                 rtv,
                 &clear_color,
                 ResourceStateTransitionMode::Transition,
             );
         }
 
-        immediate_context.clear_depth(dsv, 1.0, ResourceStateTransitionMode::Transition);
+        main_context.clear_depth(dsv, 1.0, ResourceStateTransitionMode::Transition);
 
         let num_horz_blocks = self.height_map_width / self.block_size;
         let num_vert_blocks = self.height_map_height / self.block_size;
@@ -569,7 +571,7 @@ impl SampleBase for Tessellation {
         {
             // Map the buffer and write rendering data
             let mut constants =
-                immediate_context.map_buffer_write(&self.shader_constants, MapFlags::Discard);
+                main_context.map_buffer_write(&self.shader_constants, MapFlags::Discard);
 
             constants[0] = GlobalConstants {
                 block_size: self.block_size as f32,
@@ -607,11 +609,11 @@ impl SampleBase for Tessellation {
         };
 
         // Set the pipeline state
-        let graphics = immediate_context.set_graphics_pipeline_state(pso);
+        let graphics = main_context.set_graphics_pipeline_state(pso);
 
         // Commit shader resources. RESOURCE_STATE_TRANSITION_MODE_TRANSITION mode
         // makes sure that resources are transitioned to required states.
-        immediate_context.commit_shader_resources(srb, ResourceStateTransitionMode::Transition);
+        graphics.commit_shader_resources(srb, ResourceStateTransitionMode::Transition);
 
         let draw_attribs = DrawAttribs::builder()
             .num_vertices(num_horz_blocks * num_vert_blocks)
@@ -619,6 +621,8 @@ impl SampleBase for Tessellation {
             .build();
 
         graphics.draw(&draw_attribs);
+
+        graphics.finish()
     }
 
     fn get_name() -> &'static str {

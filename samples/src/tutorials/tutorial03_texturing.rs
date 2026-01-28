@@ -9,7 +9,6 @@ use diligent_samples::sample_base::{
 
 struct Texturing {
     device: Boxed<RenderDevice>,
-    immediate_context: Boxed<ImmediateDeviceContext>,
 
     convert_ps_output_to_gamma: bool,
 
@@ -28,14 +27,12 @@ impl SampleBase for Texturing {
     fn get_render_device(&self) -> &RenderDevice {
         &self.device
     }
-    fn get_immediate_context(&self) -> &ImmediateDeviceContext {
-        &self.immediate_context
-    }
 
     fn new(
         engine_factory: &EngineFactory,
         device: Boxed<RenderDevice>,
-        immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
+        _main_context: &ImmediateDeviceContext,
+        _immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
         _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
         swap_chain_descs: &[&SwapChainDesc],
     ) -> Self {
@@ -344,7 +341,6 @@ impl SampleBase for Texturing {
             pipeline_state,
             cube_vertex_buffer,
             cube_index_buffer,
-            immediate_context: immediate_contexts.into_iter().nth(0).unwrap(),
             srb,
             _texture_srv: texture_srv,
             vertex_shader_constant_buffer,
@@ -352,7 +348,12 @@ impl SampleBase for Texturing {
         }
     }
 
-    fn update(&mut self, current_time: f64, _elapsed_time: f64) {
+    fn update(
+        &mut self,
+        _main_context: &ImmediateDeviceContext,
+        current_time: f64,
+        _elapsed_time: f64,
+    ) {
         // Apply rotation
         let cube_model_transform = glam::Mat4::from_rotation_x(-std::f32::consts::PI * 0.1)
             * glam::Mat4::from_rotation_y(current_time as f32);
@@ -364,9 +365,11 @@ impl SampleBase for Texturing {
         self.world_view_matrix = view * cube_model_transform;
     }
 
-    fn render(&self, swap_chain: &SwapChain) {
-        let immediate_context = self.get_immediate_context();
-
+    fn render(
+        &self,
+        main_context: Boxed<ImmediateDeviceContext>,
+        swap_chain: &SwapChain,
+    ) -> Boxed<ImmediateDeviceContext> {
         let rtv = swap_chain.get_current_back_buffer_rtv().unwrap();
         let dsv = swap_chain.get_depth_buffer_dsv().unwrap();
 
@@ -382,13 +385,13 @@ impl SampleBase for Texturing {
             }
         };
 
-        immediate_context.clear_render_target::<f32>(
+        main_context.clear_render_target::<f32>(
             rtv,
             &clear_color,
             ResourceStateTransitionMode::Transition,
         );
 
-        immediate_context.clear_depth(dsv, 1.0, ResourceStateTransitionMode::Transition);
+        main_context.clear_depth(dsv, 1.0, ResourceStateTransitionMode::Transition);
 
         {
             let swap_chain_desc = swap_chain.desc();
@@ -411,7 +414,7 @@ impl SampleBase for Texturing {
 
             {
                 // Map the buffer and write current world-view-projection matrix
-                let mut constant_buffer_data = immediate_context
+                let mut constant_buffer_data = main_context
                     .map_buffer_write(&self.vertex_shader_constant_buffer, MapFlags::Discard);
 
                 constant_buffer_data[0] = model_view_proj;
@@ -419,24 +422,23 @@ impl SampleBase for Texturing {
         }
 
         // Bind vertex and index buffers
-        immediate_context.set_vertex_buffers(
+        main_context.set_vertex_buffers(
             &[(&self.cube_vertex_buffer, 0)],
             ResourceStateTransitionMode::Transition,
             SetVertexBufferFlags::Reset,
         );
-        immediate_context.set_index_buffer(
+        main_context.set_index_buffer(
             &self.cube_index_buffer,
             0,
             ResourceStateTransitionMode::Transition,
         );
 
         // Set the pipeline state in the immediate context
-        let graphics = immediate_context.set_graphics_pipeline_state(&self.pipeline_state);
+        let graphics = main_context.set_graphics_pipeline_state(&self.pipeline_state);
 
         // Commit shader resources. RESOURCE_STATE_TRANSITION_MODE_TRANSITION mode
         // makes sure that resources are transitioned to required states.
-        immediate_context
-            .commit_shader_resources(&self.srb, ResourceStateTransitionMode::Transition);
+        graphics.commit_shader_resources(&self.srb, ResourceStateTransitionMode::Transition);
 
         graphics.draw_indexed(
             &DrawIndexedAttribs::builder()
@@ -446,6 +448,8 @@ impl SampleBase for Texturing {
                 .flags(DrawFlags::VerifyAll)
                 .build(),
         );
+
+        graphics.finish()
     }
 
     fn get_name() -> &'static str {

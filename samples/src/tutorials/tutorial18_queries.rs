@@ -15,7 +15,6 @@ use diligent_samples::{
 
 struct Queries {
     device: Boxed<RenderDevice>,
-    immediate_context: Boxed<ImmediateDeviceContext>,
 
     textured_cube: TexturedCube,
     rotation_matrix: glam::Mat4,
@@ -42,14 +41,12 @@ impl SampleBase for Queries {
     fn get_render_device(&self) -> &RenderDevice {
         &self.device
     }
-    fn get_immediate_context(&self) -> &ImmediateDeviceContext {
-        &self.immediate_context
-    }
 
     fn new(
         engine_factory: &EngineFactory,
         device: Boxed<RenderDevice>,
-        immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
+        main_context: &ImmediateDeviceContext,
+        _immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
         _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
         swap_chain_descs: &[&SwapChainDesc],
     ) -> Self {
@@ -199,7 +196,6 @@ impl SampleBase for Queries {
 
         let sample = Queries {
             device,
-            immediate_context: immediate_contexts.into_iter().nth(0).unwrap(),
 
             textured_cube,
 
@@ -221,7 +217,8 @@ impl SampleBase for Queries {
             rotation_matrix: glam::Mat4::IDENTITY,
         };
 
-        sample.immediate_context.flush();
+        main_context.flush();
+
         sample
     }
 
@@ -237,9 +234,11 @@ impl SampleBase for Queries {
         features.set_duration_queries(DeviceFeatureState::Optional);
     }
 
-    fn render(&self, swap_chain: &SwapChain) {
-        let immediate_context = self.get_immediate_context();
-
+    fn render(
+        &self,
+        main_context: Boxed<ImmediateDeviceContext>,
+        swap_chain: &SwapChain,
+    ) -> Boxed<ImmediateDeviceContext> {
         let view_proj_matrix = {
             let swap_chain_desc = swap_chain.desc();
 
@@ -266,7 +265,7 @@ impl SampleBase for Queries {
         {
             // Map the buffer and write current world-view-projection matrix
             let mut constant_buffer_data =
-                immediate_context.map_buffer_write(&self.cube_vs_constants, MapFlags::Discard);
+                main_context.map_buffer_write(&self.cube_vs_constants, MapFlags::Discard);
 
             constant_buffer_data[0] = view_proj_matrix * self.rotation_matrix;
         }
@@ -287,23 +286,23 @@ impl SampleBase for Queries {
                 }
             };
 
-            immediate_context.clear_render_target::<f32>(
+            main_context.clear_render_target::<f32>(
                 rtv,
                 &clear_color,
                 ResourceStateTransitionMode::Transition,
             );
         }
 
-        immediate_context.clear_depth(dsv, 1.0, ResourceStateTransitionMode::Transition);
+        main_context.clear_depth(dsv, 1.0, ResourceStateTransitionMode::Transition);
 
         {
             // Bind vertex and index buffers
-            immediate_context.set_vertex_buffers(
+            main_context.set_vertex_buffers(
                 &[(self.textured_cube.get_vertex_buffer(), 0)],
                 ResourceStateTransitionMode::Transition,
                 SetVertexBufferFlags::Reset,
             );
-            immediate_context.set_index_buffer(
+            main_context.set_index_buffer(
                 self.textured_cube.get_index_buffer(),
                 0,
                 ResourceStateTransitionMode::Transition,
@@ -311,32 +310,31 @@ impl SampleBase for Queries {
         }
 
         // Set the cube's pipeline state
-        let graphics = immediate_context.set_graphics_pipeline_state(&self.cube_pso);
+        let graphics = main_context.set_graphics_pipeline_state(&self.cube_pso);
 
         // Commit the cube shader's resources
-        immediate_context
-            .commit_shader_resources(&self.cube_srb, ResourceStateTransitionMode::Transition);
+        graphics.commit_shader_resources(&self.cube_srb, ResourceStateTransitionMode::Transition);
 
         {
             let pipeline_token = self
                 .query_pipeline_stats
                 .as_ref()
-                .map(|query| self.get_immediate_context().begin_query(query));
+                .map(|query| graphics.begin_query(query));
 
             let occlusion_token = self
                 .query_occlusion
                 .as_ref()
-                .map(|query| self.get_immediate_context().begin_query(query));
+                .map(|query| graphics.begin_query(query));
 
             let duration_token = self
                 .query_duration
                 .as_ref()
-                .map(|query| self.get_immediate_context().begin_query(query));
+                .map(|query| graphics.begin_query(query));
 
             let ts_token = self
                 .query_duration_from_timestamps
                 .as_ref()
-                .map(|ts| self.get_immediate_context().query_timestamp(ts));
+                .map(|ts| graphics.query_timestamp(ts));
 
             graphics.draw_indexed(
                 &DrawIndexedAttribs::builder()
@@ -363,15 +361,22 @@ impl SampleBase for Queries {
                 *self.duration_from_timestamps.borrow_mut() = token.duration();
             };
         }
+
+        graphics.finish()
     }
 
-    fn update(&mut self, current_time: f64, _elapsed_time: f64) {
+    fn update(
+        &mut self,
+        _main_context: &ImmediateDeviceContext,
+        current_time: f64,
+        _elapsed_time: f64,
+    ) {
         // Apply rotation
         self.rotation_matrix = glam::Mat4::from_rotation_x(-std::f32::consts::PI * 0.1)
             * glam::Mat4::from_rotation_y(current_time as f32);
     }
 
-    fn update_ui(&mut self, ui: &mut imgui::Ui) {
+    fn update_ui(&mut self, _main_context: &ImmediateDeviceContext, ui: &mut imgui::Ui) {
         if let Some(_window_token) = ui
             .window("Query data")
             .always_auto_resize(true)

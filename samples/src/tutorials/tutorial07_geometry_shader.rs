@@ -23,7 +23,6 @@ struct Constants {
 
 struct GeometryShader {
     device: Boxed<RenderDevice>,
-    immediate_context: Boxed<ImmediateDeviceContext>,
 
     textured_cube: TexturedCube,
 
@@ -45,9 +44,6 @@ impl SampleBase for GeometryShader {
     fn get_render_device(&self) -> &RenderDevice {
         &self.device
     }
-    fn get_immediate_context(&self) -> &ImmediateDeviceContext {
-        &self.immediate_context
-    }
 
     fn modify_engine_init_info(
         engine_ci: &mut diligent_samples::sample_base::sample::EngineCreateInfo,
@@ -60,7 +56,8 @@ impl SampleBase for GeometryShader {
     fn new(
         engine_factory: &EngineFactory,
         device: Boxed<RenderDevice>,
-        immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
+        _main_context: &ImmediateDeviceContext,
+        _immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
         _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
         swap_chain_descs: &[&SwapChainDesc],
     ) -> Self {
@@ -303,7 +300,6 @@ impl SampleBase for GeometryShader {
             device,
             convert_ps_output_to_gamma,
             pipeline_state: pso,
-            immediate_context: immediate_contexts.into_iter().nth(0).unwrap(),
             srb,
             vertex_shader_constants: shader_constants,
             rotation_matrix: glam::Mat4::IDENTITY,
@@ -313,7 +309,7 @@ impl SampleBase for GeometryShader {
         }
     }
 
-    fn update_ui(&mut self, ui: &mut imgui::Ui) {
+    fn update_ui(&mut self, _main_context: &ImmediateDeviceContext, ui: &mut imgui::Ui) {
         if let Some(_window_token) = ui
             .window("Settings")
             .always_auto_resize(true)
@@ -324,15 +320,22 @@ impl SampleBase for GeometryShader {
         }
     }
 
-    fn update(&mut self, current_time: f64, _elapsed_time: f64) {
+    fn update(
+        &mut self,
+        _main_context: &ImmediateDeviceContext,
+        current_time: f64,
+        _elapsed_time: f64,
+    ) {
         // Apply rotation
         self.rotation_matrix = glam::Mat4::from_rotation_x(-std::f32::consts::PI * 0.1)
             * glam::Mat4::from_rotation_y(current_time as f32);
     }
 
-    fn render(&self, swap_chain: &SwapChain) {
-        let immediate_context = self.get_immediate_context();
-
+    fn render(
+        &self,
+        main_context: Boxed<ImmediateDeviceContext>,
+        swap_chain: &SwapChain,
+    ) -> Boxed<ImmediateDeviceContext> {
         let swap_chain_desc = swap_chain.desc();
 
         let view_proj_matrix = {
@@ -374,19 +377,19 @@ impl SampleBase for GeometryShader {
                 }
             };
 
-            immediate_context.clear_render_target::<f32>(
+            main_context.clear_render_target::<f32>(
                 rtv,
                 &clear_color,
                 ResourceStateTransitionMode::Transition,
             );
         }
 
-        immediate_context.clear_depth(dsv, 1.0, ResourceStateTransitionMode::Transition);
+        main_context.clear_depth(dsv, 1.0, ResourceStateTransitionMode::Transition);
 
         {
             // Map the buffer and write current world-view-projection matrix
-            let mut constants = immediate_context
-                .map_buffer_write(&self.vertex_shader_constants, MapFlags::Discard);
+            let mut constants =
+                main_context.map_buffer_write(&self.vertex_shader_constants, MapFlags::Discard);
 
             constants[0] = Constants {
                 world_view_proj: (view_proj_matrix * self.rotation_matrix).to_cols_array(),
@@ -402,12 +405,12 @@ impl SampleBase for GeometryShader {
 
         {
             // Bind vertex and index buffers
-            immediate_context.set_vertex_buffers(
+            main_context.set_vertex_buffers(
                 &[(self.textured_cube.get_vertex_buffer(), 0)],
                 ResourceStateTransitionMode::Transition,
                 SetVertexBufferFlags::Reset,
             );
-            immediate_context.set_index_buffer(
+            main_context.set_index_buffer(
                 self.textured_cube.get_index_buffer(),
                 0,
                 ResourceStateTransitionMode::Transition,
@@ -415,12 +418,11 @@ impl SampleBase for GeometryShader {
         }
 
         // Set the pipeline state
-        let graphics = immediate_context.set_graphics_pipeline_state(&self.pipeline_state);
+        let graphics = main_context.set_graphics_pipeline_state(&self.pipeline_state);
 
         // Commit shader resources. RESOURCE_STATE_TRANSITION_MODE_TRANSITION mode
         // makes sure that resources are transitioned to required states.
-        immediate_context
-            .commit_shader_resources(&self.srb, ResourceStateTransitionMode::Transition);
+        graphics.commit_shader_resources(&self.srb, ResourceStateTransitionMode::Transition);
 
         let draw_attribs = DrawIndexedAttribs::builder()
             .num_indices(36)
@@ -430,6 +432,8 @@ impl SampleBase for GeometryShader {
             .build();
 
         graphics.draw_indexed(&draw_attribs);
+
+        graphics.finish()
     }
 
     fn get_name() -> &'static str {

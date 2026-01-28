@@ -94,7 +94,6 @@ struct BoxAttribs {
 
 struct RayTracing {
     device: Boxed<RenderDevice>,
-    immediate_context: Boxed<ImmediateDeviceContext>,
 
     camera: FirstPersonCamera,
     constants: Constants,
@@ -812,7 +811,7 @@ fn create_sbt(
 }
 
 impl RayTracing {
-    fn update_tlas(&mut self, first_build: bool) {
+    fn update_tlas(&mut self, first_build: bool, context: &DeviceContext) {
         let animate_opaque_cube = |index: usize| -> glam::Mat4 {
             struct CubeInstanceData {
                 base_pos: float3,
@@ -983,7 +982,7 @@ impl RayTracing {
             .scratch_buffer_transition_mode(ResourceStateTransitionMode::Transition)
             .build();
 
-        self.get_immediate_context().build_tlas(&attribs);
+        context.build_tlas(&attribs);
     }
 }
 
@@ -995,7 +994,8 @@ impl SampleBase for RayTracing {
     fn new(
         engine_factory: &EngineFactory,
         device: Boxed<RenderDevice>,
-        immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
+        main_context: &ImmediateDeviceContext,
+        _immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
         _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
         swap_chain_descs: &[&SwapChainDesc],
     ) -> Self {
@@ -1071,8 +1071,7 @@ impl SampleBase for RayTracing {
                 .set(ground_srv, SetShaderResourceFlags::None);
         }
 
-        let (cube_blas, cube_attribs_buffer) =
-            create_and_build_cube_blas(&device, &immediate_contexts[0]);
+        let (cube_blas, cube_attribs_buffer) = create_and_build_cube_blas(&device, main_context);
 
         ray_tracing_srb
             .get_variable_by_name("g_CubeAttribsCB", ShaderTypes::RayClosestHit)
@@ -1080,7 +1079,7 @@ impl SampleBase for RayTracing {
             .set(&cube_attribs_buffer, SetShaderResourceFlags::None);
 
         let (procedural_blas, box_attribs_cb) =
-            create_and_build_procedural_blas(&device, &immediate_contexts[0]);
+            create_and_build_procedural_blas(&device, main_context);
 
         ray_tracing_srb
             .get_variable_by_name("g_BoxAttribs", ShaderTypes::RayIntersection)
@@ -1148,7 +1147,6 @@ impl SampleBase for RayTracing {
 
         let mut sample = Self {
             device,
-            immediate_context: immediate_contexts.into_iter().nth(0).unwrap(),
 
             animate: true,
             camera,
@@ -1241,7 +1239,7 @@ impl SampleBase for RayTracing {
             dispersion_factor: 0.1,
         };
 
-        sample.update_tlas(true);
+        sample.update_tlas(true, main_context);
 
         // Hit groups for primary ray
         {
@@ -1305,7 +1303,7 @@ impl SampleBase for RayTracing {
             );
 
             // Update SBT with the shader groups we bound
-            sample.immediate_context.update_sbt(&sample.sbt, None);
+            main_context.update_sbt(&sample.sbt, None);
         }
 
         sample
@@ -1319,15 +1317,16 @@ impl SampleBase for RayTracing {
             .set_ray_tracing(DeviceFeatureState::Enabled);
     }
 
-    fn get_immediate_context(&self) -> &ImmediateDeviceContext {
-        &self.immediate_context
-    }
-
     fn get_name() -> &'static str {
         "Tutorial 21 : Ray Tracing"
     }
 
-    fn render(&self, swap_chain: &SwapChain) {
+    fn render(
+        &self,
+        main_context: Boxed<ImmediateDeviceContext>,
+        swap_chain: &SwapChain,
+    ) -> Boxed<ImmediateDeviceContext> {
+        let main_context = 
         // Trace rays
         {
             self.ray_tracing_srb
@@ -1340,11 +1339,9 @@ impl SampleBase for RayTracing {
                     SetShaderResourceFlags::None,
                 );
 
-            let ray_tracing = self
-                .immediate_context
-                .set_ray_tracing_pipeline_state(&self.ray_tracing_pso);
+            let ray_tracing = main_context.set_ray_tracing_pipeline_state(&self.ray_tracing_pso);
 
-            self.immediate_context.commit_shader_resources(
+            ray_tracing.commit_shader_resources(
                 &self.ray_tracing_srb,
                 ResourceStateTransitionMode::Transition,
             );
@@ -1358,7 +1355,9 @@ impl SampleBase for RayTracing {
                 .build();
 
             ray_tracing.trace_rays(&attribs);
-        }
+            
+            ray_tracing.finish()
+        };
 
         // Blit to swapchain image
         {
@@ -1373,16 +1372,10 @@ impl SampleBase for RayTracing {
                 );
 
             let rtv = swap_chain.get_current_back_buffer_rtv().unwrap();
-            self.immediate_context.set_render_targets(
-                &[rtv],
-                None,
-                ResourceStateTransitionMode::Transition,
-            );
+            main_context.set_render_targets(&[rtv], None, ResourceStateTransitionMode::Transition);
 
-            let blit = self
-                .immediate_context
-                .set_graphics_pipeline_state(&self.image_blit_pso);
-            self.immediate_context.commit_shader_resources(
+            let blit = main_context.set_graphics_pipeline_state(&self.image_blit_pso);
+            blit.commit_shader_resources(
                 &self.image_blit_srb,
                 ResourceStateTransitionMode::Transition,
             );
@@ -1393,10 +1386,17 @@ impl SampleBase for RayTracing {
                     .flags(DrawFlags::VerifyAll)
                     .build(),
             );
+
+            blit.finish()
         }
     }
 
-    fn update(&mut self, _current_time: f64, elapsed_time: f64) {
+    fn update(
+        &mut self,
+        main_context: &ImmediateDeviceContext,
+        _current_time: f64,
+        elapsed_time: f64,
+    ) {
         const MAX_ANIMATION_TIME_DELTA: f64 = 1.0 / 60.0;
 
         self.animation_time += f64::min(MAX_ANIMATION_TIME_DELTA, elapsed_time);
@@ -1418,7 +1418,7 @@ impl SampleBase for RayTracing {
             self.constants.camera_pos = camera_world_pos.to_array();
             self.constants.inv_view_proj = camera_view_proj.inverse().to_cols_array();
 
-            self.immediate_context.update_buffer(
+            main_context.update_buffer(
                 &mut self.constant_buffer,
                 0,
                 std::mem::size_of::<Constants>() as u64,
@@ -1427,10 +1427,10 @@ impl SampleBase for RayTracing {
             );
         }
 
-        self.update_tlas(false);
+        self.update_tlas(false, main_context);
     }
 
-    fn update_ui(&mut self, ui: &mut imgui::Ui) {
+    fn update_ui(&mut self, _main_context: &ImmediateDeviceContext, ui: &mut imgui::Ui) {
         const MAX_INDEX_OF_REFRACTION: f32 = 2.0;
         const MAX_DISPERSION: f32 = 0.5;
 
