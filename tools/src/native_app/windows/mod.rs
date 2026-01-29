@@ -1,4 +1,8 @@
-use std::ops::BitAnd;
+use std::{
+    ops::BitAnd,
+    pin::Pin,
+    sync::{Arc, Mutex, OnceLock, Weak},
+};
 
 use crate::native_app::Window;
 
@@ -7,11 +11,11 @@ use super::events::{Event, Key};
 use diligent::platforms::native_window::NativeWindow;
 
 use windows::{
-    core::*,
     Win32::{
         Foundation::*, Graphics::Gdi::ValidateRect, System::LibraryLoader::GetModuleHandleW,
         UI::Input::KeyboardAndMouse::*, UI::WindowsAndMessaging::*,
     },
+    core::*,
 };
 
 extern "system" fn handle_message(
@@ -29,7 +33,7 @@ extern "system" fn handle_message(
         }
         WM_SIZE => {
             let event_handler_ptr =
-                unsafe { GetWindowLongPtrA(hwnd, GWL_USERDATA) } as *mut Win32Window;
+                unsafe { GetWindowLongPtrA(hwnd, GWL_USERDATA) } as *mut WindowHackData;
 
             if !event_handler_ptr.is_null() {
                 unsafe {
@@ -40,23 +44,49 @@ extern "system" fn handle_message(
 
             LRESULT(0)
         }
-        WM_DESTROY => {
-            unsafe { PostQuitMessage(0) };
+
+        WM_CLOSE => {
+            let event_handler_ptr =
+                unsafe { GetWindowLongPtrA(hwnd, GWL_USERDATA) } as *mut WindowHackData;
+
+            if !event_handler_ptr.is_null() {
+                unsafe {
+                    (*event_handler_ptr).closing = true;
+                }
+            }
+
             LRESULT(0)
         }
+
         _ => unsafe { DefWindowProcW(hwnd, message, wparam, lparam) },
     }
 }
 
-pub struct Win32Window {
+struct Win32WindowManager {
     instance: HINSTANCE,
 
     window_class_name: PCWSTR,
+}
 
+unsafe impl Sync for Win32WindowManager {}
+unsafe impl Send for Win32WindowManager {}
+
+static WINDOW_MANAGER: OnceLock<Mutex<Weak<Win32WindowManager>>> = OnceLock::new();
+
+struct WindowHackData {
     resize_param: LPARAM,
     resized: bool,
+    closing: bool,
+}
 
+pub struct Win32Window {
     hwnd: HWND,
+
+    hack: Pin<Box<WindowHackData>>,
+
+    // This increments the static shared lazily-created window manager
+    // and keep it until all the windows are dropped
+    _window_manager: Arc<Win32WindowManager>,
 }
 
 impl Window for Win32Window {
@@ -65,36 +95,57 @@ impl Window for Win32Window {
             let _ = SetWindowTextW(self.hwnd, &HSTRING::from(title));
         }
     }
+
     fn native(&self) -> NativeWindow {
         NativeWindow::new(self.hwnd.0)
     }
 
     fn create(width: u32, height: u32) -> Self {
-        let instance = unsafe { GetModuleHandleW(None) }.unwrap();
+        let weak_mutex = WINDOW_MANAGER.get_or_init(|| Mutex::new(Weak::new()));
 
-        debug_assert!(!instance.0.is_null());
+        let window_manager = {
+            let mut weak = weak_mutex.lock().unwrap();
+            if let Some(window_manager) = weak.upgrade() {
+                // The window manager exists and is being used by a window
+                window_manager
+            } else {
+                // The window manager does not exist : create it
+                let instance = unsafe { GetModuleHandleW(None) }.unwrap();
 
-        let instance = HINSTANCE(instance.0);
+                debug_assert!(!instance.0.is_null());
 
-        let window_class_name = w!("DiligentWindow");
+                let instance = HINSTANCE(instance.0);
 
-        let window_class = WNDCLASSW {
-            hCursor: unsafe { LoadCursorW(None, IDC_ARROW) }.unwrap(),
-            hInstance: instance,
-            lpszClassName: window_class_name,
+                let window_class_name = w!("DiligentWindow");
 
-            style: CS_HREDRAW | CS_VREDRAW,
-            lpfnWndProc: Some(handle_message),
-            ..Default::default()
+                let window_class = WNDCLASSW {
+                    hCursor: unsafe { LoadCursorW(None, IDC_ARROW) }.unwrap(),
+                    hInstance: instance,
+                    lpszClassName: window_class_name,
+
+                    style: CS_HREDRAW | CS_VREDRAW,
+                    lpfnWndProc: Some(handle_message),
+                    ..Default::default()
+                };
+
+                let atom = unsafe { RegisterClassW(&window_class) };
+                debug_assert!(atom != 0);
+
+                let window_manger = Arc::new(Win32WindowManager {
+                    instance,
+                    window_class_name,
+                });
+
+                *weak = Arc::downgrade(&window_manger);
+
+                window_manger
+            }
         };
-
-        let atom = unsafe { RegisterClassW(&window_class) };
-        debug_assert!(atom != 0);
 
         let hwnd = unsafe {
             CreateWindowExW(
                 WINDOW_EX_STYLE::default(),
-                window_class_name,
+                window_manager.window_class_name,
                 w!(""),
                 WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                 CW_USEDEFAULT,
@@ -103,36 +154,54 @@ impl Window for Win32Window {
                 height as i32,
                 None,
                 None,
-                Some(instance),
+                Some(window_manager.instance),
                 None,
             )
         }
         .unwrap();
-        Win32Window {
-            instance,
-            window_class_name,
 
+        let hack = Box::pin(WindowHackData {
             resize_param: LPARAM::default(),
             resized: false,
+            closing: false,
+        });
 
+        unsafe {
+            SetWindowLongPtrA(
+                hwnd,
+                GWL_USERDATA,
+                std::ptr::from_ref(Pin::as_ref(&hack).get_ref()) as _,
+            )
+        };
+
+        Win32Window {
             hwnd,
+            hack,
+            _window_manager: window_manager,
         }
     }
 
     type EventType = MSG;
 
     fn poll_event(&self) -> Option<Self::EventType> {
-        if self.resized {
+        if self.hack.resized {
             return Some(MSG {
                 message: WM_SIZE,
-                lParam: self.resize_param,
+                lParam: self.hack.resize_param,
+                ..Default::default()
+            });
+        }
+
+        if self.hack.closing {
+            return Some(MSG {
+                message: WM_CLOSE,
                 ..Default::default()
             });
         }
 
         let mut msg = std::mem::MaybeUninit::<MSG>::uninit();
 
-        if unsafe { PeekMessageW(msg.as_mut_ptr(), None, 0, 0, PM_REMOVE).as_bool() } {
+        if unsafe { PeekMessageW(msg.as_mut_ptr(), Some(self.hwnd), 0, 0, PM_REMOVE).as_bool() } {
             let msg = unsafe { msg.assume_init() };
             unsafe {
                 let _ = TranslateMessage(&msg);
@@ -147,7 +216,7 @@ impl Window for Win32Window {
 
     fn handle_event(&mut self, event: &Self::EventType) -> Event {
         match event.message {
-            WM_QUIT => Event::Quit,
+            WM_CLOSE => Event::Quit,
             WM_MOUSEMOVE => Event::MouseMove {
                 x: (event.lParam.0 & 0xffff) as i16,
                 y: ((event.lParam.0 >> 16) & 0xffff) as i16,
@@ -171,18 +240,12 @@ impl Window for Win32Window {
                 button: super::events::MouseButton::Middle,
             },
             WM_SIZE => {
-                self.resized = false;
+                self.hack.resized = false;
 
                 Event::Resize {
                     width: (event.lParam.0 & 0xffff) as _,
                     height: ((event.lParam.0 >> 16) & 0xffff) as _,
                 }
-            }
-            WM_NCMOUSEMOVE => {
-                unsafe {
-                    SetWindowLongPtrA(event.hwnd, GWL_USERDATA, std::ptr::from_ref(self) as _);
-                }
-                Event::Continue
             }
 
             WM_KEYDOWN => match VIRTUAL_KEY(event.wParam.0 as u16) {
@@ -415,6 +478,11 @@ impl Window for Win32Window {
 impl Drop for Win32Window {
     fn drop(&mut self) {
         let _ = unsafe { DestroyWindow(self.hwnd) };
+    }
+}
+
+impl Drop for Win32WindowManager {
+    fn drop(&mut self) {
         let _ = unsafe { UnregisterClassW(self.window_class_name, Some(self.instance)) };
     }
 }
