@@ -1,7 +1,7 @@
 use std::{
     ops::BitAnd,
     pin::Pin,
-    sync::{Arc, Mutex, OnceLock, Weak},
+    sync::{Arc, Mutex, Weak},
 };
 
 use crate::native_app::Window;
@@ -71,7 +71,7 @@ struct Win32WindowManager {
 unsafe impl Sync for Win32WindowManager {}
 unsafe impl Send for Win32WindowManager {}
 
-static WINDOW_MANAGER: OnceLock<Mutex<Weak<Win32WindowManager>>> = OnceLock::new();
+static WINDOW_MANAGER: Mutex<Weak<Win32WindowManager>> = Mutex::new(Weak::new());
 
 struct WindowHackData {
     resize_param: LPARAM,
@@ -101,10 +101,8 @@ impl Window for Win32Window {
     }
 
     fn create(width: u32, height: u32) -> Self {
-        let weak_mutex = WINDOW_MANAGER.get_or_init(|| Mutex::new(Weak::new()));
-
         let window_manager = {
-            let mut weak = weak_mutex.lock().unwrap();
+            let mut weak = WINDOW_MANAGER.lock().unwrap();
             if let Some(window_manager) = weak.upgrade() {
                 // The window manager exists and is being used by a window
                 window_manager
