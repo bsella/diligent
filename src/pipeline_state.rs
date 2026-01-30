@@ -382,6 +382,7 @@ impl PipelineStateDesc {
 
 #[repr(transparent)]
 #[derive(Clone)]
+#[allow(clippy::type_complexity)]
 pub struct PipelineStateCreateInfo<
     'name,
     'variable_names,
@@ -1109,6 +1110,7 @@ impl<'input_layouts, 'render_pass> GraphicsPipelineDesc<'input_layouts, 'render_
 
 #[repr(transparent)]
 #[derive(Clone)]
+#[allow(clippy::type_complexity)]
 pub struct GraphicsPipelineStateCreateInfo<
     'name,
     'variable_names,
@@ -1338,6 +1340,7 @@ impl<'name, 'intersection_shader, 'closest_hit_shader, 'any_hit_shader>
 }
 
 #[repr(transparent)]
+#[allow(clippy::type_complexity)]
 pub struct RayTracingPipelineStateCreateInfo<
     'name,
     'variable_names,
@@ -1770,6 +1773,7 @@ impl RayTracingPipelineState {
 }
 
 #[repr(transparent)]
+#[allow(clippy::type_complexity)]
 pub struct TilePipelineStateCreateInfo<
     'name,
     'variable_names,
@@ -1906,6 +1910,7 @@ impl TilePipelineState {
 
 #[repr(transparent)]
 #[derive(Clone)]
+#[allow(clippy::type_complexity)]
 pub struct ComputePipelineStateCreateInfo<
     'name,
     'variable_names,

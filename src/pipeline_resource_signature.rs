@@ -111,6 +111,7 @@ impl<'name> PipelineResourceDesc<'name> {
 }
 
 #[repr(transparent)]
+#[allow(clippy::type_complexity)]
 pub struct PipelineResourceSignatureDesc<
     'name,
     'resources,

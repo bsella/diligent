@@ -781,6 +781,7 @@ impl<'geometry_name, 'vertex_buffer, 'index_buffer, 'transform_buffer>
 }
 
 #[repr(transparent)]
+#[allow(clippy::type_complexity)]
 pub struct BuildBLASAttribs<
     'blas,
     'scratch_buffer,
