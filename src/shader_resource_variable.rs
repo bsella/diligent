@@ -110,7 +110,7 @@ impl<'name> ShaderResourceVariableDesc<'name> {
 define_ported!(
     ShaderResourceVariable,
     diligent_sys::IShaderResourceVariable,
-    diligent_sys::IShaderResourceVariableMethods : 8,
+    diligent_sys::IShaderResourceVariableMethods : 9,
     Object
 );
 
@@ -130,7 +130,9 @@ impl ShaderResourceVariable {
             self,
             ShaderResourceVariable,
             SetArray,
-            device_objects.as_ptr() as _,
+            device_objects.first().map_or(std::ptr::null(), |object| {
+                std::ptr::from_ref(object) as *mut _
+            }),
             0,
             device_objects.len() as u32,
             flags.bits()
@@ -167,6 +169,20 @@ impl ShaderResourceVariable {
         )
     }
 
+    pub fn set_inline_constants<T>(&self, constants: &[T]) {
+        const {
+            assert!(std::mem::size_of::<T>() == std::mem::size_of::<u32>());
+        }
+        unsafe_member_call!(
+            self,
+            ShaderResourceVariable,
+            SetInlineConstants,
+            std::ptr::from_ref(constants) as *const _,
+            0,
+            constants.len() as u32
+        )
+    }
+
     pub fn get_type(&self) -> ShaderResourceVariableType {
         unsafe_member_call!(self, ShaderResourceVariable, GetType).into()
     }
@@ -187,5 +203,10 @@ impl ShaderResourceVariable {
 
     pub fn get_index(&self) -> u32 {
         unsafe_member_call!(self, ShaderResourceVariable, GetIndex)
+    }
+
+    pub fn get(&self, index: u32) -> &DeviceObject {
+        let device_object = unsafe_member_call!(self, ShaderResourceVariable, Get, index);
+        unsafe { &*(device_object as *const DeviceObject) }
     }
 }

@@ -63,13 +63,14 @@ bitflags! {
     pub struct PipelineResourceFlags: diligent_sys::PIPELINE_RESOURCE_FLAGS {
         const None                   = diligent_sys::PIPELINE_RESOURCE_FLAG_NONE as diligent_sys::PIPELINE_RESOURCE_FLAGS;
         const NoDynamicBuffers       = diligent_sys::PIPELINE_RESOURCE_FLAG_NO_DYNAMIC_BUFFERS as diligent_sys::PIPELINE_RESOURCE_FLAGS;
+        const InlineConstants        = diligent_sys::PIPELINE_RESOURCE_FLAG_INLINE_CONSTANTS as diligent_sys::PIPELINE_RESOURCE_FLAGS;
         const CombinedSampler        = diligent_sys::PIPELINE_RESOURCE_FLAG_COMBINED_SAMPLER as diligent_sys::PIPELINE_RESOURCE_FLAGS;
         const FormattedBuffer        = diligent_sys::PIPELINE_RESOURCE_FLAG_FORMATTED_BUFFER as diligent_sys::PIPELINE_RESOURCE_FLAGS;
         const RuntimeArray           = diligent_sys::PIPELINE_RESOURCE_FLAG_RUNTIME_ARRAY as diligent_sys::PIPELINE_RESOURCE_FLAGS;
         const GeneralInputAttachment = diligent_sys::PIPELINE_RESOURCE_FLAG_GENERAL_INPUT_ATTACHMENT as diligent_sys::PIPELINE_RESOURCE_FLAGS;
     }
 }
-const_assert_eq!(diligent_sys::PIPELINE_RESOURCE_FLAG_LAST, 16);
+const_assert_eq!(diligent_sys::PIPELINE_RESOURCE_FLAG_LAST, 32);
 
 #[repr(transparent)]
 pub struct PipelineResourceDesc<'name>(diligent_sys::PipelineResourceDesc, PhantomData<&'name ()>);

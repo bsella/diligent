@@ -1,8 +1,8 @@
 use std::ffi::CString;
 
 use crate::native_app::{
-    events::{Event, Key, MouseButton},
     Window,
+    events::{Event, Key, MouseButton},
 };
 
 use diligent::platforms::native_window::NativeWindow;
@@ -16,7 +16,12 @@ pub struct X11Window {
 
 impl Window for X11Window {
     fn native(&self) -> NativeWindow {
-        NativeWindow::new(self.win as u32, self.display as _, std::ptr::null_mut())
+        NativeWindow::new(
+            self.win as u32,
+            self.display as _,
+            std::ptr::null_mut(),
+            std::ptr::null_mut(),
+        )
     }
     fn set_title(&self, title: &str) {
         unsafe {

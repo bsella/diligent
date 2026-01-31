@@ -7,7 +7,7 @@ use static_assertions::const_assert_eq;
 
 pub const API_VERSION: u32 = diligent_sys::DILIGENT_API_VERSION;
 
-const_assert_eq!(API_VERSION, 256012);
+const_assert_eq!(API_VERSION, 256013);
 
 macro_rules! unsafe_member_call {
     ($instance:expr, $type_name: ident, $func_name:ident $(, $arg:expr) *) => (

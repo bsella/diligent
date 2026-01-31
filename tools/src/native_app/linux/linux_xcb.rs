@@ -26,6 +26,7 @@ impl Window for XCBWindow {
             self.window.resource_id(),
             std::ptr::null_mut(),
             self.connection.get_raw_conn() as _,
+            std::ptr::null_mut(),
         )
     }
     fn set_title(&self, title: &str) {

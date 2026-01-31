@@ -245,12 +245,13 @@ bitflags! {
     pub struct ShaderVariableFlags: diligent_sys::SHADER_VARIABLE_FLAGS {
         const None                           = diligent_sys::SHADER_VARIABLE_FLAG_NONE as diligent_sys::SHADER_VARIABLE_FLAGS;
         const NoDynamicBuffers               = diligent_sys::SHADER_VARIABLE_FLAG_NO_DYNAMIC_BUFFERS as diligent_sys::SHADER_VARIABLE_FLAGS;
+        const InlineConstants                = diligent_sys::SHADER_VARIABLE_FLAG_INLINE_CONSTANTS as diligent_sys::SHADER_VARIABLE_FLAGS;
         const GeneralInputAttachmentVk       = diligent_sys::SHADER_VARIABLE_FLAG_GENERAL_INPUT_ATTACHMENT_VK as diligent_sys::SHADER_VARIABLE_FLAGS;
         const UnfilterableFloatTextureWebgpu = diligent_sys::SHADER_VARIABLE_FLAG_UNFILTERABLE_FLOAT_TEXTURE_WEBGPU as diligent_sys::SHADER_VARIABLE_FLAGS;
         const NonFilteringSamplerWebgpu      = diligent_sys::SHADER_VARIABLE_FLAG_NON_FILTERING_SAMPLER_WEBGPU as diligent_sys::SHADER_VARIABLE_FLAGS;
     }
 }
-const_assert_eq!(diligent_sys::SHADER_VARIABLE_FLAG_LAST, 8);
+const_assert_eq!(diligent_sys::SHADER_VARIABLE_FLAG_LAST, 16);
 
 impl Default for ShaderVariableFlags {
     fn default() -> Self {
@@ -260,7 +261,7 @@ impl Default for ShaderVariableFlags {
 
 impl ShaderVariableFlags {
     pub fn to_pipeline_resource_flags(&self) -> PipelineResourceFlags {
-        const_assert_eq!(diligent_sys::SHADER_VARIABLE_FLAG_LAST, 1 << 3);
+        const_assert_eq!(diligent_sys::SHADER_VARIABLE_FLAG_LAST, 1 << 4);
 
         let mut result = PipelineResourceFlags::None;
 
@@ -270,6 +271,10 @@ impl ShaderVariableFlags {
 
         if self.contains(ShaderVariableFlags::GeneralInputAttachmentVk) {
             result |= PipelineResourceFlags::GeneralInputAttachment;
+        }
+
+        if self.contains(ShaderVariableFlags::InlineConstants) {
+            result |= PipelineResourceFlags::InlineConstants;
         }
 
         result
