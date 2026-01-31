@@ -17,8 +17,6 @@ const MAX_GRID_SIZE: u64 = 32;
 const MAX_INSTANCES: u64 = MAX_GRID_SIZE * MAX_GRID_SIZE * MAX_GRID_SIZE;
 
 struct Instancing {
-    device: Boxed<RenderDevice>,
-
     textured_cube: TexturedCube,
 
     convert_ps_output_to_gamma: bool,
@@ -101,13 +99,9 @@ impl Instancing {
 }
 
 impl SampleBase for Instancing {
-    fn get_render_device(&self) -> &RenderDevice {
-        &self.device
-    }
-
     fn new(
         engine_factory: &EngineFactory,
-        device: Boxed<RenderDevice>,
+        device: &RenderDevice,
         main_context: &ImmediateDeviceContext,
         _immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
         _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
@@ -151,7 +145,7 @@ impl SampleBase for Instancing {
         ];
 
         let cube_pso_ci = CreatePSOInfo::new(
-            &device,
+            device,
             swap_chain_desc.color_buffer_format(),
             swap_chain_desc.depth_buffer_format(),
             &shader_source_factory,
@@ -168,7 +162,7 @@ impl SampleBase for Instancing {
         // Create dynamic uniform buffer that will store our transformation matrix
         // Dynamic buffers can be frequently updated by the CPU
         let vs_constants = create_uniform_buffer(
-            &device,
+            device,
             std::mem::size_of::<glam::Mat4>() as u64 * 2,
             c"VS constants CB",
             Usage::Dynamic,
@@ -190,7 +184,7 @@ impl SampleBase for Instancing {
         let srb = pipeline_state.create_shader_resource_binding(true).unwrap();
 
         let textured_cube = TexturedCube::new(
-            &device,
+            device,
             GeometryPrimitiveVertexFlags::PosTex,
             BindFlags::VertexBuffer,
             None,
@@ -249,7 +243,6 @@ impl SampleBase for Instancing {
         let inst_buff = device.create_buffer(&inst_buff_desc).unwrap();
 
         let mut sample = Instancing {
-            device,
             convert_ps_output_to_gamma,
             pipeline_state,
             textured_cube,
@@ -266,7 +259,12 @@ impl SampleBase for Instancing {
         sample
     }
 
-    fn update_ui(&mut self, main_context: &ImmediateDeviceContext, ui: &mut imgui::Ui) {
+    fn update_ui(
+        &mut self,
+        _device: &RenderDevice,
+        main_context: &ImmediateDeviceContext,
+        ui: &mut imgui::Ui,
+    ) {
         if let Some(_window_token) = ui
             .window("Settings")
             .always_auto_resize(true)

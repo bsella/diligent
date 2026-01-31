@@ -425,8 +425,6 @@ fn bind_buffers(
 }
 
 struct ComputeShader {
-    device: Boxed<RenderDevice>,
-
     render_particle_pso: Boxed<GraphicsPipelineState>,
     render_particle_srb: Boxed<ShaderResourceBinding>,
 
@@ -458,13 +456,9 @@ struct ComputeShader {
 }
 
 impl SampleBase for ComputeShader {
-    fn get_render_device(&self) -> &RenderDevice {
-        &self.device
-    }
-
     fn new(
         engine_factory: &EngineFactory,
-        device: Boxed<RenderDevice>,
+        device: &RenderDevice,
         _main_context: &ImmediateDeviceContext,
         _immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
         _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
@@ -486,7 +480,7 @@ impl SampleBase for ComputeShader {
 
         let render_particle_pso = create_render_particle_pso(
             engine_factory,
-            &device,
+            device,
             swap_chain_desc,
             convert_ps_output_to_gamma,
         );
@@ -498,9 +492,9 @@ impl SampleBase for ComputeShader {
             move_particles_pso,
             collide_particles_pso,
             update_particle_speed_pso,
-        ) = create_update_particle_pso(engine_factory, &device, thread_group_size);
+        ) = create_update_particle_pso(engine_factory, device, thread_group_size);
 
-        let constants = create_constant_buffer(&device);
+        let constants = create_constant_buffer(device);
 
         reset_particle_lists_pso
             .get_static_variable_by_name(ShaderType::Compute, "Constants")
@@ -526,7 +520,7 @@ impl SampleBase for ComputeShader {
         let num_particles = 2000;
 
         let (attribs_buffer, list_heads_buffer, lists_buffer) =
-            create_particle_buffers(num_particles, &device);
+            create_particle_buffers(num_particles, device);
 
         let reset_particle_lists_srb = reset_particle_lists_pso
             .create_shader_resource_binding(true)
@@ -555,8 +549,6 @@ impl SampleBase for ComputeShader {
         );
 
         ComputeShader {
-            device,
-
             render_particle_pso,
             reset_particle_lists_pso,
             move_particles_pso,
@@ -709,7 +701,12 @@ impl SampleBase for ComputeShader {
         graphics.finish()
     }
 
-    fn update_ui(&mut self, _main_context: &ImmediateDeviceContext, ui: &mut imgui::Ui) {
+    fn update_ui(
+        &mut self,
+        device: &RenderDevice,
+        _main_context: &ImmediateDeviceContext,
+        ui: &mut imgui::Ui,
+    ) {
         if let Some(_window_token) = ui
             .window("Settings")
             .always_auto_resize(true)
@@ -729,7 +726,7 @@ impl SampleBase for ComputeShader {
                     self.particle_attribs_buffer,
                     self.particle_list_heads_buffer,
                     self.particle_lists_buffer,
-                ) = create_particle_buffers(self.num_particles as u32, &self.device);
+                ) = create_particle_buffers(self.num_particles as u32, device);
 
                 self.reset_particle_lists_srb = self
                     .reset_particle_lists_pso

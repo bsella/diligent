@@ -22,8 +22,6 @@ struct Constants {
 }
 
 struct GeometryShader {
-    device: Boxed<RenderDevice>,
-
     textured_cube: TexturedCube,
 
     convert_ps_output_to_gamma: bool,
@@ -41,10 +39,6 @@ struct GeometryShader {
 }
 
 impl SampleBase for GeometryShader {
-    fn get_render_device(&self) -> &RenderDevice {
-        &self.device
-    }
-
     fn modify_engine_init_info(
         engine_ci: &mut diligent_samples::sample_base::sample::EngineCreateInfo,
     ) {
@@ -55,7 +49,7 @@ impl SampleBase for GeometryShader {
 
     fn new(
         engine_factory: &EngineFactory,
-        device: Boxed<RenderDevice>,
+        device: &RenderDevice,
         _main_context: &ImmediateDeviceContext,
         _immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
         _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
@@ -221,7 +215,7 @@ impl SampleBase for GeometryShader {
 
         // Create dynamic uniform buffer that will store shader constants
         let shader_constants = create_uniform_buffer(
-            &device,
+            device,
             std::mem::size_of::<Constants>() as u64,
             c"Shader constants CB",
             Usage::Dynamic,
@@ -287,7 +281,7 @@ impl SampleBase for GeometryShader {
             .set(&texture_srv, SetShaderResourceFlags::None);
 
         let textured_cube = TexturedCube::new(
-            &device,
+            device,
             GeometryPrimitiveVertexFlags::PosTex,
             BindFlags::VertexBuffer,
             None,
@@ -297,7 +291,6 @@ impl SampleBase for GeometryShader {
         .unwrap();
 
         GeometryShader {
-            device,
             convert_ps_output_to_gamma,
             pipeline_state: pso,
             srb,
@@ -309,7 +302,12 @@ impl SampleBase for GeometryShader {
         }
     }
 
-    fn update_ui(&mut self, _main_context: &ImmediateDeviceContext, ui: &mut imgui::Ui) {
+    fn update_ui(
+        &mut self,
+        _device: &RenderDevice,
+        _main_context: &ImmediateDeviceContext,
+        ui: &mut imgui::Ui,
+    ) {
         if let Some(_window_token) = ui
             .window("Settings")
             .always_auto_resize(true)

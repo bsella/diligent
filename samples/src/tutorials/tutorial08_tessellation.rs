@@ -10,8 +10,6 @@ use diligent_samples::sample_base::{
 };
 
 struct Tessellation {
-    device: Boxed<RenderDevice>,
-
     main_pipeline: (Boxed<GraphicsPipelineState>, Boxed<ShaderResourceBinding>),
     wireframe_pipeline: Option<(Boxed<GraphicsPipelineState>, Boxed<ShaderResourceBinding>)>,
 
@@ -58,13 +56,9 @@ struct GlobalConstants {
 }
 
 impl SampleBase for Tessellation {
-    fn get_render_device(&self) -> &RenderDevice {
-        &self.device
-    }
-
     fn new(
         engine_factory: &EngineFactory,
-        device: Boxed<RenderDevice>,
+        device: &RenderDevice,
         _main_context: &ImmediateDeviceContext,
         _immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
         _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
@@ -162,7 +156,7 @@ impl SampleBase for Tessellation {
             );
 
         let shader_constants = create_uniform_buffer(
-            &device,
+            device,
             std::mem::size_of::<GlobalConstants>() as u64,
             c"Global shader constants CB",
             Usage::Dynamic,
@@ -432,7 +426,6 @@ impl SampleBase for Tessellation {
         );
 
         Tessellation {
-            device,
             animate: true,
             wireframe: false,
             tess_density: 32.0,
@@ -469,7 +462,12 @@ impl SampleBase for Tessellation {
             .set_geometry_shaders(DeviceFeatureState::Optional);
     }
 
-    fn update_ui(&mut self, _main_context: &ImmediateDeviceContext, ui: &mut imgui::Ui) {
+    fn update_ui(
+        &mut self,
+        _device: &RenderDevice,
+        _main_context: &ImmediateDeviceContext,
+        ui: &mut imgui::Ui,
+    ) {
         if let Some(_window_token) = ui
             .window("Settings")
             .always_auto_resize(true)

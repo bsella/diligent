@@ -5,37 +5,7 @@ use diligent_samples::sample_base::{
     sample_app::{self},
 };
 
-struct HelloTriangle {
-    device: Boxed<RenderDevice>,
-
-    pipeline_state: Boxed<GraphicsPipelineState>,
-}
-
-impl SampleBase for HelloTriangle {
-    fn get_render_device(&self) -> &RenderDevice {
-        &self.device
-    }
-
-    fn new(
-        _engine_factory: &EngineFactory,
-        device: Boxed<RenderDevice>,
-        _immediate_context: &ImmediateDeviceContext,
-        _immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
-        _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
-        swap_chain_descs: &[&SwapChainDesc],
-    ) -> Self {
-        // We are only using one swap chain
-        let swap_chain_desc = swap_chain_descs[0];
-
-        let shader_create_info = ShaderCreateInfo::builder()
-            // Tell the system that the shader source code is in HLSL.
-            // For OpenGL, the engine will convert this into GLSL under the hood.
-            .source_language(ShaderLanguage::HLSL)
-            // OpenGL backend requires emulated combined HLSL texture samplers (g_Texture + g_Texture_sampler combination)
-            .use_combined_texture_samplers(true);
-
-        let vertex_shader = {
-            let shader_source_code = r#"
+const VERTEX_SHADER_SOURCE: &str = r#"
 struct PSInput
 {
     float4 Pos   : SV_POSITION;
@@ -59,20 +29,7 @@ void main(in uint VertId : SV_VertexID, out PSInput PSIn)
 }
 "#;
 
-            device
-                .create_shader(
-                    &shader_create_info
-                        .clone()
-                        .name("Triangle vertex shader")
-                        .source(ShaderSource::SourceCode(shader_source_code))
-                        .shader_type(ShaderType::Vertex)
-                        .build(),
-                )
-                .unwrap()
-        };
-
-        let pixel_shader = {
-            let shader_source_code = r#"
+const PIXEL_SHADER_SOURCE: &str = r#"
 struct PSInput
 { 
     float4 Pos   : SV_POSITION;
@@ -89,17 +46,51 @@ void main(in PSInput PSIn, out PSOutput PSOut)
     PSOut.Color = float4(PSIn.Color.rgb, 1.0);
 }
 "#;
-            device
-                .create_shader(
-                    &shader_create_info
-                        .clone()
-                        .name("Triangle pixel shader")
-                        .source(ShaderSource::SourceCode(shader_source_code))
-                        .shader_type(ShaderType::Pixel)
-                        .build(),
-                )
-                .unwrap()
-        };
+
+struct HelloTriangle {
+    pipeline_state: Boxed<GraphicsPipelineState>,
+}
+
+impl SampleBase for HelloTriangle {
+    fn new(
+        _engine_factory: &EngineFactory,
+        device: &RenderDevice,
+        _immediate_context: &ImmediateDeviceContext,
+        _immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
+        _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
+        swap_chain_descs: &[&SwapChainDesc],
+    ) -> Self {
+        // We are only using one swap chain
+        let swap_chain_desc = swap_chain_descs[0];
+
+        let shader_create_info = ShaderCreateInfo::builder()
+            // Tell the system that the shader source code is in HLSL.
+            // For OpenGL, the engine will convert this into GLSL under the hood.
+            .source_language(ShaderLanguage::HLSL)
+            // OpenGL backend requires emulated combined HLSL texture samplers (g_Texture + g_Texture_sampler combination)
+            .use_combined_texture_samplers(true);
+
+        let vertex_shader = device
+            .create_shader(
+                &shader_create_info
+                    .clone()
+                    .name("Triangle vertex shader")
+                    .source(ShaderSource::SourceCode(VERTEX_SHADER_SOURCE))
+                    .shader_type(ShaderType::Vertex)
+                    .build(),
+            )
+            .unwrap();
+
+        let pixel_shader = device
+            .create_shader(
+                &shader_create_info
+                    .clone()
+                    .name("Triangle pixel shader")
+                    .source(ShaderSource::SourceCode(PIXEL_SHADER_SOURCE))
+                    .shader_type(ShaderType::Pixel)
+                    .build(),
+            )
+            .unwrap();
 
         let mut rtv_formats = std::array::from_fn(|_| None);
         rtv_formats[0] = Some(swap_chain_desc.color_buffer_format());
@@ -144,10 +135,7 @@ void main(in PSInput PSIn, out PSOutput PSOut)
             .create_graphics_pipeline_state(&pso_create_info)
             .unwrap();
 
-        HelloTriangle {
-            device,
-            pipeline_state,
-        }
+        HelloTriangle { pipeline_state }
     }
 
     fn render(

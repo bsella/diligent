@@ -49,16 +49,10 @@ void main(in PSInput PSIn, out PSOutput PSOut)
 "#;
 
 struct MultipleWindows {
-    device: Boxed<RenderDevice>,
-
     pipeline_state: Boxed<GraphicsPipelineState>,
 }
 
 impl SampleBase for MultipleWindows {
-    fn get_render_device(&self) -> &RenderDevice {
-        &self.device
-    }
-
     fn make_swap_chains_create_info(_settings: &impl AppSettings) -> Vec<SwapChainCreateInfo> {
         vec![
             SwapChainCreateInfo::builder()
@@ -81,7 +75,7 @@ impl SampleBase for MultipleWindows {
 
     fn new(
         _engine_factory: &EngineFactory,
-        device: Boxed<RenderDevice>,
+        device: &RenderDevice,
         _main_context: &ImmediateDeviceContext,
         _immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
         _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
@@ -97,31 +91,27 @@ impl SampleBase for MultipleWindows {
             // OpenGL backend requires emulated combined HLSL texture samplers (g_Texture + g_Texture_sampler combination)
             .use_combined_texture_samplers(true);
 
-        let vertex_shader = {
-            device
-                .create_shader(
-                    &shader_create_info
-                        .clone()
-                        .name("Triangle vertex shader")
-                        .source(ShaderSource::SourceCode(VERTEX_SHADER_SOURCE))
-                        .shader_type(ShaderType::Vertex)
-                        .build(),
-                )
-                .unwrap()
-        };
+        let vertex_shader = device
+            .create_shader(
+                &shader_create_info
+                    .clone()
+                    .name("Triangle vertex shader")
+                    .source(ShaderSource::SourceCode(VERTEX_SHADER_SOURCE))
+                    .shader_type(ShaderType::Vertex)
+                    .build(),
+            )
+            .unwrap();
 
-        let pixel_shader = {
-            device
-                .create_shader(
-                    &shader_create_info
-                        .clone()
-                        .name("Triangle pixel shader")
-                        .source(ShaderSource::SourceCode(PIXEL_SHADER_SOURCE))
-                        .shader_type(ShaderType::Pixel)
-                        .build(),
-                )
-                .unwrap()
-        };
+        let pixel_shader = device
+            .create_shader(
+                &shader_create_info
+                    .clone()
+                    .name("Triangle pixel shader")
+                    .source(ShaderSource::SourceCode(PIXEL_SHADER_SOURCE))
+                    .shader_type(ShaderType::Pixel)
+                    .build(),
+            )
+            .unwrap();
 
         let mut rtv_formats = std::array::from_fn(|_| None);
         rtv_formats[0] = Some(swap_chain_desc.color_buffer_format());
@@ -166,10 +156,7 @@ impl SampleBase for MultipleWindows {
             .create_graphics_pipeline_state(&pso_create_info)
             .unwrap();
 
-        MultipleWindows {
-            device,
-            pipeline_state,
-        }
+        MultipleWindows { pipeline_state }
     }
 
     fn render(

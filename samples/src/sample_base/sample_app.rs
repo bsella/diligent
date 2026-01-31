@@ -52,6 +52,7 @@ pub struct SampleApp<Sample: SampleBase, W: Window> {
     _golden_image_mode: GoldenImageMode,
     _golden_pixel_tolerance: u32,
 
+    device: Boxed<RenderDevice>,
     main_context: Boxed<ImmediateDeviceContext>,
 
     sample: Sample,
@@ -104,7 +105,7 @@ impl<GenericSample: SampleBase, W: Window> SampleApp<GenericSample, W> {
 
         let swap_chain_desc = swap_chain.desc();
 
-        self.sample.window_resize(swap_chain_desc);
+        self.sample.window_resize(&self.device, swap_chain_desc);
     }
 
     fn update(&mut self, current_time: f64, elapsed_time: f64) {
@@ -172,7 +173,7 @@ impl<GenericSample: SampleBase, W: Window> SampleApp<GenericSample, W> {
             // main DiligentSamples repository.
             ui.checkbox("VSync", &mut self.app_settings.vsync);
         }
-        self.sample.update_ui(&self.main_context, ui);
+        self.sample.update_ui(&self.device, &self.main_context, ui);
     }
 
     fn present(&self, swap_chain: &SwapChain) {
@@ -573,7 +574,7 @@ impl<GenericSample: SampleBase, W: Window> App for SampleApp<GenericSample, W> {
 
         let sample = GenericSample::new(
             &engine_factory,
-            device,
+            &device,
             &main_context,
             other_immediate_context,
             deferred_contexts,
@@ -603,6 +604,7 @@ impl<GenericSample: SampleBase, W: Window> App for SampleApp<GenericSample, W> {
             _golden_image_mode: GoldenImageMode::None,
             _golden_pixel_tolerance: 0,
 
+            device,
             main_context,
 
             sample,
@@ -714,8 +716,7 @@ impl<GenericSample: SampleBase, W: Window> App for SampleApp<GenericSample, W> {
                 // Render imgui UI
                 if self.app_settings.show_ui {
                     self.update_ui(&mut sample_window.swap_chain, imgui_frame.ui_mut());
-                    self.main_context =
-                        imgui_frame.render(self.main_context, self.sample.get_render_device());
+                    self.main_context = imgui_frame.render(self.main_context, &self.device);
                 }
 
                 self.present(&sample_window.swap_chain);

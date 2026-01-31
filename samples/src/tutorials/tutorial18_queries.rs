@@ -14,8 +14,6 @@ use diligent_samples::{
 };
 
 struct Queries {
-    device: Boxed<RenderDevice>,
-
     textured_cube: TexturedCube,
     rotation_matrix: glam::Mat4,
 
@@ -38,13 +36,9 @@ struct Queries {
 }
 
 impl SampleBase for Queries {
-    fn get_render_device(&self) -> &RenderDevice {
-        &self.device
-    }
-
     fn new(
         engine_factory: &EngineFactory,
-        device: Boxed<RenderDevice>,
+        device: &RenderDevice,
         main_context: &ImmediateDeviceContext,
         _immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
         _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
@@ -68,7 +62,7 @@ impl SampleBase for Queries {
         // Create dynamic uniform buffer that will store our transformation matrix
         // Dynamic buffers can be frequently updated by the CPU
         let cube_vs_constants = create_uniform_buffer(
-            &device,
+            device,
             std::mem::size_of::<glam::Mat4>() as u64,
             c"VS constants CB",
             Usage::Dynamic,
@@ -78,7 +72,7 @@ impl SampleBase for Queries {
         .unwrap();
 
         let cube_pso_ci = textured_cube::CreatePSOInfo::new(
-            &device,
+            device,
             swap_chain_desc.color_buffer_format(),
             swap_chain_desc.depth_buffer_format(),
             &shader_source_factory,
@@ -148,7 +142,7 @@ impl SampleBase for Queries {
         let device_features = device_info.features();
 
         let textured_cube = TexturedCube::new(
-            &device,
+            device,
             GeometryPrimitiveVertexFlags::PosTex,
             BindFlags::VertexBuffer,
             None,
@@ -189,14 +183,12 @@ impl SampleBase for Queries {
             device_features.timestamp_queries(),
             DeviceFeatureState::Disabled
         ) {
-            DurationQueryHelper::new(&device).ok()
+            DurationQueryHelper::new(device).ok()
         } else {
             None
         };
 
         let sample = Queries {
-            device,
-
             textured_cube,
 
             query_pipeline_stats,
@@ -376,7 +368,12 @@ impl SampleBase for Queries {
             * glam::Mat4::from_rotation_y(current_time as f32);
     }
 
-    fn update_ui(&mut self, _main_context: &ImmediateDeviceContext, ui: &mut imgui::Ui) {
+    fn update_ui(
+        &mut self,
+        _device: &RenderDevice,
+        _main_context: &ImmediateDeviceContext,
+        ui: &mut imgui::Ui,
+    ) {
         if let Some(_window_token) = ui
             .window("Query data")
             .always_auto_resize(true)

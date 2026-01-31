@@ -134,14 +134,12 @@ impl DerefMut for EngineCreateInfo<'_> {
 pub trait SampleBase {
     fn new(
         engine_factory: &EngineFactory,
-        render_device: Boxed<RenderDevice>,
+        render_device: &RenderDevice,
         main_context: &ImmediateDeviceContext,
         other_immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
         deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
         swap_chain_desc: &[&SwapChainDesc],
     ) -> Self;
-
-    fn get_render_device(&self) -> &RenderDevice;
 
     fn make_swap_chains_create_info(settings: &impl AppSettings) -> Vec<SwapChainCreateInfo> {
         // By default, the sample only created one window with one swap chain
@@ -170,13 +168,19 @@ pub trait SampleBase {
     ) {
     }
 
-    fn update_ui(&mut self, _main_context: &ImmediateDeviceContext, _ui: &mut Ui) {}
+    fn update_ui(
+        &mut self,
+        _device: &RenderDevice,
+        _main_context: &ImmediateDeviceContext,
+        _ui: &mut Ui,
+    ) {
+    }
 
     fn get_name() -> &'static str;
 
     fn pre_window_resize(&mut self) {}
 
-    fn window_resize(&mut self, _new_swap_chain: &SwapChainDesc) {}
+    fn window_resize(&mut self, _device: &RenderDevice, _new_swap_chain: &SwapChainDesc) {}
 
     fn handle_event(&mut self, _event: Event) {}
 

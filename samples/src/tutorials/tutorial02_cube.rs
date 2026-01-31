@@ -8,8 +8,6 @@ use diligent_samples::sample_base::{
 };
 
 struct Cube {
-    device: Boxed<RenderDevice>,
-
     convert_ps_output_to_gamma: bool,
 
     pipeline_state: Boxed<GraphicsPipelineState>,
@@ -22,13 +20,9 @@ struct Cube {
 }
 
 impl SampleBase for Cube {
-    fn get_render_device(&self) -> &RenderDevice {
-        &self.device
-    }
-
     fn new(
         engine_factory: &EngineFactory,
-        device: Boxed<RenderDevice>,
+        device: &RenderDevice,
         _main_context: &ImmediateDeviceContext,
         _immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
         _deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
@@ -245,7 +239,6 @@ impl SampleBase for Cube {
         };
 
         Cube {
-            device,
             convert_ps_output_to_gamma,
             pipeline_state,
             cube_vertex_buffer,
