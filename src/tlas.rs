@@ -1,6 +1,7 @@
 use std::{
     ffi::{CStr, CString},
     marker::PhantomData,
+    ops::Deref,
 };
 
 use bitflags::bitflags;
@@ -8,7 +9,7 @@ use static_assertions::const_assert_eq;
 
 use crate::{
     blas::{BottomLevelAS, RayTracingBuildAsFlags, ScratchBufferSizes},
-    device_object::DeviceObject,
+    device_object::{DeviceObject, DeviceObjectAttribs},
     graphics_types::ResourceState,
 };
 
@@ -142,6 +143,13 @@ pub struct TopLevelASDesc<'name>(
     pub(crate) diligent_sys::TopLevelASDesc,
     PhantomData<&'name ()>,
 );
+
+impl Deref for TopLevelASDesc<'_> {
+    type Target = DeviceObjectAttribs;
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*(std::ptr::from_ref(&self.0) as *const _) }
+    }
+}
 
 #[bon::bon]
 impl<'name> TopLevelASDesc<'name> {

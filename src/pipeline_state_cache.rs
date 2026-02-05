@@ -1,8 +1,11 @@
-use std::{ffi::CStr, marker::PhantomData};
+use std::{ffi::CStr, marker::PhantomData, ops::Deref};
 
 use bitflags::bitflags;
 
-use crate::{data_blob::DataBlob, device_object::DeviceObject};
+use crate::{
+    data_blob::DataBlob,
+    device_object::{DeviceObject, DeviceObjectAttribs},
+};
 
 define_ported!(
     PipelineStateCache,
@@ -30,6 +33,13 @@ pub struct PipelineStateCacheCreateInfo<'name, 'data, T>(
     pub(crate) diligent_sys::PipelineStateCacheCreateInfo,
     PhantomData<(&'name (), &'data (), T)>,
 );
+
+impl<T> Deref for PipelineStateCacheCreateInfo<'_, '_, T> {
+    type Target = DeviceObjectAttribs;
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*(std::ptr::from_ref(&self.0) as *const _) }
+    }
+}
 
 #[bon::bon]
 impl<'name, 'data, T> PipelineStateCacheCreateInfo<'name, 'data, T> {

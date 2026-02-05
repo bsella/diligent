@@ -1,9 +1,13 @@
-use std::{ffi::CStr, marker::PhantomData};
+use std::{ffi::CStr, marker::PhantomData, ops::Deref};
 
 use bon::Builder;
 use static_assertions::const_assert_eq;
 
-use crate::{buffer::Buffer, device_object::DeviceObject, graphics_types::ValueType};
+use crate::{
+    buffer::Buffer,
+    device_object::{DeviceObject, DeviceObjectAttribs},
+    graphics_types::ValueType,
+};
 
 #[derive(Clone, Copy)]
 pub enum BufferViewType {
@@ -34,6 +38,13 @@ pub struct BufferViewDesc<'name>(
     pub(crate) diligent_sys::BufferViewDesc,
     PhantomData<&'name ()>,
 );
+
+impl Deref for BufferViewDesc<'_> {
+    type Target = DeviceObjectAttribs;
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*(std::ptr::from_ref(&self.0) as *const _) }
+    }
+}
 
 #[bon::bon]
 impl<'name> BufferViewDesc<'name> {

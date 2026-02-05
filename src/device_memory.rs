@@ -1,6 +1,6 @@
-use std::{ffi::CStr, marker::PhantomData};
+use std::{ffi::CStr, marker::PhantomData, ops::Deref};
 
-use crate::device_object::DeviceObject;
+use crate::device_object::{DeviceObject, DeviceObjectAttribs};
 
 define_ported!(
     DeviceMemory,
@@ -16,6 +16,13 @@ pub enum DeviceMemoryType {
 
 #[repr(transparent)]
 pub struct DeviceMemoryDesc<'name>(diligent_sys::DeviceMemoryDesc, PhantomData<&'name ()>);
+
+impl Deref for DeviceMemoryDesc<'_> {
+    type Target = DeviceObjectAttribs;
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*(std::ptr::from_ref(&self.0) as *const _) }
+    }
+}
 
 #[bon::bon]
 impl<'name> DeviceMemoryDesc<'name> {

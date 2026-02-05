@@ -1,10 +1,10 @@
-use std::{ffi::CStr, marker::PhantomData};
+use std::{ffi::CStr, marker::PhantomData, ops::Deref};
 
 use bitflags::bitflags;
 use static_assertions::const_assert_eq;
 
 use crate::{
-    device_object::DeviceObject,
+    device_object::{DeviceObject, DeviceObjectAttribs},
     graphics_types::TextureFormat,
     sampler::Sampler,
     texture::{Texture, TextureDimension},
@@ -124,6 +124,13 @@ pub struct TextureViewDesc<'name>(
     pub(crate) diligent_sys::TextureViewDesc,
     PhantomData<&'name ()>,
 );
+
+impl Deref for TextureViewDesc<'_> {
+    type Target = DeviceObjectAttribs;
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*(std::ptr::from_ref(&self.0) as *const _) }
+    }
+}
 
 #[bon::bon]
 impl<'name> TextureViewDesc<'name> {

@@ -1,8 +1,8 @@
-use std::{ffi::CStr, marker::PhantomData};
+use std::{ffi::CStr, marker::PhantomData, ops::Deref};
 
 use static_assertions::const_assert_eq;
 
-use crate::device_object::DeviceObject;
+use crate::device_object::{DeviceObject, DeviceObjectAttribs};
 
 define_ported!(
     Fence,
@@ -21,6 +21,13 @@ const_assert_eq!(diligent_sys::FENCE_TYPE_LAST, 1);
 
 #[repr(transparent)]
 pub struct FenceDesc<'name>(pub(crate) diligent_sys::FenceDesc, PhantomData<&'name ()>);
+
+impl Deref for FenceDesc<'_> {
+    type Target = DeviceObjectAttribs;
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*(std::ptr::from_ref(&self.0) as *const _) }
+    }
+}
 
 #[bon::bon]
 impl<'name> FenceDesc<'name> {

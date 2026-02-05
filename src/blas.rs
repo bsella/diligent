@@ -1,13 +1,14 @@
 use std::{
     ffi::{CStr, CString},
     marker::PhantomData,
+    ops::Deref,
 };
 
 use bitflags::bitflags;
 use static_assertions::const_assert_eq;
 
 use crate::{
-    device_object::DeviceObject,
+    device_object::{DeviceObject, DeviceObjectAttribs},
     graphics_types::{ResourceState, ValueType},
 };
 
@@ -106,6 +107,13 @@ pub struct BottomLevelASDesc<
         &'bb_geometry_name (),
     )>,
 );
+
+impl Deref for BottomLevelASDesc<'_, '_, '_, '_, '_> {
+    type Target = DeviceObjectAttribs;
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*(std::ptr::from_ref(&self.0) as *const _) }
+    }
+}
 
 #[bon::bon]
 impl<'name, 'triangle_descs, 'bb_descs, 'triangle_geometry_name, 'bb_geometry_name>

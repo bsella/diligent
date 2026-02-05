@@ -1,12 +1,15 @@
 use std::{
     ffi::{CStr, CString},
     marker::PhantomData,
+    ops::Deref,
 };
 
 use bitflags::bitflags;
 
 use crate::{
-    RayTracingPipelineState, device_object::DeviceObject, pipeline_state::PipelineState,
+    RayTracingPipelineState,
+    device_object::{DeviceObject, DeviceObjectAttribs},
+    pipeline_state::PipelineState,
     tlas::TopLevelAS,
 };
 
@@ -26,6 +29,13 @@ pub struct ShaderBindingTableDesc<'name, 'pipeline_state>(
     pub(crate) diligent_sys::ShaderBindingTableDesc,
     PhantomData<(&'name (), &'pipeline_state ())>,
 );
+
+impl Deref for ShaderBindingTableDesc<'_, '_> {
+    type Target = DeviceObjectAttribs;
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*(std::ptr::from_ref(&self.0) as *const _) }
+    }
+}
 
 #[bon::bon]
 impl<'name, 'pipeline_state> ShaderBindingTableDesc<'name, 'pipeline_state> {

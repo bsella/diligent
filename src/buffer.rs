@@ -11,7 +11,7 @@ use crate::{
     Boxed, BoxedFromNulError, MapType,
     buffer_view::{BufferView, BufferViewDesc, BufferViewType},
     device_context::DeviceContext,
-    device_object::DeviceObject,
+    device_object::{DeviceObject, DeviceObjectAttribs},
     graphics_types::{BindFlags, CpuAccessFlags, MemoryProperty, ResourceState, Usage},
     resource_access_states,
 };
@@ -51,6 +51,13 @@ impl Default for MiscBufferFlags {
 //#[derive(Builder, Clone)]
 #[repr(transparent)]
 pub struct BufferDesc<'name>(pub(crate) diligent_sys::BufferDesc, PhantomData<&'name ()>);
+
+impl Deref for BufferDesc<'_> {
+    type Target = DeviceObjectAttribs;
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*(std::ptr::from_ref(&self.0) as *const _) }
+    }
+}
 
 #[bon::bon]
 impl<'name> BufferDesc<'name> {

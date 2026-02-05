@@ -1,9 +1,9 @@
-use std::{ffi::CStr, marker::PhantomData};
+use std::{ffi::CStr, marker::PhantomData, ops::Deref};
 
 use bitflags::bitflags;
 use static_assertions::const_assert_eq;
 
-use crate::device_object::DeviceObject;
+use crate::device_object::{DeviceObject, DeviceObjectAttribs};
 
 use super::{
     graphics_types::{FilterType, TextureAddressMode},
@@ -28,6 +28,13 @@ impl Default for SamplerFlags {
 
 #[repr(transparent)]
 pub struct SamplerDesc<'name>(pub(crate) diligent_sys::SamplerDesc, PhantomData<&'name ()>);
+
+impl Deref for SamplerDesc<'_> {
+    type Target = DeviceObjectAttribs;
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*(std::ptr::from_ref(&self.0) as *const _) }
+    }
+}
 
 #[bon::bon]
 impl<'name> SamplerDesc<'name> {

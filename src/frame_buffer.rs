@@ -1,6 +1,10 @@
-use std::{ffi::CStr, marker::PhantomData};
+use std::{ffi::CStr, marker::PhantomData, ops::Deref};
 
-use crate::{device_object::DeviceObject, render_pass::RenderPass, texture_view::TextureView};
+use crate::{
+    device_object::{DeviceObject, DeviceObjectAttribs},
+    render_pass::RenderPass,
+    texture_view::TextureView,
+};
 
 define_ported!(Framebuffer, diligent_sys::IFramebuffer, DeviceObject);
 
@@ -14,6 +18,13 @@ pub struct FramebufferDesc<'name, 'render_pass, 'texture_views, 'texture_view>(
         &'texture_view (),
     )>,
 );
+
+impl Deref for FramebufferDesc<'_, '_, '_, '_> {
+    type Target = DeviceObjectAttribs;
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*(std::ptr::from_ref(&self.0) as *const _) }
+    }
+}
 
 #[bon::bon]
 impl<'name, 'render_pass, 'texture_views, 'texture_view>

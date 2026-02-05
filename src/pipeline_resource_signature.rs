@@ -1,6 +1,7 @@
 use std::{
     ffi::{CStr, CString},
     marker::PhantomData,
+    ops::Deref,
     str::FromStr,
 };
 
@@ -9,7 +10,7 @@ use static_assertions::const_assert_eq;
 
 use crate::{
     Boxed, BoxedFromNulError,
-    device_object::DeviceObject,
+    device_object::{DeviceObject, DeviceObjectAttribs},
     graphics_types::{ShaderType, ShaderTypes},
     resource_mapping::ResourceMapping,
     sampler::SamplerDesc,
@@ -135,6 +136,13 @@ pub struct PipelineResourceSignatureDesc<
         &'immutable_samplers (),
     )>,
 );
+
+impl Deref for PipelineResourceSignatureDesc<'_, '_, '_, '_, '_, '_, '_, '_> {
+    type Target = DeviceObjectAttribs;
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*(std::ptr::from_ref(&self.0) as *const _) }
+    }
+}
 
 #[bon::bon]
 impl<

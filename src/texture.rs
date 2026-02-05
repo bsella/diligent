@@ -12,7 +12,7 @@ use crate::{
     Boxed, BoxedFromNulError, MapType,
     buffer::Buffer,
     device_context::DeviceContext,
-    device_object::DeviceObject,
+    device_object::{DeviceObject, DeviceObjectAttribs},
     graphics_types::{BindFlags, CpuAccessFlags, ResourceState, TextureFormat, Usage},
     resource_access_states,
     texture_view::{TextureView, TextureViewDesc, TextureViewType},
@@ -201,6 +201,13 @@ impl<'buffer, S: State> TextureSubResourceBuilder<'buffer, S> {
 
 #[repr(transparent)]
 pub struct TextureDesc<'name>(pub(crate) diligent_sys::TextureDesc, PhantomData<&'name ()>);
+
+impl Deref for TextureDesc<'_> {
+    type Target = DeviceObjectAttribs;
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*(std::ptr::from_ref(&self.0) as *const _) }
+    }
+}
 
 #[bon::bon]
 impl<'name> TextureDesc<'name> {
