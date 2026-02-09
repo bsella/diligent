@@ -1,11 +1,8 @@
 use std::path::Path;
 
-use diligent::{
-    graphics_utilities::{create_uniform_buffer, linear_to_srgba},
-    *,
-};
+use diligent::{graphics_utilities::*, *};
 use diligent_samples::sample_base::{
-    sample::{SampleBase, get_adjusted_projection_matrix, get_surface_pretransform_matrix},
+    sample::{SampleBase, *},
     sample_app::{self},
 };
 
@@ -95,7 +92,7 @@ impl SampleBase for Tessellation {
         };
 
         let mut rtv_formats = std::array::from_fn(|_| None);
-        rtv_formats[0] = Some(swap_chain_desc.color_buffer_format());
+        rtv_formats[0] = swap_chain_desc.color_buffer_format();
 
         let linear_clamp_sampler = SamplerDesc::builder()
             .name(c"Linear Sampler")
@@ -148,7 +145,7 @@ impl SampleBase for Tessellation {
                         GraphicsPipelineRenderTargets::builder()
                             .num_render_targets(1)
                             .rtv_formats(rtv_formats)
-                            .dsv_format(swap_chain_desc.depth_buffer_format())
+                            .maybe_dsv_format(swap_chain_desc.depth_buffer_format())
                             .build(),
                     )
                     .primitive_topology(PrimitiveTopology::ControlPointPatchList1)
@@ -169,7 +166,7 @@ impl SampleBase for Tessellation {
 
         let convert_ps_output_to_gamma = matches!(
             swap_chain_desc.color_buffer_format(),
-            TextureFormat::RGBA8_UNORM | TextureFormat::BGRA8_UNORM
+            Some(TextureFormat::RGBA8_UNORM) | Some(TextureFormat::BGRA8_UNORM)
         );
 
         let shader_source_factory = engine_factory

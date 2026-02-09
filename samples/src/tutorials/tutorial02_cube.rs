@@ -1,9 +1,9 @@
 use std::path::Path;
 
-use diligent::{graphics_utilities::linear_to_srgba, *};
+use diligent::{graphics_utilities::*, *};
 
 use diligent_samples::sample_base::{
-    sample::{SampleBase, get_adjusted_projection_matrix, get_surface_pretransform_matrix},
+    sample::{SampleBase, *},
     sample_app::{self},
 };
 
@@ -35,7 +35,7 @@ impl SampleBase for Cube {
         // we need to manually convert pixel shader output to gamma space.
         let convert_ps_output_to_gamma = matches!(
             swap_chain_desc.color_buffer_format(),
-            TextureFormat::RGBA8_UNORM | TextureFormat::BGRA8_UNORM
+            Some(TextureFormat::RGBA8_UNORM) | Some(TextureFormat::BGRA8_UNORM)
         );
 
         // In this tutorial, we will load shaders from file. To be able to do that,
@@ -102,7 +102,7 @@ impl SampleBase for Cube {
             .unwrap();
 
         let mut rtv_formats = std::array::from_fn(|_| None);
-        rtv_formats[0] = Some(swap_chain_desc.color_buffer_format());
+        rtv_formats[0] = swap_chain_desc.color_buffer_format();
 
         let rasterizer_desc = RasterizerStateDesc::builder()
             // Cull back faces
@@ -120,7 +120,7 @@ impl SampleBase for Cube {
             // Set render target format which is the format of the swap chain's color buffer
             .rtv_formats(rtv_formats)
             // Set depth buffer format which is the format of the swap chain's back buffer
-            .dsv_format(swap_chain_desc.depth_buffer_format())
+            .maybe_dsv_format(swap_chain_desc.depth_buffer_format())
             .build();
 
         let input_layouts = input_layouts![

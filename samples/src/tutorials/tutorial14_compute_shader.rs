@@ -31,7 +31,7 @@ fn create_render_particle_pso(
     convert_ps_output_to_gamma: bool,
 ) -> Boxed<GraphicsPipelineState> {
     let mut rtv_formats = std::array::from_fn(|_| None);
-    rtv_formats[0] = Some(swap_chain_desc.color_buffer_format());
+    rtv_formats[0] = swap_chain_desc.color_buffer_format();
 
     let mut render_targets = std::array::from_fn(|_| RenderTargetBlendDesc::default());
 
@@ -59,7 +59,7 @@ fn create_render_particle_pso(
             GraphicsPipelineRenderTargets::builder()
                 .num_render_targets(1)
                 .rtv_formats(rtv_formats)
-                .dsv_format(swap_chain_desc.depth_buffer_format())
+                .maybe_dsv_format(swap_chain_desc.depth_buffer_format())
                 .build(),
         )
         .primitive_topology(PrimitiveTopology::TriangleStrip)
@@ -471,7 +471,7 @@ impl SampleBase for ComputeShader {
 
         let convert_ps_output_to_gamma = matches!(
             swap_chain_desc.color_buffer_format(),
-            TextureFormat::RGBA8_UNORM | TextureFormat::BGRA8_UNORM
+            Some(TextureFormat::RGBA8_UNORM) | Some(TextureFormat::BGRA8_UNORM)
         );
 
         if convert_ps_output_to_gamma {

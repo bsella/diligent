@@ -1,14 +1,10 @@
 use std::path::Path;
 
-use diligent::{
-    geometry_primitives::GeometryPrimitiveVertexFlags,
-    graphics_utilities::{create_uniform_buffer, linear_to_srgba},
-    *,
-};
+use diligent::{geometry_primitives::GeometryPrimitiveVertexFlags, graphics_utilities::*, *};
 
 use diligent_samples::{
     sample_base::{
-        sample::{SampleBase, get_adjusted_projection_matrix, get_surface_pretransform_matrix},
+        sample::{SampleBase, *},
         sample_app::{self},
     },
     textured_cube::TexturedCube,
@@ -62,7 +58,7 @@ impl SampleBase for GeometryShader {
         // we need to manually convert pixel shader output to gamma space.
         let convert_ps_output_to_gamma = matches!(
             swap_chain_desc.color_buffer_format(),
-            TextureFormat::RGBA8_UNORM | TextureFormat::BGRA8_UNORM,
+            Some(TextureFormat::RGBA8_UNORM) | Some(TextureFormat::BGRA8_UNORM),
         );
 
         // Create a shader source stream factory to load shaders from files.
@@ -153,7 +149,7 @@ impl SampleBase for GeometryShader {
             .build();
 
         let mut rtv_formats = std::array::from_fn(|_| None);
-        rtv_formats[0] = Some(swap_chain_desc.color_buffer_format());
+        rtv_formats[0] = swap_chain_desc.color_buffer_format();
 
         let pipeline_output = GraphicsPipelineRenderTargets::builder()
             // This tutorial will render to a single render target
@@ -161,7 +157,7 @@ impl SampleBase for GeometryShader {
             // Set render target format which is the format of the swap chain's color buffer
             .rtv_formats(rtv_formats)
             // Set depth buffer format which is the format of the swap chain's back buffer
-            .dsv_format(swap_chain_desc.depth_buffer_format())
+            .maybe_dsv_format(swap_chain_desc.depth_buffer_format())
             .build();
 
         let shader_resource_variables = [ShaderResourceVariableDesc::builder()

@@ -26,8 +26,8 @@ impl ShaderDesc {
     pub fn name(&self) -> &CStr {
         unsafe { CStr::from_ptr(self.0._DeviceObjectAttribs.Name) }
     }
-    pub fn shader_type(&self) -> ShaderType {
-        ShaderType::from(self.0.ShaderType)
+    pub fn shader_type(&self) -> Option<ShaderType> {
+        ShaderType::from_sys(self.0.ShaderType)
     }
     pub fn use_combined_texture_samplers(&self) -> bool {
         self.0.UseCombinedTextureSamplers

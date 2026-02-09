@@ -93,7 +93,7 @@ impl SampleBase for HelloTriangle {
             .unwrap();
 
         let mut rtv_formats = std::array::from_fn(|_| None);
-        rtv_formats[0] = Some(swap_chain_desc.color_buffer_format());
+        rtv_formats[0] = swap_chain_desc.color_buffer_format();
 
         let rasterizer_desc = RasterizerStateDesc::builder()
             // No back face culling for this tutorial
@@ -111,7 +111,7 @@ impl SampleBase for HelloTriangle {
             // Set render target format which is the format of the swap chain's color buffer
             .rtv_formats(rtv_formats)
             // Use the depth buffer format from the swap chain
-            .dsv_format(swap_chain_desc.depth_buffer_format())
+            .maybe_dsv_format(swap_chain_desc.depth_buffer_format())
             .build();
 
         let graphics_pipeline_desc = GraphicsPipelineDesc::builder()

@@ -224,18 +224,18 @@ impl From<ComparisonFunction> for diligent_sys::COMPARISON_FUNCTION {
     }
 }
 
-impl From<diligent_sys::COMPARISON_FUNCTION> for ComparisonFunction {
-    fn from(value: diligent_sys::COMPARISON_FUNCTION) -> Self {
+impl ComparisonFunction {
+    pub fn from_sys(value: diligent_sys::COMPARISON_FUNCTION) -> Option<Self> {
         match value as _ {
-            diligent_sys::COMPARISON_FUNC_NEVER => ComparisonFunction::Never,
-            diligent_sys::COMPARISON_FUNC_LESS => ComparisonFunction::Less,
-            diligent_sys::COMPARISON_FUNC_EQUAL => ComparisonFunction::Equal,
-            diligent_sys::COMPARISON_FUNC_LESS_EQUAL => ComparisonFunction::LessEqual,
-            diligent_sys::COMPARISON_FUNC_GREATER => ComparisonFunction::Greater,
-            diligent_sys::COMPARISON_FUNC_NOT_EQUAL => ComparisonFunction::NotEqual,
-            diligent_sys::COMPARISON_FUNC_GREATER_EQUAL => ComparisonFunction::GreaterEqual,
-            diligent_sys::COMPARISON_FUNC_ALWAYS => ComparisonFunction::Always,
-            _ => panic!("Unknown comparison function"),
+            diligent_sys::COMPARISON_FUNC_NEVER => Some(ComparisonFunction::Never),
+            diligent_sys::COMPARISON_FUNC_LESS => Some(ComparisonFunction::Less),
+            diligent_sys::COMPARISON_FUNC_EQUAL => Some(ComparisonFunction::Equal),
+            diligent_sys::COMPARISON_FUNC_LESS_EQUAL => Some(ComparisonFunction::LessEqual),
+            diligent_sys::COMPARISON_FUNC_GREATER => Some(ComparisonFunction::Greater),
+            diligent_sys::COMPARISON_FUNC_NOT_EQUAL => Some(ComparisonFunction::NotEqual),
+            diligent_sys::COMPARISON_FUNC_GREATER_EQUAL => Some(ComparisonFunction::GreaterEqual),
+            diligent_sys::COMPARISON_FUNC_ALWAYS => Some(ComparisonFunction::Always),
+            _ => None,
         }
     }
 }
@@ -368,8 +368,8 @@ impl PipelineResourceLayoutDesc {
 pub struct PipelineStateDesc(diligent_sys::PipelineStateDesc);
 
 impl PipelineStateDesc {
-    pub fn pipeline_type(&self) -> PipelineType {
-        self.0.PipelineType.into()
+    pub fn pipeline_type(&self) -> Option<PipelineType> {
+        PipelineType::from_sys(self.0.PipelineType)
     }
 
     pub fn srb_allocation_granularity(&self) -> u32 {
@@ -1900,8 +1900,8 @@ impl TilePipelineDesc {
     pub fn sample_count(&self) -> u8 {
         self.0.SampleCount
     }
-    pub fn rtv_formats(&self) -> [TextureFormat; 8usize] {
-        self.0.RTVFormats.map(TextureFormat::from)
+    pub fn rtv_formats(&self) -> [Option<TextureFormat>; 8usize] {
+        self.0.RTVFormats.map(TextureFormat::from_sys)
     }
 }
 

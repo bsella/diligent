@@ -1,14 +1,7 @@
 use core::f32;
 use std::{ffi::CString, ops::Deref, path::Path};
 
-use diligent::{
-    geometry_primitives::{
-        GeometryPrimitive, GeometryPrimitiveAttributes, GeometryPrimitiveVertexFlags,
-        create_geometry_primitive,
-    },
-    graphics_utilities::{GeometryPrimitiveBuffersCreateInfo, create_geometry_primitive_buffers},
-    *,
-};
+use diligent::{geometry_primitives::*, graphics_utilities::*, *};
 use diligent_samples::sample_base::{
     first_person_camera::FirstPersonCamera,
     sample::SampleBase,
@@ -135,7 +128,7 @@ fn create_graphics_pso(
     // Create graphics pipeline to blit render target into swapchain image.
 
     let mut rtv_formats = std::array::from_fn(|_| None);
-    rtv_formats[0] = Some(swap_chain_desc.color_buffer_format());
+    rtv_formats[0] = swap_chain_desc.color_buffer_format();
 
     let graphics_pso_desc = GraphicsPipelineDesc::builder()
         .rasterizer_desc(

@@ -1,12 +1,6 @@
 use std::path::PathBuf;
 
-use diligent::{
-    geometry_primitives::{
-        GeometryPrimitive, GeometryPrimitiveAttributes, GeometryPrimitiveVertexFlags,
-    },
-    graphics_utilities::{create_geometry_primitive_buffers, GeometryPrimitiveBuffersCreateInfo},
-    *,
-};
+use diligent::{geometry_primitives::*, graphics_utilities::*, *};
 
 pub struct TexturedCube {
     vertex_buffer: Boxed<Buffer>,
@@ -16,8 +10,8 @@ pub struct TexturedCube {
 
 pub struct CreatePSOInfo<'device, 'shader_factory> {
     device: &'device RenderDevice,
-    rtv_format: TextureFormat,
-    dsv_format: TextureFormat,
+    rtv_format: Option<TextureFormat>,
+    dsv_format: Option<TextureFormat>,
     shader_source_factory: &'shader_factory ShaderSourceInputStreamFactory,
     vs_file_path: PathBuf,
     ps_file_path: PathBuf,
@@ -29,8 +23,8 @@ pub struct CreatePSOInfo<'device, 'shader_factory> {
 impl<'device, 'shader_factory> CreatePSOInfo<'device, 'shader_factory> {
     pub fn new<P>(
         device: &'device RenderDevice,
-        rtv_format: TextureFormat,
-        dsv_format: TextureFormat,
+        rtv_format: Option<TextureFormat>,
+        dsv_format: Option<TextureFormat>,
         shader_source_factory: &'shader_factory ShaderSourceInputStreamFactory,
         vs_file_path: P,
         ps_file_path: P,
@@ -134,7 +128,7 @@ impl TexturedCube {
 
         let mut rtv_formats = std::array::from_fn(|_| None);
 
-        rtv_formats[0] = Some(create_info.rtv_format);
+        rtv_formats[0] = create_info.rtv_format;
 
         let graphics_pipeline_desc = GraphicsPipelineDesc::builder()
             .rasterizer_desc(
@@ -154,7 +148,7 @@ impl TexturedCube {
                     // Set render target format which is the format of the swap chain's color buffer
                     .rtv_formats(rtv_formats)
                     // Set depth buffer format which is the format of the swap chain's back buffer
-                    .dsv_format(create_info.dsv_format)
+                    .maybe_dsv_format(create_info.dsv_format)
                     .build(),
             )
             // Set the desired number of samples

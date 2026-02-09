@@ -410,8 +410,8 @@ pub enum ColorConversionMode {
 pub struct ImguiRendererCreateInfo<'device> {
     device: &'device RenderDevice,
 
-    back_buffer_format: TextureFormat,
-    depth_buffer_format: TextureFormat,
+    back_buffer_format: Option<TextureFormat>,
+    depth_buffer_format: Option<TextureFormat>,
 
     initial_width: f32,
     initial_height: f32,
@@ -424,10 +424,11 @@ impl ImguiRenderer {
     pub fn new(create_info: &ImguiRendererCreateInfo) -> Self {
         let mut imgui_context = imgui::Context::create();
 
-        let srgb_framebuffer = create_info
-            .back_buffer_format
-            .component_type()
-            .is_some_and(|comp_type| comp_type == ComponentType::UnormSRGB);
+        let srgb_framebuffer = create_info.back_buffer_format.is_some_and(|format| {
+            format
+                .component_type()
+                .is_some_and(|comp_type| comp_type == ComponentType::UnormSRGB)
+        });
 
         let manual_srgb = (create_info.color_conversion == ColorConversionMode::Auto
             && srgb_framebuffer)
@@ -565,7 +566,7 @@ impl ImguiRenderer {
 
         let mut rtv_formats = std::array::from_fn(|_| None);
 
-        rtv_formats[0] = Some(create_info.back_buffer_format);
+        rtv_formats[0] = create_info.back_buffer_format;
 
         let shader_resource_variables = [ShaderResourceVariableDesc::builder()
             .name(c"Texture")
@@ -603,7 +604,7 @@ impl ImguiRenderer {
                         GraphicsPipelineRenderTargets::builder()
                             .num_render_targets(1)
                             .rtv_formats(rtv_formats)
-                            .dsv_format(create_info.depth_buffer_format)
+                            .maybe_dsv_format(create_info.depth_buffer_format)
                             .build(),
                     )
                     .build(),

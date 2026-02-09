@@ -299,8 +299,8 @@ impl<GenericSample: SampleBase, W: Window> SampleApp<GenericSample, W> {
                 let imgui_renderer = ImguiRenderer::new(
                     &ImguiRendererCreateInfo::builder()
                         .device(device)
-                        .back_buffer_format(swap_chain_desc.color_buffer_format())
-                        .depth_buffer_format(swap_chain_desc.depth_buffer_format())
+                        .maybe_back_buffer_format(swap_chain_desc.color_buffer_format())
+                        .maybe_depth_buffer_format(swap_chain_desc.depth_buffer_format())
                         .initial_width(swap_chain_desc.width() as f32)
                         .initial_height(swap_chain_desc.height() as f32)
                         .build(),
@@ -355,8 +355,8 @@ impl<GenericSample: SampleBase, W: Window> SampleApp<GenericSample, W> {
                 let imgui_renderer = ImguiRenderer::new(
                     &ImguiRendererCreateInfo::builder()
                         .device(&device)
-                        .back_buffer_format(swap_chain_desc.color_buffer_format())
-                        .depth_buffer_format(swap_chain_desc.depth_buffer_format())
+                        .maybe_back_buffer_format(swap_chain_desc.color_buffer_format())
+                        .maybe_depth_buffer_format(swap_chain_desc.depth_buffer_format())
                         .initial_width(swap_chain_desc.width() as f32)
                         .initial_height(swap_chain_desc.height() as f32)
                         .build(),
@@ -693,11 +693,11 @@ impl<GenericSample: SampleBase, W: Window> App for SampleApp<GenericSample, W> {
                         .swap_chain
                         .get_current_back_buffer_rtv()
                         .unwrap();
-                    let dsv = sample_window.swap_chain.get_depth_buffer_dsv().unwrap();
+                    let dsv = sample_window.swap_chain.get_depth_buffer_dsv();
 
                     self.main_context.set_render_targets(
                         &[rtv],
-                        Some(dsv),
+                        dsv,
                         ResourceStateTransitionMode::Transition,
                     );
 
@@ -708,7 +708,7 @@ impl<GenericSample: SampleBase, W: Window> App for SampleApp<GenericSample, W> {
                     // Restore default render target in case the sample has changed it
                     self.main_context.set_render_targets(
                         &[rtv],
-                        Some(dsv),
+                        dsv,
                         ResourceStateTransitionMode::Transition,
                     );
                 }

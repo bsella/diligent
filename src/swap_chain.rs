@@ -58,11 +58,11 @@ impl SwapChainDesc {
     pub fn height(&self) -> u32 {
         self.0.Height
     }
-    pub fn color_buffer_format(&self) -> TextureFormat {
-        self.0.ColorBufferFormat.into()
+    pub fn color_buffer_format(&self) -> Option<TextureFormat> {
+        TextureFormat::from_sys(self.0.ColorBufferFormat)
     }
-    pub fn depth_buffer_format(&self) -> TextureFormat {
-        self.0.DepthBufferFormat.into()
+    pub fn depth_buffer_format(&self) -> Option<TextureFormat> {
+        TextureFormat::from_sys(self.0.DepthBufferFormat)
     }
     pub fn usage(&self) -> SwapChainUsageFlags {
         SwapChainUsageFlags::from_bits_retain(self.0.Usage)
@@ -102,9 +102,13 @@ impl SwapChainCreateInfo {
 
         height: u32,
 
-        #[builder(default = TextureFormat::RGBA8_UNORM_SRGB)] color_buffer_format: TextureFormat,
+        #[builder(required)]
+        #[builder(default = Some(TextureFormat::RGBA8_UNORM_SRGB))]
+        color_buffer_format: Option<TextureFormat>,
 
-        #[builder(default = TextureFormat::D32_FLOAT)] depth_buffer_format: TextureFormat,
+        #[builder(required)]
+        #[builder(default = Some(TextureFormat::D32_FLOAT))]
+        depth_buffer_format: Option<TextureFormat>,
 
         #[builder(default = SwapChainUsageFlags::RenderTarget)] usage: SwapChainUsageFlags,
 
@@ -121,8 +125,10 @@ impl SwapChainCreateInfo {
         Self(SwapChainDesc(diligent_sys::SwapChainDesc {
             Width: width,
             Height: height,
-            ColorBufferFormat: color_buffer_format.into(),
-            DepthBufferFormat: depth_buffer_format.into(),
+            ColorBufferFormat: color_buffer_format
+                .map_or(diligent_sys::TEX_FORMAT_UNKNOWN as _, TextureFormat::into),
+            DepthBufferFormat: depth_buffer_format
+                .map_or(diligent_sys::TEX_FORMAT_UNKNOWN as _, TextureFormat::into),
             Usage: usage.bits(),
             PreTransform: pre_transform.into(),
             BufferCount: buffer_count,

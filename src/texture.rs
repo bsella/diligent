@@ -321,8 +321,8 @@ impl TextureDesc<'_> {
     pub fn depth(&self) -> u32 {
         unsafe { self.0.__bindgen_anon_1.Depth }
     }
-    pub fn format(&self) -> TextureFormat {
-        self.0.Format.into()
+    pub fn format(&self) -> Option<TextureFormat> {
+        TextureFormat::from_sys(self.0.Format)
     }
     pub fn mip_levels(&self) -> u32 {
         self.0.MipLevels
@@ -368,7 +368,9 @@ impl TextureDesc<'_> {
     }
 
     pub fn mip_level_storage_width(&self, mip_level: u32) -> usize {
-        if let Some(crate::ComponentType::Compressed) = self.format().component_type() {
+        if let Some(format) = self.format()
+            && let Some(crate::ComponentType::Compressed) = format.component_type()
+        {
             todo!()
         } else {
             self.mip_level_logical_width(mip_level) as usize
@@ -376,7 +378,9 @@ impl TextureDesc<'_> {
     }
 
     pub fn mip_level_storage_height(&self, mip_level: u32) -> usize {
-        if let Some(crate::ComponentType::Compressed) = self.format().component_type() {
+        if let Some(format) = self.format()
+            && let Some(crate::ComponentType::Compressed) = format.component_type()
+        {
             todo!()
         } else {
             self.mip_level_logical_height(mip_level) as usize
@@ -384,17 +388,22 @@ impl TextureDesc<'_> {
     }
 
     pub fn mip_level_row_size(&self, mip_level: u32) -> usize {
-        if let Some(crate::ComponentType::Compressed) = self.format().component_type() {
-            todo!()
-        } else {
-            self.mip_level_storage_width(mip_level)
-                * self.format().component_size() as usize
-                * self.format().num_components() as usize
-        }
+        self.format()
+            .map_or(self.mip_level_storage_width(mip_level), |format| {
+                if let Some(crate::ComponentType::Compressed) = format.component_type() {
+                    todo!()
+                } else {
+                    self.mip_level_storage_width(mip_level)
+                        * format.component_size() as usize
+                        * format.num_components() as usize
+                }
+            })
     }
 
     pub fn mip_level_depth_slice_size(&self, mip_level: u32) -> usize {
-        if let Some(crate::ComponentType::Compressed) = self.format().component_type() {
+        if let Some(format) = self.format()
+            && let Some(crate::ComponentType::Compressed) = format.component_type()
+        {
             todo!()
         } else {
             self.mip_level_row_size(mip_level) * self.mip_level_storage_height(mip_level)

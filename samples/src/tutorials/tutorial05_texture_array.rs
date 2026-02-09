@@ -1,8 +1,4 @@
-use diligent::{
-    geometry_primitives::GeometryPrimitiveVertexFlags,
-    graphics_utilities::{create_uniform_buffer, linear_to_srgba},
-    *,
-};
+use diligent::{geometry_primitives::*, graphics_utilities::*, *};
 
 use diligent_samples::{
     sample_base::{
@@ -130,7 +126,7 @@ impl SampleBase for TextureArray {
         // we need to manually convert pixel shader output to gamma space.
         let convert_ps_output_to_gamma = matches!(
             swap_chain_desc.color_buffer_format(),
-            TextureFormat::RGBA8_UNORM | TextureFormat::BGRA8_UNORM
+            Some(TextureFormat::RGBA8_UNORM) | Some(TextureFormat::BGRA8_UNORM)
         );
 
         // Create a shader source stream factory to load shaders from files.

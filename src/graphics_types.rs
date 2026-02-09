@@ -74,24 +74,26 @@ impl From<ShaderType> for diligent_sys::SHADER_TYPE {
         }) as _
     }
 }
-impl From<diligent_sys::SHADER_TYPE> for ShaderType {
-    fn from(value: diligent_sys::SHADER_TYPE) -> Self {
-        match value as _ {
-            diligent_sys::SHADER_TYPE_VERTEX => ShaderType::Vertex,
-            diligent_sys::SHADER_TYPE_PIXEL => ShaderType::Pixel,
-            diligent_sys::SHADER_TYPE_GEOMETRY => ShaderType::Geometry,
-            diligent_sys::SHADER_TYPE_HULL => ShaderType::Hull,
-            diligent_sys::SHADER_TYPE_DOMAIN => ShaderType::Domain,
-            diligent_sys::SHADER_TYPE_COMPUTE => ShaderType::Compute,
-            diligent_sys::SHADER_TYPE_AMPLIFICATION => ShaderType::Amplification,
-            diligent_sys::SHADER_TYPE_MESH => ShaderType::Mesh,
-            diligent_sys::SHADER_TYPE_RAY_GEN => ShaderType::RayGen,
-            diligent_sys::SHADER_TYPE_RAY_MISS => ShaderType::RayMiss,
-            diligent_sys::SHADER_TYPE_RAY_CLOSEST_HIT => ShaderType::RayClosestHit,
-            diligent_sys::SHADER_TYPE_RAY_ANY_HIT => ShaderType::RayAnyHit,
-            diligent_sys::SHADER_TYPE_RAY_INTERSECTION => ShaderType::RayIntersection,
-            diligent_sys::SHADER_TYPE_CALLABLE => ShaderType::Callable,
-            diligent_sys::SHADER_TYPE_TILE => ShaderType::Tile,
+
+impl ShaderType {
+    pub fn from_sys(shader_type: diligent_sys::SHADER_TYPE) -> Option<Self> {
+        match shader_type as _ {
+            diligent_sys::SHADER_TYPE_UNKNOWN => None,
+            diligent_sys::SHADER_TYPE_VERTEX => Some(ShaderType::Vertex),
+            diligent_sys::SHADER_TYPE_PIXEL => Some(ShaderType::Pixel),
+            diligent_sys::SHADER_TYPE_GEOMETRY => Some(ShaderType::Geometry),
+            diligent_sys::SHADER_TYPE_HULL => Some(ShaderType::Hull),
+            diligent_sys::SHADER_TYPE_DOMAIN => Some(ShaderType::Domain),
+            diligent_sys::SHADER_TYPE_COMPUTE => Some(ShaderType::Compute),
+            diligent_sys::SHADER_TYPE_AMPLIFICATION => Some(ShaderType::Amplification),
+            diligent_sys::SHADER_TYPE_MESH => Some(ShaderType::Mesh),
+            diligent_sys::SHADER_TYPE_RAY_GEN => Some(ShaderType::RayGen),
+            diligent_sys::SHADER_TYPE_RAY_MISS => Some(ShaderType::RayMiss),
+            diligent_sys::SHADER_TYPE_RAY_CLOSEST_HIT => Some(ShaderType::RayClosestHit),
+            diligent_sys::SHADER_TYPE_RAY_ANY_HIT => Some(ShaderType::RayAnyHit),
+            diligent_sys::SHADER_TYPE_RAY_INTERSECTION => Some(ShaderType::RayIntersection),
+            diligent_sys::SHADER_TYPE_CALLABLE => Some(ShaderType::Callable),
+            diligent_sys::SHADER_TYPE_TILE => Some(ShaderType::Tile),
             _ => panic!("Unknown SHADER_TYPE value"),
         }
     }
@@ -133,21 +135,24 @@ impl From<FilterType> for diligent_sys::FILTER_TYPE {
     }
 }
 
-impl From<diligent_sys::FILTER_TYPE> for FilterType {
-    fn from(value: diligent_sys::FILTER_TYPE) -> Self {
-        match value as _ {
-            diligent_sys::FILTER_TYPE_POINT => FilterType::Point,
-            diligent_sys::FILTER_TYPE_LINEAR => FilterType::Linear,
-            diligent_sys::FILTER_TYPE_ANISOTROPIC => FilterType::Anisotropic,
-            diligent_sys::FILTER_TYPE_COMPARISON_POINT => FilterType::ComparisonPoint,
-            diligent_sys::FILTER_TYPE_COMPARISON_LINEAR => FilterType::ComparisonLinear,
-            diligent_sys::FILTER_TYPE_COMPARISON_ANISOTROPIC => FilterType::ComparisonAnisotropic,
-            diligent_sys::FILTER_TYPE_MINIMUM_POINT => FilterType::MinimumPoint,
-            diligent_sys::FILTER_TYPE_MINIMUM_LINEAR => FilterType::MinimumLinear,
-            diligent_sys::FILTER_TYPE_MINIMUM_ANISOTROPIC => FilterType::MinimumAnisotropic,
-            diligent_sys::FILTER_TYPE_MAXIMUM_POINT => FilterType::MaximumPoint,
-            diligent_sys::FILTER_TYPE_MAXIMUM_LINEAR => FilterType::MaximumLinear,
-            diligent_sys::FILTER_TYPE_MAXIMUM_ANISOTROPIC => FilterType::MaximumAnisotropic,
+impl FilterType {
+    pub fn from_sys(filter_type: diligent_sys::FILTER_TYPE) -> Option<Self> {
+        match filter_type as _ {
+            diligent_sys::FILTER_TYPE_UNKNOWN => None,
+            diligent_sys::FILTER_TYPE_POINT => Some(FilterType::Point),
+            diligent_sys::FILTER_TYPE_LINEAR => Some(FilterType::Linear),
+            diligent_sys::FILTER_TYPE_ANISOTROPIC => Some(FilterType::Anisotropic),
+            diligent_sys::FILTER_TYPE_COMPARISON_POINT => Some(FilterType::ComparisonPoint),
+            diligent_sys::FILTER_TYPE_COMPARISON_LINEAR => Some(FilterType::ComparisonLinear),
+            diligent_sys::FILTER_TYPE_COMPARISON_ANISOTROPIC => {
+                Some(FilterType::ComparisonAnisotropic)
+            }
+            diligent_sys::FILTER_TYPE_MINIMUM_POINT => Some(FilterType::MinimumPoint),
+            diligent_sys::FILTER_TYPE_MINIMUM_LINEAR => Some(FilterType::MinimumLinear),
+            diligent_sys::FILTER_TYPE_MINIMUM_ANISOTROPIC => Some(FilterType::MinimumAnisotropic),
+            diligent_sys::FILTER_TYPE_MAXIMUM_POINT => Some(FilterType::MaximumPoint),
+            diligent_sys::FILTER_TYPE_MAXIMUM_LINEAR => Some(FilterType::MaximumLinear),
+            diligent_sys::FILTER_TYPE_MAXIMUM_ANISOTROPIC => Some(FilterType::MaximumAnisotropic),
             _ => panic!("Unknown filter type"),
         }
     }
@@ -175,14 +180,15 @@ impl From<TextureAddressMode> for diligent_sys::TEXTURE_ADDRESS_MODE {
     }
 }
 
-impl From<diligent_sys::TEXTURE_ADDRESS_MODE> for TextureAddressMode {
-    fn from(value: diligent_sys::TEXTURE_ADDRESS_MODE) -> Self {
+impl TextureAddressMode {
+    pub fn from_sys(value: diligent_sys::TEXTURE_ADDRESS_MODE) -> Option<Self> {
         match value as _ {
-            diligent_sys::TEXTURE_ADDRESS_WRAP => TextureAddressMode::Wrap,
-            diligent_sys::TEXTURE_ADDRESS_MIRROR => TextureAddressMode::Mirror,
-            diligent_sys::TEXTURE_ADDRESS_CLAMP => TextureAddressMode::Clamp,
-            diligent_sys::TEXTURE_ADDRESS_BORDER => TextureAddressMode::Border,
-            diligent_sys::TEXTURE_ADDRESS_MIRROR_ONCE => TextureAddressMode::MirrorOnce,
+            diligent_sys::TEXTURE_ADDRESS_UNKNOWN => None,
+            diligent_sys::TEXTURE_ADDRESS_WRAP => Some(TextureAddressMode::Wrap),
+            diligent_sys::TEXTURE_ADDRESS_MIRROR => Some(TextureAddressMode::Mirror),
+            diligent_sys::TEXTURE_ADDRESS_CLAMP => Some(TextureAddressMode::Clamp),
+            diligent_sys::TEXTURE_ADDRESS_BORDER => Some(TextureAddressMode::Border),
+            diligent_sys::TEXTURE_ADDRESS_MIRROR_ONCE => Some(TextureAddressMode::MirrorOnce),
             _ => panic!("Unknown texture address mode"),
         }
     }
@@ -2015,122 +2021,133 @@ impl From<TextureFormat> for diligent_sys::TEXTURE_FORMAT {
     }
 }
 
-impl From<diligent_sys::TEXTURE_FORMAT> for TextureFormat {
-    fn from(value: diligent_sys::TEXTURE_FORMAT) -> Self {
-        match value as _ {
-            diligent_sys::TEX_FORMAT_RGBA32_TYPELESS => TextureFormat::RGBA32_TYPELESS,
-            diligent_sys::TEX_FORMAT_RGBA32_FLOAT => TextureFormat::RGBA32_FLOAT,
-            diligent_sys::TEX_FORMAT_RGBA32_UINT => TextureFormat::RGBA32_UINT,
-            diligent_sys::TEX_FORMAT_RGBA32_SINT => TextureFormat::RGBA32_SINT,
-            diligent_sys::TEX_FORMAT_RGB32_TYPELESS => TextureFormat::RGB32_TYPELESS,
-            diligent_sys::TEX_FORMAT_RGB32_FLOAT => TextureFormat::RGB32_FLOAT,
-            diligent_sys::TEX_FORMAT_RGB32_UINT => TextureFormat::RGB32_UINT,
-            diligent_sys::TEX_FORMAT_RGB32_SINT => TextureFormat::RGB32_SINT,
-            diligent_sys::TEX_FORMAT_RGBA16_TYPELESS => TextureFormat::RGBA16_TYPELESS,
-            diligent_sys::TEX_FORMAT_RGBA16_FLOAT => TextureFormat::RGBA16_FLOAT,
-            diligent_sys::TEX_FORMAT_RGBA16_UNORM => TextureFormat::RGBA16_UNORM,
-            diligent_sys::TEX_FORMAT_RGBA16_UINT => TextureFormat::RGBA16_UINT,
-            diligent_sys::TEX_FORMAT_RGBA16_SNORM => TextureFormat::RGBA16_SNORM,
-            diligent_sys::TEX_FORMAT_RGBA16_SINT => TextureFormat::RGBA16_SINT,
-            diligent_sys::TEX_FORMAT_RG32_TYPELESS => TextureFormat::RG32_TYPELESS,
-            diligent_sys::TEX_FORMAT_RG32_FLOAT => TextureFormat::RG32_FLOAT,
-            diligent_sys::TEX_FORMAT_RG32_UINT => TextureFormat::RG32_UINT,
-            diligent_sys::TEX_FORMAT_RG32_SINT => TextureFormat::RG32_SINT,
-            diligent_sys::TEX_FORMAT_R32G8X24_TYPELESS => TextureFormat::R32G8X24_TYPELESS,
-            diligent_sys::TEX_FORMAT_D32_FLOAT_S8X24_UINT => TextureFormat::D32_FLOAT_S8X24_UINT,
+impl TextureFormat {
+    pub fn from_sys(format: diligent_sys::TEXTURE_FORMAT) -> Option<TextureFormat> {
+        match format as _ {
+            diligent_sys::TEX_FORMAT_UNKNOWN => None,
+            diligent_sys::TEX_FORMAT_RGBA32_TYPELESS => Some(TextureFormat::RGBA32_TYPELESS),
+            diligent_sys::TEX_FORMAT_RGBA32_FLOAT => Some(TextureFormat::RGBA32_FLOAT),
+            diligent_sys::TEX_FORMAT_RGBA32_UINT => Some(TextureFormat::RGBA32_UINT),
+            diligent_sys::TEX_FORMAT_RGBA32_SINT => Some(TextureFormat::RGBA32_SINT),
+            diligent_sys::TEX_FORMAT_RGB32_TYPELESS => Some(TextureFormat::RGB32_TYPELESS),
+            diligent_sys::TEX_FORMAT_RGB32_FLOAT => Some(TextureFormat::RGB32_FLOAT),
+            diligent_sys::TEX_FORMAT_RGB32_UINT => Some(TextureFormat::RGB32_UINT),
+            diligent_sys::TEX_FORMAT_RGB32_SINT => Some(TextureFormat::RGB32_SINT),
+            diligent_sys::TEX_FORMAT_RGBA16_TYPELESS => Some(TextureFormat::RGBA16_TYPELESS),
+            diligent_sys::TEX_FORMAT_RGBA16_FLOAT => Some(TextureFormat::RGBA16_FLOAT),
+            diligent_sys::TEX_FORMAT_RGBA16_UNORM => Some(TextureFormat::RGBA16_UNORM),
+            diligent_sys::TEX_FORMAT_RGBA16_UINT => Some(TextureFormat::RGBA16_UINT),
+            diligent_sys::TEX_FORMAT_RGBA16_SNORM => Some(TextureFormat::RGBA16_SNORM),
+            diligent_sys::TEX_FORMAT_RGBA16_SINT => Some(TextureFormat::RGBA16_SINT),
+            diligent_sys::TEX_FORMAT_RG32_TYPELESS => Some(TextureFormat::RG32_TYPELESS),
+            diligent_sys::TEX_FORMAT_RG32_FLOAT => Some(TextureFormat::RG32_FLOAT),
+            diligent_sys::TEX_FORMAT_RG32_UINT => Some(TextureFormat::RG32_UINT),
+            diligent_sys::TEX_FORMAT_RG32_SINT => Some(TextureFormat::RG32_SINT),
+            diligent_sys::TEX_FORMAT_R32G8X24_TYPELESS => Some(TextureFormat::R32G8X24_TYPELESS),
+            diligent_sys::TEX_FORMAT_D32_FLOAT_S8X24_UINT => {
+                Some(TextureFormat::D32_FLOAT_S8X24_UINT)
+            }
             diligent_sys::TEX_FORMAT_R32_FLOAT_X8X24_TYPELESS => {
-                TextureFormat::R32_FLOAT_X8X24_TYPELESS
+                Some(TextureFormat::R32_FLOAT_X8X24_TYPELESS)
             }
             diligent_sys::TEX_FORMAT_X32_TYPELESS_G8X24_UINT => {
-                TextureFormat::X32_TYPELESS_G8X24_UINT
+                Some(TextureFormat::X32_TYPELESS_G8X24_UINT)
             }
-            diligent_sys::TEX_FORMAT_RGB10A2_TYPELESS => TextureFormat::RGB10A2_TYPELESS,
-            diligent_sys::TEX_FORMAT_RGB10A2_UNORM => TextureFormat::RGB10A2_UNORM,
-            diligent_sys::TEX_FORMAT_RGB10A2_UINT => TextureFormat::RGB10A2_UINT,
-            diligent_sys::TEX_FORMAT_R11G11B10_FLOAT => TextureFormat::R11G11B10_FLOAT,
-            diligent_sys::TEX_FORMAT_RGBA8_TYPELESS => TextureFormat::RGBA8_TYPELESS,
-            diligent_sys::TEX_FORMAT_RGBA8_UNORM => TextureFormat::RGBA8_UNORM,
-            diligent_sys::TEX_FORMAT_RGBA8_UNORM_SRGB => TextureFormat::RGBA8_UNORM_SRGB,
-            diligent_sys::TEX_FORMAT_RGBA8_UINT => TextureFormat::RGBA8_UINT,
-            diligent_sys::TEX_FORMAT_RGBA8_SNORM => TextureFormat::RGBA8_SNORM,
-            diligent_sys::TEX_FORMAT_RGBA8_SINT => TextureFormat::RGBA8_SINT,
-            diligent_sys::TEX_FORMAT_RG16_TYPELESS => TextureFormat::RG16_TYPELESS,
-            diligent_sys::TEX_FORMAT_RG16_FLOAT => TextureFormat::RG16_FLOAT,
-            diligent_sys::TEX_FORMAT_RG16_UNORM => TextureFormat::RG16_UNORM,
-            diligent_sys::TEX_FORMAT_RG16_UINT => TextureFormat::RG16_UINT,
-            diligent_sys::TEX_FORMAT_RG16_SNORM => TextureFormat::RG16_SNORM,
-            diligent_sys::TEX_FORMAT_RG16_SINT => TextureFormat::RG16_SINT,
-            diligent_sys::TEX_FORMAT_R32_TYPELESS => TextureFormat::R32_TYPELESS,
-            diligent_sys::TEX_FORMAT_D32_FLOAT => TextureFormat::D32_FLOAT,
-            diligent_sys::TEX_FORMAT_R32_FLOAT => TextureFormat::R32_FLOAT,
-            diligent_sys::TEX_FORMAT_R32_UINT => TextureFormat::R32_UINT,
-            diligent_sys::TEX_FORMAT_R32_SINT => TextureFormat::R32_SINT,
-            diligent_sys::TEX_FORMAT_R24G8_TYPELESS => TextureFormat::R24G8_TYPELESS,
-            diligent_sys::TEX_FORMAT_D24_UNORM_S8_UINT => TextureFormat::D24_UNORM_S8_UINT,
-            diligent_sys::TEX_FORMAT_R24_UNORM_X8_TYPELESS => TextureFormat::R24_UNORM_X8_TYPELESS,
-            diligent_sys::TEX_FORMAT_X24_TYPELESS_G8_UINT => TextureFormat::X24_TYPELESS_G8_UINT,
-            diligent_sys::TEX_FORMAT_RG8_TYPELESS => TextureFormat::RG8_TYPELESS,
-            diligent_sys::TEX_FORMAT_RG8_UNORM => TextureFormat::RG8_UNORM,
-            diligent_sys::TEX_FORMAT_RG8_UINT => TextureFormat::RG8_UINT,
-            diligent_sys::TEX_FORMAT_RG8_SNORM => TextureFormat::RG8_SNORM,
-            diligent_sys::TEX_FORMAT_RG8_SINT => TextureFormat::RG8_SINT,
-            diligent_sys::TEX_FORMAT_R16_TYPELESS => TextureFormat::R16_TYPELESS,
-            diligent_sys::TEX_FORMAT_R16_FLOAT => TextureFormat::R16_FLOAT,
-            diligent_sys::TEX_FORMAT_D16_UNORM => TextureFormat::D16_UNORM,
-            diligent_sys::TEX_FORMAT_R16_UNORM => TextureFormat::R16_UNORM,
-            diligent_sys::TEX_FORMAT_R16_UINT => TextureFormat::R16_UINT,
-            diligent_sys::TEX_FORMAT_R16_SNORM => TextureFormat::R16_SNORM,
-            diligent_sys::TEX_FORMAT_R16_SINT => TextureFormat::R16_SINT,
-            diligent_sys::TEX_FORMAT_R8_TYPELESS => TextureFormat::R8_TYPELESS,
-            diligent_sys::TEX_FORMAT_R8_UNORM => TextureFormat::R8_UNORM,
-            diligent_sys::TEX_FORMAT_R8_UINT => TextureFormat::R8_UINT,
-            diligent_sys::TEX_FORMAT_R8_SNORM => TextureFormat::R8_SNORM,
-            diligent_sys::TEX_FORMAT_R8_SINT => TextureFormat::R8_SINT,
-            diligent_sys::TEX_FORMAT_A8_UNORM => TextureFormat::A8_UNORM,
-            diligent_sys::TEX_FORMAT_R1_UNORM => TextureFormat::R1_UNORM,
-            diligent_sys::TEX_FORMAT_RGB9E5_SHAREDEXP => TextureFormat::RGB9E5_SHAREDEXP,
-            diligent_sys::TEX_FORMAT_RG8_B8G8_UNORM => TextureFormat::RG8_B8G8_UNORM,
-            diligent_sys::TEX_FORMAT_G8R8_G8B8_UNORM => TextureFormat::G8R8_G8B8_UNORM,
-            diligent_sys::TEX_FORMAT_BC1_TYPELESS => TextureFormat::BC1_TYPELESS,
-            diligent_sys::TEX_FORMAT_BC1_UNORM => TextureFormat::BC1_UNORM,
-            diligent_sys::TEX_FORMAT_BC1_UNORM_SRGB => TextureFormat::BC1_UNORM_SRGB,
-            diligent_sys::TEX_FORMAT_BC2_TYPELESS => TextureFormat::BC2_TYPELESS,
-            diligent_sys::TEX_FORMAT_BC2_UNORM => TextureFormat::BC2_UNORM,
-            diligent_sys::TEX_FORMAT_BC2_UNORM_SRGB => TextureFormat::BC2_UNORM_SRGB,
-            diligent_sys::TEX_FORMAT_BC3_TYPELESS => TextureFormat::BC3_TYPELESS,
-            diligent_sys::TEX_FORMAT_BC3_UNORM => TextureFormat::BC3_UNORM,
-            diligent_sys::TEX_FORMAT_BC3_UNORM_SRGB => TextureFormat::BC3_UNORM_SRGB,
-            diligent_sys::TEX_FORMAT_BC4_TYPELESS => TextureFormat::BC4_TYPELESS,
-            diligent_sys::TEX_FORMAT_BC4_UNORM => TextureFormat::BC4_UNORM,
-            diligent_sys::TEX_FORMAT_BC4_SNORM => TextureFormat::BC4_SNORM,
-            diligent_sys::TEX_FORMAT_BC5_TYPELESS => TextureFormat::BC5_TYPELESS,
-            diligent_sys::TEX_FORMAT_BC5_UNORM => TextureFormat::BC5_UNORM,
-            diligent_sys::TEX_FORMAT_BC5_SNORM => TextureFormat::BC5_SNORM,
-            diligent_sys::TEX_FORMAT_B5G6R5_UNORM => TextureFormat::B5G6R5_UNORM,
-            diligent_sys::TEX_FORMAT_B5G5R5A1_UNORM => TextureFormat::B5G5R5A1_UNORM,
-            diligent_sys::TEX_FORMAT_BGRA8_UNORM => TextureFormat::BGRA8_UNORM,
-            diligent_sys::TEX_FORMAT_BGRX8_UNORM => TextureFormat::BGRX8_UNORM,
+            diligent_sys::TEX_FORMAT_RGB10A2_TYPELESS => Some(TextureFormat::RGB10A2_TYPELESS),
+            diligent_sys::TEX_FORMAT_RGB10A2_UNORM => Some(TextureFormat::RGB10A2_UNORM),
+            diligent_sys::TEX_FORMAT_RGB10A2_UINT => Some(TextureFormat::RGB10A2_UINT),
+            diligent_sys::TEX_FORMAT_R11G11B10_FLOAT => Some(TextureFormat::R11G11B10_FLOAT),
+            diligent_sys::TEX_FORMAT_RGBA8_TYPELESS => Some(TextureFormat::RGBA8_TYPELESS),
+            diligent_sys::TEX_FORMAT_RGBA8_UNORM => Some(TextureFormat::RGBA8_UNORM),
+            diligent_sys::TEX_FORMAT_RGBA8_UNORM_SRGB => Some(TextureFormat::RGBA8_UNORM_SRGB),
+            diligent_sys::TEX_FORMAT_RGBA8_UINT => Some(TextureFormat::RGBA8_UINT),
+            diligent_sys::TEX_FORMAT_RGBA8_SNORM => Some(TextureFormat::RGBA8_SNORM),
+            diligent_sys::TEX_FORMAT_RGBA8_SINT => Some(TextureFormat::RGBA8_SINT),
+            diligent_sys::TEX_FORMAT_RG16_TYPELESS => Some(TextureFormat::RG16_TYPELESS),
+            diligent_sys::TEX_FORMAT_RG16_FLOAT => Some(TextureFormat::RG16_FLOAT),
+            diligent_sys::TEX_FORMAT_RG16_UNORM => Some(TextureFormat::RG16_UNORM),
+            diligent_sys::TEX_FORMAT_RG16_UINT => Some(TextureFormat::RG16_UINT),
+            diligent_sys::TEX_FORMAT_RG16_SNORM => Some(TextureFormat::RG16_SNORM),
+            diligent_sys::TEX_FORMAT_RG16_SINT => Some(TextureFormat::RG16_SINT),
+            diligent_sys::TEX_FORMAT_R32_TYPELESS => Some(TextureFormat::R32_TYPELESS),
+            diligent_sys::TEX_FORMAT_D32_FLOAT => Some(TextureFormat::D32_FLOAT),
+            diligent_sys::TEX_FORMAT_R32_FLOAT => Some(TextureFormat::R32_FLOAT),
+            diligent_sys::TEX_FORMAT_R32_UINT => Some(TextureFormat::R32_UINT),
+            diligent_sys::TEX_FORMAT_R32_SINT => Some(TextureFormat::R32_SINT),
+            diligent_sys::TEX_FORMAT_R24G8_TYPELESS => Some(TextureFormat::R24G8_TYPELESS),
+            diligent_sys::TEX_FORMAT_D24_UNORM_S8_UINT => Some(TextureFormat::D24_UNORM_S8_UINT),
+            diligent_sys::TEX_FORMAT_R24_UNORM_X8_TYPELESS => {
+                Some(TextureFormat::R24_UNORM_X8_TYPELESS)
+            }
+            diligent_sys::TEX_FORMAT_X24_TYPELESS_G8_UINT => {
+                Some(TextureFormat::X24_TYPELESS_G8_UINT)
+            }
+            diligent_sys::TEX_FORMAT_RG8_TYPELESS => Some(TextureFormat::RG8_TYPELESS),
+            diligent_sys::TEX_FORMAT_RG8_UNORM => Some(TextureFormat::RG8_UNORM),
+            diligent_sys::TEX_FORMAT_RG8_UINT => Some(TextureFormat::RG8_UINT),
+            diligent_sys::TEX_FORMAT_RG8_SNORM => Some(TextureFormat::RG8_SNORM),
+            diligent_sys::TEX_FORMAT_RG8_SINT => Some(TextureFormat::RG8_SINT),
+            diligent_sys::TEX_FORMAT_R16_TYPELESS => Some(TextureFormat::R16_TYPELESS),
+            diligent_sys::TEX_FORMAT_R16_FLOAT => Some(TextureFormat::R16_FLOAT),
+            diligent_sys::TEX_FORMAT_D16_UNORM => Some(TextureFormat::D16_UNORM),
+            diligent_sys::TEX_FORMAT_R16_UNORM => Some(TextureFormat::R16_UNORM),
+            diligent_sys::TEX_FORMAT_R16_UINT => Some(TextureFormat::R16_UINT),
+            diligent_sys::TEX_FORMAT_R16_SNORM => Some(TextureFormat::R16_SNORM),
+            diligent_sys::TEX_FORMAT_R16_SINT => Some(TextureFormat::R16_SINT),
+            diligent_sys::TEX_FORMAT_R8_TYPELESS => Some(TextureFormat::R8_TYPELESS),
+            diligent_sys::TEX_FORMAT_R8_UNORM => Some(TextureFormat::R8_UNORM),
+            diligent_sys::TEX_FORMAT_R8_UINT => Some(TextureFormat::R8_UINT),
+            diligent_sys::TEX_FORMAT_R8_SNORM => Some(TextureFormat::R8_SNORM),
+            diligent_sys::TEX_FORMAT_R8_SINT => Some(TextureFormat::R8_SINT),
+            diligent_sys::TEX_FORMAT_A8_UNORM => Some(TextureFormat::A8_UNORM),
+            diligent_sys::TEX_FORMAT_R1_UNORM => Some(TextureFormat::R1_UNORM),
+            diligent_sys::TEX_FORMAT_RGB9E5_SHAREDEXP => Some(TextureFormat::RGB9E5_SHAREDEXP),
+            diligent_sys::TEX_FORMAT_RG8_B8G8_UNORM => Some(TextureFormat::RG8_B8G8_UNORM),
+            diligent_sys::TEX_FORMAT_G8R8_G8B8_UNORM => Some(TextureFormat::G8R8_G8B8_UNORM),
+            diligent_sys::TEX_FORMAT_BC1_TYPELESS => Some(TextureFormat::BC1_TYPELESS),
+            diligent_sys::TEX_FORMAT_BC1_UNORM => Some(TextureFormat::BC1_UNORM),
+            diligent_sys::TEX_FORMAT_BC1_UNORM_SRGB => Some(TextureFormat::BC1_UNORM_SRGB),
+            diligent_sys::TEX_FORMAT_BC2_TYPELESS => Some(TextureFormat::BC2_TYPELESS),
+            diligent_sys::TEX_FORMAT_BC2_UNORM => Some(TextureFormat::BC2_UNORM),
+            diligent_sys::TEX_FORMAT_BC2_UNORM_SRGB => Some(TextureFormat::BC2_UNORM_SRGB),
+            diligent_sys::TEX_FORMAT_BC3_TYPELESS => Some(TextureFormat::BC3_TYPELESS),
+            diligent_sys::TEX_FORMAT_BC3_UNORM => Some(TextureFormat::BC3_UNORM),
+            diligent_sys::TEX_FORMAT_BC3_UNORM_SRGB => Some(TextureFormat::BC3_UNORM_SRGB),
+            diligent_sys::TEX_FORMAT_BC4_TYPELESS => Some(TextureFormat::BC4_TYPELESS),
+            diligent_sys::TEX_FORMAT_BC4_UNORM => Some(TextureFormat::BC4_UNORM),
+            diligent_sys::TEX_FORMAT_BC4_SNORM => Some(TextureFormat::BC4_SNORM),
+            diligent_sys::TEX_FORMAT_BC5_TYPELESS => Some(TextureFormat::BC5_TYPELESS),
+            diligent_sys::TEX_FORMAT_BC5_UNORM => Some(TextureFormat::BC5_UNORM),
+            diligent_sys::TEX_FORMAT_BC5_SNORM => Some(TextureFormat::BC5_SNORM),
+            diligent_sys::TEX_FORMAT_B5G6R5_UNORM => Some(TextureFormat::B5G6R5_UNORM),
+            diligent_sys::TEX_FORMAT_B5G5R5A1_UNORM => Some(TextureFormat::B5G5R5A1_UNORM),
+            diligent_sys::TEX_FORMAT_BGRA8_UNORM => Some(TextureFormat::BGRA8_UNORM),
+            diligent_sys::TEX_FORMAT_BGRX8_UNORM => Some(TextureFormat::BGRX8_UNORM),
             diligent_sys::TEX_FORMAT_R10G10B10_XR_BIAS_A2_UNORM => {
-                TextureFormat::R10G10B10_XR_BIAS_A2_UNORM
+                Some(TextureFormat::R10G10B10_XR_BIAS_A2_UNORM)
             }
-            diligent_sys::TEX_FORMAT_BGRA8_TYPELESS => TextureFormat::BGRA8_TYPELESS,
-            diligent_sys::TEX_FORMAT_BGRA8_UNORM_SRGB => TextureFormat::BGRA8_UNORM_SRGB,
-            diligent_sys::TEX_FORMAT_BGRX8_TYPELESS => TextureFormat::BGRX8_TYPELESS,
-            diligent_sys::TEX_FORMAT_BGRX8_UNORM_SRGB => TextureFormat::BGRX8_UNORM_SRGB,
-            diligent_sys::TEX_FORMAT_BC6H_TYPELESS => TextureFormat::BC6H_TYPELESS,
-            diligent_sys::TEX_FORMAT_BC6H_UF16 => TextureFormat::BC6H_UF16,
-            diligent_sys::TEX_FORMAT_BC6H_SF16 => TextureFormat::BC6H_SF16,
-            diligent_sys::TEX_FORMAT_BC7_TYPELESS => TextureFormat::BC7_TYPELESS,
-            diligent_sys::TEX_FORMAT_BC7_UNORM => TextureFormat::BC7_UNORM,
-            diligent_sys::TEX_FORMAT_BC7_UNORM_SRGB => TextureFormat::BC7_UNORM_SRGB,
-            diligent_sys::TEX_FORMAT_ETC2_RGB8_UNORM => TextureFormat::ETC2_RGB8_UNORM,
-            diligent_sys::TEX_FORMAT_ETC2_RGB8_UNORM_SRGB => TextureFormat::ETC2_RGB8_UNORM_SRGB,
-            diligent_sys::TEX_FORMAT_ETC2_RGB8A1_UNORM => TextureFormat::ETC2_RGB8A1_UNORM,
+            diligent_sys::TEX_FORMAT_BGRA8_TYPELESS => Some(TextureFormat::BGRA8_TYPELESS),
+            diligent_sys::TEX_FORMAT_BGRA8_UNORM_SRGB => Some(TextureFormat::BGRA8_UNORM_SRGB),
+            diligent_sys::TEX_FORMAT_BGRX8_TYPELESS => Some(TextureFormat::BGRX8_TYPELESS),
+            diligent_sys::TEX_FORMAT_BGRX8_UNORM_SRGB => Some(TextureFormat::BGRX8_UNORM_SRGB),
+            diligent_sys::TEX_FORMAT_BC6H_TYPELESS => Some(TextureFormat::BC6H_TYPELESS),
+            diligent_sys::TEX_FORMAT_BC6H_UF16 => Some(TextureFormat::BC6H_UF16),
+            diligent_sys::TEX_FORMAT_BC6H_SF16 => Some(TextureFormat::BC6H_SF16),
+            diligent_sys::TEX_FORMAT_BC7_TYPELESS => Some(TextureFormat::BC7_TYPELESS),
+            diligent_sys::TEX_FORMAT_BC7_UNORM => Some(TextureFormat::BC7_UNORM),
+            diligent_sys::TEX_FORMAT_BC7_UNORM_SRGB => Some(TextureFormat::BC7_UNORM_SRGB),
+            diligent_sys::TEX_FORMAT_ETC2_RGB8_UNORM => Some(TextureFormat::ETC2_RGB8_UNORM),
+            diligent_sys::TEX_FORMAT_ETC2_RGB8_UNORM_SRGB => {
+                Some(TextureFormat::ETC2_RGB8_UNORM_SRGB)
+            }
+            diligent_sys::TEX_FORMAT_ETC2_RGB8A1_UNORM => Some(TextureFormat::ETC2_RGB8A1_UNORM),
             diligent_sys::TEX_FORMAT_ETC2_RGB8A1_UNORM_SRGB => {
-                TextureFormat::ETC2_RGB8A1_UNORM_SRGB
+                Some(TextureFormat::ETC2_RGB8A1_UNORM_SRGB)
             }
-            diligent_sys::TEX_FORMAT_ETC2_RGBA8_UNORM => TextureFormat::ETC2_RGBA8_UNORM,
-            diligent_sys::TEX_FORMAT_ETC2_RGBA8_UNORM_SRGB => TextureFormat::ETC2_RGBA8_UNORM_SRGB,
+            diligent_sys::TEX_FORMAT_ETC2_RGBA8_UNORM => Some(TextureFormat::ETC2_RGBA8_UNORM),
+            diligent_sys::TEX_FORMAT_ETC2_RGBA8_UNORM_SRGB => {
+                Some(TextureFormat::ETC2_RGBA8_UNORM_SRGB)
+            }
             _ => panic!("Unknown texture format"),
         }
     }
@@ -2951,8 +2968,8 @@ impl DisplayModeAttribs {
     pub fn height(&self) -> u32 {
         self.0.Height
     }
-    pub fn format(&self) -> TextureFormat {
-        self.0.Format.into()
+    pub fn format(&self) -> Option<TextureFormat> {
+        TextureFormat::from_sys(self.0.Format)
     }
     pub fn refresh_rate_numerator(&self) -> u32 {
         self.0.RefreshRateNumerator
@@ -3197,14 +3214,16 @@ impl From<PipelineType> for diligent_sys::PIPELINE_TYPE {
         }) as _
     }
 }
-impl From<diligent_sys::PIPELINE_TYPE> for PipelineType {
-    fn from(value: diligent_sys::PIPELINE_TYPE) -> Self {
+
+impl PipelineType {
+    pub fn from_sys(value: diligent_sys::PIPELINE_TYPE) -> Option<Self> {
         match value as _ {
-            diligent_sys::PIPELINE_TYPE_GRAPHICS => PipelineType::Graphics,
-            diligent_sys::PIPELINE_TYPE_COMPUTE => PipelineType::Compute,
-            diligent_sys::PIPELINE_TYPE_MESH => PipelineType::Mesh,
-            diligent_sys::PIPELINE_TYPE_RAY_TRACING => PipelineType::RayTracing,
-            diligent_sys::PIPELINE_TYPE_TILE => PipelineType::Tile,
+            diligent_sys::PIPELINE_TYPE_INVALID => None,
+            diligent_sys::PIPELINE_TYPE_GRAPHICS => Some(PipelineType::Graphics),
+            diligent_sys::PIPELINE_TYPE_COMPUTE => Some(PipelineType::Compute),
+            diligent_sys::PIPELINE_TYPE_MESH => Some(PipelineType::Mesh),
+            diligent_sys::PIPELINE_TYPE_RAY_TRACING => Some(PipelineType::RayTracing),
+            diligent_sys::PIPELINE_TYPE_TILE => Some(PipelineType::Tile),
             _ => panic!("Unknown pipeline type"),
         }
     }
