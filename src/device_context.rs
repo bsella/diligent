@@ -283,13 +283,13 @@ impl DrawIndexedAttribs {
 }
 
 #[repr(transparent)]
-pub struct DrawIndirectAttribs<'attibs_buffer>(
+pub struct DrawIndirectAttribs<'attibs_buffer, 'counter_buffer>(
     diligent_sys::DrawIndirectAttribs,
-    PhantomData<&'attibs_buffer ()>,
+    PhantomData<(&'attibs_buffer (), &'counter_buffer ())>,
 );
 
 #[bon::bon]
-impl<'attibs_buffer> DrawIndirectAttribs<'attibs_buffer> {
+impl<'attibs_buffer, 'counter_buffer> DrawIndirectAttribs<'attibs_buffer, 'counter_buffer> {
     #[builder]
     pub fn new(
         attribs_buffer: &'attibs_buffer Buffer,
@@ -305,7 +305,7 @@ impl<'attibs_buffer> DrawIndirectAttribs<'attibs_buffer> {
         #[builder(default = ResourceStateTransitionMode::None)]
         attribs_buffer_state_transition_mode: ResourceStateTransitionMode,
 
-        counter_buffer: Option<&Buffer>,
+        counter_buffer: Option<&'counter_buffer Buffer>,
 
         #[builder(default = 0)] counter_offset: u64,
 
