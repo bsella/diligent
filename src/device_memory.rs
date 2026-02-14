@@ -1,6 +1,9 @@
 use std::{ffi::CStr, marker::PhantomData, ops::Deref};
 
-use crate::device_object::{DeviceObject, DeviceObjectAttribs};
+use crate::{
+    Ported,
+    device_object::{DeviceObject, DeviceObjectAttribs},
+};
 
 define_ported!(
     DeviceMemory,

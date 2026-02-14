@@ -1,5 +1,7 @@
 use crate::{buffer::Buffer, device_context::DeviceContext, texture::Texture};
 
+use crate::Ported;
+
 define_ported!(
     DeviceContextVk,
     diligent_sys::IDeviceContextVk,

@@ -1,7 +1,7 @@
 use std::{ffi::CStr, os::raw::c_void};
 
 use crate::{
-    Boxed, BoxedFromNulError, ResourceMappingCreateInfo, SparseTextureFormatInfo,
+    Boxed, BoxedFromNulError, Ported, ResourceMappingCreateInfo, SparseTextureFormatInfo,
     TextureFormatInfoExt, TilePipelineStateCreateInfo,
     blas::{BottomLevelAS, BottomLevelASDesc},
     buffer::{Buffer, BufferDesc},
@@ -164,7 +164,7 @@ impl RenderDevice {
                 .map_or(std::ptr::null_mut(), |subresource| {
                     std::ptr::from_ref(subresource) as _
                 }),
-            pContext: device_context.map_or(std::ptr::null_mut(), |c| c.sys_ptr() as _),
+            pContext: device_context.map_or(std::ptr::null_mut(), |c| c.sys_ptr()),
         };
 
         unsafe_member_call!(

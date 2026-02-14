@@ -3,7 +3,7 @@ use std::{ffi::CStr, marker::PhantomData, mem::MaybeUninit};
 use bitflags::bitflags;
 use static_assertions::const_assert_eq;
 
-use crate::{device_object::DeviceObject, object::Object};
+use crate::{Ported, device_object::DeviceObject, object::Object};
 
 use super::{
     graphics_types::{SetShaderResourceFlags, ShaderTypes},

@@ -1,6 +1,6 @@
 use std::{ffi::CStr, marker::PhantomData};
 
-use crate::{device_object::DeviceObject, object::Object};
+use crate::{Ported, device_object::DeviceObject, object::Object};
 
 #[repr(transparent)]
 pub struct ResourceMappingEntry<'name, 'object>(
@@ -77,7 +77,7 @@ impl ResourceMapping {
             ResourceMapping,
             AddResource,
             name.as_ptr(),
-            object.sys_ptr() as _,
+            object.sys_ptr(),
             is_unique
         );
     }

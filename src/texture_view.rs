@@ -4,6 +4,7 @@ use bitflags::bitflags;
 use static_assertions::const_assert_eq;
 
 use crate::{
+    Ported,
     device_object::{DeviceObject, DeviceObjectAttribs},
     graphics_types::TextureFormat,
     sampler::Sampler,

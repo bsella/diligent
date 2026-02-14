@@ -30,11 +30,8 @@ macro_rules! define_ported {
 
         impl crate::Ported for $name {
             type SysType = $sys_name;
-        }
-
-        impl $name {
             #[allow(unused)]
-            pub(crate) fn sys_ptr(&self) -> *mut $sys_name {
+            fn sys_ptr(&self) -> *mut $sys_name {
                 std::ptr::addr_of!(self.0) as _
             }
         }
@@ -351,6 +348,8 @@ impl APIInfo {
 
 pub trait Ported {
     type SysType;
+
+    fn sys_ptr(&self) -> *mut Self::SysType;
 }
 
 #[derive(Debug)]

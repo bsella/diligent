@@ -9,7 +9,7 @@ use bitflags::bitflags;
 use static_assertions::const_assert_eq;
 
 use crate::{
-    Boxed, BoxedFromNulError, MapType,
+    Boxed, BoxedFromNulError, MapType, Ported,
     buffer::Buffer,
     device_context::DeviceContext,
     device_object::{DeviceObject, DeviceObjectAttribs},
@@ -150,7 +150,7 @@ impl<'buffer> TextureSubResource<'buffer> {
                     std::ptr::null()
                 },
                 pSrcBuffer: if let TextureSubResData::GPU(buffer) = source {
-                    buffer.sys_ptr() as _
+                    buffer.sys_ptr()
                 } else {
                     std::ptr::null_mut()
                 },
@@ -538,6 +538,8 @@ impl<'context, 'texture, T: Sized, State: MapType> TextureMapToken<'context, 'te
         map_flags: crate::MapFlags,
         map_region: Option<crate::Box>,
     ) -> TextureMapToken<'context, 'texture, T, State> {
+        use crate::Ported;
+
         let mut mapped_resource = std::mem::MaybeUninit::uninit();
 
         unsafe_member_call!(

@@ -1979,16 +1979,28 @@ impl<
 
 impl Ported for GraphicsPipelineState {
     type SysType = diligent_sys::IPipelineState;
+    fn sys_ptr(&self) -> *mut Self::SysType {
+        self.0.sys_ptr()
+    }
 }
 
 impl Ported for ComputePipelineState {
     type SysType = diligent_sys::IPipelineState;
+    fn sys_ptr(&self) -> *mut Self::SysType {
+        self.0.sys_ptr()
+    }
 }
 
 impl Ported for RayTracingPipelineState {
     type SysType = diligent_sys::IPipelineState;
+    fn sys_ptr(&self) -> *mut Self::SysType {
+        self.0.sys_ptr()
+    }
 }
 
 impl Ported for TilePipelineState {
     type SysType = diligent_sys::IPipelineState;
+    fn sys_ptr(&self) -> *mut Self::SysType {
+        self.0.sys_ptr()
+    }
 }

@@ -105,13 +105,12 @@ impl<QueryDataType: GetSysQueryType> Deref for Query<QueryDataType> {
 
 impl<QueryDataType: GetSysQueryType> Ported for Query<QueryDataType> {
     type SysType = diligent_sys::IQuery;
+    fn sys_ptr(&self) -> *mut diligent_sys::IQuery {
+        std::ptr::from_ref(&self.0) as _
+    }
 }
 
 impl<QueryDataType: GetSysQueryType> Query<QueryDataType> {
-    pub(crate) fn sys_ptr(&self) -> *mut diligent_sys::IQuery {
-        std::ptr::from_ref(&self.0) as _
-    }
-
     pub fn invalidate(&self) {
         unsafe_member_call!(self, Query, Invalidate)
     }

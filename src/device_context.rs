@@ -2454,10 +2454,16 @@ impl DeviceContext {
 
 impl Ported for ImmediateDeviceContext {
     type SysType = diligent_sys::IDeviceContext;
+    fn sys_ptr(&self) -> *mut Self::SysType {
+        self.0.sys_ptr()
+    }
 }
 
 impl Ported for DeferredDeviceContext {
     type SysType = diligent_sys::IDeviceContext;
+    fn sys_ptr(&self) -> *mut Self::SysType {
+        self.0.sys_ptr()
+    }
 }
 
 #[repr(transparent)]

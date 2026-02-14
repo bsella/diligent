@@ -13,7 +13,7 @@ use bon::Builder;
 use static_assertions::const_assert_eq;
 
 use crate::{
-    PipelineResourceFlags,
+    PipelineResourceFlags, Ported,
     device_object::DeviceObject,
     graphics_types::{ShaderType, Version},
     object::Object,

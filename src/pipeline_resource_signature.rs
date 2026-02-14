@@ -9,7 +9,7 @@ use bitflags::bitflags;
 use static_assertions::const_assert_eq;
 
 use crate::{
-    Boxed, BoxedFromNulError,
+    Boxed, BoxedFromNulError, Ported,
     device_object::{DeviceObject, DeviceObjectAttribs},
     graphics_types::{ShaderType, ShaderTypes},
     resource_mapping::ResourceMapping,

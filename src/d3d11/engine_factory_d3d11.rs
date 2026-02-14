@@ -3,7 +3,7 @@ use std::ops::{Deref, DerefMut};
 use bitflags::bitflags;
 
 use crate::{
-    Boxed, BoxedFromNulError,
+    Boxed, BoxedFromNulError, Ported,
     device_context::{DeferredDeviceContext, ImmediateDeviceContext},
     engine_factory::{EngineCreateInfo, EngineFactory},
     graphics_types::{DisplayModeAttribs, FullScreenModeDesc, TextureFormat, Version},
@@ -192,7 +192,7 @@ impl EngineFactoryD3D11 {
             EngineFactoryD3D11,
             AttachToD3D11Device,
             native_device as _,
-            immediate_context.sys_ptr() as _,
+            immediate_context.sys_ptr(),
             &engine_ci,
             &mut render_device_ptr,
             device_context_ptrs.as_mut_ptr()

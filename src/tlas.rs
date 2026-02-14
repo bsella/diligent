@@ -8,6 +8,7 @@ use bitflags::bitflags;
 use static_assertions::const_assert_eq;
 
 use crate::{
+    Ported,
     blas::{BottomLevelAS, RayTracingBuildAsFlags, ScratchBufferSizes},
     device_object::{DeviceObject, DeviceObjectAttribs},
     graphics_types::ResourceState,
@@ -120,7 +121,7 @@ impl<'instance_name, 'blas> TLASBuildInstanceData<'instance_name, 'blas> {
         Self(
             diligent_sys::TLASBuildInstanceData {
                 InstanceName: instance_name.as_ptr(),
-                pBLAS: blas.sys_ptr() as _,
+                pBLAS: blas.sys_ptr(),
                 Transform: diligent_sys::InstanceMatrix {
                     data: [
                         [transform[0], transform[1], transform[2], transform[3]],
