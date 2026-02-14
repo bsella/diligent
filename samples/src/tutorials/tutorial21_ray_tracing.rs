@@ -671,9 +671,8 @@ fn create_and_build_cube_blas(
         .vertex_count(cube_geo_info.num_vertices)
         .vertex_value_type(vertex_value_type)
         .vertex_component_count(vertex_component_count)
-        .index_buffer(&cube_index_buffer)
+        .index_buffer((&cube_index_buffer, 0, Some(index_type)))
         .primitive_count(max_primitive_count)
-        .index_type(index_type)
         .flags(RaytracingGeometryFlags::Opaque)
         .build()];
 

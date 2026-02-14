@@ -305,13 +305,17 @@ impl<'attibs_buffer, 'counter_buffer> DrawIndirectAttribs<'attibs_buffer, 'count
         #[builder(default = ResourceStateTransitionMode::None)]
         attribs_buffer_state_transition_mode: ResourceStateTransitionMode,
 
-        counter_buffer: Option<&'counter_buffer Buffer>,
-
-        #[builder(default = 0)] counter_offset: u64,
-
-        #[builder(default = ResourceStateTransitionMode::None)]
-        counter_buffer_state_transition_mode: ResourceStateTransitionMode,
+        counter_buffer: Option<(&'counter_buffer Buffer, u64, ResourceStateTransitionMode)>,
     ) -> Self {
+        let (counter_buffer, counter_offset, counter_transition_mode) = counter_buffer.map_or(
+            (
+                std::ptr::null_mut(),
+                0,
+                ResourceStateTransitionMode::None.into(),
+            ),
+            |(buffer, offset, transition)| (buffer.sys_ptr(), offset, transition.into()),
+        );
+
         Self(
             diligent_sys::DrawIndirectAttribs {
                 pAttribsBuffer: attribs_buffer.sys_ptr(),
@@ -320,10 +324,9 @@ impl<'attibs_buffer, 'counter_buffer> DrawIndirectAttribs<'attibs_buffer, 'count
                 DrawCount: draw_count,
                 DrawArgsStride: draw_args_stride,
                 AttribsBufferStateTransitionMode: attribs_buffer_state_transition_mode.into(),
-                pCounterBuffer: counter_buffer
-                    .map_or(std::ptr::null_mut(), |buffer| buffer.sys_ptr()),
+                pCounterBuffer: counter_buffer,
                 CounterOffset: counter_offset,
-                CounterBufferStateTransitionMode: counter_buffer_state_transition_mode.into(),
+                CounterBufferStateTransitionMode: counter_transition_mode,
             },
             PhantomData,
         )
@@ -355,13 +358,16 @@ impl<'attibs_buffer, 'counter_buffer> DrawIndexedIndirectAttribs<'attibs_buffer,
         #[builder(default = ResourceStateTransitionMode::None)]
         attribs_buffer_state_transition_mode: ResourceStateTransitionMode,
 
-        counter_buffer: Option<&'counter_buffer Buffer>,
-
-        #[builder(default = 0)] counter_offset: u64,
-
-        #[builder(default = ResourceStateTransitionMode::None)]
-        counter_buffer_state_transition_mode: ResourceStateTransitionMode,
+        counter_buffer: Option<(&'counter_buffer Buffer, u64, ResourceStateTransitionMode)>,
     ) -> Self {
+        let (counter_buffer, counter_offset, counter_transition_mode) = counter_buffer.map_or(
+            (
+                std::ptr::null_mut(),
+                0,
+                ResourceStateTransitionMode::None.into(),
+            ),
+            |(buffer, offset, transition)| (buffer.sys_ptr(), offset, transition.into()),
+        );
         Self(
             diligent_sys::DrawIndexedIndirectAttribs {
                 IndexType: index_type.into(),
@@ -371,10 +377,9 @@ impl<'attibs_buffer, 'counter_buffer> DrawIndexedIndirectAttribs<'attibs_buffer,
                 DrawCount: draw_count,
                 DrawArgsStride: draw_args_stride,
                 AttribsBufferStateTransitionMode: attribs_buffer_state_transition_mode.into(),
-                pCounterBuffer: counter_buffer
-                    .map_or(std::ptr::null_mut(), |buffer| buffer.sys_ptr()),
+                pCounterBuffer: counter_buffer,
                 CounterOffset: counter_offset,
-                CounterBufferStateTransitionMode: counter_buffer_state_transition_mode.into(),
+                CounterBufferStateTransitionMode: counter_transition_mode,
             },
             PhantomData,
         )
@@ -426,13 +431,16 @@ impl<'attibs_buffer, 'counter_buffer> DrawMeshIndirectAttribs<'attibs_buffer, 'c
         #[builder(default = ResourceStateTransitionMode::None)]
         attribs_buffer_state_transition_mode: ResourceStateTransitionMode,
 
-        counter_buffer: Option<&'counter_buffer Buffer>,
-
-        #[builder(default = 0)] counter_offset: u64,
-
-        #[builder(default = ResourceStateTransitionMode::None)]
-        counter_buffer_state_transition_mode: ResourceStateTransitionMode,
+        counter_buffer: Option<(&'counter_buffer Buffer, u64, ResourceStateTransitionMode)>,
     ) -> Self {
+        let (counter_buffer, counter_offset, counter_transition_mode) = counter_buffer.map_or(
+            (
+                std::ptr::null_mut(),
+                0,
+                ResourceStateTransitionMode::None.into(),
+            ),
+            |(buffer, offset, transition)| (buffer.sys_ptr(), offset, transition.into()),
+        );
         Self(
             diligent_sys::DrawMeshIndirectAttribs {
                 pAttribsBuffer: attribs_buffer.sys_ptr(),
@@ -440,10 +448,9 @@ impl<'attibs_buffer, 'counter_buffer> DrawMeshIndirectAttribs<'attibs_buffer, 'c
                 Flags: flags.bits(),
                 CommandCount: command_count,
                 AttribsBufferStateTransitionMode: attribs_buffer_state_transition_mode.into(),
-                pCounterBuffer: counter_buffer
-                    .map_or(std::ptr::null_mut(), |buffer| buffer.sys_ptr()),
+                pCounterBuffer: counter_buffer,
                 CounterOffset: counter_offset,
-                CounterBufferStateTransitionMode: counter_buffer_state_transition_mode.into(),
+                CounterBufferStateTransitionMode: counter_transition_mode,
             },
             PhantomData,
         )
@@ -743,18 +750,28 @@ impl<'geometry_name, 'vertex_buffer, 'index_buffer, 'transform_buffer>
 
         primitive_count: usize,
 
-        index_buffer: Option<&'index_buffer Buffer>,
+        index_buffer: Option<(&'index_buffer Buffer, u64, Option<ValueType>)>,
 
-        #[builder(default = 0)] index_offset: u64,
-
-        index_type: Option<ValueType>,
-
-        transform_buffer: Option<&'transform_buffer Buffer>,
-
-        #[builder(default = 0)] transform_buffer_offset: u64,
+        transform_buffer: Option<(&'transform_buffer Buffer, u64)>,
 
         #[builder(default)] flags: RaytracingGeometryFlags,
     ) -> Self {
+        let (index_buffer, index_offset, index_value_type) = index_buffer.map_or(
+            (std::ptr::null_mut(), 0, diligent_sys::VT_UNDEFINED as _),
+            |(buffer, offset, value_type)| {
+                (
+                    buffer.sys_ptr(),
+                    offset,
+                    value_type.map_or(diligent_sys::VT_UNDEFINED as _, |vt| vt.into()),
+                )
+            },
+        );
+
+        let (transform_buffer, transform_offset) = transform_buffer
+            .map_or((std::ptr::null_mut(), 0), |(buffer, offset)| {
+                (buffer.sys_ptr(), offset)
+            });
+
         Self(
             diligent_sys::BLASBuildTriangleData {
                 GeometryName: geometry_name.as_ptr(),
@@ -766,13 +783,11 @@ impl<'geometry_name, 'vertex_buffer, 'index_buffer, 'transform_buffer>
                     .map_or(diligent_sys::VT_UNDEFINED as _, |vt| vt.into()),
                 VertexComponentCount: vertex_component_count,
                 PrimitiveCount: primitive_count as u32,
-                pIndexBuffer: index_buffer.map_or(std::ptr::null_mut(), |ib| ib.sys_ptr()),
+                pIndexBuffer: index_buffer,
                 IndexOffset: index_offset,
-                IndexType: index_type.map_or(diligent_sys::VT_UNDEFINED as _, |vt| vt.into()),
-                pTransformBuffer: transform_buffer
-                    .as_ref()
-                    .map_or(std::ptr::null_mut(), |tb| tb.sys_ptr()),
-                TransformBufferOffset: transform_buffer_offset,
+                IndexType: index_value_type,
+                pTransformBuffer: transform_buffer,
+                TransformBufferOffset: transform_offset,
                 Flags: flags.bits(),
             },
             PhantomData,
