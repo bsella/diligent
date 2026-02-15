@@ -13,10 +13,7 @@ pub trait Window {
 
     fn create(width: u32, height: u32) -> Self;
 
-    type EventType;
-
-    fn poll_event(&self) -> Option<Self::EventType>;
-    fn handle_event(&mut self, event: &Self::EventType) -> Event;
+    fn handle_event(&mut self) -> Option<Event>;
 }
 
 #[cfg(target_os = "linux")]

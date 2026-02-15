@@ -40,13 +40,7 @@ impl Window for XCBWindow {
         self.connection.flush().unwrap();
     }
 
-    type EventType = xcb::Event;
-
-    fn poll_event(&self) -> Option<xcb::Event> {
-        self.connection.poll_for_event().unwrap()
-    }
-
-    fn handle_event(&mut self, event: &xcb::Event) -> Event {
+    fn handle_event(&mut self) -> Option<Event> {
         fn keysym_to_key(keysym: xcb::x::Keysym) -> Key {
             match keysym {
                 xkb::keysyms::KEY_a => Key::A,
@@ -152,83 +146,89 @@ impl Window for XCBWindow {
             }
         }
 
-        match event {
-            xcb::Event::X(x::Event::ClientMessage(message_event)) => {
-                if let x::ClientMessageData::Data32([atom, ..]) = message_event.data()
-                    && atom == self.atom_wm_delete_window.resource_id()
-                {
-                    return Event::Quit;
-                }
-                Event::Continue
-            }
-
-            xcb::Event::X(x::Event::KeyPress(key_event)) => {
-                let keysym = self
-                    .kb_state
-                    .key_get_one_sym(xkb::Keycode::new(key_event.detail() as _));
-
-                Event::KeyPress(keysym_to_key(keysym.raw()))
-            }
-
-            xcb::Event::X(x::Event::KeyRelease(key_event)) => {
-                let keysym = self
-                    .kb_state
-                    .key_get_one_sym(xkb::Keycode::new(key_event.detail() as _));
-
-                if let Ok(Some(xcb::Event::X(x::Event::KeyPress(next_event)))) =
-                    self.connection.poll_for_queued_event()
-                    && next_event.time() == key_event.time()
-                    && next_event.detail() == key_event.detail()
-                {
-                    return Event::Continue;
+        if let Ok(event) = self.connection.poll_for_event() {
+            event.map(|event| match event {
+                xcb::Event::X(x::Event::ClientMessage(message_event)) => {
+                    if let x::ClientMessageData::Data32([atom, ..]) = message_event.data()
+                        && atom == self.atom_wm_delete_window.resource_id()
+                    {
+                        return Event::Quit;
+                    }
+                    Event::Continue
                 }
 
-                Event::KeyRelease(keysym_to_key(keysym.raw()))
-            }
+                xcb::Event::X(x::Event::KeyPress(key_event)) => {
+                    let keysym = self
+                        .kb_state
+                        .key_get_one_sym(xkb::Keycode::new(key_event.detail() as _));
 
-            xcb::Event::X(x::Event::DestroyNotify(_destroy_event)) => Event::Quit,
+                    Event::KeyPress(keysym_to_key(keysym.raw()))
+                }
 
-            xcb::Event::X(x::Event::ConfigureNotify(configure_event)) => Event::Resize {
-                width: configure_event.width(),
-                height: configure_event.height(),
-            },
+                xcb::Event::X(x::Event::KeyRelease(key_event)) => {
+                    let keysym = self
+                        .kb_state
+                        .key_get_one_sym(xkb::Keycode::new(key_event.detail() as _));
 
-            xcb::Event::X(xcb::x::Event::MotionNotify(motion_event)) => Event::MouseMove {
-                x: motion_event.event_x(),
-                y: motion_event.event_y(),
-            },
+                    if let Ok(Some(xcb::Event::X(x::Event::KeyPress(next_event)))) =
+                        self.connection.poll_for_queued_event()
+                        && next_event.time() == key_event.time()
+                        && next_event.detail() == key_event.detail()
+                    {
+                        return Event::Continue;
+                    }
 
-            xcb::Event::X(xcb::x::Event::ButtonPress(press_event)) => match press_event.detail() {
-                1 => Event::MouseDown {
-                    button: MouseButton::Left,
+                    Event::KeyRelease(keysym_to_key(keysym.raw()))
+                }
+
+                xcb::Event::X(x::Event::DestroyNotify(_destroy_event)) => Event::Quit,
+
+                xcb::Event::X(x::Event::ConfigureNotify(configure_event)) => Event::Resize {
+                    width: configure_event.width(),
+                    height: configure_event.height(),
                 },
-                2 => Event::MouseDown {
-                    button: MouseButton::Right,
+
+                xcb::Event::X(xcb::x::Event::MotionNotify(motion_event)) => Event::MouseMove {
+                    x: motion_event.event_x(),
+                    y: motion_event.event_y(),
                 },
-                3 => Event::MouseDown {
-                    button: MouseButton::Middle,
-                },
-                4 => Event::MouseWheel { up: true },
-                5 => Event::MouseWheel { up: false },
+
+                xcb::Event::X(xcb::x::Event::ButtonPress(press_event)) => {
+                    match press_event.detail() {
+                        1 => Event::MouseDown {
+                            button: MouseButton::Left,
+                        },
+                        2 => Event::MouseDown {
+                            button: MouseButton::Right,
+                        },
+                        3 => Event::MouseDown {
+                            button: MouseButton::Middle,
+                        },
+                        4 => Event::MouseWheel { up: true },
+                        5 => Event::MouseWheel { up: false },
+                        _ => Event::Continue,
+                    }
+                }
+
+                xcb::Event::X(xcb::x::Event::ButtonRelease(release_event)) => {
+                    match release_event.detail() {
+                        1 => Event::MouseUp {
+                            button: MouseButton::Left,
+                        },
+                        2 => Event::MouseUp {
+                            button: MouseButton::Right,
+                        },
+                        3 => Event::MouseUp {
+                            button: MouseButton::Middle,
+                        },
+                        _ => Event::Continue,
+                    }
+                }
+
                 _ => Event::Continue,
-            },
-
-            xcb::Event::X(xcb::x::Event::ButtonRelease(release_event)) => {
-                match release_event.detail() {
-                    1 => Event::MouseUp {
-                        button: MouseButton::Left,
-                    },
-                    2 => Event::MouseUp {
-                        button: MouseButton::Right,
-                    },
-                    3 => Event::MouseUp {
-                        button: MouseButton::Middle,
-                    },
-                    _ => Event::Continue,
-                }
-            }
-
-            _ => Event::Continue,
+            })
+        } else {
+            None
         }
     }
 

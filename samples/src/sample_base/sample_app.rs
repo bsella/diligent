@@ -664,8 +664,7 @@ impl<GenericSample: SampleBase, W: Window> App for SampleApp<GenericSample, W> {
             'window: for mut sample_window in next_windows.drain(..) {
                 let mut imgui_frame = sample_window.imgui_renderer.new_frame();
 
-                while let Some(event) = sample_window.window.poll_event() {
-                    let event = sample_window.window.handle_event(&event);
+                while let Some(event) = sample_window.window.handle_event() {
                     match event {
                         Event::Quit => {
                             // sample_window is destroyed here instead of being moved into self.windows
