@@ -162,8 +162,8 @@ impl SampleBase for MultipleWindows {
     fn render(
         &self,
         main_context: Boxed<ImmediateDeviceContext>,
-        swap_chain: &SwapChain,
-    ) -> Boxed<ImmediateDeviceContext> {
+        swap_chain: Boxed<SwapChain>,
+    ) -> (Boxed<ImmediateDeviceContext>, Boxed<SwapChain>) {
         let rtv = swap_chain.get_current_back_buffer_rtv().unwrap();
         let dsv = swap_chain.get_depth_buffer_dsv().unwrap();
 
@@ -184,7 +184,7 @@ impl SampleBase for MultipleWindows {
         // use any resources.
         graphics.draw(&DrawAttribs::builder().num_vertices(3).build());
 
-        graphics.finish()
+        (graphics.finish(), swap_chain)
     }
 
     fn get_name() -> &'static str {

@@ -310,8 +310,8 @@ impl SampleBase for TextureArray {
     fn render(
         &self,
         main_context: Boxed<ImmediateDeviceContext>,
-        swap_chain: &SwapChain,
-    ) -> Boxed<ImmediateDeviceContext> {
+        swap_chain: Boxed<SwapChain>,
+    ) -> (Boxed<ImmediateDeviceContext>, Boxed<SwapChain>) {
         let view_proj_matrix = {
             let swap_chain_desc = swap_chain.desc();
 
@@ -405,7 +405,7 @@ impl SampleBase for TextureArray {
 
         graphics.draw_indexed(&draw_attribs);
 
-        graphics.finish()
+        (graphics.finish(), swap_chain)
     }
 
     fn get_name() -> &'static str {

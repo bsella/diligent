@@ -500,8 +500,8 @@ impl SampleBase for Tessellation {
     fn render(
         &self,
         main_context: Boxed<ImmediateDeviceContext>,
-        swap_chain: &SwapChain,
-    ) -> Boxed<ImmediateDeviceContext> {
+        swap_chain: Boxed<SwapChain>,
+    ) -> (Boxed<ImmediateDeviceContext>, Boxed<SwapChain>) {
         let swap_chain_desc = swap_chain.desc();
 
         let proj_matrix = {
@@ -617,7 +617,7 @@ impl SampleBase for Tessellation {
 
         graphics.draw(&draw_attribs);
 
-        graphics.finish()
+        (graphics.finish(), swap_chain)
     }
 
     fn get_name() -> &'static str {

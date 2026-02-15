@@ -700,16 +700,9 @@ impl<GenericSample: SampleBase, W: Window> App for SampleApp<GenericSample, W> {
                         ResourceStateTransitionMode::Transition,
                     );
 
-                    self.main_context = self
+                    (self.main_context, sample_window.swap_chain) = self
                         .sample
-                        .render(self.main_context, &sample_window.swap_chain);
-
-                    // Restore default render target in case the sample has changed it
-                    self.main_context.set_render_targets(
-                        &[rtv],
-                        dsv,
-                        ResourceStateTransitionMode::Transition,
-                    );
+                        .render(self.main_context, sample_window.swap_chain);
                 }
 
                 // Render imgui UI

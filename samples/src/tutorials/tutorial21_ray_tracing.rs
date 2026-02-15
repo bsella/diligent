@@ -1308,8 +1308,8 @@ impl SampleBase for RayTracing {
     fn render(
         &self,
         main_context: Boxed<ImmediateDeviceContext>,
-        swap_chain: &SwapChain,
-    ) -> Boxed<ImmediateDeviceContext> {
+        swap_chain: Boxed<SwapChain>,
+    ) -> (Boxed<ImmediateDeviceContext>, Boxed<SwapChain>) {
         // Trace rays
         let main_context = {
             self.ray_tracing_srb
@@ -1370,7 +1370,7 @@ impl SampleBase for RayTracing {
                     .build(),
             );
 
-            blit.finish()
+            (blit.finish(), swap_chain)
         }
     }
 

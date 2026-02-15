@@ -155,9 +155,9 @@ pub trait SampleBase {
     fn render(
         &self,
         main_context: Boxed<ImmediateDeviceContext>,
-        _swap_chain: &SwapChain,
-    ) -> Boxed<ImmediateDeviceContext> {
-        main_context
+        swap_chain: Boxed<SwapChain>,
+    ) -> (Boxed<ImmediateDeviceContext>, Boxed<SwapChain>) {
+        (main_context, swap_chain)
     }
 
     fn update(

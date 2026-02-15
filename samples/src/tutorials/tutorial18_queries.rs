@@ -225,8 +225,8 @@ impl SampleBase for Queries {
     fn render(
         &self,
         main_context: Boxed<ImmediateDeviceContext>,
-        swap_chain: &SwapChain,
-    ) -> Boxed<ImmediateDeviceContext> {
+        swap_chain: Boxed<SwapChain>,
+    ) -> (Boxed<ImmediateDeviceContext>, Boxed<SwapChain>) {
         let view_proj_matrix = {
             let swap_chain_desc = swap_chain.desc();
 
@@ -350,7 +350,7 @@ impl SampleBase for Queries {
             };
         }
 
-        graphics.finish()
+        (graphics.finish(), swap_chain)
     }
 
     fn update(
