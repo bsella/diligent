@@ -161,7 +161,12 @@ define_ported!(
 );
 
 impl Dearchiver {
-    pub fn load_archive(&self, archive: &DataBlob, content_version: u32, make_copy: bool) -> bool {
+    pub fn load_archive(
+        &mut self,
+        archive: &DataBlob,
+        content_version: u32,
+        make_copy: bool,
+    ) -> bool {
         unsafe_member_call!(
             self,
             Dearchiver,
@@ -232,7 +237,7 @@ impl Dearchiver {
         Boxed::new(render_pass_ptr)
     }
 
-    pub fn store(&self) -> Result<Boxed<DataBlob>, BoxedFromNulError> {
+    pub fn store(&mut self) -> Result<Boxed<DataBlob>, BoxedFromNulError> {
         let mut data_blob_ptr = std::ptr::null_mut();
         let success = unsafe_member_call!(self, Dearchiver, Store, &mut data_blob_ptr);
         if success {
@@ -242,7 +247,7 @@ impl Dearchiver {
         }
     }
 
-    pub fn reset(&self) {
+    pub fn reset(&mut self) {
         unsafe_member_call!(self, Dearchiver, Reset)
     }
     pub fn get_content_version(&self) -> u32 {

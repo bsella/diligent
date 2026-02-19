@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{cell::RefCell, path::Path};
 
 use diligent::{graphics_utilities::*, *};
 
@@ -12,9 +12,9 @@ struct Texturing {
 
     pipeline_state: Boxed<GraphicsPipelineState>,
     vertex_shader_constant_buffer: Boxed<Buffer>,
-    cube_vertex_buffer: Boxed<Buffer>,
-    cube_index_buffer: Boxed<Buffer>,
-    srb: Boxed<ShaderResourceBinding>,
+    cube_vertex_buffer: RefCell<Boxed<Buffer>>,
+    cube_index_buffer: RefCell<Boxed<Buffer>>,
+    srb: RefCell<Boxed<ShaderResourceBinding>>,
 
     _texture_srv: Boxed<TextureView>,
 
@@ -332,9 +332,9 @@ impl SampleBase for Texturing {
         Texturing {
             convert_ps_output_to_gamma,
             pipeline_state,
-            cube_vertex_buffer,
-            cube_index_buffer,
-            srb,
+            cube_vertex_buffer: RefCell::new(cube_vertex_buffer),
+            cube_index_buffer: RefCell::new(cube_index_buffer),
+            srb: RefCell::new(srb),
             _texture_srv: texture_srv,
             vertex_shader_constant_buffer,
             world_view_matrix: glam::Mat4::IDENTITY,
@@ -361,11 +361,8 @@ impl SampleBase for Texturing {
     fn render(
         &self,
         main_context: Boxed<ImmediateDeviceContext>,
-        swap_chain: Boxed<SwapChain>,
+        mut swap_chain: Boxed<SwapChain>,
     ) -> (Boxed<ImmediateDeviceContext>, Boxed<SwapChain>) {
-        let rtv = swap_chain.get_current_back_buffer_rtv().unwrap();
-        let dsv = swap_chain.get_depth_buffer_dsv().unwrap();
-
         // Clear the back buffer
         let clear_color = {
             let clear_color = [0.350, 0.350, 0.350, 1.0];
@@ -378,13 +375,16 @@ impl SampleBase for Texturing {
             }
         };
 
-        main_context.clear_render_target::<f32>(
-            rtv,
-            &clear_color,
-            ResourceStateTransitionMode::Transition,
-        );
+        {
+            let rtv = swap_chain.get_current_back_buffer_rtv_mut().unwrap();
+            main_context.clear_render_target(rtv.transition_state(), &clear_color);
+        }
 
-        main_context.clear_depth(dsv, 1.0, ResourceStateTransitionMode::Transition);
+        {
+            let dsv = swap_chain.get_depth_buffer_dsv_mut().unwrap();
+
+            main_context.clear_depth(dsv.transition_state(), 1.0);
+        }
 
         {
             let swap_chain_desc = swap_chain.desc();
@@ -416,22 +416,17 @@ impl SampleBase for Texturing {
 
         // Bind vertex and index buffers
         main_context.set_vertex_buffers(
-            &[(&self.cube_vertex_buffer, 0)],
-            ResourceStateTransitionMode::Transition,
+            [(self.cube_vertex_buffer.borrow_mut().transition_state(), 0)],
             SetVertexBufferFlags::Reset,
         );
-        main_context.set_index_buffer(
-            &self.cube_index_buffer,
-            0,
-            ResourceStateTransitionMode::Transition,
-        );
+        main_context.set_index_buffer(self.cube_index_buffer.borrow_mut().transition_state(), 0);
 
         // Set the pipeline state in the immediate context
         let graphics = main_context.set_graphics_pipeline_state(&self.pipeline_state);
 
         // Commit shader resources. RESOURCE_STATE_TRANSITION_MODE_TRANSITION mode
         // makes sure that resources are transitioned to required states.
-        graphics.commit_shader_resources(&self.srb, ResourceStateTransitionMode::Transition);
+        graphics.commit_shader_resources(self.srb.borrow_mut().transition_state());
 
         graphics.draw_indexed(
             &DrawIndexedAttribs::builder()

@@ -10,11 +10,11 @@ use diligent_samples::{
 };
 
 struct Queries {
-    textured_cube: TexturedCube,
+    textured_cube: RefCell<TexturedCube>,
     rotation_matrix: glam::Mat4,
 
     cube_pso: Boxed<GraphicsPipelineState>,
-    cube_srb: Boxed<ShaderResourceBinding>,
+    cube_srb: RefCell<Boxed<ShaderResourceBinding>>,
     cube_vs_constants: Boxed<Buffer>,
     _cube_texture_srv: Boxed<TextureView>,
 
@@ -185,7 +185,7 @@ impl SampleBase for Queries {
         };
 
         let sample = Queries {
-            textured_cube,
+            textured_cube: RefCell::new(textured_cube),
 
             query_pipeline_stats,
             query_occlusion,
@@ -199,7 +199,7 @@ impl SampleBase for Queries {
 
             convert_ps_output_to_gamma,
             cube_vs_constants,
-            cube_srb,
+            cube_srb: RefCell::new(cube_srb),
             cube_pso,
             _cube_texture_srv: cube_texture_srv,
             rotation_matrix: glam::Mat4::IDENTITY,
@@ -225,7 +225,7 @@ impl SampleBase for Queries {
     fn render(
         &self,
         main_context: Boxed<ImmediateDeviceContext>,
-        swap_chain: Boxed<SwapChain>,
+        mut swap_chain: Boxed<SwapChain>,
     ) -> (Boxed<ImmediateDeviceContext>, Boxed<SwapChain>) {
         let view_proj_matrix = {
             let swap_chain_desc = swap_chain.desc();
@@ -258,9 +258,6 @@ impl SampleBase for Queries {
             constant_buffer_data[0] = view_proj_matrix * self.rotation_matrix;
         }
 
-        let rtv = swap_chain.get_current_back_buffer_rtv().unwrap();
-        let dsv = swap_chain.get_depth_buffer_dsv().unwrap();
-
         // Clear the back buffer
         {
             let clear_color = {
@@ -274,26 +271,33 @@ impl SampleBase for Queries {
                 }
             };
 
-            main_context.clear_render_target::<f32>(
-                rtv,
-                &clear_color,
-                ResourceStateTransitionMode::Transition,
-            );
+            let rtv = swap_chain.get_current_back_buffer_rtv_mut().unwrap();
+            main_context.clear_render_target(rtv.transition_state(), &clear_color);
         }
 
-        main_context.clear_depth(dsv, 1.0, ResourceStateTransitionMode::Transition);
+        {
+            let dsv = swap_chain.get_depth_buffer_dsv_mut().unwrap();
+            main_context.clear_depth(dsv.transition_state(), 1.0);
+        }
 
         {
             // Bind vertex and index buffers
             main_context.set_vertex_buffers(
-                &[(self.textured_cube.get_vertex_buffer(), 0)],
-                ResourceStateTransitionMode::Transition,
+                [(
+                    self.textured_cube
+                        .borrow_mut()
+                        .vertex_buffer_mut()
+                        .transition_state(),
+                    0,
+                )],
                 SetVertexBufferFlags::Reset,
             );
             main_context.set_index_buffer(
-                self.textured_cube.get_index_buffer(),
+                self.textured_cube
+                    .borrow_mut()
+                    .index_buffer_mut()
+                    .transition_state(),
                 0,
-                ResourceStateTransitionMode::Transition,
             );
         }
 
@@ -301,7 +305,7 @@ impl SampleBase for Queries {
         let graphics = main_context.set_graphics_pipeline_state(&self.cube_pso);
 
         // Commit the cube shader's resources
-        graphics.commit_shader_resources(&self.cube_srb, ResourceStateTransitionMode::Transition);
+        graphics.commit_shader_resources(self.cube_srb.borrow_mut().transition_state());
 
         {
             let pipeline_token = self

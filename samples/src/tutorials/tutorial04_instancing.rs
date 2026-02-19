@@ -1,3 +1,5 @@
+use std::cell::RefCell;
+
 use diligent::{geometry_primitives::*, graphics_utilities::*, *};
 
 use diligent_samples::{
@@ -13,12 +15,12 @@ const MAX_GRID_SIZE: u64 = 32;
 const MAX_INSTANCES: u64 = MAX_GRID_SIZE * MAX_GRID_SIZE * MAX_GRID_SIZE;
 
 struct Instancing {
-    textured_cube: TexturedCube,
+    textured_cube: RefCell<TexturedCube>,
 
     convert_ps_output_to_gamma: bool,
 
     pipeline_state: Boxed<GraphicsPipelineState>,
-    srb: Boxed<ShaderResourceBinding>,
+    srb: RefCell<Boxed<ShaderResourceBinding>>,
 
     _texture_srv: Boxed<TextureView>,
 
@@ -26,7 +28,7 @@ struct Instancing {
 
     grid_size: u32,
 
-    instance_buffer: Boxed<Buffer>,
+    instance_buffer: RefCell<Boxed<Buffer>>,
 
     vertex_shader_constants: Boxed<Buffer>,
 }
@@ -87,9 +89,8 @@ impl Instancing {
 
         // Update instance data buffer
         context.update_buffer_from_slice(
-            &mut self.instance_buffer,
+            self.instance_buffer.borrow_mut().transition_state(),
             instance_data.as_slice(),
-            ResourceStateTransitionMode::Transition,
         );
     }
 }
@@ -236,17 +237,17 @@ impl SampleBase for Instancing {
             .bind_flags(BindFlags::VertexBuffer)
             .build();
 
-        let inst_buff = device.create_buffer(&inst_buff_desc).unwrap();
+        let instance_buffer = device.create_buffer(&inst_buff_desc).unwrap();
 
         let mut sample = Instancing {
             convert_ps_output_to_gamma,
             pipeline_state,
-            textured_cube,
-            srb,
+            textured_cube: RefCell::new(textured_cube),
+            srb: RefCell::new(srb),
             vertex_shader_constants: vs_constants,
             rotation_matrix: glam::Mat4::IDENTITY,
             grid_size: 5,
-            instance_buffer: inst_buff,
+            instance_buffer: RefCell::new(instance_buffer),
             _texture_srv: texture_srv,
         };
 
@@ -286,7 +287,7 @@ impl SampleBase for Instancing {
     fn render(
         &self,
         main_context: Boxed<ImmediateDeviceContext>,
-        swap_chain: Boxed<SwapChain>,
+        mut swap_chain: Boxed<SwapChain>,
     ) -> (Boxed<ImmediateDeviceContext>, Boxed<SwapChain>) {
         let view_proj_matrix = {
             let swap_chain_desc = swap_chain.desc();
@@ -312,9 +313,6 @@ impl SampleBase for Instancing {
             proj * srf_pre_transform * view
         };
 
-        let rtv = swap_chain.get_current_back_buffer_rtv().unwrap();
-        let dsv = swap_chain.get_depth_buffer_dsv().unwrap();
-
         // Clear the back buffer
         {
             let clear_color = {
@@ -328,14 +326,16 @@ impl SampleBase for Instancing {
                 }
             };
 
-            main_context.clear_render_target::<f32>(
-                rtv,
-                &clear_color,
-                ResourceStateTransitionMode::Transition,
-            );
+            let rtv = swap_chain.get_current_back_buffer_rtv_mut().unwrap();
+
+            main_context.clear_render_target(rtv.transition_state(), &clear_color);
         }
 
-        main_context.clear_depth(dsv, 1.0, ResourceStateTransitionMode::Transition);
+        {
+            let dsv = swap_chain.get_depth_buffer_dsv_mut().unwrap();
+
+            main_context.clear_depth(dsv.transition_state(), 1.0);
+        }
 
         {
             // Map the buffer and write current world-view-projection matrix
@@ -347,20 +347,22 @@ impl SampleBase for Instancing {
         }
 
         {
-            // Bind vertex, instance and index buffers
-            let buffers = [
-                (self.textured_cube.get_vertex_buffer(), 0),
-                (&self.instance_buffer, 0),
-            ];
-            main_context.set_vertex_buffers(
-                &buffers,
-                ResourceStateTransitionMode::Transition,
-                SetVertexBufferFlags::Reset,
-            );
+            {
+                let mut texture_cube = self.textured_cube.borrow_mut();
+                let mut instance_buffer = self.instance_buffer.borrow_mut();
+                // Bind vertex, instance and index buffers
+                let buffers = [
+                    (texture_cube.vertex_buffer_mut().transition_state(), 0),
+                    (instance_buffer.transition_state(), 0),
+                ];
+                main_context.set_vertex_buffers(buffers, SetVertexBufferFlags::Reset);
+            }
             main_context.set_index_buffer(
-                self.textured_cube.get_index_buffer(),
+                self.textured_cube
+                    .borrow_mut()
+                    .index_buffer_mut()
+                    .transition_state(),
                 0,
-                ResourceStateTransitionMode::Transition,
             );
         }
 
@@ -369,7 +371,7 @@ impl SampleBase for Instancing {
 
         // Commit shader resources. RESOURCE_STATE_TRANSITION_MODE_TRANSITION mode
         // makes sure that resources are transitioned to required states.
-        graphics.commit_shader_resources(&self.srb, ResourceStateTransitionMode::Transition);
+        graphics.commit_shader_resources(self.srb.borrow_mut().transition_state());
 
         let draw_attribs = DrawIndexedAttribs::builder()
             .num_indices(36)

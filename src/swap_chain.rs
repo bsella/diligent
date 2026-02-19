@@ -189,6 +189,16 @@ impl SwapChain {
         }
     }
 
+    pub fn get_current_back_buffer_rtv_mut(&mut self) -> Option<&mut TextureView> {
+        let texture_view_ptr = unsafe_member_call!(self, SwapChain, GetCurrentBackBufferRTV);
+
+        if texture_view_ptr.is_null() {
+            None
+        } else {
+            Some(unsafe { &mut *(texture_view_ptr as *mut TextureView) })
+        }
+    }
+
     pub fn get_depth_buffer_dsv(&self) -> Option<&TextureView> {
         let texture_view_ptr = unsafe_member_call!(self, SwapChain, GetDepthBufferDSV);
 
@@ -197,5 +207,36 @@ impl SwapChain {
         } else {
             Some(unsafe { &*(texture_view_ptr as *const TextureView) })
         }
+    }
+
+    pub fn get_depth_buffer_dsv_mut(&mut self) -> Option<&mut TextureView> {
+        let texture_view_ptr = unsafe_member_call!(self, SwapChain, GetDepthBufferDSV);
+
+        if texture_view_ptr.is_null() {
+            None
+        } else {
+            Some(unsafe { &mut *(texture_view_ptr as *mut TextureView) })
+        }
+    }
+
+    pub fn get_current_rtv_and_dsv_mut(
+        &mut self,
+    ) -> (Option<&mut TextureView>, Option<&mut TextureView>) {
+        let rtv_ptr = unsafe_member_call!(self, SwapChain, GetCurrentBackBufferRTV);
+        let dsv_ptr = unsafe_member_call!(self, SwapChain, GetDepthBufferDSV);
+
+        let rtv = if dsv_ptr.is_null() {
+            None
+        } else {
+            Some(unsafe { &mut *(rtv_ptr as *mut TextureView) })
+        };
+
+        let dsv = if dsv_ptr.is_null() {
+            None
+        } else {
+            Some(unsafe { &mut *(dsv_ptr as *mut TextureView) })
+        };
+
+        (rtv, dsv)
     }
 }

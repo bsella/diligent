@@ -12,7 +12,10 @@ use crate::{
     Boxed, BoxedFromNulError, MapType, Ported,
     buffer::Buffer,
     device_context::DeviceContext,
-    device_object::{DeviceObject, DeviceObjectAttribs},
+    device_object::{
+        DeviceObject, DeviceObjectAttribs, ResourceStateNoTransition, ResourceStateTransition,
+        ResourceStateVerify,
+    },
     graphics_types::{BindFlags, CpuAccessFlags, ResourceState, TextureFormat, Usage},
     resource_access_states,
     texture_view::{TextureView, TextureViewDesc, TextureViewType},
@@ -514,6 +517,18 @@ impl Texture {
     pub fn get_sparse_properties(&self) -> &SparseTextureProperties {
         let properties_ptr = unsafe_member_call!(self, Texture, GetSparseProperties);
         unsafe { &*(properties_ptr as *const &SparseTextureProperties) }
+    }
+}
+
+impl Texture {
+    pub fn transition_state(&mut self) -> ResourceStateTransition<'_, Texture> {
+        ResourceStateTransition(self)
+    }
+    pub fn verify_state(&self) -> ResourceStateVerify<'_, Texture> {
+        ResourceStateVerify(self)
+    }
+    pub fn no_state_transition(&self) -> ResourceStateNoTransition<'_, Texture> {
+        ResourceStateNoTransition(self)
     }
 }
 

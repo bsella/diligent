@@ -688,17 +688,12 @@ impl<GenericSample: SampleBase, W: Window> App for SampleApp<GenericSample, W> {
                 {
                     self.main_context.clear_stats();
 
-                    let rtv = sample_window
-                        .swap_chain
-                        .get_current_back_buffer_rtv()
-                        .unwrap();
-                    let dsv = sample_window.swap_chain.get_depth_buffer_dsv();
+                    let (rtv, dsv) = sample_window.swap_chain.get_current_rtv_and_dsv_mut();
 
-                    self.main_context.set_render_targets(
-                        &[rtv],
-                        dsv,
-                        ResourceStateTransitionMode::Transition,
-                    );
+                    let rtv = rtv.unwrap().transition_state();
+                    let dsv = dsv.map(|dsv| dsv.transition_state());
+
+                    self.main_context.set_render_targets(&[rtv], dsv);
 
                     (self.main_context, sample_window.swap_chain) = self
                         .sample

@@ -5,7 +5,10 @@ use static_assertions::const_assert_eq;
 
 use crate::{
     Ported,
-    device_object::{DeviceObject, DeviceObjectAttribs},
+    device_object::{
+        DeviceObject, DeviceObjectAttribs, ResourceStateNoTransition, ResourceStateTransition,
+        ResourceStateVerify,
+    },
     graphics_types::TextureFormat,
     sampler::Sampler,
     texture::{Texture, TextureDimension},
@@ -206,5 +209,17 @@ impl TextureView {
     pub fn get_texture(&self) -> &Texture {
         let texture_ptr = unsafe_member_call!(self, TextureView, GetTexture);
         unsafe { &*(texture_ptr as *const Texture) }
+    }
+}
+
+impl TextureView {
+    pub fn transition_state(&mut self) -> ResourceStateTransition<'_, TextureView> {
+        ResourceStateTransition(self)
+    }
+    pub fn verify_state(&self) -> ResourceStateVerify<'_, TextureView> {
+        ResourceStateVerify(self)
+    }
+    pub fn no_state_transition(&self) -> ResourceStateNoTransition<'_, TextureView> {
+        ResourceStateNoTransition(self)
     }
 }

@@ -1,4 +1,4 @@
-use std::{ops::Div, path::Path};
+use std::{cell::RefCell, ops::Div, path::Path};
 
 use diligent::{graphics_utilities::linear_to_srgba, *};
 
@@ -426,16 +426,16 @@ fn bind_buffers(
 
 struct ComputeShader {
     render_particle_pso: Boxed<GraphicsPipelineState>,
-    render_particle_srb: Boxed<ShaderResourceBinding>,
+    render_particle_srb: RefCell<Boxed<ShaderResourceBinding>>,
 
     reset_particle_lists_pso: Boxed<ComputePipelineState>,
-    reset_particle_lists_srb: Boxed<ShaderResourceBinding>,
+    reset_particle_lists_srb: RefCell<Boxed<ShaderResourceBinding>>,
 
     move_particles_pso: Boxed<ComputePipelineState>,
-    move_particles_srb: Boxed<ShaderResourceBinding>,
+    move_particles_srb: RefCell<Boxed<ShaderResourceBinding>>,
 
     collide_particles_pso: Boxed<ComputePipelineState>,
-    collide_particles_srb: Boxed<ShaderResourceBinding>,
+    collide_particles_srb: RefCell<Boxed<ShaderResourceBinding>>,
 
     update_particle_speed_pso: Boxed<ComputePipelineState>,
 
@@ -555,10 +555,10 @@ impl SampleBase for ComputeShader {
             collide_particles_pso,
             update_particle_speed_pso,
 
-            render_particle_srb,
-            reset_particle_lists_srb,
-            move_particles_srb,
-            collide_particles_srb,
+            render_particle_srb: RefCell::new(render_particle_srb),
+            reset_particle_lists_srb: RefCell::new(reset_particle_lists_srb),
+            move_particles_srb: RefCell::new(move_particles_srb),
+            collide_particles_srb: RefCell::new(collide_particles_srb),
 
             clear_color,
             num_particles: num_particles as i32,
@@ -585,20 +585,19 @@ impl SampleBase for ComputeShader {
     fn render(
         &self,
         main_context: Boxed<ImmediateDeviceContext>,
-        swap_chain: Boxed<SwapChain>,
+        mut swap_chain: Boxed<SwapChain>,
     ) -> (Boxed<ImmediateDeviceContext>, Boxed<SwapChain>) {
-        let rtv = swap_chain.get_current_back_buffer_rtv().unwrap();
-        let dsv = swap_chain.get_depth_buffer_dsv().unwrap();
-
         // Clear the back buffer
         // Let the engine perform required state transitions
-        main_context.clear_render_target(
-            rtv,
-            &self.clear_color,
-            ResourceStateTransitionMode::Transition,
-        );
+        {
+            let rtv = swap_chain.get_current_back_buffer_rtv_mut().unwrap();
+            main_context.clear_render_target(rtv.transition_state(), &self.clear_color);
+        }
 
-        main_context.clear_depth(dsv, 1.0, ResourceStateTransitionMode::Transition);
+        {
+            let dsv = swap_chain.get_depth_buffer_dsv_mut().unwrap();
+            main_context.clear_depth(dsv.transition_state(), 1.0);
+        }
 
         let swap_chain_desc = swap_chain.desc();
 
@@ -642,8 +641,9 @@ impl SampleBase for ComputeShader {
             let reset_particle_lists =
                 main_context.set_compute_pipeline_state(&self.reset_particle_lists_pso);
             reset_particle_lists.commit_shader_resources(
-                &self.reset_particle_lists_srb,
-                ResourceStateTransitionMode::Transition,
+                self.reset_particle_lists_srb
+                    .borrow_mut()
+                    .transition_state(),
             );
             reset_particle_lists.dispatch_compute(&dispatch_attribs);
 
@@ -653,10 +653,8 @@ impl SampleBase for ComputeShader {
         let main_context = {
             let move_particle_lists =
                 main_context.set_compute_pipeline_state(&self.move_particles_pso);
-            move_particle_lists.commit_shader_resources(
-                &self.move_particles_srb,
-                ResourceStateTransitionMode::Transition,
-            );
+            move_particle_lists
+                .commit_shader_resources(self.move_particles_srb.borrow_mut().transition_state());
             move_particle_lists.dispatch_compute(&dispatch_attribs);
             move_particle_lists.finish()
         };
@@ -665,8 +663,7 @@ impl SampleBase for ComputeShader {
             let collide_particles =
                 main_context.set_compute_pipeline_state(&self.collide_particles_pso);
             collide_particles.commit_shader_resources(
-                &self.collide_particles_srb,
-                ResourceStateTransitionMode::Transition,
+                self.collide_particles_srb.borrow_mut().transition_state(),
             );
             collide_particles.dispatch_compute(&dispatch_attribs);
             collide_particles.finish()
@@ -677,8 +674,7 @@ impl SampleBase for ComputeShader {
                 main_context.set_compute_pipeline_state(&self.update_particle_speed_pso);
             // Use the same SRB
             update_particles.commit_shader_resources(
-                &self.collide_particles_srb,
-                ResourceStateTransitionMode::Transition,
+                self.collide_particles_srb.borrow_mut().transition_state(),
             );
             update_particles.dispatch_compute(&dispatch_attribs);
             update_particles.finish()
@@ -686,10 +682,7 @@ impl SampleBase for ComputeShader {
 
         let graphics = main_context.set_graphics_pipeline_state(&self.render_particle_pso);
 
-        graphics.commit_shader_resources(
-            &self.render_particle_srb,
-            ResourceStateTransitionMode::Transition,
-        );
+        graphics.commit_shader_resources(self.render_particle_srb.borrow_mut().transition_state());
 
         graphics.draw(
             &DrawAttribs::builder()
@@ -728,34 +721,38 @@ impl SampleBase for ComputeShader {
                     self.particle_lists_buffer,
                 ) = create_particle_buffers(self.num_particles as u32, device);
 
-                self.reset_particle_lists_srb = self
-                    .reset_particle_lists_pso
-                    .create_shader_resource_binding(true)
-                    .unwrap();
+                self.reset_particle_lists_srb = RefCell::new(
+                    self.reset_particle_lists_pso
+                        .create_shader_resource_binding(true)
+                        .unwrap(),
+                );
 
-                self.render_particle_srb = self
-                    .render_particle_pso
-                    .create_shader_resource_binding(true)
-                    .unwrap();
+                self.render_particle_srb = RefCell::new(
+                    self.render_particle_pso
+                        .create_shader_resource_binding(true)
+                        .unwrap(),
+                );
 
-                self.move_particles_srb = self
-                    .move_particles_pso
-                    .create_shader_resource_binding(true)
-                    .unwrap();
+                self.move_particles_srb = RefCell::new(
+                    self.move_particles_pso
+                        .create_shader_resource_binding(true)
+                        .unwrap(),
+                );
 
-                self.collide_particles_srb = self
-                    .collide_particles_pso
-                    .create_shader_resource_binding(true)
-                    .unwrap();
+                self.collide_particles_srb = RefCell::new(
+                    self.collide_particles_pso
+                        .create_shader_resource_binding(true)
+                        .unwrap(),
+                );
 
                 bind_buffers(
                     &self.particle_attribs_buffer,
                     &self.particle_list_heads_buffer,
                     &self.particle_lists_buffer,
-                    &self.render_particle_srb,
-                    &self.reset_particle_lists_srb,
-                    &self.move_particles_srb,
-                    &self.collide_particles_srb,
+                    &self.render_particle_srb.borrow(),
+                    &self.reset_particle_lists_srb.borrow(),
+                    &self.move_particles_srb.borrow(),
+                    &self.collide_particles_srb.borrow(),
                 );
             }
 

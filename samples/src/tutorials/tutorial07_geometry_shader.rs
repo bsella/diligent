@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{cell::RefCell, path::Path};
 
 use diligent::{geometry_primitives::GeometryPrimitiveVertexFlags, graphics_utilities::*, *};
 
@@ -18,12 +18,12 @@ struct Constants {
 }
 
 struct GeometryShader {
-    textured_cube: TexturedCube,
+    textured_cube: RefCell<TexturedCube>,
 
     convert_ps_output_to_gamma: bool,
 
     pipeline_state: Boxed<GraphicsPipelineState>,
-    srb: Boxed<ShaderResourceBinding>,
+    srb: RefCell<Boxed<ShaderResourceBinding>>,
 
     _texture_srv: Boxed<TextureView>,
 
@@ -289,12 +289,12 @@ impl SampleBase for GeometryShader {
         GeometryShader {
             convert_ps_output_to_gamma,
             pipeline_state: pso,
-            srb,
+            srb: RefCell::new(srb),
             vertex_shader_constants: shader_constants,
             rotation_matrix: glam::Mat4::IDENTITY,
             line_width: 3.0,
             _texture_srv: texture_srv,
-            textured_cube,
+            textured_cube: RefCell::new(textured_cube),
         }
     }
 
@@ -328,11 +328,9 @@ impl SampleBase for GeometryShader {
     fn render(
         &self,
         main_context: Boxed<ImmediateDeviceContext>,
-        swap_chain: Boxed<SwapChain>,
+        mut swap_chain: Boxed<SwapChain>,
     ) -> (Boxed<ImmediateDeviceContext>, Boxed<SwapChain>) {
-        let swap_chain_desc = swap_chain.desc();
-
-        let view_proj_matrix = {
+        let (view_proj_matrix, width, height) = {
             let swap_chain_desc = swap_chain.desc();
 
             // Get pretransform matrix that rotates the scene according the surface orientation
@@ -352,11 +350,12 @@ impl SampleBase for GeometryShader {
             // Set cube view matrix
             let view = glam::Mat4::from_translation(glam::Vec3::new(0.0, 0.0, 5.0));
 
-            proj * srf_pre_transform * view
+            (
+                proj * srf_pre_transform * view,
+                swap_chain_desc.width(),
+                swap_chain_desc.height(),
+            )
         };
-
-        let rtv = swap_chain.get_current_back_buffer_rtv().unwrap();
-        let dsv = swap_chain.get_depth_buffer_dsv().unwrap();
 
         // Clear the back buffer
         {
@@ -371,14 +370,15 @@ impl SampleBase for GeometryShader {
                 }
             };
 
-            main_context.clear_render_target::<f32>(
-                rtv,
-                &clear_color,
-                ResourceStateTransitionMode::Transition,
-            );
+            let rtv = swap_chain.get_current_back_buffer_rtv_mut().unwrap();
+            main_context.clear_render_target(rtv.transition_state(), &clear_color);
         }
 
-        main_context.clear_depth(dsv, 1.0, ResourceStateTransitionMode::Transition);
+        {
+            let dsv = swap_chain.get_depth_buffer_dsv_mut().unwrap();
+
+            main_context.clear_depth(dsv.transition_state(), 1.0);
+        }
 
         {
             // Map the buffer and write current world-view-projection matrix
@@ -388,26 +388,30 @@ impl SampleBase for GeometryShader {
             constants[0] = Constants {
                 world_view_proj: (view_proj_matrix * self.rotation_matrix).to_cols_array(),
                 viewport_size: [
-                    swap_chain_desc.width() as f32,
-                    swap_chain_desc.height() as f32,
-                    1.0 / swap_chain_desc.width() as f32,
-                    1.0 / swap_chain_desc.height() as f32,
+                    width as f32,
+                    height as f32,
+                    1.0 / width as f32,
+                    1.0 / height as f32,
                 ],
                 line_width: self.line_width,
             };
         }
 
         {
-            // Bind vertex and index buffers
-            main_context.set_vertex_buffers(
-                &[(self.textured_cube.get_vertex_buffer(), 0)],
-                ResourceStateTransitionMode::Transition,
-                SetVertexBufferFlags::Reset,
-            );
+            {
+                let mut textured_cube = self.textured_cube.borrow_mut();
+                // Bind vertex and index buffers
+                main_context.set_vertex_buffers(
+                    [(textured_cube.vertex_buffer_mut().transition_state(), 0)],
+                    SetVertexBufferFlags::Reset,
+                );
+            }
             main_context.set_index_buffer(
-                self.textured_cube.get_index_buffer(),
+                self.textured_cube
+                    .borrow_mut()
+                    .index_buffer_mut()
+                    .transition_state(),
                 0,
-                ResourceStateTransitionMode::Transition,
             );
         }
 
@@ -416,7 +420,7 @@ impl SampleBase for GeometryShader {
 
         // Commit shader resources. RESOURCE_STATE_TRANSITION_MODE_TRANSITION mode
         // makes sure that resources are transitioned to required states.
-        graphics.commit_shader_resources(&self.srb, ResourceStateTransitionMode::Transition);
+        graphics.commit_shader_resources(self.srb.borrow_mut().transition_state());
 
         let draw_attribs = DrawIndexedAttribs::builder()
             .num_indices(36)

@@ -247,11 +247,19 @@ impl TexturedCube {
             .create_graphics_pipeline_state(&pso_create_info)
     }
 
-    pub fn get_vertex_buffer(&self) -> &Buffer {
+    pub fn vertex_buffer(&self) -> &Buffer {
         &self.vertex_buffer
     }
 
-    pub fn get_index_buffer(&self) -> &Buffer {
+    pub fn vertex_buffer_mut(&mut self) -> &mut Buffer {
+        &mut self.vertex_buffer
+    }
+
+    pub fn index_buffer(&self) -> &Buffer {
         &self.index_buffer
+    }
+
+    pub fn index_buffer_mut(&mut self) -> &mut Buffer {
+        &mut self.index_buffer
     }
 }

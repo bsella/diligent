@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{cell::RefCell, path::Path};
 
 use diligent::{graphics_utilities::*, *};
 use diligent_samples::sample_base::{
@@ -7,8 +7,14 @@ use diligent_samples::sample_base::{
 };
 
 struct Tessellation {
-    main_pipeline: (Boxed<GraphicsPipelineState>, Boxed<ShaderResourceBinding>),
-    wireframe_pipeline: Option<(Boxed<GraphicsPipelineState>, Boxed<ShaderResourceBinding>)>,
+    main_pipeline: (
+        Boxed<GraphicsPipelineState>,
+        RefCell<Boxed<ShaderResourceBinding>>,
+    ),
+    wireframe_pipeline: Option<(
+        Boxed<GraphicsPipelineState>,
+        RefCell<Boxed<ShaderResourceBinding>>,
+    )>,
 
     animate: bool,
     wireframe: bool,
@@ -390,19 +396,27 @@ impl SampleBase for Tessellation {
         );
 
         let main_srb = main_pipeline.create_shader_resource_binding(true).unwrap();
-        let main_pipeline = (main_pipeline, main_srb);
+        let main_pipeline = (main_pipeline, RefCell::new(main_srb));
 
         let wireframe_pipeline = wireframe_pipeline.map(|pso| {
             let srb = pso.create_shader_resource_binding(true).unwrap();
-            (pso, srb)
+            (pso, RefCell::new(srb))
         });
 
         fn apply_to_srb(
-            f: impl Fn(&(Boxed<GraphicsPipelineState>, Boxed<ShaderResourceBinding>)),
-            main_pipeline: &(Boxed<GraphicsPipelineState>, Boxed<ShaderResourceBinding>),
+            f: impl Fn(
+                &(
+                    Boxed<GraphicsPipelineState>,
+                    RefCell<Boxed<ShaderResourceBinding>>,
+                ),
+            ),
+            main_pipeline: &(
+                Boxed<GraphicsPipelineState>,
+                RefCell<Boxed<ShaderResourceBinding>>,
+            ),
             wireframe_pipeline: &Option<(
                 Boxed<GraphicsPipelineState>,
-                Boxed<ShaderResourceBinding>,
+                RefCell<Boxed<ShaderResourceBinding>>,
             )>,
         ) {
             f(main_pipeline);
@@ -414,9 +428,9 @@ impl SampleBase for Tessellation {
         #[rustfmt::skip]
         apply_to_srb(
             |(_, srb)| {
-                srb.get_variable_by_name("g_Texture", ShaderTypes::Pixel).unwrap().set(&color_map_srv, SetShaderResourceFlags::None);
-                srb.get_variable_by_name("g_HeightMap", ShaderTypes::Domain).unwrap().set(&height_map_srv, SetShaderResourceFlags::None);
-                srb.get_variable_by_name("g_HeightMap", ShaderTypes::Hull).unwrap().set(&height_map_srv, SetShaderResourceFlags::None);
+                srb.borrow().get_variable_by_name("g_Texture", ShaderTypes::Pixel).unwrap().set(&color_map_srv, SetShaderResourceFlags::None);
+                srb.borrow().get_variable_by_name("g_HeightMap", ShaderTypes::Domain).unwrap().set(&height_map_srv, SetShaderResourceFlags::None);
+                srb.borrow().get_variable_by_name("g_HeightMap", ShaderTypes::Hull).unwrap().set(&height_map_srv, SetShaderResourceFlags::None);
             },
             &main_pipeline,
             &wireframe_pipeline,
@@ -500,11 +514,11 @@ impl SampleBase for Tessellation {
     fn render(
         &self,
         main_context: Boxed<ImmediateDeviceContext>,
-        swap_chain: Boxed<SwapChain>,
+        mut swap_chain: Boxed<SwapChain>,
     ) -> (Boxed<ImmediateDeviceContext>, Boxed<SwapChain>) {
-        let swap_chain_desc = swap_chain.desc();
+        let (proj_matrix, width, height) = {
+            let swap_chain_desc = swap_chain.desc();
 
-        let proj_matrix = {
             // Get pretransform matrix that rotates the scene according the surface orientation
             let srf_pre_transform = get_surface_pretransform_matrix(
                 swap_chain_desc.pre_transform(),
@@ -518,7 +532,11 @@ impl SampleBase for Tessellation {
                 0.1,
                 1000.0,
             );
-            proj * srf_pre_transform
+            (
+                proj * srf_pre_transform,
+                swap_chain_desc.width(),
+                swap_chain_desc.height(),
+            )
         };
 
         let model_view_matrix = {
@@ -535,9 +553,6 @@ impl SampleBase for Tessellation {
             view_matrix * model_matrix
         };
 
-        let rtv = swap_chain.get_current_back_buffer_rtv().unwrap();
-        let dsv = swap_chain.get_depth_buffer_dsv().unwrap();
-
         // Clear the back buffer
         {
             let clear_color = {
@@ -551,14 +566,16 @@ impl SampleBase for Tessellation {
                 }
             };
 
-            main_context.clear_render_target::<f32>(
-                rtv,
-                &clear_color,
-                ResourceStateTransitionMode::Transition,
-            );
+            let rtv = swap_chain.get_current_back_buffer_rtv_mut().unwrap();
+
+            main_context.clear_render_target(rtv.transition_state(), &clear_color);
         }
 
-        main_context.clear_depth(dsv, 1.0, ResourceStateTransitionMode::Transition);
+        {
+            let dsv = swap_chain.get_depth_buffer_dsv_mut().unwrap();
+
+            main_context.clear_depth(dsv.transition_state(), 1.0);
+        }
 
         let num_horz_blocks = self.height_map_width / self.block_size;
         let num_vert_blocks = self.height_map_height / self.block_size;
@@ -587,10 +604,10 @@ impl SampleBase for Tessellation {
                 dummy2: [0.0, 0.0],
 
                 viewport_size: [
-                    swap_chain_desc.width() as f32,
-                    swap_chain_desc.height() as f32,
-                    1.0 / swap_chain_desc.width() as f32,
-                    1.0 / swap_chain_desc.height() as f32,
+                    width as f32,
+                    height as f32,
+                    1.0 / width as f32,
+                    1.0 / height as f32,
                 ],
 
                 line_width: 3.0,
@@ -608,7 +625,7 @@ impl SampleBase for Tessellation {
 
         // Commit shader resources. RESOURCE_STATE_TRANSITION_MODE_TRANSITION mode
         // makes sure that resources are transitioned to required states.
-        graphics.commit_shader_resources(srb, ResourceStateTransitionMode::Transition);
+        graphics.commit_shader_resources(srb.borrow_mut().transition_state());
 
         let draw_attribs = DrawAttribs::builder()
             .num_vertices(num_horz_blocks * num_vert_blocks)

@@ -8,7 +8,10 @@ use bitflags::bitflags;
 use static_assertions::const_assert_eq;
 
 use crate::{
-    device_object::{DeviceObject, DeviceObjectAttribs},
+    device_object::{
+        DeviceObject, DeviceObjectAttribs, ResourceStateNoTransition, ResourceStateTransition,
+        ResourceStateVerify,
+    },
     graphics_types::{ResourceState, ValueType},
 };
 
@@ -204,5 +207,17 @@ impl BottomLevelAS {
 
     pub fn get_state(&self) -> ResourceState {
         ResourceState::from_bits_retain(unsafe_member_call!(self, BottomLevelAS, GetState))
+    }
+}
+
+impl BottomLevelAS {
+    pub fn transition_state(&mut self) -> ResourceStateTransition<'_, BottomLevelAS> {
+        ResourceStateTransition(self)
+    }
+    pub fn verify_state(&self) -> ResourceStateVerify<'_, BottomLevelAS> {
+        ResourceStateVerify(self)
+    }
+    pub fn no_state_transition(&self) -> ResourceStateNoTransition<'_, BottomLevelAS> {
+        ResourceStateNoTransition(self)
     }
 }

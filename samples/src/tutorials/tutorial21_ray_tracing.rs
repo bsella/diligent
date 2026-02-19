@@ -1,5 +1,5 @@
 use core::f32;
-use std::{ffi::CString, ops::Deref, path::Path};
+use std::{cell::RefCell, ffi::CString, ops::Deref, path::Path};
 
 use diligent::{geometry_primitives::*, graphics_utilities::*, *};
 use diligent_samples::sample_base::{
@@ -91,10 +91,10 @@ struct RayTracing {
     max_recursion_depth: i32,
 
     image_blit_pso: Boxed<GraphicsPipelineState>,
-    image_blit_srb: Boxed<ShaderResourceBinding>,
+    image_blit_srb: RefCell<Boxed<ShaderResourceBinding>>,
 
     ray_tracing_pso: Boxed<RayTracingPipelineState>,
-    ray_tracing_srb: Boxed<ShaderResourceBinding>,
+    ray_tracing_srb: RefCell<Boxed<ShaderResourceBinding>>,
 
     constant_buffer: Boxed<Buffer>,
     _cube_attribs_buffer: Boxed<Buffer>,
@@ -108,7 +108,7 @@ struct RayTracing {
     scratch_buffer: Boxed<Buffer>,
     instance_buffer: Boxed<Buffer>,
 
-    sbt: Boxed<ShaderBindingTable>,
+    sbt: RefCell<Boxed<ShaderBindingTable>>,
 
     animate: bool,
     enabled_cubes: [bool; 4],
@@ -641,7 +641,7 @@ fn create_and_build_cube_blas(
         .index_type(index_type)
         .build();
 
-    let blas = device
+    let mut blas = device
         .create_blas(
             &BottomLevelASDesc::builder()
                 .name(c"Cube BLAS")
@@ -652,7 +652,7 @@ fn create_and_build_cube_blas(
         .unwrap();
 
     // Create scratch buffer
-    let scratch_buffer = device
+    let mut scratch_buffer = device
         .create_buffer(
             &BufferDesc::builder()
                 .name(c"BLAS Scratch Buffer")
@@ -679,15 +679,13 @@ fn create_and_build_cube_blas(
     // Build BLAS
     {
         let attribs = BuildBLASAttribs::builder()
-            .blas(&blas)
+            .blas(blas.transition_state())
             .triangle_data(&triangle_data)
             // Scratch buffer will be used to store temporary data during BLAS build.
             // Previous content in the scratch buffer will be discarded.
-            .scratch_buffer(&scratch_buffer)
+            .scratch_buffer(scratch_buffer.transition_state())
             // Allow engine to change resource states.
-            .blas_transition_mode(ResourceStateTransitionMode::Transition)
             .geometry_transition_mode(ResourceStateTransitionMode::Transition)
-            .scratch_buffer_transition_mode(ResourceStateTransitionMode::Transition)
             .build();
 
         immediate_context.build_blas(&attribs);
@@ -732,7 +730,7 @@ fn create_and_build_procedural_blas(
     // Create & build bottom level acceleration structure
 
     // Create BLAS
-    let procedural_blas = {
+    let mut procedural_blas = {
         let box_info = [BLASBoundingBoxDesc::builder()
             .geometry_name(c"Box")
             .max_box_count(1)
@@ -748,7 +746,7 @@ fn create_and_build_procedural_blas(
     };
 
     // Create scratch buffer
-    let scratch_buffer = {
+    let mut scratch_buffer = {
         let buff_desc = BufferDesc::builder()
             .name(c"BLAS Scratch Buffer")
             .usage(Usage::Default)
@@ -769,15 +767,13 @@ fn create_and_build_procedural_blas(
             .build()];
 
         let attribs = BuildBLASAttribs::builder()
-            .blas(&procedural_blas)
+            .blas(procedural_blas.transition_state())
             .box_data(&box_data)
             // Scratch buffer will be used to store temporary data during BLAS build.
             // Previous content in the scratch buffer will be discarded.
-            .scratch_buffer(&scratch_buffer)
             // Allow engine to change resource states.
-            .blas_transition_mode(ResourceStateTransitionMode::Transition)
+            .scratch_buffer(scratch_buffer.transition_state())
             .geometry_transition_mode(ResourceStateTransitionMode::Transition)
-            .scratch_buffer_transition_mode(ResourceStateTransitionMode::Transition)
             .build();
 
         immediate_context.build_blas(&attribs);
@@ -952,24 +948,21 @@ impl RayTracing {
 
         // Build or update TLAS
         let attribs = BuildTLASAttribs::builder()
-            .tlas(&self.tlas)
+            .tlas(self.tlas.transition_state())
             .update(!first_build)
             // Scratch buffer will be used to store temporary data during TLAS build or update.
             // Previous content in the scratch buffer will be discarded.
-            .scratch_buffer(&self.scratch_buffer)
+            .scratch_buffer(self.scratch_buffer.transition_state())
             // Instance buffer will store instance data during TLAS build or update.
             // Previous content in the instance buffer will be discarded.
-            .instance_buffer(&self.instance_buffer)
+            .instance_buffer(self.instance_buffer.transition_state())
             // Instances will be converted to the format that is required by the graphics driver and copied to the instance buffer.
             .instances(instances.as_slice())
             // Bind hit shaders per instance, it allows you to change the number of geometries in BLAS without invalidating the shader binding table.
             .binding_mode(HitGroupBindingMode::PerInstance)
             .hit_group_stride(HIT_GROUP_STRIDE)
             // Allow engine to change resource states.
-            .tlas_transition_mode(ResourceStateTransitionMode::Transition)
             .blas_transition_mode(ResourceStateTransitionMode::Transition)
-            .instance_buffer_transition_mode(ResourceStateTransitionMode::Transition)
-            .scratch_buffer_transition_mode(ResourceStateTransitionMode::Transition)
             .build();
 
         context.build_tlas(&attribs);
@@ -1208,10 +1201,10 @@ impl SampleBase for RayTracing {
             constant_buffer,
 
             image_blit_pso,
-            image_blit_srb,
+            image_blit_srb: RefCell::new(image_blit_srb),
             ray_tracing_pso,
-            ray_tracing_srb,
-            sbt,
+            ray_tracing_srb: RefCell::new(ray_tracing_srb),
+            sbt: RefCell::new(sbt),
             tlas,
             scratch_buffer,
             instance_buffer,
@@ -1227,43 +1220,44 @@ impl SampleBase for RayTracing {
 
         // Hit groups for primary ray
         {
-            sample.sbt.bind_hit_group_for_instance(
+            let sbt = sample.sbt.borrow();
+            sbt.bind_hit_group_for_instance(
                 &sample.tlas,
                 "Cube Instance 1",
                 PRIMARY_RAY_INDEX,
                 Some("CubePrimaryHit"),
             );
-            sample.sbt.bind_hit_group_for_instance(
+            sbt.bind_hit_group_for_instance(
                 &sample.tlas,
                 "Cube Instance 2",
                 PRIMARY_RAY_INDEX,
                 Some("CubePrimaryHit"),
             );
-            sample.sbt.bind_hit_group_for_instance(
+            sbt.bind_hit_group_for_instance(
                 &sample.tlas,
                 "Cube Instance 3",
                 PRIMARY_RAY_INDEX,
                 Some("CubePrimaryHit"),
             );
-            sample.sbt.bind_hit_group_for_instance(
+            sbt.bind_hit_group_for_instance(
                 &sample.tlas,
                 "Cube Instance 4",
                 PRIMARY_RAY_INDEX,
                 Some("CubePrimaryHit"),
             );
-            sample.sbt.bind_hit_group_for_instance(
+            sbt.bind_hit_group_for_instance(
                 &sample.tlas,
                 "Ground Instance",
                 PRIMARY_RAY_INDEX,
                 Some("GroundHit"),
             );
-            sample.sbt.bind_hit_group_for_instance(
+            sbt.bind_hit_group_for_instance(
                 &sample.tlas,
                 "Glass Instance",
                 PRIMARY_RAY_INDEX,
                 Some("GlassPrimaryHit"),
             );
-            sample.sbt.bind_hit_group_for_instance(
+            sbt.bind_hit_group_for_instance(
                 &sample.tlas,
                 "Sphere Instance",
                 PRIMARY_RAY_INDEX,
@@ -1273,21 +1267,22 @@ impl SampleBase for RayTracing {
 
         // Hit groups for shadow ray.
         {
-            // None means no shaders are bound and hit shader invocation will be skipped.
-            sample
-                .sbt
-                .bind_hit_group_for_tlas(&sample.tlas, SHADOW_RAY_INDEX, None::<&str>);
+            {
+                let sbt = sample.sbt.borrow();
+                // None means no shaders are bound and hit shader invocation will be skipped.
+                sbt.bind_hit_group_for_tlas(&sample.tlas, SHADOW_RAY_INDEX, None::<&str>);
 
-            // We must specify the intersection shader for procedural geometry.
-            sample.sbt.bind_hit_group_for_instance(
-                &sample.tlas,
-                "Sphere Instance",
-                SHADOW_RAY_INDEX,
-                Some("SphereShadowHit"),
-            );
+                // We must specify the intersection shader for procedural geometry.
+                sbt.bind_hit_group_for_instance(
+                    &sample.tlas,
+                    "Sphere Instance",
+                    SHADOW_RAY_INDEX,
+                    Some("SphereShadowHit"),
+                );
+            }
 
             // Update SBT with the shader groups we bound
-            main_context.update_sbt(&sample.sbt, None);
+            main_context.update_sbt(&mut sample.sbt.borrow_mut(), None);
         }
 
         sample
@@ -1308,11 +1303,12 @@ impl SampleBase for RayTracing {
     fn render(
         &self,
         main_context: Boxed<ImmediateDeviceContext>,
-        swap_chain: Boxed<SwapChain>,
+        mut swap_chain: Boxed<SwapChain>,
     ) -> (Boxed<ImmediateDeviceContext>, Boxed<SwapChain>) {
         // Trace rays
         let main_context = {
             self.ray_tracing_srb
+                .borrow()
                 .get_variable_by_name("g_ColorBuffer", ShaderTypes::RayGen)
                 .unwrap()
                 .set(
@@ -1324,15 +1320,14 @@ impl SampleBase for RayTracing {
 
             let ray_tracing = main_context.set_ray_tracing_pipeline_state(&self.ray_tracing_pso);
 
-            ray_tracing.commit_shader_resources(
-                &self.ray_tracing_srb,
-                ResourceStateTransitionMode::Transition,
-            );
+            ray_tracing
+                .commit_shader_resources(self.ray_tracing_srb.borrow_mut().transition_state());
 
             let swap_chain_desc = swap_chain.desc();
 
+            let mut sbt = self.sbt.borrow_mut();
             let attribs = TraceRaysAttribs::builder()
-                .sbt(&self.sbt)
+                .sbt(&mut sbt)
                 .dimension_x(swap_chain_desc.width())
                 .dimension_y(swap_chain_desc.height())
                 .build();
@@ -1345,6 +1340,7 @@ impl SampleBase for RayTracing {
         // Blit to swapchain image
         {
             self.image_blit_srb
+                .borrow()
                 .get_variable_by_name("g_Texture", ShaderTypes::Pixel)
                 .unwrap()
                 .set(
@@ -1354,14 +1350,11 @@ impl SampleBase for RayTracing {
                     SetShaderResourceFlags::None,
                 );
 
-            let rtv = swap_chain.get_current_back_buffer_rtv().unwrap();
-            main_context.set_render_targets(&[rtv], None, ResourceStateTransitionMode::Transition);
+            let rtv = swap_chain.get_current_back_buffer_rtv_mut().unwrap();
+            main_context.set_render_targets(&[rtv.transition_state()], None);
 
             let blit = main_context.set_graphics_pipeline_state(&self.image_blit_pso);
-            blit.commit_shader_resources(
-                &self.image_blit_srb,
-                ResourceStateTransitionMode::Transition,
-            );
+            blit.commit_shader_resources(self.image_blit_srb.borrow_mut().transition_state());
 
             blit.draw(
                 &DrawAttribs::builder()
@@ -1402,11 +1395,10 @@ impl SampleBase for RayTracing {
             self.constants.inv_view_proj = camera_view_proj.inverse().to_cols_array();
 
             main_context.update_buffer(
-                &mut self.constant_buffer,
+                self.constant_buffer.transition_state(),
                 0,
                 std::mem::size_of::<Constants>() as u64,
                 &self.constants,
-                ResourceStateTransitionMode::Transition,
             );
         }
 

@@ -11,7 +11,10 @@ use crate::{
     Boxed, BoxedFromNulError, MapType,
     buffer_view::{BufferView, BufferViewDesc, BufferViewType},
     device_context::DeviceContext,
-    device_object::{DeviceObject, DeviceObjectAttribs},
+    device_object::{
+        DeviceObject, DeviceObjectAttribs, ResourceStateNoTransition, ResourceStateTransition,
+        ResourceStateVerify,
+    },
     graphics_types::{BindFlags, CpuAccessFlags, MemoryProperty, ResourceState, Usage},
     resource_access_states,
 };
@@ -198,6 +201,18 @@ impl Buffer {
 
     pub fn get_sparse_properties(&self) -> diligent_sys::SparseBufferProperties {
         unsafe_member_call!(self, Buffer, GetSparseProperties)
+    }
+}
+
+impl Buffer {
+    pub fn transition_state(&mut self) -> ResourceStateTransition<'_, Buffer> {
+        ResourceStateTransition(self)
+    }
+    pub fn verify_state(&self) -> ResourceStateVerify<'_, Buffer> {
+        ResourceStateVerify(self)
+    }
+    pub fn no_state_transition(&self) -> ResourceStateNoTransition<'_, Buffer> {
+        ResourceStateNoTransition(self)
     }
 }
 

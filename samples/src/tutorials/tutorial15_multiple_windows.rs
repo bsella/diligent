@@ -162,20 +162,19 @@ impl SampleBase for MultipleWindows {
     fn render(
         &self,
         main_context: Boxed<ImmediateDeviceContext>,
-        swap_chain: Boxed<SwapChain>,
+        mut swap_chain: Boxed<SwapChain>,
     ) -> (Boxed<ImmediateDeviceContext>, Boxed<SwapChain>) {
-        let rtv = swap_chain.get_current_back_buffer_rtv().unwrap();
-        let dsv = swap_chain.get_depth_buffer_dsv().unwrap();
-
         // Clear the back buffer
         // Let the engine perform required state transitions
-        main_context.clear_render_target::<f32>(
-            rtv,
-            &[0.350, 0.350, 0.350, 1.0],
-            ResourceStateTransitionMode::Transition,
-        );
+        {
+            let rtv = swap_chain.get_current_back_buffer_rtv_mut().unwrap();
+            main_context.clear_render_target(rtv.transition_state(), &[0.35, 0.35, 0.35, 1.0f32]);
+        }
 
-        main_context.clear_depth(dsv, 1.0, ResourceStateTransitionMode::Transition);
+        {
+            let dsv = swap_chain.get_depth_buffer_dsv_mut().unwrap();
+            main_context.clear_depth(dsv.transition_state(), 1.0);
+        }
 
         // Set the pipeline state in the immediate context
         let graphics = main_context.set_graphics_pipeline_state(&self.pipeline_state);

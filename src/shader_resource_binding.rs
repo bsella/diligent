@@ -2,6 +2,7 @@ use std::{ffi::CString, str::FromStr};
 
 use crate::{
     Ported,
+    device_object::{ResourceStateNoTransition, ResourceStateTransition, ResourceStateVerify},
     graphics_types::ShaderTypes,
     object::Object,
     pipeline_resource_signature::PipelineResourceSignature,
@@ -88,5 +89,17 @@ impl ShaderResourceBinding {
 
     pub fn static_resources_initialized(&self) -> bool {
         unsafe_member_call!(self, ShaderResourceBinding, StaticResourcesInitialized)
+    }
+}
+
+impl ShaderResourceBinding {
+    pub fn transition_state(&mut self) -> ResourceStateTransition<'_, ShaderResourceBinding> {
+        ResourceStateTransition(self)
+    }
+    pub fn verify_state(&self) -> ResourceStateVerify<'_, ShaderResourceBinding> {
+        ResourceStateVerify(self)
+    }
+    pub fn no_state_transition(&self) -> ResourceStateNoTransition<'_, ShaderResourceBinding> {
+        ResourceStateNoTransition(self)
     }
 }

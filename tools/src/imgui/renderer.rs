@@ -723,7 +723,7 @@ impl ImguiFrame {
         }
 
         // Resize the vertex buffer if needed
-        let vertex_buffer = if let Some(ref vertex_buffer) = self.data.vertex_buffer
+        let vertex_buffer = if let Some(ref mut vertex_buffer) = self.data.vertex_buffer
             && self.data.vertex_buffer_size >= draw_data.total_vtx_count as u32
         {
             vertex_buffer
@@ -749,7 +749,7 @@ impl ImguiFrame {
         };
 
         // Resize the index buffer if needed
-        let index_buffer = if let Some(ref index_buffer) = self.data.index_buffer
+        let index_buffer = if let Some(ref mut index_buffer) = self.data.index_buffer
             && self.data.index_buffer_size >= draw_data.total_idx_count as u32
         {
             index_buffer
@@ -827,11 +827,10 @@ impl ImguiFrame {
         {
             // Setup shader and vertex buffers
             context.set_vertex_buffers(
-                &[(vertex_buffer, 0)],
-                ResourceStateTransitionMode::Transition,
+                [(vertex_buffer.transition_state(), 0)],
                 SetVertexBufferFlags::Reset,
             );
-            context.set_index_buffer(index_buffer, 0, ResourceStateTransitionMode::Transition);
+            context.set_index_buffer(index_buffer.transition_state(), 0);
 
             context.set_blend_factors(Some(&[0.0, 0.0, 0.0, 0.0]));
 
@@ -912,8 +911,7 @@ impl ImguiFrame {
                                     .set(texture_view, SetShaderResourceFlags::None);
 
                                 graphics_context.commit_shader_resources(
-                                    &self.data.shader_resource_binding,
-                                    ResourceStateTransitionMode::Transition,
+                                    self.data.shader_resource_binding.transition_state(),
                                 );
                             }
 
@@ -944,8 +942,7 @@ impl ImguiFrame {
                                     let offset = std::mem::size_of::<ImDrawVert>()
                                         * (cmd_params.vtx_offset + global_vtx_offset as usize);
                                     graphics_context.set_vertex_buffers(
-                                        &[(vertex_buffer, offset as u64)],
-                                        ResourceStateTransitionMode::Transition,
+                                        [(vertex_buffer.transition_state(), offset as u64)],
                                         SetVertexBufferFlags::None,
                                     );
                                     draw_attribs.build()

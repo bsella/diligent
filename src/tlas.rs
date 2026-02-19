@@ -10,7 +10,10 @@ use static_assertions::const_assert_eq;
 use crate::{
     Ported,
     blas::{BottomLevelAS, RayTracingBuildAsFlags, ScratchBufferSizes},
-    device_object::{DeviceObject, DeviceObjectAttribs},
+    device_object::{
+        DeviceObject, DeviceObjectAttribs, ResourceStateNoTransition, ResourceStateTransition,
+        ResourceStateVerify,
+    },
     graphics_types::ResourceState,
 };
 
@@ -229,5 +232,17 @@ impl TopLevelAS {
 
     pub fn get_state(&self) -> ResourceState {
         ResourceState::from_bits_retain(unsafe_member_call!(self, TopLevelAS, GetState))
+    }
+}
+
+impl TopLevelAS {
+    pub fn transition_state(&mut self) -> ResourceStateTransition<'_, TopLevelAS> {
+        ResourceStateTransition(self)
+    }
+    pub fn verify_state(&self) -> ResourceStateVerify<'_, TopLevelAS> {
+        ResourceStateVerify(self)
+    }
+    pub fn no_state_transition(&self) -> ResourceStateNoTransition<'_, TopLevelAS> {
+        ResourceStateNoTransition(self)
     }
 }
