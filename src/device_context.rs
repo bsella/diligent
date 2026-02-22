@@ -314,12 +314,12 @@ where
     ) -> Self {
         let (counter_buffer, counter_offset) = counter_buffer
             .map_or((std::ptr::null_mut(), 0), |(buffer, offset)| {
-                (buffer.resource_ref(), offset)
+                (buffer.sys_ptr(), offset)
             });
 
         Self(
             diligent_sys::DrawIndirectAttribs {
-                pAttribsBuffer: attribs_buffer.resource_ref(),
+                pAttribsBuffer: attribs_buffer.sys_ptr(),
                 DrawArgsOffset: draw_args_offset,
                 Flags: flags.bits(),
                 DrawCount: draw_count,
@@ -368,12 +368,12 @@ where
     ) -> Self {
         let (counter_buffer, counter_offset) = counter_buffer
             .map_or((std::ptr::null_mut(), 0), |(buffer, offset)| {
-                (buffer.resource_ref(), offset)
+                (buffer.sys_ptr(), offset)
             });
         Self(
             diligent_sys::DrawIndexedIndirectAttribs {
                 IndexType: index_type.into(),
-                pAttribsBuffer: attribs_buffer.resource_ref(),
+                pAttribsBuffer: attribs_buffer.sys_ptr(),
                 DrawArgsOffset: draw_args_offset,
                 Flags: flags.bits(),
                 DrawCount: draw_count,
@@ -442,11 +442,11 @@ where
     ) -> Self {
         let (counter_buffer, counter_offset) = counter_buffer
             .map_or((std::ptr::null_mut(), 0), |(buffer, offset)| {
-                (buffer.resource_ref(), offset)
+                (buffer.sys_ptr(), offset)
             });
         Self(
             diligent_sys::DrawMeshIndirectAttribs {
-                pAttribsBuffer: attribs_buffer.resource_ref(),
+                pAttribsBuffer: attribs_buffer.sys_ptr(),
                 DrawArgsOffset: draw_args_offset,
                 Flags: flags.bits(),
                 CommandCount: command_count,
@@ -628,7 +628,7 @@ where
     ) -> Self {
         Self(
             diligent_sys::DispatchComputeIndirectAttribs {
-                pAttribsBuffer: attribs_buffer.resource_ref(),
+                pAttribsBuffer: attribs_buffer.sys_ptr(),
                 AttribsBufferStateTransitionMode: AttribsBuffer::TRANSITION_MODE,
                 DispatchArgsByteOffset: dispatch_args_byte_offset,
                 #[cfg(feature = "metal")]
@@ -687,17 +687,21 @@ impl Default for RaytracingGeometryFlags {
 const_assert_eq!(diligent_sys::RAYTRACING_GEOMETRY_FLAG_LAST, 2);
 
 #[repr(transparent)]
-pub struct BLASBuildBoundingBoxData<'name, 'buffer>(
+pub struct BLASBuildBoundingBoxData<'name, 'buffer, GeometryBufferTransition>(
     diligent_sys::BLASBuildBoundingBoxData,
-    PhantomData<(&'name (), &'buffer ())>,
+    PhantomData<(&'name (), &'buffer GeometryBufferTransition)>,
 );
 #[bon::bon]
-impl<'name, 'buffer> BLASBuildBoundingBoxData<'name, 'buffer> {
+impl<'name, 'buffer, GeometryBufferTransition>
+    BLASBuildBoundingBoxData<'name, 'buffer, GeometryBufferTransition>
+where
+    GeometryBufferTransition: ResourceTransition<'buffer, Buffer>,
+{
     #[builder]
     pub fn new(
         geometry_name: &'name CStr,
 
-        box_buffer: &'buffer Buffer,
+        box_buffer: GeometryBufferTransition,
 
         #[builder(default = 0)] box_offset: u64,
 
@@ -722,24 +726,21 @@ impl<'name, 'buffer> BLASBuildBoundingBoxData<'name, 'buffer> {
 }
 
 #[repr(transparent)]
-pub struct BLASBuildTriangleData<'geometry_name, 'vertex_buffer, 'index_buffer, 'transform_buffer>(
+pub struct BLASBuildTriangleData<'geometry_name, 'geometry, GeometryBufferTransition>(
     diligent_sys::BLASBuildTriangleData,
-    PhantomData<(
-        &'geometry_name (),
-        &'vertex_buffer (),
-        &'index_buffer (),
-        &'transform_buffer (),
-    )>,
+    PhantomData<(&'geometry_name (), &'geometry GeometryBufferTransition)>,
 );
 #[bon::bon]
-impl<'geometry_name, 'vertex_buffer, 'index_buffer, 'transform_buffer>
-    BLASBuildTriangleData<'geometry_name, 'vertex_buffer, 'index_buffer, 'transform_buffer>
+impl<'geometry_name, 'geometry, GeometryBufferTransition>
+    BLASBuildTriangleData<'geometry_name, 'geometry, GeometryBufferTransition>
+where
+    GeometryBufferTransition: ResourceTransition<'geometry, Buffer>,
 {
     #[builder]
     pub fn new(
         geometry_name: &'geometry_name CStr,
 
-        vertex_buffer: &'vertex_buffer Buffer,
+        vertex_buffer: GeometryBufferTransition,
 
         #[builder(default = 0)] vertex_offset: u64,
 
@@ -753,9 +754,9 @@ impl<'geometry_name, 'vertex_buffer, 'index_buffer, 'transform_buffer>
 
         primitive_count: usize,
 
-        index_buffer: Option<(&'index_buffer Buffer, u64, Option<ValueType>)>,
+        index_buffer: Option<(GeometryBufferTransition, u64, Option<ValueType>)>,
 
-        transform_buffer: Option<(&'transform_buffer Buffer, u64)>,
+        transform_buffer: Option<(GeometryBufferTransition, u64)>,
 
         #[builder(default)] flags: RaytracingGeometryFlags,
     ) -> Self {
@@ -805,24 +806,21 @@ pub struct BuildBLASAttribs<
     'scratch_buffer,
     'triangles,
     'triangles_geometry_name,
-    'triangles_vertex_buffer,
-    'triangles_index_buffer,
-    'triangles_transform_buffer,
+    'triangles_geometry_buffers,
     'bounding_boxes,
     'bb_name,
     'bb_buffer,
     BLASTransition,
     ScratchBufferTransition,
+    GeometryBufferTransition,
 >(
     diligent_sys::BuildBLASAttribs,
     PhantomData<(
         &'blas BLASTransition,
         &'scratch_buffer ScratchBufferTransition,
-        &'triangles (),
+        &'triangles GeometryBufferTransition,
         &'triangles_geometry_name (),
-        &'triangles_vertex_buffer (),
-        &'triangles_index_buffer (),
-        &'triangles_transform_buffer (),
+        &'triangles_geometry_buffers (),
         &'bounding_boxes (),
         &'bb_name (),
         &'bb_buffer (),
@@ -834,50 +832,46 @@ impl<
     'scratch_buffer,
     'triangles,
     'triangles_geometry_name,
-    'triangles_vertex_buffer,
-    'triangles_index_buffer,
-    'triangles_transform_buffer,
+    'triangles_geometry_buffers,
     'bounding_boxes,
     'bb_name,
     'bb_buffer,
     BLASTransition,
     ScratchBufferTransition,
+    GeometryBufferTransition,
 >
     BuildBLASAttribs<
         'blas,
         'scratch_buffer,
         'triangles,
         'triangles_geometry_name,
-        'triangles_vertex_buffer,
-        'triangles_index_buffer,
-        'triangles_transform_buffer,
+        'triangles_geometry_buffers,
         'bounding_boxes,
         'bb_name,
         'bb_buffer,
         BLASTransition,
         ScratchBufferTransition,
+        GeometryBufferTransition,
     >
 where
     BLASTransition: ResourceTransition<'blas, BottomLevelAS>,
     ScratchBufferTransition: ResourceTransition<'scratch_buffer, Buffer>,
+    GeometryBufferTransition: ResourceTransition<'triangles, Buffer>,
 {
     #[builder]
     pub fn new(
         blas: BLASTransition,
 
-        #[builder(default = ResourceStateTransitionMode::None)]
-        geometry_transition_mode: ResourceStateTransitionMode,
-
         #[builder(default)] triangle_data: &'triangles [BLASBuildTriangleData<
             'triangles_geometry_name,
-            'triangles_vertex_buffer,
-            'triangles_index_buffer,
-            'triangles_transform_buffer,
+            'triangles_geometry_buffers,
+            GeometryBufferTransition,
         >],
 
         #[builder(default)] box_data: &'bounding_boxes [BLASBuildBoundingBoxData<
             'bb_name,
             'bb_buffer,
+            GeometryBufferTransition,
         >],
 
         scratch_buffer: ScratchBufferTransition,
@@ -888,9 +882,9 @@ where
     ) -> Self {
         Self(
             diligent_sys::BuildBLASAttribs {
-                pBLAS: blas.resource_ref(),
+                pBLAS: blas.sys_ptr(),
                 BLASTransitionMode: BLASTransition::TRANSITION_MODE,
-                GeometryTransitionMode: geometry_transition_mode.into(),
+                GeometryTransitionMode: GeometryBufferTransition::TRANSITION_MODE,
                 pTriangleData: triangle_data
                     .first()
                     .map_or(std::ptr::null(), |triangle| &triangle.0),
@@ -899,7 +893,7 @@ where
                     .first()
                     .map_or(std::ptr::null(), |box_data| &box_data.0),
                 BoxDataCount: box_data.len() as u32,
-                pScratchBuffer: scratch_buffer.resource_ref(),
+                pScratchBuffer: scratch_buffer.sys_ptr(),
                 ScratchBufferOffset: scratch_buffer_offset,
                 ScratchBufferTransitionMode: ScratchBufferTransition::TRANSITION_MODE,
                 Update: update,
@@ -920,12 +914,13 @@ pub struct BuildTLASAttribs<
     TLASTransition,
     InstanceBufferTransition,
     ScratchBufferTransition,
+    BlasTriansition,
 >(
     pub(crate) diligent_sys::BuildTLASAttribs,
     PhantomData<(
         &'tlas TLASTransition,
         &'tlas_instance_name (),
-        &'blas (),
+        &'blas BlasTriansition,
         &'instance_buffer InstanceBufferTransition,
         &'scratch_buffer ScratchBufferTransition,
         &'instances (),
@@ -942,6 +937,7 @@ impl<
     TLASTransition,
     InstanceBufferTransition,
     ScratchBufferTransition,
+    BlasTriansition,
 >
     BuildTLASAttribs<
         'tlas,
@@ -953,20 +949,23 @@ impl<
         TLASTransition,
         InstanceBufferTransition,
         ScratchBufferTransition,
+        BlasTriansition,
     >
 where
     TLASTransition: ResourceTransition<'tlas, TopLevelAS>,
     InstanceBufferTransition: ResourceTransition<'instance_buffer, Buffer>,
     ScratchBufferTransition: ResourceTransition<'scratch_buffer, Buffer>,
+    BlasTriansition: ResourceTransition<'blas, BottomLevelAS>,
 {
     #[builder]
     pub fn new(
         tlas: TLASTransition,
 
-        #[builder(default = ResourceStateTransitionMode::None)]
-        blas_transition_mode: ResourceStateTransitionMode,
-
-        instances: &'instances [TLASBuildInstanceData<'tlas_instance_name, 'blas>],
+        instances: &'instances [TLASBuildInstanceData<
+            'tlas_instance_name,
+            'blas,
+            BlasTriansition,
+        >],
 
         instance_buffer: InstanceBufferTransition,
 
@@ -986,20 +985,20 @@ where
     ) -> Self {
         Self(
             diligent_sys::BuildTLASAttribs {
-                pTLAS: tlas.resource_ref(),
+                pTLAS: tlas.sys_ptr(),
                 TLASTransitionMode: TLASTransition::TRANSITION_MODE,
-                BLASTransitionMode: blas_transition_mode.into(),
+                BLASTransitionMode: BlasTriansition::TRANSITION_MODE,
                 pInstances: instances
                     .first()
                     .map_or(std::ptr::null(), |instance| &instance.0),
                 InstanceCount: instances.len() as u32,
-                pInstanceBuffer: instance_buffer.resource_ref(),
+                pInstanceBuffer: instance_buffer.sys_ptr(),
                 InstanceBufferOffset: instance_buffer_offset,
                 InstanceBufferTransitionMode: InstanceBufferTransition::TRANSITION_MODE,
                 HitGroupStride: hit_group_stride,
                 BaseContributionToHitGroupIndex: base_contribution_to_hit_group_index,
                 BindingMode: binding_mode.into(),
-                pScratchBuffer: scratch_buffer.resource_ref(),
+                pScratchBuffer: scratch_buffer.sys_ptr(),
                 ScratchBufferOffset: scratch_buffer_offset,
                 ScratchBufferTransitionMode: ScratchBufferTransition::TRANSITION_MODE,
                 Update: update,
@@ -1010,27 +1009,28 @@ where
 }
 
 #[repr(transparent)]
-pub struct UpdateIndirectRTBufferAttribs<'buffer>(
+pub struct UpdateIndirectRTBufferAttribs<'buffer, AttribsBufferTransition>(
     diligent_sys::UpdateIndirectRTBufferAttribs,
-    PhantomData<&'buffer ()>,
+    PhantomData<&'buffer AttribsBufferTransition>,
 );
 
 #[bon::bon]
-impl<'buffer> UpdateIndirectRTBufferAttribs<'buffer> {
+impl<'buffer, AttribsBufferTransition>
+    UpdateIndirectRTBufferAttribs<'buffer, AttribsBufferTransition>
+where
+    AttribsBufferTransition: ResourceTransition<'buffer, Buffer>,
+{
     #[builder]
     pub fn new(
-        attribs_buffer: &'buffer Buffer,
+        attribs_buffer: AttribsBufferTransition,
 
         #[builder(default = 0)] attribs_buffer_offset: u64,
-
-        #[builder(default = ResourceStateTransitionMode::None)]
-        transition_mode: ResourceStateTransitionMode,
     ) -> Self {
         Self(
             diligent_sys::UpdateIndirectRTBufferAttribs {
                 pAttribsBuffer: attribs_buffer.sys_ptr(),
                 AttribsBufferOffset: attribs_buffer_offset,
-                TransitionMode: transition_mode.into(),
+                TransitionMode: AttribsBufferTransition::TRANSITION_MODE,
             },
             PhantomData,
         )
@@ -1089,7 +1089,7 @@ where
         Self(
             diligent_sys::TraceRaysIndirectAttribs {
                 pSBT: sbt.sys_ptr(),
-                pAttribsBuffer: attribs_buffer.resource_ref(),
+                pAttribsBuffer: attribs_buffer.sys_ptr(),
                 AttribsBufferStateTransitionMode: AttribsBufferTransition::TRANSITION_MODE,
                 ArgsByteOffset: args_byte_offset,
             },
@@ -1142,12 +1142,12 @@ where
     ) -> Self {
         CopyTextureAttribs(
             diligent_sys::CopyTextureAttribs {
-                pSrcTexture: src_texture.resource_ref(),
+                pSrcTexture: src_texture.sys_ptr(),
                 SrcMipLevel: src_mip_level,
                 SrcSlice: src_slice,
                 pSrcBox: &src_box.0,
                 SrcTextureTransitionMode: SrcTextureTransition::TRANSITION_MODE,
-                pDstTexture: dst_texture.resource_ref(),
+                pDstTexture: dst_texture.sys_ptr(),
                 DstMipLevel: dst_mip_level,
                 DstSlice: dst_slice,
                 DstX: dst_x,
@@ -1161,29 +1161,38 @@ where
 }
 
 #[repr(transparent)]
-pub struct ResolveTextureSubresourceAttribs(diligent_sys::ResolveTextureSubresourceAttribs);
+pub struct ResolveTextureSubresourceAttribs<SrcTextureTransition, DstTextureTransition>(
+    diligent_sys::ResolveTextureSubresourceAttribs,
+    PhantomData<(SrcTextureTransition, DstTextureTransition)>,
+);
 
 #[bon::bon]
-impl ResolveTextureSubresourceAttribs {
+impl<'src, 'dst, SrcTextureTransition, DstTextureTransition>
+    ResolveTextureSubresourceAttribs<SrcTextureTransition, DstTextureTransition>
+where
+    SrcTextureTransition: ResourceTransition<'src, Texture>,
+    DstTextureTransition: ResourceTransition<'dst, Texture>,
+{
     #[builder]
     pub fn new(
         src_mip_level: u32,
         src_slice: u32,
-        src_texture_transition_mode: ResourceStateTransitionMode,
         dst_mip_level: u32,
         dst_slice: u32,
-        dst_texture_transition_mode: ResourceStateTransitionMode,
         format: TextureFormat,
     ) -> Self {
-        Self(diligent_sys::ResolveTextureSubresourceAttribs {
-            SrcMipLevel: src_mip_level,
-            SrcSlice: src_slice,
-            SrcTextureTransitionMode: src_texture_transition_mode.into(),
-            DstMipLevel: dst_mip_level,
-            DstSlice: dst_slice,
-            DstTextureTransitionMode: dst_texture_transition_mode.into(),
-            Format: format.into(),
-        })
+        Self(
+            diligent_sys::ResolveTextureSubresourceAttribs {
+                SrcMipLevel: src_mip_level,
+                SrcSlice: src_slice,
+                SrcTextureTransitionMode: SrcTextureTransition::TRANSITION_MODE,
+                DstMipLevel: dst_mip_level,
+                DstSlice: dst_slice,
+                DstTextureTransitionMode: DstTextureTransition::TRANSITION_MODE,
+                Format: format.into(),
+            },
+            PhantomData,
+        )
     }
 }
 
@@ -1208,8 +1217,8 @@ where
     ) -> Self {
         Self(
             diligent_sys::WriteBLASCompactedSizeAttribs {
-                pBLAS: blas.resource_ref(),
-                pDestBuffer: dest_buffer.resource_ref(),
+                pBLAS: blas.sys_ptr(),
+                pDestBuffer: dest_buffer.sys_ptr(),
                 DestBufferOffset: dest_buffer_offset,
                 BLASTransitionMode: BLASTransition::TRANSITION_MODE,
                 BufferTransitionMode: BufferTransition::TRANSITION_MODE,
@@ -1240,8 +1249,8 @@ where
     ) -> Self {
         Self(
             diligent_sys::WriteTLASCompactedSizeAttribs {
-                pTLAS: tlas.resource_ref(),
-                pDestBuffer: dest_buffer.resource_ref(),
+                pTLAS: tlas.sys_ptr(),
+                pDestBuffer: dest_buffer.sys_ptr(),
                 DestBufferOffset: dest_buffer_offset,
                 TLASTransitionMode: TLASTransition::TRANSITION_MODE,
                 BufferTransitionMode: BufferTransition::TRANSITION_MODE,
@@ -1268,8 +1277,8 @@ where
     pub fn new(src: SrcTransition, dst: DstTransition, mode: CopyAsMode) -> Self {
         CopyBLASAttribs(
             diligent_sys::CopyBLASAttribs {
-                pSrc: src.resource_ref(),
-                pDst: dst.resource_ref(),
+                pSrc: src.sys_ptr(),
+                pDst: dst.sys_ptr(),
                 Mode: mode.into(),
                 SrcTransitionMode: SrcTransition::TRANSITION_MODE,
                 DstTransitionMode: DstTransition::TRANSITION_MODE,
@@ -1296,8 +1305,8 @@ where
     pub fn new(src: SrcTransition, dst: DstTransition, mode: CopyAsMode) -> Self {
         CopyTLASAttribs(
             diligent_sys::CopyTLASAttribs {
-                pSrc: src.resource_ref(),
-                pDst: dst.resource_ref(),
+                pSrc: src.sys_ptr(),
+                pDst: dst.sys_ptr(),
                 Mode: mode.into(),
                 SrcTransitionMode: SrcTransition::TRANSITION_MODE,
                 DstTransitionMode: DstTransition::TRANSITION_MODE,
@@ -1980,7 +1989,7 @@ impl DeviceContext {
             self,
             DeviceContext,
             CommitShaderResources,
-            srb.resource_ref(),
+            srb.sys_ptr(),
             SRBTransition::TRANSITION_MODE
         )
     }
@@ -2008,7 +2017,7 @@ impl DeviceContext {
         let num_buffers = buffers.as_ref().len();
         let (buffer_pointers, offsets): (Vec<_>, Vec<_>) = buffers
             .into_iter()
-            .map(|(buffer, offset)| (buffer.resource_ref() as *mut _, offset))
+            .map(|(buffer, offset)| (buffer.sys_ptr() as *mut _, offset))
             .unzip();
 
         unsafe_member_call!(
@@ -2041,7 +2050,7 @@ impl DeviceContext {
             self,
             DeviceContext,
             SetIndexBuffer,
-            index_buffer.resource_ref(),
+            index_buffer.sys_ptr(),
             offset,
             BufferTransition::TRANSITION_MODE
         )
@@ -2098,7 +2107,7 @@ impl DeviceContext {
             render_targets.first().map_or(std::ptr::null_mut(), |rt| {
                 std::ptr::from_ref(rt) as *mut _
             }),
-            depth_stencil.map_or(std::ptr::null_mut(), |v| v.resource_ref()),
+            depth_stencil.map_or(std::ptr::null_mut(), |v| v.sys_ptr()),
             TextureViewTransition::TRANSITION_MODE
         )
     }
@@ -2128,7 +2137,7 @@ impl DeviceContext {
             self,
             DeviceContext,
             ClearDepthStencil,
-            view.resource_ref(),
+            view.sys_ptr(),
             diligent_sys::CLEAR_DEPTH_FLAG as diligent_sys::CLEAR_DEPTH_STENCIL_FLAGS,
             depth,
             0,
@@ -2147,7 +2156,7 @@ impl DeviceContext {
             self,
             DeviceContext,
             ClearDepthStencil,
-            view.resource_ref(),
+            view.sys_ptr(),
             diligent_sys::CLEAR_STENCIL_FLAG as diligent_sys::CLEAR_DEPTH_STENCIL_FLAGS,
             0.0,
             stencil,
@@ -2167,7 +2176,7 @@ impl DeviceContext {
             self,
             DeviceContext,
             ClearDepthStencil,
-            view.resource_ref(),
+            view.sys_ptr(),
             diligent_sys::CLEAR_STENCIL_FLAG as diligent_sys::CLEAR_DEPTH_STENCIL_FLAGS
                 | diligent_sys::CLEAR_DEPTH_FLAG as diligent_sys::CLEAR_DEPTH_STENCIL_FLAGS,
             depth,
@@ -2187,7 +2196,7 @@ impl DeviceContext {
             self,
             DeviceContext,
             ClearRenderTarget,
-            view.resource_ref(),
+            view.sys_ptr(),
             rgba.as_ptr() as *const std::os::raw::c_void,
             TextureViewTransition::TRANSITION_MODE
         )
@@ -2208,7 +2217,7 @@ impl DeviceContext {
             self,
             DeviceContext,
             UpdateBuffer,
-            buffer.resource_ref(),
+            buffer.sys_ptr(),
             offset,
             size,
             std::ptr::from_ref(data) as *const std::os::raw::c_void,
@@ -2229,7 +2238,7 @@ impl DeviceContext {
             self,
             DeviceContext,
             UpdateBuffer,
-            buffer.resource_ref(),
+            buffer.sys_ptr(),
             0,
             std::mem::size_of_val(data) as u64,
             data.first()
@@ -2253,10 +2262,10 @@ impl DeviceContext {
             self,
             DeviceContext,
             CopyBuffer,
-            src_buffer.resource_ref(),
+            src_buffer.sys_ptr(),
             src_offset,
             SrcBufferTransition::TRANSITION_MODE,
-            dst_buffer.resource_ref(),
+            dst_buffer.sys_ptr(),
             dst_offset,
             size,
             DstBufferTransition::TRANSITION_MODE
@@ -2311,7 +2320,7 @@ impl DeviceContext {
             self,
             DeviceContext,
             UpdateTexture,
-            texture.resource_ref(),
+            texture.sys_ptr(),
             mip_level,
             slice,
             &dst_box.0,
@@ -2409,12 +2418,15 @@ impl DeviceContext {
         )
     }
 
-    pub fn resolve_texture_subresource(
+    pub fn resolve_texture_subresource<'src, 'dst, SrcTexture, DstTexture>(
         &self,
-        src_texture: &Texture,
-        dst_texture: &mut Texture,
-        resolve_attribs: &ResolveTextureSubresourceAttribs,
-    ) {
+        src_texture: SrcTexture,
+        dst_texture: DstTexture,
+        resolve_attribs: &ResolveTextureSubresourceAttribs<SrcTexture, DstTexture>,
+    ) where
+        SrcTexture: ResourceTransition<'src, Texture>,
+        DstTexture: ResourceTransition<'dst, Texture>,
+    {
         unsafe_member_call!(
             self,
             DeviceContext,
@@ -2425,19 +2437,25 @@ impl DeviceContext {
         )
     }
 
-    pub fn build_blas<BLASTransition, ScratchBufferTransition>(
+    pub fn build_blas<BLASTransition, ScratchBufferTransition, GeometryTransition>(
         &self,
-        attribs: &BuildBLASAttribs<BLASTransition, ScratchBufferTransition>,
+        attribs: &BuildBLASAttribs<BLASTransition, ScratchBufferTransition, GeometryTransition>,
     ) {
         unsafe_member_call!(self, DeviceContext, BuildBLAS, &attribs.0)
     }
 
-    pub fn build_tlas<TLASTransition, InstanceBufferTransition, ScratchBufferTransition>(
+    pub fn build_tlas<
+        TLASTransition,
+        InstanceBufferTransition,
+        ScratchBufferTransition,
+        BlasTriansition,
+    >(
         &self,
         attribs: &BuildTLASAttribs<
             TLASTransition,
             InstanceBufferTransition,
             ScratchBufferTransition,
+            BlasTriansition,
         >,
     ) {
         unsafe_member_call!(self, DeviceContext, BuildTLAS, &attribs.0)
@@ -2471,18 +2489,22 @@ impl DeviceContext {
         unsafe_member_call!(self, DeviceContext, WriteTLASCompactedSize, &attribs.0)
     }
 
-    pub fn update_sbt(
-        &self,
-        sbt: &mut ShaderBindingTable,
-        attribs: Option<&UpdateIndirectRTBufferAttribs>,
-    ) {
+    pub fn update_sbt(&self, sbt: &mut ShaderBindingTable) {
         unsafe_member_call!(
             self,
             DeviceContext,
             UpdateSBT,
             sbt.sys_ptr(),
-            attribs.map_or(std::ptr::null_mut(), |attribs| &attribs.0)
+            std::ptr::null_mut()
         )
+    }
+
+    pub fn update_sbt_with_attribs<Transition>(
+        &self,
+        sbt: &mut ShaderBindingTable,
+        attribs: &UpdateIndirectRTBufferAttribs<Transition>,
+    ) {
+        unsafe_member_call!(self, DeviceContext, UpdateSBT, sbt.sys_ptr(), &attribs.0)
     }
 
     pub fn debug_group(&self, name: &CStr, color: Option<[f32; 4]>) -> ScopedDebugGroup<'_> {

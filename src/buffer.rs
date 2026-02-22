@@ -206,13 +206,13 @@ impl Buffer {
 
 impl Buffer {
     pub fn transition_state(&mut self) -> ResourceStateTransition<'_, Buffer> {
-        ResourceStateTransition(self)
+        ResourceStateTransition::new(self)
     }
     pub fn verify_state(&self) -> ResourceStateVerify<'_, Buffer> {
-        ResourceStateVerify(self)
+        ResourceStateVerify::new(self)
     }
     pub fn no_state_transition(&self) -> ResourceStateNoTransition<'_, Buffer> {
-        ResourceStateNoTransition(self)
+        ResourceStateNoTransition::new(self)
     }
 }
 

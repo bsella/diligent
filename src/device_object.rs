@@ -1,4 +1,4 @@
-use std::ffi::CStr;
+use std::{ffi::CStr, marker::PhantomData};
 
 use crate::{Ported, object::Object};
 
@@ -31,50 +31,79 @@ impl DeviceObjectAttribs {
 pub trait ResourceTransition<'resource, ResourceType: Ported> {
     const TRANSITION_MODE: diligent_sys::RESOURCE_STATE_TRANSITION_MODE;
 
-    fn resource_ref(self) -> *mut ResourceType::SysType;
+    fn sys_ptr(self) -> *mut ResourceType::SysType;
 }
 
-#[must_use = ""]
+#[must_use = "The resource transition functions don't transition the state of the resource immediately.
+They act as a marker for the resource transition which occurs asynchronously and ensures the exclusivity
+of resources with transitioning states"]
 #[repr(transparent)]
-pub struct ResourceStateTransition<'resource, ResourceType>(pub(crate) &'resource mut ResourceType);
+pub struct ResourceStateTransitionMode<
+    'resource,
+    ResourceType: Ported,
+    const TRANSITION_MODE: diligent_sys::RESOURCE_STATE_TRANSITION_MODE,
+>(
+    *mut ResourceType::SysType,
+    PhantomData<&'resource mut ResourceType>,
+);
 
-impl<'resource, ResourceType: Ported> ResourceTransition<'resource, ResourceType>
-    for ResourceStateTransition<'resource, ResourceType>
+impl<
+    'resource,
+    ResourceType: Ported,
+    const TRANSITION_MODE: diligent_sys::RESOURCE_STATE_TRANSITION_MODE,
+> Clone for ResourceStateTransitionMode<'resource, ResourceType, TRANSITION_MODE>
 {
-    const TRANSITION_MODE: diligent_sys::RESOURCE_STATE_TRANSITION_MODE =
-        diligent_sys::RESOURCE_STATE_TRANSITION_MODE_TRANSITION as _;
-
-    fn resource_ref(self) -> *mut ResourceType::SysType {
-        self.0.sys_ptr()
+    fn clone(&self) -> Self {
+        ResourceStateTransitionMode(self.0, PhantomData)
     }
 }
 
-#[must_use = ""]
-#[repr(transparent)]
-pub struct ResourceStateVerify<'resource, ResourceType>(pub(crate) &'resource ResourceType);
-
-impl<'resource, ResourceType: Ported> ResourceTransition<'resource, ResourceType>
-    for ResourceStateVerify<'resource, ResourceType>
+impl<
+    'resource,
+    ResourceType: Ported,
+    const TRANSITION_MODE: diligent_sys::RESOURCE_STATE_TRANSITION_MODE,
+> ResourceTransition<'resource, ResourceType>
+    for ResourceStateTransitionMode<'resource, ResourceType, TRANSITION_MODE>
 {
-    const TRANSITION_MODE: diligent_sys::RESOURCE_STATE_TRANSITION_MODE =
-        diligent_sys::RESOURCE_STATE_TRANSITION_MODE_VERIFY as _;
+    const TRANSITION_MODE: diligent_sys::RESOURCE_STATE_TRANSITION_MODE = TRANSITION_MODE;
 
-    fn resource_ref(self) -> *mut ResourceType::SysType {
-        self.0.sys_ptr()
+    fn sys_ptr(self) -> *mut ResourceType::SysType {
+        self.0
     }
 }
 
-#[must_use = ""]
-#[repr(transparent)]
-pub struct ResourceStateNoTransition<'resource, ResourceType>(pub(crate) &'resource ResourceType);
+pub type ResourceStateTransition<'resource, ResourceType> = ResourceStateTransitionMode<
+    'resource,
+    ResourceType,
+    { diligent_sys::RESOURCE_STATE_TRANSITION_MODE_TRANSITION as _ },
+>;
 
-impl<'resource, ResourceType: Ported> ResourceTransition<'resource, ResourceType>
-    for ResourceStateNoTransition<'resource, ResourceType>
-{
-    const TRANSITION_MODE: diligent_sys::RESOURCE_STATE_TRANSITION_MODE =
-        diligent_sys::RESOURCE_STATE_TRANSITION_MODE_NONE as _;
+impl<'resource, ResourceType: Ported> ResourceStateTransition<'resource, ResourceType> {
+    pub(crate) fn new(resource: &mut ResourceType) -> Self {
+        Self(resource.sys_ptr(), PhantomData)
+    }
+}
 
-    fn resource_ref(self) -> *mut ResourceType::SysType {
-        self.0.sys_ptr()
+pub type ResourceStateVerify<'resource, ResourceType> = ResourceStateTransitionMode<
+    'resource,
+    ResourceType,
+    { diligent_sys::RESOURCE_STATE_TRANSITION_MODE_VERIFY as _ },
+>;
+
+impl<'resource, ResourceType: Ported> ResourceStateVerify<'resource, ResourceType> {
+    pub(crate) fn new(resource: &ResourceType) -> Self {
+        Self(resource.sys_ptr(), PhantomData)
+    }
+}
+
+pub type ResourceStateNoTransition<'resource, ResourceType> = ResourceStateTransitionMode<
+    'resource,
+    ResourceType,
+    { diligent_sys::RESOURCE_STATE_TRANSITION_MODE_NONE as _ },
+>;
+
+impl<'resource, ResourceType: Ported> ResourceStateNoTransition<'resource, ResourceType> {
+    pub(crate) fn new(resource: &ResourceType) -> Self {
+        Self(resource.sys_ptr(), PhantomData)
     }
 }

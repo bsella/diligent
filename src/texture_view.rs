@@ -214,12 +214,12 @@ impl TextureView {
 
 impl TextureView {
     pub fn transition_state(&mut self) -> ResourceStateTransition<'_, TextureView> {
-        ResourceStateTransition(self)
+        ResourceStateTransition::new(self)
     }
     pub fn verify_state(&self) -> ResourceStateVerify<'_, TextureView> {
-        ResourceStateVerify(self)
+        ResourceStateVerify::new(self)
     }
     pub fn no_state_transition(&self) -> ResourceStateNoTransition<'_, TextureView> {
-        ResourceStateNoTransition(self)
+        ResourceStateNoTransition::new(self)
     }
 }

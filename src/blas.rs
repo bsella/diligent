@@ -212,12 +212,12 @@ impl BottomLevelAS {
 
 impl BottomLevelAS {
     pub fn transition_state(&mut self) -> ResourceStateTransition<'_, BottomLevelAS> {
-        ResourceStateTransition(self)
+        ResourceStateTransition::new(self)
     }
     pub fn verify_state(&self) -> ResourceStateVerify<'_, BottomLevelAS> {
-        ResourceStateVerify(self)
+        ResourceStateVerify::new(self)
     }
     pub fn no_state_transition(&self) -> ResourceStateNoTransition<'_, BottomLevelAS> {
-        ResourceStateNoTransition(self)
+        ResourceStateNoTransition::new(self)
     }
 }

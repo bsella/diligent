@@ -94,12 +94,12 @@ impl ShaderResourceBinding {
 
 impl ShaderResourceBinding {
     pub fn transition_state(&mut self) -> ResourceStateTransition<'_, ShaderResourceBinding> {
-        ResourceStateTransition(self)
+        ResourceStateTransition::new(self)
     }
     pub fn verify_state(&self) -> ResourceStateVerify<'_, ShaderResourceBinding> {
-        ResourceStateVerify(self)
+        ResourceStateVerify::new(self)
     }
     pub fn no_state_transition(&self) -> ResourceStateNoTransition<'_, ShaderResourceBinding> {
-        ResourceStateNoTransition(self)
+        ResourceStateNoTransition::new(self)
     }
 }

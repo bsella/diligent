@@ -8,11 +8,10 @@ use bitflags::bitflags;
 use static_assertions::const_assert_eq;
 
 use crate::{
-    Ported,
     blas::{BottomLevelAS, RayTracingBuildAsFlags, ScratchBufferSizes},
     device_object::{
         DeviceObject, DeviceObjectAttribs, ResourceStateNoTransition, ResourceStateTransition,
-        ResourceStateVerify,
+        ResourceStateVerify, ResourceTransition,
     },
     graphics_types::ResourceState,
 };
@@ -98,17 +97,23 @@ impl TLASBuildInfo {
 }
 
 #[repr(transparent)]
-pub struct TLASBuildInstanceData<'instance_name, 'blas>(
+#[derive(Clone)]
+pub struct TLASBuildInstanceData<'instance_name, 'blas, BlasTransition>(
     pub(crate) diligent_sys::TLASBuildInstanceData,
-    PhantomData<(&'instance_name (), &'blas ())>,
+    PhantomData<(&'instance_name (), &'blas BlasTransition)>,
 );
+
 #[bon::bon]
-impl<'instance_name, 'blas> TLASBuildInstanceData<'instance_name, 'blas> {
-    #[builder]
+impl<'instance_name, 'blas, BlasTransition>
+    TLASBuildInstanceData<'instance_name, 'blas, BlasTransition>
+where
+    BlasTransition: ResourceTransition<'blas, BottomLevelAS>,
+{
+    #[builder(derive(Clone))]
     pub fn new(
         instance_name: &'instance_name CStr,
 
-        blas: &'blas BottomLevelAS,
+        blas: BlasTransition,
 
         transform: &[f32; 4 * 3],
 
@@ -237,12 +242,12 @@ impl TopLevelAS {
 
 impl TopLevelAS {
     pub fn transition_state(&mut self) -> ResourceStateTransition<'_, TopLevelAS> {
-        ResourceStateTransition(self)
+        ResourceStateTransition::new(self)
     }
     pub fn verify_state(&self) -> ResourceStateVerify<'_, TopLevelAS> {
-        ResourceStateVerify(self)
+        ResourceStateVerify::new(self)
     }
     pub fn no_state_transition(&self) -> ResourceStateNoTransition<'_, TopLevelAS> {
-        ResourceStateNoTransition(self)
+        ResourceStateNoTransition::new(self)
     }
 }

@@ -609,7 +609,7 @@ fn create_and_build_cube_blas(
             .unwrap()
     };
 
-    let (cube_vertex_buffer, cube_index_buffer, _) = create_geometry_primitive_buffers(
+    let (mut cube_vertex_buffer, mut cube_index_buffer, _) = create_geometry_primitive_buffers(
         device,
         &GeometryPrimitiveAttributes::builder()
             .geometry_type(GeometryPrimitive::Cube { size: 2.0 })
@@ -666,12 +666,12 @@ fn create_and_build_cube_blas(
     // Build BLAS
     let triangle_data = [BLASBuildTriangleData::builder()
         .geometry_name(geometry_name)
-        .vertex_buffer(&cube_vertex_buffer)
+        .vertex_buffer(cube_vertex_buffer.transition_state())
         .vertex_stride(std::mem::size_of::<float3>() as u32)
         .vertex_count(cube_geo_info.num_vertices)
         .vertex_value_type(vertex_value_type)
         .vertex_component_count(vertex_component_count)
-        .index_buffer((&cube_index_buffer, 0, Some(index_type)))
+        .index_buffer((cube_index_buffer.transition_state(), 0, Some(index_type)))
         .primitive_count(max_primitive_count)
         .flags(RaytracingGeometryFlags::Opaque)
         .build()];
@@ -683,9 +683,8 @@ fn create_and_build_cube_blas(
             .triangle_data(&triangle_data)
             // Scratch buffer will be used to store temporary data during BLAS build.
             // Previous content in the scratch buffer will be discarded.
-            .scratch_buffer(scratch_buffer.transition_state())
             // Allow engine to change resource states.
-            .geometry_transition_mode(ResourceStateTransitionMode::Transition)
+            .scratch_buffer(scratch_buffer.transition_state())
             .build();
 
         immediate_context.build_blas(&attribs);
@@ -712,7 +711,7 @@ fn create_and_build_procedural_blas(
     }];
 
     // Create box buffer
-    let box_attribs_cb = {
+    let mut box_attribs_cb = {
         let buffer_desc = BufferDesc::builder()
             .name(c"AABB Buffer")
             .usage(Usage::Immutable)
@@ -762,7 +761,7 @@ fn create_and_build_procedural_blas(
         let box_data = [BLASBuildBoundingBoxData::builder()
             .geometry_name(c"Box")
             .box_count(1)
-            .box_buffer(&box_attribs_cb)
+            .box_buffer(box_attribs_cb.transition_state())
             .box_stride(std::mem::size_of_val(&BOXES[0]) as u32)
             .build()];
 
@@ -773,7 +772,6 @@ fn create_and_build_procedural_blas(
             // Previous content in the scratch buffer will be discarded.
             // Allow engine to change resource states.
             .scratch_buffer(scratch_buffer.transition_state())
-            .geometry_transition_mode(ResourceStateTransitionMode::Transition)
             .build();
 
         immediate_context.build_blas(&attribs);
@@ -833,11 +831,16 @@ impl RayTracing {
             glam::Mat4::from_translation(pos) * glam::Mat4::from_rotation_y(angle)
         };
 
+        let cube_instance = TLASBuildInstanceData::builder().blas(
+            // Allow engine to change resource states.
+            self.cube_blas.transition_state(),
+        );
+
         let instances = [
-            TLASBuildInstanceData::builder()
+            cube_instance
+                .clone()
                 .instance_name(c"Cube Instance 1")
                 .custom_id(0)
-                .blas(&self.cube_blas)
                 .mask(if self.enabled_cubes[0] {
                     OPAQUE_GEOM_MASK as _
                 } else {
@@ -851,10 +854,10 @@ impl RayTracing {
                         .unwrap(),
                 )
                 .build(),
-            TLASBuildInstanceData::builder()
+            cube_instance
+                .clone()
                 .instance_name(c"Cube Instance 2")
                 .custom_id(1)
-                .blas(&self.cube_blas)
                 .mask(if self.enabled_cubes[1] {
                     OPAQUE_GEOM_MASK as _
                 } else {
@@ -868,10 +871,10 @@ impl RayTracing {
                         .unwrap(),
                 )
                 .build(),
-            TLASBuildInstanceData::builder()
+            cube_instance
+                .clone()
                 .instance_name(c"Cube Instance 3")
                 .custom_id(2)
-                .blas(&self.cube_blas)
                 .mask(if self.enabled_cubes[2] {
                     OPAQUE_GEOM_MASK as _
                 } else {
@@ -885,10 +888,10 @@ impl RayTracing {
                         .unwrap(),
                 )
                 .build(),
-            TLASBuildInstanceData::builder()
+            cube_instance
+                .clone()
                 .instance_name(c"Cube Instance 4")
                 .custom_id(3)
-                .blas(&self.cube_blas)
                 .mask(if self.enabled_cubes[3] {
                     OPAQUE_GEOM_MASK as _
                 } else {
@@ -902,9 +905,9 @@ impl RayTracing {
                         .unwrap(),
                 )
                 .build(),
-            TLASBuildInstanceData::builder()
+            cube_instance
+                .clone()
                 .instance_name(c"Ground Instance")
-                .blas(&self.cube_blas)
                 .mask(OPAQUE_GEOM_MASK as _)
                 .transform(
                     (glam::Mat4::from_translation(glam::vec3(0.0, -6.0, 0.0))
@@ -918,7 +921,7 @@ impl RayTracing {
             TLASBuildInstanceData::builder()
                 .instance_name(c"Sphere Instance")
                 .custom_id(0)
-                .blas(&self.procedural_blas)
+                .blas(self.procedural_blas.transition_state())
                 .mask(OPAQUE_GEOM_MASK as _)
                 .transform(
                     glam::Mat4::from_translation(glam::vec3(-3.0, -3.0, -5.0))
@@ -928,9 +931,8 @@ impl RayTracing {
                         .unwrap(),
                 )
                 .build(),
-            TLASBuildInstanceData::builder()
+            cube_instance
                 .instance_name(c"Glass Instance")
-                .blas(&self.cube_blas)
                 .mask(TRANSPARENT_GEOM_MASK as _)
                 .transform(
                     (glam::Mat4::from_translation(glam::vec3(3.0, -4.0, -5.0))
@@ -961,8 +963,6 @@ impl RayTracing {
             // Bind hit shaders per instance, it allows you to change the number of geometries in BLAS without invalidating the shader binding table.
             .binding_mode(HitGroupBindingMode::PerInstance)
             .hit_group_stride(HIT_GROUP_STRIDE)
-            // Allow engine to change resource states.
-            .blas_transition_mode(ResourceStateTransitionMode::Transition)
             .build();
 
         context.build_tlas(&attribs);
@@ -1282,7 +1282,7 @@ impl SampleBase for RayTracing {
             }
 
             // Update SBT with the shader groups we bound
-            main_context.update_sbt(&mut sample.sbt.borrow_mut(), None);
+            main_context.update_sbt(&mut sample.sbt.borrow_mut());
         }
 
         sample
