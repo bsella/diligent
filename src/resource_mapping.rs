@@ -142,6 +142,30 @@ impl ResourceMapping {
         }
     }
 
+    pub fn get_resource_by_name_mut(
+        &mut self,
+        name: impl AsRef<str>,
+        array_index: Option<u32>,
+    ) -> Option<&mut DeviceObject> {
+        let array_index = array_index.unwrap_or(0);
+
+        let name = std::ffi::CString::new(name.as_ref()).unwrap();
+
+        let resource_ptr = unsafe_member_call!(
+            self,
+            ResourceMapping,
+            GetResource,
+            name.as_ptr(),
+            array_index
+        );
+
+        if resource_ptr.is_null() {
+            None
+        } else {
+            Some(unsafe { &mut *(resource_ptr as *mut DeviceObject) })
+        }
+    }
+
     pub fn get_size(&self) -> usize {
         unsafe_member_call!(self, ResourceMapping, GetSize)
     }

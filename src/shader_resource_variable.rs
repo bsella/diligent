@@ -210,4 +210,9 @@ impl ShaderResourceVariable {
         let device_object = unsafe_member_call!(self, ShaderResourceVariable, Get, index);
         unsafe { &*(device_object as *const DeviceObject) }
     }
+
+    pub fn get_mut(&mut self, index: u32) -> &mut DeviceObject {
+        let device_object = unsafe_member_call!(self, ShaderResourceVariable, Get, index);
+        unsafe { &mut *(device_object as *mut DeviceObject) }
+    }
 }

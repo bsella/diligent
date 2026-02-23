@@ -211,6 +211,11 @@ impl TextureView {
         let texture_ptr = unsafe_member_call!(self, TextureView, GetTexture);
         unsafe { &*(texture_ptr as *const Texture) }
     }
+
+    pub fn get_texture_mut(&mut self) -> &mut Texture {
+        let texture_ptr = unsafe_member_call!(self, TextureView, GetTexture);
+        unsafe { &mut *(texture_ptr as *mut Texture) }
+    }
 }
 
 impl TextureView {

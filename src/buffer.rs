@@ -181,6 +181,16 @@ impl Buffer {
         }
     }
 
+    pub fn get_default_view_mut(&mut self, view_type: BufferViewType) -> Option<&mut BufferView> {
+        let buffer_view_ptr = unsafe_member_call!(self, Buffer, GetDefaultView, view_type.into());
+
+        if buffer_view_ptr.is_null() {
+            None
+        } else {
+            Some(unsafe { &mut *(buffer_view_ptr as *mut BufferView) })
+        }
+    }
+
     pub fn get_native_handle(&self) -> u64 {
         unsafe_member_call!(self, Buffer, GetNativeHandle)
     }

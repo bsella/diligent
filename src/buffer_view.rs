@@ -103,4 +103,10 @@ impl BufferView {
 
         unsafe { &*(buffer_ptr as *const Buffer) }
     }
+
+    pub fn get_buffer_mut(&mut self) -> &mut Buffer {
+        let buffer_ptr = unsafe_member_call!(self, BufferView, GetBuffer);
+
+        unsafe { &mut *(buffer_ptr as *mut Buffer) }
+    }
 }

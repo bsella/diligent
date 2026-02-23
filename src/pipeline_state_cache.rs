@@ -86,4 +86,15 @@ impl PipelineStateCache {
             Some(unsafe { &*(data_blob_ptr as *const DataBlob) })
         }
     }
+
+    pub fn get_data_mut(&mut self) -> Option<&mut DataBlob> {
+        let mut data_blob_ptr = std::ptr::null_mut();
+        unsafe_member_call!(self, PipelineStateCache, GetData, &mut data_blob_ptr);
+
+        if data_blob_ptr.is_null() {
+            None
+        } else {
+            Some(unsafe { &mut *(data_blob_ptr as *mut DataBlob) })
+        }
+    }
 }
