@@ -180,44 +180,43 @@ impl Window for Win32Window {
     }
 
     fn handle_event(&mut self) -> Option<Event> {
-        let event = {
+        let msg = {
             if self.hack.resized {
-                return Some(MSG {
+                Some(MSG {
                     message: WM_SIZE,
                     lParam: self.hack.resize_param,
                     ..Default::default()
-                });
-            }
-
-            if self.hack.closing {
-                return Some(MSG {
+                })
+            } else if self.hack.closing {
+                Some(MSG {
                     message: WM_CLOSE,
                     ..Default::default()
-                });
-            }
-
-            let mut msg = std::mem::MaybeUninit::<MSG>::uninit();
-
-            if unsafe { PeekMessageW(msg.as_mut_ptr(), Some(self.hwnd), 0, 0, PM_REMOVE).as_bool() }
-            {
-                let msg = unsafe { msg.assume_init() };
-                unsafe {
-                    let _ = TranslateMessage(&msg);
-                    DispatchMessageW(&msg);
-                }
-
-                Some(msg)
+                })
             } else {
-                None
+                let mut msg = std::mem::MaybeUninit::<MSG>::uninit();
+
+                if unsafe {
+                    PeekMessageW(msg.as_mut_ptr(), Some(self.hwnd), 0, 0, PM_REMOVE).as_bool()
+                } {
+                    let msg = unsafe { msg.assume_init() };
+                    unsafe {
+                        let _ = TranslateMessage(&msg);
+                        DispatchMessageW(&msg);
+                    }
+
+                    Some(msg)
+                } else {
+                    None
+                }
             }
         };
 
-        event.map(|event| {
-            match event.message {
+        msg.map(|msg| {
+            match msg.message {
                 WM_CLOSE => Event::Quit,
                 WM_MOUSEMOVE => Event::MouseMove {
-                    x: (event.lParam.0 & 0xffff) as i16,
-                    y: ((event.lParam.0 >> 16) & 0xffff) as i16,
+                    x: (msg.lParam.0 & 0xffff) as i16,
+                    y: ((msg.lParam.0 >> 16) & 0xffff) as i16,
                 },
                 WM_LBUTTONDOWN => Event::MouseDown {
                     button: super::events::MouseButton::Left,
@@ -241,12 +240,12 @@ impl Window for Win32Window {
                     self.hack.resized = false;
 
                     Event::Resize {
-                        width: (event.lParam.0 & 0xffff) as _,
-                        height: ((event.lParam.0 >> 16) & 0xffff) as _,
+                        width: (msg.lParam.0 & 0xffff) as _,
+                        height: ((msg.lParam.0 >> 16) & 0xffff) as _,
                     }
                 }
 
-                WM_KEYDOWN => match VIRTUAL_KEY(event.wParam.0 as u16) {
+                WM_KEYDOWN => match VIRTUAL_KEY(msg.wParam.0 as u16) {
                     VK_A => Event::KeyPress(Key::A),
                     VK_B => Event::KeyPress(Key::B),
                     VK_C => Event::KeyPress(Key::C),
@@ -301,7 +300,7 @@ impl Window for Win32Window {
                     VK_LEFT => Event::KeyPress(Key::Left),
                     VK_RIGHT => Event::KeyPress(Key::Right),
                     VK_MENU => {
-                        if event.lParam.0.bitand(1 << 24) == 0 {
+                        if msg.lParam.0.bitand(1 << 24) == 0 {
                             Event::KeyPress(Key::LeftAlt)
                         } else {
                             Event::KeyPress(Key::RightAlt)
@@ -310,7 +309,7 @@ impl Window for Win32Window {
                     VK_LMENU => Event::KeyPress(Key::LeftAlt),
                     VK_RMENU => Event::KeyPress(Key::RightAlt),
                     VK_SHIFT => {
-                        let scancode = event.lParam.0.bitand(0x00ff0000) >> 16;
+                        let scancode = msg.lParam.0.bitand(0x00ff0000) >> 16;
                         if unsafe { MapVirtualKeyW(scancode as _, MAPVK_VSC_TO_VK_EX) }
                             == VK_LSHIFT.0 as _
                         {
@@ -323,7 +322,7 @@ impl Window for Win32Window {
                     VK_RSHIFT => Event::KeyPress(Key::RightShift),
                     VK_LWIN => Event::KeyPress(Key::LeftSuper),
                     VK_CONTROL => {
-                        if event.lParam.0.bitand(1 << 24) == 0 {
+                        if msg.lParam.0.bitand(1 << 24) == 0 {
                             Event::KeyPress(Key::LeftCtrl)
                         } else {
                             Event::KeyPress(Key::RightCtrl)
@@ -353,11 +352,11 @@ impl Window for Win32Window {
                     VK_TAB => Event::KeyPress(Key::Tab),
                     VK_SPACE => Event::KeyPress(Key::Space),
                     _ => {
-                        println!("{}", event.wParam.0);
+                        println!("{}", msg.wParam.0);
                         Event::KeyPress(Key::Unknown)
                     }
                 },
-                WM_KEYUP => match VIRTUAL_KEY(event.wParam.0 as u16) {
+                WM_KEYUP => match VIRTUAL_KEY(msg.wParam.0 as u16) {
                     VK_A => Event::KeyRelease(Key::A),
                     VK_B => Event::KeyRelease(Key::B),
                     VK_C => Event::KeyRelease(Key::C),
@@ -412,7 +411,7 @@ impl Window for Win32Window {
                     VK_LEFT => Event::KeyRelease(Key::Left),
                     VK_RIGHT => Event::KeyRelease(Key::Right),
                     VK_MENU => {
-                        if event.lParam.0.bitand(1 << 24) == 0 {
+                        if msg.lParam.0.bitand(1 << 24) == 0 {
                             Event::KeyRelease(Key::LeftAlt)
                         } else {
                             Event::KeyRelease(Key::RightAlt)
@@ -421,7 +420,7 @@ impl Window for Win32Window {
                     VK_LMENU => Event::KeyRelease(Key::LeftAlt),
                     VK_RMENU => Event::KeyRelease(Key::RightAlt),
                     VK_SHIFT => {
-                        let scancode = event.lParam.0.bitand(0x00ff0000) >> 16;
+                        let scancode = msg.lParam.0.bitand(0x00ff0000) >> 16;
                         if unsafe { MapVirtualKeyW(scancode as _, MAPVK_VSC_TO_VK_EX) }
                             == VK_LSHIFT.0 as _
                         {
@@ -434,7 +433,7 @@ impl Window for Win32Window {
                     VK_RSHIFT => Event::KeyRelease(Key::RightShift),
                     VK_LWIN => Event::KeyRelease(Key::LeftSuper),
                     VK_CONTROL => {
-                        if event.lParam.0.bitand(1 << 24) == 0 {
+                        if msg.lParam.0.bitand(1 << 24) == 0 {
                             Event::KeyRelease(Key::LeftCtrl)
                         } else {
                             Event::KeyRelease(Key::RightCtrl)

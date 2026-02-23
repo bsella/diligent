@@ -38,6 +38,7 @@ fn configure_diligent_libs(diligent_install_dir: &Path) {
     #[cfg(target_os = "windows")]
     {
         println!("cargo::rustc-link-lib=ucrt{library_suffix}");
+        println!("cargo::rustc-link-lib=Comdlg32");
     }
 
     #[cfg(target_os = "linux")]
