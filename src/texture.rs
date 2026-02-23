@@ -14,7 +14,7 @@ use crate::{
     device_context::DeviceContext,
     device_object::{
         DeviceObject, DeviceObjectAttribs, ResourceStateNoTransition, ResourceStateTransition,
-        ResourceStateVerify,
+        ResourceStateVerify, ResourceTransition,
     },
     graphics_types::{BindFlags, CpuAccessFlags, ResourceState, TextureFormat, Usage},
     resource_access_states,
@@ -122,22 +122,34 @@ impl Default for MiscTextureFlags {
 }
 
 #[derive(Clone, Copy)]
-pub enum TextureSubResData<'buffer> {
+pub enum TextureSubResData<'buffer, BufferTransition = ResourceStateNoTransition<'buffer, Buffer>>
+where
+    BufferTransition: ResourceTransition<'buffer, Buffer>,
+{
     CPU(&'buffer [u8]),
-    GPU(&'buffer Buffer),
+    GPU(BufferTransition),
 }
 
 #[repr(transparent)]
-pub struct TextureSubResource<'buffer>(
+pub struct TextureSubResource<
+    'buffer,
+    BufferTransition: ResourceTransition<'buffer, Buffer> = ResourceStateNoTransition<
+        'buffer,
+        Buffer,
+    >,
+>(
     pub(crate) diligent_sys::TextureSubResData,
-    PhantomData<&'buffer ()>,
+    PhantomData<&'buffer BufferTransition>,
 );
 
 #[bon::bon]
-impl<'buffer> TextureSubResource<'buffer> {
+impl<'buffer, BufferTransition> TextureSubResource<'buffer, BufferTransition>
+where
+    BufferTransition: ResourceTransition<'buffer, Buffer>,
+{
     #[builder]
     pub fn new(
-        #[builder(setters(vis = ""))] source: TextureSubResData<'buffer>,
+        #[builder(setters(vis = ""))] source: TextureSubResData<'buffer, BufferTransition>,
 
         #[builder(setters(vis = ""))] source_offset: u64,
 
@@ -167,12 +179,18 @@ impl<'buffer> TextureSubResource<'buffer> {
 }
 
 use texture_sub_resource_builder::{IsUnset, SetSource, SetSourceOffset, SetStride, State};
-impl<'data, S: State> TextureSubResourceBuilder<'data, S> {
+impl<'data, S: State>
+    TextureSubResourceBuilder<'data, ResourceStateNoTransition<'data, Buffer>, S>
+{
     pub fn from_host(
         self,
         data: &'data [u8],
         stride: u64,
-    ) -> TextureSubResourceBuilder<'data, SetSource<SetSourceOffset<SetStride<S>>>>
+    ) -> TextureSubResourceBuilder<
+        'data,
+        ResourceStateNoTransition<'data, Buffer>,
+        SetSource<SetSourceOffset<SetStride<S>>>,
+    >
     where
         S::Source: IsUnset,
         S::SourceOffset: IsUnset,
@@ -184,13 +202,20 @@ impl<'data, S: State> TextureSubResourceBuilder<'data, S> {
     }
 }
 
-impl<'buffer, S: State> TextureSubResourceBuilder<'buffer, S> {
+impl<'buffer, BufferTransition, S: State> TextureSubResourceBuilder<'buffer, BufferTransition, S>
+where
+    BufferTransition: ResourceTransition<'buffer, Buffer>,
+{
     pub fn from_device(
         self,
-        data: &'buffer Buffer,
+        data: BufferTransition,
         source_offset: u64,
         stride: u64,
-    ) -> TextureSubResourceBuilder<'buffer, SetSource<SetSourceOffset<SetStride<S>>>>
+    ) -> TextureSubResourceBuilder<
+        'buffer,
+        BufferTransition,
+        SetSource<SetSourceOffset<SetStride<S>>>,
+    >
     where
         S::Source: IsUnset,
         S::SourceOffset: IsUnset,

@@ -1333,27 +1333,6 @@ impl From<CopyAsMode> for diligent_sys::COPY_AS_MODE {
     }
 }
 
-#[derive(Clone, Copy)]
-pub enum ResourceStateTransitionMode {
-    None,
-    Transition,
-    Verify,
-}
-
-impl From<ResourceStateTransitionMode> for diligent_sys::RESOURCE_STATE_TRANSITION_MODE {
-    fn from(value: ResourceStateTransitionMode) -> Self {
-        (match value {
-            ResourceStateTransitionMode::None => diligent_sys::RESOURCE_STATE_TRANSITION_MODE_NONE,
-            ResourceStateTransitionMode::Transition => {
-                diligent_sys::RESOURCE_STATE_TRANSITION_MODE_TRANSITION
-            }
-            ResourceStateTransitionMode::Verify => {
-                diligent_sys::RESOURCE_STATE_TRANSITION_MODE_VERIFY
-            }
-        }) as _
-    }
-}
-
 #[repr(transparent)]
 pub struct Viewport(diligent_sys::Viewport);
 
@@ -1524,21 +1503,26 @@ impl OptimizedClearValue {
 }
 
 #[repr(transparent)]
-pub struct BeginRenderPassAttribs<'render_pass, 'frame_buffer, 'clear_values>(
+pub struct BeginRenderPassAttribs<'render_pass, 'frame_buffer, 'clear_values, FramebufferTransition>(
     diligent_sys::BeginRenderPassAttribs,
-    PhantomData<(&'render_pass (), &'frame_buffer (), &'clear_values ())>,
+    PhantomData<(
+        &'render_pass (),
+        &'frame_buffer FramebufferTransition,
+        &'clear_values (),
+    )>,
 );
 
 #[bon::bon]
-impl<'render_pass, 'frame_buffer, 'clear_values>
-    BeginRenderPassAttribs<'render_pass, 'frame_buffer, 'clear_values>
+impl<'render_pass, 'frame_buffer, 'clear_values, FramebufferTransition>
+    BeginRenderPassAttribs<'render_pass, 'frame_buffer, 'clear_values, FramebufferTransition>
+where
+    FramebufferTransition: ResourceTransition<'frame_buffer, Framebuffer>,
 {
     #[builder]
     pub fn new(
         render_pass: &'render_pass RenderPass,
-        frame_buffer: &'frame_buffer Framebuffer,
+        frame_buffer: FramebufferTransition,
         clear_values: &'clear_values [OptimizedClearValue],
-        state_transition_mode: ResourceStateTransitionMode,
     ) -> Self {
         Self(
             diligent_sys::BeginRenderPassAttribs {
@@ -1548,7 +1532,7 @@ impl<'render_pass, 'frame_buffer, 'clear_values>
                 pClearValues: clear_values.first().map_or(std::ptr::null_mut(), |value| {
                     std::ptr::from_ref(&value.0) as *mut _
                 }),
-                StateTransitionMode: state_transition_mode.into(),
+                StateTransitionMode: FramebufferTransition::TRANSITION_MODE,
             },
             PhantomData,
         )
@@ -1681,7 +1665,10 @@ pub struct RenderPassToken<'context> {
 }
 
 impl<'context> RenderPassToken<'context> {
-    pub fn new(context: &'context DeviceContext, attribs: &BeginRenderPassAttribs) -> Self {
+    pub fn new<FramebufferTransition>(
+        context: &'context DeviceContext,
+        attribs: &BeginRenderPassAttribs<FramebufferTransition>,
+    ) -> Self {
         unsafe_member_call!(context, DeviceContext, BeginRenderPass, &attribs.0);
 
         RenderPassToken { context }
@@ -2112,7 +2099,10 @@ impl DeviceContext {
         )
     }
 
-    pub fn new_render_pass(&self, attribs: &BeginRenderPassAttribs) -> RenderPassToken<'_> {
+    pub fn new_render_pass<FramebufferTransition>(
+        &self,
+        attribs: &BeginRenderPassAttribs<FramebufferTransition>,
+    ) -> RenderPassToken<'_> {
         RenderPassToken::new(self, attribs)
     }
 
@@ -2305,16 +2295,16 @@ impl DeviceContext {
         BufferMapReadWriteToken::new(self, buffer, map_flags.bits())
     }
 
-    pub fn update_texture<'texture, TextureTransition>(
+    pub fn update_texture<'texture, 'buffer, SrcBufferTransition, DstTextureTransition>(
         &self,
-        texture: TextureTransition,
+        texture: DstTextureTransition,
         mip_level: u32,
         slice: u32,
         dst_box: &crate::Box,
-        subres_data: &TextureSubResource,
-        src_buffer_transition_mode: ResourceStateTransitionMode,
+        subres_data: &TextureSubResource<'buffer, SrcBufferTransition>,
     ) where
-        TextureTransition: ResourceTransition<'texture, Texture>,
+        SrcBufferTransition: ResourceTransition<'buffer, Buffer>,
+        DstTextureTransition: ResourceTransition<'texture, Texture>,
     {
         unsafe_member_call!(
             self,
@@ -2325,8 +2315,8 @@ impl DeviceContext {
             slice,
             &dst_box.0,
             &subres_data.0,
-            src_buffer_transition_mode.into(),
-            TextureTransition::TRANSITION_MODE
+            SrcBufferTransition::TRANSITION_MODE,
+            DstTextureTransition::TRANSITION_MODE
         )
     }
 

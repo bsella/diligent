@@ -2,7 +2,10 @@ use std::{ffi::CStr, marker::PhantomData, ops::Deref};
 
 use crate::{
     Ported,
-    device_object::{DeviceObject, DeviceObjectAttribs},
+    device_object::{
+        DeviceObject, DeviceObjectAttribs, ResourceStateNoTransition, ResourceStateTransition,
+        ResourceStateVerify,
+    },
     render_pass::RenderPass,
     texture_view::TextureView,
 };
@@ -63,5 +66,17 @@ impl Framebuffer {
     pub fn desc(&self) -> &FramebufferDesc<'_, '_, '_, '_> {
         let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
         unsafe { &*(desc_ptr as *const &FramebufferDesc) }
+    }
+}
+
+impl Framebuffer {
+    pub fn transition_state(&mut self) -> ResourceStateTransition<'_, Framebuffer> {
+        ResourceStateTransition::new(self)
+    }
+    pub fn verify_state(&self) -> ResourceStateVerify<'_, Framebuffer> {
+        ResourceStateVerify::new(self)
+    }
+    pub fn no_state_transition(&self) -> ResourceStateNoTransition<'_, Framebuffer> {
+        ResourceStateNoTransition::new(self)
     }
 }
