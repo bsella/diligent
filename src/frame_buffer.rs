@@ -13,6 +13,7 @@ use crate::{
 define_ported!(Framebuffer, diligent_sys::IFramebuffer, DeviceObject);
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct FramebufferDesc<'name, 'render_pass, 'texture_views, 'texture_view>(
     pub(crate) diligent_sys::FramebufferDesc,
     PhantomData<(
@@ -34,7 +35,7 @@ impl Deref for FramebufferDesc<'_, '_, '_, '_> {
 impl<'name, 'render_pass, 'texture_views, 'texture_view>
     FramebufferDesc<'name, 'render_pass, 'texture_views, 'texture_view>
 {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         name: Option<&'name CStr>,
         render_pass: &'render_pass RenderPass,

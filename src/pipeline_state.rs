@@ -786,13 +786,13 @@ impl Default for RenderTargetBlendDesc {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 #[repr(transparent)]
 pub struct BlendStateDesc(pub(crate) diligent_sys::BlendStateDesc);
 
 #[bon::bon]
 impl BlendStateDesc {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         #[builder(default = false)] alpha_to_coverage_enable: bool,
 
@@ -810,13 +810,13 @@ impl BlendStateDesc {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 #[repr(transparent)]
 pub struct RasterizerStateDesc(pub(crate) diligent_sys::RasterizerStateDesc);
 
 #[bon::bon]
 impl RasterizerStateDesc {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         #[builder(default = FillMode::Solid)] fill_mode: FillMode,
 
@@ -850,13 +850,13 @@ impl RasterizerStateDesc {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 #[repr(transparent)]
 pub struct StencilOperationsDesc(diligent_sys::StencilOpDesc);
 
 #[bon::bon]
 impl StencilOperationsDesc {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         #[builder(default = StencilOperation::Keep)] stencil_fail_op: StencilOperation,
 
@@ -875,7 +875,7 @@ impl StencilOperationsDesc {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 #[repr(transparent)]
 pub struct DepthStencilStateDesc(pub(crate) diligent_sys::DepthStencilStateDesc);
 
@@ -981,7 +981,7 @@ impl Default for GraphicsPipelineOutput<'_> {
 }
 
 #[repr(transparent)]
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct GraphicsPipelineDesc<'input_layouts, 'render_pass>(
     pub(crate) diligent_sys::GraphicsPipelineDesc,
     PhantomData<(&'input_layouts (), &'render_pass ())>,
@@ -1757,6 +1757,7 @@ impl RayTracingPipelineState {
 
 #[repr(transparent)]
 #[allow(clippy::type_complexity)]
+#[derive(Clone)]
 pub struct TilePipelineStateCreateInfo<
     'name,
     'variable_names,
@@ -1814,7 +1815,7 @@ impl<
         'shader,
     >
 {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         #[builder(setters(vis = ""))] pipeline_state_create_info: PipelineStateCreateInfo<
             'name,
@@ -1951,7 +1952,7 @@ impl<
         'shader,
     >
 {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         #[builder(setters(vis = ""))] pipeline_state_create_info: PipelineStateCreateInfo<
             'name,

@@ -14,6 +14,7 @@ define_ported!(
     DeviceObject
 );
 
+#[derive(Clone, Copy)]
 pub enum PsoCacheMode {
     Load,
     Store,
@@ -29,6 +30,7 @@ bitflags! {
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct PipelineStateCacheCreateInfo<'name, 'data, T>(
     pub(crate) diligent_sys::PipelineStateCacheCreateInfo,
     PhantomData<(&'name (), &'data (), T)>,
@@ -43,7 +45,7 @@ impl<T> Deref for PipelineStateCacheCreateInfo<'_, '_, T> {
 
 #[bon::bon]
 impl<'name, 'data, T> PipelineStateCacheCreateInfo<'name, 'data, T> {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         name: Option<&'name CStr>,
         mode: PsoCacheMode,

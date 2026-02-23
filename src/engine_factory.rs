@@ -10,11 +10,12 @@ use crate::{
 };
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct DearchiverCreateInfo(diligent_sys::DearchiverCreateInfo);
 
 #[bon::bon]
 impl DearchiverCreateInfo {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new() -> Self {
         Self(diligent_sys::DearchiverCreateInfo {
             pDummy: std::ptr::null_mut(),

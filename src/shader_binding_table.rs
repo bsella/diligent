@@ -25,6 +25,7 @@ bitflags! {
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct ShaderBindingTableDesc<'name, 'pipeline_state>(
     pub(crate) diligent_sys::ShaderBindingTableDesc,
     PhantomData<(&'name (), &'pipeline_state ())>,
@@ -39,7 +40,7 @@ impl Deref for ShaderBindingTableDesc<'_, '_> {
 
 #[bon::bon]
 impl<'name, 'pipeline_state> ShaderBindingTableDesc<'name, 'pipeline_state> {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         name: Option<&'name CStr>,
         raytracing_pso: &'pipeline_state RayTracingPipelineState,

@@ -88,11 +88,12 @@ impl From<TextureComponentSwizzle> for diligent_sys::TEXTURE_COMPONENT_SWIZZLE {
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct TextureComponentMapping(diligent_sys::TextureComponentMapping);
 
 #[bon::bon]
 impl TextureComponentMapping {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         #[builder(default = TextureComponentSwizzle::Identity)] r: TextureComponentSwizzle,
         #[builder(default = TextureComponentSwizzle::Identity)] g: TextureComponentSwizzle,
@@ -122,8 +123,8 @@ impl TextureComponentMapping {
     }
 }
 
-#[derive(Clone, Copy)]
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct TextureViewDesc<'name>(
     pub(crate) diligent_sys::TextureViewDesc,
     PhantomData<&'name ()>,
@@ -138,7 +139,7 @@ impl Deref for TextureViewDesc<'_> {
 
 #[bon::bon]
 impl<'name> TextureViewDesc<'name> {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         name: Option<&'name CStr>,
         view_type: TextureViewType,

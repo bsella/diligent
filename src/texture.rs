@@ -121,7 +121,7 @@ impl Default for MiscTextureFlags {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub enum TextureSubResData<'buffer, BufferTransition = ResourceStateNoTransition<'buffer, Buffer>>
 where
     BufferTransition: ResourceTransition<'buffer, Buffer>,
@@ -131,6 +131,7 @@ where
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct TextureSubResource<
     'buffer,
     BufferTransition: ResourceTransition<'buffer, Buffer> = ResourceStateNoTransition<
@@ -147,7 +148,7 @@ impl<'buffer, BufferTransition> TextureSubResource<'buffer, BufferTransition>
 where
     BufferTransition: ResourceTransition<'buffer, Buffer>,
 {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         #[builder(setters(vis = ""))] source: TextureSubResData<'buffer, BufferTransition>,
 
@@ -228,6 +229,7 @@ where
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct TextureDesc<'name>(pub(crate) diligent_sys::TextureDesc, PhantomData<&'name ()>);
 
 impl Deref for TextureDesc<'_> {
@@ -239,7 +241,7 @@ impl Deref for TextureDesc<'_> {
 
 #[bon::bon]
 impl<'name> TextureDesc<'name> {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         name: Option<&'name CStr>,
 
@@ -459,11 +461,12 @@ bitflags! {
 const_assert_eq!(diligent_sys::SPARSE_TEXTURE_FLAG_LAST, 4);
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct SparseTextureProperties(diligent_sys::SparseTextureProperties);
 
 #[bon::bon]
 impl SparseTextureProperties {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         #[builder(default = 0)] address_space_size: u64,
         #[builder(default = 0)] mip_tail_offset: u64,

@@ -78,6 +78,7 @@ bitflags! {
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct ShaderResourceVariableDesc<'name>(
     pub(crate) diligent_sys::ShaderResourceVariableDesc,
     PhantomData<&'name ()>,
@@ -85,7 +86,7 @@ pub struct ShaderResourceVariableDesc<'name>(
 
 #[bon::bon]
 impl<'name> ShaderResourceVariableDesc<'name> {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         name: Option<&'name CStr>,
 

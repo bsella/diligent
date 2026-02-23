@@ -20,6 +20,7 @@ pub enum FenceType {
 const_assert_eq!(diligent_sys::FENCE_TYPE_LAST, 1);
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct FenceDesc<'name>(pub(crate) diligent_sys::FenceDesc, PhantomData<&'name ()>);
 
 impl Deref for FenceDesc<'_> {
@@ -31,7 +32,7 @@ impl Deref for FenceDesc<'_> {
 
 #[bon::bon]
 impl<'name> FenceDesc<'name> {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         name: Option<&'name CStr>,
 

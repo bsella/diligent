@@ -114,6 +114,7 @@ impl<'name> PipelineResourceDesc<'name> {
 
 #[repr(transparent)]
 #[allow(clippy::type_complexity)]
+#[derive(Clone)]
 pub struct PipelineResourceSignatureDesc<
     'name,
     'resources,
@@ -166,7 +167,7 @@ impl<
         'immutable_samplers,
     >
 {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         name: &'name CStr,
         resources: &'resources [PipelineResourceDesc<'resource_name>],

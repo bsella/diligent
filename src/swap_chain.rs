@@ -96,7 +96,7 @@ impl Deref for SwapChainCreateInfo {
 
 #[bon::bon]
 impl SwapChainCreateInfo {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         width: u32,
 

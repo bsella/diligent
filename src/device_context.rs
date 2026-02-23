@@ -228,11 +228,12 @@ impl Default for SetVertexBufferFlags {
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct DrawAttribs(diligent_sys::DrawAttribs);
 
 #[bon::bon]
 impl DrawAttribs {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         num_vertices: u32,
         #[builder(default)] flags: DrawFlags,
@@ -251,11 +252,12 @@ impl DrawAttribs {
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct DrawIndexedAttribs(diligent_sys::DrawIndexedAttribs);
 
 #[bon::bon]
 impl DrawIndexedAttribs {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         num_indices: u32,
         index_type: ValueType,
@@ -283,6 +285,7 @@ impl DrawIndexedAttribs {
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct DrawIndirectAttribs<'attibs_buffer, 'counter_buffer, AttribsBuffer, CounterBuffer>(
     diligent_sys::DrawIndirectAttribs,
     PhantomData<(
@@ -298,7 +301,7 @@ where
     AttribsBuffer: ResourceTransition<'attibs_buffer, Buffer>,
     CounterBuffer: ResourceTransition<'counter_buffer, Buffer>,
 {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         attribs_buffer: AttribsBuffer,
 
@@ -335,6 +338,7 @@ where
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct DrawIndexedIndirectAttribs<'attibs_buffer, 'counter_buffer, AttribsBuffer, CounterBuffer>(
     diligent_sys::DrawIndexedIndirectAttribs,
     PhantomData<(
@@ -350,7 +354,7 @@ where
     AttribsBuffer: ResourceTransition<'attibs_buffer, Buffer>,
     CounterBuffer: ResourceTransition<'counter_buffer, Buffer>,
 {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         index_type: ValueType,
 
@@ -389,11 +393,12 @@ where
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct DrawMeshAttribs(diligent_sys::DrawMeshAttribs);
 
 #[bon::bon]
 impl DrawMeshAttribs {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         #[builder(default = 1)] thread_group_count_x: u32,
 
@@ -413,6 +418,7 @@ impl DrawMeshAttribs {
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct DrawMeshIndirectAttribs<'attibs_buffer, 'counter_buffer, AttribsBuffer, CounterBuffer>(
     diligent_sys::DrawMeshIndirectAttribs,
     PhantomData<(
@@ -428,7 +434,7 @@ where
     AttribsBuffer: ResourceTransition<'attibs_buffer, Buffer>,
     CounterBuffer: ResourceTransition<'counter_buffer, Buffer>,
 {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         attribs_buffer: AttribsBuffer,
 
@@ -461,11 +467,12 @@ where
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct MultiDrawItem(diligent_sys::MultiDrawItem);
 
 #[bon::bon]
 impl MultiDrawItem {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(num_vertices: u32, start_vertex_location: u32) -> Self {
         Self(diligent_sys::MultiDrawItem {
             NumVertices: num_vertices,
@@ -475,6 +482,7 @@ impl MultiDrawItem {
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct MultiDrawAttribs<'draw_items>(
     diligent_sys::MultiDrawAttribs,
     PhantomData<&'draw_items ()>,
@@ -482,7 +490,7 @@ pub struct MultiDrawAttribs<'draw_items>(
 
 #[bon::bon]
 impl<'draw_items> MultiDrawAttribs<'draw_items> {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         draw_items: &'draw_items [MultiDrawItem],
 
@@ -506,10 +514,11 @@ impl<'draw_items> MultiDrawAttribs<'draw_items> {
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct MultiDrawIndexedItem(diligent_sys::MultiDrawIndexedItem);
 #[bon::bon]
 impl MultiDrawIndexedItem {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(num_vertices: u32, first_index_location: u32, base_vertex: u32) -> Self {
         Self(diligent_sys::MultiDrawIndexedItem {
             NumIndices: num_vertices,
@@ -520,6 +529,7 @@ impl MultiDrawIndexedItem {
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct MultiDrawIndexedAttribs<'draw_items>(
     diligent_sys::MultiDrawIndexedAttribs,
     PhantomData<&'draw_items ()>,
@@ -527,7 +537,7 @@ pub struct MultiDrawIndexedAttribs<'draw_items>(
 
 #[bon::bon]
 impl<'draw_items> MultiDrawIndexedAttribs<'draw_items> {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         draw_items: &'draw_items [MultiDrawIndexedItem],
 
@@ -554,10 +564,11 @@ impl<'draw_items> MultiDrawIndexedAttribs<'draw_items> {
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct DispatchComputeAttribs(diligent_sys::DispatchComputeAttribs);
 #[bon::bon]
 impl DispatchComputeAttribs {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         #[builder(default = 1)] thread_group_count_x: u32,
 
@@ -598,6 +609,7 @@ impl DispatchComputeAttribs {
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct DispatchComputeIndirectAttribs<'attibs_buffer, AttribsBuffer>(
     diligent_sys::DispatchComputeIndirectAttribs,
     PhantomData<&'attibs_buffer AttribsBuffer>,
@@ -608,7 +620,7 @@ impl<'attibs_buffer, AttribsBuffer> DispatchComputeIndirectAttribs<'attibs_buffe
 where
     AttribsBuffer: ResourceTransition<'attibs_buffer, Buffer>,
 {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         attribs_buffer: AttribsBuffer,
 
@@ -650,10 +662,11 @@ where
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct DispatchTileAttribs(diligent_sys::DispatchTileAttribs);
 #[bon::bon]
 impl DispatchTileAttribs {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         #[builder(default = 1)] threads_per_tile_x: u32,
 
@@ -687,6 +700,7 @@ impl Default for RaytracingGeometryFlags {
 const_assert_eq!(diligent_sys::RAYTRACING_GEOMETRY_FLAG_LAST, 2);
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct BLASBuildBoundingBoxData<'name, 'buffer, GeometryBufferTransition>(
     diligent_sys::BLASBuildBoundingBoxData,
     PhantomData<(&'name (), &'buffer GeometryBufferTransition)>,
@@ -697,7 +711,7 @@ impl<'name, 'buffer, GeometryBufferTransition>
 where
     GeometryBufferTransition: ResourceTransition<'buffer, Buffer>,
 {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         geometry_name: &'name CStr,
 
@@ -726,6 +740,7 @@ where
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct BLASBuildTriangleData<'geometry_name, 'geometry, GeometryBufferTransition>(
     diligent_sys::BLASBuildTriangleData,
     PhantomData<(&'geometry_name (), &'geometry GeometryBufferTransition)>,
@@ -736,7 +751,7 @@ impl<'geometry_name, 'geometry, GeometryBufferTransition>
 where
     GeometryBufferTransition: ResourceTransition<'geometry, Buffer>,
 {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         geometry_name: &'geometry_name CStr,
 
@@ -801,6 +816,7 @@ where
 
 #[repr(transparent)]
 #[allow(clippy::type_complexity)]
+#[derive(Clone)]
 pub struct BuildBLASAttribs<
     'blas,
     'scratch_buffer,
@@ -858,7 +874,7 @@ where
     ScratchBufferTransition: ResourceTransition<'scratch_buffer, Buffer>,
     GeometryBufferTransition: ResourceTransition<'triangles, Buffer>,
 {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         blas: BLASTransition,
 
@@ -904,6 +920,7 @@ where
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct BuildTLASAttribs<
     'tlas,
     'tlas_instance_name,
@@ -957,7 +974,7 @@ where
     ScratchBufferTransition: ResourceTransition<'scratch_buffer, Buffer>,
     BlasTriansition: ResourceTransition<'blas, BottomLevelAS>,
 {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         tlas: TLASTransition,
 
@@ -1009,6 +1026,7 @@ where
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct UpdateIndirectRTBufferAttribs<'buffer, AttribsBufferTransition>(
     diligent_sys::UpdateIndirectRTBufferAttribs,
     PhantomData<&'buffer AttribsBufferTransition>,
@@ -1020,7 +1038,7 @@ impl<'buffer, AttribsBufferTransition>
 where
     AttribsBufferTransition: ResourceTransition<'buffer, Buffer>,
 {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         attribs_buffer: AttribsBufferTransition,
 
@@ -1099,6 +1117,7 @@ where
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct CopyTextureAttribs<
     'src_texture,
     'dst_texture,
@@ -1127,7 +1146,7 @@ where
     SrcTextureTransition: ResourceTransition<'src_texture, Texture>,
     DstTextureTransition: ResourceTransition<'src_texture, Texture>,
 {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         src_texture: SrcTextureTransition,
         src_mip_level: u32,
@@ -1161,6 +1180,7 @@ where
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct ResolveTextureSubresourceAttribs<SrcTextureTransition, DstTextureTransition>(
     diligent_sys::ResolveTextureSubresourceAttribs,
     PhantomData<(SrcTextureTransition, DstTextureTransition)>,
@@ -1173,7 +1193,7 @@ where
     SrcTextureTransition: ResourceTransition<'src, Texture>,
     DstTextureTransition: ResourceTransition<'dst, Texture>,
 {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         src_mip_level: u32,
         src_slice: u32,
@@ -1197,6 +1217,7 @@ where
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct WriteBLASCompactedSizeAttribs<'blas, 'buffer, BLASTransition, BufferTransition>(
     diligent_sys::WriteBLASCompactedSizeAttribs,
     PhantomData<(&'blas BLASTransition, &'buffer BufferTransition)>,
@@ -1209,7 +1230,7 @@ where
     BLASTransition: ResourceTransition<'blas, BottomLevelAS>,
     BufferTransition: ResourceTransition<'buffer, Buffer>,
 {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         blas: BLASTransition,
         dest_buffer: BufferTransition,
@@ -1229,6 +1250,7 @@ where
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct WriteTLASCompactedSizeAttribs<'tlas, 'buffer, TLASTransition, BufferTransition>(
     diligent_sys::WriteTLASCompactedSizeAttribs,
     PhantomData<(&'tlas TLASTransition, &'buffer BufferTransition)>,
@@ -1241,7 +1263,7 @@ where
     TLASTransition: ResourceTransition<'tlas, TopLevelAS>,
     BufferTransition: ResourceTransition<'buffer, Buffer>,
 {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         tlas: TLASTransition,
         dest_buffer: BufferTransition,
@@ -1261,6 +1283,7 @@ where
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct CopyBLASAttribs<'src_blas, 'dst_blas, SrcTransition, DstTransition>(
     diligent_sys::CopyBLASAttribs,
     PhantomData<(&'src_blas SrcTransition, &'dst_blas DstTransition)>,
@@ -1273,7 +1296,7 @@ where
     SrcTransition: ResourceTransition<'src_blas, BottomLevelAS>,
     DstTransition: ResourceTransition<'dst_blas, BottomLevelAS>,
 {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(src: SrcTransition, dst: DstTransition, mode: CopyAsMode) -> Self {
         CopyBLASAttribs(
             diligent_sys::CopyBLASAttribs {
@@ -1289,6 +1312,7 @@ where
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct CopyTLASAttribs<'src_tlas, 'dst_tlas, SrcTransition, DstTransition>(
     diligent_sys::CopyTLASAttribs,
     PhantomData<(&'src_tlas SrcTransition, &'dst_tlas DstTransition)>,
@@ -1301,7 +1325,7 @@ where
     SrcTransition: ResourceTransition<'src_tlas, TopLevelAS>,
     DstTransition: ResourceTransition<'dst_tlas, TopLevelAS>,
 {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(src: SrcTransition, dst: DstTransition, mode: CopyAsMode) -> Self {
         CopyTLASAttribs(
             diligent_sys::CopyTLASAttribs {
@@ -1334,11 +1358,12 @@ impl From<CopyAsMode> for diligent_sys::COPY_AS_MODE {
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct Viewport(diligent_sys::Viewport);
 
 #[bon::bon]
 impl Viewport {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         top_left_x: f32,
         top_left_y: f32,
@@ -1359,11 +1384,12 @@ impl Viewport {
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct Rect(diligent_sys::Rect);
 
 #[bon::bon]
 impl Rect {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(left: i32, top: i32, right: i32, bottom: i32) -> Self {
         Self(diligent_sys::Rect {
             left,
@@ -1421,10 +1447,12 @@ impl Default for StateTransitionFlags {
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct StateTransitionDesc<'resource>(
     diligent_sys::StateTransitionDesc,
     PhantomData<&'resource ()>,
 );
+
 #[bon::bon]
 impl<'resource> StateTransitionDesc<'resource> {
     #[builder(derive(Clone))]
@@ -1470,11 +1498,12 @@ impl<'resource> StateTransitionDesc<'resource> {
 define_ported!(CommandList, diligent_sys::ICommandList);
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct DepthStencilClearValue(pub(crate) diligent_sys::DepthStencilClearValue);
 
 #[bon::bon]
 impl DepthStencilClearValue {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(depth: f32, stencil: u8) -> Self {
         Self(diligent_sys::DepthStencilClearValue {
             Depth: depth,
@@ -1484,11 +1513,12 @@ impl DepthStencilClearValue {
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct OptimizedClearValue(pub(crate) diligent_sys::OptimizedClearValue);
 
 #[bon::bon]
 impl OptimizedClearValue {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         format: TextureFormat,
         color: [f32; 4usize],
@@ -1503,6 +1533,7 @@ impl OptimizedClearValue {
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct BeginRenderPassAttribs<'render_pass, 'frame_buffer, 'clear_values, FramebufferTransition>(
     diligent_sys::BeginRenderPassAttribs,
     PhantomData<(
@@ -1518,7 +1549,7 @@ impl<'render_pass, 'frame_buffer, 'clear_values, FramebufferTransition>
 where
     FramebufferTransition: ResourceTransition<'frame_buffer, Framebuffer>,
 {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         render_pass: &'render_pass RenderPass,
         frame_buffer: FramebufferTransition,
@@ -1540,11 +1571,12 @@ where
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct SparseBufferMemoryBindRange(diligent_sys::SparseBufferMemoryBindRange);
 
 #[bon::bon]
 impl SparseBufferMemoryBindRange {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         buffer_offset: u64,
         memory_offset: u64,
@@ -1561,11 +1593,12 @@ impl SparseBufferMemoryBindRange {
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct SparseTextureMemoryBindRange(diligent_sys::SparseTextureMemoryBindRange);
 
 #[bon::bon]
 impl SparseTextureMemoryBindRange {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         mip_level: u32,
         array_slice: u32,
@@ -1588,11 +1621,12 @@ impl SparseTextureMemoryBindRange {
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct SparseBufferMemoryBindInfo(diligent_sys::SparseBufferMemoryBindInfo);
 
 #[bon::bon]
 impl SparseBufferMemoryBindInfo {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(buffer: &Buffer, ranges: &[SparseBufferMemoryBindRange]) -> Self {
         Self(diligent_sys::SparseBufferMemoryBindInfo {
             pBuffer: buffer.sys_ptr(),
@@ -1603,11 +1637,12 @@ impl SparseBufferMemoryBindInfo {
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct SparseTextureMemoryBindInfo(diligent_sys::SparseTextureMemoryBindInfo);
 
 #[bon::bon]
 impl SparseTextureMemoryBindInfo {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(texture: &Texture, ranges: &[SparseTextureMemoryBindRange]) -> Self {
         Self(diligent_sys::SparseTextureMemoryBindInfo {
             pTexture: texture.sys_ptr(),
@@ -1618,11 +1653,12 @@ impl SparseTextureMemoryBindInfo {
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct BindSparseResourceMemoryAttribs(diligent_sys::BindSparseResourceMemoryAttribs);
 
 #[bon::bon]
 impl BindSparseResourceMemoryAttribs {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         buffer_binds: &[SparseBufferMemoryBindInfo],
         texture_binds: &[SparseTextureMemoryBindInfo],

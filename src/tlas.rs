@@ -149,6 +149,7 @@ where
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct TopLevelASDesc<'name>(
     pub(crate) diligent_sys::TopLevelASDesc,
     PhantomData<&'name ()>,
@@ -163,7 +164,7 @@ impl Deref for TopLevelASDesc<'_> {
 
 #[bon::bon]
 impl<'name> TopLevelASDesc<'name> {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         name: Option<&'name CStr>,
 

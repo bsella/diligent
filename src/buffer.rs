@@ -51,7 +51,7 @@ impl Default for MiscBufferFlags {
     }
 }
 
-//#[derive(Builder, Clone)]
+#[derive(Clone)]
 #[repr(transparent)]
 pub struct BufferDesc<'name>(pub(crate) diligent_sys::BufferDesc, PhantomData<&'name ()>);
 

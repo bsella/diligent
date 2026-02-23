@@ -93,6 +93,7 @@ impl<'name> BLASBoundingBoxDesc<'name> {
     }
 }
 
+#[derive(Clone)]
 #[repr(transparent)]
 pub struct BottomLevelASDesc<
     'name,
@@ -122,7 +123,7 @@ impl Deref for BottomLevelASDesc<'_, '_, '_, '_, '_> {
 impl<'name, 'triangle_descs, 'bb_descs, 'triangle_geometry_name, 'bb_geometry_name>
     BottomLevelASDesc<'name, 'triangle_descs, 'bb_descs, 'triangle_geometry_name, 'bb_geometry_name>
 {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         name: Option<&'name CStr>,
 
@@ -164,6 +165,7 @@ define_ported!(
 );
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct ScratchBufferSizes(pub(crate) diligent_sys::ScratchBufferSizes);
 
 impl ScratchBufferSizes {

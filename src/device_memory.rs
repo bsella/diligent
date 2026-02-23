@@ -18,6 +18,7 @@ pub enum DeviceMemoryType {
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct DeviceMemoryDesc<'name>(diligent_sys::DeviceMemoryDesc, PhantomData<&'name ()>);
 
 impl Deref for DeviceMemoryDesc<'_> {
@@ -29,7 +30,7 @@ impl Deref for DeviceMemoryDesc<'_> {
 
 #[bon::bon]
 impl<'name> DeviceMemoryDesc<'name> {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         name: Option<&'name CStr>,
 
@@ -62,6 +63,7 @@ impl<'name> DeviceMemoryDesc<'name> {
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct DeviceMemoryCreateInfo<'name, 'resources, 'objects>(
     pub(crate) diligent_sys::DeviceMemoryCreateInfo,
     PhantomData<(&'name (), &'resources (), &'objects ())>,
@@ -69,7 +71,7 @@ pub struct DeviceMemoryCreateInfo<'name, 'resources, 'objects>(
 
 #[bon::bon]
 impl<'name, 'resources, 'objects> DeviceMemoryCreateInfo<'name, 'resources, 'objects> {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         desc: DeviceMemoryDesc<'name>,
         initial_size: u64,

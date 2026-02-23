@@ -27,6 +27,7 @@ impl Default for SamplerFlags {
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct SamplerDesc<'name>(pub(crate) diligent_sys::SamplerDesc, PhantomData<&'name ()>);
 
 impl Deref for SamplerDesc<'_> {
@@ -38,7 +39,7 @@ impl Deref for SamplerDesc<'_> {
 
 #[bon::bon]
 impl<'name> SamplerDesc<'name> {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         name: Option<&'name CStr>,
 

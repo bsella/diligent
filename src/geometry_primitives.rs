@@ -20,6 +20,7 @@ bitflags! {
 }
 const_assert_eq!(diligent_sys::GEOMETRY_PRIMITIVE_VERTEX_FLAG_LAST, 4);
 
+#[derive(Clone, Copy)]
 pub enum GeometryPrimitive {
     Cube { size: f32 },
     Sphere { radius: f32 },
@@ -27,6 +28,7 @@ pub enum GeometryPrimitive {
 const_assert_eq!(diligent_sys::GEOMETRY_PRIMITIVE_TYPE_COUNT, 3);
 
 #[derive(Builder)]
+#[builder(derive(Clone))]
 pub struct GeometryPrimitiveAttributes {
     pub geometry_type: GeometryPrimitive,
 

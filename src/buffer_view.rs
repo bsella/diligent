@@ -25,7 +25,7 @@ impl From<BufferViewType> for diligent_sys::BUFFER_VIEW_TYPE {
     }
 }
 
-#[derive(Builder)]
+#[derive(Builder, Clone, Copy)]
 pub struct BufferFormat {
     value_type: Option<ValueType>,
     num_components: u8,
@@ -34,6 +34,7 @@ pub struct BufferFormat {
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct BufferViewDesc<'name>(
     pub(crate) diligent_sys::BufferViewDesc,
     PhantomData<&'name ()>,
@@ -48,7 +49,7 @@ impl Deref for BufferViewDesc<'_> {
 
 #[bon::bon]
 impl<'name> BufferViewDesc<'name> {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         name: Option<&'name CStr>,
         view_type: BufferViewType,

@@ -3,6 +3,7 @@ use std::{ffi::CStr, marker::PhantomData};
 use crate::{Ported, device_object::DeviceObject, object::Object};
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct ResourceMappingEntry<'name, 'object>(
     pub(crate) diligent_sys::ResourceMappingEntry,
     PhantomData<(&'name (), &'object ())>,
@@ -10,7 +11,7 @@ pub struct ResourceMappingEntry<'name, 'object>(
 
 #[bon::bon]
 impl<'name, 'object, 'array_index> ResourceMappingEntry<'name, 'object> {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         name: Option<&'name CStr>,
         object: &'object DeviceObject,
@@ -28,6 +29,7 @@ impl<'name, 'object, 'array_index> ResourceMappingEntry<'name, 'object> {
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct ResourceMappingCreateInfo<
     'resource_mappings,
     'resource_mapping_name,
@@ -45,7 +47,7 @@ pub struct ResourceMappingCreateInfo<
 impl<'resource_mappings, 'resource_mapping_name, 'resource_mapping_object>
     ResourceMappingCreateInfo<'resource_mappings, 'resource_mapping_name, 'resource_mapping_object>
 {
-    #[builder]
+    #[builder(derive(Clone))]
     pub fn new(
         entries: &'resource_mappings [ResourceMappingEntry<
             'resource_mapping_name,
