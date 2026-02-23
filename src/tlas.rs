@@ -1,6 +1,7 @@
 use std::{
     ffi::{CStr, CString},
     marker::PhantomData,
+    mem::MaybeUninit,
     ops::Deref,
 };
 
@@ -204,27 +205,38 @@ impl TopLevelAS {
 
     pub fn get_instance_desc(&self, name: impl AsRef<str>) -> Option<TLASInstanceDesc> {
         let name = CString::new(name.as_ref()).unwrap();
-        let desc = unsafe_member_call!(self, TopLevelAS, GetInstanceDesc, name.as_ptr());
-        if desc.InstanceIndex == diligent_sys::INVALID_INDEX
-            && desc.ContributionToHitGroupIndex == diligent_sys::INVALID_INDEX
-        {
-            None
+        let mut desc = MaybeUninit::uninit();
+        let success = unsafe_member_call!(
+            self,
+            TopLevelAS,
+            GetInstanceDesc,
+            name.as_ptr(),
+            desc.as_mut_ptr()
+        );
+
+        if success {
+            let desc = unsafe { desc.assume_init() };
+            if desc.InstanceIndex == diligent_sys::INVALID_INDEX
+                && desc.ContributionToHitGroupIndex == diligent_sys::INVALID_INDEX
+            {
+                None
+            } else {
+                Some(TLASInstanceDesc(desc))
+            }
         } else {
-            Some(TLASInstanceDesc(desc))
+            None
         }
     }
 
-    pub fn get_build_info(&self) -> TLASBuildInfo {
-        TLASBuildInfo(unsafe_member_call!(self, TopLevelAS, GetBuildInfo))
+    pub fn get_build_info(&self) -> &TLASBuildInfo {
+        let info = unsafe_member_call!(self, TopLevelAS, GetBuildInfo);
+        unsafe { &*(info as *const TLASBuildInfo) }
     }
 
-    pub fn get_scratch_buffer_sizes(&self) -> ScratchBufferSizes {
+    pub fn get_scratch_buffer_sizes(&self) -> &ScratchBufferSizes {
         let sbs = unsafe_member_call!(self, TopLevelAS, GetScratchBufferSizes);
 
-        ScratchBufferSizes {
-            build: sbs.Build,
-            update: sbs.Update,
-        }
+        unsafe { &*(sbs as *const ScratchBufferSizes) }
     }
 
     pub fn get_native_handle(&self) -> u64 {

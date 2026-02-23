@@ -135,6 +135,18 @@ impl BufferDesc<'_> {
     }
 }
 
+#[repr(transparent)]
+pub struct SparseBufferProperties(pub(crate) diligent_sys::SparseBufferProperties);
+
+impl SparseBufferProperties {
+    pub fn address_space_size(&self) -> u64 {
+        self.0.AddressSpaceSize
+    }
+    pub fn block_size(&self) -> u32 {
+        self.0.BlockSize
+    }
+}
+
 define_ported!(
     Buffer,
     diligent_sys::IBuffer,
@@ -199,8 +211,10 @@ impl Buffer {
         unsafe_member_call!(self, Buffer, InvalidateMappedRange, start_offset, size)
     }
 
-    pub fn get_sparse_properties(&self) -> diligent_sys::SparseBufferProperties {
-        unsafe_member_call!(self, Buffer, GetSparseProperties)
+    pub fn get_sparse_properties(&self) -> &SparseBufferProperties {
+        let props = unsafe_member_call!(self, Buffer, GetSparseProperties);
+
+        unsafe { &*(props as *const SparseBufferProperties) }
     }
 }
 

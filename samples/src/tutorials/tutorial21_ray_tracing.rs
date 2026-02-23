@@ -523,7 +523,7 @@ fn create_tlas(device: &RenderDevice) -> (Boxed<TopLevelAS>, Boxed<Buffer>, Boxe
         let sbs = tlas.get_scratch_buffer_sizes();
         let desc = BufferDesc::builder()
             .name(c"TLAS Scratch Buffer")
-            .size(u64::max(sbs.build, sbs.update))
+            .size(u64::max(sbs.build(), sbs.update()))
             .usage(Usage::Default)
             .bind_flags(BindFlags::RayTracing)
             .build();
@@ -658,7 +658,7 @@ fn create_and_build_cube_blas(
                 .name(c"BLAS Scratch Buffer")
                 .usage(Usage::Default)
                 .bind_flags(BindFlags::RayTracing)
-                .size(blas.get_scratch_buffer_sizes().build)
+                .size(blas.get_scratch_buffer_sizes().build())
                 .build(),
         )
         .unwrap();
@@ -750,7 +750,7 @@ fn create_and_build_procedural_blas(
             .name(c"BLAS Scratch Buffer")
             .usage(Usage::Default)
             .bind_flags(BindFlags::RayTracing)
-            .size(procedural_blas.get_scratch_buffer_sizes().build)
+            .size(procedural_blas.get_scratch_buffer_sizes().build())
             .build();
 
         device.create_buffer(&buff_desc).unwrap()

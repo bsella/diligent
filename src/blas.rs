@@ -163,9 +163,16 @@ define_ported!(
     DeviceObject
 );
 
-pub struct ScratchBufferSizes {
-    pub build: u64,
-    pub update: u64,
+#[repr(transparent)]
+pub struct ScratchBufferSizes(pub(crate) diligent_sys::ScratchBufferSizes);
+
+impl ScratchBufferSizes {
+    pub fn build(&self) -> u64 {
+        self.0.Build
+    }
+    pub fn update(&self) -> u64 {
+        self.0.Update
+    }
 }
 
 impl BottomLevelAS {
@@ -188,13 +195,10 @@ impl BottomLevelAS {
         unsafe_member_call!(self, BottomLevelAS, GetActualGeometryCount)
     }
 
-    pub fn get_scratch_buffer_sizes(&self) -> ScratchBufferSizes {
+    pub fn get_scratch_buffer_sizes(&self) -> &ScratchBufferSizes {
         let sbs = unsafe_member_call!(self, BottomLevelAS, GetScratchBufferSizes);
 
-        ScratchBufferSizes {
-            build: sbs.Build,
-            update: sbs.Update,
-        }
+        unsafe { &*(sbs as *const ScratchBufferSizes) }
     }
 
     pub fn get_native_handle(&self) -> u64 {

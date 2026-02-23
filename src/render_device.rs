@@ -1,4 +1,4 @@
-use std::{ffi::CStr, os::raw::c_void};
+use std::{ffi::CStr, mem::MaybeUninit, os::raw::c_void};
 
 use crate::{
     Boxed, BoxedFromNulError, Ported, ResourceMappingCreateInfo, SparseTextureFormatInfo,
@@ -627,15 +627,23 @@ impl RenderDevice {
         format: TextureFormat,
         dimension: TextureDimension,
         sample_count: u32,
-    ) -> SparseTextureFormatInfo {
-        SparseTextureFormatInfo::new(unsafe_member_call!(
+    ) -> Option<SparseTextureFormatInfo> {
+        let mut info = MaybeUninit::uninit();
+        let success = unsafe_member_call!(
             self,
             RenderDevice,
             GetSparseTextureFormatInfo,
             format.into(),
             dimension.into(),
-            sample_count
-        ))
+            sample_count,
+            info.as_mut_ptr()
+        );
+
+        if success {
+            Some(SparseTextureFormatInfo::new(unsafe { info.assume_init() }))
+        } else {
+            None
+        }
     }
 
     pub fn release_stale_resources(&self, force_release: bool) {

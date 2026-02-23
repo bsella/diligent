@@ -319,9 +319,11 @@ impl EngineFactoryVk {
 
     pub fn get_vulkan_version(&self) -> Version {
         let version = unsafe_member_call!(self, EngineFactoryVk, GetVulkanVersion);
-        Version {
-            major: version.Major,
-            minor: version.Minor,
+        unsafe {
+            Version {
+                major: (*version).Major,
+                minor: (*version).Minor,
+            }
         }
     }
 }
