@@ -1,7 +1,8 @@
-use diligent::{get_prefered_device_type, AdapterType, RenderDeviceType};
+use diligent::{AdapterType, RenderDeviceType, get_prefered_device_type};
 
-use clap::{command, value_parser, Arg};
-use diligent_tools::native_app::app_settings::AppSettings;
+use clap::{Arg, command, value_parser};
+
+use crate::sample_base::sample_app::AppSettings;
 
 pub struct SampleAppSettings {
     pub device_type: RenderDeviceType,

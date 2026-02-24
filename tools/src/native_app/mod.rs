@@ -1,8 +1,6 @@
 use diligent::platforms::native_window::NativeWindow;
 
 use crate::native_app::events::Event;
-pub mod app;
-pub mod app_settings;
 
 pub mod events;
 

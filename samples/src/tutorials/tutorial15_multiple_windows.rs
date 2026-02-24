@@ -2,9 +2,8 @@ use diligent::*;
 
 use diligent_samples::sample_base::{
     sample::SampleBase,
-    sample_app::{self},
+    sample_app::{self, AppSettings},
 };
-use diligent_tools::native_app::app_settings::AppSettings;
 
 const VERTEX_SHADER_SOURCE: &str = r#"
 struct PSInput

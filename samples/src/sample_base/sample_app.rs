@@ -7,11 +7,7 @@ use diligent_tools::{
         events::imgui_handle_event,
         renderer::{ImguiRenderer, ImguiRendererCreateInfo},
     },
-    native_app::{
-        Window,
-        app::{App, GoldenImageMode},
-        events::Event,
-    },
+    native_app::{Window, events::Event},
 };
 
 #[cfg(feature = "vulkan")]
@@ -41,6 +37,28 @@ use super::{
     sample::SampleBase,
     sample_app_settings::{SampleAppSettings, parse_sample_app_settings},
 };
+
+// TODO
+#[allow(dead_code)]
+enum GoldenImageMode {
+    None,
+    Capture,
+    Compare,
+    CompareUpdate,
+}
+
+pub trait AppSettings {
+    fn get_render_device_type(&self) -> RenderDeviceType;
+    fn get_window_dimensions(&self) -> (u32, u32);
+}
+
+trait App {
+    type AppSettings: AppSettings;
+
+    fn new(app_settings: Self::AppSettings, engine_create_info: EngineCreateInfo) -> Self;
+
+    fn run(self) -> Result<(), std::io::Error>;
+}
 
 struct SampleWindow<W: Window> {
     window: W,

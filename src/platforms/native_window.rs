@@ -25,17 +25,3 @@ impl NativeWindow {
         Self(diligent_sys::NativeWindow { hWnd: hwnd })
     }
 }
-
-pub trait Window {
-    fn native(&self) -> NativeWindow;
-
-    fn set_title(&self, title: &str);
-}
-
-pub trait WindowFactory {
-    type Window<'factory>: Window
-    where
-        Self: 'factory;
-
-    fn create_window(&self, width: u16, height: u16) -> Self::Window<'_>;
-}
