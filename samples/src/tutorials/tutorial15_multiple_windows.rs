@@ -162,8 +162,8 @@ impl SampleBase for MultipleWindows {
     fn render(
         &self,
         main_context: Boxed<ImmediateDeviceContext>,
-        mut swap_chain: Boxed<SwapChain>,
-    ) -> (Boxed<ImmediateDeviceContext>, Boxed<SwapChain>) {
+        swap_chain: &mut SwapChain,
+    ) -> Boxed<ImmediateDeviceContext> {
         // Clear the back buffer
         // Let the engine perform required state transitions
         {
@@ -183,7 +183,7 @@ impl SampleBase for MultipleWindows {
         // use any resources.
         graphics.draw(&DrawAttribs::builder().num_vertices(3).build());
 
-        (graphics.finish(), swap_chain)
+        graphics.finish()
     }
 
     fn get_name() -> &'static str {

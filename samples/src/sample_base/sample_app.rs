@@ -1,4 +1,4 @@
-use std::{collections::VecDeque, ops::Deref};
+use std::ops::Deref;
 
 use diligent::*;
 
@@ -72,7 +72,7 @@ pub struct SampleApp<Sample: SampleBase> {
 
     fullscreen_mode: bool,
 
-    windows: VecDeque<SampleWindow>,
+    windows: Vec<Option<SampleWindow>>,
 }
 
 enum EngineFactory {
@@ -103,21 +103,6 @@ impl Deref for EngineFactory {
 }
 
 impl<GenericSample: SampleBase> SampleApp<GenericSample> {
-    fn window_resize(&mut self, width: u32, height: u32, swap_chain: &mut SwapChain) {
-        self.sample.pre_window_resize();
-
-        swap_chain.resize(width, height, SurfaceTransform::Optimal);
-
-        let swap_chain_desc = swap_chain.desc();
-
-        self.sample.window_resize(&self.device, swap_chain_desc);
-    }
-
-    fn update(&mut self, current_time: f64, elapsed_time: f64) {
-        self.sample
-            .update(&self.main_context, current_time, elapsed_time);
-    }
-
     fn update_ui(&mut self, swap_chain: &mut SwapChain, ui: &mut imgui::Ui) {
         let swap_chain_desc = swap_chain.desc();
 
@@ -181,14 +166,6 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
         self.sample.update_ui(&self.device, &self.main_context, ui);
     }
 
-    fn present(&self, swap_chain: &SwapChain) {
-        // TODO screen capture
-
-        swap_chain.present(if self.app_settings.vsync { 1 } else { 0 });
-
-        // TODO screen capture
-    }
-
     #[allow(clippy::type_complexity)]
     fn create_device_and_contexts_and_swap_chains<WM: WindowManager>(
         app_settings: &SampleAppSettings,
@@ -199,7 +176,7 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
         Boxed<RenderDevice>,
         Vec<Boxed<ImmediateDeviceContext>>,
         Vec<Boxed<DeferredDeviceContext>>,
-        VecDeque<SampleWindow>,
+        Vec<SampleWindow>,
     ) {
         match &engine_factory {
             #[cfg(feature = "opengl")]
@@ -241,11 +218,11 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
                     device,
                     vec![immediate_context],
                     vec![],
-                    VecDeque::from([SampleWindow {
+                    vec![SampleWindow {
                         swap_chain,
                         window,
                         imgui_renderer,
-                    }]),
+                    }],
                 )
             }
             #[cfg(any(feature = "vulkan", feature = "d3d11", feature = "d3d12"))]
@@ -609,7 +586,7 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
 
             fullscreen_mode: false,
 
-            windows,
+            windows: windows.into_iter().map(Some).collect(),
         }
     }
 
@@ -625,13 +602,15 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
             + format!("{API_VERSION}").as_str()
             + ")";
 
-        self.windows
-            .iter()
-            .for_each(|sample_window| sample_window.window.set_title(app_title.as_str()));
+        self.windows.iter().for_each(|sample_window| {
+            sample_window
+                .as_ref()
+                .unwrap()
+                .window
+                .set_title(app_title.as_str())
+        });
 
         let mut filtered_frame_time = 0.0;
-
-        let mut next_windows = VecDeque::<SampleWindow>::new();
 
         loop {
             // Update
@@ -641,85 +620,101 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
                 let current_time = now.duration_since(start_time).as_secs_f64();
                 let elapsed_time = now.duration_since(last_time).as_secs_f64();
 
-                self.update(current_time, elapsed_time);
+                self.sample
+                    .update(&self.main_context, current_time, elapsed_time);
 
                 last_time = now;
 
                 elapsed_time
             };
 
-            std::mem::swap(&mut self.windows, &mut next_windows);
+            let mut active_windows = 0usize;
 
             // Handle events
-            'window: for mut sample_window in next_windows.drain(..) {
-                let mut imgui_frame = sample_window.imgui_renderer.new_frame();
+            'window: for window_index in 0..self.windows.len() {
+                if let Some(mut sample_window) = self.windows[window_index].take() {
+                    active_windows += 1;
 
-                while let Some(event) = sample_window.window.handle_event() {
-                    match event {
-                        Event::Quit => {
-                            // sample_window is destroyed here instead of being moved into self.windows
-                            continue 'window;
+                    let mut imgui_frame = sample_window.imgui_renderer.new_frame();
+
+                    while let Some(event) = sample_window.window.handle_event() {
+                        match event {
+                            Event::Quit => {
+                                // Prevent looping again when the last window is closed
+                                active_windows -= 1;
+                                // sample_window is destroyed here instead of being moved back into self.windows
+                                continue 'window;
+                            }
+                            Event::Continue => {}
+                            Event::Resize { width, height } => {
+                                self.sample.pre_window_resize();
+
+                                sample_window.swap_chain.resize(
+                                    width as u32,
+                                    height as u32,
+                                    SurfaceTransform::Optimal,
+                                );
+
+                                self.sample
+                                    .window_resize(&self.device, sample_window.swap_chain.desc());
+                            }
+                            _ => {}
                         }
-                        Event::Continue => {}
-                        Event::Resize { width, height } => self.window_resize(
-                            width as u32,
-                            height as u32,
-                            &mut sample_window.swap_chain,
-                        ),
-                        _ => {}
+
+                        let event = imgui_handle_event(imgui_frame.io_mut(), event);
+
+                        self.sample.handle_event(event);
                     }
 
-                    let event = imgui_handle_event(imgui_frame.io_mut(), event);
+                    // Render
+                    {
+                        self.main_context.clear_stats();
 
-                    self.sample.handle_event(event);
+                        let (rtv, dsv) = sample_window.swap_chain.get_current_rtv_and_dsv_mut();
+
+                        let rtv = rtv.unwrap().transition_state();
+                        let dsv = dsv.map(|dsv| dsv.transition_state());
+
+                        self.main_context.set_render_targets(&[rtv], dsv);
+
+                        self.main_context = self
+                            .sample
+                            .render(self.main_context, &mut sample_window.swap_chain);
+                    }
+
+                    // Render imgui UI
+                    if self.app_settings.show_ui {
+                        self.update_ui(&mut sample_window.swap_chain, imgui_frame.ui_mut());
+                        self.main_context = imgui_frame.render(self.main_context, &self.device);
+                    }
+
+                    sample_window
+                        .swap_chain
+                        .present(if self.app_settings.vsync { 1 } else { 0 });
+
+                    // Update window title
+                    {
+                        let filter_scale = 0.2;
+                        filtered_frame_time = filtered_frame_time * (1.0 - filter_scale)
+                            + filter_scale * elapsed_time;
+
+                        sample_window.window.set_title(
+                            format!(
+                                "{app_title} - {:.1} ms ({:.1} fps)",
+                                filtered_frame_time * 1000.0,
+                                1.0 / filtered_frame_time
+                            )
+                            .as_str(),
+                        );
+                    }
+
+                    sample_window.imgui_renderer = imgui_frame.finish();
+
+                    self.windows[window_index].replace(sample_window);
                 }
-
-                // Render
-                {
-                    self.main_context.clear_stats();
-
-                    let (rtv, dsv) = sample_window.swap_chain.get_current_rtv_and_dsv_mut();
-
-                    let rtv = rtv.unwrap().transition_state();
-                    let dsv = dsv.map(|dsv| dsv.transition_state());
-
-                    self.main_context.set_render_targets(&[rtv], dsv);
-
-                    (self.main_context, sample_window.swap_chain) = self
-                        .sample
-                        .render(self.main_context, sample_window.swap_chain);
-                }
-
-                // Render imgui UI
-                if self.app_settings.show_ui {
-                    self.update_ui(&mut sample_window.swap_chain, imgui_frame.ui_mut());
-                    self.main_context = imgui_frame.render(self.main_context, &self.device);
-                }
-
-                self.present(&sample_window.swap_chain);
-
-                // Update window title
-                {
-                    let filter_scale = 0.2;
-                    filtered_frame_time =
-                        filtered_frame_time * (1.0 - filter_scale) + filter_scale * elapsed_time;
-
-                    sample_window.window.set_title(
-                        format!(
-                            "{app_title} - {:.1} ms ({:.1} fps)",
-                            filtered_frame_time * 1000.0,
-                            1.0 / filtered_frame_time
-                        )
-                        .as_str(),
-                    );
-                }
-
-                sample_window.imgui_renderer = imgui_frame.finish();
-
-                self.windows.push_back(sample_window);
             }
 
-            if self.windows.is_empty() {
+            if active_windows == 0 {
                 break;
             }
         }

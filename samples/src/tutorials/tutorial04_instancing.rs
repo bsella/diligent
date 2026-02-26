@@ -287,8 +287,8 @@ impl SampleBase for Instancing {
     fn render(
         &self,
         main_context: Boxed<ImmediateDeviceContext>,
-        mut swap_chain: Boxed<SwapChain>,
-    ) -> (Boxed<ImmediateDeviceContext>, Boxed<SwapChain>) {
+        swap_chain: &mut SwapChain,
+    ) -> Boxed<ImmediateDeviceContext> {
         let view_proj_matrix = {
             let swap_chain_desc = swap_chain.desc();
 
@@ -383,7 +383,7 @@ impl SampleBase for Instancing {
 
         graphics.draw_indexed(&draw_attribs);
 
-        (graphics.finish(), swap_chain)
+        graphics.finish()
     }
 
     fn get_name() -> &'static str {

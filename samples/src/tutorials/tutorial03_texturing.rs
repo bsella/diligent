@@ -361,8 +361,8 @@ impl SampleBase for Texturing {
     fn render(
         &self,
         main_context: Boxed<ImmediateDeviceContext>,
-        mut swap_chain: Boxed<SwapChain>,
-    ) -> (Boxed<ImmediateDeviceContext>, Boxed<SwapChain>) {
+        swap_chain: &mut SwapChain,
+    ) -> Boxed<ImmediateDeviceContext> {
         // Clear the back buffer
         let clear_color = {
             let clear_color = [0.350, 0.350, 0.350, 1.0];
@@ -437,7 +437,7 @@ impl SampleBase for Texturing {
                 .build(),
         );
 
-        (graphics.finish(), swap_chain)
+        graphics.finish()
     }
 
     fn get_name() -> &'static str {

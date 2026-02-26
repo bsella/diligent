@@ -585,8 +585,8 @@ impl SampleBase for ComputeShader {
     fn render(
         &self,
         main_context: Boxed<ImmediateDeviceContext>,
-        mut swap_chain: Boxed<SwapChain>,
-    ) -> (Boxed<ImmediateDeviceContext>, Boxed<SwapChain>) {
+        swap_chain: &mut SwapChain,
+    ) -> Boxed<ImmediateDeviceContext> {
         // Clear the back buffer
         // Let the engine perform required state transitions
         {
@@ -691,7 +691,7 @@ impl SampleBase for ComputeShader {
                 .build(),
         );
 
-        (graphics.finish(), swap_chain)
+        graphics.finish()
     }
 
     fn update_ui(
