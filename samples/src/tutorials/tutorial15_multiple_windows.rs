@@ -2,7 +2,8 @@ use diligent::*;
 
 use diligent_samples::sample_base::{
     sample::SampleBase,
-    sample_app::{self, AppSettings},
+    sample_app::{self},
+    sample_app_settings::SampleAppSettings,
 };
 
 const VERTEX_SHADER_SOURCE: &str = r#"
@@ -52,7 +53,7 @@ struct MultipleWindows {
 }
 
 impl SampleBase for MultipleWindows {
-    fn make_swap_chains_create_info(_settings: &impl AppSettings) -> Vec<SwapChainCreateInfo> {
+    fn make_swap_chains_create_info(_settings: &SampleAppSettings) -> Vec<SwapChainCreateInfo> {
         vec![
             SwapChainCreateInfo::builder()
                 .width(1024)

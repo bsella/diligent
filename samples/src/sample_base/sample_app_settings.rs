@@ -2,8 +2,6 @@ use diligent::{AdapterType, RenderDeviceType, get_prefered_device_type};
 
 use clap::{Arg, command, value_parser};
 
-use crate::sample_base::sample_app::AppSettings;
-
 pub struct SampleAppSettings {
     pub device_type: RenderDeviceType,
 
@@ -29,11 +27,11 @@ pub struct SampleAppSettings {
     pub vk_compatibility: bool,
 }
 
-impl AppSettings for SampleAppSettings {
-    fn get_render_device_type(&self) -> RenderDeviceType {
+impl SampleAppSettings {
+    pub fn get_render_device_type(&self) -> RenderDeviceType {
         self.device_type
     }
-    fn get_window_dimensions(&self) -> (u32, u32) {
+    pub fn get_window_dimensions(&self) -> (u32, u32) {
         (self.width, self.height)
     }
 }

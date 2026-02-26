@@ -9,9 +9,11 @@ pub trait Window {
 
     fn set_title(&self, title: &str);
 
-    fn create(width: u32, height: u32) -> Self;
-
     fn handle_event(&mut self) -> Option<Event>;
+}
+
+pub trait WindowManager {
+    fn create_window(width: u32, height: u32) -> Box<dyn Window>;
 }
 
 #[cfg(target_os = "linux")]

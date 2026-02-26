@@ -1,7 +1,7 @@
 use std::ffi::CString;
 
 use crate::native_app::{
-    Window,
+    Window, WindowManager,
     events::{Event, Key, MouseButton},
 };
 
@@ -312,8 +312,83 @@ impl Window for X11Window {
             }
         })
     }
+}
 
-    fn create(width: u32, height: u32) -> Self {
+struct FrameBufferConfig {
+    ptr: *mut GLXFBConfig,
+}
+
+impl FrameBufferConfig {
+    fn new(display: *mut Display) -> Self {
+        #[rustfmt::skip]
+        let visual_attribs =
+        [
+            x11::glx::GLX_RENDER_TYPE,    x11::glx::GLX_RGBA_BIT,
+            x11::glx::GLX_DRAWABLE_TYPE,  x11::glx::GLX_WINDOW_BIT,
+            x11::glx::GLX_DOUBLEBUFFER,   1,
+
+            // The largest available total RGBA color buffer size (sum of GLX_RED_SIZE, 
+            // GLX_GREEN_SIZE, GLX_BLUE_SIZE, and GLX_ALPHA_SIZE) of at least the minimum
+            // size specified for each color component is preferred.
+            x11::glx::GLX_RED_SIZE,       8,
+            x11::glx::GLX_GREEN_SIZE,     8,
+            x11::glx::GLX_BLUE_SIZE,      8,
+            x11::glx::GLX_ALPHA_SIZE,     8,
+
+            // The largest available depth buffer of at least GLX_DEPTH_SIZE size is preferred
+            x11::glx::GLX_DEPTH_SIZE,     24,
+
+            x11::glx::GLX_SAMPLE_BUFFERS, 0,
+
+            // Setting GLX_SAMPLES to 1 results in 2x MS backbuffer, which is 
+            // against the spec that states:
+            //     if GLX SAMPLE BUFFERS is zero, then GLX SAMPLES will also be zero
+            // GLX_SAMPLES, 1,
+
+            0
+        ];
+
+        let mut fbcount = 0;
+
+        let fb_ptr = unsafe {
+            x11::glx::glXChooseFBConfig(
+                display,
+                x11::xlib::XDefaultScreen(display),
+                visual_attribs.as_ptr(),
+                &mut fbcount,
+            )
+        };
+
+        if fb_ptr.is_null() {
+            panic!("Failed to retrieve a framebuffer config");
+        }
+
+        FrameBufferConfig { ptr: fb_ptr }
+    }
+}
+
+impl Drop for FrameBufferConfig {
+    fn drop(&mut self) {
+        unsafe { x11::xlib::XFree(self.ptr as *mut std::ffi::c_void) };
+    }
+}
+
+impl Drop for X11Window {
+    fn drop(&mut self) {
+        unsafe {
+            let ctx = x11::glx::glXGetCurrentContext();
+            x11::glx::glXMakeCurrent(self.display, 0, std::ptr::null_mut());
+            x11::glx::glXDestroyContext(self.display, ctx);
+            x11::xlib::XDestroyWindow(self.display, self.win);
+            x11::xlib::XCloseDisplay(self.display);
+        }
+    }
+}
+
+pub struct X11WindowManager;
+
+impl WindowManager for X11WindowManager {
+    fn create_window(width: u32, height: u32) -> Box<dyn Window> {
         let display = unsafe { x11::xlib::XOpenDisplay(std::ptr::null()) };
 
         let fbc = FrameBufferConfig::new(display);
@@ -441,81 +516,10 @@ impl Window for X11Window {
             x11::glx::glXMakeCurrent(display, win, ctx);
         }
 
-        X11Window {
+        Box::new(X11Window {
             display,
             _fbc: fbc,
             win,
-        }
-    }
-}
-
-struct FrameBufferConfig {
-    ptr: *mut GLXFBConfig,
-}
-
-impl FrameBufferConfig {
-    fn new(display: *mut Display) -> Self {
-        #[rustfmt::skip]
-        let visual_attribs =
-        [
-            x11::glx::GLX_RENDER_TYPE,    x11::glx::GLX_RGBA_BIT,
-            x11::glx::GLX_DRAWABLE_TYPE,  x11::glx::GLX_WINDOW_BIT,
-            x11::glx::GLX_DOUBLEBUFFER,   1,
-
-            // The largest available total RGBA color buffer size (sum of GLX_RED_SIZE, 
-            // GLX_GREEN_SIZE, GLX_BLUE_SIZE, and GLX_ALPHA_SIZE) of at least the minimum
-            // size specified for each color component is preferred.
-            x11::glx::GLX_RED_SIZE,       8,
-            x11::glx::GLX_GREEN_SIZE,     8,
-            x11::glx::GLX_BLUE_SIZE,      8,
-            x11::glx::GLX_ALPHA_SIZE,     8,
-
-            // The largest available depth buffer of at least GLX_DEPTH_SIZE size is preferred
-            x11::glx::GLX_DEPTH_SIZE,     24,
-
-            x11::glx::GLX_SAMPLE_BUFFERS, 0,
-
-            // Setting GLX_SAMPLES to 1 results in 2x MS backbuffer, which is 
-            // against the spec that states:
-            //     if GLX SAMPLE BUFFERS is zero, then GLX SAMPLES will also be zero
-            // GLX_SAMPLES, 1,
-
-            0
-        ];
-
-        let mut fbcount = 0;
-
-        let fb_ptr = unsafe {
-            x11::glx::glXChooseFBConfig(
-                display,
-                x11::xlib::XDefaultScreen(display),
-                visual_attribs.as_ptr(),
-                &mut fbcount,
-            )
-        };
-
-        if fb_ptr.is_null() {
-            panic!("Failed to retrieve a framebuffer config");
-        }
-
-        FrameBufferConfig { ptr: fb_ptr }
-    }
-}
-
-impl Drop for FrameBufferConfig {
-    fn drop(&mut self) {
-        unsafe { x11::xlib::XFree(self.ptr as *mut std::ffi::c_void) };
-    }
-}
-
-impl Drop for X11Window {
-    fn drop(&mut self) {
-        unsafe {
-            let ctx = x11::glx::glXGetCurrentContext();
-            x11::glx::glXMakeCurrent(self.display, 0, std::ptr::null_mut());
-            x11::glx::glXDestroyContext(self.display, ctx);
-            x11::xlib::XDestroyWindow(self.display, self.win);
-            x11::xlib::XCloseDisplay(self.display);
-        }
+        })
     }
 }

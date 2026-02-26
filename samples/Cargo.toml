@@ -19,7 +19,7 @@ path = "../tools"
 
 [features]
 # Vulkan is present on all platforms, so let's set it as the default backend for now.
-default = ["vulkan"]
+default = ["vulkan", "opengl"]
 
 vulkan = ["diligent_tools/vulkan"]
 opengl = ["diligent_tools/opengl"]

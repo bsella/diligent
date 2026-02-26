@@ -7,7 +7,7 @@ use diligent_tools::{
         events::imgui_handle_event,
         renderer::{ImguiRenderer, ImguiRendererCreateInfo},
     },
-    native_app::{Window, events::Event},
+    native_app::{Window, WindowManager, events::Event},
 };
 
 #[cfg(feature = "vulkan")]
@@ -47,26 +47,13 @@ enum GoldenImageMode {
     CompareUpdate,
 }
 
-pub trait AppSettings {
-    fn get_render_device_type(&self) -> RenderDeviceType;
-    fn get_window_dimensions(&self) -> (u32, u32);
-}
-
-trait App {
-    type AppSettings: AppSettings;
-
-    fn new(app_settings: Self::AppSettings, engine_create_info: EngineCreateInfo) -> Self;
-
-    fn run(self) -> Result<(), std::io::Error>;
-}
-
-struct SampleWindow<W: Window> {
-    window: W,
+pub struct SampleWindow {
+    window: std::boxed::Box<dyn Window>,
     swap_chain: Boxed<SwapChain>,
     imgui_renderer: ImguiRenderer,
 }
 
-pub struct SampleApp<Sample: SampleBase, W: Window> {
+pub struct SampleApp<Sample: SampleBase> {
     _golden_image_mode: GoldenImageMode,
     _golden_pixel_tolerance: u32,
 
@@ -85,7 +72,7 @@ pub struct SampleApp<Sample: SampleBase, W: Window> {
 
     fullscreen_mode: bool,
 
-    windows: VecDeque<SampleWindow<W>>,
+    windows: VecDeque<SampleWindow>,
 }
 
 enum EngineFactory {
@@ -115,7 +102,7 @@ impl Deref for EngineFactory {
     }
 }
 
-impl<GenericSample: SampleBase, W: Window> SampleApp<GenericSample, W> {
+impl<GenericSample: SampleBase> SampleApp<GenericSample> {
     fn window_resize(&mut self, width: u32, height: u32, swap_chain: &mut SwapChain) {
         self.sample.pre_window_resize();
 
@@ -202,138 +189,8 @@ impl<GenericSample: SampleBase, W: Window> SampleApp<GenericSample, W> {
         // TODO screen capture
     }
 
-    fn create_device_and_contexts(
-        app_settings: &SampleAppSettings,
-        engine_factory: &EngineFactory,
-        engine_create_info: EngineCreateInfo,
-    ) -> (
-        Boxed<RenderDevice>,
-        Vec<Boxed<ImmediateDeviceContext>>,
-        Vec<Boxed<DeferredDeviceContext>>,
-    ) {
-        match &engine_factory {
-            #[cfg(feature = "vulkan")]
-            EngineFactory::Vulkan(engine_factory) => {
-                let mut engine_vk_create_info = EngineVkCreateInfo::new(engine_create_info);
-
-                if app_settings.vk_compatibility {
-                    engine_vk_create_info.features_vk = DeviceFeaturesVk::new(
-                        DeviceFeatureState::Disabled,
-                        DeviceFeatureState::Disabled,
-                    );
-                };
-
-                GenericSample::modify_engine_init_info(
-                    &mut sample::EngineCreateInfo::EngineVkCreateInfo(&mut engine_vk_create_info),
-                );
-
-                engine_factory
-                    .create_device_and_contexts(&engine_vk_create_info)
-                    .unwrap()
-            }
-            #[cfg(feature = "opengl")]
-            EngineFactory::OpenGL(_engine_factory) => {
-                // The device, and contexts are created with the swapchain in the same function later
-                unreachable!();
-            }
-            #[cfg(feature = "d3d11")]
-            EngineFactory::D3D11(engine_factory) => {
-                let mut engine_d3d11_create_info =
-                    EngineD3D11CreateInfo::new(D3D11ValidationFlags::None, engine_create_info);
-
-                GenericSample::modify_engine_init_info(
-                    &mut sample::EngineCreateInfo::EngineD3D11CreateInfo(
-                        &mut engine_d3d11_create_info,
-                    ),
-                );
-
-                engine_factory
-                    .create_device_and_contexts(&engine_d3d11_create_info)
-                    .unwrap()
-            }
-            #[cfg(feature = "d3d12")]
-            EngineFactory::D3D12(engine_factory) => {
-                let mut engine_d3d12_create_info = EngineD3D12CreateInfo::new(engine_create_info);
-
-                GenericSample::modify_engine_init_info(
-                    &mut sample::EngineCreateInfo::EngineD3D12CreateInfo(
-                        &mut engine_d3d12_create_info,
-                    ),
-                );
-
-                engine_factory
-                    .create_device_and_contexts(&engine_d3d12_create_info)
-                    .unwrap()
-            }
-        }
-    }
-
-    fn create_swap_chains(
-        engine_factory: &EngineFactory,
-        device: &RenderDevice,
-        swap_chain_ci: &[SwapChainCreateInfo],
-        immediate_context: &ImmediateDeviceContext,
-    ) -> VecDeque<SampleWindow<W>> {
-        let create_swap_chain = |swap_chain_ci, native_window| match &engine_factory {
-            #[cfg(feature = "vulkan")]
-            EngineFactory::Vulkan(engine_factory) => engine_factory
-                .create_swap_chain(device, immediate_context, swap_chain_ci, &native_window)
-                .unwrap(),
-            #[cfg(feature = "opengl")]
-            EngineFactory::OpenGL(_engine_factory) => {
-                unreachable!()
-            }
-            #[cfg(feature = "d3d11")]
-            EngineFactory::D3D11(engine_factory) => engine_factory
-                .create_swap_chain(
-                    device,
-                    immediate_context,
-                    swap_chain_ci,
-                    &FullScreenModeDesc::default(),
-                    &native_window,
-                )
-                .unwrap(),
-            #[cfg(feature = "d3d12")]
-            EngineFactory::D3D12(engine_factory) => engine_factory
-                .create_swap_chain(
-                    device,
-                    immediate_context,
-                    swap_chain_ci,
-                    &FullScreenModeDesc::default(),
-                    &native_window,
-                )
-                .unwrap(),
-        };
-
-        swap_chain_ci
-            .iter()
-            .map(|ci| {
-                let window = W::create(ci.width(), ci.height());
-
-                let swap_chain = create_swap_chain(ci, window.native());
-
-                let swap_chain_desc = swap_chain.desc();
-
-                let imgui_renderer = ImguiRenderer::new(
-                    &ImguiRendererCreateInfo::builder()
-                        .device(device)
-                        .maybe_back_buffer_format(swap_chain_desc.color_buffer_format())
-                        .maybe_depth_buffer_format(swap_chain_desc.depth_buffer_format())
-                        .initial_width(swap_chain_desc.width() as f32)
-                        .initial_height(swap_chain_desc.height() as f32)
-                        .build(),
-                );
-                SampleWindow {
-                    imgui_renderer,
-                    swap_chain,
-                    window,
-                }
-            })
-            .collect()
-    }
-
     #[allow(clippy::type_complexity)]
-    fn create_device_and_contexts_and_swap_chains(
+    fn create_device_and_contexts_and_swap_chains<WM: WindowManager>(
         app_settings: &SampleAppSettings,
         engine_factory: &EngineFactory,
         swap_chain_ci: &[SwapChainCreateInfo],
@@ -342,7 +199,7 @@ impl<GenericSample: SampleBase, W: Window> SampleApp<GenericSample, W> {
         Boxed<RenderDevice>,
         Vec<Boxed<ImmediateDeviceContext>>,
         Vec<Boxed<DeferredDeviceContext>>,
-        VecDeque<SampleWindow<W>>,
+        VecDeque<SampleWindow>,
     ) {
         match &engine_factory {
             #[cfg(feature = "opengl")]
@@ -355,7 +212,7 @@ impl<GenericSample: SampleBase, W: Window> SampleApp<GenericSample, W> {
                     panic!("The OpenGL backend does not permite creating multiple swapchains");
                 }
 
-                let window = W::create(app_settings.width, app_settings.height);
+                let window = WM::create_window(swap_chain_ci[0].width(), swap_chain_ci[0].height());
 
                 let mut engine_gl_create_info =
                     EngineGLCreateInfo::new(window.native(), engine_create_info);
@@ -393,18 +250,134 @@ impl<GenericSample: SampleBase, W: Window> SampleApp<GenericSample, W> {
             }
             #[cfg(any(feature = "vulkan", feature = "d3d11", feature = "d3d12"))]
             _ => {
-                let (device, immediate_contexts, defered_contexts) =
-                    Self::create_device_and_contexts(
-                        app_settings,
-                        engine_factory,
-                        engine_create_info,
-                    );
-                let sample_windows = Self::create_swap_chains(
-                    engine_factory,
-                    &device,
-                    swap_chain_ci,
-                    immediate_contexts.first().unwrap(),
-                );
+                let (device, immediate_contexts, defered_contexts) = match &engine_factory {
+                    #[cfg(feature = "vulkan")]
+                    EngineFactory::Vulkan(engine_factory) => {
+                        let mut engine_vk_create_info = EngineVkCreateInfo::new(engine_create_info);
+
+                        if app_settings.vk_compatibility {
+                            engine_vk_create_info.features_vk = DeviceFeaturesVk::new(
+                                DeviceFeatureState::Disabled,
+                                DeviceFeatureState::Disabled,
+                            );
+                        };
+
+                        GenericSample::modify_engine_init_info(
+                            &mut sample::EngineCreateInfo::EngineVkCreateInfo(
+                                &mut engine_vk_create_info,
+                            ),
+                        );
+
+                        engine_factory
+                            .create_device_and_contexts(&engine_vk_create_info)
+                            .unwrap()
+                    }
+                    #[cfg(feature = "opengl")]
+                    EngineFactory::OpenGL(_engine_factory) => {
+                        // The device, and contexts are created with the swapchain in the same function later
+                        unreachable!();
+                    }
+                    #[cfg(feature = "d3d11")]
+                    EngineFactory::D3D11(engine_factory) => {
+                        let mut engine_d3d11_create_info = EngineD3D11CreateInfo::new(
+                            D3D11ValidationFlags::None,
+                            engine_create_info,
+                        );
+
+                        GenericSample::modify_engine_init_info(
+                            &mut sample::EngineCreateInfo::EngineD3D11CreateInfo(
+                                &mut engine_d3d11_create_info,
+                            ),
+                        );
+
+                        engine_factory
+                            .create_device_and_contexts(&engine_d3d11_create_info)
+                            .unwrap()
+                    }
+                    #[cfg(feature = "d3d12")]
+                    EngineFactory::D3D12(engine_factory) => {
+                        let mut engine_d3d12_create_info =
+                            EngineD3D12CreateInfo::new(engine_create_info);
+
+                        GenericSample::modify_engine_init_info(
+                            &mut sample::EngineCreateInfo::EngineD3D12CreateInfo(
+                                &mut engine_d3d12_create_info,
+                            ),
+                        );
+
+                        engine_factory
+                            .create_device_and_contexts(&engine_d3d12_create_info)
+                            .unwrap()
+                    }
+                };
+
+                let immediate_context = immediate_contexts.first().unwrap();
+
+                let sample_windows = {
+                    let create_swap_chain = |swap_chain_ci, native_window| match &engine_factory {
+                        #[cfg(feature = "vulkan")]
+                        EngineFactory::Vulkan(engine_factory) => engine_factory
+                            .create_swap_chain(
+                                &device,
+                                immediate_context,
+                                swap_chain_ci,
+                                &native_window,
+                            )
+                            .unwrap(),
+                        #[cfg(feature = "opengl")]
+                        EngineFactory::OpenGL(_engine_factory) => {
+                            unreachable!()
+                        }
+                        #[cfg(feature = "d3d11")]
+                        EngineFactory::D3D11(engine_factory) => engine_factory
+                            .create_swap_chain(
+                                device,
+                                immediate_context,
+                                swap_chain_ci,
+                                &FullScreenModeDesc::default(),
+                                &native_window,
+                            )
+                            .unwrap(),
+                        #[cfg(feature = "d3d12")]
+                        EngineFactory::D3D12(engine_factory) => engine_factory
+                            .create_swap_chain(
+                                device,
+                                immediate_context,
+                                swap_chain_ci,
+                                &FullScreenModeDesc::default(),
+                                &native_window,
+                            )
+                            .unwrap(),
+                    };
+
+                    swap_chain_ci
+                        .iter()
+                        .map(|ci| {
+                            let window = WM::create_window(ci.width(), ci.height());
+
+                            let swap_chain = create_swap_chain(ci, window.native());
+
+                            let swap_chain_desc = swap_chain.desc();
+
+                            let imgui_renderer = ImguiRenderer::new(
+                                &ImguiRendererCreateInfo::builder()
+                                    .device(&device)
+                                    .maybe_back_buffer_format(swap_chain_desc.color_buffer_format())
+                                    .maybe_depth_buffer_format(
+                                        swap_chain_desc.depth_buffer_format(),
+                                    )
+                                    .initial_width(swap_chain_desc.width() as f32)
+                                    .initial_height(swap_chain_desc.height() as f32)
+                                    .build(),
+                            );
+                            SampleWindow {
+                                imgui_renderer,
+                                swap_chain,
+                                window,
+                            }
+                        })
+                        .collect()
+                };
                 (device, immediate_contexts, defered_contexts, sample_windows)
             }
         }
@@ -447,12 +420,11 @@ impl<GenericSample: SampleBase, W: Window> SampleApp<GenericSample, W> {
             }
         }
     }
-}
 
-impl<GenericSample: SampleBase, W: Window> App for SampleApp<GenericSample, W> {
-    type AppSettings = SampleAppSettings;
-
-    fn new(app_settings: SampleAppSettings, mut engine_create_info: EngineCreateInfo) -> Self {
+    fn new<WM: WindowManager>(
+        app_settings: SampleAppSettings,
+        mut engine_create_info: EngineCreateInfo,
+    ) -> Self {
         let swap_chains_ci = GenericSample::make_swap_chains_create_info(&app_settings);
 
         fn find_adapter(
@@ -575,7 +547,7 @@ impl<GenericSample: SampleBase, W: Window> App for SampleApp<GenericSample, W> {
             Self::display_modes(&engine_factory, &app_settings, &engine_create_info);
 
         let (device, mut immediate_contexts, deferred_contexts, windows) =
-            Self::create_device_and_contexts_and_swap_chains(
+            Self::create_device_and_contexts_and_swap_chains::<WM>(
                 &app_settings,
                 &engine_factory,
                 swap_chains_ci.as_slice(),
@@ -618,7 +590,7 @@ impl<GenericSample: SampleBase, W: Window> App for SampleApp<GenericSample, W> {
             })
             .collect();
 
-        SampleApp::<GenericSample, W> {
+        SampleApp::<GenericSample> {
             _golden_image_mode: GoldenImageMode::None,
             _golden_pixel_tolerance: 0,
 
@@ -659,7 +631,7 @@ impl<GenericSample: SampleBase, W: Window> App for SampleApp<GenericSample, W> {
 
         let mut filtered_frame_time = 0.0;
 
-        let mut next_windows = VecDeque::<SampleWindow<W>>::new();
+        let mut next_windows = VecDeque::<SampleWindow>::new();
 
         loop {
             // Update
@@ -772,16 +744,16 @@ pub fn main<Sample: SampleBase>() -> Result<(), std::io::Error> {
         match device_type {
             #[cfg(feature = "vulkan")]
             RenderDeviceType::VULKAN => {
-                use diligent_tools::native_app::linux::xcb::XCBWindow;
+                use diligent_tools::native_app::linux::xcb::XCBWindowManager;
 
-                SampleApp::<Sample, XCBWindow>::new(settings, engine_ci).run()
+                SampleApp::<Sample>::new::<XCBWindowManager>(settings, engine_ci).run()
             }
 
             #[cfg(feature = "opengl")]
             RenderDeviceType::GL => {
-                use diligent_tools::native_app::linux::x11::X11Window;
+                use diligent_tools::native_app::linux::x11::X11WindowManager;
 
-                SampleApp::<Sample, X11Window>::new(settings, engine_ci).run()
+                SampleApp::<Sample>::new::<X11WindowManager>(settings, engine_ci).run()
             }
 
             #[allow(unreachable_patterns)]

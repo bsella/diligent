@@ -17,7 +17,7 @@ use diligent::d3d12::engine_factory_d3d12::EngineD3D12CreateInfo;
 use diligent_tools::native_app::events::Event;
 use imgui::Ui;
 
-use crate::sample_base::sample_app::AppSettings;
+use crate::sample_base::sample_app_settings::SampleAppSettings;
 
 // Returns projection matrix adjusted to the current screen orientation
 pub fn get_adjusted_projection_matrix(
@@ -140,16 +140,15 @@ pub trait SampleBase {
         main_context: &ImmediateDeviceContext,
         other_immediate_contexts: Vec<Boxed<ImmediateDeviceContext>>,
         deferred_contexts: Vec<Boxed<DeferredDeviceContext>>,
-        swap_chain_desc: &[&SwapChainDesc],
+        windows: &[&SwapChainDesc],
     ) -> Self;
 
-    fn make_swap_chains_create_info(settings: &impl AppSettings) -> Vec<SwapChainCreateInfo> {
+    fn make_swap_chains_create_info(settings: &SampleAppSettings) -> Vec<SwapChainCreateInfo> {
         // By default, the sample only created one window with one swap chain
-        let (width, height) = settings.get_window_dimensions();
         vec![
             SwapChainCreateInfo::builder()
-                .width(width)
-                .height(height)
+                .width(settings.width)
+                .height(settings.height)
                 .build(),
         ]
     }

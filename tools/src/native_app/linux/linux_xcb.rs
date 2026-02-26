@@ -4,7 +4,7 @@ use xcb::{Xid, x};
 use xkbcommon::xkb;
 
 use crate::native_app::{
-    Window,
+    Window, WindowManager,
     events::{Event, Key, MouseButton},
 };
 
@@ -231,8 +231,12 @@ impl Window for XCBWindow {
             None
         }
     }
+}
 
-    fn create(width: u32, height: u32) -> Self {
+pub struct XCBWindowManager;
+
+impl WindowManager for XCBWindowManager {
+    fn create_window(width: u32, height: u32) -> Box<dyn Window> {
         let (connection, screen_number) =
             xcb::Connection::connect(None).expect("Unable to make an XCB connection");
 
@@ -338,13 +342,13 @@ impl Window for XCBWindow {
             }
         }
 
-        XCBWindow {
+        Box::new(XCBWindow {
             atom_wm_delete_window,
             _atom_wm_protocols: atom_wm_protocols,
             connection,
             kb_state,
             _screen_number: screen_number,
             window,
-        }
+        })
     }
 }
