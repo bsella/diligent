@@ -1455,9 +1455,9 @@ pub struct StateTransitionDesc<'resource>(
 
 #[bon::bon]
 impl<'resource> StateTransitionDesc<'resource> {
-    #[builder(derive(Clone))]
+    #[builder]
     pub fn new(
-        resource: &'resource DeviceObject,
+        resource: &'resource mut DeviceObject,
 
         new_state: ResourceState,
 
