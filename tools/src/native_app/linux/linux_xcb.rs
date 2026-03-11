@@ -236,7 +236,10 @@ impl Window for XCBWindow {
 pub struct XCBWindowManager;
 
 impl WindowManager for XCBWindowManager {
-    fn create_window(width: u32, height: u32) -> Box<dyn Window> {
+    fn create() -> Self {
+        XCBWindowManager
+    }
+    fn create_window(&mut self, width: u32, height: u32) -> Box<dyn Window> {
         let (connection, screen_number) =
             xcb::Connection::connect(None).expect("Unable to make an XCB connection");
 

@@ -388,7 +388,10 @@ impl Drop for X11Window {
 pub struct X11WindowManager;
 
 impl WindowManager for X11WindowManager {
-    fn create_window(width: u32, height: u32) -> Box<dyn Window> {
+    fn create() -> Self {
+        X11WindowManager
+    }
+    fn create_window(&mut self, width: u32, height: u32) -> Box<dyn Window> {
         let display = unsafe { x11::xlib::XOpenDisplay(std::ptr::null()) };
 
         let fbc = FrameBufferConfig::new(display);

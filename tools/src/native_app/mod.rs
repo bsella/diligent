@@ -13,7 +13,8 @@ pub trait Window {
 }
 
 pub trait WindowManager {
-    fn create_window(width: u32, height: u32) -> Box<dyn Window>;
+    fn new() -> Self;
+    fn create_window(&mut self, width: u32, height: u32) -> Box<dyn Window>;
 }
 
 #[cfg(target_os = "linux")]

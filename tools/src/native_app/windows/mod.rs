@@ -1,10 +1,6 @@
-use std::{
-    ops::BitAnd,
-    pin::Pin,
-    sync::{Arc, Mutex, Weak},
-};
+use std::{ops::BitAnd, pin::Pin};
 
-use crate::native_app::Window;
+use crate::native_app::{Window, WindowManager};
 
 use super::events::{Event, Key};
 
@@ -62,88 +58,47 @@ extern "system" fn handle_message(
     }
 }
 
-struct Win32WindowManager {
+pub struct Win32WindowManager {
     instance: HINSTANCE,
 
     window_class_name: PCWSTR,
 }
 
-unsafe impl Sync for Win32WindowManager {}
-unsafe impl Send for Win32WindowManager {}
+impl WindowManager for Win32WindowManager {
+    fn new() -> Self {
+        // The window manager does not exist : create it
+        let instance = unsafe { GetModuleHandleW(None) }.unwrap();
 
-static WINDOW_MANAGER: Mutex<Weak<Win32WindowManager>> = Mutex::new(Weak::new());
+        debug_assert!(!instance.0.is_null());
 
-struct WindowHackData {
-    resize_param: LPARAM,
-    resized: bool,
-    closing: bool,
-}
+        let instance = HINSTANCE(instance.0);
 
-pub struct Win32Window {
-    hwnd: HWND,
+        let window_class_name = w!("DiligentWindow");
 
-    hack: Pin<Box<WindowHackData>>,
+        let window_class = WNDCLASSW {
+            hCursor: unsafe { LoadCursorW(None, IDC_ARROW) }.unwrap(),
+            hInstance: instance,
+            lpszClassName: window_class_name,
 
-    // This increments the static shared lazily-created window manager
-    // and keep it until all the windows are dropped
-    _window_manager: Arc<Win32WindowManager>,
-}
+            style: CS_HREDRAW | CS_VREDRAW,
+            lpfnWndProc: Some(handle_message),
+            ..Default::default()
+        };
 
-impl Window for Win32Window {
-    fn set_title(&self, title: &str) {
-        unsafe {
-            let _ = SetWindowTextW(self.hwnd, &HSTRING::from(title));
+        let atom = unsafe { RegisterClassW(&window_class) };
+        debug_assert!(atom != 0);
+
+        Win32WindowManager {
+            instance,
+            window_class_name,
         }
     }
 
-    fn native(&self) -> NativeWindow {
-        NativeWindow::new(self.hwnd.0)
-    }
-
-    fn create(width: u32, height: u32) -> Self {
-        let window_manager = {
-            let mut weak = WINDOW_MANAGER.lock().unwrap();
-            if let Some(window_manager) = weak.upgrade() {
-                // The window manager exists and is being used by a window
-                window_manager
-            } else {
-                // The window manager does not exist : create it
-                let instance = unsafe { GetModuleHandleW(None) }.unwrap();
-
-                debug_assert!(!instance.0.is_null());
-
-                let instance = HINSTANCE(instance.0);
-
-                let window_class_name = w!("DiligentWindow");
-
-                let window_class = WNDCLASSW {
-                    hCursor: unsafe { LoadCursorW(None, IDC_ARROW) }.unwrap(),
-                    hInstance: instance,
-                    lpszClassName: window_class_name,
-
-                    style: CS_HREDRAW | CS_VREDRAW,
-                    lpfnWndProc: Some(handle_message),
-                    ..Default::default()
-                };
-
-                let atom = unsafe { RegisterClassW(&window_class) };
-                debug_assert!(atom != 0);
-
-                let window_manger = Arc::new(Win32WindowManager {
-                    instance,
-                    window_class_name,
-                });
-
-                *weak = Arc::downgrade(&window_manger);
-
-                window_manger
-            }
-        };
-
+    fn create_window(&mut self, width: u32, height: u32) -> Box<dyn Window> {
         let hwnd = unsafe {
             CreateWindowExW(
                 WINDOW_EX_STYLE::default(),
-                window_manager.window_class_name,
+                self.window_class_name,
                 w!(""),
                 WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                 CW_USEDEFAULT,
@@ -152,7 +107,7 @@ impl Window for Win32Window {
                 height as i32,
                 None,
                 None,
-                Some(window_manager.instance),
+                Some(self.instance),
                 None,
             )
         }
@@ -172,11 +127,31 @@ impl Window for Win32Window {
             )
         };
 
-        Win32Window {
-            hwnd,
-            hack,
-            _window_manager: window_manager,
+        Box::new(Win32Window { hwnd, hack })
+    }
+}
+
+struct WindowHackData {
+    resize_param: LPARAM,
+    resized: bool,
+    closing: bool,
+}
+
+pub struct Win32Window {
+    hwnd: HWND,
+
+    hack: Pin<Box<WindowHackData>>,
+}
+
+impl Window for Win32Window {
+    fn set_title(&self, title: &str) {
+        unsafe {
+            let _ = SetWindowTextW(self.hwnd, &HSTRING::from(title));
         }
+    }
+
+    fn native(&self) -> NativeWindow {
+        NativeWindow::new(self.hwnd.0)
     }
 
     fn handle_event(&mut self) -> Option<Event> {

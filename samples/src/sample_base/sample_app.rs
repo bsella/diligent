@@ -167,11 +167,12 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
     }
 
     #[allow(clippy::type_complexity)]
-    fn create_device_and_contexts_and_swap_chains<WM: WindowManager>(
+    fn create_device_and_contexts_and_swap_chains(
         app_settings: &SampleAppSettings,
         engine_factory: &EngineFactory,
         swap_chain_ci: &[SwapChainCreateInfo],
         engine_create_info: EngineCreateInfo,
+        window_manager: &mut impl WindowManager,
     ) -> (
         Boxed<RenderDevice>,
         Vec<Boxed<ImmediateDeviceContext>>,
@@ -330,7 +331,7 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
                     swap_chain_ci
                         .iter()
                         .map(|ci| {
-                            let window = WM::create_window(ci.width(), ci.height());
+                            let window = window_manager.create_window(ci.width(), ci.height());
 
                             let swap_chain = create_swap_chain(ci, window.native());
 
@@ -398,9 +399,10 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
         }
     }
 
-    fn new<WM: WindowManager>(
+    fn new(
         app_settings: SampleAppSettings,
         mut engine_create_info: EngineCreateInfo,
+        window_manager: &mut impl WindowManager,
     ) -> Self {
         let swap_chains_ci = GenericSample::make_swap_chains_create_info(&app_settings);
 
@@ -524,11 +526,12 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
             Self::display_modes(&engine_factory, &app_settings, &engine_create_info);
 
         let (device, mut immediate_contexts, deferred_contexts, windows) =
-            Self::create_device_and_contexts_and_swap_chains::<WM>(
+            Self::create_device_and_contexts_and_swap_chains(
                 &app_settings,
                 &engine_factory,
                 swap_chains_ci.as_slice(),
                 engine_create_info,
+                window_manager,
             );
 
         let swap_chain_descs = windows
@@ -730,31 +733,27 @@ pub fn main<Sample: SampleBase>() -> Result<(), std::io::Error> {
 
     #[cfg(target_os = "windows")]
     {
-        use diligent_tools::native_app::windows::Win32Window;
-        SampleApp::<Sample, Win32Window>::new(settings, engine_ci).run()
+        let mut window_manager = diligent_tools::native_app::windows::Win32WindowManager::new();
+
+        SampleApp::<Sample>::new(settings, engine_ci, &mut window_manager).run()
     }
     #[cfg(target_os = "linux")]
     {
         let device_type = settings.device_type;
-        match device_type {
+        let mut window_manager = match device_type {
             #[cfg(feature = "vulkan")]
             RenderDeviceType::VULKAN => {
-                use diligent_tools::native_app::linux::xcb::XCBWindowManager;
-
-                SampleApp::<Sample>::new::<XCBWindowManager>(settings, engine_ci).run()
+                diligent_tools::native_app::linux::xcb::XCBWindowManager::new()
             }
 
             #[cfg(feature = "opengl")]
-            RenderDeviceType::GL => {
-                use diligent_tools::native_app::linux::x11::X11WindowManager;
-
-                SampleApp::<Sample>::new::<X11WindowManager>(settings, engine_ci).run()
-            }
+            RenderDeviceType::GL => diligent_tools::native_app::linux::xcb::X11WindowManager::new(),
 
             #[allow(unreachable_patterns)]
             _ => Err(std::io::Error::other(format!(
                 "Render device type {device_type} is not available on linux",
             ))),
-        }
+        };
+        SampleApp::<Sample>::new::<XCBWindowManager>(settings, engine_ci, &mut window_manager).run()
     }
 }
