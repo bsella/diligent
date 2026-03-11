@@ -743,17 +743,19 @@ pub fn main<Sample: SampleBase>() -> Result<(), std::io::Error> {
         let mut window_manager = match device_type {
             #[cfg(feature = "vulkan")]
             RenderDeviceType::VULKAN => {
-                diligent_tools::native_app::linux::xcb::XCBWindowManager::new()
+                Ok(diligent_tools::native_app::linux::xcb::XCBWindowManager::new())
             }
 
             #[cfg(feature = "opengl")]
-            RenderDeviceType::GL => diligent_tools::native_app::linux::xcb::X11WindowManager::new(),
+            RenderDeviceType::GL => {
+                Ok(diligent_tools::native_app::linux::xcb::X11WindowManager::new())
+            }
 
             #[allow(unreachable_patterns)]
             _ => Err(std::io::Error::other(format!(
                 "Render device type {device_type} is not available on linux",
             ))),
-        };
-        SampleApp::<Sample>::new::<XCBWindowManager>(settings, engine_ci, &mut window_manager).run()
+        }?;
+        SampleApp::<Sample>::new(settings, engine_ci, &mut window_manager).run()
     }
 }

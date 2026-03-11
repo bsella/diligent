@@ -388,7 +388,7 @@ impl Drop for X11Window {
 pub struct X11WindowManager;
 
 impl WindowManager for X11WindowManager {
-    fn create() -> Self {
+    fn new() -> Self {
         X11WindowManager
     }
     fn create_window(&mut self, width: u32, height: u32) -> Box<dyn Window> {

@@ -236,7 +236,7 @@ impl Window for XCBWindow {
 pub struct XCBWindowManager;
 
 impl WindowManager for XCBWindowManager {
-    fn create() -> Self {
+    fn new() -> Self {
         XCBWindowManager
     }
     fn create_window(&mut self, width: u32, height: u32) -> Box<dyn Window> {
