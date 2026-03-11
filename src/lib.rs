@@ -26,7 +26,7 @@ macro_rules! unsafe_member_call {
 macro_rules! define_ported {
     ($name:ident, $sys_name:ty) => {
         #[repr(transparent)]
-        pub struct $name(pub(crate) $sys_name);
+        pub struct $name(pub(crate) $sys_name, std::marker::PhantomPinned);
 
         impl crate::Ported for $name {
             type SysType = $sys_name;
