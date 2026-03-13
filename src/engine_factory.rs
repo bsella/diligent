@@ -223,15 +223,15 @@ impl EngineFactory {
         Boxed::new(dearchiver_ptr)
     }
 
-    pub fn set_message_callback(&self, callback: diligent_sys::DebugMessageCallbackType) {
+    pub fn set_message_callback(&mut self, callback: diligent_sys::DebugMessageCallbackType) {
         unsafe_member_call!(self, EngineFactory, SetMessageCallback, callback)
     }
 
-    pub fn set_break_on_error(&self, break_on_error: bool) {
+    pub fn set_break_on_error(&mut self, break_on_error: bool) {
         unsafe_member_call!(self, EngineFactory, SetBreakOnError, break_on_error)
     }
 
-    pub fn set_memory_allocator(&self, allocator: &MemoryAllocator) {
+    pub fn set_memory_allocator(&mut self, allocator: &MemoryAllocator) {
         unsafe_member_call!(
             &self,
             EngineFactory,
@@ -240,3 +240,6 @@ impl EngineFactory {
         );
     }
 }
+
+// # Safety : Access to EngineFactory can be thread safe
+unsafe impl Sync for EngineFactory {}

@@ -99,7 +99,7 @@ impl DeviceMemory {
         unsafe { &*(desc_ptr as *const DeviceMemoryDesc) }
     }
 
-    pub fn resize(&self, new_size: u64) -> bool {
+    pub fn resize(&mut self, new_size: u64) -> bool {
         unsafe_member_call!(self, DeviceMemory, Resize, new_size)
     }
 
@@ -111,3 +111,6 @@ impl DeviceMemory {
         unsafe_member_call!(self, DeviceMemory, IsCompatible, device_objet.sys_ptr())
     }
 }
+
+// # Safety : Access to DeviceMemory can be thread safe
+unsafe impl Sync for DeviceMemory {}
