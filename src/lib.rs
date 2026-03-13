@@ -44,6 +44,12 @@ macro_rules! define_ported {
                 unsafe { &*(std::ptr::from_ref(&self.0) as *const $parent) }
             }
         }
+
+        impl std::ops::DerefMut for $name {
+            fn deref_mut(&mut self) -> &mut Self::Target {
+                unsafe { &mut *(std::ptr::from_mut(&mut self.0) as *mut $parent) }
+            }
+        }
     };
 
     ($name:ident, $sys_name:ty, $parent:ty) => {
@@ -405,6 +411,12 @@ impl<T: Ported> Drop for Boxed<T> {
         }
     }
 }
+
+// # Safety
+// Boxed can be moved from a thread to another. The underlying pointer is not shared
+// with other Boxeds.
+unsafe impl<T: Ported> Send for Boxed<T> {}
+unsafe impl<T: Ported> Sync for Boxed<T> where T: Sync {}
 
 mod resource_access_states {
     pub struct Read;

@@ -47,7 +47,7 @@ enum GoldenImageMode {
     CompareUpdate,
 }
 
-pub struct SampleWindow {
+struct SampleWindow {
     window: std::boxed::Box<dyn Window>,
     swap_chain: Boxed<SwapChain>,
     imgui_renderer: ImguiRenderer,

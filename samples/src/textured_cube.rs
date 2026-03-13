@@ -262,4 +262,8 @@ impl TexturedCube {
     pub fn index_buffer_mut(&mut self) -> &mut Buffer {
         &mut self.index_buffer
     }
+
+    pub fn vertex_and_index_buffer_mut(&mut self) -> (&mut Buffer, &mut Buffer) {
+        (&mut self.vertex_buffer, &mut self.index_buffer)
+    }
 }
