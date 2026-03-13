@@ -1387,7 +1387,9 @@ fn main() {
     {
         let mut window_manager = diligent_tools::native_app::windows::Win32WindowManager::new();
 
-        SampleApp::<Sample>::new(settings, engine_ci, &mut window_manager).run()
+        MultithreadingApp::new(settings, engine_ci, &mut window_manager)
+            .run()
+            .unwrap()
     }
     #[cfg(target_os = "linux")]
     {
