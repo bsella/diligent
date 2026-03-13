@@ -227,3 +227,6 @@ impl BottomLevelAS {
         ResourceStateNoTransition::new(self)
     }
 }
+
+// # Safety : Access to BottomLevelAS can be thread safe
+unsafe impl Sync for BottomLevelAS {}

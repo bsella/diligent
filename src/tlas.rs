@@ -264,3 +264,6 @@ impl TopLevelAS {
         ResourceStateNoTransition::new(self)
     }
 }
+
+// # Safety : Access to TopLevelAS can be thread safe
+unsafe impl Sync for TopLevelAS {}

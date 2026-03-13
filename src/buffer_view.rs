@@ -110,3 +110,6 @@ impl BufferView {
         unsafe { &mut *(buffer_ptr as *mut Buffer) }
     }
 }
+
+// # Safety : Access to BufferView can be thread safe
+unsafe impl Sync for BufferView {}

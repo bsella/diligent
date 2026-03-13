@@ -81,3 +81,6 @@ impl Framebuffer {
         ResourceStateNoTransition::new(self)
     }
 }
+
+// # Safety : Access to Framebuffer can be thread safe
+unsafe impl Sync for Framebuffer {}

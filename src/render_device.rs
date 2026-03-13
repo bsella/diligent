@@ -661,3 +661,6 @@ impl RenderDevice {
 
     //TODO pub fn get_shader_compilation_thread_pool();
 }
+
+// # Safety : RenderDevice is thread-safe by design
+unsafe impl Sync for RenderDevice {}

@@ -240,6 +240,9 @@ impl Buffer {
     }
 }
 
+// # Safety : Access to Buffer can be thread safe
+unsafe impl Sync for Buffer {}
+
 pub struct BufferMapToken<'context, 'buffer, T: Sized, State: MapType> {
     device_context: &'context DeviceContext,
     buffer: &'buffer Buffer,

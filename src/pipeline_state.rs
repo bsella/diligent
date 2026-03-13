@@ -1697,6 +1697,8 @@ impl PipelineState {
     }
 }
 
+unsafe impl Sync for PipelineState {}
+
 #[repr(transparent)]
 pub struct GraphicsPipelineState(PipelineState);
 

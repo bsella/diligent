@@ -229,3 +229,6 @@ impl TextureView {
         ResourceStateNoTransition::new(self)
     }
 }
+
+// # Safety : Access to TextureView can be thread safe
+unsafe impl Sync for TextureView {}

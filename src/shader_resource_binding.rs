@@ -103,3 +103,6 @@ impl ShaderResourceBinding {
         ResourceStateNoTransition::new(self)
     }
 }
+
+// # Safety : Access to ShaderResourceBinding can be thread safe
+unsafe impl Sync for ShaderResourceBinding {}

@@ -71,3 +71,6 @@ impl Fence {
         unsafe_member_call!(self, Fence, Wait, value)
     }
 }
+
+// # Safety : Access to Fence can be thread safe
+unsafe impl Sync for Fence {}

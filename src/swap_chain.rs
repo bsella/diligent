@@ -240,3 +240,5 @@ impl SwapChain {
         (rtv, dsv)
     }
 }
+
+unsafe impl Sync for SwapChain {}

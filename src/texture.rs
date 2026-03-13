@@ -560,6 +560,9 @@ impl Texture {
     }
 }
 
+// # Safety : Access to Texture can be thread safe
+unsafe impl Sync for Texture {}
+
 pub struct TextureMapToken<'context, 'texture, T: Sized, State: MapType> {
     device_context: &'context DeviceContext,
     texture: &'texture Texture,
