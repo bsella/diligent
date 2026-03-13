@@ -2424,10 +2424,6 @@ impl DeviceContext {
         unsafe_member_call!(self, DeviceContext, GenerateMips, texture_view.sys_ptr())
     }
 
-    pub fn finish_frame(&self) {
-        unsafe_member_call!(self, DeviceContext, FinishFrame)
-    }
-
     pub fn get_frame_number(&self) -> u64 {
         unsafe_member_call!(self, DeviceContext, GetFrameNumber)
     }
@@ -2603,6 +2599,10 @@ impl ImmediateDeviceContext {
         unsafe_member_call!(self.0, DeviceContext, Flush)
     }
 
+    pub fn finish_frame(&self) {
+        unsafe_member_call!(self.0, DeviceContext, FinishFrame)
+    }
+
     pub fn execute_command_lists(&self, command_lists: &[&CommandList]) {
         unsafe_member_call!(
             self.0,
@@ -2682,5 +2682,12 @@ impl DeferredDeviceContext {
         );
 
         Boxed::new(command_list_ptr)
+    }
+
+    /// # Safety
+    /// For deferred contexts, this method must be called after all command lists referencing dynamic resources
+    /// have been executed through immediate context.
+    pub unsafe fn finish_frame(&self) {
+        unsafe_member_call!(self.0, DeviceContext, FinishFrame)
     }
 }
