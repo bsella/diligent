@@ -142,7 +142,7 @@ fn populate_instance_buffer(grid_size: usize) -> Vec<InstanceData> {
     instances
 }
 
-struct RenderingContext {
+struct SharedThreadData {
     pso: Boxed<GraphicsPipelineState>,
 
     textured_cube: TexturedCube,
@@ -155,7 +155,7 @@ struct RenderingContext {
     instances: Vec<InstanceData>,
 }
 
-impl RenderingContext {
+impl SharedThreadData {
     fn render_subset<Context: GraphicsContext>(
         &self,
         context: Context,
@@ -248,6 +248,14 @@ impl RenderingContext {
     }
 }
 
+struct ExclusiveThreadData {
+    context: Boxed<DeferredDeviceContext>,
+    message_receiver: Receiver<ThreadMessage>,
+    command_list_sender: Sender<Boxed<CommandList>>,
+}
+
+unsafe impl Send for ExclusiveThreadData {}
+
 enum ThreadMessage {
     Draw {
         swap_chain: Arc<RwLock<Boxed<SwapChain>>>,
@@ -255,16 +263,9 @@ enum ThreadMessage {
     },
     Stop,
 }
-struct ThreadData {
-    context: Boxed<DeferredDeviceContext>,
-    message_receiver: Receiver<ThreadMessage>,
-    command_list_sender: Sender<Boxed<CommandList>>,
-}
-
-unsafe impl Send for ThreadData {}
 
 struct RunningThread {
-    handle: std::thread::JoinHandle<ThreadData>,
+    handle: std::thread::JoinHandle<ExclusiveThreadData>,
 
     message_sender: Sender<ThreadMessage>,
     index: usize,
@@ -283,7 +284,7 @@ impl RunningThread {
 }
 
 struct PausedThread {
-    data: ThreadData,
+    data: ExclusiveThreadData,
 
     message_sender: Sender<ThreadMessage>,
     index: usize,
@@ -292,7 +293,7 @@ struct PausedThread {
 impl PausedThread {
     fn run(
         self,
-        rendering_context: Arc<RenderingContext>,
+        shared_data: Arc<SharedThreadData>,
         num_threads: usize,
         rotation_matrix: glam::Mat4,
         execute_command_list_barrier: Arc<Barrier>,
@@ -301,7 +302,7 @@ impl PausedThread {
             message_sender: self.message_sender,
             handle: std::thread::spawn(move || {
                 worker_thread_func(
-                    rendering_context,
+                    shared_data,
                     self.data,
                     self.index,
                     num_threads,
@@ -315,13 +316,13 @@ impl PausedThread {
 }
 
 fn worker_thread_func(
-    rendering_context: Arc<RenderingContext>,
-    mut thread_data: ThreadData,
+    shared_data: Arc<SharedThreadData>,
+    mut thread_data: ExclusiveThreadData,
     thread_index: usize,
     num_threads: usize,
     rotation_matrix: &glam::Mat4,
     execute_command_list_barrier: &Barrier,
-) -> ThreadData {
+) -> ExclusiveThreadData {
     let command_list_sender = &thread_data.command_list_sender;
     while let Ok(message) = thread_data.message_receiver.recv() {
         match message {
@@ -331,7 +332,7 @@ fn worker_thread_func(
             } => {
                 thread_data.context.begin(0);
 
-                thread_data.context = rendering_context.render_subset(
+                thread_data.context = shared_data.render_subset(
                     thread_data.context,
                     1 + thread_index,
                     num_threads + 1,
@@ -369,7 +370,7 @@ struct Multithreading {
 
     swap_chain: Arc<RwLock<Boxed<SwapChain>>>,
 
-    rendering_context: Arc<RenderingContext>,
+    shared_thead_data: Arc<SharedThreadData>,
 
     _textures_srv: [Boxed<TextureView>; NUM_TEXTURES],
 
@@ -401,7 +402,7 @@ impl Multithreading {
 
         for paused_thread in self.paused_threads.drain(0..num_threads) {
             self.running_threads.push_back(paused_thread.run(
-                self.rendering_context.clone(),
+                self.shared_thead_data.clone(),
                 num_threads,
                 rotation_matrix,
                 self.execute_command_list_barrier.clone(),
@@ -656,7 +657,7 @@ impl Multithreading {
                     std::sync::mpsc::channel::<ThreadMessage>();
 
                 PausedThread {
-                    data: ThreadData {
+                    data: ExclusiveThreadData {
                         context,
                         message_receiver,
                         command_list_sender: command_list_sender.clone(),
@@ -667,7 +668,7 @@ impl Multithreading {
             })
             .collect();
 
-        let rendering_context = RenderingContext {
+        let shared_thread_data = SharedThreadData {
             pso,
             instance_constants,
             instances,
@@ -686,7 +687,7 @@ impl Multithreading {
 
             swap_chain: Arc::new(RwLock::new(swap_chain)),
 
-            rendering_context: Arc::new(rendering_context),
+            shared_thead_data: Arc::new(shared_thread_data),
 
             paused_threads,
             running_threads: VecDeque::new(),
@@ -787,7 +788,7 @@ impl Multithreading {
         });
 
         // Also render in the main thread
-        let main_context = self.rendering_context.render_subset(
+        let main_context = self.shared_thead_data.render_subset(
             main_context,
             0,
             self.num_worker_threads + 1,
