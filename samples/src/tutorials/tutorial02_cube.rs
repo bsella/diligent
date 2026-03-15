@@ -313,7 +313,8 @@ impl SampleBase for Cube {
             {
                 // Map the buffer and write current world-view-projection matrix
                 let mut constant_buffer_data = main_context
-                    .map_buffer_write(&self.vertex_shader_constant_buffer, MapFlags::Discard);
+                    .map_buffer_write(&self.vertex_shader_constant_buffer, MapFlags::Discard)
+                    .unwrap();
 
                 constant_buffer_data[0] = model_view_proj;
             }

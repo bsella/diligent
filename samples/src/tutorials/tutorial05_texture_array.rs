@@ -361,8 +361,9 @@ impl SampleBase for TextureArray {
 
         {
             // Map the buffer and write current world-view-projection matrix
-            let mut cb_constants =
-                main_context.map_buffer_write(&self.vertex_shader_constants, MapFlags::Discard);
+            let mut cb_constants = main_context
+                .map_buffer_write(&self.vertex_shader_constants, MapFlags::Discard)
+                .unwrap();
 
             cb_constants[0] = view_proj_matrix;
             cb_constants[1] = self.rotation_matrix;

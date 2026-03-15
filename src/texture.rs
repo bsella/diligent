@@ -583,7 +583,7 @@ impl<'context, 'texture, T: Sized, State: MapType> TextureMapToken<'context, 'te
         array_slice: u32,
         map_flags: crate::MapFlags,
         map_region: Option<crate::Box>,
-    ) -> TextureMapToken<'context, 'texture, T, State> {
+    ) -> Result<TextureMapToken<'context, 'texture, T, State>, BoxedFromNulError> {
         use crate::Ported;
 
         let mut mapped_resource = std::mem::MaybeUninit::uninit();
@@ -603,7 +603,11 @@ impl<'context, 'texture, T: Sized, State: MapType> TextureMapToken<'context, 'te
 
         let mapped_resource = unsafe { mapped_resource.assume_init() };
 
-        TextureMapToken::<T, State> {
+        if mapped_resource.pData.is_null() {
+            return Err(BoxedFromNulError);
+        }
+
+        Ok(TextureMapToken::<T, State> {
             device_context,
             texture,
             mip_level,
@@ -617,7 +621,7 @@ impl<'context, 'texture, T: Sized, State: MapType> TextureMapToken<'context, 'te
             stride: mapped_resource.Stride,
             depth_stride: mapped_resource.DepthStride,
             phantom: PhantomData,
-        }
+        })
     }
 
     pub fn stride(&self) -> u64 {

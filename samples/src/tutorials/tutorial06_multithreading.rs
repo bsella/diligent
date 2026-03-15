@@ -189,7 +189,8 @@ impl SharedThreadData {
 
             let mut cb_constants = context
                 .borrow()
-                .map_buffer_write(&self.vs_constants, MapFlags::Discard);
+                .map_buffer_write(&self.vs_constants, MapFlags::Discard)
+                .unwrap();
 
             cb_constants[0] = *view_proj_matrix;
             cb_constants[1] = *self.rotation_matrix.read().unwrap();
@@ -238,7 +239,8 @@ impl SharedThreadData {
 
                 let mut inst_data = graphics
                     .borrow()
-                    .map_buffer_write(&self.instance_constants, MapFlags::Discard);
+                    .map_buffer_write(&self.instance_constants, MapFlags::Discard)
+                    .unwrap();
 
                 inst_data[0] = instance.matrix;
             }

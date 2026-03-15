@@ -382,8 +382,9 @@ impl SampleBase for GeometryShader {
 
         {
             // Map the buffer and write current world-view-projection matrix
-            let mut constants =
-                main_context.map_buffer_write(&self.vertex_shader_constants, MapFlags::Discard);
+            let mut constants = main_context
+                .map_buffer_write(&self.vertex_shader_constants, MapFlags::Discard)
+                .unwrap();
 
             constants[0] = Constants {
                 world_view_proj: (view_proj_matrix * self.rotation_matrix).to_cols_array(),

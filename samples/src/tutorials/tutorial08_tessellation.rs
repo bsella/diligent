@@ -582,8 +582,9 @@ impl SampleBase for Tessellation {
 
         {
             // Map the buffer and write rendering data
-            let mut constants =
-                main_context.map_buffer_write(&self.shader_constants, MapFlags::Discard);
+            let mut constants = main_context
+                .map_buffer_write(&self.shader_constants, MapFlags::Discard)
+                .unwrap();
 
             constants[0] = GlobalConstants {
                 block_size: self.block_size as f32,

@@ -255,7 +255,7 @@ impl<'context, 'buffer, T: Sized, State: MapType> BufferMapToken<'context, 'buff
         device_context: &'context DeviceContext,
         buffer: &'buffer Buffer,
         map_flags: diligent_sys::MAP_FLAGS,
-    ) -> BufferMapToken<'context, 'buffer, T, State> {
+    ) -> Result<BufferMapToken<'context, 'buffer, T, State>, BoxedFromNulError> {
         let mut ptr = std::ptr::null_mut();
         unsafe_member_call!(
             device_context,
@@ -267,7 +267,11 @@ impl<'context, 'buffer, T: Sized, State: MapType> BufferMapToken<'context, 'buff
             &mut ptr
         );
 
-        BufferMapToken::<T, State> {
+        if ptr.is_null() {
+            return Err(BoxedFromNulError);
+        }
+
+        Ok(BufferMapToken::<T, State> {
             buffer,
             data: unsafe {
                 std::slice::from_raw_parts_mut(
@@ -277,7 +281,7 @@ impl<'context, 'buffer, T: Sized, State: MapType> BufferMapToken<'context, 'buff
             },
             device_context,
             phantom: PhantomData,
-        }
+        })
     }
 }
 

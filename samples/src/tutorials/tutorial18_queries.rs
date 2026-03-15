@@ -252,8 +252,9 @@ impl SampleBase for Queries {
 
         {
             // Map the buffer and write current world-view-projection matrix
-            let mut constant_buffer_data =
-                main_context.map_buffer_write(&self.cube_vs_constants, MapFlags::Discard);
+            let mut constant_buffer_data = main_context
+                .map_buffer_write(&self.cube_vs_constants, MapFlags::Discard)
+                .unwrap();
 
             constant_buffer_data[0] = view_proj_matrix * self.rotation_matrix;
         }

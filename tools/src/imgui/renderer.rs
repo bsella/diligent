@@ -776,8 +776,12 @@ impl ImguiFrame {
 
         // Transfer the vertex and index buffer from imgui data into our GPU buffers
         {
-            let mut vb_access = context.map_buffer_write(vertex_buffer, MapFlags::Discard);
-            let mut ib_access = context.map_buffer_write(index_buffer, MapFlags::Discard);
+            let mut vb_access = context
+                .map_buffer_write(vertex_buffer, MapFlags::Discard)
+                .unwrap();
+            let mut ib_access = context
+                .map_buffer_write(index_buffer, MapFlags::Discard)
+                .unwrap();
 
             let mut vtx_offset = 0;
             let mut idx_offset = 0;
@@ -786,8 +790,8 @@ impl ImguiFrame {
                 let vtx_buffer = draw_list.vtx_buffer();
                 let idx_buffer = draw_list.idx_buffer();
 
-                vb_access[vtx_offset..][..vtx_buffer.len()].copy_from_slice(vtx_buffer);
-                ib_access[idx_offset..][..idx_buffer.len()].copy_from_slice(idx_buffer);
+                vb_access[vtx_offset..vtx_buffer.len()].copy_from_slice(vtx_buffer);
+                ib_access[idx_offset..idx_buffer.len()].copy_from_slice(idx_buffer);
 
                 vtx_offset += vtx_buffer.len();
                 idx_offset += idx_buffer.len();
@@ -814,10 +818,12 @@ impl ImguiFrame {
             ];
 
             {
-                let mut projection_data = context.map_buffer_write::<[f32; 16]>(
-                    &self.data.vertex_constant_buffer,
-                    MapFlags::Discard,
-                );
+                let mut projection_data = context
+                    .map_buffer_write::<[f32; 16]>(
+                        &self.data.vertex_constant_buffer,
+                        MapFlags::Discard,
+                    )
+                    .unwrap();
 
                 (*projection_data)[0] = projection;
             }

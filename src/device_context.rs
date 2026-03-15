@@ -27,6 +27,8 @@ use crate::{
     texture_view::TextureView,
     tlas::{HitGroupBindingMode, TLASBuildInstanceData, TopLevelAS},
 };
+#[cfg(any(feature = "d3d11", feature = "d3d12", feature = "vulkan"))]
+use crate::{TextureMapReadToken, TextureMapReadWriteToken, TextureMapWriteToken};
 
 #[repr(transparent)]
 pub struct DeviceContextDesc(diligent_sys::DeviceContextDesc);
@@ -2302,7 +2304,7 @@ impl DeviceContext {
         &self,
         buffer: &'buffer Buffer,
         map_flags: MapFlags,
-    ) -> BufferMapReadToken<'_, 'buffer, T>
+    ) -> Result<BufferMapReadToken<'_, 'buffer, T>, BoxedFromNulError>
     where
         Self: Sized,
     {
@@ -2313,7 +2315,7 @@ impl DeviceContext {
         &self,
         buffer: &'buffer Buffer,
         map_flags: MapFlags,
-    ) -> BufferMapWriteToken<'_, 'buffer, T>
+    ) -> Result<BufferMapWriteToken<'_, 'buffer, T>, BoxedFromNulError>
     where
         Self: Sized,
     {
@@ -2324,7 +2326,7 @@ impl DeviceContext {
         &self,
         buffer: &'buffer Buffer,
         map_flags: MapFlags,
-    ) -> BufferMapReadWriteToken<'_, 'buffer, T>
+    ) -> Result<BufferMapReadWriteToken<'_, 'buffer, T>, BoxedFromNulError>
     where
         Self: Sized,
     {
@@ -2371,15 +2373,8 @@ impl DeviceContext {
         array_slice: u32,
         map_flags: MapFlags,
         map_region: Option<crate::Box>,
-    ) -> crate::texture::TextureMapReadToken<'_, 'texture, T> {
-        crate::texture::TextureMapReadToken::new(
-            self,
-            texture,
-            mip_level,
-            array_slice,
-            map_flags,
-            map_region,
-        )
+    ) -> Result<TextureMapReadToken<'_, 'texture, T>, BoxedFromNulError> {
+        TextureMapReadToken::new(self, texture, mip_level, array_slice, map_flags, map_region)
     }
 
     #[cfg(any(feature = "d3d11", feature = "d3d12", feature = "vulkan"))]
@@ -2390,15 +2385,8 @@ impl DeviceContext {
         array_slice: u32,
         map_flags: MapFlags,
         map_region: Option<crate::Box>,
-    ) -> crate::texture::TextureMapWriteToken<'_, 'texture, T> {
-        crate::texture::TextureMapWriteToken::new(
-            self,
-            texture,
-            mip_level,
-            array_slice,
-            map_flags,
-            map_region,
-        )
+    ) -> Result<TextureMapWriteToken<'_, 'texture, T>, BoxedFromNulError> {
+        TextureMapWriteToken::new(self, texture, mip_level, array_slice, map_flags, map_region)
     }
 
     #[cfg(any(feature = "d3d11", feature = "d3d12", feature = "vulkan"))]
@@ -2409,15 +2397,8 @@ impl DeviceContext {
         array_slice: u32,
         map_flags: MapFlags,
         map_region: Option<crate::Box>,
-    ) -> crate::texture::TextureMapReadWriteToken<'_, 'texture, T> {
-        crate::texture::TextureMapReadWriteToken::new(
-            self,
-            texture,
-            mip_level,
-            array_slice,
-            map_flags,
-            map_region,
-        )
+    ) -> Result<TextureMapReadWriteToken<'_, 'texture, T>, BoxedFromNulError> {
+        TextureMapReadWriteToken::new(self, texture, mip_level, array_slice, map_flags, map_region)
     }
 
     pub fn generate_mips(&self, texture_view: &mut TextureView) {

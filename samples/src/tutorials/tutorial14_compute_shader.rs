@@ -613,8 +613,9 @@ impl SampleBase for ComputeShader {
             }
 
             // Map the buffer and write current world-view-projection matrix
-            let mut constants =
-                main_context.map_buffer_write::<Constants>(&self.constants, MapFlags::Discard);
+            let mut constants = main_context
+                .map_buffer_write::<Constants>(&self.constants, MapFlags::Discard)
+                .unwrap();
 
             let constants = &mut constants[0];
 
