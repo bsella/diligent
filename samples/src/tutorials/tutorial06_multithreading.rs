@@ -152,7 +152,9 @@ struct SharedThreadData {
 
     srb: [Boxed<ShaderResourceBinding>; NUM_TEXTURES],
 
-    instances: Vec<InstanceData>,
+    instances: RwLock<Vec<InstanceData>>,
+
+    rotation_matrix: RwLock<glam::Mat4>,
 }
 
 impl SharedThreadData {
@@ -163,7 +165,6 @@ impl SharedThreadData {
         num_subsets: usize,
         swap_chain: &SwapChain,
         view_proj_matrix: &glam::Mat4,
-        rotation_matrix: &glam::Mat4,
     ) -> Context {
         // Deferred contexts start in default state. We must bind everything to the context.
         // Render targets are set and transitioned to correct states by the main thread, here we only verify the states.
@@ -190,8 +191,8 @@ impl SharedThreadData {
                 .borrow()
                 .map_buffer_write(&self.vs_constants, MapFlags::Discard);
 
-            cb_constants[0] = view_proj_matrix;
-            cb_constants[1] = rotation_matrix;
+            cb_constants[0] = *view_proj_matrix;
+            cb_constants[1] = *self.rotation_matrix.read().unwrap();
         }
 
         // Bind vertex and index buffers. This must be done for every context
@@ -210,7 +211,8 @@ impl SharedThreadData {
             .flags(DrawFlags::VerifyAll)
             .build();
 
-        let num_instances = self.instances.len();
+        let instances = self.instances.read().unwrap();
+        let num_instances = instances.len();
         let susbset_size = num_instances / num_subsets;
         let start_inst = susbset_size * subset;
         let end_inst = if subset < num_subsets - 1 {
@@ -221,7 +223,7 @@ impl SharedThreadData {
 
         let graphics = context.set_graphics_pipeline_state(&self.pso);
 
-        for instance in &self.instances[start_inst..end_inst] {
+        for instance in &instances[start_inst..end_inst] {
             // Shader resources have been explicitly transitioned to correct states, so
             // RESOURCE_STATE_TRANSITION_MODE_TRANSITION mode is not needed.
             // Instead, we use RESOURCE_STATE_TRANSITION_MODE_VERIFY mode to
@@ -289,74 +291,54 @@ struct PausedThread {
 
 impl PausedThread {
     fn run(
-        self,
+        mut self,
         shared_data: Arc<SharedThreadData>,
         index: usize,
         num_threads: usize,
-        rotation_matrix: glam::Mat4,
         execute_command_list_barrier: Arc<Barrier>,
     ) -> RunningThread {
         RunningThread {
             message_sender: self.message_sender,
             handle: std::thread::spawn(move || {
-                worker_thread_func(
-                    shared_data,
-                    self.data,
-                    index,
-                    num_threads,
-                    &rotation_matrix,
-                    &execute_command_list_barrier,
-                )
+                let command_list_sender = &self.data.command_list_sender;
+                while let Ok(message) = self.data.message_receiver.recv() {
+                    match message {
+                        ThreadMessage::Draw {
+                            swap_chain,
+                            view_proj_matrix,
+                        } => {
+                            self.data.context.begin(0);
+
+                            self.data.context = shared_data.render_subset(
+                                self.data.context,
+                                1 + index,
+                                num_threads + 1,
+                                &swap_chain.read().unwrap(),
+                                &view_proj_matrix,
+                            );
+
+                            let _ = command_list_sender
+                                .send(self.data.context.finish_command_list().unwrap());
+
+                            // Call FinishFrame() to release dynamic resources allocated by deferred contexts
+                            // IMPORTANT: we must wait until the command lists are submitted for execution
+                            //            because FinishFrame() invalidates all dynamic resources.
+                            // IMPORTANT: In Metal backend FinishFrame must be called from the same
+                            //            thread that issued rendering commands.
+                            execute_command_list_barrier.wait();
+
+                            unsafe {
+                                self.data.context.finish_frame();
+                            }
+                        }
+                        ThreadMessage::Stop => break,
+                    }
+                }
+
+                self.data
             }),
         }
     }
-}
-
-fn worker_thread_func(
-    shared_data: Arc<SharedThreadData>,
-    mut thread_data: ExclusiveThreadData,
-    thread_index: usize,
-    num_threads: usize,
-    rotation_matrix: &glam::Mat4,
-    execute_command_list_barrier: &Barrier,
-) -> ExclusiveThreadData {
-    let command_list_sender = &thread_data.command_list_sender;
-    while let Ok(message) = thread_data.message_receiver.recv() {
-        match message {
-            ThreadMessage::Draw {
-                swap_chain,
-                view_proj_matrix,
-            } => {
-                thread_data.context.begin(0);
-
-                thread_data.context = shared_data.render_subset(
-                    thread_data.context,
-                    1 + thread_index,
-                    num_threads + 1,
-                    &swap_chain.read().unwrap(),
-                    &view_proj_matrix,
-                    rotation_matrix,
-                );
-
-                let _ =
-                    command_list_sender.send(thread_data.context.finish_command_list().unwrap());
-
-                // Call FinishFrame() to release dynamic resources allocated by deferred contexts
-                // IMPORTANT: we must wait until the command lists are submitted for execution
-                //            because FinishFrame() invalidates all dynamic resources.
-                // IMPORTANT: In Metal backend FinishFrame must be called from the same
-                //            thread that issued rendering commands.
-                execute_command_list_barrier.wait();
-
-                unsafe {
-                    thread_data.context.finish_frame();
-                }
-            }
-            ThreadMessage::Stop => break,
-        }
-    }
-
-    thread_data
 }
 
 struct Multithreading {
@@ -373,8 +355,6 @@ struct Multithreading {
 
     max_threads: usize,
     num_worker_threads: usize,
-
-    rotation_matrix: glam::Mat4,
 
     convert_ps_output_to_gamma: bool,
 
@@ -393,8 +373,6 @@ impl Multithreading {
     fn set_num_threads(&mut self, num_threads: usize) {
         self.stop_all_threads();
 
-        let rotation_matrix = self.rotation_matrix;
-
         self.execute_command_list_barrier = Arc::new(Barrier::new(num_threads + 1));
 
         for (index, paused_thread) in self.paused_threads.drain(0..num_threads).enumerate() {
@@ -402,7 +380,6 @@ impl Multithreading {
                 self.shared_thead_data.clone(),
                 index,
                 num_threads,
-                rotation_matrix,
                 self.execute_command_list_barrier.clone(),
             ))
         }
@@ -448,7 +425,8 @@ impl Multithreading {
             .begin()
         {
             if ui.slider("Grid Size", 1, 32, &mut self.grid_size) {
-                //self.rendering_context.instances = populate_instance_buffer(self.grid_size);
+                *self.shared_thead_data.instances.write().unwrap() =
+                    populate_instance_buffer(self.grid_size);
             }
             if ui.slider(
                 "Worker Threads",
@@ -674,15 +652,15 @@ impl Multithreading {
         let shared_thread_data = SharedThreadData {
             pso,
             instance_constants,
-            instances,
+            instances: RwLock::new(instances),
             textured_cube,
             srb,
             vs_constants,
+
+            rotation_matrix: RwLock::new(glam::Mat4::IDENTITY),
         };
 
         let mut sample = Self {
-            rotation_matrix: glam::Mat4::IDENTITY,
-
             _textures_srv: textures_srv,
             grid_size,
             max_threads,
@@ -714,7 +692,8 @@ impl Multithreading {
         _elapsed_time: f64,
     ) {
         // Apply rotation
-        self.rotation_matrix = glam::Mat4::from_rotation_y(current_time as f32)
+        let mut rotation_matrix = self.shared_thead_data.rotation_matrix.write().unwrap();
+        *rotation_matrix = glam::Mat4::from_rotation_y(current_time as f32)
             * glam::Mat4::from_rotation_x(-current_time as f32 * 0.25);
     }
 
@@ -797,7 +776,6 @@ impl Multithreading {
             self.num_worker_threads + 1,
             &self.swap_chain.read().unwrap(),
             &view_proj_matrix,
-            &self.rotation_matrix,
         );
 
         let mut command_lists = Vec::new();
