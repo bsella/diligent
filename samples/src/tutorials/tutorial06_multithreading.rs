@@ -263,6 +263,57 @@ struct ThreadData {
 
 unsafe impl Send for ThreadData {}
 
+struct RunningThread {
+    handle: std::thread::JoinHandle<ThreadData>,
+
+    message_sender: Sender<ThreadMessage>,
+    index: usize,
+}
+
+impl RunningThread {
+    fn pause(self) -> PausedThread {
+        self.message_sender.send(ThreadMessage::Stop).unwrap();
+
+        PausedThread {
+            data: self.handle.join().unwrap(),
+            message_sender: self.message_sender,
+            index: self.index,
+        }
+    }
+}
+
+struct PausedThread {
+    data: ThreadData,
+
+    message_sender: Sender<ThreadMessage>,
+    index: usize,
+}
+
+impl PausedThread {
+    fn run(
+        self,
+        rendering_context: Arc<RenderingContext>,
+        num_threads: usize,
+        rotation_matrix: glam::Mat4,
+        execute_command_list_barrier: Arc<Barrier>,
+    ) -> RunningThread {
+        RunningThread {
+            message_sender: self.message_sender,
+            handle: std::thread::spawn(move || {
+                worker_thread_func(
+                    rendering_context,
+                    self.data,
+                    self.index,
+                    num_threads,
+                    &rotation_matrix,
+                    &execute_command_list_barrier,
+                )
+            }),
+            index: self.index,
+        }
+    }
+}
+
 fn worker_thread_func(
     rendering_context: Arc<RenderingContext>,
     mut thread_data: ThreadData,
@@ -311,8 +362,8 @@ fn worker_thread_func(
 }
 
 struct Multithreading {
-    thread_data: VecDeque<ThreadData>,
-    threads: Vec<std::thread::JoinHandle<ThreadData>>,
+    running_threads: VecDeque<RunningThread>,
+    paused_threads: VecDeque<PausedThread>,
 
     grid_size: usize,
 
@@ -329,7 +380,6 @@ struct Multithreading {
 
     convert_ps_output_to_gamma: bool,
 
-    message_senders: Vec<Sender<ThreadMessage>>,
     command_list_receiver: Receiver<Boxed<CommandList>>,
 
     execute_command_list_barrier: Arc<Barrier>,
@@ -337,14 +387,9 @@ struct Multithreading {
 
 impl Multithreading {
     fn stop_all_threads(&mut self) {
-        self.threads
-            .drain(..)
-            .zip(&self.message_senders)
-            .for_each(|(thread, sender)| {
-                sender.send(ThreadMessage::Stop).unwrap();
-
-                self.thread_data.push_back(thread.join().unwrap());
-            });
+        for thread in self.running_threads.drain(..) {
+            self.paused_threads.push_back(thread.pause());
+        }
     }
 
     fn set_num_threads(&mut self, num_threads: usize) {
@@ -354,21 +399,13 @@ impl Multithreading {
 
         self.execute_command_list_barrier = Arc::new(Barrier::new(num_threads + 1));
 
-        for thread_number in 0..num_threads {
-            let thread_data = self.thread_data.pop_front().unwrap();
-            let rendering_context = self.rendering_context.clone();
-            let execute_command_list_barrier = self.execute_command_list_barrier.clone();
-
-            self.threads.push(std::thread::spawn(move || {
-                worker_thread_func(
-                    rendering_context,
-                    thread_data,
-                    thread_number,
-                    num_threads,
-                    &rotation_matrix,
-                    &execute_command_list_barrier,
-                )
-            }));
+        for paused_thread in self.paused_threads.drain(0..num_threads) {
+            self.running_threads.push_back(paused_thread.run(
+                self.rendering_context.clone(),
+                num_threads,
+                rotation_matrix,
+                self.execute_command_list_barrier.clone(),
+            ))
         }
     }
 }
@@ -611,18 +648,24 @@ impl Multithreading {
         let (command_list_sender, command_list_receiver) =
             std::sync::mpsc::channel::<Boxed<CommandList>>();
 
-        let mut thread_data = VecDeque::with_capacity(max_threads);
-        let mut message_senders = Vec::new();
-        for context in deferred_contexts.into_iter() {
-            let (message_sender, message_receiver) = std::sync::mpsc::channel::<ThreadMessage>();
-            thread_data.push_back(ThreadData {
-                context,
-                message_receiver,
-                command_list_sender: command_list_sender.clone(),
-            });
+        let paused_threads = deferred_contexts
+            .into_iter()
+            .enumerate()
+            .map(|(index, context)| {
+                let (message_sender, message_receiver) =
+                    std::sync::mpsc::channel::<ThreadMessage>();
 
-            message_senders.push(message_sender);
-        }
+                PausedThread {
+                    data: ThreadData {
+                        context,
+                        message_receiver,
+                        command_list_sender: command_list_sender.clone(),
+                    },
+                    message_sender,
+                    index,
+                }
+            })
+            .collect();
 
         let rendering_context = RenderingContext {
             pso,
@@ -643,12 +686,10 @@ impl Multithreading {
 
             swap_chain: Arc::new(RwLock::new(swap_chain)),
 
-            message_senders,
-
             rendering_context: Arc::new(rendering_context),
 
-            thread_data,
-            threads: vec![],
+            paused_threads,
+            running_threads: VecDeque::new(),
 
             convert_ps_output_to_gamma,
 
@@ -735,8 +776,9 @@ impl Multithreading {
         };
 
         // Tell all the worker threads to render
-        self.message_senders.iter().for_each(|sender| {
-            sender
+        self.running_threads.iter().for_each(|thread| {
+            thread
+                .message_sender
                 .send(ThreadMessage::Draw {
                     swap_chain: self.swap_chain.clone(),
                     view_proj_matrix,
@@ -756,7 +798,7 @@ impl Multithreading {
 
         let mut command_lists = Vec::new();
         // Get all the command lists from the threads
-        for _ in 0..self.threads.len() {
+        for _ in 0..self.running_threads.len() {
             command_lists.push(self.command_list_receiver.recv().unwrap());
         }
 
