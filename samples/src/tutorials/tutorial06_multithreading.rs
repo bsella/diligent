@@ -268,7 +268,6 @@ struct RunningThread {
     handle: std::thread::JoinHandle<ExclusiveThreadData>,
 
     message_sender: Sender<ThreadMessage>,
-    index: usize,
 }
 
 impl RunningThread {
@@ -278,7 +277,6 @@ impl RunningThread {
         PausedThread {
             data: self.handle.join().unwrap(),
             message_sender: self.message_sender,
-            index: self.index,
         }
     }
 }
@@ -287,13 +285,13 @@ struct PausedThread {
     data: ExclusiveThreadData,
 
     message_sender: Sender<ThreadMessage>,
-    index: usize,
 }
 
 impl PausedThread {
     fn run(
         self,
         shared_data: Arc<SharedThreadData>,
+        index: usize,
         num_threads: usize,
         rotation_matrix: glam::Mat4,
         execute_command_list_barrier: Arc<Barrier>,
@@ -304,13 +302,12 @@ impl PausedThread {
                 worker_thread_func(
                     shared_data,
                     self.data,
-                    self.index,
+                    index,
                     num_threads,
                     &rotation_matrix,
                     &execute_command_list_barrier,
                 )
             }),
-            index: self.index,
         }
     }
 }
@@ -400,9 +397,10 @@ impl Multithreading {
 
         self.execute_command_list_barrier = Arc::new(Barrier::new(num_threads + 1));
 
-        for paused_thread in self.paused_threads.drain(0..num_threads) {
+        for (index, paused_thread) in self.paused_threads.drain(0..num_threads).enumerate() {
             self.running_threads.push_back(paused_thread.run(
                 self.shared_thead_data.clone(),
+                index,
                 num_threads,
                 rotation_matrix,
                 self.execute_command_list_barrier.clone(),
@@ -426,6 +424,13 @@ impl Multithreading {
         engine_ci: &mut diligent_samples::sample_base::sample::EngineCreateInfo,
     ) {
         engine_ci.num_deferred_contexts = std::thread::available_parallelism().unwrap().into();
+        match engine_ci {
+            #[cfg(feature = "vulkan")]
+            diligent_samples::sample_base::sample::EngineCreateInfo::EngineVkCreateInfo(ci) => {
+                // Enough space for 32x32x32x256 bytes allocations for 3 frames
+                ci.dynamic_heap_size = 26 << 20;
+            }
+        }
     }
 
     fn release_swap_chain_buffers(&mut self) {}
@@ -651,8 +656,7 @@ impl Multithreading {
 
         let paused_threads = deferred_contexts
             .into_iter()
-            .enumerate()
-            .map(|(index, context)| {
+            .map(|context| {
                 let (message_sender, message_receiver) =
                     std::sync::mpsc::channel::<ThreadMessage>();
 
@@ -663,7 +667,6 @@ impl Multithreading {
                         command_list_sender: command_list_sender.clone(),
                     },
                     message_sender,
-                    index,
                 }
             })
             .collect();
