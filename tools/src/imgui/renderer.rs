@@ -790,8 +790,8 @@ impl ImguiFrame {
                 let vtx_buffer = draw_list.vtx_buffer();
                 let idx_buffer = draw_list.idx_buffer();
 
-                vb_access[vtx_offset..vtx_buffer.len()].copy_from_slice(vtx_buffer);
-                ib_access[idx_offset..idx_buffer.len()].copy_from_slice(idx_buffer);
+                vb_access[vtx_offset..][..vtx_buffer.len()].copy_from_slice(vtx_buffer);
+                ib_access[idx_offset..][..idx_buffer.len()].copy_from_slice(idx_buffer);
 
                 vtx_offset += vtx_buffer.len();
                 idx_offset += idx_buffer.len();
