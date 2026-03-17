@@ -26,7 +26,7 @@ use crate::{
         GetSysQueryType, Query, QueryDataBinaryOcclusion, QueryDataDuration, QueryDataOcclusion,
         QueryDataPipelineStatistics, QueryDataTimestamp,
     },
-    render_pass::{RenderPass, RenderPassDesc, RenderTargetAttachments},
+    render_pass::{RenderPass, RenderPassDesc},
     resource_mapping::ResourceMapping,
     sampler::{Sampler, SamplerDesc},
     shader::{Shader, ShaderCreateInfo, ShaderCreateInfoWrapper},
@@ -353,140 +353,12 @@ impl RenderDevice {
         &self,
         desc: &RenderPassDesc,
     ) -> Result<Boxed<RenderPass>, BoxedFromNulError> {
-        let attachments = desc
-            .attachments
-            .iter()
-            .map(|att| diligent_sys::RenderPassAttachmentDesc {
-                Format: att
-                    .format
-                    .map_or(diligent_sys::TEX_FORMAT_UNKNOWN as _, |format| {
-                        format.into()
-                    }),
-                SampleCount: att.sample_count,
-                LoadOp: att.load_op.into(),
-                StoreOp: att.store_op.into(),
-                StencilLoadOp: att.stencil_load_op.into(),
-                StencilStoreOp: att.stencil_store_op.into(),
-                InitialState: att
-                    .initial_state
-                    .as_ref()
-                    .map_or(diligent_sys::RESOURCE_STATE_UNKNOWN as _, |state| {
-                        state.bits()
-                    }),
-                FinalState: att
-                    .final_state
-                    .as_ref()
-                    .map_or(diligent_sys::RESOURCE_STATE_UNKNOWN as _, |state| {
-                        state.bits()
-                    }),
-            })
-            .collect::<Vec<_>>();
-
-        struct SubpassWrapper {
-            input_attachments: Vec<diligent_sys::AttachmentReference>,
-            preserve_attachments: Vec<u32>,
-            render_target_attachments: Vec<diligent_sys::AttachmentReference>,
-            resolve_attachments: Vec<diligent_sys::AttachmentReference>,
-            depth_stencil_attachments: Vec<diligent_sys::AttachmentReference>,
-            shading_rate_attachments: Vec<diligent_sys::ShadingRateAttachment>,
-        }
-
-        let subpasses = desc
-            .subpasses
-            .iter()
-            .map(|subpass| SubpassWrapper {
-                input_attachments: subpass
-                    .input_attachments
-                    .iter()
-                    .map(|att| att.into())
-                    .collect(),
-                preserve_attachments: subpass.preserve_attachments.clone(),
-                render_target_attachments: match &subpass.render_target_attachments {
-                    RenderTargetAttachments::RenderTargets(render_targets) => {
-                        render_targets.iter().map(|att| att.into()).collect()
-                    }
-                    RenderTargetAttachments::RenderTargetsAndResolve(
-                        render_targets_and_resolve,
-                    ) => render_targets_and_resolve
-                        .iter()
-                        .map(|(att, _resolve)| att.into())
-                        .collect(),
-                },
-                resolve_attachments: match &subpass.render_target_attachments {
-                    RenderTargetAttachments::RenderTargets(_) => Vec::new(),
-                    RenderTargetAttachments::RenderTargetsAndResolve(
-                        render_targets_and_resolve,
-                    ) => render_targets_and_resolve
-                        .iter()
-                        .map(|(_att, resolve)| resolve.into())
-                        .collect(),
-                },
-                depth_stencil_attachments: subpass
-                    .depth_stencil_attachment
-                    .iter()
-                    .map(|att| att.into())
-                    .collect(),
-
-                shading_rate_attachments: subpass
-                    .shading_rate_attachment
-                    .iter()
-                    .map(|att| diligent_sys::ShadingRateAttachment {
-                        Attachment: (&att.attachment).into(),
-                        TileSize: att.tile_size,
-                    })
-                    .collect(),
-            })
-            .collect::<Vec<_>>();
-
-        let subpasses = subpasses
-            .iter()
-            .map(|subpass| diligent_sys::SubpassDesc {
-                InputAttachmentCount: subpass.input_attachments.len() as u32,
-                pInputAttachments: subpass.input_attachments.as_ptr(),
-                PreserveAttachmentCount: subpass.preserve_attachments.len() as u32,
-                pPreserveAttachments: subpass.preserve_attachments.as_ptr(),
-                RenderTargetAttachmentCount: subpass.render_target_attachments.len() as u32,
-                pRenderTargetAttachments: subpass.render_target_attachments.as_ptr(),
-                pResolveAttachments: subpass.resolve_attachments.as_ptr(),
-                pDepthStencilAttachment: subpass.depth_stencil_attachments.as_ptr(),
-                pShadingRateAttachment: subpass.shading_rate_attachments.as_ptr(),
-            })
-            .collect::<Vec<_>>();
-
-        let dependencies = desc
-            .dependencies
-            .iter()
-            .map(|dep| diligent_sys::SubpassDependencyDesc {
-                SrcSubpass: dep.src_subpass_index as u32,
-                DstSubpass: dep.dst_subpass_index as u32,
-                SrcStageMask: dep.src_stage_mask.bits(),
-                DstStageMask: dep.dst_stage_mask.bits(),
-                SrcAccessMask: dep.src_access_mask.bits(),
-                DstAccessMask: dep.dst_access_mask.bits(),
-            })
-            .collect::<Vec<_>>();
-
-        let desc = diligent_sys::RenderPassDesc {
-            _DeviceObjectAttribs: diligent_sys::DeviceObjectAttribs {
-                Name: desc
-                    .name
-                    .as_ref()
-                    .map_or(std::ptr::null(), |name| name.as_ptr()),
-            },
-            AttachmentCount: attachments.len() as u32,
-            pAttachments: attachments.as_ptr(),
-            SubpassCount: subpasses.len() as u32,
-            pSubpasses: subpasses.as_ptr(),
-            DependencyCount: dependencies.len() as u32,
-            pDependencies: dependencies.as_ptr(),
-        };
-
         let mut render_pass_ptr = std::ptr::null_mut();
         unsafe_member_call!(
             self,
             RenderDevice,
             CreateRenderPass,
-            &desc,
+            &desc.0,
             &mut render_pass_ptr
         );
 
