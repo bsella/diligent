@@ -40,9 +40,9 @@ impl<'name, 'render_pass, 'texture_views, 'texture_view>
         name: Option<&'name CStr>,
         render_pass: &'render_pass RenderPass,
         attachments: &'texture_views [&'texture_view TextureView],
-        width: u32,
-        height: u32,
-        num_array_slices: u32,
+        width: Option<u32>,
+        height: Option<u32>,
+        num_array_slices: Option<u32>,
     ) -> Self {
         Self(
             diligent_sys::FramebufferDesc {
@@ -54,9 +54,9 @@ impl<'name, 'render_pass, 'texture_views, 'texture_view>
                 ppAttachments: attachments
                     .first()
                     .map_or(std::ptr::null(), |_| attachments.as_ptr() as *const *mut _),
-                Width: width,
-                Height: height,
-                NumArraySlices: num_array_slices,
+                Width: width.unwrap_or(0),
+                Height: height.unwrap_or(0),
+                NumArraySlices: num_array_slices.unwrap_or(0),
             },
             PhantomData,
         )
