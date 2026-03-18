@@ -1506,8 +1506,34 @@ pub struct DepthStencilClearValue(pub(crate) diligent_sys::DepthStencilClearValu
 #[bon::bon]
 impl DepthStencilClearValue {
     #[builder(derive(Clone))]
-    pub fn new(depth: f32, stencil: u8) -> Self {
+    pub fn new(
+        #[builder(setters(vis = ""))] depth_value: f32,
+        #[builder(setters(vis = ""))] stencil_value: u8,
+    ) -> Self {
         Self(diligent_sys::DepthStencilClearValue {
+            Depth: depth_value,
+            Stencil: stencil_value,
+        })
+    }
+}
+
+impl DepthStencilClearValue {
+    pub fn depth(depth: f32) -> DepthStencilClearValue {
+        DepthStencilClearValue(diligent_sys::DepthStencilClearValue {
+            Depth: depth,
+            Stencil: 0,
+        })
+    }
+
+    pub fn stencil(stencil: u8) -> DepthStencilClearValue {
+        DepthStencilClearValue(diligent_sys::DepthStencilClearValue {
+            Depth: 1.0,
+            Stencil: stencil,
+        })
+    }
+
+    pub fn depth_stencil(depth: f32, stencil: u8) -> DepthStencilClearValue {
+        DepthStencilClearValue(diligent_sys::DepthStencilClearValue {
             Depth: depth,
             Stencil: stencil,
         })
@@ -1522,15 +1548,42 @@ pub struct OptimizedClearValue(pub(crate) diligent_sys::OptimizedClearValue);
 impl OptimizedClearValue {
     #[builder(derive(Clone))]
     pub fn new(
-        format: TextureFormat,
-        color: [f32; 4usize],
-        depth_stencil: DepthStencilClearValue,
+        format: Option<TextureFormat>,
+        #[builder(setters(vis = ""))] color_value: [f32; 4usize],
+        #[builder(setters(vis = ""))] depth_stencil_value: DepthStencilClearValue,
     ) -> Self {
         Self(diligent_sys::OptimizedClearValue {
-            Format: format.into(),
-            Color: color,
-            DepthStencil: depth_stencil.0,
+            Format: format.map_or(diligent_sys::TEX_FORMAT_UNKNOWN as _, |fmt| fmt.into()),
+            Color: color_value,
+            DepthStencil: depth_stencil_value.0,
         })
+    }
+}
+
+use optimized_clear_value_builder::{IsUnset, SetColorValue, SetDepthStencilValue, State};
+impl<S: State> OptimizedClearValueBuilder<S> {
+    pub fn color(
+        self,
+        color: [f32; 4usize],
+    ) -> OptimizedClearValueBuilder<SetColorValue<SetDepthStencilValue<S>>>
+    where
+        S::ColorValue: IsUnset,
+        S::DepthStencilValue: IsUnset,
+    {
+        self.depth_stencil_value(DepthStencilClearValue::depth_stencil(1.0, 0))
+            .color_value(color)
+    }
+
+    pub fn depth_stencil(
+        self,
+        depth_stencil_value: DepthStencilClearValue,
+    ) -> OptimizedClearValueBuilder<SetColorValue<SetDepthStencilValue<S>>>
+    where
+        S::ColorValue: IsUnset,
+        S::DepthStencilValue: IsUnset,
+    {
+        self.depth_stencil_value(depth_stencil_value)
+            .color_value([0.0, 0.0, 0.0, 0.0])
     }
 }
 
