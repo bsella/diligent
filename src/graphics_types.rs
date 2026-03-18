@@ -1723,6 +1723,16 @@ bitflags! {
 
 const_assert_eq!(diligent_sys::RESOURCE_STATE_MAX_BIT, 2097152);
 
+impl ResourceState {
+    pub fn from_sys(value: diligent_sys::RESOURCE_STATE) -> Option<Self> {
+        if value == diligent_sys::RESOURCE_STATE_UNKNOWN {
+            None
+        } else {
+            Some(ResourceState::from_bits_retain(value))
+        }
+    }
+}
+
 #[derive(Clone, Copy)]
 pub enum QueuePriority {
     Low,
