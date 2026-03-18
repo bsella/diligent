@@ -38,6 +38,12 @@ use diligent_samples::{
         sample_app_settings::{SampleAppSettings, parse_sample_app_settings},
     },
     textured_cube::{CreatePSOInfo, TexturedCube},
+    window::{
+        imgui::{
+            events::imgui_handle_event, renderer::ImguiRenderer, renderer::ImguiRendererCreateInfo,
+        },
+        native_app::{Window, WindowManager, events::Event},
+    },
 };
 
 enum EngineFactory {
@@ -67,10 +73,6 @@ impl Deref for EngineFactory {
     }
 }
 
-use diligent_tools::{
-    imgui::{events::imgui_handle_event, renderer::ImguiRenderer},
-    native_app::{Window, WindowManager, events::Event},
-};
 use image::DynamicImage;
 use rand::distr::uniform::{UniformFloat, UniformInt, UniformSampler};
 
@@ -409,6 +411,8 @@ impl Multithreading {
                 // Enough space for 32x32x32x256 bytes allocations for 3 frames
                 ci.dynamic_heap_size = 26 << 20;
             }
+            #[allow(unreachable_patterns)]
+            _ => {}
         }
     }
 
@@ -836,16 +840,19 @@ impl MultithreadingApp {
         match &engine_factory {
             #[cfg(feature = "opengl")]
             EngineFactory::OpenGL(engine_factory) => {
+                use diligent_samples::sample_base::sample;
+
                 if engine_create_info.num_deferred_contexts != 0 {
                     panic!("Deferred contexts are not supported in OpenGL mode");
                 }
 
-                let window = WM::create_window(swap_chain_ci.width(), swap_chain_ci.height());
+                let window =
+                    window_manager.create_window(swap_chain_ci.width(), swap_chain_ci.height());
 
                 let mut engine_gl_create_info =
                     EngineGLCreateInfo::new(window.native(), engine_create_info);
 
-                GenericSample::modify_engine_init_info(
+                Multithreading::modify_engine_init_info(
                     &mut sample::EngineCreateInfo::EngineGLCreateInfo(&mut engine_gl_create_info),
                 );
 
@@ -869,11 +876,11 @@ impl MultithreadingApp {
                     device,
                     vec![immediate_context],
                     vec![],
-                    vec![SampleWindow {
-                        swap_chain,
+                    SampleWindow {
                         window,
                         imgui_renderer,
-                    }],
+                    },
+                    swap_chain,
                 )
             }
             #[cfg(any(feature = "vulkan", feature = "d3d11", feature = "d3d12"))]
@@ -978,8 +985,6 @@ impl MultithreadingApp {
                         )
                         .unwrap(),
                 };
-
-                use diligent_tools::imgui::renderer::{ImguiRenderer, ImguiRendererCreateInfo};
 
                 let window =
                     window_manager.create_window(swap_chain_ci.width(), swap_chain_ci.height());
@@ -1411,7 +1416,8 @@ fn main() {
 
     #[cfg(target_os = "windows")]
     {
-        let mut window_manager = diligent_tools::native_app::windows::Win32WindowManager::new();
+        let mut window_manager =
+            diligent_samples::window::native_app::windows::Win32WindowManager::new();
 
         MultithreadingApp::new(settings, engine_ci, &mut window_manager)
             .run()
@@ -1420,24 +1426,27 @@ fn main() {
     #[cfg(target_os = "linux")]
     {
         let device_type = settings.device_type;
-        let window_manager = match device_type {
+        match device_type {
             #[cfg(feature = "vulkan")]
             RenderDeviceType::VULKAN => {
-                Ok(diligent_tools::native_app::linux::xcb::XCBWindowManager::new())
+                let mut window_manager =
+                    diligent_samples::window::native_app::linux::xcb::XCBWindowManager::new();
+                MultithreadingApp::new(settings, engine_ci, &mut window_manager)
+                    .run()
+                    .unwrap()
             }
 
             #[cfg(feature = "opengl")]
             RenderDeviceType::GL => {
-                Ok(diligent_tools::native_app::linux::xcb::X11WindowManager::new())
+                let mut window_manager =
+                    diligent_samples::window::native_app::linux::x11::X11WindowManager::new();
+                MultithreadingApp::new(settings, engine_ci, &mut window_manager)
+                    .run()
+                    .unwrap()
             }
 
             #[allow(unreachable_patterns)]
-            _ => Err(std::io::Error::other(format!(
-                "Render device type {device_type} is not available on linux",
-            ))),
-        };
-        MultithreadingApp::new(settings, engine_ci, &mut window_manager.unwrap())
-            .run()
-            .unwrap()
+            _ => panic!("Render device type {device_type} is not available on linux",),
+        }
     }
 }

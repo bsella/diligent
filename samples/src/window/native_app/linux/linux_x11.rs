@@ -1,6 +1,6 @@
 use std::ffi::CString;
 
-use crate::native_app::{
+use crate::window::native_app::{
     Window, WindowManager,
     events::{Event, Key, MouseButton},
 };

@@ -3,7 +3,7 @@ use diligent::platforms::native_window::NativeWindow;
 use xcb::{Xid, x};
 use xkbcommon::xkb;
 
-use crate::native_app::{
+use crate::window::native_app::{
     Window, WindowManager,
     events::{Event, Key, MouseButton},
 };

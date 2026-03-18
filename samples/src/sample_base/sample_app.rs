@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use diligent::*;
 
-use diligent_tools::{
+use crate::window::{
     imgui::{
         events::imgui_handle_event,
         renderer::{ImguiRenderer, ImguiRendererCreateInfo},
@@ -190,7 +190,8 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
                     panic!("The OpenGL backend does not permite creating multiple swapchains");
                 }
 
-                let window = WM::create_window(swap_chain_ci[0].width(), swap_chain_ci[0].height());
+                let window = window_manager
+                    .create_window(swap_chain_ci[0].width(), swap_chain_ci[0].height());
 
                 let mut engine_gl_create_info =
                     EngineGLCreateInfo::new(window.native(), engine_create_info);
@@ -733,29 +734,32 @@ pub fn main<Sample: SampleBase>() -> Result<(), std::io::Error> {
 
     #[cfg(target_os = "windows")]
     {
-        let mut window_manager = diligent_tools::native_app::windows::Win32WindowManager::new();
+        let mut window_manager = crate::window::native_app::windows::Win32WindowManager::new();
 
         SampleApp::<Sample>::new(settings, engine_ci, &mut window_manager).run()
     }
     #[cfg(target_os = "linux")]
     {
         let device_type = settings.device_type;
-        let mut window_manager = match device_type {
+        match device_type {
             #[cfg(feature = "vulkan")]
             RenderDeviceType::VULKAN => {
-                Ok(diligent_tools::native_app::linux::xcb::XCBWindowManager::new())
+                let mut window_manager =
+                    crate::window::native_app::linux::xcb::XCBWindowManager::new();
+                SampleApp::<Sample>::new(settings, engine_ci, &mut window_manager).run()
             }
 
             #[cfg(feature = "opengl")]
             RenderDeviceType::GL => {
-                Ok(diligent_tools::native_app::linux::xcb::X11WindowManager::new())
+                let mut window_manager =
+                    crate::window::native_app::linux::x11::X11WindowManager::new();
+                SampleApp::<Sample>::new(settings, engine_ci, &mut window_manager).run()
             }
 
             #[allow(unreachable_patterns)]
             _ => Err(std::io::Error::other(format!(
                 "Render device type {device_type} is not available on linux",
             ))),
-        }?;
-        SampleApp::<Sample>::new(settings, engine_ci, &mut window_manager).run()
+        }
     }
 }

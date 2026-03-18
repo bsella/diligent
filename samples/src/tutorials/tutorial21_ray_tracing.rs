@@ -7,7 +7,7 @@ use diligent_samples::sample_base::{
     sample::SampleBase,
     sample_app::{self},
 };
-use diligent_tools::native_app;
+use diligent_samples::window::native_app;
 
 use image::EncodableLayout;
 

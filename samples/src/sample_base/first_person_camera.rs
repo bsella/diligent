@@ -1,7 +1,7 @@
 use core::f32;
 
+use crate::window::native_app::events::{Event, Key, MouseButton};
 use diligent::SurfaceTransform;
-use diligent_tools::native_app::events::{Event, Key, MouseButton};
 use glam::Vec4Swizzles;
 
 pub struct FirstPersonCamera {

@@ -14,7 +14,7 @@ use diligent::d3d11::engine_factory_d3d11::EngineD3D11CreateInfo;
 #[cfg(feature = "d3d12")]
 use diligent::d3d12::engine_factory_d3d12::EngineD3D12CreateInfo;
 
-use diligent_tools::native_app::events::Event;
+use crate::window::native_app::events::Event;
 use imgui::Ui;
 
 use crate::sample_base::sample_app_settings::SampleAppSettings;

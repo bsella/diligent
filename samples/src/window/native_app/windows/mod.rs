@@ -1,6 +1,6 @@
 use std::{ops::BitAnd, pin::Pin};
 
-use crate::native_app::{Window, WindowManager};
+use crate::window::native_app::{Window, WindowManager};
 
 use super::events::{Event, Key};
 

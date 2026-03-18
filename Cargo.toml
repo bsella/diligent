@@ -43,4 +43,4 @@ name = "diligent"
 
 [workspace]
 resolver = "2"
-members = ["tools", "samples"]
+members = ["samples"]

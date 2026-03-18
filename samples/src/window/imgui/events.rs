@@ -1,6 +1,6 @@
 use imgui::Io;
 
-use crate::native_app::events::{Event, Key, MouseButton};
+use crate::window::native_app::events::{Event, Key, MouseButton};
 
 #[rustfmt::skip]
 fn handle_key_event(io: &mut imgui::Io, key: Key, down: bool) {
