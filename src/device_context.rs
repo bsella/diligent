@@ -1503,20 +1503,6 @@ define_ported!(CommandList, diligent_sys::ICommandList);
 #[derive(Clone)]
 pub struct DepthStencilClearValue(pub(crate) diligent_sys::DepthStencilClearValue);
 
-#[bon::bon]
-impl DepthStencilClearValue {
-    #[builder(derive(Clone))]
-    pub fn new(
-        #[builder(setters(vis = ""))] depth_value: f32,
-        #[builder(setters(vis = ""))] stencil_value: u8,
-    ) -> Self {
-        Self(diligent_sys::DepthStencilClearValue {
-            Depth: depth_value,
-            Stencil: stencil_value,
-        })
-    }
-}
-
 impl DepthStencilClearValue {
     pub fn depth(depth: f32) -> DepthStencilClearValue {
         DepthStencilClearValue(diligent_sys::DepthStencilClearValue {
