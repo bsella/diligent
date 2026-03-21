@@ -1497,6 +1497,36 @@ impl<'resource> StateTransitionDesc<'resource> {
     }
 }
 
+impl StateTransitionDesc<'_> {
+    pub fn resource(&mut self) -> &mut DeviceObject {
+        unsafe { &mut *(self.0.pResource as *mut DeviceObject) }
+    }
+    pub fn new_state(&self) -> ResourceState {
+        ResourceState::from_bits_retain(self.0.NewState)
+    }
+    pub fn first_mip_level(&self) -> u32 {
+        self.0.FirstMipLevel
+    }
+    pub fn mip_levels_count(&self) -> u32 {
+        self.0.MipLevelsCount
+    }
+    pub fn first_array_slice(&self) -> u32 {
+        self.0.FirstArraySlice
+    }
+    pub fn array_slice_count(&self) -> u32 {
+        self.0.ArraySliceCount
+    }
+    pub fn old_state(&self) -> Option<ResourceState> {
+        ResourceState::from_sys(self.0.OldState)
+    }
+    pub fn transition_type(&self) -> StateTransitionType {
+        self.0.TransitionType.into()
+    }
+    pub fn flags(&self) -> StateTransitionFlags {
+        StateTransitionFlags::from_bits_retain(self.0.Flags)
+    }
+}
+
 define_ported!(CommandList, diligent_sys::ICommandList);
 
 #[repr(transparent)]

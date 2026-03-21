@@ -46,6 +46,8 @@ pub enum BlendFactor {
 }
 const_assert_eq!(diligent_sys::BLEND_OPERATION_NUM_OPERATIONS, 6);
 
+// BLEND_FACTOR_UNDEFINED represents an invalid value and is never used
+// so let's not concider it and use only valid values
 impl From<BlendFactor> for diligent_sys::BLEND_FACTOR {
     fn from(value: BlendFactor) -> Self {
         (match value {
@@ -70,6 +72,31 @@ impl From<BlendFactor> for diligent_sys::BLEND_FACTOR {
     }
 }
 
+impl From<diligent_sys::BLEND_FACTOR> for BlendFactor {
+    fn from(value: diligent_sys::BLEND_FACTOR) -> Self {
+        match value as _ {
+            diligent_sys::BLEND_FACTOR_ZERO => BlendFactor::Zero,
+            diligent_sys::BLEND_FACTOR_ONE => BlendFactor::One,
+            diligent_sys::BLEND_FACTOR_SRC_COLOR => BlendFactor::SrcColor,
+            diligent_sys::BLEND_FACTOR_INV_SRC_COLOR => BlendFactor::InvSrcColor,
+            diligent_sys::BLEND_FACTOR_SRC_ALPHA => BlendFactor::SrcAlpha,
+            diligent_sys::BLEND_FACTOR_INV_SRC_ALPHA => BlendFactor::InvSrcAlpha,
+            diligent_sys::BLEND_FACTOR_DEST_ALPHA => BlendFactor::DestAlpha,
+            diligent_sys::BLEND_FACTOR_INV_DEST_ALPHA => BlendFactor::InvDestAlpha,
+            diligent_sys::BLEND_FACTOR_DEST_COLOR => BlendFactor::DestColor,
+            diligent_sys::BLEND_FACTOR_INV_DEST_COLOR => BlendFactor::InvDestColor,
+            diligent_sys::BLEND_FACTOR_SRC_ALPHA_SAT => BlendFactor::SrcAlphaSat,
+            diligent_sys::BLEND_FACTOR_BLEND_FACTOR => BlendFactor::BlendFactor,
+            diligent_sys::BLEND_FACTOR_INV_BLEND_FACTOR => BlendFactor::InvBlendFactor,
+            diligent_sys::BLEND_FACTOR_SRC1_COLOR => BlendFactor::Src1Color,
+            diligent_sys::BLEND_FACTOR_INV_SRC1_COLOR => BlendFactor::InvSrc1Color,
+            diligent_sys::BLEND_FACTOR_SRC1_ALPHA => BlendFactor::Src1Alpha,
+            diligent_sys::BLEND_FACTOR_INV_SRC1_ALPHA => BlendFactor::InvSrc1Alpha,
+            _ => panic!("Unknown BLEND_FACTOR value"),
+        }
+    }
+}
+
 #[derive(Clone, Copy)]
 pub enum BlendOperation {
     Add,
@@ -89,6 +116,19 @@ impl From<BlendOperation> for diligent_sys::BLEND_OPERATION {
             BlendOperation::Min => diligent_sys::BLEND_OPERATION_MIN,
             BlendOperation::Max => diligent_sys::BLEND_OPERATION_MAX,
         }) as _
+    }
+}
+
+impl From<diligent_sys::BLEND_OPERATION> for BlendOperation {
+    fn from(value: diligent_sys::BLEND_OPERATION) -> Self {
+        match value as _ {
+            diligent_sys::BLEND_OPERATION_ADD => BlendOperation::Add,
+            diligent_sys::BLEND_OPERATION_SUBTRACT => BlendOperation::Subtract,
+            diligent_sys::BLEND_OPERATION_REV_SUBTRACT => BlendOperation::RevSubtract,
+            diligent_sys::BLEND_OPERATION_MIN => BlendOperation::Min,
+            diligent_sys::BLEND_OPERATION_MAX => BlendOperation::Max,
+            _ => panic!("Unknown BLEND_OPERATION value"),
+        }
     }
 }
 
@@ -136,6 +176,30 @@ impl From<LogicOperation> for diligent_sys::LOGIC_OPERATION {
     }
 }
 
+impl From<diligent_sys::LOGIC_OPERATION> for LogicOperation {
+    fn from(value: diligent_sys::LOGIC_OPERATION) -> Self {
+        match value as _ {
+            diligent_sys::LOGIC_OP_CLEAR => LogicOperation::Clear,
+            diligent_sys::LOGIC_OP_SET => LogicOperation::Set,
+            diligent_sys::LOGIC_OP_COPY => LogicOperation::Copy,
+            diligent_sys::LOGIC_OP_COPY_INVERTED => LogicOperation::CopyInverted,
+            diligent_sys::LOGIC_OP_NOOP => LogicOperation::NoOp,
+            diligent_sys::LOGIC_OP_INVERT => LogicOperation::Invert,
+            diligent_sys::LOGIC_OP_AND => LogicOperation::And,
+            diligent_sys::LOGIC_OP_NAND => LogicOperation::Nand,
+            diligent_sys::LOGIC_OP_OR => LogicOperation::Or,
+            diligent_sys::LOGIC_OP_NOR => LogicOperation::Nor,
+            diligent_sys::LOGIC_OP_XOR => LogicOperation::Xor,
+            diligent_sys::LOGIC_OP_EQUIV => LogicOperation::Equiv,
+            diligent_sys::LOGIC_OP_AND_REVERSE => LogicOperation::AndReverse,
+            diligent_sys::LOGIC_OP_AND_INVERTED => LogicOperation::AndInverted,
+            diligent_sys::LOGIC_OP_OR_REVERSE => LogicOperation::OrReverse,
+            diligent_sys::LOGIC_OP_OR_INVERTED => LogicOperation::OrInverted,
+            _ => panic!("Unknown LOGIC_OPERATION value"),
+        }
+    }
+}
+
 #[derive(Clone, Copy)]
 pub enum FillMode {
     Wireframe,
@@ -148,6 +212,16 @@ impl From<FillMode> for diligent_sys::FILL_MODE {
             FillMode::Wireframe => diligent_sys::FILL_MODE_WIREFRAME,
             FillMode::Solid => diligent_sys::FILL_MODE_SOLID,
         }) as _
+    }
+}
+
+impl From<diligent_sys::FILL_MODE> for FillMode {
+    fn from(value: diligent_sys::FILL_MODE) -> Self {
+        match value as _ {
+            diligent_sys::FILL_MODE_WIREFRAME => FillMode::Wireframe,
+            diligent_sys::FILL_MODE_SOLID => FillMode::Solid,
+            _ => panic!("Unknown FILL_MODE value"),
+        }
     }
 }
 
@@ -165,6 +239,17 @@ impl From<CullMode> for diligent_sys::CULL_MODE {
             CullMode::Front => diligent_sys::CULL_MODE_FRONT,
             CullMode::Back => diligent_sys::CULL_MODE_BACK,
         }) as _
+    }
+}
+
+impl From<diligent_sys::CULL_MODE> for CullMode {
+    fn from(value: diligent_sys::CULL_MODE) -> Self {
+        match value as _ {
+            diligent_sys::CULL_MODE_NONE => CullMode::None,
+            diligent_sys::CULL_MODE_FRONT => CullMode::Front,
+            diligent_sys::CULL_MODE_BACK => CullMode::Back,
+            _ => panic!("Unknown CULL_MODE value"),
+        }
     }
 }
 
@@ -196,6 +281,22 @@ impl From<StencilOperation> for diligent_sys::STENCIL_OP {
     }
 }
 
+impl From<diligent_sys::STENCIL_OP> for StencilOperation {
+    fn from(value: diligent_sys::STENCIL_OP) -> Self {
+        match value as _ {
+            diligent_sys::STENCIL_OP_KEEP => StencilOperation::Keep,
+            diligent_sys::STENCIL_OP_ZERO => StencilOperation::Zero,
+            diligent_sys::STENCIL_OP_REPLACE => StencilOperation::Replace,
+            diligent_sys::STENCIL_OP_INCR_SAT => StencilOperation::IncrSat,
+            diligent_sys::STENCIL_OP_DECR_SAT => StencilOperation::DecrSat,
+            diligent_sys::STENCIL_OP_INVERT => StencilOperation::Invert,
+            diligent_sys::STENCIL_OP_INCR_WRAP => StencilOperation::IncrWrap,
+            diligent_sys::STENCIL_OP_DECR_WRAP => StencilOperation::DecrWrap,
+            _ => panic!("Unknown STENCIL_OP value"),
+        }
+    }
+}
+
 #[derive(Clone, Copy)]
 pub enum ComparisonFunction {
     Never,
@@ -221,6 +322,22 @@ impl From<ComparisonFunction> for diligent_sys::COMPARISON_FUNCTION {
             ComparisonFunction::GreaterEqual => diligent_sys::COMPARISON_FUNC_GREATER_EQUAL,
             ComparisonFunction::Always => diligent_sys::COMPARISON_FUNC_ALWAYS,
         }) as _
+    }
+}
+
+impl From<diligent_sys::COMPARISON_FUNCTION> for ComparisonFunction {
+    fn from(value: diligent_sys::COMPARISON_FUNCTION) -> Self {
+        match value as _ {
+            diligent_sys::COMPARISON_FUNC_NEVER => ComparisonFunction::Never,
+            diligent_sys::COMPARISON_FUNC_LESS => ComparisonFunction::Less,
+            diligent_sys::COMPARISON_FUNC_EQUAL => ComparisonFunction::Equal,
+            diligent_sys::COMPARISON_FUNC_LESS_EQUAL => ComparisonFunction::LessEqual,
+            diligent_sys::COMPARISON_FUNC_GREATER => ComparisonFunction::Greater,
+            diligent_sys::COMPARISON_FUNC_NOT_EQUAL => ComparisonFunction::NotEqual,
+            diligent_sys::COMPARISON_FUNC_GREATER_EQUAL => ComparisonFunction::GreaterEqual,
+            diligent_sys::COMPARISON_FUNC_ALWAYS => ComparisonFunction::Always,
+            _ => panic!("Unknow COMPARISON_FUNCTION value"),
+        }
     }
 }
 
@@ -719,70 +836,85 @@ where
     }
 }
 
-#[derive(Builder, Clone)]
-pub struct RenderTargetBlendDesc {
-    #[builder(default = false)]
-    blend_enable: bool,
+#[repr(transparent)]
+#[derive(Clone)]
+pub struct RenderTargetBlendDesc(diligent_sys::RenderTargetBlendDesc);
 
-    #[builder(default = false)]
-    logic_operation_enable: bool,
+#[bon::bon]
+impl RenderTargetBlendDesc {
+    #[builder(derive(Clone))]
+    pub fn new(
+        #[builder(default = false)] blend_enable: bool,
 
-    #[builder(default = BlendFactor::One)]
-    src_blend: BlendFactor,
+        #[builder(default = false)] logic_operation_enable: bool,
 
-    #[builder(default = BlendFactor::Zero)]
-    dest_blend: BlendFactor,
+        #[builder(default = BlendFactor::One)] src_blend: BlendFactor,
 
-    #[builder(default = BlendOperation::Add)]
-    blend_op: BlendOperation,
+        #[builder(default = BlendFactor::Zero)] dest_blend: BlendFactor,
 
-    #[builder(default = BlendFactor::One)]
-    src_blend_alpha: BlendFactor,
+        #[builder(default = BlendOperation::Add)] blend_op: BlendOperation,
 
-    #[builder(default = BlendFactor::Zero)]
-    dest_blend_alpha: BlendFactor,
+        #[builder(default = BlendFactor::One)] src_blend_alpha: BlendFactor,
 
-    #[builder(default = BlendOperation::Add)]
-    blend_op_alpha: BlendOperation,
+        #[builder(default = BlendFactor::Zero)] dest_blend_alpha: BlendFactor,
 
-    #[builder(default = LogicOperation::NoOp)]
-    logic_op: LogicOperation,
+        #[builder(default = BlendOperation::Add)] blend_op_alpha: BlendOperation,
 
-    #[builder(default = ColorMask::RGBA)]
-    render_target_write_mask: ColorMask,
+        #[builder(default = LogicOperation::NoOp)] logic_op: LogicOperation,
+
+        #[builder(default = ColorMask::RGBA)] render_target_write_mask: ColorMask,
+    ) -> Self {
+        RenderTargetBlendDesc(diligent_sys::RenderTargetBlendDesc {
+            BlendEnable: blend_enable,
+            LogicOperationEnable: logic_operation_enable,
+            SrcBlend: src_blend.into(),
+            DestBlend: dest_blend.into(),
+            BlendOp: blend_op.into(),
+            SrcBlendAlpha: src_blend_alpha.into(),
+            DestBlendAlpha: dest_blend_alpha.into(),
+            BlendOpAlpha: blend_op_alpha.into(),
+            LogicOp: logic_op.into(),
+            RenderTargetWriteMask: render_target_write_mask.bits(),
+        })
+    }
 }
 
-impl From<&RenderTargetBlendDesc> for diligent_sys::RenderTargetBlendDesc {
-    fn from(value: &RenderTargetBlendDesc) -> Self {
-        diligent_sys::RenderTargetBlendDesc {
-            BlendEnable: value.blend_enable,
-            LogicOperationEnable: value.logic_operation_enable,
-            SrcBlend: value.src_blend.into(),
-            DestBlend: value.dest_blend.into(),
-            BlendOp: value.blend_op.into(),
-            SrcBlendAlpha: value.src_blend_alpha.into(),
-            DestBlendAlpha: value.dest_blend_alpha.into(),
-            BlendOpAlpha: value.blend_op_alpha.into(),
-            LogicOp: value.logic_op.into(),
-            RenderTargetWriteMask: value.render_target_write_mask.bits(),
-        }
+impl RenderTargetBlendDesc {
+    pub fn blend_enable(&self) -> bool {
+        self.0.BlendEnable
+    }
+    pub fn logic_operation_enable(&self) -> bool {
+        self.0.LogicOperationEnable
+    }
+    pub fn src_blend(&self) -> BlendFactor {
+        self.0.SrcBlend.into()
+    }
+    pub fn dest_blend(&self) -> BlendFactor {
+        self.0.DestBlend.into()
+    }
+    pub fn blend_op(&self) -> BlendOperation {
+        self.0.BlendOp.into()
+    }
+    pub fn src_blend_alpha(&self) -> BlendFactor {
+        self.0.SrcBlendAlpha.into()
+    }
+    pub fn dest_blend_alpha(&self) -> BlendFactor {
+        self.0.DestBlendAlpha.into()
+    }
+    pub fn blend_op_alpha(&self) -> BlendOperation {
+        self.0.BlendOpAlpha.into()
+    }
+    pub fn logic_op(&self) -> LogicOperation {
+        self.0.LogicOp.into()
+    }
+    pub fn render_target_write_mask(&self) -> ColorMask {
+        ColorMask::from_bits_retain(self.0.RenderTargetWriteMask)
     }
 }
 
 impl Default for RenderTargetBlendDesc {
     fn default() -> Self {
-        RenderTargetBlendDesc {
-            blend_enable: false,
-            logic_operation_enable: false,
-            src_blend: BlendFactor::One,
-            dest_blend: BlendFactor::Zero,
-            blend_op: BlendOperation::Add,
-            src_blend_alpha: BlendFactor::One,
-            dest_blend_alpha: BlendFactor::Zero,
-            blend_op_alpha: BlendOperation::Add,
-            logic_op: LogicOperation::NoOp,
-            render_target_write_mask: ColorMask::RGBA,
-        }
+        RenderTargetBlendDesc::builder().build()
     }
 }
 
@@ -805,7 +937,7 @@ impl BlendStateDesc {
         BlendStateDesc(diligent_sys::BlendStateDesc {
             AlphaToCoverageEnable: alpha_to_coverage_enable,
             IndependentBlendEnable: independent_blend_enable,
-            RenderTargets: render_targets.each_ref().map(|rt| rt.into()),
+            RenderTargets: render_targets.map(|rt| rt.0),
         })
     }
 }
@@ -850,6 +982,36 @@ impl RasterizerStateDesc {
     }
 }
 
+impl RasterizerStateDesc {
+    pub fn fill_mode(&self) -> FillMode {
+        self.0.FillMode.into()
+    }
+    pub fn cull_mode(&self) -> CullMode {
+        self.0.CullMode.into()
+    }
+    pub fn front_counter_clockwise(&self) -> bool {
+        self.0.FrontCounterClockwise
+    }
+    pub fn depth_clip_enable(&self) -> bool {
+        self.0.DepthClipEnable
+    }
+    pub fn scissor_enable(&self) -> bool {
+        self.0.ScissorEnable
+    }
+    pub fn antialiased_line_enable(&self) -> bool {
+        self.0.AntialiasedLineEnable
+    }
+    pub fn depth_bias(&self) -> i32 {
+        self.0.DepthBias
+    }
+    pub fn depth_bias_clamp(&self) -> f32 {
+        self.0.DepthBiasClamp
+    }
+    pub fn slope_scaled_depth_bias(&self) -> f32 {
+        self.0.SlopeScaledDepthBias
+    }
+}
+
 #[derive(Clone)]
 #[repr(transparent)]
 pub struct StencilOperationsDesc(diligent_sys::StencilOpDesc);
@@ -872,6 +1034,21 @@ impl StencilOperationsDesc {
             StencilPassOp: stencil_pass_op.into(),
             StencilFunc: stencil_func.into(),
         })
+    }
+}
+
+impl StencilOperationsDesc {
+    pub fn stencil_fail_op(&self) -> StencilOperation {
+        self.0.StencilFailOp.into()
+    }
+    pub fn stencil_depth_fail_op(&self) -> StencilOperation {
+        self.0.StencilDepthFailOp.into()
+    }
+    pub fn stencil_pass_op(&self) -> StencilOperation {
+        self.0.StencilPassOp.into()
+    }
+    pub fn stencil_func(&self) -> ComparisonFunction {
+        self.0.StencilFunc.into()
     }
 }
 
@@ -911,6 +1088,33 @@ impl DepthStencilStateDesc {
             FrontFace: front_face.0,
             BackFace: back_face.0,
         })
+    }
+}
+
+impl DepthStencilStateDesc {
+    pub fn depth_enable(&self) -> bool {
+        self.0.DepthEnable
+    }
+    pub fn depth_write_enable(&self) -> bool {
+        self.0.DepthWriteEnable
+    }
+    pub fn depth_func(&self) -> ComparisonFunction {
+        self.0.DepthFunc.into()
+    }
+    pub fn stencil_enable(&self) -> bool {
+        self.0.StencilEnable
+    }
+    pub fn stencil_read_mask(&self) -> u8 {
+        self.0.StencilReadMask
+    }
+    pub fn stencil_write_mask(&self) -> u8 {
+        self.0.StencilWriteMask
+    }
+    pub fn front_face(&self) -> &StencilOperationsDesc {
+        unsafe { std::mem::transmute(&self.0.FrontFace) }
+    }
+    pub fn back_face(&self) -> &StencilOperationsDesc {
+        unsafe { std::mem::transmute(&self.0.BackFace) }
     }
 }
 
@@ -1088,6 +1292,50 @@ impl<'input_layouts, 'render_pass> GraphicsPipelineDesc<'input_layouts, 'render_
             },
             PhantomData,
         )
+    }
+}
+
+impl GraphicsPipelineDesc<'_, '_> {
+    pub fn blend_desc(&self) -> &BlendStateDesc {
+        unsafe { std::mem::transmute(&self.0.BlendDesc) }
+    }
+    pub fn rasterizer_desc(&self) -> &RasterizerStateDesc {
+        unsafe { std::mem::transmute(&self.0.RasterizerDesc) }
+    }
+    pub fn depth_stencil_desc(&self) -> &DepthStencilStateDesc {
+        unsafe { std::mem::transmute(&self.0.DepthStencilDesc) }
+    }
+    pub fn output(&self) -> &GraphicsPipelineOutput<'_> {
+        todo!()
+    }
+    pub fn sample_mask(&self) -> u32 {
+        self.0.SampleMask
+    }
+    pub fn input_layouts(&self) -> &[LayoutElement] {
+        unsafe {
+            std::slice::from_raw_parts(
+                self.0.InputLayout.LayoutElements as *const LayoutElement,
+                self.0.InputLayout.NumElements as usize,
+            )
+        }
+    }
+    pub fn primitive_topology(&self) -> PrimitiveTopology {
+        self.0.PrimitiveTopology.into()
+    }
+    pub fn num_viewports(&self) -> u8 {
+        self.0.NumViewports
+    }
+    pub fn shading_rate_flags(&self) -> PipelineShadingRateFlags {
+        PipelineShadingRateFlags::from_bits_retain(self.0.ShadingRateFlags)
+    }
+    pub fn sample_count(&self) -> u8 {
+        self.0.SmplDesc.Count
+    }
+    pub fn sample_quality(&self) -> u8 {
+        self.0.SmplDesc.Quality
+    }
+    pub fn node_mask(&self) -> u32 {
+        self.0.NodeMask
     }
 }
 

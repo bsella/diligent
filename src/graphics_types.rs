@@ -1,3 +1,4 @@
+use core::panic;
 use std::{ffi::CStr, fmt::Display};
 
 use bitflags::bitflags;
@@ -353,6 +354,123 @@ impl From<PrimitiveTopology> for diligent_sys::PRIMITIVE_TOPOLOGY {
                 diligent_sys::PRIMITIVE_TOPOLOGY_32_CONTROL_POINT_PATCHLIST
             }
         }) as _
+    }
+}
+
+impl From<diligent_sys::PRIMITIVE_TOPOLOGY> for PrimitiveTopology {
+    fn from(value: diligent_sys::PRIMITIVE_TOPOLOGY) -> Self {
+        match value as _ {
+            diligent_sys::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST => PrimitiveTopology::TriangleList,
+            diligent_sys::PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP => PrimitiveTopology::TriangleStrip,
+            diligent_sys::PRIMITIVE_TOPOLOGY_POINT_LIST => PrimitiveTopology::PointList,
+            diligent_sys::PRIMITIVE_TOPOLOGY_LINE_LIST => PrimitiveTopology::LineList,
+            diligent_sys::PRIMITIVE_TOPOLOGY_LINE_STRIP => PrimitiveTopology::LineStrip,
+            diligent_sys::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST_ADJ => {
+                PrimitiveTopology::TriangleListAdj
+            }
+            diligent_sys::PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_ADJ => {
+                PrimitiveTopology::TriangleStripAdj
+            }
+            diligent_sys::PRIMITIVE_TOPOLOGY_LINE_LIST_ADJ => PrimitiveTopology::LineListAdj,
+            diligent_sys::PRIMITIVE_TOPOLOGY_LINE_STRIP_ADJ => PrimitiveTopology::LineStripAdj,
+            diligent_sys::PRIMITIVE_TOPOLOGY_1_CONTROL_POINT_PATCHLIST => {
+                PrimitiveTopology::ControlPointPatchList1
+            }
+            diligent_sys::PRIMITIVE_TOPOLOGY_2_CONTROL_POINT_PATCHLIST => {
+                PrimitiveTopology::ControlPointPatchList2
+            }
+            diligent_sys::PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST => {
+                PrimitiveTopology::ControlPointPatchList3
+            }
+            diligent_sys::PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST => {
+                PrimitiveTopology::ControlPointPatchList4
+            }
+            diligent_sys::PRIMITIVE_TOPOLOGY_5_CONTROL_POINT_PATCHLIST => {
+                PrimitiveTopology::ControlPointPatchList5
+            }
+            diligent_sys::PRIMITIVE_TOPOLOGY_6_CONTROL_POINT_PATCHLIST => {
+                PrimitiveTopology::ControlPointPatchList6
+            }
+            diligent_sys::PRIMITIVE_TOPOLOGY_7_CONTROL_POINT_PATCHLIST => {
+                PrimitiveTopology::ControlPointPatchList7
+            }
+            diligent_sys::PRIMITIVE_TOPOLOGY_8_CONTROL_POINT_PATCHLIST => {
+                PrimitiveTopology::ControlPointPatchList8
+            }
+            diligent_sys::PRIMITIVE_TOPOLOGY_9_CONTROL_POINT_PATCHLIST => {
+                PrimitiveTopology::ControlPointPatchList9
+            }
+            diligent_sys::PRIMITIVE_TOPOLOGY_10_CONTROL_POINT_PATCHLIST => {
+                PrimitiveTopology::ControlPointPatchList10
+            }
+            diligent_sys::PRIMITIVE_TOPOLOGY_11_CONTROL_POINT_PATCHLIST => {
+                PrimitiveTopology::ControlPointPatchList11
+            }
+            diligent_sys::PRIMITIVE_TOPOLOGY_12_CONTROL_POINT_PATCHLIST => {
+                PrimitiveTopology::ControlPointPatchList12
+            }
+            diligent_sys::PRIMITIVE_TOPOLOGY_13_CONTROL_POINT_PATCHLIST => {
+                PrimitiveTopology::ControlPointPatchList13
+            }
+            diligent_sys::PRIMITIVE_TOPOLOGY_14_CONTROL_POINT_PATCHLIST => {
+                PrimitiveTopology::ControlPointPatchList14
+            }
+            diligent_sys::PRIMITIVE_TOPOLOGY_15_CONTROL_POINT_PATCHLIST => {
+                PrimitiveTopology::ControlPointPatchList15
+            }
+            diligent_sys::PRIMITIVE_TOPOLOGY_16_CONTROL_POINT_PATCHLIST => {
+                PrimitiveTopology::ControlPointPatchList16
+            }
+            diligent_sys::PRIMITIVE_TOPOLOGY_17_CONTROL_POINT_PATCHLIST => {
+                PrimitiveTopology::ControlPointPatchList17
+            }
+            diligent_sys::PRIMITIVE_TOPOLOGY_18_CONTROL_POINT_PATCHLIST => {
+                PrimitiveTopology::ControlPointPatchList18
+            }
+            diligent_sys::PRIMITIVE_TOPOLOGY_19_CONTROL_POINT_PATCHLIST => {
+                PrimitiveTopology::ControlPointPatchList19
+            }
+            diligent_sys::PRIMITIVE_TOPOLOGY_20_CONTROL_POINT_PATCHLIST => {
+                PrimitiveTopology::ControlPointPatchList20
+            }
+            diligent_sys::PRIMITIVE_TOPOLOGY_21_CONTROL_POINT_PATCHLIST => {
+                PrimitiveTopology::ControlPointPatchList21
+            }
+            diligent_sys::PRIMITIVE_TOPOLOGY_22_CONTROL_POINT_PATCHLIST => {
+                PrimitiveTopology::ControlPointPatchList22
+            }
+            diligent_sys::PRIMITIVE_TOPOLOGY_23_CONTROL_POINT_PATCHLIST => {
+                PrimitiveTopology::ControlPointPatchList23
+            }
+            diligent_sys::PRIMITIVE_TOPOLOGY_24_CONTROL_POINT_PATCHLIST => {
+                PrimitiveTopology::ControlPointPatchList24
+            }
+            diligent_sys::PRIMITIVE_TOPOLOGY_25_CONTROL_POINT_PATCHLIST => {
+                PrimitiveTopology::ControlPointPatchList25
+            }
+            diligent_sys::PRIMITIVE_TOPOLOGY_26_CONTROL_POINT_PATCHLIST => {
+                PrimitiveTopology::ControlPointPatchList26
+            }
+            diligent_sys::PRIMITIVE_TOPOLOGY_27_CONTROL_POINT_PATCHLIST => {
+                PrimitiveTopology::ControlPointPatchList27
+            }
+            diligent_sys::PRIMITIVE_TOPOLOGY_28_CONTROL_POINT_PATCHLIST => {
+                PrimitiveTopology::ControlPointPatchList28
+            }
+            diligent_sys::PRIMITIVE_TOPOLOGY_29_CONTROL_POINT_PATCHLIST => {
+                PrimitiveTopology::ControlPointPatchList29
+            }
+            diligent_sys::PRIMITIVE_TOPOLOGY_30_CONTROL_POINT_PATCHLIST => {
+                PrimitiveTopology::ControlPointPatchList30
+            }
+            diligent_sys::PRIMITIVE_TOPOLOGY_31_CONTROL_POINT_PATCHLIST => {
+                PrimitiveTopology::ControlPointPatchList31
+            }
+            diligent_sys::PRIMITIVE_TOPOLOGY_32_CONTROL_POINT_PATCHLIST => {
+                PrimitiveTopology::ControlPointPatchList32
+            }
+            _ => panic!("Unknown PRIMITIVE_TOPOLOGY value"),
+        }
     }
 }
 
@@ -3062,6 +3180,17 @@ impl From<StateTransitionType> for diligent_sys::STATE_TRANSITION_TYPE {
             StateTransitionType::Begin => diligent_sys::STATE_TRANSITION_TYPE_BEGIN,
             StateTransitionType::End => diligent_sys::STATE_TRANSITION_TYPE_END,
         }) as _
+    }
+}
+
+impl From<diligent_sys::STATE_TRANSITION_TYPE> for StateTransitionType {
+    fn from(value: diligent_sys::STATE_TRANSITION_TYPE) -> Self {
+        match value as _ {
+            diligent_sys::STATE_TRANSITION_TYPE_IMMEDIATE => StateTransitionType::Immediate,
+            diligent_sys::STATE_TRANSITION_TYPE_BEGIN => StateTransitionType::Begin,
+            diligent_sys::STATE_TRANSITION_TYPE_END => StateTransitionType::End,
+            _ => panic!("Unknown STATE_TRANSITION_TYPE value"),
+        }
     }
 }
 

@@ -52,6 +52,18 @@ impl<'sampler_or_texture_name, 'sampler_name, 'sampler_desc>
     }
 }
 
+impl ImmutableSamplerDesc<'_, '_, '_> {
+    pub fn shader_stages(&self) -> ShaderTypes {
+        ShaderTypes::from_bits_retain(self.0.ShaderStages)
+    }
+    pub fn sampler_or_texture_name(&self) -> &CStr {
+        unsafe { CStr::from_ptr(self.0.SamplerOrTextureName) }
+    }
+    pub fn sampler_desc(&self) -> &SamplerDesc<'_> {
+        unsafe { std::mem::transmute(&self.0.Desc) }
+    }
+}
+
 define_ported!(
     PipelineResourceSignature,
     diligent_sys::IPipelineResourceSignature,
@@ -109,6 +121,27 @@ impl<'name> PipelineResourceDesc<'name> {
             },
             PhantomData,
         )
+    }
+}
+
+impl PipelineResourceDesc<'_> {
+    pub fn name(&self) -> &CStr {
+        unsafe { CStr::from_ptr(self.0.Name) }
+    }
+    pub fn shader_stages(&self) -> ShaderTypes {
+        ShaderTypes::from_bits_retain(self.0.ShaderStages)
+    }
+    pub fn array_size(&self) -> u32 {
+        self.0.ArraySize
+    }
+    pub fn resource_type(&self) -> Option<ShaderResourceType> {
+        ShaderResourceType::from_sys(self.0.ResourceType)
+    }
+    pub fn var_type(&self) -> ShaderResourceVariableType {
+        self.0.VarType.into()
+    }
+    pub fn flags(&self) -> PipelineResourceFlags {
+        PipelineResourceFlags::from_bits_retain(self.0.Flags)
     }
 }
 

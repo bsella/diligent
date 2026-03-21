@@ -17,6 +17,16 @@ pub enum DeviceMemoryType {
     Sparce,
 }
 
+impl DeviceMemoryType {
+    pub fn from_sys(value: diligent_sys::DEVICE_MEMORY_TYPE) -> Option<DeviceMemoryType> {
+        match value as _ {
+            diligent_sys::DEVICE_MEMORY_TYPE_UNDEFINED => None,
+            diligent_sys::DEVICE_MEMORY_TYPE_SPARSE => Some(DeviceMemoryType::Sparce),
+            _ => panic!("Unknown DEVICE_MEMORY_TYPE value"),
+        }
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone)]
 pub struct DeviceMemoryDesc<'name>(diligent_sys::DeviceMemoryDesc, PhantomData<&'name ()>);
@@ -59,6 +69,18 @@ impl<'name> DeviceMemoryDesc<'name> {
             },
             PhantomData,
         )
+    }
+}
+
+impl DeviceMemoryDesc<'_> {
+    pub fn device_memory_type(&self) -> Option<DeviceMemoryType> {
+        DeviceMemoryType::from_sys(self.0.Type)
+    }
+    pub fn page_size(&self) -> u64 {
+        self.0.PageSize
+    }
+    pub fn immediate_context_mask(&self) -> u64 {
+        self.0.ImmediateContextMask
     }
 }
 

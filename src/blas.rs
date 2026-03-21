@@ -157,6 +157,30 @@ impl<'name, 'triangle_descs, 'bb_descs, 'triangle_geometry_name, 'bb_geometry_na
     }
 }
 
+impl BottomLevelASDesc<'_, '_, '_, '_, '_> {
+    pub fn triangles(&self) -> &[BLASTriangleDesc<'_>] {
+        unsafe {
+            std::slice::from_raw_parts(self.0.pTriangles as *const _, self.0.TriangleCount as usize)
+        }
+    }
+
+    pub fn boxes(&self) -> &[BLASBoundingBoxDesc<'_>] {
+        unsafe { std::slice::from_raw_parts(self.0.pBoxes as *const _, self.0.BoxCount as usize) }
+    }
+
+    pub fn flags(&self) -> RayTracingBuildAsFlags {
+        RayTracingBuildAsFlags::from_bits_retain(self.0.Flags)
+    }
+
+    pub fn compacted_size(&self) -> u64 {
+        self.0.CompactedSize
+    }
+
+    pub fn immediate_context_mask(&self) -> u64 {
+        self.0.ImmediateContextMask
+    }
+}
+
 define_ported!(
     BottomLevelAS,
     diligent_sys::IBottomLevelAS,

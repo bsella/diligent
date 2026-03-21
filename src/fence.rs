@@ -53,6 +53,16 @@ impl<'name> FenceDesc<'name> {
     }
 }
 
+impl FenceDesc<'_> {
+    pub fn fence_type(&self) -> FenceType {
+        match self.0.Type as _ {
+            diligent_sys::FENCE_TYPE_CPU_WAIT_ONLY => FenceType::CpuWaitOnly,
+            diligent_sys::FENCE_TYPE_GENERAL => FenceType::General,
+            _ => panic!("Unknown FENCE_TYPE value"),
+        }
+    }
+}
+
 impl Fence {
     pub fn desc(&self) -> &FenceDesc<'_> {
         let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);

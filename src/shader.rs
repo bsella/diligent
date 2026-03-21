@@ -130,6 +130,27 @@ impl From<ShaderResourceType> for diligent_sys::SHADER_RESOURCE_TYPE {
 }
 
 impl ShaderResourceType {
+    pub fn from_sys(value: diligent_sys::SHADER_RESOURCE_TYPE) -> Option<Self> {
+        match value as _ {
+            diligent_sys::SHADER_RESOURCE_TYPE_UNKNOWN => None,
+            diligent_sys::SHADER_RESOURCE_TYPE_ACCEL_STRUCT => {
+                Some(ShaderResourceType::AccelStruct)
+            }
+            diligent_sys::SHADER_RESOURCE_TYPE_BUFFER_SRV => Some(ShaderResourceType::BufferSRV),
+            diligent_sys::SHADER_RESOURCE_TYPE_BUFFER_UAV => Some(ShaderResourceType::BufferUAV),
+            diligent_sys::SHADER_RESOURCE_TYPE_CONSTANT_BUFFER => {
+                Some(ShaderResourceType::ConstantBuffer)
+            }
+            diligent_sys::SHADER_RESOURCE_TYPE_INPUT_ATTACHMENT => {
+                Some(ShaderResourceType::InputAttachment)
+            }
+            diligent_sys::SHADER_RESOURCE_TYPE_SAMPLER => Some(ShaderResourceType::Sampler),
+            diligent_sys::SHADER_RESOURCE_TYPE_TEXTURE_SRV => Some(ShaderResourceType::TextureSRV),
+            diligent_sys::SHADER_RESOURCE_TYPE_TEXTURE_UAV => Some(ShaderResourceType::TextureUAV),
+            _ => panic!("Unknown SHADER_RESOURCE_TYPE value"),
+        }
+    }
+
     pub fn get_valid_pipeline_resource_flags(&self) -> PipelineResourceFlags {
         const_assert_eq!(diligent_sys::SHADER_RESOURCE_TYPE_LAST, 8);
         match self {
