@@ -191,6 +191,21 @@ impl<'name> TopLevelASDesc<'name> {
     }
 }
 
+impl TopLevelASDesc<'_> {
+    pub fn max_instance_count(&self) -> usize {
+        self.0.MaxInstanceCount as usize
+    }
+    pub fn flags(&self) -> RayTracingBuildAsFlags {
+        RayTracingBuildAsFlags::from_bits_retain(self.0.Flags)
+    }
+    pub fn compacted_size(&self) -> u64 {
+        self.0.CompactedSize
+    }
+    pub fn immediate_context_mask(&self) -> u64 {
+        self.0.ImmediateContextMask
+    }
+}
+
 define_ported!(
     TopLevelAS,
     diligent_sys::ITopLevelAS,

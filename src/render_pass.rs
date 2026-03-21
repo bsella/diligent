@@ -250,6 +250,59 @@ impl<
     }
 }
 
+impl SubpassDesc<'_, '_, '_, '_, '_, '_> {
+    pub fn input_attachments(&self) -> &[AttachmentReference] {
+        unsafe {
+            std::slice::from_raw_parts(
+                self.0.pInputAttachments as *const AttachmentReference,
+                self.0.InputAttachmentCount as usize,
+            )
+        }
+    }
+    pub fn render_target_attachments(&self) -> &[AttachmentReference] {
+        unsafe {
+            std::slice::from_raw_parts(
+                self.0.pRenderTargetAttachments as *const AttachmentReference,
+                self.0.RenderTargetAttachmentCount as usize,
+            )
+        }
+    }
+    pub fn resolve_attachments(&self) -> Option<&[AttachmentReference]> {
+        if self.0.pResolveAttachments.is_null() {
+            None
+        } else {
+            Some(unsafe {
+                std::slice::from_raw_parts(
+                    self.0.pResolveAttachments as *const AttachmentReference,
+                    self.0.RenderTargetAttachmentCount as usize,
+                )
+            })
+        }
+    }
+    pub fn depth_stencil_attachment(&self) -> Option<&AttachmentReference> {
+        if self.0.pDepthStencilAttachment.is_null() {
+            None
+        } else {
+            Some(unsafe { &*(self.0.pDepthStencilAttachment as *const AttachmentReference) })
+        }
+    }
+    pub fn preserve_attachments(&self) -> &[u32] {
+        unsafe {
+            std::slice::from_raw_parts(
+                self.0.pPreserveAttachments,
+                self.0.PreserveAttachmentCount as usize,
+            )
+        }
+    }
+    pub fn shading_rate_attachment(&self) -> Option<&ShadingRateAttachment> {
+        if self.0.pShadingRateAttachment.is_null() {
+            None
+        } else {
+            Some(unsafe { &*(self.0.pShadingRateAttachment as *const ShadingRateAttachment) })
+        }
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone)]
 pub struct SubpassDependencyDesc(diligent_sys::SubpassDependencyDesc);
@@ -275,6 +328,29 @@ impl SubpassDependencyDesc {
             SrcAccessMask: src_access_mask.bits(),
             DstAccessMask: dst_access_mask.bits(),
         })
+    }
+}
+
+impl SubpassDependencyDesc {
+    pub fn src_subpass_index(&self) -> usize {
+        self.0.SrcSubpass as usize
+    }
+    pub fn dst_subpass_index(&self) -> usize {
+        self.0.DstSubpass as usize
+    }
+
+    pub fn src_stage_mask(&self) -> PipelineStageFlags {
+        PipelineStageFlags::from_bits_retain(self.0.SrcStageMask)
+    }
+    pub fn dst_stage_mask(&self) -> PipelineStageFlags {
+        PipelineStageFlags::from_bits_retain(self.0.DstStageMask)
+    }
+
+    pub fn src_access_mask(&self) -> AccessFlags {
+        AccessFlags::from_bits_retain(self.0.SrcAccessMask)
+    }
+    pub fn dst_access_mask(&self) -> AccessFlags {
+        AccessFlags::from_bits_retain(self.0.DstAccessMask)
     }
 }
 

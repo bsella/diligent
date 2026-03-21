@@ -108,6 +108,18 @@ impl<'name> ShaderResourceVariableDesc<'name> {
     }
 }
 
+impl ShaderResourceVariableDesc<'_> {
+    pub fn variable_type(&self) -> ShaderResourceVariableType {
+        self.0.Type.into()
+    }
+    pub fn shader_stages(&self) -> ShaderTypes {
+        ShaderTypes::from_bits_retain(self.0.ShaderStages)
+    }
+    pub fn flags(&self) -> ShaderVariableFlags {
+        ShaderVariableFlags::from_bits_retain(self.0.Flags)
+    }
+}
+
 define_ported!(
     ShaderResourceVariable,
     diligent_sys::IShaderResourceVariable,

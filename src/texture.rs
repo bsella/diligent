@@ -54,6 +54,32 @@ impl From<TextureDimension> for diligent_sys::RESOURCE_DIMENSION {
 }
 
 impl TextureDimension {
+    pub fn from_sys(
+        value: diligent_sys::RESOURCE_DIMENSION,
+        array_size: NonZero<usize>,
+        depth: NonZero<usize>,
+    ) -> Option<TextureDimension> {
+        match value as _ {
+            diligent_sys::RESOURCE_DIM_TEX_1D => Some(TextureDimension::Texture1D),
+            diligent_sys::RESOURCE_DIM_TEX_1D_ARRAY => {
+                Some(TextureDimension::Texture1DArray { array_size })
+            }
+            diligent_sys::RESOURCE_DIM_TEX_2D => Some(TextureDimension::Texture2D),
+            diligent_sys::RESOURCE_DIM_TEX_2D_ARRAY => {
+                Some(TextureDimension::Texture2DArray { array_size })
+            }
+            diligent_sys::RESOURCE_DIM_TEX_3D => Some(TextureDimension::Texture3D { depth }),
+            diligent_sys::RESOURCE_DIM_TEX_CUBE => Some(TextureDimension::TextureCube),
+            diligent_sys::RESOURCE_DIM_TEX_CUBE_ARRAY => {
+                Some(TextureDimension::TextureCubeArray { array_size })
+            }
+            diligent_sys::RESOURCE_DIM_UNDEFINED => None,
+            _ => panic!("Unknown RESOURCE_DIMENSION value"),
+        }
+    }
+}
+
+impl TextureDimension {
     pub fn is_array(&self) -> bool {
         matches!(
             &self,
@@ -487,6 +513,33 @@ impl SparseTextureProperties {
             BlockSize: block_size,
             Flags: flags.bits(),
         })
+    }
+}
+
+impl SparseTextureProperties {
+    pub fn address_space_size(&self) -> u64 {
+        self.0.AddressSpaceSize
+    }
+    pub fn mip_tail_offset(&self) -> u64 {
+        self.0.MipTailOffset
+    }
+    pub fn mip_tail_stride(&self) -> u64 {
+        self.0.MipTailStride
+    }
+    pub fn mip_tail_size(&self) -> u64 {
+        self.0.MipTailSize
+    }
+    pub fn first_mip_in_tail(&self) -> u32 {
+        self.0.FirstMipInTail
+    }
+    pub fn tile_size(&self) -> &[u32; 3usize] {
+        &self.0.TileSize
+    }
+    pub fn block_size(&self) -> u32 {
+        self.0.BlockSize
+    }
+    pub fn flags(&self) -> SparseTextureFlags {
+        SparseTextureFlags::from_bits_retain(self.0.Flags)
     }
 }
 

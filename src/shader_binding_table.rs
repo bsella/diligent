@@ -57,6 +57,12 @@ impl<'name, 'pipeline_state> ShaderBindingTableDesc<'name, 'pipeline_state> {
     }
 }
 
+impl ShaderBindingTableDesc<'_, '_> {
+    pub fn raytracing_pso(&self) -> &RayTracingPipelineState {
+        unsafe { &*(self.0.pPSO as *const RayTracingPipelineState) }
+    }
+}
+
 define_ported!(
     ShaderBindingTable,
     diligent_sys::IShaderBindingTable,

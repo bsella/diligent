@@ -136,25 +136,32 @@ impl From<FilterType> for diligent_sys::FILTER_TYPE {
     }
 }
 
+impl From<diligent_sys::FILTER_TYPE> for FilterType {
+    fn from(value: diligent_sys::FILTER_TYPE) -> Self {
+        match value as _ {
+            diligent_sys::FILTER_TYPE_POINT => FilterType::Point,
+            diligent_sys::FILTER_TYPE_LINEAR => FilterType::Linear,
+            diligent_sys::FILTER_TYPE_ANISOTROPIC => FilterType::Anisotropic,
+            diligent_sys::FILTER_TYPE_COMPARISON_POINT => FilterType::ComparisonPoint,
+            diligent_sys::FILTER_TYPE_COMPARISON_LINEAR => FilterType::ComparisonLinear,
+            diligent_sys::FILTER_TYPE_COMPARISON_ANISOTROPIC => FilterType::ComparisonAnisotropic,
+            diligent_sys::FILTER_TYPE_MINIMUM_POINT => FilterType::MinimumPoint,
+            diligent_sys::FILTER_TYPE_MINIMUM_LINEAR => FilterType::MinimumLinear,
+            diligent_sys::FILTER_TYPE_MINIMUM_ANISOTROPIC => FilterType::MinimumAnisotropic,
+            diligent_sys::FILTER_TYPE_MAXIMUM_POINT => FilterType::MaximumPoint,
+            diligent_sys::FILTER_TYPE_MAXIMUM_LINEAR => FilterType::MaximumLinear,
+            diligent_sys::FILTER_TYPE_MAXIMUM_ANISOTROPIC => FilterType::MaximumAnisotropic,
+            _ => panic!("Unknown FILTER_TYPE value"),
+        }
+    }
+}
+
 impl FilterType {
     pub fn from_sys(filter_type: diligent_sys::FILTER_TYPE) -> Option<Self> {
-        match filter_type as _ {
-            diligent_sys::FILTER_TYPE_UNKNOWN => None,
-            diligent_sys::FILTER_TYPE_POINT => Some(FilterType::Point),
-            diligent_sys::FILTER_TYPE_LINEAR => Some(FilterType::Linear),
-            diligent_sys::FILTER_TYPE_ANISOTROPIC => Some(FilterType::Anisotropic),
-            diligent_sys::FILTER_TYPE_COMPARISON_POINT => Some(FilterType::ComparisonPoint),
-            diligent_sys::FILTER_TYPE_COMPARISON_LINEAR => Some(FilterType::ComparisonLinear),
-            diligent_sys::FILTER_TYPE_COMPARISON_ANISOTROPIC => {
-                Some(FilterType::ComparisonAnisotropic)
-            }
-            diligent_sys::FILTER_TYPE_MINIMUM_POINT => Some(FilterType::MinimumPoint),
-            diligent_sys::FILTER_TYPE_MINIMUM_LINEAR => Some(FilterType::MinimumLinear),
-            diligent_sys::FILTER_TYPE_MINIMUM_ANISOTROPIC => Some(FilterType::MinimumAnisotropic),
-            diligent_sys::FILTER_TYPE_MAXIMUM_POINT => Some(FilterType::MaximumPoint),
-            diligent_sys::FILTER_TYPE_MAXIMUM_LINEAR => Some(FilterType::MaximumLinear),
-            diligent_sys::FILTER_TYPE_MAXIMUM_ANISOTROPIC => Some(FilterType::MaximumAnisotropic),
-            _ => panic!("Unknown filter type"),
+        if filter_type == diligent_sys::FILTER_TYPE_UNKNOWN as _ {
+            None
+        } else {
+            Some(filter_type.into())
         }
     }
 }
@@ -181,16 +188,25 @@ impl From<TextureAddressMode> for diligent_sys::TEXTURE_ADDRESS_MODE {
     }
 }
 
+impl From<diligent_sys::TEXTURE_ADDRESS_MODE> for TextureAddressMode {
+    fn from(value: diligent_sys::TEXTURE_ADDRESS_MODE) -> Self {
+        match value as _ {
+            diligent_sys::TEXTURE_ADDRESS_WRAP => TextureAddressMode::Wrap,
+            diligent_sys::TEXTURE_ADDRESS_MIRROR => TextureAddressMode::Mirror,
+            diligent_sys::TEXTURE_ADDRESS_CLAMP => TextureAddressMode::Clamp,
+            diligent_sys::TEXTURE_ADDRESS_BORDER => TextureAddressMode::Border,
+            diligent_sys::TEXTURE_ADDRESS_MIRROR_ONCE => TextureAddressMode::MirrorOnce,
+            _ => panic!("Unknown TEXTURE_ADDRESS_MODE value"),
+        }
+    }
+}
+
 impl TextureAddressMode {
     pub fn from_sys(value: diligent_sys::TEXTURE_ADDRESS_MODE) -> Option<Self> {
-        match value as _ {
-            diligent_sys::TEXTURE_ADDRESS_UNKNOWN => None,
-            diligent_sys::TEXTURE_ADDRESS_WRAP => Some(TextureAddressMode::Wrap),
-            diligent_sys::TEXTURE_ADDRESS_MIRROR => Some(TextureAddressMode::Mirror),
-            diligent_sys::TEXTURE_ADDRESS_CLAMP => Some(TextureAddressMode::Clamp),
-            diligent_sys::TEXTURE_ADDRESS_BORDER => Some(TextureAddressMode::Border),
-            diligent_sys::TEXTURE_ADDRESS_MIRROR_ONCE => Some(TextureAddressMode::MirrorOnce),
-            _ => panic!("Unknown texture address mode"),
+        if value == diligent_sys::TEXTURE_ADDRESS_UNKNOWN as _ {
+            None
+        } else {
+            Some(value.into())
         }
     }
 }

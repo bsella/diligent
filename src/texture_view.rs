@@ -39,6 +39,22 @@ impl From<TextureViewType> for diligent_sys::TEXTURE_VIEW_TYPE {
     }
 }
 
+impl From<diligent_sys::TEXTURE_VIEW_TYPE> for TextureViewType {
+    fn from(value: diligent_sys::TEXTURE_VIEW_TYPE) -> Self {
+        match value as _ {
+            diligent_sys::TEXTURE_VIEW_SHADER_RESOURCE => TextureViewType::ShaderResource,
+            diligent_sys::TEXTURE_VIEW_RENDER_TARGET => TextureViewType::RenderTarget,
+            diligent_sys::TEXTURE_VIEW_DEPTH_STENCIL => TextureViewType::DepthStencil,
+            diligent_sys::TEXTURE_VIEW_READ_ONLY_DEPTH_STENCIL => {
+                TextureViewType::ReadOnlyDepthStencil
+            }
+            diligent_sys::TEXTURE_VIEW_UNORDERED_ACCESS => TextureViewType::UnorderedAccess,
+            diligent_sys::TEXTURE_VIEW_SHADING_RATE => TextureViewType::ShadingRate,
+            _ => panic!("Unknown TEXTURE_VIEW_TYPE value"),
+        }
+    }
+}
+
 bitflags! {
     #[derive(Clone,Copy)]
     pub struct UavAccessFlags: diligent_sys::UAV_ACCESS_FLAG {
@@ -177,6 +193,31 @@ impl<'name> TextureViewDesc<'name> {
             },
             PhantomData,
         )
+    }
+}
+
+impl TextureViewDesc<'_> {
+    pub fn view_type(&self) -> TextureViewType {
+        self.0.ViewType.into()
+    }
+
+    pub fn format(&self) -> Option<TextureFormat> {
+        TextureFormat::from_sys(self.0.Format)
+    }
+    pub fn most_detailed_mip(&self) -> usize {
+        self.0.MostDetailedMip as usize
+    }
+    pub fn num_mip_levels(&self) -> usize {
+        self.0.NumMipLevels as usize
+    }
+    pub fn access_flags(&self) -> UavAccessFlags {
+        UavAccessFlags::from_bits_retain(self.0.AccessFlags)
+    }
+    pub fn flags(&self) -> TextureViewFlags {
+        TextureViewFlags::from_bits_retain(self.0.Flags)
+    }
+    pub fn swizzle(&self) -> &TextureComponentMapping {
+        unsafe { std::mem::transmute(&self.0.Swizzle) }
     }
 }
 

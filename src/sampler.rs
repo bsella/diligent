@@ -96,6 +96,51 @@ impl<'name> SamplerDesc<'name> {
     }
 }
 
+impl SamplerDesc<'_> {
+    pub fn min_filter(&self) -> FilterType {
+        self.0.MinFilter.into()
+    }
+    pub fn mag_filter(&self) -> FilterType {
+        self.0.MagFilter.into()
+    }
+    pub fn mip_filter(&self) -> FilterType {
+        self.0.MipFilter.into()
+    }
+    pub fn address_u(&self) -> TextureAddressMode {
+        self.0.AddressU.into()
+    }
+    pub fn address_v(&self) -> TextureAddressMode {
+        self.0.AddressV.into()
+    }
+    pub fn address_w(&self) -> TextureAddressMode {
+        self.0.AddressW.into()
+    }
+    pub fn flags(&self) -> SamplerFlags {
+        SamplerFlags::from_bits_retain(self.0.Flags)
+    }
+    pub fn unnormalized_coords(&self) -> bool {
+        self.0.UnnormalizedCoords
+    }
+    pub fn mip_lod_bias(&self) -> f32 {
+        self.0.MipLODBias
+    }
+    pub fn max_anisotropy(&self) -> u32 {
+        self.0.MaxAnisotropy
+    }
+    pub fn comparison_func(&self) -> ComparisonFunction {
+        self.0.ComparisonFunc.into()
+    }
+    pub fn border_color(&self) -> &[f32; 4usize] {
+        &self.0.BorderColor
+    }
+    pub fn min_lod(&self) -> f32 {
+        self.0.MinLOD
+    }
+    pub fn max_lod(&self) -> f32 {
+        self.0.MaxLOD
+    }
+}
+
 define_ported!(Sampler, diligent_sys::ISampler, DeviceObject);
 
 impl Sampler {
