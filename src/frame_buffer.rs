@@ -89,7 +89,7 @@ impl FramebufferDesc<'_, '_, '_, '_> {
 impl Framebuffer {
     pub fn desc(&self) -> &FramebufferDesc<'_, '_, '_, '_> {
         let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
-        unsafe { &*(desc_ptr as *const &FramebufferDesc) }
+        unsafe { &*(desc_ptr as *const FramebufferDesc) }
     }
 }
 

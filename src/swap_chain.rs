@@ -225,7 +225,7 @@ impl SwapChain {
         let rtv_ptr = unsafe_member_call!(self, SwapChain, GetCurrentBackBufferRTV);
         let dsv_ptr = unsafe_member_call!(self, SwapChain, GetDepthBufferDSV);
 
-        let rtv = if dsv_ptr.is_null() {
+        let rtv = if rtv_ptr.is_null() {
             None
         } else {
             Some(unsafe { &mut *(rtv_ptr as *mut TextureView) })
