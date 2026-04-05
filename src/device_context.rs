@@ -1806,6 +1806,8 @@ impl<Context: UnsetRenderTarget> RenderPassToken<Context> {
     }
 
     pub fn end_render_pass(self) -> Context {
+        unsafe_member_call!(self.0.borrow(), DeviceContext, EndRenderPass);
+
         self.0
     }
 }
