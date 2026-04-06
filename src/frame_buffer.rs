@@ -51,9 +51,9 @@ impl<'name, 'render_pass, 'texture_views, 'texture_view>
                 },
                 pRenderPass: render_pass.sys_ptr(),
                 AttachmentCount: attachments.len() as u32,
-                ppAttachments: attachments
-                    .first()
-                    .map_or(std::ptr::null(), |_| attachments.as_ptr() as *const *mut _),
+                ppAttachments: attachments.first().map_or(std::ptr::null(), |attachment| {
+                    std::ptr::from_ref(attachment) as *mut _
+                }),
                 Width: width,
                 Height: height,
                 NumArraySlices: num_array_slices,
@@ -89,7 +89,7 @@ impl FramebufferDesc<'_, '_, '_, '_> {
 impl Framebuffer {
     pub fn desc(&self) -> &FramebufferDesc<'_, '_, '_, '_> {
         let desc_ptr = unsafe_member_call!(self, DeviceObject, GetDesc);
-        unsafe { &*(desc_ptr as *const FramebufferDesc) }
+        unsafe { &*(desc_ptr as *const &FramebufferDesc) }
     }
 }
 

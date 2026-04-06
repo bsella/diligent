@@ -1150,10 +1150,10 @@ pub struct GraphicsPipelineRenderPass<'render_pass> {
 }
 
 impl<'render_pass> GraphicsPipelineRenderPass<'render_pass> {
-    pub fn new(render_pass: &'render_pass RenderPass) -> Self {
+    pub fn new(render_pass: &'render_pass RenderPass, subpass_index: u8) -> Self {
         GraphicsPipelineRenderPass {
             render_pass,
-            subpass_index: 0,
+            subpass_index,
         }
     }
 }
