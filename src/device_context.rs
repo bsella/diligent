@@ -1151,22 +1151,22 @@ where
     #[builder(derive(Clone))]
     pub fn new(
         src_texture: SrcTextureTransition,
-        src_mip_level: u32,
-        src_slice: u32,
-        src_box: &'region crate::Box,
+        #[builder(default = 0)] src_mip_level: u32,
+        #[builder(default = 0)] src_slice: u32,
+        src_box: Option<&'region crate::Box>,
         dst_texture: DstTextureTransition,
-        dst_mip_level: u32,
-        dst_slice: u32,
-        dst_x: u32,
-        dst_y: u32,
-        dst_z: u32,
+        #[builder(default = 0)] dst_mip_level: u32,
+        #[builder(default = 0)] dst_slice: u32,
+        #[builder(default = 0)] dst_x: u32,
+        #[builder(default = 0)] dst_y: u32,
+        #[builder(default = 0)] dst_z: u32,
     ) -> Self {
         CopyTextureAttribs(
             diligent_sys::CopyTextureAttribs {
                 pSrcTexture: src_texture.sys_ptr(),
                 SrcMipLevel: src_mip_level,
                 SrcSlice: src_slice,
-                pSrcBox: &src_box.0,
+                pSrcBox: src_box.map_or(std::ptr::null(), |src_box| &src_box.0),
                 SrcTextureTransitionMode: SrcTextureTransition::TRANSITION_MODE,
                 pDstTexture: dst_texture.sys_ptr(),
                 DstMipLevel: dst_mip_level,
@@ -1785,13 +1785,13 @@ pub trait UnsetPipeline: Borrow<DeviceContext> + Sized {}
 impl UnsetPipeline for Boxed<ImmediateDeviceContext> {}
 impl UnsetPipeline for Boxed<DeferredDeviceContext> {}
 
-pub trait UnsetRenderTarget: Borrow<DeviceContext> + Sized {}
-impl UnsetRenderTarget for Boxed<ImmediateDeviceContext> {}
-impl UnsetRenderTarget for Boxed<DeferredDeviceContext> {}
+pub trait UnsetRenderPass: Borrow<DeviceContext> + Sized {}
+impl UnsetRenderPass for Boxed<ImmediateDeviceContext> {}
+impl UnsetRenderPass for Boxed<DeferredDeviceContext> {}
 
-pub struct RenderPassToken<Context: UnsetRenderTarget>(Context);
+pub struct RenderPassToken<Context: UnsetRenderPass>(Context);
 
-impl<Context: UnsetRenderTarget> RenderPassToken<Context> {
+impl<Context: UnsetRenderPass> RenderPassToken<Context> {
     pub fn new<FramebufferTransition>(
         context: Context,
         attribs: &BeginRenderPassAttribs<FramebufferTransition>,
@@ -1812,21 +1812,21 @@ impl<Context: UnsetRenderTarget> RenderPassToken<Context> {
     }
 }
 
-impl<Context: UnsetRenderTarget> Deref for RenderPassToken<Context> {
+impl<Context: UnsetRenderPass> Deref for RenderPassToken<Context> {
     type Target = Context;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl<Context: UnsetRenderTarget> Borrow<DeviceContext> for RenderPassToken<Context> {
+impl<Context: UnsetRenderPass> Borrow<DeviceContext> for RenderPassToken<Context> {
     fn borrow(&self) -> &DeviceContext {
         self.0.borrow()
     }
 }
 
 // The UnsetPipeline trait is applied to the underlying type of RenderPassToken
-impl<Context: UnsetRenderTarget> UnsetPipeline for RenderPassToken<Context> where
+impl<Context: UnsetRenderPass> UnsetPipeline for RenderPassToken<Context> where
     Context: UnsetPipeline
 {
 }
@@ -2077,8 +2077,8 @@ pub trait RayTracingContext: UnsetPipeline {
     }
 }
 
-pub trait RenderPassContext: UnsetRenderTarget {
-    fn new_render_pass<FramebufferTransition>(
+pub trait RenderPassContext: UnsetRenderPass {
+    fn begin_render_pass<FramebufferTransition>(
         self,
         attribs: &BeginRenderPassAttribs<FramebufferTransition>,
     ) -> RenderPassToken<Self> {
@@ -2091,7 +2091,7 @@ impl<Context: UnsetPipeline> MeshContext for Context {}
 impl<Context: UnsetPipeline> ComputeContext for Context {}
 impl<Context: UnsetPipeline> TileContext for Context {}
 impl<Context: UnsetPipeline> RayTracingContext for Context {}
-impl<Context: UnsetRenderTarget> RenderPassContext for Context {}
+impl<Context: UnsetRenderPass> RenderPassContext for Context {}
 
 impl DeviceContext {
     pub fn desc(&self) -> &DeviceContextDesc {
