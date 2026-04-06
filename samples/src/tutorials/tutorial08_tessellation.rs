@@ -1,9 +1,12 @@
 use std::{cell::RefCell, path::Path};
 
 use diligent::{graphics_utilities::*, *};
-use diligent_samples::sample_base::{
-    sample::{SampleBase, *},
-    sample_app::{self},
+use diligent_samples::{
+    GetDeviceType,
+    sample_base::{
+        sample::{SampleBase, *},
+        sample_app::{self},
+    },
 };
 
 struct Tessellation {
@@ -76,20 +79,7 @@ impl SampleBase for Tessellation {
         );
 
         // Cull back faces. For some reason, in OpenGL the order is reversed
-        let cull = {
-            #[cfg(feature = "opengl")]
-            {
-                matches!(
-                    device.get_device_info().device_type(),
-                    diligent::RenderDeviceType::GL
-                )
-            }
-
-            #[cfg(not(feature = "opengl"))]
-            {
-                false
-            }
-        };
+        let cull = device.get_device_info().device_type().is_gl();
 
         let cull_mode = if cull {
             CullMode::Front
