@@ -1859,7 +1859,7 @@ const_assert_eq!(diligent_sys::RESOURCE_STATE_MAX_BIT, 2097152);
 
 impl ResourceState {
     pub fn from_sys(value: diligent_sys::RESOURCE_STATE) -> Option<Self> {
-        if value == diligent_sys::RESOURCE_STATE_UNKNOWN {
+        if value == diligent_sys::RESOURCE_STATE_UNKNOWN as _ {
             None
         } else {
             Some(ResourceState::from_bits_retain(value))
