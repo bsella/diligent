@@ -128,6 +128,7 @@ define_ported!(
 );
 
 impl ShaderResourceVariable {
+    // TODO : limit the resource type
     pub fn set(&self, device_object: &DeviceObject, flags: SetShaderResourceFlags) {
         unsafe_member_call!(
             self,
