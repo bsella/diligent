@@ -160,7 +160,7 @@ struct SharedThreadData {
 }
 
 impl SharedThreadData {
-    fn render_subset<Context: GraphicsContext>(
+    fn render_subset<Context: CanSetRenderTargets + CanSetGraphicsPipeline>(
         &self,
         context: Context,
         subset: usize,
@@ -170,7 +170,7 @@ impl SharedThreadData {
     ) -> Context {
         // Deferred contexts start in default state. We must bind everything to the context.
         // Render targets are set and transitioned to correct states by the main thread, here we only verify the states.
-        {
+        let context = {
             let rtv = swap_chain
                 .get_current_back_buffer_rtv()
                 .unwrap()
@@ -178,10 +178,8 @@ impl SharedThreadData {
 
             let dsv = swap_chain.get_depth_buffer_dsv();
 
-            context
-                .borrow()
-                .set_render_targets(&[rtv], dsv.map(TextureView::verify_state));
-        }
+            context.set_render_targets(&[rtv], dsv.map(TextureView::verify_state))
+        };
 
         {
             // Map the buffer and write current world-view-projection matrix
@@ -250,7 +248,7 @@ impl SharedThreadData {
             graphics.draw_indexed(&draw_attrs);
         }
 
-        graphics.finish()
+        graphics.finish_pipeline().finish_render_targets()
     }
 }
 
@@ -708,7 +706,7 @@ impl Multithreading {
         main_context: Boxed<ImmediateDeviceContext>,
     ) -> Boxed<ImmediateDeviceContext> {
         // Exclusive access to the swap chain in this thread
-        {
+        let main_context = {
             let mut swap_chain = self.swap_chain.write().unwrap();
 
             let (rtv, dsv) = swap_chain.get_current_rtv_and_dsv_mut();
@@ -716,7 +714,8 @@ impl Multithreading {
             let rtv = rtv.unwrap().transition_state();
             let dsv = dsv.map(|v| v.transition_state());
 
-            main_context.set_render_targets(std::slice::from_ref(&rtv), dsv.clone());
+            let main_context =
+                main_context.set_render_targets(std::slice::from_ref(&rtv), dsv.clone());
 
             // Clear the back buffer
             {
@@ -737,7 +736,9 @@ impl Multithreading {
             if let Some(dsv) = dsv {
                 main_context.clear_depth(dsv, 1.0);
             }
-        }
+
+            main_context.finish_render_targets()
+        };
 
         let swap_chain = self.swap_chain.read().unwrap();
         let view_proj_matrix = {
@@ -1300,18 +1301,7 @@ impl MultithreadingApp {
 
             // Render imgui UI
             if self.app_settings.show_ui {
-                let width = {
-                    let mut swap_chain = self.sample.swap_chain.write().unwrap();
-
-                    let (rtv, dsv) = swap_chain.get_current_rtv_and_dsv_mut();
-
-                    self.main_context.set_render_targets(
-                        &[rtv.unwrap().transition_state()],
-                        dsv.map(|dsv| dsv.transition_state()),
-                    );
-
-                    swap_chain.desc().width()
-                };
+                let width = self.sample.swap_chain.read().unwrap().desc().width();
 
                 let adapters_wnd_width = width.min(330);
 
@@ -1377,7 +1367,12 @@ impl MultithreadingApp {
                     ui.checkbox("VSync", &mut self.app_settings.vsync);
                 }
                 self.sample.update_ui(&self.device, &self.main_context, ui);
-                self.main_context = imgui_frame.render(self.main_context, &self.device);
+
+                {
+                    let mut swap_chain = self.sample.swap_chain.write().unwrap();
+                    self.main_context =
+                        imgui_frame.render(self.main_context, &self.device, &mut swap_chain);
+                }
             }
 
             self.sample

@@ -1351,7 +1351,7 @@ impl SampleBase for RayTracing {
                 );
 
             let rtv = swap_chain.get_current_back_buffer_rtv_mut().unwrap();
-            main_context.set_render_targets(&[rtv.transition_state()], None);
+            let main_context = main_context.set_render_targets(&[rtv.transition_state()], None);
 
             let blit = main_context.set_graphics_pipeline_state(&self.image_blit_pso);
             blit.commit_shader_resources(self.image_blit_srb.borrow_mut().transition_state());
@@ -1363,7 +1363,7 @@ impl SampleBase for RayTracing {
                     .build(),
             );
 
-            blit.finish()
+            blit.finish_pipeline().finish_render_targets()
         }
     }
 

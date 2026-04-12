@@ -587,21 +587,25 @@ impl SampleBase for ComputeShader {
         main_context: Boxed<ImmediateDeviceContext>,
         swap_chain: &mut SwapChain,
     ) -> Boxed<ImmediateDeviceContext> {
+        let (rtv, dsv) = swap_chain.get_current_rtv_and_dsv_mut();
+        let rtv = rtv.unwrap().transition_state();
+        let dsv = dsv.map(|dsv| dsv.transition_state());
+
+        let main_context = main_context.set_render_targets(std::slice::from_ref(&rtv), dsv.clone());
+
         // Clear the back buffer
         // Let the engine perform required state transitions
+
         {
-            let rtv = swap_chain.get_current_back_buffer_rtv_mut().unwrap();
-            main_context.clear_render_target(rtv.transition_state(), &self.clear_color);
+            main_context.clear_render_target(rtv, &self.clear_color);
+            if let Some(dsv) = dsv {
+                main_context.clear_depth(dsv, 1.0);
+            }
         }
 
         {
-            let dsv = swap_chain.get_depth_buffer_dsv_mut().unwrap();
-            main_context.clear_depth(dsv.transition_state(), 1.0);
-        }
+            let swap_chain_desc = swap_chain.desc();
 
-        let swap_chain_desc = swap_chain.desc();
-
-        {
             #[repr(C)]
             struct Constants {
                 ui_num_particles: u32,
@@ -692,7 +696,7 @@ impl SampleBase for ComputeShader {
                 .build(),
         );
 
-        graphics.finish()
+        graphics.finish_pipeline().finish_render_targets()
     }
 
     fn update_ui(

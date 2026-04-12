@@ -711,6 +711,7 @@ impl ImguiFrame {
         &mut self,
         context: Boxed<ImmediateDeviceContext>,
         render_device: &RenderDevice,
+        swap_chain: &mut SwapChain,
     ) -> Boxed<ImmediateDeviceContext> {
         let draw_data = self.context.render();
 
@@ -856,6 +857,13 @@ impl ImguiFrame {
             );
         }
 
+        let (rtv, dsv) = swap_chain.get_current_rtv_and_dsv_mut();
+
+        let rtv = rtv.unwrap().transition_state();
+        let dsv = dsv.map(|dsv| dsv.transition_state());
+
+        let context = context.set_render_targets(&[rtv], dsv);
+
         let graphics_context = context.set_graphics_pipeline_state(&self.data.pipeline_state);
 
         {
@@ -972,7 +980,7 @@ impl ImguiFrame {
                 global_vtx_offset += cmd_list.vtx_buffer().len() as u32;
             }
         }
-        graphics_context.finish()
+        graphics_context.finish_pipeline().finish_render_targets()
     }
 
     pub fn ui_mut(&mut self) -> &mut imgui::Ui {

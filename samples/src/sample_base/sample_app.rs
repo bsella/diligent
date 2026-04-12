@@ -674,30 +674,21 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
                     {
                         self.main_context.clear_stats();
 
-                        let (rtv, dsv) = sample_window.swap_chain.get_current_rtv_and_dsv_mut();
-
-                        let rtv = rtv.unwrap().transition_state();
-                        let dsv = dsv.map(|dsv| dsv.transition_state());
-
-                        self.main_context.set_render_targets(&[rtv], dsv);
-
                         self.main_context = self
                             .sample
                             .render(self.main_context, &mut sample_window.swap_chain);
                     }
 
                     {
-                        let (rtv, dsv) = sample_window.swap_chain.get_current_rtv_and_dsv_mut();
-
-                        let rtv = rtv.unwrap().transition_state();
-                        let dsv = dsv.map(|dsv| dsv.transition_state());
-
-                        self.main_context.set_render_targets(&[rtv], dsv);
-
                         // Render imgui UI
                         if self.app_settings.show_ui {
                             self.update_ui(&mut sample_window.swap_chain, imgui_frame.ui_mut());
-                            self.main_context = imgui_frame.render(self.main_context, &self.device);
+
+                            self.main_context = imgui_frame.render(
+                                self.main_context,
+                                &self.device,
+                                &mut sample_window.swap_chain,
+                            );
                         }
                     }
 

@@ -1781,18 +1781,177 @@ impl Borrow<DeviceContext> for Boxed<DeferredDeviceContext> {
 // Borrow is used here to mark owned device context and access its underlying DeviceContext.
 // In our case, Boxed<[Immediate|Deferred]DeviceContext> does not Deref directly into DeviceContext.
 // Unfortunately, in Rust, we cannot define a recursive Deref trait, so we use Borrow instead.
-pub trait CanSetPipeline: Borrow<DeviceContext> + Sized {}
-impl CanSetPipeline for Boxed<ImmediateDeviceContext> {}
-impl CanSetPipeline for Boxed<DeferredDeviceContext> {}
+pub trait CanSetGraphicsPipeline: Borrow<DeviceContext> + Sized {
+    fn set_graphics_pipeline_state(
+        self,
+        pipeline_state: &GraphicsPipelineState,
+    ) -> GraphicsPipelineToken<Self> {
+        unsafe_member_call!(
+            self.borrow(),
+            DeviceContext,
+            SetPipelineState,
+            pipeline_state.sys_ptr()
+        );
 
-pub trait CanSetRenderPass: Borrow<DeviceContext> + Sized {}
+        GraphicsPipelineToken(self)
+    }
+    fn set_mesh_pipeline_state(
+        self,
+        pipeline_state: &GraphicsPipelineState,
+    ) -> GraphicsPipelineToken<Self> {
+        unsafe_member_call!(
+            self.borrow(),
+            DeviceContext,
+            SetPipelineState,
+            pipeline_state.sys_ptr()
+        );
+
+        GraphicsPipelineToken(self)
+    }
+}
+pub trait CanSetComputePipeline: Borrow<DeviceContext> + Sized {
+    fn set_compute_pipeline_state(
+        self,
+        pipeline_state: &ComputePipelineState,
+    ) -> ComputePipelineToken<Self> {
+        unsafe_member_call!(
+            self.borrow(),
+            DeviceContext,
+            SetPipelineState,
+            pipeline_state.sys_ptr()
+        );
+
+        ComputePipelineToken(self)
+    }
+}
+pub trait CanSetTilePipeline: Borrow<DeviceContext> + Sized {
+    fn set_tile_pipeline_state(
+        self,
+        pipeline_state: &TilePipelineState,
+    ) -> TilePipelineToken<Self> {
+        unsafe_member_call!(
+            self.borrow(),
+            DeviceContext,
+            SetPipelineState,
+            pipeline_state.sys_ptr()
+        );
+
+        TilePipelineToken(self)
+    }
+}
+pub trait CanSetRayTracingPipeline: Borrow<DeviceContext> + Sized {
+    fn set_ray_tracing_pipeline_state(
+        self,
+        pipeline_state: &RayTracingPipelineState,
+    ) -> RayTracingPipelineToken<Self> {
+        unsafe_member_call!(
+            self.borrow(),
+            DeviceContext,
+            SetPipelineState,
+            pipeline_state.sys_ptr()
+        );
+
+        RayTracingPipelineToken(self)
+    }
+}
+pub trait CanSetRenderTargets: Borrow<DeviceContext> + Sized {
+    fn set_render_targets<'texture_view, TextureViewTransition>(
+        self,
+        render_targets: &[TextureViewTransition],
+        depth_stencil: Option<TextureViewTransition>,
+    ) -> RenderTargetsToken<Self>
+    where
+        TextureViewTransition: ResourceTransition<'texture_view, TextureView>,
+    {
+        unsafe_member_call!(
+            self.borrow(),
+            DeviceContext,
+            SetRenderTargets,
+            render_targets.len() as u32,
+            render_targets.first().map_or(std::ptr::null_mut(), |rt| {
+                std::ptr::from_ref(rt) as *mut _
+            }),
+            depth_stencil.map_or(std::ptr::null_mut(), |v| v.sys_ptr()),
+            TextureViewTransition::TRANSITION_MODE
+        );
+        RenderTargetsToken(self)
+    }
+}
+pub trait CanSetRenderPass: Borrow<DeviceContext> + Sized {
+    fn begin_render_pass<FramebufferTransition>(
+        self,
+        attribs: &BeginRenderPassAttribs<FramebufferTransition>,
+    ) -> RenderPassToken<Self> {
+        RenderPassToken::new(self, attribs)
+    }
+}
+
+impl CanSetGraphicsPipeline for Boxed<ImmediateDeviceContext> {}
+impl CanSetGraphicsPipeline for Boxed<DeferredDeviceContext> {}
+impl CanSetComputePipeline for Boxed<ImmediateDeviceContext> {}
+impl CanSetComputePipeline for Boxed<DeferredDeviceContext> {}
+impl CanSetTilePipeline for Boxed<ImmediateDeviceContext> {}
+impl CanSetTilePipeline for Boxed<DeferredDeviceContext> {}
+impl CanSetRayTracingPipeline for Boxed<ImmediateDeviceContext> {}
+impl CanSetRayTracingPipeline for Boxed<DeferredDeviceContext> {}
+
+impl CanSetRenderTargets for Boxed<ImmediateDeviceContext> {}
+impl CanSetRenderTargets for Boxed<DeferredDeviceContext> {}
+
 impl CanSetRenderPass for Boxed<ImmediateDeviceContext> {}
 impl CanSetRenderPass for Boxed<DeferredDeviceContext> {}
+
+pub trait SetGraphicsPipeline {}
+pub trait SetComputePipeline {}
+pub trait SetTilePipeline {}
+pub trait SetRayTracingPipeline {}
+pub trait SetGraphicsOutput {}
+
+pub struct RenderTargetsToken<Context: CanSetRenderTargets>(Context);
+
+impl<Context: CanSetRenderTargets> RenderTargetsToken<Context> {
+    pub fn finish_render_targets(self) -> Context {
+        self.0
+    }
+}
+
+impl<Context: CanSetRenderTargets> Deref for RenderTargetsToken<Context> {
+    type Target = Context;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<Context: CanSetRenderTargets> Borrow<DeviceContext> for RenderTargetsToken<Context> {
+    fn borrow(&self) -> &DeviceContext {
+        self.0.borrow()
+    }
+}
+
+// The CanSetPipeline trait is applied to the underlying type of RenderPassToken
+impl<Context: CanSetRenderTargets> CanSetGraphicsPipeline for RenderTargetsToken<Context> where
+    Context: CanSetGraphicsPipeline
+{
+}
+impl<Context: CanSetRenderTargets> CanSetComputePipeline for RenderTargetsToken<Context> where
+    Context: CanSetComputePipeline
+{
+}
+impl<Context: CanSetRenderTargets> CanSetTilePipeline for RenderTargetsToken<Context> where
+    Context: CanSetTilePipeline
+{
+}
+impl<Context: CanSetRenderTargets> CanSetRayTracingPipeline for RenderTargetsToken<Context> where
+    Context: CanSetRayTracingPipeline
+{
+}
+
+impl<Context: CanSetRenderTargets> SetGraphicsOutput for RenderTargetsToken<Context> {}
 
 pub struct RenderPassToken<Context: CanSetRenderPass>(Context);
 
 impl<Context: CanSetRenderPass> RenderPassToken<Context> {
-    pub fn new<FramebufferTransition>(
+    pub(crate) fn new<FramebufferTransition>(
         context: Context,
         attribs: &BeginRenderPassAttribs<FramebufferTransition>,
     ) -> Self {
@@ -1826,33 +1985,45 @@ impl<Context: CanSetRenderPass> Borrow<DeviceContext> for RenderPassToken<Contex
 }
 
 // The CanSetPipeline trait is applied to the underlying type of RenderPassToken
-impl<Context: CanSetRenderPass> CanSetPipeline for RenderPassToken<Context> where
-    Context: CanSetPipeline
+impl<Context: CanSetRenderPass> CanSetGraphicsPipeline for RenderPassToken<Context> where
+    Context: CanSetGraphicsPipeline
 {
 }
 
-pub struct GraphicsPipelineToken<Context: CanSetPipeline>(Context);
+impl<Context: CanSetRenderPass> SetGraphicsOutput for RenderPassToken<Context> {}
 
-impl<Context: CanSetPipeline> GraphicsPipelineToken<Context> {
-    pub fn draw(&self, attribs: &DrawAttribs) {
+pub struct GraphicsPipelineToken<Context: CanSetGraphicsPipeline>(Context);
+
+impl<Context: CanSetGraphicsPipeline> GraphicsPipelineToken<Context> {
+    pub fn draw(&self, attribs: &DrawAttribs)
+    where
+        Context: SetGraphicsOutput,
+    {
         unsafe_member_call!(self.0.borrow(), DeviceContext, Draw, &attribs.0)
     }
 
-    pub fn draw_indexed(&self, attribs: &DrawIndexedAttribs) {
+    pub fn draw_indexed(&self, attribs: &DrawIndexedAttribs)
+    where
+        Context: SetGraphicsOutput,
+    {
         unsafe_member_call!(self.0.borrow(), DeviceContext, DrawIndexed, &attribs.0)
     }
 
     pub fn draw_indirect<AttribsBuffer, CounterBuffer>(
         &self,
         attribs: &DrawIndirectAttribs<AttribsBuffer, CounterBuffer>,
-    ) {
+    ) where
+        Context: SetGraphicsOutput,
+    {
         unsafe_member_call!(self.0.borrow(), DeviceContext, DrawIndirect, &attribs.0)
     }
 
     pub fn draw_indexed_indirect<AttribsBuffer, CounterBuffer>(
         &self,
         attribs: &DrawIndexedIndirectAttribs<AttribsBuffer, CounterBuffer>,
-    ) {
+    ) where
+        Context: SetGraphicsOutput,
+    {
         unsafe_member_call!(
             self.0.borrow(),
             DeviceContext,
@@ -1861,37 +2032,50 @@ impl<Context: CanSetPipeline> GraphicsPipelineToken<Context> {
         )
     }
 
-    pub fn multi_draw(&self, attribs: &MultiDrawAttribs) {
+    pub fn multi_draw(&self, attribs: &MultiDrawAttribs)
+    where
+        Context: SetGraphicsOutput,
+    {
         unsafe_member_call!(self.0.borrow(), DeviceContext, MultiDraw, &attribs.0)
     }
 
-    pub fn multi_draw_indexed(&self, attribs: &MultiDrawIndexedAttribs) {
+    pub fn multi_draw_indexed(&self, attribs: &MultiDrawIndexedAttribs)
+    where
+        Context: SetGraphicsOutput,
+    {
         unsafe_member_call!(self.0.borrow(), DeviceContext, MultiDrawIndexed, &attribs.0)
     }
 
-    pub fn finish(self) -> Context {
+    pub fn finish_pipeline(self) -> Context {
         self.0
     }
 }
 
-impl<Context: CanSetPipeline> Deref for GraphicsPipelineToken<Context> {
+impl<Context: CanSetGraphicsPipeline> Deref for GraphicsPipelineToken<Context> {
     type Target = Context;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-pub struct MeshPipelineToken<Context: CanSetPipeline>(Context);
+impl<Context: CanSetGraphicsPipeline> SetGraphicsPipeline for GraphicsPipelineToken<Context> {}
 
-impl<Context: CanSetPipeline> MeshPipelineToken<Context> {
-    pub fn draw_mesh(&self, attribs: &DrawMeshAttribs) {
+pub struct MeshPipelineToken<Context: CanSetGraphicsPipeline>(Context);
+
+impl<Context: CanSetGraphicsPipeline> MeshPipelineToken<Context> {
+    pub fn draw_mesh(&self, attribs: &DrawMeshAttribs)
+    where
+        Context: SetGraphicsOutput,
+    {
         unsafe_member_call!(self.0.borrow(), DeviceContext, DrawMesh, &attribs.0)
     }
 
     pub fn draw_mesh_indirect<AttribsBuffer, CounterBuffer>(
         &self,
         attribs: &DrawMeshIndirectAttribs<AttribsBuffer, CounterBuffer>,
-    ) {
+    ) where
+        Context: SetGraphicsOutput,
+    {
         unsafe_member_call!(self.0.borrow(), DeviceContext, DrawMeshIndirect, &attribs.0)
     }
 
@@ -1900,16 +2084,18 @@ impl<Context: CanSetPipeline> MeshPipelineToken<Context> {
     }
 }
 
-impl<Context: CanSetPipeline> Deref for MeshPipelineToken<Context> {
+impl<Context: CanSetGraphicsPipeline> Deref for MeshPipelineToken<Context> {
     type Target = Context;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-pub struct ComputePipelineToken<Context: CanSetPipeline>(Context);
+impl<Context: CanSetGraphicsPipeline> SetGraphicsPipeline for MeshPipelineToken<Context> {}
 
-impl<Context: CanSetPipeline> ComputePipelineToken<Context> {
+pub struct ComputePipelineToken<Context: CanSetComputePipeline>(Context);
+
+impl<Context: CanSetComputePipeline> ComputePipelineToken<Context> {
     pub fn dispatch_compute(&self, attribs: &DispatchComputeAttribs) {
         unsafe_member_call!(self.0.borrow(), DeviceContext, DispatchCompute, &attribs.0)
     }
@@ -1931,16 +2117,18 @@ impl<Context: CanSetPipeline> ComputePipelineToken<Context> {
     }
 }
 
-impl<Context: CanSetPipeline> Deref for ComputePipelineToken<Context> {
+impl<Context: CanSetComputePipeline> Deref for ComputePipelineToken<Context> {
     type Target = Context;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-pub struct TilePipelineToken<Context: CanSetPipeline>(Context);
+impl<Context: CanSetComputePipeline> SetComputePipeline for ComputePipelineToken<Context> {}
 
-impl<Context: CanSetPipeline> TilePipelineToken<Context> {
+pub struct TilePipelineToken<Context: CanSetTilePipeline>(Context);
+
+impl<Context: CanSetTilePipeline> TilePipelineToken<Context> {
     pub fn dispatch_tile(&self, attribs: &DispatchTileAttribs) {
         unsafe_member_call!(self.0.borrow(), DeviceContext, DispatchTile, &attribs.0)
     }
@@ -1950,16 +2138,18 @@ impl<Context: CanSetPipeline> TilePipelineToken<Context> {
     }
 }
 
-impl<Context: CanSetPipeline> Deref for TilePipelineToken<Context> {
+impl<Context: CanSetTilePipeline> Deref for TilePipelineToken<Context> {
     type Target = Context;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-pub struct RayTracingPipelineToken<Context: CanSetPipeline>(Context);
+impl<Context: CanSetTilePipeline> SetTilePipeline for TilePipelineToken<Context> {}
 
-impl<Context: CanSetPipeline> RayTracingPipelineToken<Context> {
+pub struct RayTracingPipelineToken<Context: CanSetRayTracingPipeline>(Context);
+
+impl<Context: CanSetRayTracingPipeline> RayTracingPipelineToken<Context> {
     pub fn trace_rays(&self, attribs: &TraceRaysAttribs) {
         unsafe_member_call!(self.0.borrow(), DeviceContext, TraceRays, &attribs.0)
     }
@@ -1983,12 +2173,14 @@ impl<Context: CanSetPipeline> RayTracingPipelineToken<Context> {
     }
 }
 
-impl<Context: CanSetPipeline> Deref for RayTracingPipelineToken<Context> {
+impl<Context: CanSetRayTracingPipeline> Deref for RayTracingPipelineToken<Context> {
     type Target = Context;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
+
+impl<Context: CanSetRayTracingPipeline> SetRayTracingPipeline for RayTracingPipelineToken<Context> {}
 
 define_ported!(
     DeviceContext,
@@ -1996,102 +2188,6 @@ define_ported!(
     diligent_sys::IDeviceContextMethods : 72,
     Object
 );
-
-pub trait GraphicsContext: CanSetPipeline {
-    fn set_graphics_pipeline_state(
-        self,
-        pipeline_state: &GraphicsPipelineState,
-    ) -> GraphicsPipelineToken<Self> {
-        unsafe_member_call!(
-            self.borrow(),
-            DeviceContext,
-            SetPipelineState,
-            pipeline_state.sys_ptr()
-        );
-
-        GraphicsPipelineToken(self)
-    }
-}
-
-pub trait MeshContext: CanSetPipeline {
-    fn set_mesh_pipeline_state(
-        self,
-        pipeline_state: &GraphicsPipelineState,
-    ) -> GraphicsPipelineToken<Self> {
-        unsafe_member_call!(
-            self.borrow(),
-            DeviceContext,
-            SetPipelineState,
-            pipeline_state.sys_ptr()
-        );
-
-        GraphicsPipelineToken(self)
-    }
-}
-
-pub trait ComputeContext: CanSetPipeline {
-    fn set_compute_pipeline_state(
-        self,
-        pipeline_state: &ComputePipelineState,
-    ) -> ComputePipelineToken<Self> {
-        unsafe_member_call!(
-            self.borrow(),
-            DeviceContext,
-            SetPipelineState,
-            pipeline_state.sys_ptr()
-        );
-
-        ComputePipelineToken(self)
-    }
-}
-
-pub trait TileContext: CanSetPipeline {
-    fn set_tile_pipeline_state(
-        self,
-        pipeline_state: &TilePipelineState,
-    ) -> TilePipelineToken<Self> {
-        unsafe_member_call!(
-            self.borrow(),
-            DeviceContext,
-            SetPipelineState,
-            pipeline_state.sys_ptr()
-        );
-
-        TilePipelineToken(self)
-    }
-}
-
-pub trait RayTracingContext: CanSetPipeline {
-    fn set_ray_tracing_pipeline_state(
-        self,
-        pipeline_state: &RayTracingPipelineState,
-    ) -> RayTracingPipelineToken<Self> {
-        unsafe_member_call!(
-            self.borrow(),
-            DeviceContext,
-            SetPipelineState,
-            pipeline_state.sys_ptr()
-        );
-
-        RayTracingPipelineToken(self)
-    }
-}
-
-pub trait RenderPassContext: CanSetRenderPass {
-    fn begin_render_pass<FramebufferTransition>(
-        self,
-        attribs: &BeginRenderPassAttribs<FramebufferTransition>,
-    ) -> RenderPassToken<Self> {
-        RenderPassToken::new(self, attribs)
-    }
-}
-
-impl<Context: CanSetPipeline> GraphicsContext for Context {}
-impl<Context: CanSetPipeline> MeshContext for Context {}
-impl<Context: CanSetPipeline> ComputeContext for Context {}
-impl<Context: CanSetPipeline> TileContext for Context {}
-impl<Context: CanSetPipeline> RayTracingContext for Context {}
-impl<Context: CanSetRenderPass> RenderPassContext for Context {}
 
 impl DeviceContext {
     pub fn desc(&self) -> &DeviceContextDesc {
@@ -2216,26 +2312,6 @@ impl DeviceContext {
             rects.first().map_or(std::ptr::null(), |rect| &rect.0),
             render_target_width,
             render_target_height
-        )
-    }
-
-    pub fn set_render_targets<'texture_view, TextureViewTransition>(
-        &self,
-        render_targets: &[TextureViewTransition],
-        depth_stencil: Option<TextureViewTransition>,
-    ) where
-        TextureViewTransition: ResourceTransition<'texture_view, TextureView>,
-    {
-        unsafe_member_call!(
-            self,
-            DeviceContext,
-            SetRenderTargets,
-            render_targets.len() as u32,
-            render_targets.first().map_or(std::ptr::null_mut(), |rt| {
-                std::ptr::from_ref(rt) as *mut _
-            }),
-            depth_stencil.map_or(std::ptr::null_mut(), |v| v.sys_ptr()),
-            TextureViewTransition::TRANSITION_MODE
         )
     }
 
