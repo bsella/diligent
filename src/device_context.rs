@@ -1781,17 +1781,17 @@ impl Borrow<DeviceContext> for Boxed<DeferredDeviceContext> {
 // Borrow is used here to mark owned device context and access its underlying DeviceContext.
 // In our case, Boxed<[Immediate|Deferred]DeviceContext> does not Deref directly into DeviceContext.
 // Unfortunately, in Rust, we cannot define a recursive Deref trait, so we use Borrow instead.
-pub trait UnsetPipeline: Borrow<DeviceContext> + Sized {}
-impl UnsetPipeline for Boxed<ImmediateDeviceContext> {}
-impl UnsetPipeline for Boxed<DeferredDeviceContext> {}
+pub trait CanSetPipeline: Borrow<DeviceContext> + Sized {}
+impl CanSetPipeline for Boxed<ImmediateDeviceContext> {}
+impl CanSetPipeline for Boxed<DeferredDeviceContext> {}
 
-pub trait UnsetRenderPass: Borrow<DeviceContext> + Sized {}
-impl UnsetRenderPass for Boxed<ImmediateDeviceContext> {}
-impl UnsetRenderPass for Boxed<DeferredDeviceContext> {}
+pub trait CanSetRenderPass: Borrow<DeviceContext> + Sized {}
+impl CanSetRenderPass for Boxed<ImmediateDeviceContext> {}
+impl CanSetRenderPass for Boxed<DeferredDeviceContext> {}
 
-pub struct RenderPassToken<Context: UnsetRenderPass>(Context);
+pub struct RenderPassToken<Context: CanSetRenderPass>(Context);
 
-impl<Context: UnsetRenderPass> RenderPassToken<Context> {
+impl<Context: CanSetRenderPass> RenderPassToken<Context> {
     pub fn new<FramebufferTransition>(
         context: Context,
         attribs: &BeginRenderPassAttribs<FramebufferTransition>,
@@ -1812,28 +1812,28 @@ impl<Context: UnsetRenderPass> RenderPassToken<Context> {
     }
 }
 
-impl<Context: UnsetRenderPass> Deref for RenderPassToken<Context> {
+impl<Context: CanSetRenderPass> Deref for RenderPassToken<Context> {
     type Target = Context;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl<Context: UnsetRenderPass> Borrow<DeviceContext> for RenderPassToken<Context> {
+impl<Context: CanSetRenderPass> Borrow<DeviceContext> for RenderPassToken<Context> {
     fn borrow(&self) -> &DeviceContext {
         self.0.borrow()
     }
 }
 
-// The UnsetPipeline trait is applied to the underlying type of RenderPassToken
-impl<Context: UnsetRenderPass> UnsetPipeline for RenderPassToken<Context> where
-    Context: UnsetPipeline
+// The CanSetPipeline trait is applied to the underlying type of RenderPassToken
+impl<Context: CanSetRenderPass> CanSetPipeline for RenderPassToken<Context> where
+    Context: CanSetPipeline
 {
 }
 
-pub struct GraphicsPipelineToken<Context: UnsetPipeline>(Context);
+pub struct GraphicsPipelineToken<Context: CanSetPipeline>(Context);
 
-impl<Context: UnsetPipeline> GraphicsPipelineToken<Context> {
+impl<Context: CanSetPipeline> GraphicsPipelineToken<Context> {
     pub fn draw(&self, attribs: &DrawAttribs) {
         unsafe_member_call!(self.0.borrow(), DeviceContext, Draw, &attribs.0)
     }
@@ -1874,16 +1874,16 @@ impl<Context: UnsetPipeline> GraphicsPipelineToken<Context> {
     }
 }
 
-impl<Context: UnsetPipeline> Deref for GraphicsPipelineToken<Context> {
+impl<Context: CanSetPipeline> Deref for GraphicsPipelineToken<Context> {
     type Target = Context;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-pub struct MeshPipelineToken<Context: UnsetPipeline>(Context);
+pub struct MeshPipelineToken<Context: CanSetPipeline>(Context);
 
-impl<Context: UnsetPipeline> MeshPipelineToken<Context> {
+impl<Context: CanSetPipeline> MeshPipelineToken<Context> {
     pub fn draw_mesh(&self, attribs: &DrawMeshAttribs) {
         unsafe_member_call!(self.0.borrow(), DeviceContext, DrawMesh, &attribs.0)
     }
@@ -1900,16 +1900,16 @@ impl<Context: UnsetPipeline> MeshPipelineToken<Context> {
     }
 }
 
-impl<Context: UnsetPipeline> Deref for MeshPipelineToken<Context> {
+impl<Context: CanSetPipeline> Deref for MeshPipelineToken<Context> {
     type Target = Context;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-pub struct ComputePipelineToken<Context: UnsetPipeline>(Context);
+pub struct ComputePipelineToken<Context: CanSetPipeline>(Context);
 
-impl<Context: UnsetPipeline> ComputePipelineToken<Context> {
+impl<Context: CanSetPipeline> ComputePipelineToken<Context> {
     pub fn dispatch_compute(&self, attribs: &DispatchComputeAttribs) {
         unsafe_member_call!(self.0.borrow(), DeviceContext, DispatchCompute, &attribs.0)
     }
@@ -1931,16 +1931,16 @@ impl<Context: UnsetPipeline> ComputePipelineToken<Context> {
     }
 }
 
-impl<Context: UnsetPipeline> Deref for ComputePipelineToken<Context> {
+impl<Context: CanSetPipeline> Deref for ComputePipelineToken<Context> {
     type Target = Context;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-pub struct TilePipelineToken<Context: UnsetPipeline>(Context);
+pub struct TilePipelineToken<Context: CanSetPipeline>(Context);
 
-impl<Context: UnsetPipeline> TilePipelineToken<Context> {
+impl<Context: CanSetPipeline> TilePipelineToken<Context> {
     pub fn dispatch_tile(&self, attribs: &DispatchTileAttribs) {
         unsafe_member_call!(self.0.borrow(), DeviceContext, DispatchTile, &attribs.0)
     }
@@ -1950,16 +1950,16 @@ impl<Context: UnsetPipeline> TilePipelineToken<Context> {
     }
 }
 
-impl<Context: UnsetPipeline> Deref for TilePipelineToken<Context> {
+impl<Context: CanSetPipeline> Deref for TilePipelineToken<Context> {
     type Target = Context;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-pub struct RayTracingPipelineToken<Context: UnsetPipeline>(Context);
+pub struct RayTracingPipelineToken<Context: CanSetPipeline>(Context);
 
-impl<Context: UnsetPipeline> RayTracingPipelineToken<Context> {
+impl<Context: CanSetPipeline> RayTracingPipelineToken<Context> {
     pub fn trace_rays(&self, attribs: &TraceRaysAttribs) {
         unsafe_member_call!(self.0.borrow(), DeviceContext, TraceRays, &attribs.0)
     }
@@ -1983,7 +1983,7 @@ impl<Context: UnsetPipeline> RayTracingPipelineToken<Context> {
     }
 }
 
-impl<Context: UnsetPipeline> Deref for RayTracingPipelineToken<Context> {
+impl<Context: CanSetPipeline> Deref for RayTracingPipelineToken<Context> {
     type Target = Context;
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -1997,7 +1997,7 @@ define_ported!(
     Object
 );
 
-pub trait GraphicsContext: UnsetPipeline {
+pub trait GraphicsContext: CanSetPipeline {
     fn set_graphics_pipeline_state(
         self,
         pipeline_state: &GraphicsPipelineState,
@@ -2013,7 +2013,7 @@ pub trait GraphicsContext: UnsetPipeline {
     }
 }
 
-pub trait MeshContext: UnsetPipeline {
+pub trait MeshContext: CanSetPipeline {
     fn set_mesh_pipeline_state(
         self,
         pipeline_state: &GraphicsPipelineState,
@@ -2029,7 +2029,7 @@ pub trait MeshContext: UnsetPipeline {
     }
 }
 
-pub trait ComputeContext: UnsetPipeline {
+pub trait ComputeContext: CanSetPipeline {
     fn set_compute_pipeline_state(
         self,
         pipeline_state: &ComputePipelineState,
@@ -2045,7 +2045,7 @@ pub trait ComputeContext: UnsetPipeline {
     }
 }
 
-pub trait TileContext: UnsetPipeline {
+pub trait TileContext: CanSetPipeline {
     fn set_tile_pipeline_state(
         self,
         pipeline_state: &TilePipelineState,
@@ -2061,7 +2061,7 @@ pub trait TileContext: UnsetPipeline {
     }
 }
 
-pub trait RayTracingContext: UnsetPipeline {
+pub trait RayTracingContext: CanSetPipeline {
     fn set_ray_tracing_pipeline_state(
         self,
         pipeline_state: &RayTracingPipelineState,
@@ -2077,7 +2077,7 @@ pub trait RayTracingContext: UnsetPipeline {
     }
 }
 
-pub trait RenderPassContext: UnsetRenderPass {
+pub trait RenderPassContext: CanSetRenderPass {
     fn begin_render_pass<FramebufferTransition>(
         self,
         attribs: &BeginRenderPassAttribs<FramebufferTransition>,
@@ -2086,12 +2086,12 @@ pub trait RenderPassContext: UnsetRenderPass {
     }
 }
 
-impl<Context: UnsetPipeline> GraphicsContext for Context {}
-impl<Context: UnsetPipeline> MeshContext for Context {}
-impl<Context: UnsetPipeline> ComputeContext for Context {}
-impl<Context: UnsetPipeline> TileContext for Context {}
-impl<Context: UnsetPipeline> RayTracingContext for Context {}
-impl<Context: UnsetRenderPass> RenderPassContext for Context {}
+impl<Context: CanSetPipeline> GraphicsContext for Context {}
+impl<Context: CanSetPipeline> MeshContext for Context {}
+impl<Context: CanSetPipeline> ComputeContext for Context {}
+impl<Context: CanSetPipeline> TileContext for Context {}
+impl<Context: CanSetPipeline> RayTracingContext for Context {}
+impl<Context: CanSetRenderPass> RenderPassContext for Context {}
 
 impl DeviceContext {
     pub fn desc(&self) -> &DeviceContextDesc {
