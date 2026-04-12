@@ -1334,7 +1334,7 @@ impl SampleBase for RayTracing {
 
             ray_tracing.trace_rays(&attribs);
 
-            ray_tracing.finish()
+            ray_tracing.finish_pipeline()
         };
 
         // Blit to swapchain image

@@ -652,7 +652,7 @@ impl SampleBase for ComputeShader {
             );
             reset_particle_lists.dispatch_compute(&dispatch_attribs);
 
-            reset_particle_lists.finish()
+            reset_particle_lists.finish_pipeline()
         };
 
         let main_context = {
@@ -661,7 +661,7 @@ impl SampleBase for ComputeShader {
             move_particle_lists
                 .commit_shader_resources(self.move_particles_srb.borrow_mut().transition_state());
             move_particle_lists.dispatch_compute(&dispatch_attribs);
-            move_particle_lists.finish()
+            move_particle_lists.finish_pipeline()
         };
 
         let main_context = {
@@ -671,7 +671,7 @@ impl SampleBase for ComputeShader {
                 self.collide_particles_srb.borrow_mut().transition_state(),
             );
             collide_particles.dispatch_compute(&dispatch_attribs);
-            collide_particles.finish()
+            collide_particles.finish_pipeline()
         };
 
         let main_context = {
@@ -682,7 +682,7 @@ impl SampleBase for ComputeShader {
                 self.collide_particles_srb.borrow_mut().transition_state(),
             );
             update_particles.dispatch_compute(&dispatch_attribs);
-            update_particles.finish()
+            update_particles.finish_pipeline()
         };
 
         let graphics = main_context.set_graphics_pipeline_state(&self.render_particle_pso);

@@ -1995,35 +1995,32 @@ impl<Context: CanSetRenderPass> SetGraphicsOutput for RenderPassToken<Context> {
 pub struct GraphicsPipelineToken<Context: CanSetGraphicsPipeline>(Context);
 
 impl<Context: CanSetGraphicsPipeline> GraphicsPipelineToken<Context> {
-    pub fn draw(&self, attribs: &DrawAttribs)
-    where
-        Context: SetGraphicsOutput,
-    {
+    pub fn finish_pipeline(self) -> Context {
+        self.0
+    }
+}
+
+// Only when output and graphics pipeline are set, drawing can be done
+impl<Context: CanSetGraphicsPipeline + SetGraphicsOutput> GraphicsPipelineToken<Context> {
+    pub fn draw(&self, attribs: &DrawAttribs) {
         unsafe_member_call!(self.0.borrow(), DeviceContext, Draw, &attribs.0)
     }
 
-    pub fn draw_indexed(&self, attribs: &DrawIndexedAttribs)
-    where
-        Context: SetGraphicsOutput,
-    {
+    pub fn draw_indexed(&self, attribs: &DrawIndexedAttribs) {
         unsafe_member_call!(self.0.borrow(), DeviceContext, DrawIndexed, &attribs.0)
     }
 
     pub fn draw_indirect<AttribsBuffer, CounterBuffer>(
         &self,
         attribs: &DrawIndirectAttribs<AttribsBuffer, CounterBuffer>,
-    ) where
-        Context: SetGraphicsOutput,
-    {
+    ) {
         unsafe_member_call!(self.0.borrow(), DeviceContext, DrawIndirect, &attribs.0)
     }
 
     pub fn draw_indexed_indirect<AttribsBuffer, CounterBuffer>(
         &self,
         attribs: &DrawIndexedIndirectAttribs<AttribsBuffer, CounterBuffer>,
-    ) where
-        Context: SetGraphicsOutput,
-    {
+    ) {
         unsafe_member_call!(
             self.0.borrow(),
             DeviceContext,
@@ -2032,22 +2029,12 @@ impl<Context: CanSetGraphicsPipeline> GraphicsPipelineToken<Context> {
         )
     }
 
-    pub fn multi_draw(&self, attribs: &MultiDrawAttribs)
-    where
-        Context: SetGraphicsOutput,
-    {
+    pub fn multi_draw(&self, attribs: &MultiDrawAttribs) {
         unsafe_member_call!(self.0.borrow(), DeviceContext, MultiDraw, &attribs.0)
     }
 
-    pub fn multi_draw_indexed(&self, attribs: &MultiDrawIndexedAttribs)
-    where
-        Context: SetGraphicsOutput,
-    {
+    pub fn multi_draw_indexed(&self, attribs: &MultiDrawIndexedAttribs) {
         unsafe_member_call!(self.0.borrow(), DeviceContext, MultiDrawIndexed, &attribs.0)
-    }
-
-    pub fn finish_pipeline(self) -> Context {
-        self.0
     }
 }
 
@@ -2063,24 +2050,22 @@ impl<Context: CanSetGraphicsPipeline> SetGraphicsPipeline for GraphicsPipelineTo
 pub struct MeshPipelineToken<Context: CanSetGraphicsPipeline>(Context);
 
 impl<Context: CanSetGraphicsPipeline> MeshPipelineToken<Context> {
-    pub fn draw_mesh(&self, attribs: &DrawMeshAttribs)
-    where
-        Context: SetGraphicsOutput,
-    {
+    pub fn finish_pipeline(self) -> Context {
+        self.0
+    }
+}
+
+// Only when output and graphics pipeline are set, drawing can be done
+impl<Context: CanSetGraphicsPipeline + SetGraphicsOutput> MeshPipelineToken<Context> {
+    pub fn draw_mesh(&self, attribs: &DrawMeshAttribs) {
         unsafe_member_call!(self.0.borrow(), DeviceContext, DrawMesh, &attribs.0)
     }
 
     pub fn draw_mesh_indirect<AttribsBuffer, CounterBuffer>(
         &self,
         attribs: &DrawMeshIndirectAttribs<AttribsBuffer, CounterBuffer>,
-    ) where
-        Context: SetGraphicsOutput,
-    {
+    ) {
         unsafe_member_call!(self.0.borrow(), DeviceContext, DrawMeshIndirect, &attribs.0)
-    }
-
-    pub fn finish(self) -> Context {
-        self.0
     }
 }
 
@@ -2112,7 +2097,7 @@ impl<Context: CanSetComputePipeline> ComputePipelineToken<Context> {
         )
     }
 
-    pub fn finish(self) -> Context {
+    pub fn finish_pipeline(self) -> Context {
         self.0
     }
 }
@@ -2133,7 +2118,7 @@ impl<Context: CanSetTilePipeline> TilePipelineToken<Context> {
         unsafe_member_call!(self.0.borrow(), DeviceContext, DispatchTile, &attribs.0)
     }
 
-    pub fn finish(self) -> Context {
+    pub fn finish_pipeline(self) -> Context {
         self.0
     }
 }
@@ -2168,7 +2153,7 @@ impl<Context: CanSetRayTracingPipeline> RayTracingPipelineToken<Context> {
         )
     }
 
-    pub fn finish(self) -> Context {
+    pub fn finish_pipeline(self) -> Context {
         self.0
     }
 }
