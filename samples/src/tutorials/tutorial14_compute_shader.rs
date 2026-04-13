@@ -456,6 +456,19 @@ struct ComputeShader {
 }
 
 impl SampleBase for ComputeShader {
+    fn make_swap_chains_create_info(
+        settings: &diligent_samples::sample_base::sample_app_settings::SampleAppSettings,
+    ) -> Vec<SwapChainCreateInfo> {
+        vec![
+            SwapChainCreateInfo::builder()
+                .width(settings.width)
+                .height(settings.height)
+                // We do not need the depth buffer from the swap chain in this sample
+                .depth_buffer_format(None)
+                .build(),
+        ]
+    }
+
     fn new(
         engine_factory: &EngineFactory,
         device: &RenderDevice,
@@ -587,21 +600,17 @@ impl SampleBase for ComputeShader {
         main_context: Boxed<ImmediateDeviceContext>,
         swap_chain: &mut SwapChain,
     ) -> Boxed<ImmediateDeviceContext> {
-        let (rtv, dsv) = swap_chain.get_current_rtv_and_dsv_mut();
-        let rtv = rtv.unwrap().transition_state();
-        let dsv = dsv.map(|dsv| dsv.transition_state());
+        let rtv = swap_chain
+            .get_current_back_buffer_rtv_mut()
+            .unwrap()
+            .transition_state();
 
-        let main_context = main_context.set_render_targets(std::slice::from_ref(&rtv), dsv.clone());
+        let main_context = main_context.set_render_targets(std::slice::from_ref(&rtv), None);
 
         // Clear the back buffer
         // Let the engine perform required state transitions
 
-        {
-            main_context.clear_render_target(rtv, &self.clear_color);
-            if let Some(dsv) = dsv {
-                main_context.clear_depth(dsv, 1.0);
-            }
-        }
+        main_context.clear_render_target(rtv, &self.clear_color);
 
         {
             let swap_chain_desc = swap_chain.desc();
