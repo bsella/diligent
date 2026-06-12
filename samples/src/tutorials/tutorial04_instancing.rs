@@ -90,7 +90,7 @@ impl Instancing {
         // Update instance data buffer
         context.update_buffer_from_slice(
             self.instance_buffer.borrow_mut().transition_state(),
-            instance_data.as_slice(),
+            &instance_data,
         );
     }
 }

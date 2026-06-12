@@ -321,7 +321,7 @@ fn create_particle_buffers(
                 .element_byte_stride(std::mem::size_of::<ParticleAttribs>() as u32)
                 .size(std::mem::size_of::<ParticleAttribs>() as u64 * num_particles as u64)
                 .build(),
-            particle_data.as_slice(),
+            &particle_data,
             None,
         )
         .unwrap();

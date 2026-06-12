@@ -155,7 +155,7 @@ impl TexturedCube {
             .sample_count(create_info.sample_count)
             // Primitive topology defines what kind of primitives will be rendered by this pipeline state
             .primitive_topology(PrimitiveTopology::TriangleList)
-            .input_layouts(input_layouts.as_slice())
+            .input_layouts(&input_layouts)
             .build();
 
         let shader_ci = ShaderCreateInfo::builder()

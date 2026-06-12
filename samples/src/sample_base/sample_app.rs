@@ -139,7 +139,7 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
                 ui.combo(
                     "Display Modes",
                     &mut self.selected_display_mode,
-                    self.display_modes_strings.as_slice(),
+                    &self.display_modes_strings,
                     |label| label.into(),
                 );
             }
@@ -507,7 +507,7 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
         let adapter = if let Some(adapter_index) = find_adapter(
             app_settings.adapter_index,
             app_settings.adapter_type,
-            adapters.as_slice(),
+            &adapters,
         ) {
             engine_create_info.adapter_index.replace(adapter_index);
             adapters.into_iter().nth(adapter_index)
@@ -530,7 +530,7 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
             Self::create_device_and_contexts_and_swap_chains(
                 &app_settings,
                 &engine_factory,
-                swap_chains_ci.as_slice(),
+                &swap_chains_ci,
                 engine_create_info,
                 window_manager,
             );
@@ -549,7 +549,7 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
             &main_context,
             other_immediate_context,
             deferred_contexts,
-            swap_chain_descs.as_slice(),
+            &swap_chain_descs,
         );
 
         let display_modes_strings = display_modes

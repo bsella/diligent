@@ -959,7 +959,7 @@ impl RayTracing {
             // Previous content in the instance buffer will be discarded.
             .instance_buffer(self.instance_buffer.transition_state())
             // Instances will be converted to the format that is required by the graphics driver and copied to the instance buffer.
-            .instances(instances.as_slice())
+            .instances(&instances)
             // Bind hit shaders per instance, it allows you to change the number of geometries in BLAS without invalidating the shader binding table.
             .binding_mode(HitGroupBindingMode::PerInstance)
             .hit_group_stride(HIT_GROUP_STRIDE)
@@ -1040,7 +1040,7 @@ impl SampleBase for RayTracing {
                 .get_variable_by_name("g_CubeTextures", ShaderTypes::RayClosestHit)
                 .unwrap()
                 .set_array(
-                    logo_srvs.map(|srv| srv.deref()).as_slice(),
+                    &logo_srvs.map(|srv| srv.deref()),
                     SetShaderResourceFlags::None,
                 );
 

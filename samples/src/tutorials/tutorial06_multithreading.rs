@@ -351,7 +351,7 @@ struct Multithreading {
 
     swap_chain: Arc<RwLock<Boxed<SwapChain>>>,
 
-    shared_thead_data: Arc<SharedThreadData>,
+    shared_thread_data: Arc<SharedThreadData>,
 
     _textures_srv: [Boxed<TextureView>; NUM_TEXTURES],
 
@@ -379,7 +379,7 @@ impl Multithreading {
 
         for (index, paused_thread) in self.paused_threads.drain(0..num_threads).enumerate() {
             self.running_threads.push_back(paused_thread.run(
-                self.shared_thead_data.clone(),
+                self.shared_thread_data.clone(),
                 index,
                 num_threads,
                 self.execute_command_list_barrier.clone(),
@@ -429,7 +429,7 @@ impl Multithreading {
             .begin()
         {
             if ui.slider("Grid Size", 1, 32, &mut self.grid_size) {
-                *self.shared_thead_data.instances.write().unwrap() =
+                *self.shared_thread_data.instances.write().unwrap() =
                     populate_instance_buffer(self.grid_size);
             }
             if ui.slider(
@@ -672,7 +672,7 @@ impl Multithreading {
 
             swap_chain: Arc::new(RwLock::new(swap_chain)),
 
-            shared_thead_data: Arc::new(shared_thread_data),
+            shared_thread_data: Arc::new(shared_thread_data),
 
             paused_threads,
             running_threads: VecDeque::new(),
@@ -696,7 +696,7 @@ impl Multithreading {
         _elapsed_time: f64,
     ) {
         // Apply rotation
-        let mut rotation_matrix = self.shared_thead_data.rotation_matrix.write().unwrap();
+        let mut rotation_matrix = self.shared_thread_data.rotation_matrix.write().unwrap();
         *rotation_matrix = glam::Mat4::from_rotation_y(current_time as f32)
             * glam::Mat4::from_rotation_x(-current_time as f32 * 0.25);
     }
@@ -777,7 +777,7 @@ impl Multithreading {
         });
 
         // Also render in the main thread
-        let main_context = self.shared_thead_data.render_subset(
+        let main_context = self.shared_thread_data.render_subset(
             main_context,
             0,
             self.num_worker_threads + 1,
@@ -785,7 +785,7 @@ impl Multithreading {
             &view_proj_matrix,
         );
 
-        let mut command_lists = Vec::new();
+        let mut command_lists = Vec::with_capacity(self.running_threads.len());
         // Get all the command lists from the threads
         for _ in 0..self.running_threads.len() {
             command_lists.push(self.command_list_receiver.recv().unwrap());
@@ -796,7 +796,7 @@ impl Multithreading {
             .map(|cmd_list| cmd_list.deref())
             .collect();
 
-        main_context.execute_command_lists(command_lists_refs.as_slice());
+        main_context.execute_command_lists(&command_lists_refs);
 
         self.execute_command_list_barrier.wait();
 
@@ -1165,7 +1165,7 @@ impl MultithreadingApp {
         let adapter = if let Some(adapter_index) = find_adapter(
             app_settings.adapter_index,
             app_settings.adapter_type,
-            adapters.as_slice(),
+            &adapters,
         ) {
             engine_create_info.adapter_index.replace(adapter_index);
             adapters.into_iter().nth(adapter_index)
@@ -1337,7 +1337,7 @@ impl MultithreadingApp {
                         ui.combo(
                             "Display Modes",
                             &mut self.selected_display_mode,
-                            self.display_modes_strings.as_slice(),
+                            &self.display_modes_strings,
                             |label| label.into(),
                         );
                     }

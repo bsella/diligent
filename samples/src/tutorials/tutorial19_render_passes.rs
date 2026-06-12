@@ -1219,7 +1219,7 @@ impl SampleBase for RenderPasses {
                         .map_buffer_write(&self.lights_buffer, MapFlags::Discard)
                         .unwrap();
 
-                    lights_data.clone_from_slice(self.lights.as_slice());
+                    lights_data.clone_from_slice(&self.lights);
                 }
 
                 // Bind vertex and index buffers
