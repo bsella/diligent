@@ -415,6 +415,7 @@ impl DrawMeshAttribs {
             ThreadGroupCountY: thread_group_count_y,
             ThreadGroupCountZ: thread_group_count_z,
             Flags: flags.bits(),
+            pMtlAttribs: std::ptr::null(), // TODO
         })
     }
 }
@@ -462,6 +463,7 @@ where
                 pCounterBuffer: counter_buffer,
                 CounterOffset: counter_offset,
                 CounterBufferStateTransitionMode: CounterBuffer::TRANSITION_MODE,
+                pMtlAttribs: std::ptr::null(), // TODO
             },
             PhantomData,
         )

@@ -482,6 +482,24 @@ impl PipelineResourceLayoutDesc {
 }
 
 #[repr(transparent)]
+pub struct SpecializationConstant(diligent_sys::SpecializationConstant);
+
+impl SpecializationConstant {
+    pub fn name(&self) -> &CStr {
+        unsafe { CStr::from_ptr(self.0.Name) }
+    }
+    pub fn shader_stages(&self) -> ShaderTypes {
+        ShaderTypes::from_bits_retain(self.0.ShaderStages)
+    }
+    pub fn size(&self) -> u32 {
+        self.0.Size
+    }
+    pub fn data_ptr(&self) -> *const () {
+        self.0.pData as _
+    }
+}
+
+#[repr(transparent)]
 pub struct PipelineStateDesc(diligent_sys::PipelineStateDesc);
 
 impl PipelineStateDesc {
@@ -516,6 +534,7 @@ pub struct PipelineStateCreateInfo<
     'immutable_samplers,
     'resource_signature,
     'resource_signatures,
+    'specialization_constants,
 >(
     pub(crate) diligent_sys::PipelineStateCreateInfo,
     PhantomData<(
@@ -529,6 +548,7 @@ pub struct PipelineStateCreateInfo<
         &'immutable_samplers (),
         &'resource_signature (),
         &'resource_signatures (),
+        &'specialization_constants (),
     )>,
 );
 
@@ -544,6 +564,7 @@ impl<
     'immutable_samplers,
     'resource_signature,
     'resource_signatures,
+    'specialization_constants,
 >
     PipelineStateCreateInfo<
         'name,
@@ -556,6 +577,7 @@ impl<
         'immutable_samplers,
         'resource_signature,
         'resource_signatures,
+        'specialization_constants,
     >
 {
     #[builder(derive(Clone))]
@@ -588,6 +610,9 @@ impl<
         #[builder(default = &[])] resource_signatures: &'resource_signatures[&'resource_signature PipelineResourceSignature],
 
         pso_cache: Option<&'pso_cache PipelineStateCache>,
+
+        #[builder(default = &[])]
+        specialization_constants: &'specialization_constants [SpecializationConstant],
     ) -> Self {
         PipelineStateCreateInfo(
             diligent_sys::PipelineStateCreateInfo {
@@ -621,12 +646,12 @@ impl<
                 } else {
                     resource_signatures.as_ptr() as _
                 },
-                pPSOCache: if let Some(pso_cache) = pso_cache {
-                    pso_cache.sys_ptr()
-                } else {
-                    std::ptr::null_mut()
-                },
+                pPSOCache: pso_cache.map_or(std::ptr::null_mut(), PipelineStateCache::sys_ptr),
                 pInternalData: std::ptr::null_mut(),
+                NumSpecializationConstants: specialization_constants.len() as u32,
+                pSpecializationConstants: specialization_constants
+                    .first()
+                    .map_or(std::ptr::null(), |constants| &constants.0),
             },
             PhantomData,
         )
@@ -644,6 +669,7 @@ impl<
     'immutable_samplers,
     'resource_signature,
     'resource_signatures,
+    'specialization_constants,
     S: pipeline_state_create_info_builder::State,
 >
     PipelineStateCreateInfoBuilder<
@@ -657,6 +683,7 @@ impl<
         'immutable_samplers,
         'resource_signature,
         'resource_signatures,
+        'specialization_constants,
         S,
     >
 where
@@ -685,6 +712,7 @@ where
         'immutable_samplers,
         'resource_signature,
         'resource_signatures,
+        'specialization_constants,
         'input_layouts,
         'render_pass,
         'vertex_shader,
@@ -725,6 +753,7 @@ where
         'immutable_samplers,
         'resource_signature,
         'resource_signatures,
+        'specialization_constants,
         'input_layouts,
         'render_pass,
         'vertex_shader,
@@ -769,6 +798,7 @@ where
         'immutable_samplers,
         'resource_signature,
         'resource_signatures,
+        'specialization_constants,
         'general_shader_groups,
         'general_shader_name,
         'general_shader,
@@ -803,6 +833,7 @@ where
         'immutable_samplers,
         'resource_signature,
         'resource_signatures,
+        'specialization_constants,
         'shader,
         'texture_formats,
         tile_pipeline_state_create_info_builder::SetPipelineStateCreateInfo,
@@ -826,6 +857,7 @@ where
         'immutable_samplers,
         'resource_signature,
         'resource_signatures,
+        'specialization_constants,
         'shader,
         compute_pipeline_state_create_info_builder::SetPipelineStateCreateInfo,
     > {
@@ -1353,6 +1385,7 @@ pub struct GraphicsPipelineStateCreateInfo<
     'immutable_samplers,
     'resource_signature,
     'resource_signatures,
+    'specialization_constants,
     'input_layouts,
     'render_pass,
     'vertex_shader,
@@ -1375,6 +1408,7 @@ pub struct GraphicsPipelineStateCreateInfo<
         &'immutable_samplers (),
         &'resource_signature (),
         &'resource_signatures (),
+        &'specialization_constants (),
         &'input_layouts (),
         &'render_pass (),
         &'vertex_shader (),
@@ -1399,6 +1433,7 @@ impl<
     'immutable_samplers,
     'resource_signature,
     'resource_signatures,
+    'specialization_constants,
     'input_layouts,
     'render_pass,
     'vertex_shader,
@@ -1420,6 +1455,7 @@ impl<
         'immutable_samplers,
         'resource_signature,
         'resource_signatures,
+        'specialization_constants,
         'input_layouts,
         'render_pass,
         'vertex_shader,
@@ -1444,6 +1480,7 @@ impl<
             'immutable_samplers,
             'resource_signature,
             'resource_signatures,
+            'specialization_constants,
         >,
 
         graphics_pipeline_desc: GraphicsPipelineDesc<'input_layouts, 'render_pass>,
@@ -1583,6 +1620,7 @@ pub struct RayTracingPipelineStateCreateInfo<
     'immutable_samplers,
     'resource_signature,
     'resource_signatures,
+    'specialization_constants,
     'general_shader_groups,
     'general_shader_name,
     'general_shader,
@@ -1609,6 +1647,7 @@ pub struct RayTracingPipelineStateCreateInfo<
         &'immutable_samplers (),
         &'resource_signature (),
         &'resource_signatures (),
+        &'specialization_constants (),
         &'general_shader_groups (),
         &'general_shader_name (),
         &'general_shader (),
@@ -1637,6 +1676,7 @@ impl<
     'immutable_samplers,
     'resource_signature,
     'resource_signatures,
+    'specialization_constants,
     'general_shader_groups,
     'general_shader_name,
     'general_shader,
@@ -1662,6 +1702,7 @@ impl<
         'immutable_samplers,
         'resource_signature,
         'resource_signatures,
+        'specialization_constants,
         'general_shader_groups,
         'general_shader_name,
         'general_shader,
@@ -1690,6 +1731,7 @@ impl<
             'immutable_samplers,
             'resource_signature,
             'resource_signatures,
+            'specialization_constants,
         >,
 
         shader_record_size: u16,
@@ -2019,6 +2061,7 @@ pub struct TilePipelineStateCreateInfo<
     'immutable_samplers,
     'resource_signature,
     'resource_signatures,
+    'specialization_constants,
     'shader,
 >(
     pub(crate) diligent_sys::TilePipelineStateCreateInfo,
@@ -2033,6 +2076,7 @@ pub struct TilePipelineStateCreateInfo<
         &'immutable_samplers (),
         &'resource_signature (),
         &'resource_signatures (),
+        &'specialization_constants (),
         &'shader (),
     )>,
 );
@@ -2049,6 +2093,7 @@ impl<
     'immutable_samplers,
     'resource_signature,
     'resource_signatures,
+    'specialization_constants,
     'shader,
 >
     TilePipelineStateCreateInfo<
@@ -2062,6 +2107,7 @@ impl<
         'immutable_samplers,
         'resource_signature,
         'resource_signatures,
+        'specialization_constants,
         'shader,
     >
 {
@@ -2078,6 +2124,7 @@ impl<
             'immutable_samplers,
             'resource_signature,
             'resource_signatures,
+            'specialization_constants,
         >,
         render_target_formats: &[TextureFormat],
         sample_count: u8,
@@ -2156,6 +2203,7 @@ pub struct ComputePipelineStateCreateInfo<
     'immutable_samplers,
     'resource_signature,
     'resource_signatures,
+    'specialization_constants,
     'shader,
 >(
     pub(crate) diligent_sys::ComputePipelineStateCreateInfo,
@@ -2170,6 +2218,7 @@ pub struct ComputePipelineStateCreateInfo<
         &'immutable_samplers (),
         &'resource_signature (),
         &'resource_signatures (),
+        &'specialization_constants (),
         &'shader (),
     )>,
 );
@@ -2186,6 +2235,7 @@ impl<
     'immutable_samplers,
     'resource_signature,
     'resource_signatures,
+    'specialization_constants,
     'shader,
 >
     ComputePipelineStateCreateInfo<
@@ -2199,6 +2249,7 @@ impl<
         'immutable_samplers,
         'resource_signature,
         'resource_signatures,
+        'specialization_constants,
         'shader,
     >
 {
@@ -2215,6 +2266,7 @@ impl<
             'immutable_samplers,
             'resource_signature,
             'resource_signatures,
+            'specialization_constants,
         >,
         shader: &'shader Shader,
     ) -> Self {

@@ -1650,6 +1650,7 @@ impl Default for DeviceFeatures {
             NativeMultiDraw: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
             AsyncShaderCompilation: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
             FormattedBuffers: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            SpecializationConstants: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
         })
     }
 }
