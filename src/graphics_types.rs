@@ -1651,6 +1651,8 @@ impl Default for DeviceFeatures {
             AsyncShaderCompilation: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
             FormattedBuffers: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
             SpecializationConstants: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            ShaderFloat64: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
+            ShaderBarycentrics: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
         })
     }
 }

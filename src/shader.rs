@@ -129,6 +129,51 @@ impl From<ShaderResourceType> for diligent_sys::SHADER_RESOURCE_TYPE {
     }
 }
 
+#[derive(Clone, Copy, Default)]
+pub enum ShaderOptimizationLevel {
+    #[default]
+    Default,
+    Disabled,
+    _0,
+    _1,
+    _2,
+    _3,
+}
+const_assert_eq!(diligent_sys::SHADER_OPTIMIZATION_LEVEL_COUNT, 6);
+
+impl From<ShaderOptimizationLevel> for diligent_sys::SHADER_OPTIMIZATION_LEVEL {
+    fn from(value: ShaderOptimizationLevel) -> Self {
+        (match value {
+            ShaderOptimizationLevel::Default => diligent_sys::SHADER_OPTIMIZATION_LEVEL_DEFAULT,
+            ShaderOptimizationLevel::Disabled => diligent_sys::SHADER_OPTIMIZATION_LEVEL_DISABLED,
+            ShaderOptimizationLevel::_0 => diligent_sys::SHADER_OPTIMIZATION_LEVEL_0,
+            ShaderOptimizationLevel::_1 => diligent_sys::SHADER_OPTIMIZATION_LEVEL_1,
+            ShaderOptimizationLevel::_2 => diligent_sys::SHADER_OPTIMIZATION_LEVEL_2,
+            ShaderOptimizationLevel::_3 => diligent_sys::SHADER_OPTIMIZATION_LEVEL_3,
+        }) as _
+    }
+}
+
+impl TryFrom<diligent_sys::SHADER_OPTIMIZATION_LEVEL> for ShaderOptimizationLevel {
+    type Error = std::io::Error;
+    fn try_from(value: diligent_sys::SHADER_OPTIMIZATION_LEVEL) -> Result<Self, Self::Error> {
+        match value as _ {
+            diligent_sys::SHADER_OPTIMIZATION_LEVEL_DEFAULT => Ok(ShaderOptimizationLevel::Default),
+            diligent_sys::SHADER_OPTIMIZATION_LEVEL_DISABLED => {
+                Ok(ShaderOptimizationLevel::Disabled)
+            }
+            diligent_sys::SHADER_OPTIMIZATION_LEVEL_0 => Ok(ShaderOptimizationLevel::_0),
+            diligent_sys::SHADER_OPTIMIZATION_LEVEL_1 => Ok(ShaderOptimizationLevel::_1),
+            diligent_sys::SHADER_OPTIMIZATION_LEVEL_2 => Ok(ShaderOptimizationLevel::_2),
+            diligent_sys::SHADER_OPTIMIZATION_LEVEL_3 => Ok(ShaderOptimizationLevel::_3),
+            _ => Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Unknow SHADER_OPTIMIZATION_LEVEL value",
+            )),
+        }
+    }
+}
+
 impl ShaderResourceType {
     pub fn from_sys(value: diligent_sys::SHADER_RESOURCE_TYPE) -> Option<Self> {
         match value as _ {
@@ -270,6 +315,9 @@ pub struct ShaderCreateInfo<'a> {
     #[builder(default)]
     compile_flags: ShaderCompileFlags,
 
+    #[builder(default)]
+    shader_optimization_level: ShaderOptimizationLevel,
+
     #[builder(default = false)]
     load_constant_buffer_reflection: bool,
 
@@ -396,6 +444,7 @@ impl From<&ShaderCreateInfo<'_>> for ShaderCreateInfoWrapper {
                 Minor: value.language_version.minor,
             },
             CompileFlags: value.compile_flags.bits(),
+            ShaderOptimizationLevel: value.shader_optimization_level.try_into().unwrap(),
             LoadConstantBufferReflection: value.load_constant_buffer_reflection,
             GLSLExtensions: value
                 .glsl_extensions
