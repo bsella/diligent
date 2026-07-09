@@ -196,7 +196,7 @@ impl TopLevelASDesc<'_> {
         self.0.MaxInstanceCount as usize
     }
     pub fn flags(&self) -> RayTracingBuildAsFlags {
-        RayTracingBuildAsFlags::from_bits_retain(self.0.Flags)
+        RayTracingBuildAsFlags::from_bits(self.0.Flags).unwrap()
     }
     pub fn compacted_size(&self) -> u64 {
         self.0.CompactedSize
@@ -264,7 +264,7 @@ impl TopLevelAS {
     }
 
     pub fn get_state(&self) -> ResourceState {
-        ResourceState::from_bits_retain(unsafe_member_call!(self, TopLevelAS, GetState))
+        ResourceState::from_bits(unsafe_member_call!(self, TopLevelAS, GetState)).unwrap()
     }
 }
 

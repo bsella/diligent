@@ -62,7 +62,7 @@ impl ShaderResourceBinding {
             flags.bits()
         );
 
-        ShaderResourceVariableTypeFlags::from_bits_retain(flags)
+        ShaderResourceVariableTypeFlags::from_bits(flags).unwrap()
     }
 
     pub fn get_variable_by_name(

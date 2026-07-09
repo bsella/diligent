@@ -215,10 +215,10 @@ impl TextureViewDesc<'_> {
         self.0.NumMipLevels as usize
     }
     pub fn access_flags(&self) -> UavAccessFlags {
-        UavAccessFlags::from_bits_retain(self.0.AccessFlags)
+        UavAccessFlags::from_bits(self.0.AccessFlags).unwrap()
     }
     pub fn flags(&self) -> TextureViewFlags {
-        TextureViewFlags::from_bits_retain(self.0.Flags)
+        TextureViewFlags::from_bits(self.0.Flags).unwrap()
     }
     pub fn swizzle(&self) -> &TextureComponentMapping {
         unsafe { std::mem::transmute(&self.0.Swizzle) }

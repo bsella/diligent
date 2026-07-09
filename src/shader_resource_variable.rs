@@ -117,10 +117,10 @@ impl ShaderResourceVariableDesc<'_> {
         self.0.Type.try_into().unwrap()
     }
     pub fn shader_stages(&self) -> ShaderTypes {
-        ShaderTypes::from_bits_retain(self.0.ShaderStages)
+        ShaderTypes::from_bits(self.0.ShaderStages).unwrap()
     }
     pub fn flags(&self) -> ShaderVariableFlags {
-        ShaderVariableFlags::from_bits_retain(self.0.Flags)
+        ShaderVariableFlags::from_bits(self.0.Flags).unwrap()
     }
 }
 

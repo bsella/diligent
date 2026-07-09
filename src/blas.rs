@@ -169,7 +169,7 @@ impl BottomLevelASDesc<'_, '_, '_, '_, '_> {
     }
 
     pub fn flags(&self) -> RayTracingBuildAsFlags {
-        RayTracingBuildAsFlags::from_bits_retain(self.0.Flags)
+        RayTracingBuildAsFlags::from_bits(self.0.Flags).unwrap()
     }
 
     pub fn compacted_size(&self) -> u64 {
@@ -236,7 +236,7 @@ impl BottomLevelAS {
     }
 
     pub fn get_state(&self) -> ResourceState {
-        ResourceState::from_bits_retain(unsafe_member_call!(self, BottomLevelAS, GetState))
+        ResourceState::from_bits(unsafe_member_call!(self, BottomLevelAS, GetState)).unwrap()
     }
 }
 

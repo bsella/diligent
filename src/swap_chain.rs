@@ -65,7 +65,7 @@ impl SwapChainDesc {
         TextureFormat::try_from_sys(self.0.DepthBufferFormat).unwrap()
     }
     pub fn usage(&self) -> SwapChainUsageFlags {
-        SwapChainUsageFlags::from_bits_retain(self.0.Usage)
+        SwapChainUsageFlags::from_bits(self.0.Usage).unwrap()
     }
     pub fn pre_transform(&self) -> SurfaceTransform {
         self.0.PreTransform.try_into().unwrap()

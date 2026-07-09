@@ -108,13 +108,13 @@ impl BufferDesc<'_> {
         self.0.Size
     }
     pub fn bind_flags(&self) -> BindFlags {
-        BindFlags::from_bits_retain(self.0.BindFlags)
+        BindFlags::from_bits(self.0.BindFlags).unwrap()
     }
     pub fn usage(&self) -> Usage {
         self.0.Usage.try_into().unwrap()
     }
     pub fn cpu_access_flags(&self) -> CpuAccessFlags {
-        CpuAccessFlags::from_bits_retain(self.0.CPUAccessFlags)
+        CpuAccessFlags::from_bits(self.0.CPUAccessFlags).unwrap()
     }
     pub fn mode(&self) -> Option<BufferMode> {
         match self.0.Mode as _ {
@@ -125,7 +125,7 @@ impl BufferDesc<'_> {
         }
     }
     pub fn misc_flags(&self) -> MiscBufferFlags {
-        MiscBufferFlags::from_bits_retain(self.0.MiscFlags)
+        MiscBufferFlags::from_bits(self.0.MiscFlags).unwrap()
     }
     pub fn element_byte_stride(&self) -> u32 {
         self.0.ElementByteStride
@@ -201,7 +201,7 @@ impl Buffer {
 
     pub fn get_state(&self) -> ResourceState {
         let state = unsafe_member_call!(self, Buffer, GetState);
-        ResourceState::from_bits_retain(state)
+        ResourceState::from_bits(state).unwrap()
     }
 
     pub fn get_memory_properties(&self) -> Option<MemoryProperty> {

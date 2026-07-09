@@ -348,17 +348,17 @@ impl SubpassDependencyDesc {
     }
 
     pub fn src_stage_mask(&self) -> PipelineStageFlags {
-        PipelineStageFlags::from_bits_retain(self.0.SrcStageMask)
+        PipelineStageFlags::from_bits(self.0.SrcStageMask).unwrap()
     }
     pub fn dst_stage_mask(&self) -> PipelineStageFlags {
-        PipelineStageFlags::from_bits_retain(self.0.DstStageMask)
+        PipelineStageFlags::from_bits(self.0.DstStageMask).unwrap()
     }
 
     pub fn src_access_mask(&self) -> AccessFlags {
-        AccessFlags::from_bits_retain(self.0.SrcAccessMask)
+        AccessFlags::from_bits(self.0.SrcAccessMask).unwrap()
     }
     pub fn dst_access_mask(&self) -> AccessFlags {
-        AccessFlags::from_bits_retain(self.0.DstAccessMask)
+        AccessFlags::from_bits(self.0.DstAccessMask).unwrap()
     }
 }
 

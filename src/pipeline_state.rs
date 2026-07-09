@@ -489,7 +489,7 @@ impl PipelineResourceLayoutDesc {
         self.0.DefaultVariableType.try_into().unwrap()
     }
     pub fn default_variable_merge_stages(&self) -> ShaderTypes {
-        ShaderTypes::from_bits_retain(self.0.DefaultVariableMergeStages)
+        ShaderTypes::from_bits(self.0.DefaultVariableMergeStages).unwrap()
     }
     pub fn variables(&self) -> &[ShaderResourceVariableDesc<'_>] {
         unsafe {
@@ -517,7 +517,7 @@ impl SpecializationConstant {
         unsafe { CStr::from_ptr(self.0.Name) }
     }
     pub fn shader_stages(&self) -> ShaderTypes {
-        ShaderTypes::from_bits_retain(self.0.ShaderStages)
+        ShaderTypes::from_bits(self.0.ShaderStages).unwrap()
     }
     pub fn size(&self) -> u32 {
         self.0.Size
@@ -968,7 +968,7 @@ impl RenderTargetBlendDesc {
         self.0.LogicOp.try_into().unwrap()
     }
     pub fn render_target_write_mask(&self) -> ColorMask {
-        ColorMask::from_bits_retain(self.0.RenderTargetWriteMask)
+        ColorMask::from_bits(self.0.RenderTargetWriteMask).unwrap()
     }
 }
 
@@ -1386,7 +1386,7 @@ impl GraphicsPipelineDesc<'_, '_> {
         self.0.NumViewports
     }
     pub fn shading_rate_flags(&self) -> PipelineShadingRateFlags {
-        PipelineShadingRateFlags::from_bits_retain(self.0.ShadingRateFlags)
+        PipelineShadingRateFlags::from_bits(self.0.ShadingRateFlags).unwrap()
     }
     pub fn sample_count(&self) -> u8 {
         self.0.SmplDesc.Count

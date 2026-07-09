@@ -800,10 +800,10 @@ impl AdapterMemoryInfo {
         self.0.MaxMemoryAllocation
     }
     pub fn unified_memory_cpu_access(&self) -> CpuAccessFlags {
-        CpuAccessFlags::from_bits_retain(self.0.UnifiedMemoryCPUAccess)
+        CpuAccessFlags::from_bits(self.0.UnifiedMemoryCPUAccess).unwrap()
     }
     pub fn memoryless_texture_bind_flags(&self) -> BindFlags {
-        BindFlags::from_bits_retain(self.0.MemorylessTextureBindFlags)
+        BindFlags::from_bits(self.0.MemorylessTextureBindFlags).unwrap()
     }
 }
 
@@ -863,7 +863,7 @@ impl RayTracingProperties {
         self.0.IndexBufferAlignment
     }
     pub fn cap_flags(&self) -> RaytracingCapFlags {
-        RaytracingCapFlags::from_bits_retain(self.0.CapFlags)
+        RaytracingCapFlags::from_bits(self.0.CapFlags).unwrap()
     }
 }
 
@@ -893,10 +893,10 @@ impl WaveOpProperties {
         self.0.MaxSize
     }
     pub fn supported_stages(&self) -> ShaderTypes {
-        ShaderTypes::from_bits_retain(self.0.SupportedStages)
+        ShaderTypes::from_bits(self.0.SupportedStages).unwrap()
     }
     pub fn features(&self) -> WaveFeature {
-        WaveFeature::from_bits_retain(self.0.MinSize)
+        WaveFeature::from_bits(self.0.MinSize).unwrap()
     }
 }
 
@@ -1043,7 +1043,7 @@ impl ShadingRateMode {
         }
     }
     pub fn sample_bits(&self) -> SampleCount {
-        SampleCount::from_bits_retain(self.0.SampleBits)
+        SampleCount::from_bits(self.0.SampleBits).unwrap()
     }
 }
 
@@ -1112,19 +1112,19 @@ impl ShadingRateProperties {
         }
     }
     pub fn cap_flags(&self) -> ShadingRateCapFlags {
-        ShadingRateCapFlags::from_bits_retain(self.0.CapFlags)
+        ShadingRateCapFlags::from_bits(self.0.CapFlags).unwrap()
     }
     pub fn combiners(&self) -> ShadingRateCombiner {
-        ShadingRateCombiner::from_bits_retain(self.0.Combiners)
+        ShadingRateCombiner::from_bits(self.0.Combiners).unwrap()
     }
     pub fn format(&self) -> ShadingRateFormat {
-        ShadingRateFormat::from_bits_retain(self.0.Format)
+        ShadingRateFormat::from_bits(self.0.Format).unwrap()
     }
     pub fn shading_rate_texture_access(&self) -> ShadingRateTextureAccess {
-        ShadingRateTextureAccess::from_bits_retain(self.0.ShadingRateTextureAccess)
+        ShadingRateTextureAccess::from_bits(self.0.ShadingRateTextureAccess).unwrap()
     }
     pub fn bind_flags(&self) -> BindFlags {
-        BindFlags::from_bits_retain(self.0.BindFlags)
+        BindFlags::from_bits(self.0.BindFlags).unwrap()
     }
     pub fn min_tile_size(&self) -> (u32, u32) {
         (self.0.MinTileSize[0], self.0.MinTileSize[1])
@@ -1182,7 +1182,7 @@ bitflags! {
 pub struct DrawCommandProperties(diligent_sys::DrawCommandProperties);
 impl DrawCommandProperties {
     pub fn cap_flags(&self) -> DrawCommandCapFlags {
-        DrawCommandCapFlags::from_bits_retain(self.0.CapFlags)
+        DrawCommandCapFlags::from_bits(self.0.CapFlags).unwrap()
     }
     pub fn max_index_value(&self) -> u32 {
         self.0.MaxIndexValue
@@ -1227,13 +1227,13 @@ impl SparseResourceProperties {
         self.0.ResourceSpaceSize
     }
     pub fn cap_flags(&self) -> SparseResourceCapFlags {
-        SparseResourceCapFlags::from_bits_retain(self.0.CapFlags)
+        SparseResourceCapFlags::from_bits(self.0.CapFlags).unwrap()
     }
     pub fn standard_block_size(&self) -> u32 {
         self.0.StandardBlockSize
     }
     pub fn buffer_bind_flags(&self) -> BindFlags {
-        BindFlags::from_bits_retain(self.0.BufferBindFlags)
+        BindFlags::from_bits(self.0.BufferBindFlags).unwrap()
     }
 }
 
@@ -1685,7 +1685,7 @@ pub struct CommandQueueInfo(diligent_sys::CommandQueueInfo);
 
 impl CommandQueueInfo {
     pub fn queue_type(&self) -> CommandQueueType {
-        CommandQueueType::from_bits_retain(self.0.QueueType)
+        CommandQueueType::from_bits(self.0.QueueType).unwrap()
     }
     pub fn max_device_contexts(&self) -> u32 {
         self.0.MaxDeviceContexts
@@ -3050,13 +3050,13 @@ bitflags! {
 pub struct TextureFormatInfoExt(diligent_sys::TextureFormatInfoExt);
 impl TextureFormatInfoExt {
     pub fn bind_flags(&self) -> BindFlags {
-        BindFlags::from_bits_retain(self.0.BindFlags)
+        BindFlags::from_bits(self.0.BindFlags).unwrap()
     }
     pub fn dimensions(&self) -> ResourceDimensionSupport {
-        ResourceDimensionSupport::from_bits_retain(self.0.Dimensions)
+        ResourceDimensionSupport::from_bits(self.0.Dimensions).unwrap()
     }
     pub fn sample_counts(&self) -> SampleCount {
-        SampleCount::from_bits_retain(self.0.SampleCounts)
+        SampleCount::from_bits(self.0.SampleCounts).unwrap()
     }
     pub fn filterable(&self) -> bool {
         self.0.Filterable
@@ -3071,13 +3071,13 @@ impl SparseTextureFormatInfo {
         Self(sys)
     }
     pub fn bind_flags(&self) -> BindFlags {
-        BindFlags::from_bits_retain(self.0.BindFlags)
+        BindFlags::from_bits(self.0.BindFlags).unwrap()
     }
     pub fn tile_size(&self) -> &[u32; 3usize] {
         &self.0.TileSize
     }
     pub fn flags(&self) -> SparseTextureFlags {
-        SparseTextureFlags::from_bits_retain(self.0.Flags)
+        SparseTextureFlags::from_bits(self.0.Flags).unwrap()
     }
 }
 

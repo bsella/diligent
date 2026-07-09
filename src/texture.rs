@@ -387,16 +387,16 @@ impl TextureDesc<'_> {
         self.0.SampleCount
     }
     pub fn bind_flags(&self) -> BindFlags {
-        BindFlags::from_bits_retain(self.0.BindFlags)
+        BindFlags::from_bits(self.0.BindFlags).unwrap()
     }
     pub fn usage(&self) -> Usage {
         self.0.Usage.try_into().unwrap()
     }
     pub fn cpu_access_flags(&self) -> CpuAccessFlags {
-        CpuAccessFlags::from_bits_retain(self.0.CPUAccessFlags)
+        CpuAccessFlags::from_bits(self.0.CPUAccessFlags).unwrap()
     }
     pub fn misc_flags(&self) -> MiscTextureFlags {
-        MiscTextureFlags::from_bits_retain(self.0.MiscFlags)
+        MiscTextureFlags::from_bits(self.0.MiscFlags).unwrap()
     }
     pub fn clear_color(&self) -> &[f32; 4] {
         &self.0.ClearValue.Color
@@ -539,7 +539,7 @@ impl SparseTextureProperties {
         self.0.BlockSize
     }
     pub fn flags(&self) -> SparseTextureFlags {
-        SparseTextureFlags::from_bits_retain(self.0.Flags)
+        SparseTextureFlags::from_bits(self.0.Flags).unwrap()
     }
 }
 
@@ -592,7 +592,7 @@ impl Texture {
 
     pub fn get_state(&self) -> ResourceState {
         let state = unsafe_member_call!(self, Texture, GetState);
-        ResourceState::from_bits_retain(state)
+        ResourceState::from_bits(state).unwrap()
     }
 
     pub fn get_sparse_properties(&self) -> &SparseTextureProperties {

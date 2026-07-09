@@ -35,7 +35,7 @@ pub struct DeviceContextDesc(diligent_sys::DeviceContextDesc);
 
 impl DeviceContextDesc {
     pub fn queue_type(&self) -> CommandQueueType {
-        CommandQueueType::from_bits_retain(self.0.QueueType)
+        CommandQueueType::from_bits(self.0.QueueType).unwrap()
     }
     pub fn is_deferred(&self) -> bool {
         self.0.IsDeferred
@@ -1504,7 +1504,7 @@ impl StateTransitionDesc<'_> {
         unsafe { &mut *(self.0.pResource as *mut DeviceObject) }
     }
     pub fn new_state(&self) -> ResourceState {
-        ResourceState::from_bits_retain(self.0.NewState)
+        ResourceState::from_bits(self.0.NewState).unwrap()
     }
     pub fn first_mip_level(&self) -> u32 {
         self.0.FirstMipLevel
@@ -1525,7 +1525,7 @@ impl StateTransitionDesc<'_> {
         self.0.TransitionType.try_into().unwrap()
     }
     pub fn flags(&self) -> StateTransitionFlags {
-        StateTransitionFlags::from_bits_retain(self.0.Flags)
+        StateTransitionFlags::from_bits(self.0.Flags).unwrap()
     }
 }
 

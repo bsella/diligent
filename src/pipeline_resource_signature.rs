@@ -54,7 +54,7 @@ impl<'sampler_or_texture_name, 'sampler_name, 'sampler_desc>
 
 impl ImmutableSamplerDesc<'_, '_, '_> {
     pub fn shader_stages(&self) -> ShaderTypes {
-        ShaderTypes::from_bits_retain(self.0.ShaderStages)
+        ShaderTypes::from_bits(self.0.ShaderStages).unwrap()
     }
     pub fn sampler_or_texture_name(&self) -> &CStr {
         unsafe { CStr::from_ptr(self.0.SamplerOrTextureName) }
@@ -129,7 +129,7 @@ impl PipelineResourceDesc<'_> {
         unsafe { CStr::from_ptr(self.0.Name) }
     }
     pub fn shader_stages(&self) -> ShaderTypes {
-        ShaderTypes::from_bits_retain(self.0.ShaderStages)
+        ShaderTypes::from_bits(self.0.ShaderStages).unwrap()
     }
     pub fn array_size(&self) -> u32 {
         self.0.ArraySize
@@ -141,7 +141,7 @@ impl PipelineResourceDesc<'_> {
         self.0.VarType.try_into().unwrap()
     }
     pub fn flags(&self) -> PipelineResourceFlags {
-        PipelineResourceFlags::from_bits_retain(self.0.Flags)
+        PipelineResourceFlags::from_bits(self.0.Flags).unwrap()
     }
 }
 
