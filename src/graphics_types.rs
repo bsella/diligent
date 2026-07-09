@@ -136,32 +136,34 @@ impl From<FilterType> for diligent_sys::FILTER_TYPE {
     }
 }
 
-impl From<diligent_sys::FILTER_TYPE> for FilterType {
-    fn from(value: diligent_sys::FILTER_TYPE) -> Self {
-        match value as _ {
-            diligent_sys::FILTER_TYPE_POINT => FilterType::Point,
-            diligent_sys::FILTER_TYPE_LINEAR => FilterType::Linear,
-            diligent_sys::FILTER_TYPE_ANISOTROPIC => FilterType::Anisotropic,
-            diligent_sys::FILTER_TYPE_COMPARISON_POINT => FilterType::ComparisonPoint,
-            diligent_sys::FILTER_TYPE_COMPARISON_LINEAR => FilterType::ComparisonLinear,
-            diligent_sys::FILTER_TYPE_COMPARISON_ANISOTROPIC => FilterType::ComparisonAnisotropic,
-            diligent_sys::FILTER_TYPE_MINIMUM_POINT => FilterType::MinimumPoint,
-            diligent_sys::FILTER_TYPE_MINIMUM_LINEAR => FilterType::MinimumLinear,
-            diligent_sys::FILTER_TYPE_MINIMUM_ANISOTROPIC => FilterType::MinimumAnisotropic,
-            diligent_sys::FILTER_TYPE_MAXIMUM_POINT => FilterType::MaximumPoint,
-            diligent_sys::FILTER_TYPE_MAXIMUM_LINEAR => FilterType::MaximumLinear,
-            diligent_sys::FILTER_TYPE_MAXIMUM_ANISOTROPIC => FilterType::MaximumAnisotropic,
-            _ => panic!("Unknown FILTER_TYPE value"),
-        }
-    }
-}
-
 impl FilterType {
-    pub fn from_sys(filter_type: diligent_sys::FILTER_TYPE) -> Option<Self> {
-        if filter_type == diligent_sys::FILTER_TYPE_UNKNOWN as _ {
-            None
-        } else {
-            Some(filter_type.into())
+    pub fn try_from_sys(
+        filter_type: diligent_sys::FILTER_TYPE,
+    ) -> Result<Option<Self>, std::io::Error> {
+        match filter_type as _ {
+            diligent_sys::FILTER_TYPE_UNKNOWN => Ok(None),
+            diligent_sys::FILTER_TYPE_POINT => Ok(Some(FilterType::Point)),
+            diligent_sys::FILTER_TYPE_LINEAR => Ok(Some(FilterType::Linear)),
+            diligent_sys::FILTER_TYPE_ANISOTROPIC => Ok(Some(FilterType::Anisotropic)),
+            diligent_sys::FILTER_TYPE_COMPARISON_POINT => Ok(Some(FilterType::ComparisonPoint)),
+            diligent_sys::FILTER_TYPE_COMPARISON_LINEAR => Ok(Some(FilterType::ComparisonLinear)),
+            diligent_sys::FILTER_TYPE_COMPARISON_ANISOTROPIC => {
+                Ok(Some(FilterType::ComparisonAnisotropic))
+            }
+            diligent_sys::FILTER_TYPE_MINIMUM_POINT => Ok(Some(FilterType::MinimumPoint)),
+            diligent_sys::FILTER_TYPE_MINIMUM_LINEAR => Ok(Some(FilterType::MinimumLinear)),
+            diligent_sys::FILTER_TYPE_MINIMUM_ANISOTROPIC => {
+                Ok(Some(FilterType::MinimumAnisotropic))
+            }
+            diligent_sys::FILTER_TYPE_MAXIMUM_POINT => Ok(Some(FilterType::MaximumPoint)),
+            diligent_sys::FILTER_TYPE_MAXIMUM_LINEAR => Ok(Some(FilterType::MaximumLinear)),
+            diligent_sys::FILTER_TYPE_MAXIMUM_ANISOTROPIC => {
+                Ok(Some(FilterType::MaximumAnisotropic))
+            }
+            _ => Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Unknown FILTER_TYPE value",
+            )),
         }
     }
 }
@@ -188,25 +190,21 @@ impl From<TextureAddressMode> for diligent_sys::TEXTURE_ADDRESS_MODE {
     }
 }
 
-impl From<diligent_sys::TEXTURE_ADDRESS_MODE> for TextureAddressMode {
-    fn from(value: diligent_sys::TEXTURE_ADDRESS_MODE) -> Self {
-        match value as _ {
-            diligent_sys::TEXTURE_ADDRESS_WRAP => TextureAddressMode::Wrap,
-            diligent_sys::TEXTURE_ADDRESS_MIRROR => TextureAddressMode::Mirror,
-            diligent_sys::TEXTURE_ADDRESS_CLAMP => TextureAddressMode::Clamp,
-            diligent_sys::TEXTURE_ADDRESS_BORDER => TextureAddressMode::Border,
-            diligent_sys::TEXTURE_ADDRESS_MIRROR_ONCE => TextureAddressMode::MirrorOnce,
-            _ => panic!("Unknown TEXTURE_ADDRESS_MODE value"),
-        }
-    }
-}
-
 impl TextureAddressMode {
-    pub fn from_sys(value: diligent_sys::TEXTURE_ADDRESS_MODE) -> Option<Self> {
-        if value == diligent_sys::TEXTURE_ADDRESS_UNKNOWN as _ {
-            None
-        } else {
-            Some(value.into())
+    pub fn try_from_sys(
+        value: diligent_sys::TEXTURE_ADDRESS_MODE,
+    ) -> Result<Option<Self>, std::io::Error> {
+        match value as _ {
+            diligent_sys::TEXTURE_ADDRESS_UNKNOWN => Ok(None),
+            diligent_sys::TEXTURE_ADDRESS_WRAP => Ok(Some(TextureAddressMode::Wrap)),
+            diligent_sys::TEXTURE_ADDRESS_MIRROR => Ok(Some(TextureAddressMode::Mirror)),
+            diligent_sys::TEXTURE_ADDRESS_CLAMP => Ok(Some(TextureAddressMode::Clamp)),
+            diligent_sys::TEXTURE_ADDRESS_BORDER => Ok(Some(TextureAddressMode::Border)),
+            diligent_sys::TEXTURE_ADDRESS_MIRROR_ONCE => Ok(Some(TextureAddressMode::MirrorOnce)),
+            _ => Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Unknown TEXTURE_ADDRESS_MODE value",
+            )),
         }
     }
 }
@@ -373,119 +371,123 @@ impl From<PrimitiveTopology> for diligent_sys::PRIMITIVE_TOPOLOGY {
     }
 }
 
-impl From<diligent_sys::PRIMITIVE_TOPOLOGY> for PrimitiveTopology {
-    fn from(value: diligent_sys::PRIMITIVE_TOPOLOGY) -> Self {
+impl TryFrom<diligent_sys::PRIMITIVE_TOPOLOGY> for PrimitiveTopology {
+    type Error = std::io::Error;
+    fn try_from(value: diligent_sys::PRIMITIVE_TOPOLOGY) -> Result<Self, Self::Error> {
         match value as _ {
-            diligent_sys::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST => PrimitiveTopology::TriangleList,
-            diligent_sys::PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP => PrimitiveTopology::TriangleStrip,
-            diligent_sys::PRIMITIVE_TOPOLOGY_POINT_LIST => PrimitiveTopology::PointList,
-            diligent_sys::PRIMITIVE_TOPOLOGY_LINE_LIST => PrimitiveTopology::LineList,
-            diligent_sys::PRIMITIVE_TOPOLOGY_LINE_STRIP => PrimitiveTopology::LineStrip,
+            diligent_sys::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST => Ok(PrimitiveTopology::TriangleList),
+            diligent_sys::PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP => Ok(PrimitiveTopology::TriangleStrip),
+            diligent_sys::PRIMITIVE_TOPOLOGY_POINT_LIST => Ok(PrimitiveTopology::PointList),
+            diligent_sys::PRIMITIVE_TOPOLOGY_LINE_LIST => Ok(PrimitiveTopology::LineList),
+            diligent_sys::PRIMITIVE_TOPOLOGY_LINE_STRIP => Ok(PrimitiveTopology::LineStrip),
             diligent_sys::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST_ADJ => {
-                PrimitiveTopology::TriangleListAdj
+                Ok(PrimitiveTopology::TriangleListAdj)
             }
             diligent_sys::PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_ADJ => {
-                PrimitiveTopology::TriangleStripAdj
+                Ok(PrimitiveTopology::TriangleStripAdj)
             }
-            diligent_sys::PRIMITIVE_TOPOLOGY_LINE_LIST_ADJ => PrimitiveTopology::LineListAdj,
-            diligent_sys::PRIMITIVE_TOPOLOGY_LINE_STRIP_ADJ => PrimitiveTopology::LineStripAdj,
+            diligent_sys::PRIMITIVE_TOPOLOGY_LINE_LIST_ADJ => Ok(PrimitiveTopology::LineListAdj),
+            diligent_sys::PRIMITIVE_TOPOLOGY_LINE_STRIP_ADJ => Ok(PrimitiveTopology::LineStripAdj),
             diligent_sys::PRIMITIVE_TOPOLOGY_1_CONTROL_POINT_PATCHLIST => {
-                PrimitiveTopology::ControlPointPatchList1
+                Ok(PrimitiveTopology::ControlPointPatchList1)
             }
             diligent_sys::PRIMITIVE_TOPOLOGY_2_CONTROL_POINT_PATCHLIST => {
-                PrimitiveTopology::ControlPointPatchList2
+                Ok(PrimitiveTopology::ControlPointPatchList2)
             }
             diligent_sys::PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST => {
-                PrimitiveTopology::ControlPointPatchList3
+                Ok(PrimitiveTopology::ControlPointPatchList3)
             }
             diligent_sys::PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST => {
-                PrimitiveTopology::ControlPointPatchList4
+                Ok(PrimitiveTopology::ControlPointPatchList4)
             }
             diligent_sys::PRIMITIVE_TOPOLOGY_5_CONTROL_POINT_PATCHLIST => {
-                PrimitiveTopology::ControlPointPatchList5
+                Ok(PrimitiveTopology::ControlPointPatchList5)
             }
             diligent_sys::PRIMITIVE_TOPOLOGY_6_CONTROL_POINT_PATCHLIST => {
-                PrimitiveTopology::ControlPointPatchList6
+                Ok(PrimitiveTopology::ControlPointPatchList6)
             }
             diligent_sys::PRIMITIVE_TOPOLOGY_7_CONTROL_POINT_PATCHLIST => {
-                PrimitiveTopology::ControlPointPatchList7
+                Ok(PrimitiveTopology::ControlPointPatchList7)
             }
             diligent_sys::PRIMITIVE_TOPOLOGY_8_CONTROL_POINT_PATCHLIST => {
-                PrimitiveTopology::ControlPointPatchList8
+                Ok(PrimitiveTopology::ControlPointPatchList8)
             }
             diligent_sys::PRIMITIVE_TOPOLOGY_9_CONTROL_POINT_PATCHLIST => {
-                PrimitiveTopology::ControlPointPatchList9
+                Ok(PrimitiveTopology::ControlPointPatchList9)
             }
             diligent_sys::PRIMITIVE_TOPOLOGY_10_CONTROL_POINT_PATCHLIST => {
-                PrimitiveTopology::ControlPointPatchList10
+                Ok(PrimitiveTopology::ControlPointPatchList10)
             }
             diligent_sys::PRIMITIVE_TOPOLOGY_11_CONTROL_POINT_PATCHLIST => {
-                PrimitiveTopology::ControlPointPatchList11
+                Ok(PrimitiveTopology::ControlPointPatchList11)
             }
             diligent_sys::PRIMITIVE_TOPOLOGY_12_CONTROL_POINT_PATCHLIST => {
-                PrimitiveTopology::ControlPointPatchList12
+                Ok(PrimitiveTopology::ControlPointPatchList12)
             }
             diligent_sys::PRIMITIVE_TOPOLOGY_13_CONTROL_POINT_PATCHLIST => {
-                PrimitiveTopology::ControlPointPatchList13
+                Ok(PrimitiveTopology::ControlPointPatchList13)
             }
             diligent_sys::PRIMITIVE_TOPOLOGY_14_CONTROL_POINT_PATCHLIST => {
-                PrimitiveTopology::ControlPointPatchList14
+                Ok(PrimitiveTopology::ControlPointPatchList14)
             }
             diligent_sys::PRIMITIVE_TOPOLOGY_15_CONTROL_POINT_PATCHLIST => {
-                PrimitiveTopology::ControlPointPatchList15
+                Ok(PrimitiveTopology::ControlPointPatchList15)
             }
             diligent_sys::PRIMITIVE_TOPOLOGY_16_CONTROL_POINT_PATCHLIST => {
-                PrimitiveTopology::ControlPointPatchList16
+                Ok(PrimitiveTopology::ControlPointPatchList16)
             }
             diligent_sys::PRIMITIVE_TOPOLOGY_17_CONTROL_POINT_PATCHLIST => {
-                PrimitiveTopology::ControlPointPatchList17
+                Ok(PrimitiveTopology::ControlPointPatchList17)
             }
             diligent_sys::PRIMITIVE_TOPOLOGY_18_CONTROL_POINT_PATCHLIST => {
-                PrimitiveTopology::ControlPointPatchList18
+                Ok(PrimitiveTopology::ControlPointPatchList18)
             }
             diligent_sys::PRIMITIVE_TOPOLOGY_19_CONTROL_POINT_PATCHLIST => {
-                PrimitiveTopology::ControlPointPatchList19
+                Ok(PrimitiveTopology::ControlPointPatchList19)
             }
             diligent_sys::PRIMITIVE_TOPOLOGY_20_CONTROL_POINT_PATCHLIST => {
-                PrimitiveTopology::ControlPointPatchList20
+                Ok(PrimitiveTopology::ControlPointPatchList20)
             }
             diligent_sys::PRIMITIVE_TOPOLOGY_21_CONTROL_POINT_PATCHLIST => {
-                PrimitiveTopology::ControlPointPatchList21
+                Ok(PrimitiveTopology::ControlPointPatchList21)
             }
             diligent_sys::PRIMITIVE_TOPOLOGY_22_CONTROL_POINT_PATCHLIST => {
-                PrimitiveTopology::ControlPointPatchList22
+                Ok(PrimitiveTopology::ControlPointPatchList22)
             }
             diligent_sys::PRIMITIVE_TOPOLOGY_23_CONTROL_POINT_PATCHLIST => {
-                PrimitiveTopology::ControlPointPatchList23
+                Ok(PrimitiveTopology::ControlPointPatchList23)
             }
             diligent_sys::PRIMITIVE_TOPOLOGY_24_CONTROL_POINT_PATCHLIST => {
-                PrimitiveTopology::ControlPointPatchList24
+                Ok(PrimitiveTopology::ControlPointPatchList24)
             }
             diligent_sys::PRIMITIVE_TOPOLOGY_25_CONTROL_POINT_PATCHLIST => {
-                PrimitiveTopology::ControlPointPatchList25
+                Ok(PrimitiveTopology::ControlPointPatchList25)
             }
             diligent_sys::PRIMITIVE_TOPOLOGY_26_CONTROL_POINT_PATCHLIST => {
-                PrimitiveTopology::ControlPointPatchList26
+                Ok(PrimitiveTopology::ControlPointPatchList26)
             }
             diligent_sys::PRIMITIVE_TOPOLOGY_27_CONTROL_POINT_PATCHLIST => {
-                PrimitiveTopology::ControlPointPatchList27
+                Ok(PrimitiveTopology::ControlPointPatchList27)
             }
             diligent_sys::PRIMITIVE_TOPOLOGY_28_CONTROL_POINT_PATCHLIST => {
-                PrimitiveTopology::ControlPointPatchList28
+                Ok(PrimitiveTopology::ControlPointPatchList28)
             }
             diligent_sys::PRIMITIVE_TOPOLOGY_29_CONTROL_POINT_PATCHLIST => {
-                PrimitiveTopology::ControlPointPatchList29
+                Ok(PrimitiveTopology::ControlPointPatchList29)
             }
             diligent_sys::PRIMITIVE_TOPOLOGY_30_CONTROL_POINT_PATCHLIST => {
-                PrimitiveTopology::ControlPointPatchList30
+                Ok(PrimitiveTopology::ControlPointPatchList30)
             }
             diligent_sys::PRIMITIVE_TOPOLOGY_31_CONTROL_POINT_PATCHLIST => {
-                PrimitiveTopology::ControlPointPatchList31
+                Ok(PrimitiveTopology::ControlPointPatchList31)
             }
             diligent_sys::PRIMITIVE_TOPOLOGY_32_CONTROL_POINT_PATCHLIST => {
-                PrimitiveTopology::ControlPointPatchList32
+                Ok(PrimitiveTopology::ControlPointPatchList32)
             }
-            _ => panic!("Unknown PRIMITIVE_TOPOLOGY value"),
+            _ => Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Unknown PRIMITIVE_TOPOLOGY value",
+            )),
         }
     }
 }
@@ -541,16 +543,20 @@ impl From<Usage> for diligent_sys::USAGE {
     }
 }
 
-impl From<diligent_sys::USAGE> for Usage {
-    fn from(value: diligent_sys::USAGE) -> Self {
+impl TryFrom<diligent_sys::USAGE> for Usage {
+    type Error = std::io::Error;
+    fn try_from(value: diligent_sys::USAGE) -> Result<Self, Self::Error> {
         match value as _ {
-            diligent_sys::USAGE_IMMUTABLE => Usage::Immutable,
-            diligent_sys::USAGE_DEFAULT => Usage::Default,
-            diligent_sys::USAGE_DYNAMIC => Usage::Dynamic,
-            diligent_sys::USAGE_STAGING => Usage::Staging,
-            diligent_sys::USAGE_UNIFIED => Usage::Unified,
-            diligent_sys::USAGE_SPARSE => Usage::Sparse,
-            _ => panic!("Unknown USAGE value"),
+            diligent_sys::USAGE_IMMUTABLE => Ok(Usage::Immutable),
+            diligent_sys::USAGE_DEFAULT => Ok(Usage::Default),
+            diligent_sys::USAGE_DYNAMIC => Ok(Usage::Dynamic),
+            diligent_sys::USAGE_STAGING => Ok(Usage::Staging),
+            diligent_sys::USAGE_UNIFIED => Ok(Usage::Unified),
+            diligent_sys::USAGE_SPARSE => Ok(Usage::Sparse),
+            _ => Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Unknown USAGE value",
+            )),
         }
     }
 }
@@ -1238,13 +1244,17 @@ pub enum DeviceFeatureState {
     Optional,
 }
 
-impl From<diligent_sys::DEVICE_FEATURE_STATE> for DeviceFeatureState {
-    fn from(value: diligent_sys::DEVICE_FEATURE_STATE) -> Self {
+impl TryFrom<diligent_sys::DEVICE_FEATURE_STATE> for DeviceFeatureState {
+    type Error = std::io::Error;
+    fn try_from(value: diligent_sys::DEVICE_FEATURE_STATE) -> Result<Self, Self::Error> {
         match value as _ {
-            diligent_sys::DEVICE_FEATURE_STATE_DISABLED => DeviceFeatureState::Disabled,
-            diligent_sys::DEVICE_FEATURE_STATE_ENABLED => DeviceFeatureState::Enabled,
-            diligent_sys::DEVICE_FEATURE_STATE_OPTIONAL => DeviceFeatureState::Optional,
-            _ => panic!(),
+            diligent_sys::DEVICE_FEATURE_STATE_DISABLED => Ok(DeviceFeatureState::Disabled),
+            diligent_sys::DEVICE_FEATURE_STATE_ENABLED => Ok(DeviceFeatureState::Enabled),
+            diligent_sys::DEVICE_FEATURE_STATE_OPTIONAL => Ok(DeviceFeatureState::Optional),
+            _ => Err(Self::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Unknown DEVICE_FEATURE_STATE value",
+            )),
         }
     }
 }
@@ -1263,145 +1273,145 @@ impl From<DeviceFeatureState> for diligent_sys::DEVICE_FEATURE_STATE {
 pub struct DeviceFeatures(pub(crate) diligent_sys::DeviceFeatures);
 impl DeviceFeatures {
     pub fn separable_programs(&self) -> DeviceFeatureState {
-        self.0.SeparablePrograms.into()
+        self.0.SeparablePrograms.try_into().unwrap()
     }
     pub fn shader_resource_queries(&self) -> DeviceFeatureState {
-        self.0.ShaderResourceQueries.into()
+        self.0.ShaderResourceQueries.try_into().unwrap()
     }
     pub fn wireframe_fill(&self) -> DeviceFeatureState {
-        self.0.WireframeFill.into()
+        self.0.WireframeFill.try_into().unwrap()
     }
     pub fn multithreaded_resource_creation(&self) -> DeviceFeatureState {
-        self.0.MultithreadedResourceCreation.into()
+        self.0.MultithreadedResourceCreation.try_into().unwrap()
     }
     pub fn compute_shaders(&self) -> DeviceFeatureState {
-        self.0.ComputeShaders.into()
+        self.0.ComputeShaders.try_into().unwrap()
     }
     pub fn geometry_shaders(&self) -> DeviceFeatureState {
-        self.0.GeometryShaders.into()
+        self.0.GeometryShaders.try_into().unwrap()
     }
     pub fn tessellation(&self) -> DeviceFeatureState {
-        self.0.Tessellation.into()
+        self.0.Tessellation.try_into().unwrap()
     }
     pub fn mesh_shaders(&self) -> DeviceFeatureState {
-        self.0.MeshShaders.into()
+        self.0.MeshShaders.try_into().unwrap()
     }
     pub fn ray_tracing(&self) -> DeviceFeatureState {
-        self.0.RayTracing.into()
+        self.0.RayTracing.try_into().unwrap()
     }
     pub fn bindless_resources(&self) -> DeviceFeatureState {
-        self.0.BindlessResources.into()
+        self.0.BindlessResources.try_into().unwrap()
     }
     pub fn occlusion_queries(&self) -> DeviceFeatureState {
-        self.0.OcclusionQueries.into()
+        self.0.OcclusionQueries.try_into().unwrap()
     }
     pub fn binary_occlusion_queries(&self) -> DeviceFeatureState {
-        self.0.BinaryOcclusionQueries.into()
+        self.0.BinaryOcclusionQueries.try_into().unwrap()
     }
     pub fn timestamp_queries(&self) -> DeviceFeatureState {
-        self.0.TimestampQueries.into()
+        self.0.TimestampQueries.try_into().unwrap()
     }
     pub fn pipeline_statistics_queries(&self) -> DeviceFeatureState {
-        self.0.PipelineStatisticsQueries.into()
+        self.0.PipelineStatisticsQueries.try_into().unwrap()
     }
     pub fn duration_queries(&self) -> DeviceFeatureState {
-        self.0.DurationQueries.into()
+        self.0.DurationQueries.try_into().unwrap()
     }
     pub fn depth_bias_clamp(&self) -> DeviceFeatureState {
-        self.0.DepthBiasClamp.into()
+        self.0.DepthBiasClamp.try_into().unwrap()
     }
     pub fn depth_clamp(&self) -> DeviceFeatureState {
-        self.0.DepthClamp.into()
+        self.0.DepthClamp.try_into().unwrap()
     }
     pub fn independent_blend(&self) -> DeviceFeatureState {
-        self.0.IndependentBlend.into()
+        self.0.IndependentBlend.try_into().unwrap()
     }
     pub fn dual_source_blend(&self) -> DeviceFeatureState {
-        self.0.DualSourceBlend.into()
+        self.0.DualSourceBlend.try_into().unwrap()
     }
     pub fn multi_viewport(&self) -> DeviceFeatureState {
-        self.0.MultiViewport.into()
+        self.0.MultiViewport.try_into().unwrap()
     }
     pub fn texture_compression_bc(&self) -> DeviceFeatureState {
-        self.0.TextureCompressionBC.into()
+        self.0.TextureCompressionBC.try_into().unwrap()
     }
     pub fn texture_compression_etc2(&self) -> DeviceFeatureState {
-        self.0.TextureCompressionETC2.into()
+        self.0.TextureCompressionETC2.try_into().unwrap()
     }
     pub fn vertex_pipeline_uav_writes_and_atomics(&self) -> DeviceFeatureState {
-        self.0.VertexPipelineUAVWritesAndAtomics.into()
+        self.0.VertexPipelineUAVWritesAndAtomics.try_into().unwrap()
     }
     pub fn pixel_uav_writes_and_atomics(&self) -> DeviceFeatureState {
-        self.0.PixelUAVWritesAndAtomics.into()
+        self.0.PixelUAVWritesAndAtomics.try_into().unwrap()
     }
     pub fn texture_uav_extended_formats(&self) -> DeviceFeatureState {
-        self.0.TextureUAVExtendedFormats.into()
+        self.0.TextureUAVExtendedFormats.try_into().unwrap()
     }
     pub fn shader_float16(&self) -> DeviceFeatureState {
-        self.0.ShaderFloat16.into()
+        self.0.ShaderFloat16.try_into().unwrap()
     }
     pub fn resource_buffer16_bit_access(&self) -> DeviceFeatureState {
-        self.0.ResourceBuffer16BitAccess.into()
+        self.0.ResourceBuffer16BitAccess.try_into().unwrap()
     }
     pub fn uniform_buffer16_bit_access(&self) -> DeviceFeatureState {
-        self.0.UniformBuffer16BitAccess.into()
+        self.0.UniformBuffer16BitAccess.try_into().unwrap()
     }
     pub fn shader_input_output16(&self) -> DeviceFeatureState {
-        self.0.ShaderInputOutput16.into()
+        self.0.ShaderInputOutput16.try_into().unwrap()
     }
     pub fn shader_int8(&self) -> DeviceFeatureState {
-        self.0.ShaderInt8.into()
+        self.0.ShaderInt8.try_into().unwrap()
     }
     pub fn resource_buffer8_bit_access(&self) -> DeviceFeatureState {
-        self.0.ResourceBuffer8BitAccess.into()
+        self.0.ResourceBuffer8BitAccess.try_into().unwrap()
     }
     pub fn uniform_buffer8_bit_access(&self) -> DeviceFeatureState {
-        self.0.UniformBuffer8BitAccess.into()
+        self.0.UniformBuffer8BitAccess.try_into().unwrap()
     }
     pub fn shader_resource_static_arrays(&self) -> DeviceFeatureState {
-        self.0.ShaderResourceStaticArrays.into()
+        self.0.ShaderResourceStaticArrays.try_into().unwrap()
     }
     pub fn shader_resource_runtime_arrays(&self) -> DeviceFeatureState {
-        self.0.ShaderResourceRuntimeArrays.into()
+        self.0.ShaderResourceRuntimeArrays.try_into().unwrap()
     }
     pub fn wave_op(&self) -> DeviceFeatureState {
-        self.0.WaveOp.into()
+        self.0.WaveOp.try_into().unwrap()
     }
     pub fn instance_data_step_rate(&self) -> DeviceFeatureState {
-        self.0.InstanceDataStepRate.into()
+        self.0.InstanceDataStepRate.try_into().unwrap()
     }
     pub fn native_fence(&self) -> DeviceFeatureState {
-        self.0.NativeFence.into()
+        self.0.NativeFence.try_into().unwrap()
     }
     pub fn tile_shaders(&self) -> DeviceFeatureState {
-        self.0.TileShaders.into()
+        self.0.TileShaders.try_into().unwrap()
     }
     pub fn transfer_queue_timestamp_queries(&self) -> DeviceFeatureState {
-        self.0.TransferQueueTimestampQueries.into()
+        self.0.TransferQueueTimestampQueries.try_into().unwrap()
     }
     pub fn variable_rate_shading(&self) -> DeviceFeatureState {
-        self.0.VariableRateShading.into()
+        self.0.VariableRateShading.try_into().unwrap()
     }
     pub fn sparse_resources(&self) -> DeviceFeatureState {
-        self.0.SparseResources.into()
+        self.0.SparseResources.try_into().unwrap()
     }
     pub fn subpass_framebuffer_fetch(&self) -> DeviceFeatureState {
-        self.0.SubpassFramebufferFetch.into()
+        self.0.SubpassFramebufferFetch.try_into().unwrap()
     }
     pub fn texture_component_swizzle(&self) -> DeviceFeatureState {
-        self.0.TextureComponentSwizzle.into()
+        self.0.TextureComponentSwizzle.try_into().unwrap()
     }
     pub fn texture_subresource_views(&self) -> DeviceFeatureState {
-        self.0.TextureSubresourceViews.into()
+        self.0.TextureSubresourceViews.try_into().unwrap()
     }
     pub fn native_multi_draw(&self) -> DeviceFeatureState {
-        self.0.NativeMultiDraw.into()
+        self.0.NativeMultiDraw.try_into().unwrap()
     }
     pub fn async_shader_compilation(&self) -> DeviceFeatureState {
-        self.0.AsyncShaderCompilation.into()
+        self.0.AsyncShaderCompilation.try_into().unwrap()
     }
     pub fn formatted_buffers(&self) -> DeviceFeatureState {
-        self.0.FormattedBuffers.into()
+        self.0.FormattedBuffers.try_into().unwrap()
     }
 
     pub fn set_separable_programs(&mut self, state: DeviceFeatureState) {
@@ -1806,25 +1816,31 @@ impl From<SurfaceTransform> for diligent_sys::SURFACE_TRANSFORM {
     }
 }
 
-impl From<diligent_sys::SURFACE_TRANSFORM> for SurfaceTransform {
-    fn from(value: diligent_sys::SURFACE_TRANSFORM) -> Self {
+impl TryFrom<diligent_sys::SURFACE_TRANSFORM> for SurfaceTransform {
+    type Error = std::io::Error;
+    fn try_from(value: diligent_sys::SURFACE_TRANSFORM) -> Result<Self, Self::Error> {
         match value as _ {
-            diligent_sys::SURFACE_TRANSFORM_OPTIMAL => SurfaceTransform::Optimal,
-            diligent_sys::SURFACE_TRANSFORM_IDENTITY => SurfaceTransform::Identity,
-            diligent_sys::SURFACE_TRANSFORM_ROTATE_90 => SurfaceTransform::Rotate90,
-            diligent_sys::SURFACE_TRANSFORM_ROTATE_180 => SurfaceTransform::Rotate180,
-            diligent_sys::SURFACE_TRANSFORM_ROTATE_270 => SurfaceTransform::Rotate270,
-            diligent_sys::SURFACE_TRANSFORM_HORIZONTAL_MIRROR => SurfaceTransform::HorizontalMirror,
+            diligent_sys::SURFACE_TRANSFORM_OPTIMAL => Ok(SurfaceTransform::Optimal),
+            diligent_sys::SURFACE_TRANSFORM_IDENTITY => Ok(SurfaceTransform::Identity),
+            diligent_sys::SURFACE_TRANSFORM_ROTATE_90 => Ok(SurfaceTransform::Rotate90),
+            diligent_sys::SURFACE_TRANSFORM_ROTATE_180 => Ok(SurfaceTransform::Rotate180),
+            diligent_sys::SURFACE_TRANSFORM_ROTATE_270 => Ok(SurfaceTransform::Rotate270),
+            diligent_sys::SURFACE_TRANSFORM_HORIZONTAL_MIRROR => {
+                Ok(SurfaceTransform::HorizontalMirror)
+            }
             diligent_sys::SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_90 => {
-                SurfaceTransform::HorizontalMirrorRotate90
+                Ok(SurfaceTransform::HorizontalMirrorRotate90)
             }
             diligent_sys::SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_180 => {
-                SurfaceTransform::HorizontalMirrorRotate180
+                Ok(SurfaceTransform::HorizontalMirrorRotate180)
             }
             diligent_sys::SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270 => {
-                SurfaceTransform::HorizontalMirrorRotate270
+                Ok(SurfaceTransform::HorizontalMirrorRotate270)
             }
-            _ => panic!(),
+            _ => Err(Self::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Unknown SURFACE_TRANSFORM value",
+            )),
         }
     }
 }
@@ -1861,11 +1877,19 @@ bitflags! {
 const_assert_eq!(diligent_sys::RESOURCE_STATE_MAX_BIT, 2097152);
 
 impl ResourceState {
-    pub fn from_sys(value: diligent_sys::RESOURCE_STATE) -> Option<Self> {
+    pub fn try_from_sys(
+        value: diligent_sys::RESOURCE_STATE,
+    ) -> Result<Option<Self>, std::io::Error> {
         if value == diligent_sys::RESOURCE_STATE_UNKNOWN as _ {
-            None
+            Ok(None)
         } else {
-            Some(ResourceState::from_bits_retain(value))
+            ResourceState::from_bits(value).map_or(
+                Err(std::io::Error::new(
+                    std::io::ErrorKind::InvalidData,
+                    "Unknown RESOURCE_STATE value",
+                )),
+                |state| Ok(Some(state)),
+            )
         }
     }
 }
@@ -2169,133 +2193,144 @@ impl From<TextureFormat> for diligent_sys::TEXTURE_FORMAT {
 }
 
 impl TextureFormat {
-    pub fn from_sys(format: diligent_sys::TEXTURE_FORMAT) -> Option<TextureFormat> {
+    pub fn try_from_sys(
+        format: diligent_sys::TEXTURE_FORMAT,
+    ) -> Result<Option<TextureFormat>, std::io::Error> {
         match format as _ {
-            diligent_sys::TEX_FORMAT_UNKNOWN => None,
-            diligent_sys::TEX_FORMAT_RGBA32_TYPELESS => Some(TextureFormat::RGBA32_TYPELESS),
-            diligent_sys::TEX_FORMAT_RGBA32_FLOAT => Some(TextureFormat::RGBA32_FLOAT),
-            diligent_sys::TEX_FORMAT_RGBA32_UINT => Some(TextureFormat::RGBA32_UINT),
-            diligent_sys::TEX_FORMAT_RGBA32_SINT => Some(TextureFormat::RGBA32_SINT),
-            diligent_sys::TEX_FORMAT_RGB32_TYPELESS => Some(TextureFormat::RGB32_TYPELESS),
-            diligent_sys::TEX_FORMAT_RGB32_FLOAT => Some(TextureFormat::RGB32_FLOAT),
-            diligent_sys::TEX_FORMAT_RGB32_UINT => Some(TextureFormat::RGB32_UINT),
-            diligent_sys::TEX_FORMAT_RGB32_SINT => Some(TextureFormat::RGB32_SINT),
-            diligent_sys::TEX_FORMAT_RGBA16_TYPELESS => Some(TextureFormat::RGBA16_TYPELESS),
-            diligent_sys::TEX_FORMAT_RGBA16_FLOAT => Some(TextureFormat::RGBA16_FLOAT),
-            diligent_sys::TEX_FORMAT_RGBA16_UNORM => Some(TextureFormat::RGBA16_UNORM),
-            diligent_sys::TEX_FORMAT_RGBA16_UINT => Some(TextureFormat::RGBA16_UINT),
-            diligent_sys::TEX_FORMAT_RGBA16_SNORM => Some(TextureFormat::RGBA16_SNORM),
-            diligent_sys::TEX_FORMAT_RGBA16_SINT => Some(TextureFormat::RGBA16_SINT),
-            diligent_sys::TEX_FORMAT_RG32_TYPELESS => Some(TextureFormat::RG32_TYPELESS),
-            diligent_sys::TEX_FORMAT_RG32_FLOAT => Some(TextureFormat::RG32_FLOAT),
-            diligent_sys::TEX_FORMAT_RG32_UINT => Some(TextureFormat::RG32_UINT),
-            diligent_sys::TEX_FORMAT_RG32_SINT => Some(TextureFormat::RG32_SINT),
-            diligent_sys::TEX_FORMAT_R32G8X24_TYPELESS => Some(TextureFormat::R32G8X24_TYPELESS),
+            diligent_sys::TEX_FORMAT_UNKNOWN => Ok(None),
+            diligent_sys::TEX_FORMAT_RGBA32_TYPELESS => Ok(Some(TextureFormat::RGBA32_TYPELESS)),
+            diligent_sys::TEX_FORMAT_RGBA32_FLOAT => Ok(Some(TextureFormat::RGBA32_FLOAT)),
+            diligent_sys::TEX_FORMAT_RGBA32_UINT => Ok(Some(TextureFormat::RGBA32_UINT)),
+            diligent_sys::TEX_FORMAT_RGBA32_SINT => Ok(Some(TextureFormat::RGBA32_SINT)),
+            diligent_sys::TEX_FORMAT_RGB32_TYPELESS => Ok(Some(TextureFormat::RGB32_TYPELESS)),
+            diligent_sys::TEX_FORMAT_RGB32_FLOAT => Ok(Some(TextureFormat::RGB32_FLOAT)),
+            diligent_sys::TEX_FORMAT_RGB32_UINT => Ok(Some(TextureFormat::RGB32_UINT)),
+            diligent_sys::TEX_FORMAT_RGB32_SINT => Ok(Some(TextureFormat::RGB32_SINT)),
+            diligent_sys::TEX_FORMAT_RGBA16_TYPELESS => Ok(Some(TextureFormat::RGBA16_TYPELESS)),
+            diligent_sys::TEX_FORMAT_RGBA16_FLOAT => Ok(Some(TextureFormat::RGBA16_FLOAT)),
+            diligent_sys::TEX_FORMAT_RGBA16_UNORM => Ok(Some(TextureFormat::RGBA16_UNORM)),
+            diligent_sys::TEX_FORMAT_RGBA16_UINT => Ok(Some(TextureFormat::RGBA16_UINT)),
+            diligent_sys::TEX_FORMAT_RGBA16_SNORM => Ok(Some(TextureFormat::RGBA16_SNORM)),
+            diligent_sys::TEX_FORMAT_RGBA16_SINT => Ok(Some(TextureFormat::RGBA16_SINT)),
+            diligent_sys::TEX_FORMAT_RG32_TYPELESS => Ok(Some(TextureFormat::RG32_TYPELESS)),
+            diligent_sys::TEX_FORMAT_RG32_FLOAT => Ok(Some(TextureFormat::RG32_FLOAT)),
+            diligent_sys::TEX_FORMAT_RG32_UINT => Ok(Some(TextureFormat::RG32_UINT)),
+            diligent_sys::TEX_FORMAT_RG32_SINT => Ok(Some(TextureFormat::RG32_SINT)),
+            diligent_sys::TEX_FORMAT_R32G8X24_TYPELESS => {
+                Ok(Some(TextureFormat::R32G8X24_TYPELESS))
+            }
             diligent_sys::TEX_FORMAT_D32_FLOAT_S8X24_UINT => {
-                Some(TextureFormat::D32_FLOAT_S8X24_UINT)
+                Ok(Some(TextureFormat::D32_FLOAT_S8X24_UINT))
             }
             diligent_sys::TEX_FORMAT_R32_FLOAT_X8X24_TYPELESS => {
-                Some(TextureFormat::R32_FLOAT_X8X24_TYPELESS)
+                Ok(Some(TextureFormat::R32_FLOAT_X8X24_TYPELESS))
             }
             diligent_sys::TEX_FORMAT_X32_TYPELESS_G8X24_UINT => {
-                Some(TextureFormat::X32_TYPELESS_G8X24_UINT)
+                Ok(Some(TextureFormat::X32_TYPELESS_G8X24_UINT))
             }
-            diligent_sys::TEX_FORMAT_RGB10A2_TYPELESS => Some(TextureFormat::RGB10A2_TYPELESS),
-            diligent_sys::TEX_FORMAT_RGB10A2_UNORM => Some(TextureFormat::RGB10A2_UNORM),
-            diligent_sys::TEX_FORMAT_RGB10A2_UINT => Some(TextureFormat::RGB10A2_UINT),
-            diligent_sys::TEX_FORMAT_R11G11B10_FLOAT => Some(TextureFormat::R11G11B10_FLOAT),
-            diligent_sys::TEX_FORMAT_RGBA8_TYPELESS => Some(TextureFormat::RGBA8_TYPELESS),
-            diligent_sys::TEX_FORMAT_RGBA8_UNORM => Some(TextureFormat::RGBA8_UNORM),
-            diligent_sys::TEX_FORMAT_RGBA8_UNORM_SRGB => Some(TextureFormat::RGBA8_UNORM_SRGB),
-            diligent_sys::TEX_FORMAT_RGBA8_UINT => Some(TextureFormat::RGBA8_UINT),
-            diligent_sys::TEX_FORMAT_RGBA8_SNORM => Some(TextureFormat::RGBA8_SNORM),
-            diligent_sys::TEX_FORMAT_RGBA8_SINT => Some(TextureFormat::RGBA8_SINT),
-            diligent_sys::TEX_FORMAT_RG16_TYPELESS => Some(TextureFormat::RG16_TYPELESS),
-            diligent_sys::TEX_FORMAT_RG16_FLOAT => Some(TextureFormat::RG16_FLOAT),
-            diligent_sys::TEX_FORMAT_RG16_UNORM => Some(TextureFormat::RG16_UNORM),
-            diligent_sys::TEX_FORMAT_RG16_UINT => Some(TextureFormat::RG16_UINT),
-            diligent_sys::TEX_FORMAT_RG16_SNORM => Some(TextureFormat::RG16_SNORM),
-            diligent_sys::TEX_FORMAT_RG16_SINT => Some(TextureFormat::RG16_SINT),
-            diligent_sys::TEX_FORMAT_R32_TYPELESS => Some(TextureFormat::R32_TYPELESS),
-            diligent_sys::TEX_FORMAT_D32_FLOAT => Some(TextureFormat::D32_FLOAT),
-            diligent_sys::TEX_FORMAT_R32_FLOAT => Some(TextureFormat::R32_FLOAT),
-            diligent_sys::TEX_FORMAT_R32_UINT => Some(TextureFormat::R32_UINT),
-            diligent_sys::TEX_FORMAT_R32_SINT => Some(TextureFormat::R32_SINT),
-            diligent_sys::TEX_FORMAT_R24G8_TYPELESS => Some(TextureFormat::R24G8_TYPELESS),
-            diligent_sys::TEX_FORMAT_D24_UNORM_S8_UINT => Some(TextureFormat::D24_UNORM_S8_UINT),
+            diligent_sys::TEX_FORMAT_RGB10A2_TYPELESS => Ok(Some(TextureFormat::RGB10A2_TYPELESS)),
+            diligent_sys::TEX_FORMAT_RGB10A2_UNORM => Ok(Some(TextureFormat::RGB10A2_UNORM)),
+            diligent_sys::TEX_FORMAT_RGB10A2_UINT => Ok(Some(TextureFormat::RGB10A2_UINT)),
+            diligent_sys::TEX_FORMAT_R11G11B10_FLOAT => Ok(Some(TextureFormat::R11G11B10_FLOAT)),
+            diligent_sys::TEX_FORMAT_RGBA8_TYPELESS => Ok(Some(TextureFormat::RGBA8_TYPELESS)),
+            diligent_sys::TEX_FORMAT_RGBA8_UNORM => Ok(Some(TextureFormat::RGBA8_UNORM)),
+            diligent_sys::TEX_FORMAT_RGBA8_UNORM_SRGB => Ok(Some(TextureFormat::RGBA8_UNORM_SRGB)),
+            diligent_sys::TEX_FORMAT_RGBA8_UINT => Ok(Some(TextureFormat::RGBA8_UINT)),
+            diligent_sys::TEX_FORMAT_RGBA8_SNORM => Ok(Some(TextureFormat::RGBA8_SNORM)),
+            diligent_sys::TEX_FORMAT_RGBA8_SINT => Ok(Some(TextureFormat::RGBA8_SINT)),
+            diligent_sys::TEX_FORMAT_RG16_TYPELESS => Ok(Some(TextureFormat::RG16_TYPELESS)),
+            diligent_sys::TEX_FORMAT_RG16_FLOAT => Ok(Some(TextureFormat::RG16_FLOAT)),
+            diligent_sys::TEX_FORMAT_RG16_UNORM => Ok(Some(TextureFormat::RG16_UNORM)),
+            diligent_sys::TEX_FORMAT_RG16_UINT => Ok(Some(TextureFormat::RG16_UINT)),
+            diligent_sys::TEX_FORMAT_RG16_SNORM => Ok(Some(TextureFormat::RG16_SNORM)),
+            diligent_sys::TEX_FORMAT_RG16_SINT => Ok(Some(TextureFormat::RG16_SINT)),
+            diligent_sys::TEX_FORMAT_R32_TYPELESS => Ok(Some(TextureFormat::R32_TYPELESS)),
+            diligent_sys::TEX_FORMAT_D32_FLOAT => Ok(Some(TextureFormat::D32_FLOAT)),
+            diligent_sys::TEX_FORMAT_R32_FLOAT => Ok(Some(TextureFormat::R32_FLOAT)),
+            diligent_sys::TEX_FORMAT_R32_UINT => Ok(Some(TextureFormat::R32_UINT)),
+            diligent_sys::TEX_FORMAT_R32_SINT => Ok(Some(TextureFormat::R32_SINT)),
+            diligent_sys::TEX_FORMAT_R24G8_TYPELESS => Ok(Some(TextureFormat::R24G8_TYPELESS)),
+            diligent_sys::TEX_FORMAT_D24_UNORM_S8_UINT => {
+                Ok(Some(TextureFormat::D24_UNORM_S8_UINT))
+            }
             diligent_sys::TEX_FORMAT_R24_UNORM_X8_TYPELESS => {
-                Some(TextureFormat::R24_UNORM_X8_TYPELESS)
+                Ok(Some(TextureFormat::R24_UNORM_X8_TYPELESS))
             }
             diligent_sys::TEX_FORMAT_X24_TYPELESS_G8_UINT => {
-                Some(TextureFormat::X24_TYPELESS_G8_UINT)
+                Ok(Some(TextureFormat::X24_TYPELESS_G8_UINT))
             }
-            diligent_sys::TEX_FORMAT_RG8_TYPELESS => Some(TextureFormat::RG8_TYPELESS),
-            diligent_sys::TEX_FORMAT_RG8_UNORM => Some(TextureFormat::RG8_UNORM),
-            diligent_sys::TEX_FORMAT_RG8_UINT => Some(TextureFormat::RG8_UINT),
-            diligent_sys::TEX_FORMAT_RG8_SNORM => Some(TextureFormat::RG8_SNORM),
-            diligent_sys::TEX_FORMAT_RG8_SINT => Some(TextureFormat::RG8_SINT),
-            diligent_sys::TEX_FORMAT_R16_TYPELESS => Some(TextureFormat::R16_TYPELESS),
-            diligent_sys::TEX_FORMAT_R16_FLOAT => Some(TextureFormat::R16_FLOAT),
-            diligent_sys::TEX_FORMAT_D16_UNORM => Some(TextureFormat::D16_UNORM),
-            diligent_sys::TEX_FORMAT_R16_UNORM => Some(TextureFormat::R16_UNORM),
-            diligent_sys::TEX_FORMAT_R16_UINT => Some(TextureFormat::R16_UINT),
-            diligent_sys::TEX_FORMAT_R16_SNORM => Some(TextureFormat::R16_SNORM),
-            diligent_sys::TEX_FORMAT_R16_SINT => Some(TextureFormat::R16_SINT),
-            diligent_sys::TEX_FORMAT_R8_TYPELESS => Some(TextureFormat::R8_TYPELESS),
-            diligent_sys::TEX_FORMAT_R8_UNORM => Some(TextureFormat::R8_UNORM),
-            diligent_sys::TEX_FORMAT_R8_UINT => Some(TextureFormat::R8_UINT),
-            diligent_sys::TEX_FORMAT_R8_SNORM => Some(TextureFormat::R8_SNORM),
-            diligent_sys::TEX_FORMAT_R8_SINT => Some(TextureFormat::R8_SINT),
-            diligent_sys::TEX_FORMAT_A8_UNORM => Some(TextureFormat::A8_UNORM),
-            diligent_sys::TEX_FORMAT_R1_UNORM => Some(TextureFormat::R1_UNORM),
-            diligent_sys::TEX_FORMAT_RGB9E5_SHAREDEXP => Some(TextureFormat::RGB9E5_SHAREDEXP),
-            diligent_sys::TEX_FORMAT_RG8_B8G8_UNORM => Some(TextureFormat::RG8_B8G8_UNORM),
-            diligent_sys::TEX_FORMAT_G8R8_G8B8_UNORM => Some(TextureFormat::G8R8_G8B8_UNORM),
-            diligent_sys::TEX_FORMAT_BC1_TYPELESS => Some(TextureFormat::BC1_TYPELESS),
-            diligent_sys::TEX_FORMAT_BC1_UNORM => Some(TextureFormat::BC1_UNORM),
-            diligent_sys::TEX_FORMAT_BC1_UNORM_SRGB => Some(TextureFormat::BC1_UNORM_SRGB),
-            diligent_sys::TEX_FORMAT_BC2_TYPELESS => Some(TextureFormat::BC2_TYPELESS),
-            diligent_sys::TEX_FORMAT_BC2_UNORM => Some(TextureFormat::BC2_UNORM),
-            diligent_sys::TEX_FORMAT_BC2_UNORM_SRGB => Some(TextureFormat::BC2_UNORM_SRGB),
-            diligent_sys::TEX_FORMAT_BC3_TYPELESS => Some(TextureFormat::BC3_TYPELESS),
-            diligent_sys::TEX_FORMAT_BC3_UNORM => Some(TextureFormat::BC3_UNORM),
-            diligent_sys::TEX_FORMAT_BC3_UNORM_SRGB => Some(TextureFormat::BC3_UNORM_SRGB),
-            diligent_sys::TEX_FORMAT_BC4_TYPELESS => Some(TextureFormat::BC4_TYPELESS),
-            diligent_sys::TEX_FORMAT_BC4_UNORM => Some(TextureFormat::BC4_UNORM),
-            diligent_sys::TEX_FORMAT_BC4_SNORM => Some(TextureFormat::BC4_SNORM),
-            diligent_sys::TEX_FORMAT_BC5_TYPELESS => Some(TextureFormat::BC5_TYPELESS),
-            diligent_sys::TEX_FORMAT_BC5_UNORM => Some(TextureFormat::BC5_UNORM),
-            diligent_sys::TEX_FORMAT_BC5_SNORM => Some(TextureFormat::BC5_SNORM),
-            diligent_sys::TEX_FORMAT_B5G6R5_UNORM => Some(TextureFormat::B5G6R5_UNORM),
-            diligent_sys::TEX_FORMAT_B5G5R5A1_UNORM => Some(TextureFormat::B5G5R5A1_UNORM),
-            diligent_sys::TEX_FORMAT_BGRA8_UNORM => Some(TextureFormat::BGRA8_UNORM),
-            diligent_sys::TEX_FORMAT_BGRX8_UNORM => Some(TextureFormat::BGRX8_UNORM),
+            diligent_sys::TEX_FORMAT_RG8_TYPELESS => Ok(Some(TextureFormat::RG8_TYPELESS)),
+            diligent_sys::TEX_FORMAT_RG8_UNORM => Ok(Some(TextureFormat::RG8_UNORM)),
+            diligent_sys::TEX_FORMAT_RG8_UINT => Ok(Some(TextureFormat::RG8_UINT)),
+            diligent_sys::TEX_FORMAT_RG8_SNORM => Ok(Some(TextureFormat::RG8_SNORM)),
+            diligent_sys::TEX_FORMAT_RG8_SINT => Ok(Some(TextureFormat::RG8_SINT)),
+            diligent_sys::TEX_FORMAT_R16_TYPELESS => Ok(Some(TextureFormat::R16_TYPELESS)),
+            diligent_sys::TEX_FORMAT_R16_FLOAT => Ok(Some(TextureFormat::R16_FLOAT)),
+            diligent_sys::TEX_FORMAT_D16_UNORM => Ok(Some(TextureFormat::D16_UNORM)),
+            diligent_sys::TEX_FORMAT_R16_UNORM => Ok(Some(TextureFormat::R16_UNORM)),
+            diligent_sys::TEX_FORMAT_R16_UINT => Ok(Some(TextureFormat::R16_UINT)),
+            diligent_sys::TEX_FORMAT_R16_SNORM => Ok(Some(TextureFormat::R16_SNORM)),
+            diligent_sys::TEX_FORMAT_R16_SINT => Ok(Some(TextureFormat::R16_SINT)),
+            diligent_sys::TEX_FORMAT_R8_TYPELESS => Ok(Some(TextureFormat::R8_TYPELESS)),
+            diligent_sys::TEX_FORMAT_R8_UNORM => Ok(Some(TextureFormat::R8_UNORM)),
+            diligent_sys::TEX_FORMAT_R8_UINT => Ok(Some(TextureFormat::R8_UINT)),
+            diligent_sys::TEX_FORMAT_R8_SNORM => Ok(Some(TextureFormat::R8_SNORM)),
+            diligent_sys::TEX_FORMAT_R8_SINT => Ok(Some(TextureFormat::R8_SINT)),
+            diligent_sys::TEX_FORMAT_A8_UNORM => Ok(Some(TextureFormat::A8_UNORM)),
+            diligent_sys::TEX_FORMAT_R1_UNORM => Ok(Some(TextureFormat::R1_UNORM)),
+            diligent_sys::TEX_FORMAT_RGB9E5_SHAREDEXP => Ok(Some(TextureFormat::RGB9E5_SHAREDEXP)),
+            diligent_sys::TEX_FORMAT_RG8_B8G8_UNORM => Ok(Some(TextureFormat::RG8_B8G8_UNORM)),
+            diligent_sys::TEX_FORMAT_G8R8_G8B8_UNORM => Ok(Some(TextureFormat::G8R8_G8B8_UNORM)),
+            diligent_sys::TEX_FORMAT_BC1_TYPELESS => Ok(Some(TextureFormat::BC1_TYPELESS)),
+            diligent_sys::TEX_FORMAT_BC1_UNORM => Ok(Some(TextureFormat::BC1_UNORM)),
+            diligent_sys::TEX_FORMAT_BC1_UNORM_SRGB => Ok(Some(TextureFormat::BC1_UNORM_SRGB)),
+            diligent_sys::TEX_FORMAT_BC2_TYPELESS => Ok(Some(TextureFormat::BC2_TYPELESS)),
+            diligent_sys::TEX_FORMAT_BC2_UNORM => Ok(Some(TextureFormat::BC2_UNORM)),
+            diligent_sys::TEX_FORMAT_BC2_UNORM_SRGB => Ok(Some(TextureFormat::BC2_UNORM_SRGB)),
+            diligent_sys::TEX_FORMAT_BC3_TYPELESS => Ok(Some(TextureFormat::BC3_TYPELESS)),
+            diligent_sys::TEX_FORMAT_BC3_UNORM => Ok(Some(TextureFormat::BC3_UNORM)),
+            diligent_sys::TEX_FORMAT_BC3_UNORM_SRGB => Ok(Some(TextureFormat::BC3_UNORM_SRGB)),
+            diligent_sys::TEX_FORMAT_BC4_TYPELESS => Ok(Some(TextureFormat::BC4_TYPELESS)),
+            diligent_sys::TEX_FORMAT_BC4_UNORM => Ok(Some(TextureFormat::BC4_UNORM)),
+            diligent_sys::TEX_FORMAT_BC4_SNORM => Ok(Some(TextureFormat::BC4_SNORM)),
+            diligent_sys::TEX_FORMAT_BC5_TYPELESS => Ok(Some(TextureFormat::BC5_TYPELESS)),
+            diligent_sys::TEX_FORMAT_BC5_UNORM => Ok(Some(TextureFormat::BC5_UNORM)),
+            diligent_sys::TEX_FORMAT_BC5_SNORM => Ok(Some(TextureFormat::BC5_SNORM)),
+            diligent_sys::TEX_FORMAT_B5G6R5_UNORM => Ok(Some(TextureFormat::B5G6R5_UNORM)),
+            diligent_sys::TEX_FORMAT_B5G5R5A1_UNORM => Ok(Some(TextureFormat::B5G5R5A1_UNORM)),
+            diligent_sys::TEX_FORMAT_BGRA8_UNORM => Ok(Some(TextureFormat::BGRA8_UNORM)),
+            diligent_sys::TEX_FORMAT_BGRX8_UNORM => Ok(Some(TextureFormat::BGRX8_UNORM)),
             diligent_sys::TEX_FORMAT_R10G10B10_XR_BIAS_A2_UNORM => {
-                Some(TextureFormat::R10G10B10_XR_BIAS_A2_UNORM)
+                Ok(Some(TextureFormat::R10G10B10_XR_BIAS_A2_UNORM))
             }
-            diligent_sys::TEX_FORMAT_BGRA8_TYPELESS => Some(TextureFormat::BGRA8_TYPELESS),
-            diligent_sys::TEX_FORMAT_BGRA8_UNORM_SRGB => Some(TextureFormat::BGRA8_UNORM_SRGB),
-            diligent_sys::TEX_FORMAT_BGRX8_TYPELESS => Some(TextureFormat::BGRX8_TYPELESS),
-            diligent_sys::TEX_FORMAT_BGRX8_UNORM_SRGB => Some(TextureFormat::BGRX8_UNORM_SRGB),
-            diligent_sys::TEX_FORMAT_BC6H_TYPELESS => Some(TextureFormat::BC6H_TYPELESS),
-            diligent_sys::TEX_FORMAT_BC6H_UF16 => Some(TextureFormat::BC6H_UF16),
-            diligent_sys::TEX_FORMAT_BC6H_SF16 => Some(TextureFormat::BC6H_SF16),
-            diligent_sys::TEX_FORMAT_BC7_TYPELESS => Some(TextureFormat::BC7_TYPELESS),
-            diligent_sys::TEX_FORMAT_BC7_UNORM => Some(TextureFormat::BC7_UNORM),
-            diligent_sys::TEX_FORMAT_BC7_UNORM_SRGB => Some(TextureFormat::BC7_UNORM_SRGB),
-            diligent_sys::TEX_FORMAT_ETC2_RGB8_UNORM => Some(TextureFormat::ETC2_RGB8_UNORM),
+            diligent_sys::TEX_FORMAT_BGRA8_TYPELESS => Ok(Some(TextureFormat::BGRA8_TYPELESS)),
+            diligent_sys::TEX_FORMAT_BGRA8_UNORM_SRGB => Ok(Some(TextureFormat::BGRA8_UNORM_SRGB)),
+            diligent_sys::TEX_FORMAT_BGRX8_TYPELESS => Ok(Some(TextureFormat::BGRX8_TYPELESS)),
+            diligent_sys::TEX_FORMAT_BGRX8_UNORM_SRGB => Ok(Some(TextureFormat::BGRX8_UNORM_SRGB)),
+            diligent_sys::TEX_FORMAT_BC6H_TYPELESS => Ok(Some(TextureFormat::BC6H_TYPELESS)),
+            diligent_sys::TEX_FORMAT_BC6H_UF16 => Ok(Some(TextureFormat::BC6H_UF16)),
+            diligent_sys::TEX_FORMAT_BC6H_SF16 => Ok(Some(TextureFormat::BC6H_SF16)),
+            diligent_sys::TEX_FORMAT_BC7_TYPELESS => Ok(Some(TextureFormat::BC7_TYPELESS)),
+            diligent_sys::TEX_FORMAT_BC7_UNORM => Ok(Some(TextureFormat::BC7_UNORM)),
+            diligent_sys::TEX_FORMAT_BC7_UNORM_SRGB => Ok(Some(TextureFormat::BC7_UNORM_SRGB)),
+            diligent_sys::TEX_FORMAT_ETC2_RGB8_UNORM => Ok(Some(TextureFormat::ETC2_RGB8_UNORM)),
             diligent_sys::TEX_FORMAT_ETC2_RGB8_UNORM_SRGB => {
-                Some(TextureFormat::ETC2_RGB8_UNORM_SRGB)
+                Ok(Some(TextureFormat::ETC2_RGB8_UNORM_SRGB))
             }
-            diligent_sys::TEX_FORMAT_ETC2_RGB8A1_UNORM => Some(TextureFormat::ETC2_RGB8A1_UNORM),
+            diligent_sys::TEX_FORMAT_ETC2_RGB8A1_UNORM => {
+                Ok(Some(TextureFormat::ETC2_RGB8A1_UNORM))
+            }
             diligent_sys::TEX_FORMAT_ETC2_RGB8A1_UNORM_SRGB => {
-                Some(TextureFormat::ETC2_RGB8A1_UNORM_SRGB)
+                Ok(Some(TextureFormat::ETC2_RGB8A1_UNORM_SRGB))
             }
-            diligent_sys::TEX_FORMAT_ETC2_RGBA8_UNORM => Some(TextureFormat::ETC2_RGBA8_UNORM),
+            diligent_sys::TEX_FORMAT_ETC2_RGBA8_UNORM => Ok(Some(TextureFormat::ETC2_RGBA8_UNORM)),
             diligent_sys::TEX_FORMAT_ETC2_RGBA8_UNORM_SRGB => {
-                Some(TextureFormat::ETC2_RGBA8_UNORM_SRGB)
+                Ok(Some(TextureFormat::ETC2_RGBA8_UNORM_SRGB))
             }
-            _ => panic!("Unknown texture format"),
+            _ => Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Unknown texture format",
+            )),
         }
     }
 }
@@ -3053,13 +3088,17 @@ pub enum ScalingMode {
     Stretched,
 }
 
-impl From<diligent_sys::SCALING_MODE> for ScalingMode {
-    fn from(value: diligent_sys::SCALING_MODE) -> Self {
+impl TryFrom<diligent_sys::SCALING_MODE> for ScalingMode {
+    type Error = std::io::Error;
+    fn try_from(value: diligent_sys::SCALING_MODE) -> Result<Self, Self::Error> {
         match value {
-            diligent_sys::SCALING_MODE_UNSPECIFIED => ScalingMode::Unspecified,
-            diligent_sys::SCALING_MODE_CENTERED => ScalingMode::Centered,
-            diligent_sys::SCALING_MODE_STRETCHED => ScalingMode::Stretched,
-            _ => panic!("Unknown scaling mode"),
+            diligent_sys::SCALING_MODE_UNSPECIFIED => Ok(ScalingMode::Unspecified),
+            diligent_sys::SCALING_MODE_CENTERED => Ok(ScalingMode::Centered),
+            diligent_sys::SCALING_MODE_STRETCHED => Ok(ScalingMode::Stretched),
+            _ => Err(Self::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Unknown scaling mode",
+            )),
         }
     }
 }
@@ -3082,14 +3121,18 @@ pub enum ScanlineOrder {
     LowerFieldFirst,
 }
 
-impl From<diligent_sys::SCANLINE_ORDER> for ScanlineOrder {
-    fn from(value: diligent_sys::SCANLINE_ORDER) -> Self {
+impl TryFrom<diligent_sys::SCANLINE_ORDER> for ScanlineOrder {
+    type Error = std::io::Error;
+    fn try_from(value: diligent_sys::SCANLINE_ORDER) -> Result<Self, Self::Error> {
         match value {
-            diligent_sys::SCANLINE_ORDER_UNSPECIFIED => ScanlineOrder::Unspecified,
-            diligent_sys::SCANLINE_ORDER_PROGRESSIVE => ScanlineOrder::Progressive,
-            diligent_sys::SCANLINE_ORDER_UPPER_FIELD_FIRST => ScanlineOrder::UpperFieldFirst,
-            diligent_sys::SCANLINE_ORDER_LOWER_FIELD_FIRST => ScanlineOrder::LowerFieldFirst,
-            _ => panic!("Unknown scanline order"),
+            diligent_sys::SCANLINE_ORDER_UNSPECIFIED => Ok(ScanlineOrder::Unspecified),
+            diligent_sys::SCANLINE_ORDER_PROGRESSIVE => Ok(ScanlineOrder::Progressive),
+            diligent_sys::SCANLINE_ORDER_UPPER_FIELD_FIRST => Ok(ScanlineOrder::UpperFieldFirst),
+            diligent_sys::SCANLINE_ORDER_LOWER_FIELD_FIRST => Ok(ScanlineOrder::LowerFieldFirst),
+            _ => Err(Self::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Unknown scanline order",
+            )),
         }
     }
 }
@@ -3116,7 +3159,7 @@ impl DisplayModeAttribs {
         self.0.Height
     }
     pub fn format(&self) -> Option<TextureFormat> {
-        TextureFormat::from_sys(self.0.Format)
+        TextureFormat::try_from_sys(self.0.Format).unwrap()
     }
     pub fn refresh_rate_numerator(&self) -> u32 {
         self.0.RefreshRateNumerator
@@ -3202,13 +3245,17 @@ impl From<StateTransitionType> for diligent_sys::STATE_TRANSITION_TYPE {
     }
 }
 
-impl From<diligent_sys::STATE_TRANSITION_TYPE> for StateTransitionType {
-    fn from(value: diligent_sys::STATE_TRANSITION_TYPE) -> Self {
+impl TryFrom<diligent_sys::STATE_TRANSITION_TYPE> for StateTransitionType {
+    type Error = std::io::Error;
+    fn try_from(value: diligent_sys::STATE_TRANSITION_TYPE) -> Result<Self, Self::Error> {
         match value as _ {
-            diligent_sys::STATE_TRANSITION_TYPE_IMMEDIATE => StateTransitionType::Immediate,
-            diligent_sys::STATE_TRANSITION_TYPE_BEGIN => StateTransitionType::Begin,
-            diligent_sys::STATE_TRANSITION_TYPE_END => StateTransitionType::End,
-            _ => panic!("Unknown STATE_TRANSITION_TYPE value"),
+            diligent_sys::STATE_TRANSITION_TYPE_IMMEDIATE => Ok(StateTransitionType::Immediate),
+            diligent_sys::STATE_TRANSITION_TYPE_BEGIN => Ok(StateTransitionType::Begin),
+            diligent_sys::STATE_TRANSITION_TYPE_END => Ok(StateTransitionType::End),
+            _ => Err(Self::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Unknown STATE_TRANSITION_TYPE value",
+            )),
         }
     }
 }

@@ -98,25 +98,31 @@ impl<'name> SamplerDesc<'name> {
 
 impl SamplerDesc<'_> {
     pub fn min_filter(&self) -> FilterType {
-        self.0.MinFilter.into()
+        FilterType::try_from_sys(self.0.MinFilter).unwrap().unwrap()
     }
     pub fn mag_filter(&self) -> FilterType {
-        self.0.MagFilter.into()
+        FilterType::try_from_sys(self.0.MagFilter).unwrap().unwrap()
     }
     pub fn mip_filter(&self) -> FilterType {
-        self.0.MipFilter.into()
+        FilterType::try_from_sys(self.0.MipFilter).unwrap().unwrap()
     }
     pub fn address_u(&self) -> TextureAddressMode {
-        self.0.AddressU.into()
+        TextureAddressMode::try_from_sys(self.0.AddressU)
+            .unwrap()
+            .unwrap()
     }
     pub fn address_v(&self) -> TextureAddressMode {
-        self.0.AddressV.into()
+        TextureAddressMode::try_from_sys(self.0.AddressV)
+            .unwrap()
+            .unwrap()
     }
     pub fn address_w(&self) -> TextureAddressMode {
-        self.0.AddressW.into()
+        TextureAddressMode::try_from_sys(self.0.AddressW)
+            .unwrap()
+            .unwrap()
     }
     pub fn flags(&self) -> SamplerFlags {
-        SamplerFlags::from_bits_retain(self.0.Flags)
+        SamplerFlags::from_bits(self.0.Flags).unwrap()
     }
     pub fn unnormalized_coords(&self) -> bool {
         self.0.UnnormalizedCoords
@@ -128,7 +134,7 @@ impl SamplerDesc<'_> {
         self.0.MaxAnisotropy
     }
     pub fn comparison_func(&self) -> ComparisonFunction {
-        self.0.ComparisonFunc.into()
+        self.0.ComparisonFunc.try_into().unwrap()
     }
     pub fn border_color(&self) -> &[f32; 4usize] {
         &self.0.BorderColor

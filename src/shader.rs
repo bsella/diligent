@@ -444,7 +444,7 @@ impl From<&ShaderCreateInfo<'_>> for ShaderCreateInfoWrapper {
                 Minor: value.language_version.minor,
             },
             CompileFlags: value.compile_flags.bits(),
-            ShaderOptimizationLevel: value.shader_optimization_level.try_into().unwrap(),
+            ShaderOptimizationLevel: value.shader_optimization_level.into(),
             LoadConstantBufferReflection: value.load_constant_buffer_reflection,
             GLSLExtensions: value
                 .glsl_extensions

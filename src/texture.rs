@@ -378,7 +378,7 @@ impl TextureDesc<'_> {
         unsafe { self.0.__bindgen_anon_1.Depth }
     }
     pub fn format(&self) -> Option<TextureFormat> {
-        TextureFormat::from_sys(self.0.Format)
+        TextureFormat::try_from_sys(self.0.Format).unwrap()
     }
     pub fn mip_levels(&self) -> u32 {
         self.0.MipLevels
@@ -390,7 +390,7 @@ impl TextureDesc<'_> {
         BindFlags::from_bits_retain(self.0.BindFlags)
     }
     pub fn usage(&self) -> Usage {
-        self.0.Usage.into()
+        self.0.Usage.try_into().unwrap()
     }
     pub fn cpu_access_flags(&self) -> CpuAccessFlags {
         CpuAccessFlags::from_bits_retain(self.0.CPUAccessFlags)

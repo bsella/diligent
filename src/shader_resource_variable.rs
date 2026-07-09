@@ -35,19 +35,23 @@ impl From<ShaderResourceVariableType> for diligent_sys::SHADER_RESOURCE_VARIABLE
     }
 }
 
-impl From<diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE> for ShaderResourceVariableType {
-    fn from(value: diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE) -> Self {
+impl TryFrom<diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE> for ShaderResourceVariableType {
+    type Error = std::io::Error;
+    fn try_from(value: diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE) -> Result<Self, Self::Error> {
         match value as _ {
             diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_STATIC => {
-                ShaderResourceVariableType::Static
+                Ok(ShaderResourceVariableType::Static)
             }
             diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_MUTABLE => {
-                ShaderResourceVariableType::Mutable
+                Ok(ShaderResourceVariableType::Mutable)
             }
             diligent_sys::SHADER_RESOURCE_VARIABLE_TYPE_DYNAMIC => {
-                ShaderResourceVariableType::Dynamic
+                Ok(ShaderResourceVariableType::Dynamic)
             }
-            _ => panic!(),
+            _ => Err(Self::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Unknown SHADER_RESOURCE_VARIABLE_TYPE value",
+            )),
         }
     }
 }
@@ -110,7 +114,7 @@ impl<'name> ShaderResourceVariableDesc<'name> {
 
 impl ShaderResourceVariableDesc<'_> {
     pub fn variable_type(&self) -> ShaderResourceVariableType {
-        self.0.Type.into()
+        self.0.Type.try_into().unwrap()
     }
     pub fn shader_stages(&self) -> ShaderTypes {
         ShaderTypes::from_bits_retain(self.0.ShaderStages)
@@ -198,7 +202,9 @@ impl ShaderResourceVariable {
     }
 
     pub fn get_type(&self) -> ShaderResourceVariableType {
-        unsafe_member_call!(self, ShaderResourceVariable, GetType).into()
+        unsafe_member_call!(self, ShaderResourceVariable, GetType)
+            .try_into()
+            .unwrap()
     }
 
     pub fn get_resource_desc(&self) -> ShaderResourceDesc {

@@ -59,16 +59,16 @@ impl SwapChainDesc {
         self.0.Height
     }
     pub fn color_buffer_format(&self) -> Option<TextureFormat> {
-        TextureFormat::from_sys(self.0.ColorBufferFormat)
+        TextureFormat::try_from_sys(self.0.ColorBufferFormat).unwrap()
     }
     pub fn depth_buffer_format(&self) -> Option<TextureFormat> {
-        TextureFormat::from_sys(self.0.DepthBufferFormat)
+        TextureFormat::try_from_sys(self.0.DepthBufferFormat).unwrap()
     }
     pub fn usage(&self) -> SwapChainUsageFlags {
         SwapChainUsageFlags::from_bits_retain(self.0.Usage)
     }
     pub fn pre_transform(&self) -> SurfaceTransform {
-        self.0.PreTransform.into()
+        self.0.PreTransform.try_into().unwrap()
     }
     pub fn buffer_count(&self) -> u32 {
         self.0.BufferCount

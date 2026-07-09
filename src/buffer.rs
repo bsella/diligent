@@ -111,7 +111,7 @@ impl BufferDesc<'_> {
         BindFlags::from_bits_retain(self.0.BindFlags)
     }
     pub fn usage(&self) -> Usage {
-        self.0.Usage.into()
+        self.0.Usage.try_into().unwrap()
     }
     pub fn cpu_access_flags(&self) -> CpuAccessFlags {
         CpuAccessFlags::from_bits_retain(self.0.CPUAccessFlags)

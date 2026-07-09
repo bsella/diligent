@@ -39,18 +39,22 @@ impl From<TextureViewType> for diligent_sys::TEXTURE_VIEW_TYPE {
     }
 }
 
-impl From<diligent_sys::TEXTURE_VIEW_TYPE> for TextureViewType {
-    fn from(value: diligent_sys::TEXTURE_VIEW_TYPE) -> Self {
+impl TryFrom<diligent_sys::TEXTURE_VIEW_TYPE> for TextureViewType {
+    type Error = std::io::Error;
+    fn try_from(value: diligent_sys::TEXTURE_VIEW_TYPE) -> Result<Self, Self::Error> {
         match value as _ {
-            diligent_sys::TEXTURE_VIEW_SHADER_RESOURCE => TextureViewType::ShaderResource,
-            diligent_sys::TEXTURE_VIEW_RENDER_TARGET => TextureViewType::RenderTarget,
-            diligent_sys::TEXTURE_VIEW_DEPTH_STENCIL => TextureViewType::DepthStencil,
+            diligent_sys::TEXTURE_VIEW_SHADER_RESOURCE => Ok(TextureViewType::ShaderResource),
+            diligent_sys::TEXTURE_VIEW_RENDER_TARGET => Ok(TextureViewType::RenderTarget),
+            diligent_sys::TEXTURE_VIEW_DEPTH_STENCIL => Ok(TextureViewType::DepthStencil),
             diligent_sys::TEXTURE_VIEW_READ_ONLY_DEPTH_STENCIL => {
-                TextureViewType::ReadOnlyDepthStencil
+                Ok(TextureViewType::ReadOnlyDepthStencil)
             }
-            diligent_sys::TEXTURE_VIEW_UNORDERED_ACCESS => TextureViewType::UnorderedAccess,
-            diligent_sys::TEXTURE_VIEW_SHADING_RATE => TextureViewType::ShadingRate,
-            _ => panic!("Unknown TEXTURE_VIEW_TYPE value"),
+            diligent_sys::TEXTURE_VIEW_UNORDERED_ACCESS => Ok(TextureViewType::UnorderedAccess),
+            diligent_sys::TEXTURE_VIEW_SHADING_RATE => Ok(TextureViewType::ShadingRate),
+            _ => Err(Self::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Unknown TEXTURE_VIEW_TYPE value",
+            )),
         }
     }
 }
@@ -198,11 +202,11 @@ impl<'name> TextureViewDesc<'name> {
 
 impl TextureViewDesc<'_> {
     pub fn view_type(&self) -> TextureViewType {
-        self.0.ViewType.into()
+        self.0.ViewType.try_into().unwrap()
     }
 
     pub fn format(&self) -> Option<TextureFormat> {
-        TextureFormat::from_sys(self.0.Format)
+        TextureFormat::try_from_sys(self.0.Format).unwrap()
     }
     pub fn most_detailed_mip(&self) -> usize {
         self.0.MostDetailedMip as usize

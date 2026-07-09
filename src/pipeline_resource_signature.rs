@@ -138,7 +138,7 @@ impl PipelineResourceDesc<'_> {
         ShaderResourceType::from_sys(self.0.ResourceType)
     }
     pub fn var_type(&self) -> ShaderResourceVariableType {
-        self.0.VarType.into()
+        self.0.VarType.try_into().unwrap()
     }
     pub fn flags(&self) -> PipelineResourceFlags {
         PipelineResourceFlags::from_bits_retain(self.0.Flags)

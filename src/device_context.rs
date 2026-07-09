@@ -1519,10 +1519,10 @@ impl StateTransitionDesc<'_> {
         self.0.ArraySliceCount
     }
     pub fn old_state(&self) -> Option<ResourceState> {
-        ResourceState::from_sys(self.0.OldState)
+        ResourceState::try_from_sys(self.0.OldState).unwrap()
     }
     pub fn transition_type(&self) -> StateTransitionType {
-        self.0.TransitionType.into()
+        self.0.TransitionType.try_into().unwrap()
     }
     pub fn flags(&self) -> StateTransitionFlags {
         StateTransitionFlags::from_bits_retain(self.0.Flags)

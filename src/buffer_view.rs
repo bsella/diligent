@@ -24,12 +24,16 @@ impl From<BufferViewType> for diligent_sys::BUFFER_VIEW_TYPE {
     }
 }
 
-impl From<diligent_sys::BUFFER_VIEW_TYPE> for BufferViewType {
-    fn from(value: diligent_sys::BUFFER_VIEW_TYPE) -> Self {
+impl TryFrom<diligent_sys::BUFFER_VIEW_TYPE> for BufferViewType {
+    type Error = std::io::Error;
+    fn try_from(value: diligent_sys::BUFFER_VIEW_TYPE) -> Result<Self, Self::Error> {
         match value as _ {
-            diligent_sys::BUFFER_VIEW_SHADER_RESOURCE => BufferViewType::ShaderResource,
-            diligent_sys::BUFFER_VIEW_UNORDERED_ACCESS => BufferViewType::UnorderedAccess,
-            _ => panic!("Unknown BUFFER_VIEW_TYPE value"),
+            diligent_sys::BUFFER_VIEW_SHADER_RESOURCE => Ok(BufferViewType::ShaderResource),
+            diligent_sys::BUFFER_VIEW_UNORDERED_ACCESS => Ok(BufferViewType::UnorderedAccess),
+            _ => Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Unknown BUFFER_VIEW_TYPE value",
+            )),
         }
     }
 }
@@ -94,7 +98,7 @@ impl<'name> BufferViewDesc<'name> {
 
 impl BufferViewDesc<'_> {
     pub fn view_type(&self) -> BufferViewType {
-        self.0.ViewType.into()
+        self.0.ViewType.try_into().unwrap()
     }
     pub fn format(&self) -> BufferFormat {
         BufferFormat(self.0.Format)

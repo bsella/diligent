@@ -34,13 +34,17 @@ impl From<AttachmentLoadOperation> for diligent_sys::ATTACHMENT_LOAD_OP {
     }
 }
 
-impl From<diligent_sys::ATTACHMENT_LOAD_OP> for AttachmentLoadOperation {
-    fn from(value: diligent_sys::ATTACHMENT_LOAD_OP) -> Self {
+impl TryFrom<diligent_sys::ATTACHMENT_LOAD_OP> for AttachmentLoadOperation {
+    type Error = std::io::Error;
+    fn try_from(value: diligent_sys::ATTACHMENT_LOAD_OP) -> Result<Self, Self::Error> {
         match value as _ {
-            diligent_sys::ATTACHMENT_LOAD_OP_LOAD => AttachmentLoadOperation::Load,
-            diligent_sys::ATTACHMENT_LOAD_OP_CLEAR => AttachmentLoadOperation::Clear,
-            diligent_sys::ATTACHMENT_LOAD_OP_DISCARD => AttachmentLoadOperation::Discard,
-            _ => panic!("Unknown ATTACHMENT_LOAD_OP value"),
+            diligent_sys::ATTACHMENT_LOAD_OP_LOAD => Ok(AttachmentLoadOperation::Load),
+            diligent_sys::ATTACHMENT_LOAD_OP_CLEAR => Ok(AttachmentLoadOperation::Clear),
+            diligent_sys::ATTACHMENT_LOAD_OP_DISCARD => Ok(AttachmentLoadOperation::Discard),
+            _ => Err(Self::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Unknown ATTACHMENT_LOAD_OP value",
+            )),
         }
     }
 }
@@ -61,12 +65,16 @@ impl From<AttachmentStoreOperation> for diligent_sys::ATTACHMENT_STORE_OP {
     }
 }
 
-impl From<diligent_sys::ATTACHMENT_STORE_OP> for AttachmentStoreOperation {
-    fn from(value: diligent_sys::ATTACHMENT_STORE_OP) -> Self {
+impl TryFrom<diligent_sys::ATTACHMENT_STORE_OP> for AttachmentStoreOperation {
+    type Error = std::io::Error;
+    fn try_from(value: diligent_sys::ATTACHMENT_STORE_OP) -> Result<Self, Self::Error> {
         match value as _ {
-            diligent_sys::ATTACHMENT_STORE_OP_STORE => AttachmentStoreOperation::Store,
-            diligent_sys::ATTACHMENT_STORE_OP_DISCARD => AttachmentStoreOperation::Discard,
-            _ => panic!("Unknown ATTACHMENT_STORE_OP value"),
+            diligent_sys::ATTACHMENT_STORE_OP_STORE => Ok(AttachmentStoreOperation::Store),
+            diligent_sys::ATTACHMENT_STORE_OP_DISCARD => Ok(AttachmentStoreOperation::Discard),
+            _ => Err(Self::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Unknown ATTACHMENT_STORE_OP value",
+            )),
         }
     }
 }
@@ -114,28 +122,28 @@ impl RenderPassAttachmentDesc {
 
 impl RenderPassAttachmentDesc {
     pub fn format(&self) -> Option<TextureFormat> {
-        TextureFormat::from_sys(self.0.Format)
+        TextureFormat::try_from_sys(self.0.Format).unwrap()
     }
     pub fn sample_count(&self) -> u8 {
         self.0.SampleCount
     }
     pub fn load_op(&self) -> AttachmentLoadOperation {
-        self.0.LoadOp.into()
+        self.0.LoadOp.try_into().unwrap()
     }
     pub fn store_op(&self) -> AttachmentStoreOperation {
-        self.0.StoreOp.into()
+        self.0.StoreOp.try_into().unwrap()
     }
     pub fn stencil_load_op(&self) -> AttachmentLoadOperation {
-        self.0.StencilLoadOp.into()
+        self.0.StencilLoadOp.try_into().unwrap()
     }
     pub fn stencil_store_op(&self) -> AttachmentStoreOperation {
-        self.0.StencilStoreOp.into()
+        self.0.StencilStoreOp.try_into().unwrap()
     }
     pub fn initial_state(&self) -> Option<ResourceState> {
-        ResourceState::from_sys(self.0.InitialState)
+        ResourceState::try_from_sys(self.0.InitialState).unwrap()
     }
     pub fn final_state(&self) -> Option<ResourceState> {
-        ResourceState::from_sys(self.0.FinalState)
+        ResourceState::try_from_sys(self.0.FinalState).unwrap()
     }
 }
 

@@ -72,27 +72,31 @@ impl From<BlendFactor> for diligent_sys::BLEND_FACTOR {
     }
 }
 
-impl From<diligent_sys::BLEND_FACTOR> for BlendFactor {
-    fn from(value: diligent_sys::BLEND_FACTOR) -> Self {
+impl TryFrom<diligent_sys::BLEND_FACTOR> for BlendFactor {
+    type Error = std::io::Error;
+    fn try_from(value: diligent_sys::BLEND_FACTOR) -> Result<Self, Self::Error> {
         match value as _ {
-            diligent_sys::BLEND_FACTOR_ZERO => BlendFactor::Zero,
-            diligent_sys::BLEND_FACTOR_ONE => BlendFactor::One,
-            diligent_sys::BLEND_FACTOR_SRC_COLOR => BlendFactor::SrcColor,
-            diligent_sys::BLEND_FACTOR_INV_SRC_COLOR => BlendFactor::InvSrcColor,
-            diligent_sys::BLEND_FACTOR_SRC_ALPHA => BlendFactor::SrcAlpha,
-            diligent_sys::BLEND_FACTOR_INV_SRC_ALPHA => BlendFactor::InvSrcAlpha,
-            diligent_sys::BLEND_FACTOR_DEST_ALPHA => BlendFactor::DestAlpha,
-            diligent_sys::BLEND_FACTOR_INV_DEST_ALPHA => BlendFactor::InvDestAlpha,
-            diligent_sys::BLEND_FACTOR_DEST_COLOR => BlendFactor::DestColor,
-            diligent_sys::BLEND_FACTOR_INV_DEST_COLOR => BlendFactor::InvDestColor,
-            diligent_sys::BLEND_FACTOR_SRC_ALPHA_SAT => BlendFactor::SrcAlphaSat,
-            diligent_sys::BLEND_FACTOR_BLEND_FACTOR => BlendFactor::BlendFactor,
-            diligent_sys::BLEND_FACTOR_INV_BLEND_FACTOR => BlendFactor::InvBlendFactor,
-            diligent_sys::BLEND_FACTOR_SRC1_COLOR => BlendFactor::Src1Color,
-            diligent_sys::BLEND_FACTOR_INV_SRC1_COLOR => BlendFactor::InvSrc1Color,
-            diligent_sys::BLEND_FACTOR_SRC1_ALPHA => BlendFactor::Src1Alpha,
-            diligent_sys::BLEND_FACTOR_INV_SRC1_ALPHA => BlendFactor::InvSrc1Alpha,
-            _ => panic!("Unknown BLEND_FACTOR value"),
+            diligent_sys::BLEND_FACTOR_ZERO => Ok(BlendFactor::Zero),
+            diligent_sys::BLEND_FACTOR_ONE => Ok(BlendFactor::One),
+            diligent_sys::BLEND_FACTOR_SRC_COLOR => Ok(BlendFactor::SrcColor),
+            diligent_sys::BLEND_FACTOR_INV_SRC_COLOR => Ok(BlendFactor::InvSrcColor),
+            diligent_sys::BLEND_FACTOR_SRC_ALPHA => Ok(BlendFactor::SrcAlpha),
+            diligent_sys::BLEND_FACTOR_INV_SRC_ALPHA => Ok(BlendFactor::InvSrcAlpha),
+            diligent_sys::BLEND_FACTOR_DEST_ALPHA => Ok(BlendFactor::DestAlpha),
+            diligent_sys::BLEND_FACTOR_INV_DEST_ALPHA => Ok(BlendFactor::InvDestAlpha),
+            diligent_sys::BLEND_FACTOR_DEST_COLOR => Ok(BlendFactor::DestColor),
+            diligent_sys::BLEND_FACTOR_INV_DEST_COLOR => Ok(BlendFactor::InvDestColor),
+            diligent_sys::BLEND_FACTOR_SRC_ALPHA_SAT => Ok(BlendFactor::SrcAlphaSat),
+            diligent_sys::BLEND_FACTOR_BLEND_FACTOR => Ok(BlendFactor::BlendFactor),
+            diligent_sys::BLEND_FACTOR_INV_BLEND_FACTOR => Ok(BlendFactor::InvBlendFactor),
+            diligent_sys::BLEND_FACTOR_SRC1_COLOR => Ok(BlendFactor::Src1Color),
+            diligent_sys::BLEND_FACTOR_INV_SRC1_COLOR => Ok(BlendFactor::InvSrc1Color),
+            diligent_sys::BLEND_FACTOR_SRC1_ALPHA => Ok(BlendFactor::Src1Alpha),
+            diligent_sys::BLEND_FACTOR_INV_SRC1_ALPHA => Ok(BlendFactor::InvSrc1Alpha),
+            _ => Err(Self::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Unknown BLEND_FACTOR value",
+            )),
         }
     }
 }
@@ -119,15 +123,19 @@ impl From<BlendOperation> for diligent_sys::BLEND_OPERATION {
     }
 }
 
-impl From<diligent_sys::BLEND_OPERATION> for BlendOperation {
-    fn from(value: diligent_sys::BLEND_OPERATION) -> Self {
+impl TryFrom<diligent_sys::BLEND_OPERATION> for BlendOperation {
+    type Error = std::io::Error;
+    fn try_from(value: diligent_sys::BLEND_OPERATION) -> Result<Self, Self::Error> {
         match value as _ {
-            diligent_sys::BLEND_OPERATION_ADD => BlendOperation::Add,
-            diligent_sys::BLEND_OPERATION_SUBTRACT => BlendOperation::Subtract,
-            diligent_sys::BLEND_OPERATION_REV_SUBTRACT => BlendOperation::RevSubtract,
-            diligent_sys::BLEND_OPERATION_MIN => BlendOperation::Min,
-            diligent_sys::BLEND_OPERATION_MAX => BlendOperation::Max,
-            _ => panic!("Unknown BLEND_OPERATION value"),
+            diligent_sys::BLEND_OPERATION_ADD => Ok(BlendOperation::Add),
+            diligent_sys::BLEND_OPERATION_SUBTRACT => Ok(BlendOperation::Subtract),
+            diligent_sys::BLEND_OPERATION_REV_SUBTRACT => Ok(BlendOperation::RevSubtract),
+            diligent_sys::BLEND_OPERATION_MIN => Ok(BlendOperation::Min),
+            diligent_sys::BLEND_OPERATION_MAX => Ok(BlendOperation::Max),
+            _ => Err(Self::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Unknown BLEND_OPERATION value",
+            )),
         }
     }
 }
@@ -176,26 +184,30 @@ impl From<LogicOperation> for diligent_sys::LOGIC_OPERATION {
     }
 }
 
-impl From<diligent_sys::LOGIC_OPERATION> for LogicOperation {
-    fn from(value: diligent_sys::LOGIC_OPERATION) -> Self {
+impl TryFrom<diligent_sys::LOGIC_OPERATION> for LogicOperation {
+    type Error = std::io::Error;
+    fn try_from(value: diligent_sys::LOGIC_OPERATION) -> Result<Self, Self::Error> {
         match value as _ {
-            diligent_sys::LOGIC_OP_CLEAR => LogicOperation::Clear,
-            diligent_sys::LOGIC_OP_SET => LogicOperation::Set,
-            diligent_sys::LOGIC_OP_COPY => LogicOperation::Copy,
-            diligent_sys::LOGIC_OP_COPY_INVERTED => LogicOperation::CopyInverted,
-            diligent_sys::LOGIC_OP_NOOP => LogicOperation::NoOp,
-            diligent_sys::LOGIC_OP_INVERT => LogicOperation::Invert,
-            diligent_sys::LOGIC_OP_AND => LogicOperation::And,
-            diligent_sys::LOGIC_OP_NAND => LogicOperation::Nand,
-            diligent_sys::LOGIC_OP_OR => LogicOperation::Or,
-            diligent_sys::LOGIC_OP_NOR => LogicOperation::Nor,
-            diligent_sys::LOGIC_OP_XOR => LogicOperation::Xor,
-            diligent_sys::LOGIC_OP_EQUIV => LogicOperation::Equiv,
-            diligent_sys::LOGIC_OP_AND_REVERSE => LogicOperation::AndReverse,
-            diligent_sys::LOGIC_OP_AND_INVERTED => LogicOperation::AndInverted,
-            diligent_sys::LOGIC_OP_OR_REVERSE => LogicOperation::OrReverse,
-            diligent_sys::LOGIC_OP_OR_INVERTED => LogicOperation::OrInverted,
-            _ => panic!("Unknown LOGIC_OPERATION value"),
+            diligent_sys::LOGIC_OP_CLEAR => Ok(LogicOperation::Clear),
+            diligent_sys::LOGIC_OP_SET => Ok(LogicOperation::Set),
+            diligent_sys::LOGIC_OP_COPY => Ok(LogicOperation::Copy),
+            diligent_sys::LOGIC_OP_COPY_INVERTED => Ok(LogicOperation::CopyInverted),
+            diligent_sys::LOGIC_OP_NOOP => Ok(LogicOperation::NoOp),
+            diligent_sys::LOGIC_OP_INVERT => Ok(LogicOperation::Invert),
+            diligent_sys::LOGIC_OP_AND => Ok(LogicOperation::And),
+            diligent_sys::LOGIC_OP_NAND => Ok(LogicOperation::Nand),
+            diligent_sys::LOGIC_OP_OR => Ok(LogicOperation::Or),
+            diligent_sys::LOGIC_OP_NOR => Ok(LogicOperation::Nor),
+            diligent_sys::LOGIC_OP_XOR => Ok(LogicOperation::Xor),
+            diligent_sys::LOGIC_OP_EQUIV => Ok(LogicOperation::Equiv),
+            diligent_sys::LOGIC_OP_AND_REVERSE => Ok(LogicOperation::AndReverse),
+            diligent_sys::LOGIC_OP_AND_INVERTED => Ok(LogicOperation::AndInverted),
+            diligent_sys::LOGIC_OP_OR_REVERSE => Ok(LogicOperation::OrReverse),
+            diligent_sys::LOGIC_OP_OR_INVERTED => Ok(LogicOperation::OrInverted),
+            _ => Err(Self::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Unknown LOGIC_OPERATION value",
+            )),
         }
     }
 }
@@ -215,12 +227,16 @@ impl From<FillMode> for diligent_sys::FILL_MODE {
     }
 }
 
-impl From<diligent_sys::FILL_MODE> for FillMode {
-    fn from(value: diligent_sys::FILL_MODE) -> Self {
+impl TryFrom<diligent_sys::FILL_MODE> for FillMode {
+    type Error = std::io::Error;
+    fn try_from(value: diligent_sys::FILL_MODE) -> Result<Self, Self::Error> {
         match value as _ {
-            diligent_sys::FILL_MODE_WIREFRAME => FillMode::Wireframe,
-            diligent_sys::FILL_MODE_SOLID => FillMode::Solid,
-            _ => panic!("Unknown FILL_MODE value"),
+            diligent_sys::FILL_MODE_WIREFRAME => Ok(FillMode::Wireframe),
+            diligent_sys::FILL_MODE_SOLID => Ok(FillMode::Solid),
+            _ => Err(Self::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Unknown FILL_MODE value",
+            )),
         }
     }
 }
@@ -242,13 +258,17 @@ impl From<CullMode> for diligent_sys::CULL_MODE {
     }
 }
 
-impl From<diligent_sys::CULL_MODE> for CullMode {
-    fn from(value: diligent_sys::CULL_MODE) -> Self {
+impl TryFrom<diligent_sys::CULL_MODE> for CullMode {
+    type Error = std::io::Error;
+    fn try_from(value: diligent_sys::CULL_MODE) -> Result<Self, Self::Error> {
         match value as _ {
-            diligent_sys::CULL_MODE_NONE => CullMode::None,
-            diligent_sys::CULL_MODE_FRONT => CullMode::Front,
-            diligent_sys::CULL_MODE_BACK => CullMode::Back,
-            _ => panic!("Unknown CULL_MODE value"),
+            diligent_sys::CULL_MODE_NONE => Ok(CullMode::None),
+            diligent_sys::CULL_MODE_FRONT => Ok(CullMode::Front),
+            diligent_sys::CULL_MODE_BACK => Ok(CullMode::Back),
+            _ => Err(Self::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Unknown CULL_MODE value",
+            )),
         }
     }
 }
@@ -281,18 +301,22 @@ impl From<StencilOperation> for diligent_sys::STENCIL_OP {
     }
 }
 
-impl From<diligent_sys::STENCIL_OP> for StencilOperation {
-    fn from(value: diligent_sys::STENCIL_OP) -> Self {
+impl TryFrom<diligent_sys::STENCIL_OP> for StencilOperation {
+    type Error = std::io::Error;
+    fn try_from(value: diligent_sys::STENCIL_OP) -> Result<Self, Self::Error> {
         match value as _ {
-            diligent_sys::STENCIL_OP_KEEP => StencilOperation::Keep,
-            diligent_sys::STENCIL_OP_ZERO => StencilOperation::Zero,
-            diligent_sys::STENCIL_OP_REPLACE => StencilOperation::Replace,
-            diligent_sys::STENCIL_OP_INCR_SAT => StencilOperation::IncrSat,
-            diligent_sys::STENCIL_OP_DECR_SAT => StencilOperation::DecrSat,
-            diligent_sys::STENCIL_OP_INVERT => StencilOperation::Invert,
-            diligent_sys::STENCIL_OP_INCR_WRAP => StencilOperation::IncrWrap,
-            diligent_sys::STENCIL_OP_DECR_WRAP => StencilOperation::DecrWrap,
-            _ => panic!("Unknown STENCIL_OP value"),
+            diligent_sys::STENCIL_OP_KEEP => Ok(StencilOperation::Keep),
+            diligent_sys::STENCIL_OP_ZERO => Ok(StencilOperation::Zero),
+            diligent_sys::STENCIL_OP_REPLACE => Ok(StencilOperation::Replace),
+            diligent_sys::STENCIL_OP_INCR_SAT => Ok(StencilOperation::IncrSat),
+            diligent_sys::STENCIL_OP_DECR_SAT => Ok(StencilOperation::DecrSat),
+            diligent_sys::STENCIL_OP_INVERT => Ok(StencilOperation::Invert),
+            diligent_sys::STENCIL_OP_INCR_WRAP => Ok(StencilOperation::IncrWrap),
+            diligent_sys::STENCIL_OP_DECR_WRAP => Ok(StencilOperation::DecrWrap),
+            _ => Err(Self::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Unknown STENCIL_OP value",
+            )),
         }
     }
 }
@@ -325,18 +349,22 @@ impl From<ComparisonFunction> for diligent_sys::COMPARISON_FUNCTION {
     }
 }
 
-impl From<diligent_sys::COMPARISON_FUNCTION> for ComparisonFunction {
-    fn from(value: diligent_sys::COMPARISON_FUNCTION) -> Self {
+impl TryFrom<diligent_sys::COMPARISON_FUNCTION> for ComparisonFunction {
+    type Error = std::io::Error;
+    fn try_from(value: diligent_sys::COMPARISON_FUNCTION) -> Result<Self, Self::Error> {
         match value as _ {
-            diligent_sys::COMPARISON_FUNC_NEVER => ComparisonFunction::Never,
-            diligent_sys::COMPARISON_FUNC_LESS => ComparisonFunction::Less,
-            diligent_sys::COMPARISON_FUNC_EQUAL => ComparisonFunction::Equal,
-            diligent_sys::COMPARISON_FUNC_LESS_EQUAL => ComparisonFunction::LessEqual,
-            diligent_sys::COMPARISON_FUNC_GREATER => ComparisonFunction::Greater,
-            diligent_sys::COMPARISON_FUNC_NOT_EQUAL => ComparisonFunction::NotEqual,
-            diligent_sys::COMPARISON_FUNC_GREATER_EQUAL => ComparisonFunction::GreaterEqual,
-            diligent_sys::COMPARISON_FUNC_ALWAYS => ComparisonFunction::Always,
-            _ => panic!("Unknow COMPARISON_FUNCTION value"),
+            diligent_sys::COMPARISON_FUNC_NEVER => Ok(ComparisonFunction::Never),
+            diligent_sys::COMPARISON_FUNC_LESS => Ok(ComparisonFunction::Less),
+            diligent_sys::COMPARISON_FUNC_EQUAL => Ok(ComparisonFunction::Equal),
+            diligent_sys::COMPARISON_FUNC_LESS_EQUAL => Ok(ComparisonFunction::LessEqual),
+            diligent_sys::COMPARISON_FUNC_GREATER => Ok(ComparisonFunction::Greater),
+            diligent_sys::COMPARISON_FUNC_NOT_EQUAL => Ok(ComparisonFunction::NotEqual),
+            diligent_sys::COMPARISON_FUNC_GREATER_EQUAL => Ok(ComparisonFunction::GreaterEqual),
+            diligent_sys::COMPARISON_FUNC_ALWAYS => Ok(ComparisonFunction::Always),
+            _ => Err(Self::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Unknow COMPARISON_FUNCTION value",
+            )),
         }
     }
 }
@@ -458,7 +486,7 @@ pub struct PipelineResourceLayoutDesc(diligent_sys::PipelineResourceLayoutDesc);
 
 impl PipelineResourceLayoutDesc {
     pub fn default_variable_type(&self) -> ShaderResourceVariableType {
-        self.0.DefaultVariableType.into()
+        self.0.DefaultVariableType.try_into().unwrap()
     }
     pub fn default_variable_merge_stages(&self) -> ShaderTypes {
         ShaderTypes::from_bits_retain(self.0.DefaultVariableMergeStages)
@@ -919,25 +947,25 @@ impl RenderTargetBlendDesc {
         self.0.LogicOperationEnable
     }
     pub fn src_blend(&self) -> BlendFactor {
-        self.0.SrcBlend.into()
+        self.0.SrcBlend.try_into().unwrap()
     }
     pub fn dest_blend(&self) -> BlendFactor {
-        self.0.DestBlend.into()
+        self.0.DestBlend.try_into().unwrap()
     }
     pub fn blend_op(&self) -> BlendOperation {
-        self.0.BlendOp.into()
+        self.0.BlendOp.try_into().unwrap()
     }
     pub fn src_blend_alpha(&self) -> BlendFactor {
-        self.0.SrcBlendAlpha.into()
+        self.0.SrcBlendAlpha.try_into().unwrap()
     }
     pub fn dest_blend_alpha(&self) -> BlendFactor {
-        self.0.DestBlendAlpha.into()
+        self.0.DestBlendAlpha.try_into().unwrap()
     }
     pub fn blend_op_alpha(&self) -> BlendOperation {
-        self.0.BlendOpAlpha.into()
+        self.0.BlendOpAlpha.try_into().unwrap()
     }
     pub fn logic_op(&self) -> LogicOperation {
-        self.0.LogicOp.into()
+        self.0.LogicOp.try_into().unwrap()
     }
     pub fn render_target_write_mask(&self) -> ColorMask {
         ColorMask::from_bits_retain(self.0.RenderTargetWriteMask)
@@ -1016,10 +1044,10 @@ impl RasterizerStateDesc {
 
 impl RasterizerStateDesc {
     pub fn fill_mode(&self) -> FillMode {
-        self.0.FillMode.into()
+        self.0.FillMode.try_into().unwrap()
     }
     pub fn cull_mode(&self) -> CullMode {
-        self.0.CullMode.into()
+        self.0.CullMode.try_into().unwrap()
     }
     pub fn front_counter_clockwise(&self) -> bool {
         self.0.FrontCounterClockwise
@@ -1071,16 +1099,16 @@ impl StencilOperationsDesc {
 
 impl StencilOperationsDesc {
     pub fn stencil_fail_op(&self) -> StencilOperation {
-        self.0.StencilFailOp.into()
+        self.0.StencilFailOp.try_into().unwrap()
     }
     pub fn stencil_depth_fail_op(&self) -> StencilOperation {
-        self.0.StencilDepthFailOp.into()
+        self.0.StencilDepthFailOp.try_into().unwrap()
     }
     pub fn stencil_pass_op(&self) -> StencilOperation {
-        self.0.StencilPassOp.into()
+        self.0.StencilPassOp.try_into().unwrap()
     }
     pub fn stencil_func(&self) -> ComparisonFunction {
-        self.0.StencilFunc.into()
+        self.0.StencilFunc.try_into().unwrap()
     }
 }
 
@@ -1131,7 +1159,7 @@ impl DepthStencilStateDesc {
         self.0.DepthWriteEnable
     }
     pub fn depth_func(&self) -> ComparisonFunction {
-        self.0.DepthFunc.into()
+        self.0.DepthFunc.try_into().unwrap()
     }
     pub fn stencil_enable(&self) -> bool {
         self.0.StencilEnable
@@ -1352,7 +1380,7 @@ impl GraphicsPipelineDesc<'_, '_> {
         }
     }
     pub fn primitive_topology(&self) -> PrimitiveTopology {
-        self.0.PrimitiveTopology.into()
+        self.0.PrimitiveTopology.try_into().unwrap()
     }
     pub fn num_viewports(&self) -> u8 {
         self.0.NumViewports
@@ -2177,7 +2205,10 @@ impl TilePipelineDesc {
         self.0.SampleCount
     }
     pub fn rtv_formats(&self) -> [Option<TextureFormat>; 8usize] {
-        self.0.RTVFormats.map(TextureFormat::from_sys)
+        self.0
+            .RTVFormats
+            .map(TextureFormat::try_from_sys)
+            .map(Result::unwrap)
     }
 }
 
