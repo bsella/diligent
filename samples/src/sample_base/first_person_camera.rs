@@ -247,8 +247,12 @@ impl FirstPersonCamera {
             _ => fov_y,
         };
 
-        self.proj_matrix =
-            glam::Mat4::perspective_lh(fov, aspect_ratio, near_clip_plane, far_clip_plane);
+        self.proj_matrix = glam::camera::lh::proj::directx::perspective(
+            fov,
+            aspect_ratio,
+            near_clip_plane,
+            far_clip_plane,
+        );
     }
 
     pub fn position(&self) -> glam::Vec3 {

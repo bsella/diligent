@@ -40,7 +40,7 @@ pub fn get_adjusted_projection_matrix(
         _ => fov_y,
     };
 
-    glam::Mat4::perspective_lh(fov, aspect_ratio, near_plane, far_plane)
+    glam::camera::lh::proj::directx::perspective(fov, aspect_ratio, near_plane, far_plane)
 }
 
 // Returns pretransform matrix that matches the current screen rotation
