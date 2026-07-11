@@ -36,9 +36,9 @@ struct GeometryShader {
 
 impl SampleBase for GeometryShader {
     fn required_features() -> DeviceFeatures {
-        let mut features = DeviceFeatures::default();
-        features.set_geometry_shaders(DeviceFeatureState::Enabled);
-        features
+        DeviceFeatures::builder()
+            .geometry_shaders(DeviceFeatureState::Enabled)
+            .build()
     }
 
     fn new(

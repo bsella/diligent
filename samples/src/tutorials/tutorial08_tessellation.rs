@@ -453,10 +453,10 @@ impl SampleBase for Tessellation {
     }
 
     fn required_features() -> DeviceFeatures {
-        let mut features = DeviceFeatures::default();
-        features.set_tessellation(DeviceFeatureState::Enabled);
-        features.set_geometry_shaders(DeviceFeatureState::Optional);
-        features
+        DeviceFeatures::builder()
+            .tessellation(DeviceFeatureState::Enabled)
+            .geometry_shaders(DeviceFeatureState::Optional)
+            .build()
     }
 
     fn update_ui(

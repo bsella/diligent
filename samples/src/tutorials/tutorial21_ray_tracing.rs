@@ -1289,9 +1289,9 @@ impl SampleBase for RayTracing {
     }
 
     fn required_features() -> DeviceFeatures {
-        let mut features = DeviceFeatures::default();
-        features.set_ray_tracing(DeviceFeatureState::Enabled);
-        features
+        DeviceFeatures::builder()
+            .ray_tracing(DeviceFeatureState::Enabled)
+            .build()
     }
 
     fn get_name() -> &'static str {

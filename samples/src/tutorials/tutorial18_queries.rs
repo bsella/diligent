@@ -211,13 +211,13 @@ impl SampleBase for Queries {
     }
 
     fn required_features() -> DeviceFeatures {
-        let mut features = DeviceFeatures::default();
-        features.set_occlusion_queries(DeviceFeatureState::Optional);
-        features.set_binary_occlusion_queries(DeviceFeatureState::Optional);
-        features.set_timestamp_queries(DeviceFeatureState::Optional);
-        features.set_pipeline_statistics_queries(DeviceFeatureState::Optional);
-        features.set_duration_queries(DeviceFeatureState::Optional);
-        features
+        DeviceFeatures::builder()
+            .occlusion_queries(DeviceFeatureState::Optional)
+            .binary_occlusion_queries(DeviceFeatureState::Optional)
+            .timestamp_queries(DeviceFeatureState::Optional)
+            .pipeline_statistics_queries(DeviceFeatureState::Optional)
+            .duration_queries(DeviceFeatureState::Optional)
+            .build()
     }
 
     fn render(

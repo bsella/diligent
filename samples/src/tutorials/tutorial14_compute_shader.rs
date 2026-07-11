@@ -588,9 +588,9 @@ impl SampleBase for ComputeShader {
     }
 
     fn required_features() -> DeviceFeatures {
-        let mut features = DeviceFeatures::default();
-        features.set_compute_shaders(DeviceFeatureState::Enabled);
-        features
+        DeviceFeatures::builder()
+            .compute_shaders(DeviceFeatureState::Enabled)
+            .build()
     }
 
     fn render(

@@ -1272,6 +1272,128 @@ impl From<DeviceFeatureState> for diligent_sys::DEVICE_FEATURE_STATE {
 #[repr(transparent)]
 #[derive(Clone)]
 pub struct DeviceFeatures(pub(crate) diligent_sys::DeviceFeatures);
+
+#[bon::bon]
+impl DeviceFeatures {
+    #[rustfmt::skip]
+    #[builder(builder_type(vis = "pub"), start_fn(name = builder_impl, vis = ""))]
+    fn new(
+        #[builder(start_fn)] default_state: DeviceFeatureState,
+        #[builder(default = default_state)]separable_programs: DeviceFeatureState,
+        #[builder(default = default_state)]shader_resource_queries: DeviceFeatureState,
+        #[builder(default = default_state)]wireframe_fill: DeviceFeatureState,
+        #[builder(default = default_state)]multithreaded_resource_creation: DeviceFeatureState,
+        #[builder(default = default_state)]compute_shaders: DeviceFeatureState,
+        #[builder(default = default_state)]geometry_shaders: DeviceFeatureState,
+        #[builder(default = default_state)]tessellation: DeviceFeatureState,
+        #[builder(default = default_state)]mesh_shaders: DeviceFeatureState,
+        #[builder(default = default_state)]ray_tracing: DeviceFeatureState,
+        #[builder(default = default_state)]bindless_resources: DeviceFeatureState,
+        #[builder(default = default_state)]occlusion_queries: DeviceFeatureState,
+        #[builder(default = default_state)]binary_occlusion_queries: DeviceFeatureState,
+        #[builder(default = default_state)]timestamp_queries: DeviceFeatureState,
+        #[builder(default = default_state)]pipeline_statistics_queries: DeviceFeatureState,
+        #[builder(default = default_state)]duration_queries: DeviceFeatureState,
+        #[builder(default = default_state)]depth_bias_clamp: DeviceFeatureState,
+        #[builder(default = default_state)]depth_clamp: DeviceFeatureState,
+        #[builder(default = default_state)]independent_blend: DeviceFeatureState,
+        #[builder(default = default_state)]dual_source_blend: DeviceFeatureState,
+        #[builder(default = default_state)]multi_viewport: DeviceFeatureState,
+        #[builder(default = default_state)]texture_compression_bc: DeviceFeatureState,
+        #[builder(default = default_state)]texture_compression_etc2: DeviceFeatureState,
+        #[builder(default = default_state)]vertex_pipeline_uav_writes_and_atomics: DeviceFeatureState,
+        #[builder(default = default_state)]pixel_uav_writes_and_atomics: DeviceFeatureState,
+        #[builder(default = default_state)]texture_uav_extended_formats: DeviceFeatureState,
+        #[builder(default = default_state)]shader_float16: DeviceFeatureState,
+        #[builder(default = default_state)]resource_buffer16_bit_access: DeviceFeatureState,
+        #[builder(default = default_state)]uniform_buffer16_bit_access: DeviceFeatureState,
+        #[builder(default = default_state)]shader_input_output16: DeviceFeatureState,
+        #[builder(default = default_state)]shader_int8: DeviceFeatureState,
+        #[builder(default = default_state)]resource_buffer8_bit_access: DeviceFeatureState,
+        #[builder(default = default_state)]uniform_buffer8_bit_access: DeviceFeatureState,
+        #[builder(default = default_state)]shader_resource_static_arrays: DeviceFeatureState,
+        #[builder(default = default_state)]shader_resource_runtime_arrays: DeviceFeatureState,
+        #[builder(default = default_state)]wave_op: DeviceFeatureState,
+        #[builder(default = default_state)]instance_data_step_rate: DeviceFeatureState,
+        #[builder(default = default_state)]native_fence: DeviceFeatureState,
+        #[builder(default = default_state)]tile_shaders: DeviceFeatureState,
+        #[builder(default = default_state)]transfer_queue_timestamp_queries: DeviceFeatureState,
+        #[builder(default = default_state)]variable_rate_shading: DeviceFeatureState,
+        #[builder(default = default_state)]sparse_resources: DeviceFeatureState,
+        #[builder(default = default_state)]subpass_framebuffer_fetch: DeviceFeatureState,
+        #[builder(default = default_state)]texture_component_swizzle: DeviceFeatureState,
+        #[builder(default = default_state)]texture_subresource_views: DeviceFeatureState,
+        #[builder(default = default_state)]native_multi_draw: DeviceFeatureState,
+        #[builder(default = default_state)]async_shader_compilation: DeviceFeatureState,
+        #[builder(default = default_state)]formatted_buffers: DeviceFeatureState,
+        #[builder(default = default_state)]specialization_constants: DeviceFeatureState,
+        #[builder(default = default_state)]shader_float64: DeviceFeatureState,
+        #[builder(default = default_state)]shader_barycentrics: DeviceFeatureState,
+    ) -> Self{
+        let _ = default_state;
+        Self(diligent_sys::DeviceFeatures {
+            SeparablePrograms: separable_programs.into(),
+            ShaderResourceQueries: shader_resource_queries.into(),
+            WireframeFill: wireframe_fill.into(),
+            MultithreadedResourceCreation: multithreaded_resource_creation.into(),
+            ComputeShaders: compute_shaders.into(),
+            GeometryShaders: geometry_shaders.into(),
+            Tessellation: tessellation.into(),
+            MeshShaders: mesh_shaders.into(),
+            RayTracing: ray_tracing.into(),
+            BindlessResources: bindless_resources.into(),
+            OcclusionQueries: occlusion_queries.into(),
+            BinaryOcclusionQueries: binary_occlusion_queries.into(),
+            TimestampQueries: timestamp_queries.into(),
+            PipelineStatisticsQueries: pipeline_statistics_queries.into(),
+            DurationQueries: duration_queries.into(),
+            DepthBiasClamp: depth_bias_clamp.into(),
+            DepthClamp: depth_clamp.into(),
+            IndependentBlend: independent_blend.into(),
+            DualSourceBlend: dual_source_blend.into(),
+            MultiViewport: multi_viewport.into(),
+            TextureCompressionBC: texture_compression_bc.into(),
+            TextureCompressionETC2: texture_compression_etc2.into(),
+            VertexPipelineUAVWritesAndAtomics: vertex_pipeline_uav_writes_and_atomics.into(),
+            PixelUAVWritesAndAtomics: pixel_uav_writes_and_atomics.into(),
+            TextureUAVExtendedFormats: texture_uav_extended_formats.into(),
+            ShaderFloat16: shader_float16.into(),
+            ResourceBuffer16BitAccess: resource_buffer16_bit_access.into(),
+            UniformBuffer16BitAccess: uniform_buffer16_bit_access.into(),
+            ShaderInputOutput16: shader_input_output16.into(),
+            ShaderInt8: shader_int8.into(),
+            ResourceBuffer8BitAccess: resource_buffer8_bit_access.into(),
+            UniformBuffer8BitAccess: uniform_buffer8_bit_access.into(),
+            ShaderResourceStaticArrays: shader_resource_static_arrays.into(),
+            ShaderResourceRuntimeArrays: shader_resource_runtime_arrays.into(),
+            WaveOp: wave_op.into(),
+            InstanceDataStepRate: instance_data_step_rate.into(),
+            NativeFence: native_fence.into(),
+            TileShaders: tile_shaders.into(),
+            TransferQueueTimestampQueries: transfer_queue_timestamp_queries.into(),
+            VariableRateShading: variable_rate_shading.into(),
+            SparseResources: sparse_resources.into(),
+            SubpassFramebufferFetch: subpass_framebuffer_fetch.into(),
+            TextureComponentSwizzle: texture_component_swizzle.into(),
+            TextureSubresourceViews: texture_subresource_views.into(),
+            NativeMultiDraw: native_multi_draw.into(),
+            AsyncShaderCompilation: async_shader_compilation.into(),
+            FormattedBuffers: formatted_buffers.into(),
+            SpecializationConstants: specialization_constants.into(),
+            ShaderFloat64: shader_float64.into(),
+            ShaderBarycentrics: shader_barycentrics.into(),
+        })
+    }
+
+    pub fn all_optional() -> DeviceFeaturesBuilder {
+        Self::builder_impl(DeviceFeatureState::Optional)
+    }
+
+    pub fn builder() -> DeviceFeaturesBuilder {
+        Self::builder_impl(DeviceFeatureState::Disabled)
+    }
+}
+
 impl DeviceFeatures {
     pub fn separable_programs(&self) -> DeviceFeatureState {
         self.0.SeparablePrograms.try_into().unwrap()
@@ -1414,205 +1536,19 @@ impl DeviceFeatures {
     pub fn formatted_buffers(&self) -> DeviceFeatureState {
         self.0.FormattedBuffers.try_into().unwrap()
     }
-
-    pub fn set_separable_programs(&mut self, state: DeviceFeatureState) {
-        self.0.SeparablePrograms = state.into()
+    pub fn specialization_constants(&self) -> DeviceFeatureState {
+        self.0.SpecializationConstants.try_into().unwrap()
     }
-    pub fn set_shader_resource_queries(&mut self, state: DeviceFeatureState) {
-        self.0.ShaderResourceQueries = state.into()
+    pub fn shader_float64(&self) -> DeviceFeatureState {
+        self.0.ShaderFloat64.try_into().unwrap()
     }
-    pub fn set_wireframe_fill(&mut self, state: DeviceFeatureState) {
-        self.0.WireframeFill = state.into()
-    }
-    pub fn set_multithreaded_resource_creation(&mut self, state: DeviceFeatureState) {
-        self.0.MultithreadedResourceCreation = state.into()
-    }
-    pub fn set_compute_shaders(&mut self, state: DeviceFeatureState) {
-        self.0.ComputeShaders = state.into()
-    }
-    pub fn set_geometry_shaders(&mut self, state: DeviceFeatureState) {
-        self.0.GeometryShaders = state.into()
-    }
-    pub fn set_tessellation(&mut self, state: DeviceFeatureState) {
-        self.0.Tessellation = state.into()
-    }
-    pub fn set_mesh_shaders(&mut self, state: DeviceFeatureState) {
-        self.0.MeshShaders = state.into()
-    }
-    pub fn set_ray_tracing(&mut self, state: DeviceFeatureState) {
-        self.0.RayTracing = state.into()
-    }
-    pub fn set_bindless_resources(&mut self, state: DeviceFeatureState) {
-        self.0.BindlessResources = state.into()
-    }
-    pub fn set_occlusion_queries(&mut self, state: DeviceFeatureState) {
-        self.0.OcclusionQueries = state.into()
-    }
-    pub fn set_binary_occlusion_queries(&mut self, state: DeviceFeatureState) {
-        self.0.BinaryOcclusionQueries = state.into()
-    }
-    pub fn set_timestamp_queries(&mut self, state: DeviceFeatureState) {
-        self.0.TimestampQueries = state.into()
-    }
-    pub fn set_pipeline_statistics_queries(&mut self, state: DeviceFeatureState) {
-        self.0.PipelineStatisticsQueries = state.into()
-    }
-    pub fn set_duration_queries(&mut self, state: DeviceFeatureState) {
-        self.0.DurationQueries = state.into()
-    }
-    pub fn set_depth_bias_clamp(&mut self, state: DeviceFeatureState) {
-        self.0.DepthBiasClamp = state.into()
-    }
-    pub fn set_depth_clamp(&mut self, state: DeviceFeatureState) {
-        self.0.DepthClamp = state.into()
-    }
-    pub fn set_independent_blend(&mut self, state: DeviceFeatureState) {
-        self.0.IndependentBlend = state.into()
-    }
-    pub fn set_dual_source_blend(&mut self, state: DeviceFeatureState) {
-        self.0.DualSourceBlend = state.into()
-    }
-    pub fn set_multi_viewport(&mut self, state: DeviceFeatureState) {
-        self.0.MultiViewport = state.into()
-    }
-    pub fn set_texture_compression_bc(&mut self, state: DeviceFeatureState) {
-        self.0.TextureCompressionBC = state.into()
-    }
-    pub fn set_texture_compression_etc2(&mut self, state: DeviceFeatureState) {
-        self.0.TextureCompressionETC2 = state.into()
-    }
-    pub fn set_vertex_pipeline_uav_writes_and_atomics(&mut self, state: DeviceFeatureState) {
-        self.0.VertexPipelineUAVWritesAndAtomics = state.into()
-    }
-    pub fn set_pixel_uav_writes_and_atomics(&mut self, state: DeviceFeatureState) {
-        self.0.PixelUAVWritesAndAtomics = state.into()
-    }
-    pub fn set_texture_uav_extended_formats(&mut self, state: DeviceFeatureState) {
-        self.0.TextureUAVExtendedFormats = state.into()
-    }
-    pub fn set_shader_float16(&mut self, state: DeviceFeatureState) {
-        self.0.ShaderFloat16 = state.into()
-    }
-    pub fn set_resource_buffer16_bit_access(&mut self, state: DeviceFeatureState) {
-        self.0.ResourceBuffer16BitAccess = state.into()
-    }
-    pub fn set_uniform_buffer16_bit_access(&mut self, state: DeviceFeatureState) {
-        self.0.UniformBuffer16BitAccess = state.into()
-    }
-    pub fn set_shader_input_output16(&mut self, state: DeviceFeatureState) {
-        self.0.ShaderInputOutput16 = state.into()
-    }
-    pub fn set_shader_int8(&mut self, state: DeviceFeatureState) {
-        self.0.ShaderInt8 = state.into()
-    }
-    pub fn set_resource_buffer8_bit_access(&mut self, state: DeviceFeatureState) {
-        self.0.ResourceBuffer8BitAccess = state.into()
-    }
-    pub fn set_uniform_buffer8_bit_access(&mut self, state: DeviceFeatureState) {
-        self.0.UniformBuffer8BitAccess = state.into()
-    }
-    pub fn set_shader_resource_static_arrays(&mut self, state: DeviceFeatureState) {
-        self.0.ShaderResourceStaticArrays = state.into()
-    }
-    pub fn set_shader_resource_runtime_arrays(&mut self, state: DeviceFeatureState) {
-        self.0.ShaderResourceRuntimeArrays = state.into()
-    }
-    pub fn set_wave_op(&mut self, state: DeviceFeatureState) {
-        self.0.WaveOp = state.into()
-    }
-    pub fn set_instance_data_step_rate(&mut self, state: DeviceFeatureState) {
-        self.0.InstanceDataStepRate = state.into()
-    }
-    pub fn set_native_fence(&mut self, state: DeviceFeatureState) {
-        self.0.NativeFence = state.into()
-    }
-    pub fn set_tile_shaders(&mut self, state: DeviceFeatureState) {
-        self.0.TileShaders = state.into()
-    }
-    pub fn set_transfer_queue_timestamp_queries(&mut self, state: DeviceFeatureState) {
-        self.0.TransferQueueTimestampQueries = state.into()
-    }
-    pub fn set_variable_rate_shading(&mut self, state: DeviceFeatureState) {
-        self.0.VariableRateShading = state.into()
-    }
-    pub fn set_sparse_resources(&mut self, state: DeviceFeatureState) {
-        self.0.SparseResources = state.into()
-    }
-    pub fn set_subpass_framebuffer_fetch(&mut self, state: DeviceFeatureState) {
-        self.0.SubpassFramebufferFetch = state.into()
-    }
-    pub fn set_texture_component_swizzle(&mut self, state: DeviceFeatureState) {
-        self.0.TextureComponentSwizzle = state.into()
-    }
-    pub fn set_texture_subresource_views(&mut self, state: DeviceFeatureState) {
-        self.0.TextureSubresourceViews = state.into()
-    }
-    pub fn set_native_multi_draw(&mut self, state: DeviceFeatureState) {
-        self.0.NativeMultiDraw = state.into()
-    }
-    pub fn set_async_shader_compilation(&mut self, state: DeviceFeatureState) {
-        self.0.AsyncShaderCompilation = state.into()
-    }
-    pub fn set_formatted_buffers(&mut self, state: DeviceFeatureState) {
-        self.0.FormattedBuffers = state.into()
+    pub fn shader_barycentrics(&self) -> DeviceFeatureState {
+        self.0.ShaderBarycentrics.try_into().unwrap()
     }
 }
 
 impl DeviceFeatures {
-    // TODO : replace map methods with proper iterator
-    fn map(&mut self, f: impl Fn(&mut diligent_sys::DEVICE_FEATURE_STATE)) {
-        f(&mut self.0.SeparablePrograms);
-        f(&mut self.0.ShaderResourceQueries);
-        f(&mut self.0.WireframeFill);
-        f(&mut self.0.MultithreadedResourceCreation);
-        f(&mut self.0.ComputeShaders);
-        f(&mut self.0.GeometryShaders);
-        f(&mut self.0.Tessellation);
-        f(&mut self.0.MeshShaders);
-        f(&mut self.0.RayTracing);
-        f(&mut self.0.BindlessResources);
-        f(&mut self.0.OcclusionQueries);
-        f(&mut self.0.BinaryOcclusionQueries);
-        f(&mut self.0.TimestampQueries);
-        f(&mut self.0.PipelineStatisticsQueries);
-        f(&mut self.0.DurationQueries);
-        f(&mut self.0.DepthBiasClamp);
-        f(&mut self.0.DepthClamp);
-        f(&mut self.0.IndependentBlend);
-        f(&mut self.0.DualSourceBlend);
-        f(&mut self.0.MultiViewport);
-        f(&mut self.0.TextureCompressionBC);
-        f(&mut self.0.TextureCompressionETC2);
-        f(&mut self.0.VertexPipelineUAVWritesAndAtomics);
-        f(&mut self.0.PixelUAVWritesAndAtomics);
-        f(&mut self.0.TextureUAVExtendedFormats);
-        f(&mut self.0.ShaderFloat16);
-        f(&mut self.0.ResourceBuffer16BitAccess);
-        f(&mut self.0.UniformBuffer16BitAccess);
-        f(&mut self.0.ShaderInputOutput16);
-        f(&mut self.0.ShaderInt8);
-        f(&mut self.0.ResourceBuffer8BitAccess);
-        f(&mut self.0.UniformBuffer8BitAccess);
-        f(&mut self.0.ShaderResourceStaticArrays);
-        f(&mut self.0.ShaderResourceRuntimeArrays);
-        f(&mut self.0.WaveOp);
-        f(&mut self.0.InstanceDataStepRate);
-        f(&mut self.0.NativeFence);
-        f(&mut self.0.TileShaders);
-        f(&mut self.0.TransferQueueTimestampQueries);
-        f(&mut self.0.VariableRateShading);
-        f(&mut self.0.SparseResources);
-        f(&mut self.0.SubpassFramebufferFetch);
-        f(&mut self.0.TextureComponentSwizzle);
-        f(&mut self.0.TextureSubresourceViews);
-        f(&mut self.0.NativeMultiDraw);
-        f(&mut self.0.AsyncShaderCompilation);
-        f(&mut self.0.FormattedBuffers);
-        f(&mut self.0.SpecializationConstants);
-        f(&mut self.0.ShaderFloat64);
-        f(&mut self.0.ShaderBarycentrics);
-    }
-
+    // TODO : replace map method with proper iterator
     #[rustfmt::skip]
     fn map_with(
         &mut self,
@@ -1671,12 +1607,6 @@ impl DeviceFeatures {
         f(&mut self.0.ShaderBarycentrics, &other.0.ShaderBarycentrics);
     }
 
-    pub fn all_optional() -> Self {
-        let mut features = DeviceFeatures::default();
-        features.map(|s| *s = diligent_sys::DEVICE_FEATURE_STATE_OPTIONAL as _);
-        features
-    }
-
     pub fn and(&self, other: &Self) -> Self {
         let mut features = self.clone();
 
@@ -1695,58 +1625,7 @@ impl DeviceFeatures {
 
 impl Default for DeviceFeatures {
     fn default() -> Self {
-        Self(diligent_sys::DeviceFeatures {
-            SeparablePrograms: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            ShaderResourceQueries: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            WireframeFill: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            MultithreadedResourceCreation: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            ComputeShaders: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            GeometryShaders: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            Tessellation: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            MeshShaders: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            RayTracing: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            BindlessResources: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            OcclusionQueries: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            BinaryOcclusionQueries: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            TimestampQueries: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            PipelineStatisticsQueries: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            DurationQueries: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            DepthBiasClamp: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            DepthClamp: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            IndependentBlend: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            DualSourceBlend: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            MultiViewport: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            TextureCompressionBC: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            TextureCompressionETC2: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            VertexPipelineUAVWritesAndAtomics: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            PixelUAVWritesAndAtomics: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            TextureUAVExtendedFormats: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            ShaderFloat16: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            ResourceBuffer16BitAccess: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            UniformBuffer16BitAccess: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            ShaderInputOutput16: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            ShaderInt8: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            ResourceBuffer8BitAccess: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            UniformBuffer8BitAccess: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            ShaderResourceStaticArrays: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            ShaderResourceRuntimeArrays: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            WaveOp: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            InstanceDataStepRate: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            NativeFence: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            TileShaders: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            TransferQueueTimestampQueries: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            VariableRateShading: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            SparseResources: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            SubpassFramebufferFetch: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            TextureComponentSwizzle: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            TextureSubresourceViews: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            NativeMultiDraw: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            AsyncShaderCompilation: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            FormattedBuffers: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            SpecializationConstants: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            ShaderFloat64: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-            ShaderBarycentrics: diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _,
-        })
+        DeviceFeatures::builder().build()
     }
 }
 

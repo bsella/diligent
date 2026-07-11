@@ -497,8 +497,9 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
             None
         };
 
-        let mut features = DeviceFeatures::all_optional();
-        features.set_transfer_queue_timestamp_queries(DeviceFeatureState::Disabled);
+        let mut features = DeviceFeatures::all_optional()
+            .transfer_queue_timestamp_queries(DeviceFeatureState::Disabled)
+            .build();
 
         features = features.and(&GenericSample::required_features());
 

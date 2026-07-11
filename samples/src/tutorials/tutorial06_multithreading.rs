@@ -1155,8 +1155,9 @@ impl MultithreadingApp {
             None
         };
 
-        let mut features = DeviceFeatures::all_optional();
-        features.set_transfer_queue_timestamp_queries(DeviceFeatureState::Disabled);
+        let mut features = DeviceFeatures::all_optional()
+            .transfer_queue_timestamp_queries(DeviceFeatureState::Disabled)
+            .build();
 
         features = features.and(&Multithreading::required_features());
 
