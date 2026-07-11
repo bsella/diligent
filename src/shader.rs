@@ -592,11 +592,15 @@ impl ShaderCodeVariableDesc {
     }
 
     pub fn members(&self) -> &[ShaderCodeVariableDesc] {
-        unsafe {
-            std::slice::from_raw_parts(
-                self.0.pMembers as *const ShaderCodeVariableDesc,
-                self.0.NumMembers as usize,
-            )
+        if self.0.pMembers.is_null() {
+            &[]
+        } else {
+            unsafe {
+                std::slice::from_raw_parts(
+                    self.0.pMembers as *const ShaderCodeVariableDesc,
+                    self.0.NumMembers as usize,
+                )
+            }
         }
     }
 }
@@ -610,11 +614,15 @@ impl ShaderCodeBufferDesc {
     }
 
     pub fn variables(&self) -> &[ShaderCodeVariableDesc] {
-        unsafe {
-            std::slice::from_raw_parts(
-                self.0.pVariables as *const ShaderCodeVariableDesc,
-                self.0.NumVariables as usize,
-            )
+        if self.0.pVariables.is_null() {
+            &[]
+        } else {
+            unsafe {
+                std::slice::from_raw_parts(
+                    self.0.pVariables as *const ShaderCodeVariableDesc,
+                    self.0.NumVariables as usize,
+                )
+            }
         }
     }
 }

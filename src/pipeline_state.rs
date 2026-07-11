@@ -492,19 +492,27 @@ impl PipelineResourceLayoutDesc {
         ShaderTypes::from_bits(self.0.DefaultVariableMergeStages).unwrap()
     }
     pub fn variables(&self) -> &[ShaderResourceVariableDesc<'_>] {
-        unsafe {
-            std::slice::from_raw_parts(
-                self.0.Variables as *const ShaderResourceVariableDesc,
-                self.0.NumVariables as usize,
-            )
+        if self.0.Variables.is_null() {
+            &[]
+        } else {
+            unsafe {
+                std::slice::from_raw_parts(
+                    self.0.Variables as *const ShaderResourceVariableDesc,
+                    self.0.NumVariables as usize,
+                )
+            }
         }
     }
     pub fn immutable_samplers(&self) -> &[ImmutableSamplerDesc<'_, '_, '_>] {
-        unsafe {
-            std::slice::from_raw_parts(
-                self.0.ImmutableSamplers as *const ImmutableSamplerDesc,
-                self.0.NumImmutableSamplers as usize,
-            )
+        if self.0.ImmutableSamplers.is_null() {
+            &[]
+        } else {
+            unsafe {
+                std::slice::from_raw_parts(
+                    self.0.ImmutableSamplers as *const ImmutableSamplerDesc,
+                    self.0.NumImmutableSamplers as usize,
+                )
+            }
         }
     }
 }
@@ -1372,11 +1380,15 @@ impl GraphicsPipelineDesc<'_, '_> {
         self.0.SampleMask
     }
     pub fn input_layouts(&self) -> &[LayoutElement] {
-        unsafe {
-            std::slice::from_raw_parts(
-                self.0.InputLayout.LayoutElements as *const LayoutElement,
-                self.0.InputLayout.NumElements as usize,
-            )
+        if self.0.InputLayout.LayoutElements.is_null() {
+            &[]
+        } else {
+            unsafe {
+                std::slice::from_raw_parts(
+                    self.0.InputLayout.LayoutElements as *const LayoutElement,
+                    self.0.InputLayout.NumElements as usize,
+                )
+            }
         }
     }
     pub fn primitive_topology(&self) -> PrimitiveTopology {

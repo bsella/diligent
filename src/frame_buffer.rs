@@ -68,11 +68,15 @@ impl FramebufferDesc<'_, '_, '_, '_> {
         unsafe { &*(self.0.pRenderPass as *const RenderPass) }
     }
     pub fn attachments(&self) -> &[&TextureView] {
-        unsafe {
-            std::slice::from_raw_parts(
-                self.0.ppAttachments as *const &TextureView,
-                self.0.AttachmentCount as usize,
-            )
+        if self.0.ppAttachments.is_null() {
+            &[]
+        } else {
+            unsafe {
+                std::slice::from_raw_parts(
+                    self.0.ppAttachments as *const &TextureView,
+                    self.0.AttachmentCount as usize,
+                )
+            }
         }
     }
     pub fn width(&self) -> u32 {

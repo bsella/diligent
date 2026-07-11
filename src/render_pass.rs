@@ -260,19 +260,27 @@ impl<
 
 impl SubpassDesc<'_, '_, '_, '_, '_, '_> {
     pub fn input_attachments(&self) -> &[AttachmentReference] {
-        unsafe {
-            std::slice::from_raw_parts(
-                self.0.pInputAttachments as *const AttachmentReference,
-                self.0.InputAttachmentCount as usize,
-            )
+        if self.0.pInputAttachments.is_null() {
+            &[]
+        } else {
+            unsafe {
+                std::slice::from_raw_parts(
+                    self.0.pInputAttachments as *const AttachmentReference,
+                    self.0.InputAttachmentCount as usize,
+                )
+            }
         }
     }
     pub fn render_target_attachments(&self) -> &[AttachmentReference] {
-        unsafe {
-            std::slice::from_raw_parts(
-                self.0.pRenderTargetAttachments as *const AttachmentReference,
-                self.0.RenderTargetAttachmentCount as usize,
-            )
+        if self.0.pRenderTargetAttachments.is_null() {
+            &[]
+        } else {
+            unsafe {
+                std::slice::from_raw_parts(
+                    self.0.pRenderTargetAttachments as *const AttachmentReference,
+                    self.0.RenderTargetAttachmentCount as usize,
+                )
+            }
         }
     }
     pub fn resolve_attachments(&self) -> Option<&[AttachmentReference]> {
@@ -295,11 +303,15 @@ impl SubpassDesc<'_, '_, '_, '_, '_, '_> {
         }
     }
     pub fn preserve_attachments(&self) -> &[u32] {
-        unsafe {
-            std::slice::from_raw_parts(
-                self.0.pPreserveAttachments,
-                self.0.PreserveAttachmentCount as usize,
-            )
+        if self.0.pPreserveAttachments.is_null() {
+            &[]
+        } else {
+            unsafe {
+                std::slice::from_raw_parts(
+                    self.0.pPreserveAttachments,
+                    self.0.PreserveAttachmentCount as usize,
+                )
+            }
         }
     }
     pub fn shading_rate_attachment(&self) -> Option<&ShadingRateAttachment> {
@@ -451,17 +463,28 @@ impl<
 
 impl RenderPassDesc<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_> {
     pub fn attachments(&self) -> &[RenderPassAttachmentDesc] {
-        unsafe {
-            std::slice::from_raw_parts(
-                self.0.pAttachments as *const _,
-                self.0.AttachmentCount as usize,
-            )
+        if self.0.pAttachments.is_null() {
+            &[]
+        } else {
+            unsafe {
+                std::slice::from_raw_parts(
+                    self.0.pAttachments as *const _,
+                    self.0.AttachmentCount as usize,
+                )
+            }
         }
     }
 
     pub fn subpasses(&self) -> &[SubpassDesc<'_, '_, '_, '_, '_, '_>] {
-        unsafe {
-            std::slice::from_raw_parts(self.0.pSubpasses as *const _, self.0.SubpassCount as usize)
+        if self.0.pSubpasses.is_null() {
+            &[]
+        } else {
+            unsafe {
+                std::slice::from_raw_parts(
+                    self.0.pSubpasses as *const _,
+                    self.0.SubpassCount as usize,
+                )
+            }
         }
     }
 }

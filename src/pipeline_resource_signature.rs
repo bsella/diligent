@@ -243,19 +243,27 @@ impl<
 
 impl PipelineResourceSignatureDesc<'_, '_, '_, '_, '_, '_, '_, '_> {
     pub fn resources(&self) -> &[PipelineResourceDesc<'_>] {
-        unsafe {
-            std::slice::from_raw_parts(
-                self.0.Resources as *const PipelineResourceDesc,
-                self.0.NumResources as usize,
-            )
+        if self.0.Resources.is_null() {
+            &[]
+        } else {
+            unsafe {
+                std::slice::from_raw_parts(
+                    self.0.Resources as *const PipelineResourceDesc,
+                    self.0.NumResources as usize,
+                )
+            }
         }
     }
     pub fn immutable_samplers(&self) -> &[ImmutableSamplerDesc<'_, '_, '_>] {
-        unsafe {
-            std::slice::from_raw_parts(
-                self.0.ImmutableSamplers as *const ImmutableSamplerDesc,
-                self.0.NumImmutableSamplers as usize,
-            )
+        if self.0.ImmutableSamplers.is_null() {
+            &[]
+        } else {
+            unsafe {
+                std::slice::from_raw_parts(
+                    self.0.ImmutableSamplers as *const ImmutableSamplerDesc,
+                    self.0.NumImmutableSamplers as usize,
+                )
+            }
         }
     }
     pub fn binding_index(&self) -> u8 {
