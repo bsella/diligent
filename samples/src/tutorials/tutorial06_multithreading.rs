@@ -845,9 +845,7 @@ impl MultithreadingApp {
         match &engine_factory {
             #[cfg(feature = "opengl")]
             EngineFactory::OpenGL(engine_factory) => {
-                use diligent_samples::sample_base::sample;
-
-                if engine_create_info.num_deferred_contexts != 0 {
+                if engine_create_info.num_deferred_contexts() != 0 {
                     panic!("Deferred contexts are not supported in OpenGL mode");
                 }
 

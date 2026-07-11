@@ -182,7 +182,7 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
         match &engine_factory {
             #[cfg(feature = "opengl")]
             EngineFactory::OpenGL(engine_factory) => {
-                if engine_create_info.num_deferred_contexts != 0 {
+                if engine_create_info.num_deferred_contexts() != 0 {
                     panic!("Deferred contexts are not supported in OpenGL mode");
                 }
 
