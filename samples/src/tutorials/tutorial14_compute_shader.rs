@@ -587,12 +587,10 @@ impl SampleBase for ComputeShader {
         }
     }
 
-    fn modify_engine_init_info(
-        engine_ci: &mut diligent_samples::sample_base::sample::EngineCreateInfo,
-    ) {
-        engine_ci
-            .features
-            .set_compute_shaders(DeviceFeatureState::Enabled);
+    fn required_features() -> DeviceFeatures {
+        let mut features = DeviceFeatures::default();
+        features.set_compute_shaders(DeviceFeatureState::Enabled);
+        features
     }
 
     fn render(

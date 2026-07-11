@@ -196,9 +196,7 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
                 let mut engine_gl_create_info =
                     EngineGLCreateInfo::new(window.native(), engine_create_info);
 
-                GenericSample::modify_engine_init_info(
-                    &mut sample::EngineCreateInfo::EngineGLCreateInfo(&mut engine_gl_create_info),
-                );
+                GenericSample::modify_engine_init_info_gl(&mut engine_gl_create_info);
 
                 let (device, immediate_context, swap_chain) = engine_factory
                     .create_device_and_swap_chain_gl(&engine_gl_create_info, &swap_chain_ci[0])
@@ -241,11 +239,7 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
                             );
                         };
 
-                        GenericSample::modify_engine_init_info(
-                            &mut sample::EngineCreateInfo::EngineVkCreateInfo(
-                                &mut engine_vk_create_info,
-                            ),
-                        );
+                        GenericSample::modify_engine_init_info_vk(&mut engine_vk_create_info);
 
                         engine_factory
                             .create_device_and_contexts(&engine_vk_create_info)
@@ -263,11 +257,7 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
                             engine_create_info,
                         );
 
-                        GenericSample::modify_engine_init_info(
-                            &mut sample::EngineCreateInfo::EngineD3D11CreateInfo(
-                                &mut engine_d3d11_create_info,
-                            ),
-                        );
+                        GenericSample::modify_engine_init_info_d3d11(&mut engine_d3d11_create_info);
 
                         engine_factory
                             .create_device_and_contexts(&engine_d3d11_create_info)
@@ -278,11 +268,7 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
                         let mut engine_d3d12_create_info =
                             EngineD3D12CreateInfo::new(engine_create_info);
 
-                        GenericSample::modify_engine_init_info(
-                            &mut sample::EngineCreateInfo::EngineD3D12CreateInfo(
-                                &mut engine_d3d12_create_info,
-                            ),
-                        );
+                        GenericSample::modify_engine_init_info_d3d12(&mut engine_d3d12_create_info);
 
                         engine_factory
                             .create_device_and_contexts(&engine_d3d12_create_info)
@@ -378,7 +364,7 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
                 match (&app_settings.adapter_type, app_settings.adapter_index) {
                     (AdapterType::Software, _) | (_, None) => Vec::new(),
                     (_, Some(adapter_index)) => engine_factory.enumerate_display_modes(
-                        engine_create_info.graphics_api_version,
+                        engine_create_info.graphics_api_version(),
                         adapter_index as u32,
                         0,
                         TextureFormat::RGBA8_UNORM_SRGB,
@@ -390,7 +376,7 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
                 match (&app_settings.adapter_type, app_settings.adapter_index) {
                     (AdapterType::Software, _) | (_, None) => Vec::new(),
                     (_, Some(adapter_index)) => engine_factory.enumerate_display_modes(
-                        engine_create_info.graphics_api_version,
+                        engine_create_info.graphics_api_version(),
                         adapter_index as u32,
                         0,
                         TextureFormat::RGBA8_UNORM_SRGB,
@@ -400,11 +386,7 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
         }
     }
 
-    fn new(
-        app_settings: SampleAppSettings,
-        mut engine_create_info: EngineCreateInfo,
-        window_manager: &mut impl WindowManager,
-    ) -> Self {
+    fn new(app_settings: SampleAppSettings, window_manager: &mut impl WindowManager) -> Self {
         let swap_chains_ci = GenericSample::make_swap_chains_create_info(&app_settings);
 
         fn find_adapter(
@@ -492,36 +474,39 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
             RenderDeviceType::WEBGPU => todo!(),
         };
 
-        #[cfg(feature = "d3d11")]
-        {
-            engine_create_info.graphics_api_version = Version::new(11, 0);
-        }
+        let graphics_api_version = match app_settings.device_type {
+            #[cfg(feature = "d3d11")]
+            RenderDeviceType::D3D11 => Version::new(11, 0),
+            #[cfg(feature = "d3d12")]
+            RenderDeviceType::D3D12 => Version::new(12, 0),
+            _ => Version::new(0, 0),
+        };
 
-        #[cfg(feature = "d3d12")]
-        {
-            engine_create_info.graphics_api_version = Version::new(11, 0);
-        }
+        let mut chosen_adapter_index = None;
 
-        let adapters = engine_factory.enumerate_adapters(engine_create_info.graphics_api_version);
+        let adapters = engine_factory.enumerate_adapters(graphics_api_version);
 
         let adapter = if let Some(adapter_index) = find_adapter(
             app_settings.adapter_index,
             app_settings.adapter_type,
             &adapters,
         ) {
-            engine_create_info.adapter_index.replace(adapter_index);
+            chosen_adapter_index.replace(adapter_index);
             adapters.into_iter().nth(adapter_index)
         } else {
             None
         };
 
-        engine_create_info
-            .features
-            .set_all(DeviceFeatureState::Optional);
+        let mut features = DeviceFeatures::all_optional();
+        features.set_transfer_queue_timestamp_queries(DeviceFeatureState::Disabled);
 
-        engine_create_info
-            .features
-            .set_transfer_queue_timestamp_queries(DeviceFeatureState::Disabled);
+        features = features.and(&GenericSample::required_features());
+
+        let engine_create_info = EngineCreateInfo::builder()
+            .features(features)
+            .maybe_adapter_index(chosen_adapter_index)
+            .num_deferred_contexts(GenericSample::num_deferred_contexts())
+            .build();
 
         let display_modes =
             Self::display_modes(&engine_factory, &app_settings, &engine_create_info);
@@ -730,13 +715,11 @@ impl<GenericSample: SampleBase> SampleApp<GenericSample> {
 pub fn main<Sample: SampleBase>() -> Result<(), std::io::Error> {
     let settings = parse_sample_app_settings();
 
-    let engine_ci = EngineCreateInfo::default();
-
     #[cfg(target_os = "windows")]
     {
         let mut window_manager = crate::window::native_app::windows::Win32WindowManager::new();
 
-        SampleApp::<Sample>::new(settings, engine_ci, &mut window_manager).run()
+        SampleApp::<Sample>::new(settings, &mut window_manager).run()
     }
     #[cfg(target_os = "linux")]
     {
@@ -746,14 +729,14 @@ pub fn main<Sample: SampleBase>() -> Result<(), std::io::Error> {
             RenderDeviceType::VULKAN => {
                 let mut window_manager =
                     crate::window::native_app::linux::xcb::XCBWindowManager::new();
-                SampleApp::<Sample>::new(settings, engine_ci, &mut window_manager).run()
+                SampleApp::<Sample>::new(settings, &mut window_manager).run()
             }
 
             #[cfg(feature = "opengl")]
             RenderDeviceType::GL => {
                 let mut window_manager =
                     crate::window::native_app::linux::x11::X11WindowManager::new();
-                SampleApp::<Sample>::new(settings, engine_ci, &mut window_manager).run()
+                SampleApp::<Sample>::new(settings, &mut window_manager).run()
             }
 
             #[allow(unreachable_patterns)]

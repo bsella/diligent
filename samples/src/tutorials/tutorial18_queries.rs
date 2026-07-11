@@ -210,16 +210,14 @@ impl SampleBase for Queries {
         sample
     }
 
-    fn modify_engine_init_info(
-        engine_ci: &mut diligent_samples::sample_base::sample::EngineCreateInfo,
-    ) {
-        let features = &mut engine_ci.features;
-
+    fn required_features() -> DeviceFeatures {
+        let mut features = DeviceFeatures::default();
         features.set_occlusion_queries(DeviceFeatureState::Optional);
         features.set_binary_occlusion_queries(DeviceFeatureState::Optional);
         features.set_timestamp_queries(DeviceFeatureState::Optional);
         features.set_pipeline_statistics_queries(DeviceFeatureState::Optional);
         features.set_duration_queries(DeviceFeatureState::Optional);
+        features
     }
 
     fn render(

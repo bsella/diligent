@@ -1288,12 +1288,10 @@ impl SampleBase for RayTracing {
         sample
     }
 
-    fn modify_engine_init_info(
-        engine_ci: &mut diligent_samples::sample_base::sample::EngineCreateInfo,
-    ) {
-        engine_ci
-            .features
-            .set_ray_tracing(DeviceFeatureState::Enabled);
+    fn required_features() -> DeviceFeatures {
+        let mut features = DeviceFeatures::default();
+        features.set_ray_tracing(DeviceFeatureState::Enabled);
+        features
     }
 
     fn get_name() -> &'static str {

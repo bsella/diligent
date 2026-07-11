@@ -1,4 +1,4 @@
-use std::{os::raw::c_void, path::Path};
+use std::{marker::PhantomData, os::raw::c_void, path::Path};
 
 use crate::{
     APIInfo, Boxed, BoxedFromNulError, Dearchiver, ImmediateContextCreateInfo, ValidationFlags,
@@ -23,79 +23,100 @@ impl DearchiverCreateInfo {
     }
 }
 
-pub struct EngineCreateInfo {
-    pub engine_api_version: i32,
+#[repr(transparent)]
+pub struct EngineCreateInfo<'immediate_context_info>(
+    pub(crate) diligent_sys::EngineCreateInfo,
+    PhantomData<&'immediate_context_info ()>,
+);
 
-    pub adapter_index: Option<usize>,
-    pub graphics_api_version: Version,
-
-    pub immediate_context_info: Vec<ImmediateContextCreateInfo>,
-
-    pub num_deferred_contexts: usize,
-
-    pub features: DeviceFeatures,
-
-    pub enable_validation: bool,
-
-    pub validation_flags: ValidationFlags,
-
-    // TODO
-    //IThreadPool* pAsyncShaderCompilationThreadPool DEFAULT_INITIALIZER(nullptr);
-    pub num_async_shader_compilation_threads: u32,
-    // TODO
-    //const OpenXRAttribs *pXRAttribs DEFAULT_INITIALIZER(nullptr);
-}
-
-impl Default for EngineCreateInfo {
-    fn default() -> Self {
-        EngineCreateInfo {
-            engine_api_version: diligent_sys::DILIGENT_API_VERSION as i32,
-            adapter_index: None,
-            graphics_api_version: Version { major: 0, minor: 0 },
-
-            immediate_context_info: Vec::new(),
-            num_deferred_contexts: 0,
-
-            features: DeviceFeatures::default(),
-
-            #[cfg(debug_assertions)]
-            enable_validation: true,
-            #[cfg(not(debug_assertions))]
-            enable_validation: false,
-
-            validation_flags: ValidationFlags::None,
-
-            num_async_shader_compilation_threads: 0xFFFFFFFF,
-        }
+#[bon::bon]
+impl<'immediate_context_info> EngineCreateInfo<'immediate_context_info> {
+    #[builder]
+    pub fn new(
+        #[builder(default = diligent_sys::DILIGENT_API_VERSION)] engine_api_version: u32,
+        adapter_index: Option<usize>,
+        #[builder(default = Version { major: 0, minor: 0 })] graphics_api_version: Version,
+        #[builder(default = &[])]
+        immediate_context_info: &'immediate_context_info [ImmediateContextCreateInfo],
+        #[builder(default = 0)] num_deferred_contexts: usize,
+        #[builder(default = DeviceFeatures::default())] features: DeviceFeatures,
+        #[builder(default = cfg!(debug_assertions))] enable_validation: bool,
+        #[builder(default = ValidationFlags::None)] validation_flags: ValidationFlags,
+        #[builder(default = 0xFFFFFFFF)] num_async_shader_compilation_threads: u32,
+        // TODO
+        //IThreadPool* pAsyncShaderCompilationThreadPool DEFAULT_INITIALIZER(nullptr);
+        // TODO
+        //const OpenXRAttribs *pXRAttribs DEFAULT_INITIALIZER(nullptr);
+    ) -> Self {
+        EngineCreateInfo(
+            diligent_sys::EngineCreateInfo {
+                EngineAPIVersion: engine_api_version as i32,
+                AdapterId: adapter_index.unwrap_or(diligent_sys::DEFAULT_ADAPTER_ID as usize)
+                    as u32,
+                GraphicsAPIVersion: diligent_sys::Version {
+                    Major: graphics_api_version.minor,
+                    Minor: graphics_api_version.minor,
+                },
+                pImmediateContextInfo: if immediate_context_info.is_empty() {
+                    std::ptr::null()
+                } else {
+                    immediate_context_info.as_ptr() as _
+                },
+                NumImmediateContexts: immediate_context_info.len() as u32,
+                NumDeferredContexts: num_deferred_contexts as u32,
+                Features: features.0,
+                EnableValidation: enable_validation,
+                ValidationFlags: validation_flags.bits(),
+                pAsyncShaderCompilationThreadPool: std::ptr::null_mut(),
+                NumAsyncShaderCompilationThreads: num_async_shader_compilation_threads,
+                Padding: 0,
+                pXRAttribs: std::ptr::null(),
+            },
+            PhantomData,
+        )
     }
 }
 
-impl From<&EngineCreateInfo> for diligent_sys::EngineCreateInfo {
-    fn from(value: &EngineCreateInfo) -> Self {
-        diligent_sys::EngineCreateInfo {
-            EngineAPIVersion: value.engine_api_version,
-            AdapterId: value
-                .adapter_index
-                .unwrap_or(diligent_sys::DEFAULT_ADAPTER_ID as usize) as u32,
-            GraphicsAPIVersion: diligent_sys::Version {
-                Major: value.graphics_api_version.minor,
-                Minor: value.graphics_api_version.minor,
-            },
-            pImmediateContextInfo: if value.immediate_context_info.is_empty() {
-                std::ptr::null()
-            } else {
-                value.immediate_context_info.as_ptr() as _
-            },
-            NumImmediateContexts: value.immediate_context_info.len() as u32,
-            NumDeferredContexts: value.num_deferred_contexts as u32,
-            Features: value.features.0,
-            EnableValidation: value.enable_validation,
-            ValidationFlags: value.validation_flags.bits(),
-            pAsyncShaderCompilationThreadPool: std::ptr::null_mut(),
-            NumAsyncShaderCompilationThreads: value.num_async_shader_compilation_threads,
-            Padding: 0,
-            pXRAttribs: std::ptr::null(),
+impl EngineCreateInfo<'_> {
+    pub fn engine_api_version(&self) -> u32 {
+        self.0.EngineAPIVersion as u32
+    }
+    pub fn adapter_index(&self) -> usize {
+        self.0.AdapterId as usize
+    }
+    pub fn graphics_api_version(&self) -> Version {
+        Version {
+            major: self.0.GraphicsAPIVersion.Major,
+            minor: self.0.GraphicsAPIVersion.Minor,
         }
+    }
+    pub fn immediate_context_info(&self) -> &[ImmediateContextCreateInfo] {
+        if self.0.pImmediateContextInfo.is_null() {
+            &[]
+        } else {
+            unsafe {
+                std::slice::from_raw_parts(
+                    self.0.pImmediateContextInfo as _,
+                    self.0.NumImmediateContexts as usize,
+                )
+            }
+        }
+    }
+    pub fn num_deferred_contexts(&self) -> usize {
+        self.0.NumDeferredContexts as usize
+    }
+    pub fn features(&self) -> &DeviceFeatures {
+        let ptr = std::ptr::from_ref(&self.0.Features);
+        unsafe { &*(ptr as *const DeviceFeatures) }
+    }
+    pub fn enable_validation(&self) -> bool {
+        self.0.EnableValidation
+    }
+    pub fn validation_flags(&self) -> ValidationFlags {
+        ValidationFlags::from_bits(self.0.ValidationFlags).unwrap()
+    }
+    pub fn num_async_shader_compilation_threads(&self) -> u32 {
+        self.0.NumAsyncShaderCompilationThreads
     }
 }
 

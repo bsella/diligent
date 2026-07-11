@@ -399,20 +399,24 @@ impl Multithreading {
         "Tutorial06: Multithreading"
     }
 
-    fn modify_engine_init_info(
-        engine_ci: &mut diligent_samples::sample_base::sample::EngineCreateInfo,
-    ) {
-        engine_ci.num_deferred_contexts = std::thread::available_parallelism().unwrap().into();
-        match engine_ci {
-            #[cfg(feature = "vulkan")]
-            diligent_samples::sample_base::sample::EngineCreateInfo::EngineVkCreateInfo(ci) => {
-                // Enough space for 32x32x32x256 bytes allocations for 3 frames
-                ci.dynamic_heap_size = 26 << 20;
-            }
-            #[allow(unreachable_patterns)]
-            _ => {}
-        }
+    fn required_features() -> DeviceFeatures {
+        DeviceFeatures::default()
     }
+
+    fn num_deferred_contexts() -> usize {
+        std::thread::available_parallelism().unwrap().into()
+    }
+
+    fn modify_engine_init_info_vk(engine_ci: &mut EngineVkCreateInfo) {
+        // Enough space for 32x32x32x256 bytes allocations for 3 frames
+        engine_ci.dynamic_heap_size = 26 << 20;
+    }
+    #[cfg(feature = "opengl")]
+    fn modify_engine_init_info_gl(_engine_ci: &mut EngineGLCreateInfo) {}
+    #[cfg(feature = "d3d11")]
+    fn modify_engine_init_info_d3d11(_engine_ci: &mut EngineD3D11CreateInfo) {}
+    #[cfg(feature = "d3d12")]
+    fn modify_engine_init_info_d3d12(_engine_ci: &mut EngineD3D12CreateInfo) {}
 
     fn release_swap_chain_buffers(&mut self) {}
 
@@ -853,9 +857,7 @@ impl MultithreadingApp {
                 let mut engine_gl_create_info =
                     EngineGLCreateInfo::new(window.native(), engine_create_info);
 
-                Multithreading::modify_engine_init_info(
-                    &mut sample::EngineCreateInfo::EngineGLCreateInfo(&mut engine_gl_create_info),
-                );
+                Multithreading::modify_engine_init_info_gl(&mut engine_gl_create_info);
 
                 let (device, immediate_context, swap_chain) = engine_factory
                     .create_device_and_swap_chain_gl(&engine_gl_create_info, swap_chain_ci)
@@ -889,8 +891,6 @@ impl MultithreadingApp {
                 let (device, immediate_contexts, defered_contexts) = match &engine_factory {
                     #[cfg(feature = "vulkan")]
                     EngineFactory::Vulkan(engine_factory) => {
-                        use diligent_samples::sample_base::sample;
-
                         let mut engine_vk_create_info = EngineVkCreateInfo::new(engine_create_info);
 
                         if app_settings.vk_compatibility {
@@ -900,11 +900,7 @@ impl MultithreadingApp {
                             );
                         };
 
-                        Multithreading::modify_engine_init_info(
-                            &mut sample::EngineCreateInfo::EngineVkCreateInfo(
-                                &mut engine_vk_create_info,
-                            ),
-                        );
+                        Multithreading::modify_engine_init_info_vk(&mut engine_vk_create_info);
 
                         engine_factory
                             .create_device_and_contexts(&engine_vk_create_info)
@@ -922,11 +918,7 @@ impl MultithreadingApp {
                             engine_create_info,
                         );
 
-                        GenericSample::modify_engine_init_info(
-                            &mut sample::EngineCreateInfo::EngineD3D11CreateInfo(
-                                &mut engine_d3d11_create_info,
-                            ),
-                        );
+                        GenericSample::modify_engine_init_info_d3d11(&mut engine_d3d11_create_info);
 
                         engine_factory
                             .create_device_and_contexts(&engine_d3d11_create_info)
@@ -937,11 +929,7 @@ impl MultithreadingApp {
                         let mut engine_d3d12_create_info =
                             EngineD3D12CreateInfo::new(engine_create_info);
 
-                        GenericSample::modify_engine_init_info(
-                            &mut sample::EngineCreateInfo::EngineD3D12CreateInfo(
-                                &mut engine_d3d12_create_info,
-                            ),
-                        );
+                        GenericSample::modify_engine_init_info_d3d12(&mut engine_d3d12_create_info);
 
                         engine_factory
                             .create_device_and_contexts(&engine_d3d12_create_info)
@@ -1055,11 +1043,7 @@ impl MultithreadingApp {
         }
     }
 
-    fn new(
-        app_settings: SampleAppSettings,
-        mut engine_create_info: EngineCreateInfo,
-        window_manager: &mut impl WindowManager,
-    ) -> Self {
+    fn new(app_settings: SampleAppSettings, window_manager: &mut impl WindowManager) -> Self {
         let swap_chain_ci = SwapChainCreateInfo::builder()
             .width(app_settings.width)
             .height(app_settings.height)
@@ -1150,36 +1134,39 @@ impl MultithreadingApp {
             RenderDeviceType::WEBGPU => todo!(),
         };
 
-        #[cfg(feature = "d3d11")]
-        {
-            engine_create_info.graphics_api_version = Version::new(11, 0);
-        }
+        let graphics_api_version = match app_settings.device_type {
+            #[cfg(feature = "d3d11")]
+            RenderDeviceType::D3D11 => Version::new(11, 0),
+            #[cfg(feature = "d3d12")]
+            RenderDeviceType::D3D12 => Version::new(12, 0),
+            _ => Version::new(0, 0),
+        };
 
-        #[cfg(feature = "d3d12")]
-        {
-            engine_create_info.graphics_api_version = Version::new(11, 0);
-        }
+        let mut chosen_adapter_index = None;
 
-        let adapters = engine_factory.enumerate_adapters(engine_create_info.graphics_api_version);
+        let adapters = engine_factory.enumerate_adapters(graphics_api_version);
 
         let adapter = if let Some(adapter_index) = find_adapter(
             app_settings.adapter_index,
             app_settings.adapter_type,
             &adapters,
         ) {
-            engine_create_info.adapter_index.replace(adapter_index);
+            chosen_adapter_index.replace(adapter_index);
             adapters.into_iter().nth(adapter_index)
         } else {
             None
         };
 
-        engine_create_info
-            .features
-            .set_all(DeviceFeatureState::Optional);
+        let mut features = DeviceFeatures::all_optional();
+        features.set_transfer_queue_timestamp_queries(DeviceFeatureState::Disabled);
 
-        engine_create_info
-            .features
-            .set_transfer_queue_timestamp_queries(DeviceFeatureState::Disabled);
+        features = features.and(&Multithreading::required_features());
+
+        let engine_create_info = EngineCreateInfo::builder()
+            .features(features)
+            .maybe_adapter_index(chosen_adapter_index)
+            .num_deferred_contexts(Multithreading::num_deferred_contexts())
+            .build();
 
         let display_modes =
             Self::display_modes(&engine_factory, &app_settings, &engine_create_info);
@@ -1407,14 +1394,12 @@ impl MultithreadingApp {
 fn main() {
     let settings = parse_sample_app_settings();
 
-    let engine_ci = EngineCreateInfo::default();
-
     #[cfg(target_os = "windows")]
     {
         let mut window_manager =
             diligent_samples::window::native_app::windows::Win32WindowManager::new();
 
-        MultithreadingApp::new(settings, engine_ci, &mut window_manager)
+        MultithreadingApp::new(settings, &mut window_manager)
             .run()
             .unwrap()
     }
@@ -1426,7 +1411,7 @@ fn main() {
             RenderDeviceType::VULKAN => {
                 let mut window_manager =
                     diligent_samples::window::native_app::linux::xcb::XCBWindowManager::new();
-                MultithreadingApp::new(settings, engine_ci, &mut window_manager)
+                MultithreadingApp::new(settings, &mut window_manager)
                     .run()
                     .unwrap()
             }
@@ -1435,7 +1420,7 @@ fn main() {
             RenderDeviceType::GL => {
                 let mut window_manager =
                     diligent_samples::window::native_app::linux::x11::X11WindowManager::new();
-                MultithreadingApp::new(settings, engine_ci, &mut window_manager)
+                MultithreadingApp::new(settings, &mut window_manager)
                     .run()
                     .unwrap()
             }

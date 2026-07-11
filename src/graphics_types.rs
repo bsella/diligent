@@ -1270,6 +1270,7 @@ impl From<DeviceFeatureState> for diligent_sys::DEVICE_FEATURE_STATE {
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct DeviceFeatures(pub(crate) diligent_sys::DeviceFeatures);
 impl DeviceFeatures {
     pub fn separable_programs(&self) -> DeviceFeatureState {
@@ -1558,55 +1559,137 @@ impl DeviceFeatures {
 }
 
 impl DeviceFeatures {
-    pub fn set_all(&mut self, state: DeviceFeatureState) {
-        let state = state.into();
-        self.0.SeparablePrograms = state;
-        self.0.ShaderResourceQueries = state;
-        self.0.WireframeFill = state;
-        self.0.MultithreadedResourceCreation = state;
-        self.0.ComputeShaders = state;
-        self.0.GeometryShaders = state;
-        self.0.Tessellation = state;
-        self.0.MeshShaders = state;
-        self.0.RayTracing = state;
-        self.0.BindlessResources = state;
-        self.0.OcclusionQueries = state;
-        self.0.BinaryOcclusionQueries = state;
-        self.0.TimestampQueries = state;
-        self.0.PipelineStatisticsQueries = state;
-        self.0.DurationQueries = state;
-        self.0.DepthBiasClamp = state;
-        self.0.DepthClamp = state;
-        self.0.IndependentBlend = state;
-        self.0.DualSourceBlend = state;
-        self.0.MultiViewport = state;
-        self.0.TextureCompressionBC = state;
-        self.0.TextureCompressionETC2 = state;
-        self.0.VertexPipelineUAVWritesAndAtomics = state;
-        self.0.PixelUAVWritesAndAtomics = state;
-        self.0.TextureUAVExtendedFormats = state;
-        self.0.ShaderFloat16 = state;
-        self.0.ResourceBuffer16BitAccess = state;
-        self.0.UniformBuffer16BitAccess = state;
-        self.0.ShaderInputOutput16 = state;
-        self.0.ShaderInt8 = state;
-        self.0.ResourceBuffer8BitAccess = state;
-        self.0.UniformBuffer8BitAccess = state;
-        self.0.ShaderResourceStaticArrays = state;
-        self.0.ShaderResourceRuntimeArrays = state;
-        self.0.WaveOp = state;
-        self.0.InstanceDataStepRate = state;
-        self.0.NativeFence = state;
-        self.0.TileShaders = state;
-        self.0.TransferQueueTimestampQueries = state;
-        self.0.VariableRateShading = state;
-        self.0.SparseResources = state;
-        self.0.SubpassFramebufferFetch = state;
-        self.0.TextureComponentSwizzle = state;
-        self.0.TextureSubresourceViews = state;
-        self.0.NativeMultiDraw = state;
-        self.0.AsyncShaderCompilation = state;
-        self.0.FormattedBuffers = state;
+    // TODO : replace map methods with proper iterator
+    fn map(&mut self, f: impl Fn(&mut diligent_sys::DEVICE_FEATURE_STATE)) {
+        f(&mut self.0.SeparablePrograms);
+        f(&mut self.0.ShaderResourceQueries);
+        f(&mut self.0.WireframeFill);
+        f(&mut self.0.MultithreadedResourceCreation);
+        f(&mut self.0.ComputeShaders);
+        f(&mut self.0.GeometryShaders);
+        f(&mut self.0.Tessellation);
+        f(&mut self.0.MeshShaders);
+        f(&mut self.0.RayTracing);
+        f(&mut self.0.BindlessResources);
+        f(&mut self.0.OcclusionQueries);
+        f(&mut self.0.BinaryOcclusionQueries);
+        f(&mut self.0.TimestampQueries);
+        f(&mut self.0.PipelineStatisticsQueries);
+        f(&mut self.0.DurationQueries);
+        f(&mut self.0.DepthBiasClamp);
+        f(&mut self.0.DepthClamp);
+        f(&mut self.0.IndependentBlend);
+        f(&mut self.0.DualSourceBlend);
+        f(&mut self.0.MultiViewport);
+        f(&mut self.0.TextureCompressionBC);
+        f(&mut self.0.TextureCompressionETC2);
+        f(&mut self.0.VertexPipelineUAVWritesAndAtomics);
+        f(&mut self.0.PixelUAVWritesAndAtomics);
+        f(&mut self.0.TextureUAVExtendedFormats);
+        f(&mut self.0.ShaderFloat16);
+        f(&mut self.0.ResourceBuffer16BitAccess);
+        f(&mut self.0.UniformBuffer16BitAccess);
+        f(&mut self.0.ShaderInputOutput16);
+        f(&mut self.0.ShaderInt8);
+        f(&mut self.0.ResourceBuffer8BitAccess);
+        f(&mut self.0.UniformBuffer8BitAccess);
+        f(&mut self.0.ShaderResourceStaticArrays);
+        f(&mut self.0.ShaderResourceRuntimeArrays);
+        f(&mut self.0.WaveOp);
+        f(&mut self.0.InstanceDataStepRate);
+        f(&mut self.0.NativeFence);
+        f(&mut self.0.TileShaders);
+        f(&mut self.0.TransferQueueTimestampQueries);
+        f(&mut self.0.VariableRateShading);
+        f(&mut self.0.SparseResources);
+        f(&mut self.0.SubpassFramebufferFetch);
+        f(&mut self.0.TextureComponentSwizzle);
+        f(&mut self.0.TextureSubresourceViews);
+        f(&mut self.0.NativeMultiDraw);
+        f(&mut self.0.AsyncShaderCompilation);
+        f(&mut self.0.FormattedBuffers);
+        f(&mut self.0.SpecializationConstants);
+        f(&mut self.0.ShaderFloat64);
+        f(&mut self.0.ShaderBarycentrics);
+    }
+
+    #[rustfmt::skip]
+    fn map_with(
+        &mut self,
+        other: &DeviceFeatures,
+        f: impl Fn(&mut diligent_sys::DEVICE_FEATURE_STATE, &diligent_sys::DEVICE_FEATURE_STATE),
+    ) {
+        f(&mut self.0.SeparablePrograms, &other.0.SeparablePrograms);
+        f(&mut self.0.ShaderResourceQueries, &other.0.ShaderResourceQueries);
+        f(&mut self.0.WireframeFill, &other.0.WireframeFill);
+        f(&mut self.0.MultithreadedResourceCreation, &other.0.MultithreadedResourceCreation);
+        f(&mut self.0.ComputeShaders, &other.0.ComputeShaders);
+        f(&mut self.0.GeometryShaders, &other.0.GeometryShaders);
+        f(&mut self.0.Tessellation, &other.0.Tessellation);
+        f(&mut self.0.MeshShaders, &other.0.MeshShaders);
+        f(&mut self.0.RayTracing, &other.0.RayTracing);
+        f(&mut self.0.BindlessResources, &other.0.BindlessResources);
+        f(&mut self.0.OcclusionQueries, &other.0.OcclusionQueries);
+        f(&mut self.0.BinaryOcclusionQueries, &other.0.BinaryOcclusionQueries);
+        f(&mut self.0.TimestampQueries, &other.0.TimestampQueries);
+        f(&mut self.0.PipelineStatisticsQueries, &other.0.PipelineStatisticsQueries);
+        f(&mut self.0.DurationQueries, &other.0.DurationQueries);
+        f(&mut self.0.DepthBiasClamp, &other.0.DepthBiasClamp);
+        f(&mut self.0.DepthClamp, &other.0.DepthClamp);
+        f(&mut self.0.IndependentBlend, &other.0.IndependentBlend);
+        f(&mut self.0.DualSourceBlend, &other.0.DualSourceBlend);
+        f(&mut self.0.MultiViewport, &other.0.MultiViewport);
+        f(&mut self.0.TextureCompressionBC, &other.0.TextureCompressionBC);
+        f(&mut self.0.TextureCompressionETC2, &other.0.TextureCompressionETC2);
+        f(&mut self.0.VertexPipelineUAVWritesAndAtomics, &other.0.VertexPipelineUAVWritesAndAtomics);
+        f(&mut self.0.PixelUAVWritesAndAtomics, &other.0.PixelUAVWritesAndAtomics);
+        f(&mut self.0.TextureUAVExtendedFormats, &other.0.TextureUAVExtendedFormats);
+        f(&mut self.0.ShaderFloat16, &other.0.ShaderFloat16);
+        f(&mut self.0.ResourceBuffer16BitAccess, &other.0.ResourceBuffer16BitAccess);
+        f(&mut self.0.UniformBuffer16BitAccess, &other.0.UniformBuffer16BitAccess);
+        f(&mut self.0.ShaderInputOutput16, &other.0.ShaderInputOutput16);
+        f(&mut self.0.ShaderInt8, &other.0.ShaderInt8);
+        f(&mut self.0.ResourceBuffer8BitAccess, &other.0.ResourceBuffer8BitAccess);
+        f(&mut self.0.UniformBuffer8BitAccess, &other.0.UniformBuffer8BitAccess);
+        f(&mut self.0.ShaderResourceStaticArrays, &other.0.ShaderResourceStaticArrays);
+        f(&mut self.0.ShaderResourceRuntimeArrays, &other.0.ShaderResourceRuntimeArrays);
+        f(&mut self.0.WaveOp, &other.0.WaveOp);
+        f(&mut self.0.InstanceDataStepRate, &other.0.InstanceDataStepRate);
+        f(&mut self.0.NativeFence, &other.0.NativeFence);
+        f(&mut self.0.TileShaders, &other.0.TileShaders);
+        f(&mut self.0.TransferQueueTimestampQueries, &other.0.TransferQueueTimestampQueries);
+        f(&mut self.0.VariableRateShading, &other.0.VariableRateShading);
+        f(&mut self.0.SparseResources, &other.0.SparseResources);
+        f(&mut self.0.SubpassFramebufferFetch, &other.0.SubpassFramebufferFetch);
+        f(&mut self.0.TextureComponentSwizzle, &other.0.TextureComponentSwizzle);
+        f(&mut self.0.TextureSubresourceViews, &other.0.TextureSubresourceViews);
+        f(&mut self.0.NativeMultiDraw, &other.0.NativeMultiDraw);
+        f(&mut self.0.AsyncShaderCompilation, &other.0.AsyncShaderCompilation);
+        f(&mut self.0.FormattedBuffers, &other.0.FormattedBuffers);
+        f(&mut self.0.SpecializationConstants, &other.0.SpecializationConstants);
+        f(&mut self.0.ShaderFloat64, &other.0.ShaderFloat64);
+        f(&mut self.0.ShaderBarycentrics, &other.0.ShaderBarycentrics);
+    }
+
+    pub fn all_optional() -> Self {
+        let mut features = DeviceFeatures::default();
+        features.map(|s| *s = diligent_sys::DEVICE_FEATURE_STATE_OPTIONAL as _);
+        features
+    }
+
+    pub fn and(&self, other: &Self) -> Self {
+        let mut features = self.clone();
+
+        features.map_with(other, |state, other_state| {
+            if *state == diligent_sys::DEVICE_FEATURE_STATE_DISABLED as _
+                || (*state == diligent_sys::DEVICE_FEATURE_STATE_OPTIONAL as _
+                    && *other_state == diligent_sys::DEVICE_FEATURE_STATE_ENABLED as _)
+            {
+                *state = *other_state
+            }
+        });
+
+        features
     }
 }
 

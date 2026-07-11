@@ -452,15 +452,11 @@ impl SampleBase for Tessellation {
         }
     }
 
-    fn modify_engine_init_info(
-        engine_ci: &mut diligent_samples::sample_base::sample::EngineCreateInfo,
-    ) {
-        engine_ci
-            .features
-            .set_tessellation(DeviceFeatureState::Enabled);
-        engine_ci
-            .features
-            .set_geometry_shaders(DeviceFeatureState::Optional);
+    fn required_features() -> DeviceFeatures {
+        let mut features = DeviceFeatures::default();
+        features.set_tessellation(DeviceFeatureState::Enabled);
+        features.set_geometry_shaders(DeviceFeatureState::Optional);
+        features
     }
 
     fn update_ui(

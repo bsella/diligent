@@ -35,12 +35,10 @@ struct GeometryShader {
 }
 
 impl SampleBase for GeometryShader {
-    fn modify_engine_init_info(
-        engine_ci: &mut diligent_samples::sample_base::sample::EngineCreateInfo,
-    ) {
-        engine_ci
-            .features
-            .set_geometry_shaders(DeviceFeatureState::Enabled);
+    fn required_features() -> DeviceFeatures {
+        let mut features = DeviceFeatures::default();
+        features.set_geometry_shaders(DeviceFeatureState::Enabled);
+        features
     }
 
     fn new(

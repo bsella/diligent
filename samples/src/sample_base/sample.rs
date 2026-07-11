@@ -1,5 +1,3 @@
-use std::ops::{Deref, DerefMut};
-
 use diligent::*;
 
 #[cfg(feature = "vulkan")]
@@ -91,48 +89,6 @@ pub fn get_surface_pretransform_matrix(
     }
 }
 
-pub enum EngineCreateInfo<'a> {
-    #[cfg(feature = "vulkan")]
-    EngineVkCreateInfo(&'a mut EngineVkCreateInfo),
-    #[cfg(feature = "opengl")]
-    EngineGLCreateInfo(&'a mut EngineGLCreateInfo),
-    #[cfg(feature = "d3d11")]
-    EngineD3D11CreateInfo(&'a mut EngineD3D11CreateInfo),
-    #[cfg(feature = "d3d12")]
-    EngineD3D12CreateInfo(&'a mut EngineD3D12CreateInfo),
-}
-
-impl Deref for EngineCreateInfo<'_> {
-    type Target = diligent::EngineCreateInfo;
-    fn deref(&self) -> &Self::Target {
-        match self {
-            #[cfg(feature = "vulkan")]
-            EngineCreateInfo::EngineVkCreateInfo(vk_create_info) => vk_create_info,
-            #[cfg(feature = "opengl")]
-            EngineCreateInfo::EngineGLCreateInfo(gl_create_info) => gl_create_info,
-            #[cfg(feature = "d3d11")]
-            EngineCreateInfo::EngineD3D11CreateInfo(d3d11_create_info) => d3d11_create_info,
-            #[cfg(feature = "d3d12")]
-            EngineCreateInfo::EngineD3D12CreateInfo(d3d12_create_info) => d3d12_create_info,
-        }
-    }
-}
-
-impl DerefMut for EngineCreateInfo<'_> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        match self {
-            #[cfg(feature = "vulkan")]
-            EngineCreateInfo::EngineVkCreateInfo(vk_create_info) => vk_create_info,
-            #[cfg(feature = "opengl")]
-            EngineCreateInfo::EngineGLCreateInfo(gl_create_info) => gl_create_info,
-            #[cfg(feature = "d3d11")]
-            EngineCreateInfo::EngineD3D11CreateInfo(d3d11_create_info) => d3d11_create_info,
-            #[cfg(feature = "d3d12")]
-            EngineCreateInfo::EngineD3D12CreateInfo(d3d12_create_info) => d3d12_create_info,
-        }
-    }
-}
-
 pub trait SampleBase {
     fn new(
         engine_factory: &EngineFactory,
@@ -187,5 +143,22 @@ pub trait SampleBase {
 
     fn release_swap_chain_buffers(&mut self) {}
 
-    fn modify_engine_init_info(_engine_ci: &mut EngineCreateInfo) {}
+    fn required_features() -> DeviceFeatures {
+        DeviceFeatures::default()
+    }
+
+    fn num_deferred_contexts() -> usize {
+        0
+    }
+
+    // TODO : replace the following methods with a generic when specialization
+    // is stabilized in Rust
+    #[cfg(feature = "vulkan")]
+    fn modify_engine_init_info_vk(_engine_ci: &mut EngineVkCreateInfo) {}
+    #[cfg(feature = "opengl")]
+    fn modify_engine_init_info_gl(_engine_ci: &mut EngineGLCreateInfo) {}
+    #[cfg(feature = "d3d11")]
+    fn modify_engine_init_info_d3d11(_engine_ci: &mut EngineD3D11CreateInfo) {}
+    #[cfg(feature = "d3d12")]
+    fn modify_engine_init_info_d3d12(_engine_ci: &mut EngineD3D12CreateInfo) {}
 }

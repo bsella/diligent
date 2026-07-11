@@ -29,8 +29,8 @@ impl DeviceFeaturesVk {
     }
 }
 
-pub struct EngineVkCreateInfo {
-    engine_create_info: EngineCreateInfo,
+pub struct EngineVkCreateInfo<'immediate_context_info> {
+    engine_create_info: EngineCreateInfo<'immediate_context_info>,
 
     pub features_vk: DeviceFeaturesVk,
 
@@ -56,22 +56,22 @@ pub struct EngineVkCreateInfo {
     pub dx_compiler_path: Option<PathBuf>,
 }
 
-impl Deref for EngineVkCreateInfo {
-    type Target = EngineCreateInfo;
+impl<'immediate_context_info> Deref for EngineVkCreateInfo<'immediate_context_info> {
+    type Target = EngineCreateInfo<'immediate_context_info>;
 
     fn deref(&self) -> &Self::Target {
         &self.engine_create_info
     }
 }
 
-impl DerefMut for EngineVkCreateInfo {
+impl DerefMut for EngineVkCreateInfo<'_> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.engine_create_info
     }
 }
 
-impl EngineVkCreateInfo {
-    pub fn new(engine_create_info: EngineCreateInfo) -> Self {
+impl<'immediate_context_info> EngineVkCreateInfo<'immediate_context_info> {
+    pub fn new(engine_create_info: EngineCreateInfo<'immediate_context_info>) -> Self {
         EngineVkCreateInfo {
             engine_create_info,
 
@@ -134,9 +134,9 @@ impl EngineVkCreateInfo {
     }
 }
 
-impl Default for EngineVkCreateInfo {
+impl Default for EngineVkCreateInfo<'_> {
     fn default() -> Self {
-        EngineVkCreateInfo::new(EngineCreateInfo::default())
+        EngineVkCreateInfo::new(EngineCreateInfo::builder().build())
     }
 }
 
@@ -167,11 +167,11 @@ impl EngineFactoryVk {
     > {
         let num_immediate_contexts = create_info
             .engine_create_info
-            .immediate_context_info
+            .immediate_context_info()
             .len()
             .max(1);
 
-        let num_deferred_contexts = create_info.engine_create_info.num_deferred_contexts;
+        let num_deferred_contexts = create_info.engine_create_info.num_deferred_contexts();
 
         let mut render_device_ptr = std::ptr::null_mut();
         let mut device_context_ptrs = Vec::from_iter(std::iter::repeat_n(
@@ -205,7 +205,7 @@ impl EngineFactoryVk {
                 .collect::<Vec<_>>();
 
             let create_info = diligent_sys::EngineVkCreateInfo {
-                _EngineCreateInfo: (&create_info.engine_create_info).into(),
+                _EngineCreateInfo: create_info.engine_create_info.0,
                 FeaturesVk: diligent_sys::DeviceFeaturesVk {
                     DynamicRendering: create_info.features_vk.dynamic_rendering.into(),
                     HostImageCopy: create_info.features_vk.host_image_copy.into(),
