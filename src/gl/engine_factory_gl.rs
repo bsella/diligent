@@ -10,32 +10,36 @@ use crate::{
     swap_chain::{SwapChain, SwapChainCreateInfo},
 };
 
-pub struct EngineGLCreateInfo<'immediate_context_info> {
-    engine_create_info: EngineCreateInfo<'immediate_context_info>,
+pub struct EngineGLCreateInfo<'immediate_context_info, 'xr_attribs> {
+    engine_create_info: EngineCreateInfo<'immediate_context_info, 'xr_attribs>,
 
     window: NativeWindow,
     zero_to_one_ndz: bool,
     preferred_adapter_type: AdapterType,
 }
 
-impl<'immediate_context_info> Deref for EngineGLCreateInfo<'immediate_context_info> {
-    type Target = EngineCreateInfo<'immediate_context_info>;
+impl<'immediate_context_info, 'xr_attribs> Deref
+    for EngineGLCreateInfo<'immediate_context_info, 'xr_attribs>
+{
+    type Target = EngineCreateInfo<'immediate_context_info, 'xr_attribs>;
 
     fn deref(&self) -> &Self::Target {
         &self.engine_create_info
     }
 }
 
-impl DerefMut for EngineGLCreateInfo<'_> {
+impl DerefMut for EngineGLCreateInfo<'_, '_> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.engine_create_info
     }
 }
 
-impl<'immediate_context_info> EngineGLCreateInfo<'immediate_context_info> {
+impl<'immediate_context_info, 'xr_attribs>
+    EngineGLCreateInfo<'immediate_context_info, 'xr_attribs>
+{
     pub fn new(
         window: NativeWindow,
-        engine_create_info: EngineCreateInfo<'immediate_context_info>,
+        engine_create_info: EngineCreateInfo<'immediate_context_info, 'xr_attribs>,
     ) -> Self {
         EngineGLCreateInfo {
             engine_create_info,
@@ -46,7 +50,7 @@ impl<'immediate_context_info> EngineGLCreateInfo<'immediate_context_info> {
     }
 }
 
-impl From<&EngineGLCreateInfo<'_>> for diligent_sys::EngineGLCreateInfo {
+impl From<&EngineGLCreateInfo<'_, '_>> for diligent_sys::EngineGLCreateInfo {
     fn from(value: &EngineGLCreateInfo) -> Self {
         diligent_sys::EngineGLCreateInfo {
             _EngineCreateInfo: value.engine_create_info.0,

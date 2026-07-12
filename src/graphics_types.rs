@@ -3395,3 +3395,18 @@ impl PipelineType {
         }
     }
 }
+
+#[repr(transparent)]
+pub struct OpenXRAttribs(pub(crate) diligent_sys::OpenXRAttribs);
+
+#[bon::bon]
+impl OpenXRAttribs {
+    #[builder]
+    pub fn new(get_instance_proc_addr: *mut (), instance: u64, system_id: u64) -> Self {
+        OpenXRAttribs(diligent_sys::OpenXRAttribs {
+            GetInstanceProcAddr: get_instance_proc_addr as _,
+            Instance: instance,
+            SystemId: system_id,
+        })
+    }
+}

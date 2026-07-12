@@ -29,8 +29,8 @@ impl DeviceFeaturesVk {
     }
 }
 
-pub struct EngineVkCreateInfo<'immediate_context_info> {
-    engine_create_info: EngineCreateInfo<'immediate_context_info>,
+pub struct EngineVkCreateInfo<'immediate_context_info, 'xr_attribs> {
+    engine_create_info: EngineCreateInfo<'immediate_context_info, 'xr_attribs>,
 
     pub features_vk: DeviceFeaturesVk,
 
@@ -56,22 +56,26 @@ pub struct EngineVkCreateInfo<'immediate_context_info> {
     pub dx_compiler_path: Option<PathBuf>,
 }
 
-impl<'immediate_context_info> Deref for EngineVkCreateInfo<'immediate_context_info> {
-    type Target = EngineCreateInfo<'immediate_context_info>;
+impl<'immediate_context_info, 'xr_attribs> Deref
+    for EngineVkCreateInfo<'immediate_context_info, 'xr_attribs>
+{
+    type Target = EngineCreateInfo<'immediate_context_info, 'xr_attribs>;
 
     fn deref(&self) -> &Self::Target {
         &self.engine_create_info
     }
 }
 
-impl DerefMut for EngineVkCreateInfo<'_> {
+impl DerefMut for EngineVkCreateInfo<'_, '_> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.engine_create_info
     }
 }
 
-impl<'immediate_context_info> EngineVkCreateInfo<'immediate_context_info> {
-    pub fn new(engine_create_info: EngineCreateInfo<'immediate_context_info>) -> Self {
+impl<'immediate_context_info, 'xr_attribs>
+    EngineVkCreateInfo<'immediate_context_info, 'xr_attribs>
+{
+    pub fn new(engine_create_info: EngineCreateInfo<'immediate_context_info, 'xr_attribs>) -> Self {
         EngineVkCreateInfo {
             engine_create_info,
 
@@ -134,7 +138,7 @@ impl<'immediate_context_info> EngineVkCreateInfo<'immediate_context_info> {
     }
 }
 
-impl Default for EngineVkCreateInfo<'_> {
+impl Default for EngineVkCreateInfo<'_, '_> {
     fn default() -> Self {
         EngineVkCreateInfo::new(EngineCreateInfo::builder().build())
     }

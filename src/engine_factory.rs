@@ -1,7 +1,8 @@
 use std::{marker::PhantomData, os::raw::c_void, path::Path};
 
 use crate::{
-    APIInfo, Boxed, BoxedFromNulError, Dearchiver, ImmediateContextCreateInfo, ValidationFlags,
+    APIInfo, Boxed, BoxedFromNulError, Dearchiver, ImmediateContextCreateInfo, OpenXRAttribs,
+    ValidationFlags,
     data_blob::DataBlob,
     graphics_types::{DeviceFeatures, GraphicsAdapterInfo, Version},
     memory_allocator::MemoryAllocator,
@@ -24,13 +25,13 @@ impl DearchiverCreateInfo {
 }
 
 #[repr(transparent)]
-pub struct EngineCreateInfo<'immediate_context_info>(
+pub struct EngineCreateInfo<'immediate_context_info, 'xr_attribs>(
     pub(crate) diligent_sys::EngineCreateInfo,
-    PhantomData<&'immediate_context_info ()>,
+    PhantomData<(&'immediate_context_info (), &'xr_attribs ())>,
 );
 
 #[bon::bon]
-impl<'immediate_context_info> EngineCreateInfo<'immediate_context_info> {
+impl<'immediate_context_info, 'xr_attribs> EngineCreateInfo<'immediate_context_info, 'xr_attribs> {
     #[builder]
     pub fn new(
         #[builder(default = diligent_sys::DILIGENT_API_VERSION)] engine_api_version: u32,
@@ -43,10 +44,9 @@ impl<'immediate_context_info> EngineCreateInfo<'immediate_context_info> {
         #[builder(default = cfg!(debug_assertions))] enable_validation: bool,
         #[builder(default = ValidationFlags::None)] validation_flags: ValidationFlags,
         #[builder(default = 0xFFFFFFFF)] num_async_shader_compilation_threads: u32,
+        xr_attribs: Option<&'xr_attribs OpenXRAttribs>,
         // TODO
         //IThreadPool* pAsyncShaderCompilationThreadPool DEFAULT_INITIALIZER(nullptr);
-        // TODO
-        //const OpenXRAttribs *pXRAttribs DEFAULT_INITIALIZER(nullptr);
     ) -> Self {
         EngineCreateInfo(
             diligent_sys::EngineCreateInfo {
@@ -69,15 +69,15 @@ impl<'immediate_context_info> EngineCreateInfo<'immediate_context_info> {
                 ValidationFlags: validation_flags.bits(),
                 pAsyncShaderCompilationThreadPool: std::ptr::null_mut(),
                 NumAsyncShaderCompilationThreads: num_async_shader_compilation_threads,
+                pXRAttribs: xr_attribs.map_or(std::ptr::null(), |attribs| &attribs.0),
                 Padding: 0,
-                pXRAttribs: std::ptr::null(),
             },
             PhantomData,
         )
     }
 }
 
-impl EngineCreateInfo<'_> {
+impl EngineCreateInfo<'_, '_> {
     pub fn engine_api_version(&self) -> u32 {
         self.0.EngineAPIVersion as u32
     }
