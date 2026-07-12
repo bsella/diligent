@@ -954,7 +954,7 @@ impl MultithreadingApp {
                     #[cfg(feature = "d3d11")]
                     EngineFactory::D3D11(engine_factory) => engine_factory
                         .create_swap_chain(
-                            device,
+                            &device,
                             immediate_context,
                             swap_chain_ci,
                             &FullScreenModeDesc::default(),
@@ -964,7 +964,7 @@ impl MultithreadingApp {
                     #[cfg(feature = "d3d12")]
                     EngineFactory::D3D12(engine_factory) => engine_factory
                         .create_swap_chain(
-                            device,
+                            &device,
                             immediate_context,
                             swap_chain_ci,
                             &FullScreenModeDesc::default(),
