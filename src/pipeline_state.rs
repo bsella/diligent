@@ -1373,8 +1373,23 @@ impl GraphicsPipelineDesc<'_, '_> {
     pub fn depth_stencil_desc(&self) -> &DepthStencilStateDesc {
         unsafe { std::mem::transmute(&self.0.DepthStencilDesc) }
     }
-    pub fn output(&self) -> &GraphicsPipelineOutput<'_> {
-        todo!()
+    pub fn output(&self) -> GraphicsPipelineOutput<'_> {
+        if self.0.pRenderPass.is_null() {
+            GraphicsPipelineOutput::RenderTargets(GraphicsPipelineRenderTargets {
+                num_render_targets: self.0.NumRenderTargets as _,
+                rtv_formats: self
+                    .0
+                    .RTVFormats
+                    .map(|format| TextureFormat::try_from_sys(format).unwrap()),
+                dsv_format: TextureFormat::try_from_sys(self.0.DSVFormat).unwrap(),
+                read_only_dsv: self.0.ReadOnlyDSV,
+            })
+        } else {
+            GraphicsPipelineOutput::RenderPass(GraphicsPipelineRenderPass {
+                render_pass: unsafe { &*(self.0.pRenderPass as *const RenderPass) },
+                subpass_index: self.0.SubpassIndex,
+            })
+        }
     }
     pub fn sample_mask(&self) -> u32 {
         self.0.SampleMask

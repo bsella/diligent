@@ -44,16 +44,16 @@ impl Drop for AlignedMemoryAllocation<'_> {
 
 impl MemoryAllocator {
     pub fn allocate(&self, size: usize) -> MemoryAllocation<'_> {
-        let mem_ptr = unsafe {
-            (*self.0.pVtbl).MemoryAllocator.Allocate.unwrap_unchecked()(
-                std::ptr::from_ref(&self.0) as _,
-                size,
-                // TODO
-                std::ptr::null(),
-                std::ptr::null(),
-                line!() as _,
-            )
-        };
+        let mem_ptr = unsafe_member_call!(
+            self,
+            MemoryAllocator,
+            Allocate,
+            size,
+            // TODO
+            std::ptr::null(),
+            std::ptr::null(),
+            line!() as _
+        );
 
         MemoryAllocation {
             allocator: self,
@@ -62,20 +62,17 @@ impl MemoryAllocator {
     }
 
     pub fn allocate_aligned(&self, size: usize, alignment: usize) -> MemoryAllocation<'_> {
-        let mem_ptr = unsafe {
-            (*self.0.pVtbl)
-                .MemoryAllocator
-                .AllocateAligned
-                .unwrap_unchecked()(
-                std::ptr::from_ref(&self.0) as _,
-                size,
-                alignment,
-                // TODO
-                std::ptr::null(),
-                std::ptr::null(),
-                line!() as _,
-            )
-        };
+        let mem_ptr = unsafe_member_call!(
+            self,
+            MemoryAllocator,
+            AllocateAligned,
+            size,
+            alignment,
+            // TODO
+            std::ptr::null(),
+            std::ptr::null(),
+            line!() as _
+        );
 
         MemoryAllocation {
             allocator: self,
