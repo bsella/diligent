@@ -39,6 +39,28 @@ fn configure_diligent_libs(diligent_install_dir: &Path) {
     {
         println!("cargo::rustc-link-lib=ucrt{library_suffix}");
         println!("cargo::rustc-link-lib=Comdlg32");
+        #[cfg(feature = "opengl")]
+        {
+            println!("cargo::rustc-link-lib=gdi32");
+            println!("cargo::rustc-link-lib=opengl32");
+        }
+    }
+
+    #[cfg(feature = "d3d11")]
+    {
+        println!("cargo::rustc-link-lib=D3D11");
+    }
+
+    #[cfg(feature = "d3d12")]
+    {
+        println!("cargo::rustc-link-lib=D3D12");
+    }
+
+    #[cfg(any(feature = "d3d11", feature = "d3d12"))]
+    {
+        println!("cargo::rustc-link-lib=D3dcompiler");
+        println!("cargo::rustc-link-lib=DXGI");
+        println!("cargo::rustc-link-lib=nvapi64");
     }
 
     #[cfg(target_os = "linux")]

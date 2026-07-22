@@ -916,7 +916,9 @@ impl MultithreadingApp {
                             engine_create_info,
                         );
 
-                        GenericSample::modify_engine_init_info_d3d11(&mut engine_d3d11_create_info);
+                        Multithreading::modify_engine_init_info_d3d11(
+                            &mut engine_d3d11_create_info,
+                        );
 
                         engine_factory
                             .create_device_and_contexts(&engine_d3d11_create_info)
@@ -927,7 +929,9 @@ impl MultithreadingApp {
                         let mut engine_d3d12_create_info =
                             EngineD3D12CreateInfo::new(engine_create_info);
 
-                        GenericSample::modify_engine_init_info_d3d12(&mut engine_d3d12_create_info);
+                        Multithreading::modify_engine_init_info_d3d12(
+                            &mut engine_d3d12_create_info,
+                        );
 
                         engine_factory
                             .create_device_and_contexts(&engine_d3d12_create_info)
@@ -1019,7 +1023,7 @@ impl MultithreadingApp {
                 match (&app_settings.adapter_type, app_settings.adapter_index) {
                     (AdapterType::Software, _) | (_, None) => Vec::new(),
                     (_, Some(adapter_index)) => engine_factory.enumerate_display_modes(
-                        engine_create_info.graphics_api_version,
+                        engine_create_info.graphics_api_version(),
                         adapter_index as u32,
                         0,
                         TextureFormat::RGBA8_UNORM_SRGB,
@@ -1031,7 +1035,7 @@ impl MultithreadingApp {
                 match (&app_settings.adapter_type, app_settings.adapter_index) {
                     (AdapterType::Software, _) | (_, None) => Vec::new(),
                     (_, Some(adapter_index)) => engine_factory.enumerate_display_modes(
-                        engine_create_info.graphics_api_version,
+                        engine_create_info.graphics_api_version(),
                         adapter_index as u32,
                         0,
                         TextureFormat::RGBA8_UNORM_SRGB,

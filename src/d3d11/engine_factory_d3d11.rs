@@ -31,30 +31,34 @@ bitflags! {
     }
 }
 
-pub struct EngineD3D11CreateInfo {
-    engine_create_info: EngineCreateInfo,
+pub struct EngineD3D11CreateInfo<'immediate_context_info, 'xr_attribs> {
+    engine_create_info: EngineCreateInfo<'immediate_context_info, 'xr_attribs>,
 
     d3d11_validation_flags: D3D11ValidationFlags,
 }
 
-impl Deref for EngineD3D11CreateInfo {
-    type Target = EngineCreateInfo;
+impl<'immediate_context_info, 'xr_attribs> Deref
+    for EngineD3D11CreateInfo<'immediate_context_info, 'xr_attribs>
+{
+    type Target = EngineCreateInfo<'immediate_context_info, 'xr_attribs>;
 
     fn deref(&self) -> &Self::Target {
         &self.engine_create_info
     }
 }
 
-impl DerefMut for EngineD3D11CreateInfo {
+impl DerefMut for EngineD3D11CreateInfo<'_, '_> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.engine_create_info
     }
 }
 
-impl EngineD3D11CreateInfo {
+impl<'immediate_context_info, 'xr_attribs>
+    EngineD3D11CreateInfo<'immediate_context_info, 'xr_attribs>
+{
     pub fn new(
         d3d11_validation_flags: D3D11ValidationFlags,
-        engine_create_info: EngineCreateInfo,
+        engine_create_info: EngineCreateInfo<'immediate_context_info, 'xr_attribs>,
     ) -> Self {
         EngineD3D11CreateInfo {
             engine_create_info,
@@ -63,10 +67,10 @@ impl EngineD3D11CreateInfo {
     }
 }
 
-impl From<&EngineD3D11CreateInfo> for diligent_sys::EngineD3D11CreateInfo {
+impl From<&EngineD3D11CreateInfo<'_, '_>> for diligent_sys::EngineD3D11CreateInfo {
     fn from(value: &EngineD3D11CreateInfo) -> Self {
         diligent_sys::EngineD3D11CreateInfo {
-            _EngineCreateInfo: (&value.engine_create_info).into(),
+            _EngineCreateInfo: value.engine_create_info.0,
             D3D11ValidationFlags: value.d3d11_validation_flags.bits(),
         }
     }
@@ -86,11 +90,11 @@ impl EngineFactoryD3D11 {
     > {
         let num_immediate_contexts = engine_ci
             .engine_create_info
-            .immediate_context_info
+            .immediate_context_info()
             .len()
             .max(1);
 
-        let num_deferred_contexts = engine_ci.engine_create_info.num_deferred_contexts;
+        let num_deferred_contexts = engine_ci.engine_create_info.num_deferred_contexts();
 
         let engine_ci = engine_ci.into();
 
@@ -173,11 +177,11 @@ impl EngineFactoryD3D11 {
     > {
         let num_immediate_contexts = engine_ci
             .engine_create_info
-            .immediate_context_info
+            .immediate_context_info()
             .len()
             .max(1);
 
-        let num_deferred_contexts = engine_ci.engine_create_info.num_deferred_contexts;
+        let num_deferred_contexts = engine_ci.engine_create_info.num_deferred_contexts();
 
         let mut render_device_ptr = std::ptr::null_mut();
         let mut device_context_ptrs: Vec<_> = std::iter::repeat_n(
@@ -192,7 +196,7 @@ impl EngineFactoryD3D11 {
             EngineFactoryD3D11,
             AttachToD3D11Device,
             native_device as _,
-            immediate_context.sys_ptr(),
+            immediate_context.sys_ptr() as _,
             &engine_ci,
             &mut render_device_ptr,
             device_context_ptrs.as_mut_ptr()

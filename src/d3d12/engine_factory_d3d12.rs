@@ -37,8 +37,8 @@ bitflags! {
     }
 }
 
-pub struct EngineD3D12CreateInfo {
-    engine_create_info: EngineCreateInfo,
+pub struct EngineD3D12CreateInfo<'immediate_context_info, 'xr_attribs> {
+    engine_create_info: EngineCreateInfo<'immediate_context_info, 'xr_attribs>,
 
     d3d12_dll_name: CString,
     d3d12_validation_flags: D3D12ValidationFlags,
@@ -52,22 +52,26 @@ pub struct EngineD3D12CreateInfo {
     p_dx_compiler_path: CString,
 }
 
-impl Deref for EngineD3D12CreateInfo {
-    type Target = EngineCreateInfo;
+impl<'immediate_context_info, 'xr_attribs> Deref
+    for EngineD3D12CreateInfo<'immediate_context_info, 'xr_attribs>
+{
+    type Target = EngineCreateInfo<'immediate_context_info, 'xr_attribs>;
 
     fn deref(&self) -> &Self::Target {
         &self.engine_create_info
     }
 }
 
-impl DerefMut for EngineD3D12CreateInfo {
+impl DerefMut for EngineD3D12CreateInfo<'_, '_> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.engine_create_info
     }
 }
 
-impl EngineD3D12CreateInfo {
-    pub fn new(engine_create_info: EngineCreateInfo) -> Self {
+impl<'immediate_context_info, 'xr_attribs>
+    EngineD3D12CreateInfo<'immediate_context_info, 'xr_attribs>
+{
+    pub fn new(engine_create_info: EngineCreateInfo<'immediate_context_info, 'xr_attribs>) -> Self {
         EngineD3D12CreateInfo {
             engine_create_info,
             cpu_descriptor_heap_allocation_size: [
@@ -105,10 +109,10 @@ impl EngineD3D12CreateInfo {
     }
 }
 
-impl From<&EngineD3D12CreateInfo> for diligent_sys::EngineD3D12CreateInfo {
+impl From<&EngineD3D12CreateInfo<'_, '_>> for diligent_sys::EngineD3D12CreateInfo {
     fn from(value: &EngineD3D12CreateInfo) -> Self {
         diligent_sys::EngineD3D12CreateInfo {
-            _EngineCreateInfo: (&value.engine_create_info).into(),
+            _EngineCreateInfo: value.engine_create_info.0,
             D3D12ValidationFlags: value.d3d12_validation_flags.bits(),
             CPUDescriptorHeapAllocationSize: value.cpu_descriptor_heap_allocation_size,
             D3D12DllName: value.d3d12_dll_name.as_ptr(),
@@ -146,11 +150,11 @@ impl EngineFactoryD3D12 {
     > {
         let num_immediate_contexts = engine_ci
             .engine_create_info
-            .immediate_context_info
+            .immediate_context_info()
             .len()
             .max(1);
 
-        let num_deferred_contexts = engine_ci.engine_create_info.num_deferred_contexts;
+        let num_deferred_contexts = engine_ci.engine_create_info.num_deferred_contexts();
 
         let engine_ci = engine_ci.into();
 
